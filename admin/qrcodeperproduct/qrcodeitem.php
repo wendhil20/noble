@@ -17,11 +17,8 @@ $fetchResult = $conn->query($fetchQuery);
 
 while ($row = $fetchResult->fetch_assoc()) {
     $productId = $row['id'];
-
-    // Generate the link to view product
     $qrText = "http://localhost/noble/admin/qrcodeperproduct/view_product.php?id=$productId";
 
-    // Generate QR
     $resultQR = Builder::create()
         ->writer(new PngWriter())
         ->data($qrText)
@@ -29,19 +26,14 @@ while ($row = $fetchResult->fetch_assoc()) {
         ->margin(10)
         ->build();
 
-    // Save the QR code as PNG file
-    $qrFilename = "qr_" . $productId . ".png";
-    $qrPath = $qrDir . $qrFilename;
-    $resultQR->saveToFile($qrPath);
+    $qrBlob = $resultQR->getString(); // Get binary content
 
-    // Store the path relative to this PHP file
-    $relativePath = "qrcodes/" . $qrFilename;
-
-    // Update the database
     $stmt = $conn->prepare("UPDATE products SET qr_code = ? WHERE id = ?");
-    $stmt->bind_param("si", $relativePath, $productId);
+    $stmt->bind_param("bi", $null, $productId); // 'b' = blob
+    $stmt->send_long_data(0, $qrBlob); // Send blob content
     $stmt->execute();
 }
+
 
 // ✅ Fetch again for display
 $displayQuery = "SELECT id, product_name, codename, quantity, price, qr_code FROM products ORDER BY product_name";
@@ -59,7 +51,7 @@ $displayResult = $conn->query($displayQuery);
 </head>
 
 <body class="bg-gray-100">
-<?php include '../navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
 
     <div class="bg-white p-6 rounded shadow">
         <h2 class="text-2xl font-bold mb-6 text-orange-600">Product List with QR Codes</h2>
@@ -73,6 +65,8 @@ $displayResult = $conn->query($displayQuery);
                         <th class="border border-gray-300 px-4 py-2">Quantity</th>
                         <th class="border border-gray-300 px-4 py-2">Price</th>
                         <th class="border border-gray-300 px-4 py-2">QR Code</th>
+                        <th class="border border-gray-300 px-4 py-2">Action</th>
+
                     </tr>
                 </thead>
                 <tbody>
@@ -83,19 +77,27 @@ $displayResult = $conn->query($displayQuery);
                             <td class="border border-gray-300 px-4 py-2"><?= $product['quantity'] ?></td>
                             <td class="border border-gray-300 px-4 py-2">₱<?= number_format($product['price'], 2) ?></td>
                             <td class="border border-gray-300 px-4 py-2 text-center">
-                             <?php if (!empty($product['qr_code']) && file_exists($product['qr_code'])): ?>
-    <a href="http://localhost/noble/admin/qrcodeperproduct/view_product.php?id=<?= $product['id'] ?>" target="_blank">
-        <img src="<?= htmlspecialchars($product['qr_code']) ?>" class="h-16 w-16 mx-auto mb-2 hover:scale-105 transition-transform" alt="QR Code" />
-    </a>
-    <a href="<?= htmlspecialchars($product['qr_code']) ?>" download
-        class="inline-block mt-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded">
-        Download
-    </a>
-<?php else: ?>
-    <span class="text-gray-400 italic">No QR</span>
-<?php endif; ?>
-
+                                <?php if (!empty($product['qr_code'])): ?>
+                                    <?php $base64QR = base64_encode($product['qr_code']); ?>
+                                    <a href="view_product.php?id=<?= $product['id'] ?>" target="_blank">
+                                        <img src="data:image/png;base64,<?= $base64QR ?>" class="h-16 w-16 mx-auto mb-2 hover:scale-105 transition-transform" alt="QR Code" />
+                                    </a>
+                                    <a href="data:image/png;base64,<?= $base64QR ?>" download="qr_<?= $product['id'] ?>.png"
+                                        class="inline-block mt-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded">
+                                        Download
+                                    </a>
+                            <td class="border border-gray-300 px-4 py-2">
+                                <a href="variant_edit.php?id=<?= $product['id'] ?>"
+                                    class="inline-block bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">
+                                    Update
+                                </a>
                             </td>
+
+                        <?php else: ?>
+                            <span class="text-gray-400 italic">No QR</span>
+                        <?php endif; ?>
+
+                        </td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>

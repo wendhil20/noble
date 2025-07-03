@@ -69,67 +69,97 @@ ini_set('display_errors', 1);
   <script>
     let typeIndex = 0;
 
-    function addType() {
-      const section = document.getElementById('types-section');
-      const wrapper = document.createElement('div');
-      wrapper.classList.add('mb-6', 'border', 'p-4', 'rounded', 'bg-gray-50', 'relative');
-      wrapper.setAttribute('data-type-index', typeIndex);
+ function addType() {
+  const section = document.getElementById('types-section');
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('mb-6', 'border', 'p-4', 'rounded', 'bg-gray-50', 'relative');
+  wrapper.setAttribute('data-type-index', typeIndex);
 
-      wrapper.innerHTML = `
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-semibold text-lg text-gray-700">Product Type ${typeIndex + 1}</h3>
-          <button type="button" onclick="removeType(this)" class="text-red-600 text-sm hover:underline">Remove Type</button>
-        </div>
-        <div class="mb-3 flex gap-2">
-          <input type="text" name="type_name[]" placeholder="Type Name" class="border p-2 w-1/2 rounded" required />
-          <input type="file" name="type_image[]" accept="image/*" class="w-1/2 mt-1" required />
-        </div>
-        <div>
-          <label class="block font-medium mb-1">Variant Options:</label>
-          <div id="variant-section-${typeIndex}">
-            ${variantRowHTML(typeIndex)}
-          </div>
-          <button type="button" onclick="addVariant(${typeIndex})" class="text-sm text-blue-600 mt-1">+ Add another variant</button>
-        </div>
-      `;
+  wrapper.innerHTML = `
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="font-semibold text-lg text-gray-700">Product Type ${typeIndex + 1}</h3>
+      <button type="button" onclick="removeType(this)" class="text-red-600 text-sm hover:underline">Remove Type</button>
+    </div>
+    <div class="mb-3 flex gap-2">
+      <input type="text" name="type_name[]" placeholder="Type Name" class="border p-2 w-1/2 rounded" required />
+      <input type="file" name="type_image[]" accept="image/*" class="w-1/2 mt-1" required />
+    </div>
+    
+    <!-- Colors Section -->
+    <div class="mb-4">
+      <label class="block font-medium mb-1">Colors:</label>
+      <div id="color-section-${typeIndex}">
+        ${colorRowHTML(typeIndex)}
+      </div>
+      <button type="button" onclick="addColor(${typeIndex})" class="bg-green-500 text-white px-2 py-1 rounded text-sm mt-1">+ Add Color</button>
+    </div>
+    
+    <!-- Variants Section (Size, etc.) -->
+    <div>
+      <label class="block font-medium mb-1">Other Variants:</label>
+      <div id="variant-section-${typeIndex}">
+        ${variantRowHTML(typeIndex)}
+      </div>
+      <button type="button" onclick="addVariant(${typeIndex})" class="bg-blue-500 text-white px-2 py-1 rounded text-sm mt-1">+ Add Variant</button>
+    </div>
+  `;
 
-      section.appendChild(wrapper);
-      typeIndex++;
-    }
+  section.appendChild(wrapper);
+  typeIndex++;
+}
 
-    function variantRowHTML(index) {
-      return `
-        <div class="flex gap-2 mb-2 items-center">
-          <input type="text" name="variant_color[${index}][]" placeholder="Color Name" class="border p-2 w-1/6 rounded" />
-          <input type="file" name="variant_image[${index}][]" accept="image/*" class="w-1/6" />
-          <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-1/6 rounded" />
-          <input type="number" name="variant_price[${index}][]" placeholder="Price" class="border p-2 w-1/6 rounded" />
-         <input type="number" name="variant_percent[${index}][]" placeholder="Percent" class="border p-2 w-1/6 rounded" oninput="updatePriceFromPercent(this)" />
-          <input type="text" name="variant_namevariant[${index}][]" placeholder="Name Variant" class="border p-2 w-1/6 rounded" />
-          <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount" class="border p-2 w-1/6 rounded" />
-          <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
-        </div>
-      `;
-    }
+function colorRowHTML(index) {
+  return `
+    <div class="flex gap-2 mb-2 items-center bg-green-50 p-2 rounded">
+      <input type="text" name="color_name[${index}][]" placeholder="Color Name" class="border p-2 w-1/4 rounded" required />
+      <input type="text" name="color_code[${index}][]" placeholder="Color Code (#hex)" class="border p-2 w-1/4 rounded" />
+      <input type="file" name="color_image[${index}][]" accept="image/*" class="w-1/4" required />
+      <input type="number" step="0.01" name="color_price[${index}][]" placeholder="Color Price" class="border p-2 w-1/4 rounded" required />
+      <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
+    </div>
+  `;
+}
 
-    function addVariant(index) {
-      const variantSection = document.getElementById(`variant-section-${index}`);
-      const div = document.createElement('div');
-      div.classList.add('flex', 'gap-2', 'mb-2', 'items-center');
-      div.innerHTML = variantRowHTML(index);
-      variantSection.appendChild(div);
-    }
+function variantRowHTML(index) {
+  return `
+    <div class="flex gap-2 mb-2 items-center bg-blue-50 p-2 rounded">
+      <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-1/5 rounded" />
+      <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 w-1/5 rounded" />
+      <input type="number" name="variant_percent[${index}][]" placeholder="Percent" class="border p-2 w-1/5 rounded" oninput="updatePriceFromPercent(this)" />
+      <input type="text" name="variant_namevariant[${index}][]" placeholder="Name Variant" class="border p-2 w-1/5 rounded" />
+      <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount" class="border p-2 w-1/5 rounded" />
+      <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
+    </div>
+  `;
+}
 
-    function removeType(button) {
-      button.closest('[data-type-index]').remove();
-    }
+function addColor(index) {
+  const colorSection = document.getElementById(`color-section-${index}`);
+  const div = document.createElement('div');
+  div.innerHTML = colorRowHTML(index);
+  colorSection.appendChild(div);
+}
 
-    function removeVariant(button) {
-      button.parentElement.remove();
-    }
+function addVariant(index) {
+  const variantSection = document.getElementById(`variant-section-${index}`);
+  const div = document.createElement('div');
+  div.innerHTML = variantRowHTML(index);
+  variantSection.appendChild(div);
+}
 
+function removeColor(button) {
+  button.parentElement.remove();
+}
 
-    function updatePriceFromPercent(percentInput) {
+function removeVariant(button) {
+  button.parentElement.remove();
+}
+
+function removeType(button) {
+  button.closest('[data-type-index]').remove();
+}
+
+function updatePriceFromPercent(percentInput) {
   const parent = percentInput.closest('.flex');
   const priceInput = parent.querySelector('input[name^="variant_price"]');
   
@@ -139,7 +169,6 @@ ini_set('display_errors', 1);
   const finalPrice = basePrice + (basePrice * percent / 100);
   priceInput.value = finalPrice.toFixed(2);
 }
-
   </script>
 </body>
 

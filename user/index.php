@@ -12,63 +12,118 @@ $SYCJ_query = "
 ";
 $SYCJ_result = mysqli_query($conn, $SYCJ_query);
 
-// discount 40 percent
 $material_querys = "
-SELECT 
-    pv.*, 
-    pt.type_name, 
-    pt.product_id
-FROM 
-    product_variants pv
-JOIN 
-    product_types pt ON pv.type_id = pt.id
-WHERE 
-    pv.discount = 40
-ORDER BY 
-    pv.percent ASC
+       SELECT 
+        pv.*,
+        pt.type_name,
+        pt.type_image,  -- Add this
+        pt.product_id,
+        p.product_name,
+        p.codename,
+        p.main_image,
+        p.description,
+        pc.id as color_id,
+        pc.color_name AS color,
+        pc.color_code,
+        pc.price as color_price
+    FROM 
+        product_variants pv 
+    JOIN 
+        product_types pt ON pv.type_id = pt.id 
+    JOIN 
+        products p ON pt.product_id = p.id
+    LEFT JOIN 
+        product_colors pc ON p.id = pc.product_id
+    WHERE 
+        pv.discount = 40
+    ORDER BY 
+        pv.percent ASC, p.id, pc.id
 ";
+
 $material_results = mysqli_query($conn, $material_querys);
 
-//discount minimal
 $material_querysone = "
-SELECT 
-    pv.*, 
-    pt.type_name, 
-    pt.product_id
-FROM 
-    product_variants pv
-JOIN 
-    product_types pt ON pv.type_id = pt.id
-WHERE 
-    pv.discount BETWEEN 1 AND 30
-ORDER BY 
-    pv.percent ASC
+    SELECT 
+        pv.*,
+        pt.type_name,
+        pt.type_image,  -- Add this
+        pt.product_id,
+        p.product_name,
+        p.codename,
+        p.main_image,
+        p.description,
+        pc.id as color_id,
+        pc.color_name AS color,
+        pc.color_code,
+        pc.price as color_price
+    FROM 
+        product_variants pv 
+    JOIN 
+        product_types pt ON pv.type_id = pt.id 
+    JOIN 
+        products p ON pt.product_id = p.id
+    LEFT JOIN 
+        product_colors pc ON p.id = pc.product_id
+    WHERE 
+        pv.discount BETWEEN 1 AND 30 
+    ORDER BY 
+        pv.percent ASC, p.id, pc.id
 ";
+
 $material_resultsone = mysqli_query($conn, $material_querysone);
 
-// new arrival
+// New arrival query with color data
 $material_querystwo = "
-SELECT 
-    pv.*, 
-    pt.type_name, 
-    pt.product_id
-FROM 
-    product_variants pv
-JOIN 
-    product_types pt ON pv.type_id = pt.id
-WHERE 
-    pv.status = 'new'
-ORDER BY 
-    pv.percent ASC
+    SELECT 
+        pv.*,
+        pt.type_name,
+        pt.product_id,
+        p.product_name,
+        p.codename,
+        p.main_image,
+        p.description,
+        pc.id as color_id,
+        pc.color_name,
+        pc.color_code,
+        pc.price as color_price
+    FROM 
+        product_variants pv 
+    JOIN 
+        product_types pt ON pv.type_id = pt.id 
+    JOIN 
+        products p ON pt.product_id = p.id
+    LEFT JOIN 
+        product_colors pc ON p.id = pc.product_id
+    WHERE 
+        pv.status = 'new' 
+    ORDER BY 
+        pv.percent ASC, p.id, pc.id
 ";
+
 $material_resultstwo = mysqli_query($conn, $material_querystwo);
 
 $discount_result = mysqli_query(
     $conn,
-    "SELECT * FROM product_variants 
-     WHERE discount IS NULL OR discount = 0 
-     ORDER BY percent ASC"
+    "SELECT 
+        pv.*, 
+        pt.type_image,
+        pt.type_name,
+        pt.product_id,
+        p.product_name,
+        p.main_image,
+        p.codename,
+        p.description,
+        pc.color_name AS color,
+        pc.color_code,
+        pc.price AS color_price
+     FROM product_variants pv
+     JOIN product_types pt ON pv.type_id = pt.id
+     JOIN products p ON pt.product_id = p.id
+     LEFT JOIN product_colors pc ON p.id = pc.product_id
+     WHERE pv.discount IS NULL OR pv.discount = 0
+     ORDER BY pv.percent ASC"
 );
+
 
 // handle filtering
 $filter = 'furniture'; // force it
@@ -98,6 +153,7 @@ if (!empty($products)) {
 } else {
     $columns = [[], [], []]; // Empty columns as fallback
 }
+
 
 ?>
 
@@ -243,6 +299,7 @@ if (!empty($products)) {
 
     <?php include 'navbar/top.php'; ?>
 
+
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-sm px-4 py-2 rounded shadow-lg z-50">
             <?= htmlspecialchars($_SESSION['toast']['message']) ?>
@@ -368,18 +425,19 @@ if (!empty($products)) {
                             <p>No products available at the moment.</p>
                         </div>
                     <?php else: ?>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             <?php foreach ($columns as $i => $column): ?>
                                 <?php if (!empty($column)): ?>
-                                    <div class="h-[500px] overflow-hidden">
+                                    <div class="h-[300px] overflow-hidden">
                                         <div class="swiper swiper-auto-<?= $i ?>">
                                             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="700">
                                                 <?php foreach ($column as $v): ?>
                                                     <div class="swiper-slide">
                                                         <div class="bg-white rounded-lg shadow text-center flex flex-col h-full p-3 justify-between">
-                                                            <div class="w-full aspect-square bg-gray-100 rounded mb-2 overflow-hidden flex items-center justify-center">
-                                                                <?php if (!empty($v['image'])): ?>
-                                                                    <img src="data:image/jpeg;base64,<?= base64_encode($v['image']) ?>"
+                                                            <div class="w-full aspect-square rounded mb-2 overflow-hidden flex items-center justify-center">
+                                                                <?php if (!empty($v['type_image'])): ?>
+                                                                    <img src="data:image/jpeg;base64,<?= base64_encode($v['type_image']) ?>"
                                                                         alt="<?= htmlspecialchars($v['namevariant'] ?? 'Product') ?>"
                                                                         class="w-full h-full object-contain" />
                                                                 <?php else: ?>
@@ -634,9 +692,9 @@ if (!empty($products)) {
 
                                     <!-- Image -->
                                     <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
-                                        <?php if (!empty($row['image'])): ?>
+                                        <?php if (!empty($row['type_image'])): ?>
                                             <img
-                                                src="data:image/jpeg;base64,<?= base64_encode($row['image']) ?>"
+                                                src="data:image/jpeg;base64,<?= base64_encode($row['type_image']) ?>"
                                                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                                 alt="<?= htmlspecialchars($row['namevariant']) ?>" />
                                         <?php else: ?>
@@ -683,20 +741,27 @@ if (!empty($products)) {
                                             </form>
 
 
-                                            <form class="add-to-cart-form">
-                                                <input type="hidden" name="product_id" value="<?= $row['product_id'] ?>">
-                                                <input type="hidden" name="selected_type" value="<?= $row['type_name'] ?>">
-                                                <input type="hidden" name="selected_variant" value="<?= $row['color'] ?>">
+                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                 <input type="hidden" name="return_url" value="index.php">
+
                                                 <button
                                                     type="submit"
                                                     class="bg-orange-500 text-white text-sm px-2 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
                                                     <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                                    Add to Cart
+                                                    Pre-Order
                                                 </button>
                                             </form>
-                                        </div>
 
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -736,9 +801,9 @@ if (!empty($products)) {
 
                                     <!-- Image -->
                                     <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
-                                        <?php if (!empty($row['image'])): ?>
+                                        <?php if (!empty($row['type_image'])): ?>
                                             <img
-                                                src="data:image/jpeg;base64,<?= base64_encode($row['image']) ?>"
+                                                src="data:image/jpeg;base64,<?= base64_encode($row['type_image']) ?>"
                                                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                                 alt="<?= htmlspecialchars($row['namevariant']) ?>" />
                                         <?php else: ?>
@@ -775,7 +840,7 @@ if (!empty($products)) {
                                                 <button
                                                     type="submit"
                                                     class="relative bg-red-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md group
-                  border-2 border-white ring-2 ring-red-200">
+                                                       border-2 border-white ring-2 ring-red-200">
                                                     <!-- 🛍️ Shopping Bag Icon -->
                                                     <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
@@ -784,22 +849,28 @@ if (!empty($products)) {
                                                     Shop
                                                 </button>
                                             </form>
-
-                                            <form class="add-to-cart-form">
-                                                <input type="hidden" name="product_id" value="<?= $row['product_id'] ?>">
-                                                <input type="hidden" name="selected_type" value="<?= $row['type_name'] ?>">
-                                                <input type="hidden" name="selected_variant" value="<?= $row['color'] ?>">
+                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                 <input type="hidden" name="return_url" value="index.php">
+
                                                 <button
                                                     type="submit"
                                                     class="bg-orange-500 text-white text-sm px-2 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
                                                     <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                                    Add to Cart
+                                                    Pre-Order
                                                 </button>
                                             </form>
 
-                                        </div>
 
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -896,17 +967,23 @@ if (!empty($products)) {
                                                     </button>
                                                 </form>
 
-
-                                                <form class="add-to-cart-form">
+                                                <form class="productForm" data-product-id="<?= $row['product_id'] ?>">
                                                     <input type="hidden" name="product_id" value="<?= $row['product_id'] ?>">
                                                     <input type="hidden" name="selected_type" value="<?= $row['type_name'] ?>">
                                                     <input type="hidden" name="selected_variant" value="<?= $row['color'] ?>">
+                                                    <input type="hidden" name="variant_id" value="<?= $row['variant_id'] ?? '' ?>">
+                                                    <input type="hidden" name="selected_color_id" value="<?= $row['color_id'] ?? 1 ?>">
+                                                    <input type="hidden" name="selected_color_name" value="<?= $row['color_name'] ?? $row['color'] ?? 'Default' ?>">
+                                                    <input type="hidden" name="color_price" value="<?= $row['color_price'] ?? 0 ?>">
+                                                    <input type="hidden" name="variant_price" value="<?= $row['variant_price'] ?? 0 ?>">
+                                                    <input type="hidden" name="total_price" value="<?= $row['variant_price'] ?? 0 ?>">
                                                     <input type="hidden" name="return_url" value="index.php">
+
                                                     <button
                                                         type="submit"
                                                         class="bg-orange-500 text-white text-sm px-2 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
                                                         <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                                        Add to Cart
+                                                        Pre-Order
                                                     </button>
                                                 </form>
                                             </div>
@@ -975,36 +1052,13 @@ if (!empty($products)) {
     </section>
 
 
-    <div id="chat-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-
-        <!-- ✅ CHAT TOGGLE BUTTON -->
-        <button id="chat-toggle" onclick="openChat()"
-            style="background-color: #16a34a; color: white; border: none; padding: 12px 18px; border-radius: 50px; box-shadow: 0 0 10px rgba(0,0,0,0.3); font-size: 14px; cursor: pointer;">
-            💬 Chat with us
-        </button>
-
-        <!-- ✅ CHATBOX IFRAME (Initially hidden) -->
-        <div id="chat-box" style="display: none; position: relative; margin-top: 10px;">
-            <!-- ❌ Close Button -->
-            <button onclick="closeChat()"
-                style="position: absolute; top: -10px; right: -10px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 16px; cursor: pointer; z-index: 10000;">
-                ×
-            </button>
-
-            <!-- 🧩 IFRAME CHATBOX -->
-            <iframe
-                src="chatbot/login.php"
-                style="width: 360px; height: 540px; border: none; border-radius: 14px; box-shadow: 0 0 15px rgba(0,0,0,0.2);"
-                allow="clipboard-write">
-            </iframe>
-        </div>
-    </div>
+   
 
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 
-    <footer class="bg-gray-900 pattern-bg text-white py-16 mt-12 relative overflow-hidden">
+    <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
@@ -1147,108 +1201,13 @@ if (!empty($products)) {
     </footer>
 
 
-    <!-- Init AOS -->
+   
     <script>
         AOS.init();
     </script>
     <script>
-        // ✅ Updated Add to Cart functionality with dynamic cart count update
-        document.querySelectorAll('.add-to-cart-form').forEach(form => {
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault(); // Stop page reload
 
-                const formData = new FormData(this);
-
-                try {
-                    const response = await fetch('cart/add_to_cart.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const result = await response.json(); // Expect JSON response
-
-                    if (response.ok && result.success) {
-                        // ✅ Show success toast
-                        showToast("Added to cart successfully!", "success");
-
-                        // ✅ Update cart count dynamically
-                        updateCartCount(result.cart_count);
-
-                    } else {
-                        showToast(result.message || "Failed to add to cart.", "error");
-                    }
-
-                } catch (error) {
-                    console.error('Error:', error);
-                    showToast("Network error. Please try again.", "error");
-                }
-            });
-        });
-
-        // ✅ Function to update cart count in navigation
-        function updateCartCount(newCount) {
-            const cartLink = document.querySelector('a[onclick*="cart_view"]');
-            if (!cartLink) return;
-
-            // Find existing notification bubble
-            let notificationBubble = cartLink.querySelector('.bg-red-500');
-
-            if (newCount > 0) {
-                if (notificationBubble) {
-                    // Update existing bubble
-                    notificationBubble.textContent = newCount;
-                } else {
-                    // Create new notification bubble
-                    notificationBubble = document.createElement('span');
-                    notificationBubble.className = 'absolute -top-2 -right-3 bg-red-500 text-white text-[10px] px-1 py-0.5 p-1 rounded-full font-bold leading-none';
-                    notificationBubble.textContent = newCount;
-                    cartLink.appendChild(notificationBubble);
-                }
-            } else {
-                // Remove bubble if cart is empty
-                if (notificationBubble) {
-                    notificationBubble.remove();
-                }
-            }
-        }
-
-        // ✅ Enhanced Toast logic with better styling
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.className = `fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg z-50 text-white text-sm font-medium transform transition-all duration-300 ${
-        type === 'success' ? 'bg-green-600' : 'bg-red-600'
-    }`;
-
-            // Add slide-in animation
-            toast.style.transform = 'translateX(100%)';
-            document.body.appendChild(toast);
-
-            // Trigger animation
-            setTimeout(() => {
-                toast.style.transform = 'translateX(0)';
-            }, 10);
-
-            // Remove toast after 3 seconds with slide-out animation
-            setTimeout(() => {
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-
-
-        function openChat() {
-            document.getElementById('chat-box').style.display = 'block';
-            document.getElementById('chat-toggle').style.display = 'none';
-        }
-
-        function closeChat() {
-            document.getElementById('chat-box').style.display = 'none';
-            document.getElementById('chat-toggle').style.display = 'inline-block';
-        }
-
-        const swiper = new Swiper(".mySwiper-indoor", {
+          const swiper = new Swiper(".mySwiper-indoor", {
             slidesPerView: 1,
             spaceBetween: 20,
             loop: true,
@@ -1288,6 +1247,129 @@ if (!empty($products)) {
                 },
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle form submissions for index.php product forms
+            document.querySelectorAll('.productForm').forEach(form => {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+                    const button = this.querySelector('button[type="submit"]');
+                    const originalText = button.innerHTML;
+
+                    // Show loading state
+                    button.disabled = true;
+                    button.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Adding...';
+
+                    try {
+                        // Ensure required fields are set
+                        if (!formData.get('selected_color_id') || formData.get('selected_color_id') === '') {
+                            formData.set('selected_color_id', '1');
+                        }
+                        if (!formData.get('selected_color_name') || formData.get('selected_color_name') === '') {
+                            formData.set('selected_color_name', 'Default');
+                        }
+                        if (!formData.get('color_price')) {
+                            formData.set('color_price', '0');
+                        }
+
+                        const response = await fetch('cart/add_to_cart.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showNotification(data.message || 'Product added to cart!', 'success');
+                            updateCartCount(data.cart_count);
+
+                            // Success feedback
+                            button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added!';
+                            button.className = button.className.replace('bg-orange-500 hover:bg-orange-600', 'bg-green-500');
+
+                            // Reset after 2 seconds
+                            setTimeout(() => {
+                                button.innerHTML = originalText;
+                                button.className = button.className.replace('bg-green-500', 'bg-orange-500 hover:bg-orange-600');
+                                button.disabled = false;
+                            }, 2000);
+                        } else {
+                            throw new Error(data.message || 'Add to cart failed.');
+                        }
+                    } catch (error) {
+                        showNotification('Error: ' + error.message, 'error');
+                        console.error('Add to cart error:', error);
+
+                        // Reset button
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                });
+            });
+        });
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const bgColor = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            } [type] || 'bg-blue-500';
+
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300 translate-x-full`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+
+            // Animate out and remove
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        function updateCartCount(count) {
+            const cartCountElements = document.querySelectorAll('.cart-count, #cart-count, [data-cart-count]');
+            cartCountElements.forEach(element => {
+                element.textContent = count;
+                element.style.display = count > 0 ? 'inline' : 'none';
+            });
+
+            const cartBubble = document.getElementById('cart-count-bubble');
+            if (cartBubble) {
+                if (count > 0) {
+                    cartBubble.classList.remove('hidden');
+                    cartBubble.style.display = 'inline';
+                } else {
+                    cartBubble.classList.add('hidden');
+                    cartBubble.style.display = 'none';
+                }
+            }
+        }
+
+
+        function openChat() {
+            document.getElementById('chat-box').style.display = 'block';
+            document.getElementById('chat-toggle').style.display = 'none';
+        }
+
+        function closeChat() {
+            document.getElementById('chat-box').style.display = 'none';
+            document.getElementById('chat-toggle').style.display = 'inline-block';
+        }
+
+      
 
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {

@@ -14,6 +14,7 @@ if (!$product_id) {
 // Fetch product
 $product = $conn->query("SELECT * FROM products WHERE id = $product_id")->fetch_assoc();
 $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_id");
+$colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product_id");
 ?>
 
 <!DOCTYPE html>
@@ -30,7 +31,7 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
 
 <?php include '../navbar/top.php'; ?>
 
-  <div class=" bg-white p-6 rounded-lg shadow mt-5">
+  <div class="bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Update Product</h2>
 
     <form action="update_process.php" method="POST" enctype="multipart/form-data">
@@ -41,9 +42,9 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
         <label class="block font-semibold mb-1">Product Name</label>
         <input type="text" name="product_name" value="<?php echo htmlspecialchars($product['product_name']); ?>" required class="w-full border p-2 rounded" />
       </div>
+      
       <div class="mb-4">
         <label class="block font-semibold mb-1">Main Image (Leave blank if no change)</label>
-
         <?php if (!empty($product['main_image'])): ?>
           <div class="mb-2">
             <img src="data:image/jpeg;base64,<?php echo base64_encode($product['main_image']); ?>"
@@ -51,7 +52,6 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
               class="w-32 h-32 object-contain rounded shadow border" />
           </div>
         <?php endif; ?>
-
         <input type="file" name="main_image" accept="image/*" class="w-full" />
       </div>
 
@@ -70,10 +70,54 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
         <textarea name="description" rows="4" class="w-full border p-2 rounded" required><?php echo htmlspecialchars($product['description'] ?? ''); ?></textarea>
       </div>
 
+      <!-- Product Colors Section -->
+      <div class="mb-6 border p-4 rounded bg-green-50">
+        <h3 class="font-semibold text-lg text-gray-700 mb-3">Product Colors</h3>
+        <div id="colors-section">
+          <?php 
+          $colorIndex = 0;
+          while ($color = $colors->fetch_assoc()) { ?>
+            <div class="flex gap-2 mb-2 items-center bg-white p-2 rounded border">
+              <input type="hidden" name="color_id[]" value="<?php echo $color['id']; ?>" />
+              
+              <!-- Delete checkbox -->
+              <div class="flex items-center">
+                <input type="checkbox" name="delete_color[]" value="<?php echo $color['id']; ?>" />
+                <label class="text-sm text-gray-600 ml-1">Delete</label>
+              </div>
+              
+              <!-- Color Name -->
+              <input type="text" name="color_name[]" value="<?php echo htmlspecialchars($color['color_name']); ?>" placeholder="Color Name" class="border p-2 w-1/5 rounded" required />
+              
+              <!-- Color Code -->
+              <input type="text" name="color_code[]" value="<?php echo htmlspecialchars($color['color_code']); ?>" placeholder="Color Code (#hex)" class="border p-2 w-1/5 rounded" />
+              
+              <!-- Image -->
+              <div class="w-1/5">
+                <?php if (!empty($color['image'])): ?>
+                  <img src="data:image/jpeg;base64,<?php echo base64_encode($color['image']); ?>" alt="Color Image" class="w-12 h-12 object-contain rounded mb-1 border" />
+                <?php endif; ?>
+                <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" />
+              </div>
+              
+              <!-- Price -->
+              <input type="number" step="0.01" name="color_price[]" value="<?php echo htmlspecialchars($color['price']); ?>" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
+              
+              <!-- Remove Button -->
+              <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
+            </div>
+          <?php 
+            $colorIndex++;
+          } ?>
+        </div>
+        <button type="button" onclick="addColor()" class="bg-green-500 text-white px-2 py-1 rounded text-sm mt-2">+ Add Color</button>
+      </div>
+
       <!-- Product Types -->
       <div id="types-section">
         <?php
         $typeIndex = 0;
+        $types->data_seek(0); // Reset result set
         while ($type = $types->fetch_assoc()) {
           $type_id = $type['id'];
           $variants = $conn->query("SELECT * FROM product_variants WHERE type_id = $type_id");
@@ -104,30 +148,20 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
               </div>
             </div>
 
-
-            <label class="block font-medium mb-1">Variants:</label>
+            <label class="block font-medium mb-1">Variants (Sizes, etc.):</label>
             <div id="variant-section-<?php echo $typeIndex; ?>">
               <?php while ($variant = $variants->fetch_assoc()) { ?>
-                <div class="flex gap-2 mb-2 items-center">
+                <div class="flex gap-2 mb-2 items-center bg-blue-50 p-2 rounded">
                   <input type="hidden" name="variant_id[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
 
                   <!-- Delete -->
-                  <input type="checkbox" name="delete_variant[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
-                  <label class="text-sm text-gray-600">Delete</label>
-
-                  <!-- Color -->
-                  <input type="text" name="variant_color[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['color']); ?>" placeholder="Color" class="border p-2 w-1/5 rounded" />
-
-                  <!-- Image -->
-                  <div class="w-1/5">
-                    <?php if (!empty($variant['image'])): ?>
-                      <img src="data:image/jpeg;base64,<?php echo base64_encode($variant['image']); ?>" alt="Variant Image" class="w-12 h-12 object-contain rounded mb-1" />
-                    <?php endif; ?>
-                    <input type="file" name="variant_image[<?php echo $typeIndex; ?>][]" accept="image/*" />
+                  <div class="flex items-center">
+                    <input type="checkbox" name="delete_variant[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
+                    <label class="text-sm text-gray-600 ml-1">Del</label>
                   </div>
 
                   <!-- Size -->
-                  <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['size']); ?>" placeholder="Size" class="border p-2 w-1/5 rounded" />
+                  <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['size']); ?>" placeholder="Size" class="border p-2 w-1/6 rounded" />
 
                   <!-- Base Price -->
                   <input
@@ -136,7 +170,7 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
                     name="variant_price[<?php echo $typeIndex; ?>][]"
                     value="<?php echo htmlspecialchars($variant['price']); ?>"
                     placeholder="Base Price"
-                    class="border p-2 w-1/5 rounded computed-price" />
+                    class="border p-2 w-1/6 rounded computed-price" />
 
                   <!-- Markup % -->
                   <input
@@ -145,10 +179,10 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
                     name="variant_percent[<?php echo $typeIndex; ?>][]"
                     value="<?php echo htmlspecialchars($variant['percent'] ?? ''); ?>"
                     placeholder="Markup %"
-                    class="border p-2 w-1/5 rounded percent-input" />
+                    class="border p-2 w-1/6 rounded percent-input" />
 
                   <!-- Markup Display -->
-                  <div class="markup-preview text-sm text-green-600 w-1/5 font-semibold">₱0.00</div>
+                  <div class="markup-preview text-sm text-green-600 w-1/6 font-semibold">₱0.00</div>
 
                   <!-- Discount -->
                   <input
@@ -157,34 +191,29 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
                     name="variant_discount[<?php echo $typeIndex; ?>][]"
                     value="<?php echo htmlspecialchars($variant['discount'] ?? ''); ?>"
                     placeholder="Discount %"
-                    class="border p-2 w-1/5 rounded discount-input" />
+                    class="border p-2 w-1/6 rounded discount-input" />
 
                   <!-- Final Price Display -->
-                  <div class="final-preview text-sm text-red-600 w-1/5 font-semibold">₱0.00</div>
+                  <div class="final-preview text-sm text-red-600 w-1/6 font-semibold">₱0.00</div>
 
                   <!-- Name Variant -->
-                  <input type="text" name="variant_namevariant[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['namevariant'] ?? ''); ?>" placeholder="Name Variant" class="border p-2 w-1/5 rounded" />
+                  <input type="text" name="variant_namevariant[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['namevariant'] ?? ''); ?>" placeholder="Name Variant" class="border p-2 w-1/6 rounded" />
 
                   <!-- Remove Button -->
-                  <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">X</button>
+                  <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
                 </div>
-
-
               <?php } ?>
             </div>
-            <button type="button" onclick="addVariant(<?php echo $typeIndex; ?>)" class="text-sm text-blue-600 mt-1">+ Add another variant</button>
+            <button type="button" onclick="addVariant(<?php echo $typeIndex; ?>)" class="text-sm text-blue-600 mt-1">+ Add Variant</button>
           </div>
         <?php $typeIndex++;
         } ?>
       </div>
 
-      <div class="mt-4">
+      <div class="mt-4 flex gap-2">
         <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">Update Product</button>
-      </div>
-      <div class="mt-4">
         <button type="button" onclick="addType()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Add Type</button>
       </div>
-
     </form>
   </div>
 
@@ -199,19 +228,77 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
       button.parentElement.remove();
     }
 
-    function createInput(type, name, placeholder, className = '') {
+    function removeColor(button) {
+      button.parentElement.remove();
+    }
+
+    function addColor() {
+      const colorsSection = document.getElementById('colors-section');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2 mb-2 items-center bg-white p-2 rounded border';
+      
+      div.innerHTML = `
+        <input type="hidden" name="color_id[]" value="new" />
+        
+        <!-- Delete placeholder for new colors -->
+        <div class="flex items-center">
+          <span class="text-sm text-gray-400 w-[50px]">New</span>
+        </div>
+        
+        <!-- Color Name -->
+        <input type="text" name="color_name[]" placeholder="Color Name" class="border p-2 w-1/5 rounded" required />
+        
+        <!-- Color Code -->
+        <input type="text" name="color_code[]" placeholder="Color Code (#hex)" class="border p-2 w-1/5 rounded" />
+        
+        <!-- Image -->
+        <div class="w-1/5">
+          <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" required />
+        </div>
+        
+        <!-- Price -->
+        <input type="number" step="0.01" name="color_price[]" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
+        
+        <!-- Remove Button -->
+        <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
+      `;
+      
+      colorsSection.appendChild(div);
+    }
+
+    function createInput(type, name, placeholder, className = '', value = '') {
       const input = document.createElement('input');
       input.type = type;
       input.name = name;
       input.placeholder = placeholder;
       input.className = `border p-2 rounded ${className}`;
+      if (value) {
+        input.value = value;
+      }
       return input;
+    }
+
+    function getLastVariantData(index) {
+      const variantSection = document.getElementById('variant-section-' + index);
+      const lastVariant = variantSection.querySelector('.flex:last-child');
+      
+      if (!lastVariant) return null;
+      
+      return {
+        size: lastVariant.querySelector('input[name*="variant_size"]')?.value || '',
+        price: lastVariant.querySelector('input[name*="variant_price"]')?.value || '',
+        percent: lastVariant.querySelector('input[name*="variant_percent"]')?.value || '',
+        discount: lastVariant.querySelector('input[name*="variant_discount"]')?.value || '',
+        namevariant: lastVariant.querySelector('input[name*="variant_namevariant"]')?.value || ''
+      };
     }
 
     function addVariant(index) {
       const variantSection = document.getElementById('variant-section-' + index);
+      const lastData = getLastVariantData(index);
+      
       const div = document.createElement('div');
-      div.classList.add('flex', 'gap-2', 'mb-2', 'items-center');
+      div.classList.add('flex', 'gap-2', 'mb-2', 'items-center', 'bg-blue-50', 'p-2', 'rounded');
 
       // Hidden ID
       const hiddenInput = document.createElement('input');
@@ -222,67 +309,65 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
 
       // Delete placeholder
       const deleteLabel = document.createElement('div');
-      deleteLabel.innerHTML = `<span class="text-sm text-gray-400 w-[40px] inline-block"></span>`;
+      deleteLabel.innerHTML = `<span class="text-sm text-gray-400 w-[40px] inline-block">New</span>`;
       div.appendChild(deleteLabel);
 
-      // Color
-      const colorInput = createInput('text', `variant_color[${index}][]`, 'Color', 'w-1/5');
-      div.appendChild(colorInput);
-
-      // Image
-      const imageInput = createInput('file', `variant_image[${index}][]`, '', 'w-1/5');
-      imageInput.accept = 'image/*';
-      div.appendChild(imageInput);
-
       // Size
-      const sizeInput = createInput('text', `variant_size[${index}][]`, 'Size', 'w-1/5');
+      const sizeInput = createInput('text', `variant_size[${index}][]`, 'Size', 'w-1/6');
       div.appendChild(sizeInput);
 
       // Base Price
-      const priceInput = createInput('number', `variant_price[${index}][]`, 'Base Price', 'w-1/5 computed-price');
+      const priceInput = createInput('number', `variant_price[${index}][]`, 'Base Price', 'w-1/6 computed-price');
       priceInput.step = '0.01';
       div.appendChild(priceInput);
 
       // Markup %
-      const percentInput = createInput('number', `variant_percent[${index}][]`, 'Markup %', 'w-1/5 percent-input');
+      const percentInput = createInput('number', `variant_percent[${index}][]`, 'Markup %', 'w-1/6 percent-input');
       percentInput.step = '0.01';
       div.appendChild(percentInput);
 
       // Markup Preview
       const markupDisplay = document.createElement('div');
-      markupDisplay.className = 'markup-preview text-sm text-green-600 w-1/5 font-semibold';
+      markupDisplay.className = 'markup-preview text-sm text-green-600 w-1/6 font-semibold';
       markupDisplay.textContent = '₱0.00';
       div.appendChild(markupDisplay);
 
       // Discount %
-      const discountInput = createInput('number', `variant_discount[${index}][]`, 'Discount %', 'w-1/5 discount-input');
+      const discountInput = createInput('number', `variant_discount[${index}][]`, 'Discount %', 'w-1/6 discount-input');
       discountInput.step = '0.01';
       div.appendChild(discountInput);
 
       // Final Price Preview
       const finalDisplay = document.createElement('div');
-      finalDisplay.className = 'final-preview text-sm text-red-600 w-1/5 font-semibold';
+      finalDisplay.className = 'final-preview text-sm text-red-600 w-1/6 font-semibold';
       finalDisplay.textContent = '₱0.00';
       div.appendChild(finalDisplay);
 
       // Name Variant
-      const nameVariantInput = createInput('text', `variant_namevariant[${index}][]`, 'Name Variant', 'w-1/5');
+      const nameVariantInput = createInput('text', `variant_namevariant[${index}][]`, 'Name Variant', 'w-1/6');
       div.appendChild(nameVariantInput);
 
       // Remove Button
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'text-red-500 text-sm';
-      removeButton.innerHTML = 'X';
+      removeButton.innerHTML = '✕';
       removeButton.onclick = () => removeVariant(removeButton);
       div.appendChild(removeButton);
 
       variantSection.appendChild(div);
 
-      // Hook live update
-      priceInput.addEventListener('input', () => applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay));
-      percentInput.addEventListener('input', () => applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay));
-      discountInput.addEventListener('input', () => applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay));
+      // Add event listeners for price calculation
+      const hook = () => applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay);
+      priceInput.addEventListener('input', hook);
+      percentInput.addEventListener('input', hook);
+      discountInput.addEventListener('input', hook);
+
+      // Calculate initial markup and final price
+      applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay);
+      
+      // Focus on the size input
+      sizeInput.focus();
     }
 
     function addType() {
@@ -301,9 +386,9 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
         <input type="text" name="type_name[]" placeholder="Type Name" class="border p-2 w-1/2 rounded" required />
         <input type="file" name="type_image[]" accept="image/*" class="w-1/2" />
       </div>
-      <label class="block font-medium mb-1">Variants:</label>
+      <label class="block font-medium mb-1">Variants (Sizes, etc.):</label>
       <div id="variant-section-${typeIndex}"></div>
-      <button type="button" onclick="addVariant(${typeIndex})" class="text-sm text-blue-600 mt-1">+ Add another variant</button>
+      <button type="button" onclick="addVariant(${typeIndex})" class="text-sm text-blue-600 mt-1">+ Add Variant</button>
     `;
 
       typesSection.appendChild(div);
@@ -353,7 +438,6 @@ $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_i
       });
     });
   </script>
-
 
 </body>
 

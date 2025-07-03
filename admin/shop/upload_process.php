@@ -1,103 +1,126 @@
 <?php
-session_start();
 include '../../connection/connect.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Reset AUTO_INCREMENT if tables are empty
-$tables = ['products', 'product_types', 'product_variants'];
-foreach ($tables as $table) {
-    $result = $conn->query("SELECT COUNT(*) as total FROM $table");
-    $row = $result->fetch_assoc();
-    if ($row['total'] == 0) {
-        $conn->query("ALTER TABLE $table AUTO_INCREMENT = 1");
-    }
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $conn->begin_transaction();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $product_name = $_POST['product_name'];
-    $codename = $_POST['codename'];
-    $quantity = $_POST['quantity'];
-    $price = $_POST['price'] ?? 0;
-    $description = $_POST['description'] ?? '';
+        // Insert main product
+        $main_image = null;
+        if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] === UPLOAD_ERR_OK) {
+            $main_image = file_get_contents($_FILES['main_image']['tmp_name']);
+        }
 
-    // Main image (LONGBLOB)
-    $main_image_data = null;
-    if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] === UPLOAD_ERR_OK) {
-        $main_image_data = file_get_contents($_FILES['main_image']['tmp_name']);
-    }
+        $_POST['quantity'] = (int)$_POST['quantity'];
 
-    // Insert into products
-    $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, price, description, main_image) VALUES (?, ?, ?, ?, ?, ?)");
-    $null = NULL;
-    $stmt->bind_param("ssidsb", $product_name, $codename, $quantity, $price, $description, $null);
-    if ($main_image_data !== null) {
-        $stmt->send_long_data(5, $main_image_data);
-    }
-    $stmt->execute();
-    $product_id = $stmt->insert_id;
-    $stmt->close();
+        $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, description) VALUES (?, ?, ?, ?, ?)");
+        if (!$stmt) throw new Exception("Prepare failed for product insert: " . $conn->error);
 
-    // Insert product types and variants
-    if (isset($_POST['type_name']) && is_array($_POST['type_name'])) {
-        foreach ($_POST['type_name'] as $i => $type_name) {
-            $type_image_data = null;
-            if (isset($_FILES['type_image']['error'][$i]) && $_FILES['type_image']['error'][$i] === UPLOAD_ERR_OK) {
-                $type_image_data = file_get_contents($_FILES['type_image']['tmp_name'][$i]);
-            }
+        $stmt->bind_param("ssibs", 
+            $_POST['product_name'],
+            $_POST['codename'],
+            $_POST['quantity'],
+            $main_image,
+            $_POST['description']
+        );
+        $stmt->send_long_data(3, $main_image); // send binary data
+        $stmt->execute();
+        $product_id = $conn->insert_id;
+        $stmt->close();
 
-            // Insert into product_types
-            $stmt_type = $conn->prepare("INSERT INTO product_types (product_id, type_name, type_image) VALUES (?, ?, ?)");
-            $null = NULL;
-            $stmt_type->bind_param("isb", $product_id, $type_name, $null);
-            if ($type_image_data !== null) {
-                $stmt_type->send_long_data(2, $type_image_data);
-            }
-            $stmt_type->execute();
-            $type_id = $stmt_type->insert_id;
-            $stmt_type->close();
+        // Handle product types
+        if (isset($_POST['type_name']) && is_array($_POST['type_name'])) {
+            foreach ($_POST['type_name'] as $type_index => $type_name) {
 
-            // Insert product_variants - FIXED PART
-            if (isset($_POST["variant_color"][$i]) && is_array($_POST["variant_color"][$i])) {
-                foreach ($_POST["variant_color"][$i] as $j => $variant_color) {
-                    $variant_size = $_POST["variant_size"][$i][$j] ?? '';
-                    $variant_price = $_POST["variant_price"][$i][$j] ?? 0;
-                    $variant_percent = $_POST["variant_percent"][$i][$j] ?? 0;
-                    $variant_discount = $_POST["variant_discount"][$i][$j] ?? 0;
-                    $namevariant = $_POST["variant_namevariant"][$i][$j] ?? '';
+                $type_image = null;
+                if (isset($_FILES['type_image']['tmp_name'][$type_index]) && 
+                    $_FILES['type_image']['error'][$type_index] === UPLOAD_ERR_OK) {
+                    $type_image = file_get_contents($_FILES['type_image']['tmp_name'][$type_index]);
+                }
 
-                    $variant_image_data = null;
-                    
-                    // DEBUG: Add this to see the file structure
-                    error_log("Checking variant image [$i][$j]: " . print_r($_FILES["variant_image"], true));
-                    
-                    // Fixed variant image handling
-                    if (isset($_FILES["variant_image"]["tmp_name"][$i][$j]) && 
-                        isset($_FILES["variant_image"]["error"][$i][$j]) &&
-                        $_FILES["variant_image"]["error"][$i][$j] === UPLOAD_ERR_OK &&
-                        !empty($_FILES["variant_image"]["tmp_name"][$i][$j])) {
-                        
-                        $variant_image_data = file_get_contents($_FILES["variant_image"]["tmp_name"][$i][$j]);
-                        error_log("Variant image loaded successfully for [$i][$j]");
-                    } else {
-                        error_log("Variant image not loaded for [$i][$j] - Error: " . 
-                                 ($_FILES["variant_image"]["error"][$i][$j] ?? 'undefined'));
+                $stmt = $conn->prepare("INSERT INTO product_types (product_id, type_name, type_image) VALUES (?, ?, ?)");
+                if (!$stmt) throw new Exception("Prepare failed for product_types: " . $conn->error);
+
+                $stmt->bind_param("isb", $product_id, $type_name, $type_image);
+                $stmt->send_long_data(2, $type_image);
+                $stmt->execute();
+                $type_id = $stmt->insert_id;
+                $stmt->close();
+
+                // Product colors for the product (not per type)
+                if (isset($_POST['color_name'][$type_index]) && is_array($_POST['color_name'][$type_index])) {
+                    foreach ($_POST['color_name'][$type_index] as $color_index => $color_name) {
+                        if (!empty($color_name)) {
+                            $color_code = $_POST['color_code'][$type_index][$color_index] ?? '';
+                            $color_price = (float)($_POST['color_price'][$type_index][$color_index] ?? 0);
+                            $color_image = null;
+
+                            if (isset($_FILES['color_image']['tmp_name'][$type_index][$color_index]) && 
+                                $_FILES['color_image']['error'][$type_index][$color_index] === UPLOAD_ERR_OK) {
+                                $color_image = file_get_contents($_FILES['color_image']['tmp_name'][$type_index][$color_index]);
+                            }
+
+                            $stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, color_code, price, image) VALUES (?, ?, ?, ?, ?)");
+                            if (!$stmt) throw new Exception("Prepare failed for product_colors: " . $conn->error);
+
+                            $stmt->bind_param("issdb", $product_id, $color_name, $color_code, $color_price, $color_image);
+                            $stmt->send_long_data(4, $color_image);
+                            $stmt->execute();
+                            $stmt->close();
+                        }
                     }
+                }
 
-                    $stmt_var = $conn->prepare("INSERT INTO product_variants (type_id, color, size, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                    $null = NULL;
-                    $stmt_var->bind_param("issdddss", $type_id, $variant_color, $variant_size, $variant_price, $variant_percent, $variant_discount, $namevariant, $null);
-                    if ($variant_image_data !== null) {
-                        $stmt_var->send_long_data(7, $variant_image_data);
+                // Product variants for this type
+                if (isset($_POST['variant_size'][$type_index]) && is_array($_POST['variant_size'][$type_index])) {
+                    foreach ($_POST['variant_size'][$type_index] as $variant_index => $size) {
+                        $name_variant = $_POST['variant_namevariant'][$type_index][$variant_index] ?? '';
+                        $color = $_POST['variant_color'][$type_index][$variant_index] ?? '';
+                        $price = (float)($_POST['variant_price'][$type_index][$variant_index] ?? 0);
+                        $percent = (float)($_POST['variant_percent'][$type_index][$variant_index] ?? 0);
+                        $discount = (float)($_POST['variant_discount'][$type_index][$variant_index] ?? 0);
+
+                        if (!empty($size) || !empty($name_variant)) {
+                            $final_price = $price + ($price * $percent / 100);
+
+                            $variant_image = null;
+                            if (isset($_FILES['variant_image']['tmp_name'][$type_index][$variant_index]) && 
+                                $_FILES['variant_image']['error'][$type_index][$variant_index] === UPLOAD_ERR_OK) {
+                                $variant_image = file_get_contents($_FILES['variant_image']['tmp_name'][$type_index][$variant_index]);
+                            }
+
+                            $stmt = $conn->prepare("INSERT INTO product_variants (type_id, color, size, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                            if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
+
+                            $stmt->bind_param("issdddss", 
+                                $type_id,
+                                $color,
+                                $size,
+                                $final_price,
+                                $percent,
+                                $discount,
+                                $name_variant,
+                                $variant_image
+                            );
+                            $stmt->send_long_data(7, $variant_image);
+                            $stmt->execute();
+                            $stmt->close();
+                        }
                     }
-                    $stmt_var->execute();
-                    $stmt_var->close();
                 }
             }
         }
-    }
 
-    echo "<script>alert('Product uploaded successfully!'); window.location.href='adminshop.php';</script>";
-    exit;
+        $conn->commit();
+        echo "<script>alert('Product uploaded successfully!'); window.location.href='adminshop.php';</script>";
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo "<script>alert('Error: " . addslashes($e->getMessage()) . "'); history.back();</script>";
+    }
 } else {
-    echo "Invalid request.";
+    header("Location: adminshop.php");
+    exit();
 }
 ?>

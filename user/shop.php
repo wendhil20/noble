@@ -21,20 +21,28 @@ if (!empty($search_keyword)) {
     $filter_sql .= " AND product_name LIKE '%$search_safe%'";
 }
 
-$query = $conn->query("SELECT id, product_name, main_image FROM products $filter_sql");
+// ✅ Include description in query
+$query = $conn->query("SELECT id, product_name, main_image, description FROM products $filter_sql");
 
-$all_categories = ['furniture', 'material']; // Extend this as needed
+$all_categories = ['furniture', 'material']; // Extend as needed
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <title>Shop Products</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Optional fallback if line-clamp plugin is not included */
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
 </head>
-
 <body class="bg-gray-100 font-sans">
 
   <?php include 'navbar/top.php'; ?>
@@ -63,7 +71,6 @@ $all_categories = ['furniture', 'material']; // Extend this as needed
           placeholder=" Search products..."
           class="w-full sm:w-64 border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
-
         <button
           type="submit"
           class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
@@ -116,6 +123,11 @@ $all_categories = ['furniture', 'material']; // Extend this as needed
             <?= htmlspecialchars($row['product_name']) ?>
           </h2>
 
+          <!-- Description -->
+          <p class="text-xs text-gray-600 mt-1 line-clamp-3">
+            <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
+          </p>
+
           <!-- Variant Count -->
           <div class="mt-2">
             <span class="inline-block text-xs px-3 py-1 bg-orange-500 text-white rounded-full font-medium">
@@ -127,5 +139,4 @@ $all_categories = ['furniture', 'material']; // Extend this as needed
     </div>
   </div>
 </body>
-
 </html>

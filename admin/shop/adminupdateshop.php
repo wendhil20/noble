@@ -3,16 +3,38 @@ include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// ✅ Handle Delete Request
+// ✅ Handle Delete Request with CASCADE DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
   $deleteId = (int) $_POST['delete_id'];
-  $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
-  $stmt->bind_param("i", $deleteId);
-  $stmt->execute();
-  $stmt->close();
-
-  header("Location: " . $_SERVER['PHP_SELF']);
-  exit();
+  
+  try {
+    // Start transaction
+    $conn->begin_transaction();
+    
+    // Delete related records first (child tables)
+    $stmt1 = $conn->prepare("DELETE FROM product_colors WHERE product_id = ?");
+    $stmt1->bind_param("i", $deleteId);
+    $stmt1->execute();
+    $stmt1->close();
+    
+    
+    // Finally, delete the main product record
+    $stmt3 = $conn->prepare("DELETE FROM products WHERE id = ?");
+    $stmt3->bind_param("i", $deleteId);
+    $stmt3->execute();
+    $stmt3->close();
+    
+    // Commit transaction
+    $conn->commit();
+    
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+    
+  } catch (Exception $e) {
+    // Rollback transaction on error
+    $conn->rollback();
+    echo "Error deleting product: " . $e->getMessage();
+  }
 }
 
 // ✅ Fetch all products
@@ -78,12 +100,12 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
                 </td>
                 <td class="border border-gray-300 px-4 py-2 product-name"><?= htmlspecialchars($product['product_name']) ?></td>
                 <td class="border border-gray-300 px-4 py-2 product-code"><?= htmlspecialchars($product['codename']) ?></td>
-                <td class="border border-gray-300 px-4 py-2"><?= $product['quantity'] ?></td>
+                <td class="border border-gray-300 px-4 py-2 product-qty"><?= $product['quantity'] ?></td>
                 <td class="border border-gray-300 px-4 py-2 text-center space-x-2">
                   <a href="update_product.php?id=<?= $product['id'] ?>" class="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700">
                     Update
                   </a>
-                  <form action="" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this product?');">
+                  <form action="" method="POST" class="inline-block" onsubmit="return confirm('⚠️ WARNING: This will permanently delete this product and ALL its related data (colors, images, etc.). Are you sure you want to continue?');">
                     <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
                     <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
                       Delete

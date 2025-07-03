@@ -7,12 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-900 font-sans"> 
+<body class="bg-black font-sans"> 
     <?php include 'navbar/top.php'; ?>
-    <section class="about-us max-w-6xl mx-auto px-4 py-12">
+    <section class="about-us px-4 py-12">
         <!-- Header Section -->
         <div class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">About Us</h1>
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">About Us</h1>
             <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
         </div>
         
@@ -24,7 +24,7 @@
                 </div>
                 <div class="flex-1">
                     <p class="text-lg text-gray-700 leading-relaxed">
-                        Welcome to <span class="font-semibold text-blue-600">Noble Home Corp.</span>, a leading provider of high-quality construction products. With years of experience, we pride ourselves on delivering top-notch products that transform spaces. Our goal is to offer solutions that enhance the functionality and aesthetic appeal of homes and commercial spaces alike.
+                        Welcome to <span class="font-semibold text-blue-600">Noble Home Corp</span>, a leading provider of high-quality construction products. With years of experience, we pride ourselves on delivering top-notch products that transform spaces. Our goal is to offer solutions that enhance the functionality and aesthetic appeal of homes and commercial spaces alike.
                     </p>
                 </div>
             </div>
@@ -110,7 +110,7 @@
         </div>
     </section>
 
-    <section class="bg-gray-900">
+    <section class="bg-black">
         <footer class=" text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>

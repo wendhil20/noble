@@ -47,9 +47,9 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
         <label class="block font-semibold mb-1">Main Image (Leave blank if no change)</label>
         <?php if (!empty($product['main_image'])): ?>
           <div class="mb-2">
-            <img src="data:image/jpeg;base64,<?php echo base64_encode($product['main_image']); ?>"
-              alt="Main Product Image"
-              class="w-32 h-32 object-contain rounded shadow border" />
+                <img src="../../<?= htmlspecialchars($product['main_image']) ?>" 
+     class="h-16 w-16 object-contain rounded" 
+     alt="Product Image">
           </div>
         <?php endif; ?>
         <input type="file" name="main_image" accept="image/*" class="w-full" />
@@ -95,7 +95,8 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
               <!-- Image -->
               <div class="w-1/5">
                 <?php if (!empty($color['image'])): ?>
-                  <img src="data:image/jpeg;base64,<?php echo base64_encode($color['image']); ?>" alt="Color Image" class="w-12 h-12 object-contain rounded mb-1 border" />
+                <img src="../../<?= htmlspecialchars($color['image']) ?>" alt="Color Image" class="w-12 h-12 object-contain rounded mb-1 border" />
+
                 <?php endif; ?>
                 <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" />
               </div>
@@ -140,9 +141,10 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
 
               <div class="w-1/2">
                 <?php if (!empty($type['type_image'])): ?>
-                  <img src="data:image/jpeg;base64,<?php echo base64_encode($type['type_image']); ?>"
-                    alt="Type Image"
-                    class="w-20 h-20 object-contain rounded mb-1 border" />
+                <img src="../../<?php echo htmlspecialchars($type['type_image']); ?>"
+     alt="Type Image"
+     class="w-20 h-20 object-contain rounded mb-1 border" />
+
                 <?php endif; ?>
                 <input type="file" name="type_image[]" accept="image/*" class="w-full" />
               </div>

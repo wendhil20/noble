@@ -1,6 +1,9 @@
 <?php
 include '../../connection/connect.php';
 
+include '../role/roleaccount.php';
+require_role(['admin', 'superadmin']); // allow only admin and superadmin
+
 // Get selected admin ID or default to 1
 $admin_id = isset($_GET['admin_id']) ? intval($_GET['admin_id']) : 1;
 
@@ -9,6 +12,7 @@ $stmt = $conn->prepare("SELECT id, name FROM users ORDER BY name ASC");
 $stmt->execute();
 $all_users = $stmt->get_result();
 
+// Fixed query - only show users who have sent messages TO the selected admin
 $stmt = $conn->prepare("
     SELECT 
         u.id, 
@@ -21,11 +25,11 @@ $stmt = $conn->prepare("
         SUM(CASE WHEN m.receiver_id = ? AND m.is_read = 0 THEN 1 ELSE 0 END) as unread_count
     FROM users u 
     INNER JOIN messages m ON u.id = m.sender_id
-    WHERE u.id > 0
+    WHERE m.receiver_id = ?
     GROUP BY u.id, u.name, u.email
     ORDER BY last_message_time DESC
 ");
-$stmt->bind_param("ii", $admin_id, $admin_id);
+$stmt->bind_param("iii", $admin_id, $admin_id, $admin_id);
 $stmt->execute();
 $users = $stmt->get_result();
 
@@ -122,7 +126,36 @@ if ($selected_user_id) {
 
       <!-- Users List -->
       <div class="flex-1 overflow-y-auto user-list" id="usersList">
-        <!-- This gets loaded by AJAX -->
+        <?php if ($users->num_rows > 0): ?>
+          <?php while ($user = $users->fetch_assoc()): ?>
+            <div class="user-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer" 
+                 data-user-id="<?= $user['id'] ?>">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($user['name']) ?></h3>
+                  <p class="text-sm text-gray-600"><?= htmlspecialchars($user['email']) ?></p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <?= $user['last_message'] ? substr($user['last_message'], 0, 50) . '...' : 'No messages' ?>
+                  </p>
+                  <p class="text-xs text-gray-400">
+                    <?= $user['last_message_time'] ? date('M j, Y g:i A', strtotime($user['last_message_time'])) : '' ?>
+                  </p>
+                </div>
+                <?php if ($user['unread_count'] > 0): ?>
+                  <div class="ml-2">
+                    <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                      <?= $user['unread_count'] ?>
+                    </span>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endwhile; ?>
+        <?php else: ?>
+          <div class="p-4 text-center text-gray-500">
+            <p>No users have sent messages to this admin yet.</p>
+          </div>
+        <?php endif; ?>
       </div>
 
     </div>
@@ -167,8 +200,9 @@ if ($selected_user_id) {
             $(`.user-item[data-user-id="${currentUserId}"]`).addClass("bg-orange-50 border-l-4 border-l-orange-500");
           }
         },
-        error: function() {
-          console.log("Error updating user list with notifications.");
+        error: function(xhr, status, error) {
+          console.log("Error updating user list:", error);
+          console.log("Response:", xhr.responseText);
         }
       });
     }
@@ -184,7 +218,7 @@ if ($selected_user_id) {
 
       // Mark messages as read and load chat
       $.ajax({
-        url: "mark_messages_read.php", // You'll need to create this file
+        url: "mark_messages_read.php",
         method: "POST",
         data: {
           user_id: userId,
@@ -194,7 +228,7 @@ if ($selected_user_id) {
 
       // Load the chat interface
       $.ajax({
-        url: "load_chat_interface.php", // You'll need to create this file  
+        url: "load_chat_interface.php",
         method: "POST",
         data: {
           user_id: userId,
@@ -209,8 +243,10 @@ if ($selected_user_id) {
             loadMessages(userId, adminId);
           }, 3000);
         },
-        error: function() {
-          alert("Error loading conversation.");
+        error: function(xhr, status, error) {
+          console.log("Error loading conversation:", error);
+          console.log("Response:", xhr.responseText);
+          alert("Error loading conversation: " + error);
         }
       });
     }
@@ -244,8 +280,9 @@ if ($selected_user_id) {
             chatBox.scrollTop = prevScrollTop;
           }
         },
-        error: function() {
-          console.log("Error loading messages");
+        error: function(xhr, status, error) {
+          console.log("Error loading messages:", error);
+          console.log("Response:", xhr.responseText);
         }
       });
     }
@@ -257,8 +294,8 @@ if ($selected_user_id) {
       }
     }
 
-    // Initialize user list
-    fetchUserListWithNotifications();
+    // Initialize - don't load user list via AJAX initially since we already have it
+    // fetchUserListWithNotifications();
 
     // Refresh user list every 5 seconds
     setInterval(fetchUserListWithNotifications, 5000);
@@ -274,24 +311,8 @@ if ($selected_user_id) {
         clearInterval(messagesRefreshInterval);
       }
       
-      // Show empty state
-      $("#chat-panel").html(`
-        <div class="flex-1 flex items-center justify-center bg-gray-50">
-          <div class="text-center text-gray-500">
-            <div class="w-16 h-16 bg-gray-300 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-            </div>
-            <h3 class="text-lg font-medium mb-2">Select a conversation</h3>
-            <p>Choose a user from the sidebar to start messaging</p>
-            <p class="text-xs mt-2 text-gray-400">Admin changed - select user to continue</p>
-          </div>
-        </div>
-      `);
-      
-      // Refresh user list for new admin
-      fetchUserListWithNotifications();
+      // Redirect to reload with new admin
+      window.location.href = `?admin_id=${newAdminId}`;
     });
 
     // User selection click handler (delegated event)
@@ -351,8 +372,10 @@ if ($selected_user_id) {
           loadMessages(currentUserId, currentAdminId);
           scrollToBottom();
         },
-        error: function() {
-          alert("Error sending message");
+        error: function(xhr, status, error) {
+          console.log("Error sending message:", error);
+          console.log("Response:", xhr.responseText);
+          alert("Error sending message: " + error);
         },
         complete: function() {
           btn.prop("disabled", false).text("Send as Admin");

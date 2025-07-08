@@ -1,4 +1,4 @@
-  <?php
+<?php
 // Start session with secure settings
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 1);
@@ -108,6 +108,12 @@ try {
             break;
         case 'admin':
             $redirect_url = "../admin/client/dashboard.php";
+            break;
+        case 'sales':
+            $redirect_url = "../sales/dashboard.php";
+            break;
+        case 'accountant':
+            $redirect_url = "../accountant/dashboard.php";
             break;
         default:
             $redirect_url = "../admin/client/dashboard.php";

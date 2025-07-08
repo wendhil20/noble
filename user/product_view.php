@@ -1,11 +1,9 @@
 <?php
+session_start();
 include '../connection/connect.php';
-
-
+// ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $token = $_COOKIE['remember_token'];
-
-
   $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
   $stmt->bind_param("s", $token);
   $stmt->execute();
@@ -15,9 +13,33 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $user = $res->fetch_assoc();
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_email'] = $user['email'];
+
+    // Check if the account is Google-based (optional flag or logic)
+    if (!empty($user['google_id'])) {
+      $_SESSION['google_logged_in'] = true;
+      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+    }
   }
+  $stmt->close();
 }
 
+// ✅ Final check if logged in (either normal or Google)
+if (!isset($_SESSION['user_id'])) {
+  // Not logged in, redirect to login/Google callback
+  header('Location: google-callback.php');
+  exit;
+}
+
+// ✅ Retrieve user info
+$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'] ?? 'Guest';
+$user_email = $_SESSION['user_email'] ?? 'example@example.com';
+$user_picture = $_SESSION['user_picture'] ?? null;
+// Initialize $is_logged_in variable
+$is_logged_in = isset($_SESSION['user_id']) || isset($_COOKIE['remember_token']);
+
+// Continue with your product code...
 $product_id = $_GET['id'] ?? 0;
 
 if (!$product_id || !is_numeric($product_id) || $product_id <= 0) {
@@ -74,6 +96,22 @@ $stmt->bind_param("si", $codename, $product_id);
 $stmt->execute();
 $related_products = $stmt->get_result();
 
+
+$variants = [];
+$stmt = $conn->prepare("
+  SELECT v.*
+  FROM product_variants v
+  INNER JOIN product_types t ON v.type_id = t.id
+  WHERE t.product_id = ?
+");
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+  $variants[] = $row;
+}
+$stmt->close();
+
 ?>
 
 
@@ -86,16 +124,19 @@ $related_products = $stmt->get_result();
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     .selected {
       border-color: #f97316;
-      background: #fed7aa;
+
     }
 
     .color-selected {
-      border-color: #f97316;
-      border-width: 3px;
+      border: 3px;
+      border-color: rgb(227, 144, 85);
+      border-width: 6px;
       box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
     }
 
@@ -126,40 +167,65 @@ $related_products = $stmt->get_result();
       transform: scale(1.1);
       border-color: #9ca3af;
     }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
   </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 ">
   <?php include 'navbar/top.php'; ?>
+  <div class="bg-orange-600 text-white py-5">
+    <div class="container mx-auto px-4">
+      <h1 class="text-4xl font-bold text-center mb-4">🛒Your Shopping</h1>
+      <p class="text-xl text-center opacity-90">Learn more about this item and check if it fits your needs.</p>
+    </div>
+  </div>
+
 
   <!-- Breadcrumb -->
-  <nav class="px-4 py-4 text-sm">
-    <a href="index" class="text-blue-600">Home</a> /
-    <a href="shop" class="text-blue-600">Products</a> /
-    <span><?= htmlspecialchars($product['product_name']) ?></span>
+  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center space-x-2 text-sm">
+        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-600 font-medium">Products</span>
+      </div>
+    </div>
   </nav>
 
   <div class="px-4 pb-8 min-h-screen flex flex-col">
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex-grow">
+    <div class=" rounded-lg overflow-hidden flex-grow">
       <div class="grid md:grid-cols-2 gap-8 p-8 items-start">
 
         <!-- Product Image Section -->
         <div class="text-center">
           <div class="aspect-square max-w-md mx-auto mb-4 relative">
             <img id="main-product-image"
-              src="data:image/jpeg;base64,<?= base64_encode($product['main_image']) ?>"
-              class="w-full h-full object-contain rounded-lg"
-              alt="<?= htmlspecialchars($product['product_name']) ?>">
+     src="../<?= htmlspecialchars($product['main_image']) ?>"
+     class="w-full h-full object-contain rounded-lg"
+     alt="<?= htmlspecialchars($product['product_name']) ?>">
+
           </div>
 
-          <h1 class="text-2xl font-bold mb-2"><?= htmlspecialchars($product['product_name']) ?></h1>
-          <p class="text-gray-600 text-sm mb-4"><?= htmlspecialchars($product['description'] ?? 'No description available.') ?></p>
+          <!-- LEFT: Description (Simplified) -->
+          <div class=" px-4">
+            <h1 class="text-xl font-semibold text-gray-800 mb-2">
+              <?= htmlspecialchars($product['product_name']) ?>
+            </h1>
+            <p class="text-black text-md leading-relaxed">
+              <?= htmlspecialchars($product['description'] ?? 'No description available.') ?>
+            </p>
+          </div>
 
-          <div class="flex gap-2 justify-center">
-            <a href="product_specs.php?id=<?= $product['id'] ?>" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <div class="flex gap-4 mt-6 justify-start">
+            <a href="product_specs.php?id=<?= $product['id'] ?>" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
               View Details
             </a>
-            <button onclick="shareProduct()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            <button onclick="shareProduct()" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
               Share
             </button>
           </div>
@@ -180,32 +246,48 @@ $related_products = $stmt->get_result();
 
           <!-- Color Selection -->
           <?php if (!empty($product_colors)): ?>
-            <div>
-              <h3 class="font-semibold mb-3">Available Colors</h3>
-              <div class="flex flex-wrap gap-3 mb-2">
-                <?php foreach ($product_colors as $color): ?>
-                  <div class="text-center">
-                    <button type="button"
-                      onclick="selectColor(this, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, <?= $color['id'] ?>)"
-                      class="color-btn color-swatch hover:shadow-md"
-                      style="background-color: <?= htmlspecialchars($color['color_code']) ?>;"
-                      data-color-id="<?= $color['id'] ?>"
-                      data-color-name="<?= htmlspecialchars($color['color_name']) ?>"
-                      data-color-price="<?= $color['price'] ?>"
-                      title="<?= htmlspecialchars($color['color_name']) ?>">
-                      <?php if ($color['image']): ?>
-                        <img src="data:image/jpeg;base64,<?= base64_encode($color['image']) ?>"
-                          class="w-full h-full object-cover rounded-full opacity-0 hover:opacity-100 transition-opacity"
-                          alt="<?= htmlspecialchars($color['color_name']) ?>">
-                      <?php endif; ?>
-                    </button>
-                    <span class="text-xs text-gray-600 mt-1 block"><?= htmlspecialchars($color['color_name']) ?></span>
-                  </div>
-                <?php endforeach; ?>
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3 w-full">
+                  <h3 class="font-semibold text-lg text-gray-800 whitespace-nowrap">Available Colors</h3>
+                  <div class="flex-1 h-px bg-orange-300"></div>
+                  <span class="text-sm text-gray-400 italic whitespace-nowrap">← drag to explore →</span>
+                </div>
               </div>
-              <div id="selected-color-info" class="text-sm text-gray-500 italic">Select a color to see pricing</div>
+
+              <!-- Swiper Container -->
+              <div class="swiper colorSwiper">
+                <div class="swiper-wrapper">
+                  <?php foreach ($product_colors as $color): ?>
+                    <div class="swiper-slide w-auto">
+                      <div class="text-center">
+                        <button type="button"
+                          onclick="selectColor(this, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, <?= $color['id'] ?>)"
+                          class="color-btn color-swatch hover:shadow-md w-12 h-12 rounded-full border border-orange-400"
+                          style="background-color: <?= htmlspecialchars($color['color_code']) ?>;"
+                          data-color-id="<?= $color['id'] ?>"
+                          data-color-name="<?= htmlspecialchars($color['color_name']) ?>"
+                          data-color-price="<?= $color['price'] ?>"
+                          title="<?= htmlspecialchars($color['color_name']) ?>">
+                          <?php if ($color['image']): ?>
+                            <img src="../<?=($color['image']) ?>"
+                              class="w-full h-full object-contain rounded-full  hover:opacity-100 transition-opacity"
+                              alt="<?= htmlspecialchars($color['color_name']) ?>">
+                          <?php endif; ?>
+                        </button>
+                        <span class="text-xs text-black font-bold mt-1 block"><?= htmlspecialchars($color['color_name']) ?></span>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+
+              <div id="selected-color-info" class="text-sm text-gray-500 italic mt-2">
+                Select a color to see pricing
+              </div>
             </div>
           <?php endif; ?>
+
 
           <!-- Type Selection -->
           <?php if (!empty($types_data)): ?>
@@ -218,7 +300,7 @@ $related_products = $stmt->get_result();
                     class="type-btn border-2 rounded-lg p-3 hover:border-orange-300 transition-all">
                     <div class="aspect-square bg-gray-100 rounded mb-2 overflow-hidden">
                       <?php if ($type['image']): ?>
-                        <img src="data:image/jpeg;base64,<?= base64_encode($type['image']) ?>"
+                        <img src="../<?=($type['image']) ?>"
                           class="w-full h-full object-contain" alt="<?= htmlspecialchars($type['name']) ?>">
                       <?php else: ?>
                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
@@ -234,6 +316,7 @@ $related_products = $stmt->get_result();
           <!-- Variant Selection -->
           <div>
             <h3 class="font-semibold mb-3">Sizes</h3>
+
             <div id="variant-container" class="text-gray-500">Please select a product type first.</div>
 
             <?php foreach ($types_data as $type): ?>
@@ -286,7 +369,6 @@ $related_products = $stmt->get_result();
 
           <!-- Purchase Section -->
           <div class="border-t pt-6 mt-auto">
-            <?php $is_logged_in = isset($_SESSION['user_id']); ?>
 
             <form id="productForm" class="space-y-4 max-w-2xl mx-auto" method="POST">
               <input type="hidden" name="product_id" value="<?= $product_id ?>" />
@@ -324,42 +406,288 @@ $related_products = $stmt->get_result();
       </div>
     </div>
 
+    <?php if (!empty($variants)): ?>
+      <section class="mt-3">
+        <div class="bg-white rounded-lg p-3 border border-gray-200">
+          <h2 class="text-2xl font-bold text-orange-700 mb-4"> Specifications</h2>
+
+          <?php foreach ($variants as $variant): ?>
+            <div class="mb-6">
+              <dl class="divide-y divide-gray-200 text-sm text-black bg-gray-50 rounded-md p-4">
+                <?php for ($i = 1; $i <= 10; $i++):
+                  $key = "descrip$i";
+                  if (!empty($variant[$key])):
+                ?>
+                    <div class="flex justify-between py-1">
+                      <dd class="text-left"><?= htmlspecialchars($variant[$key]) ?></dd>
+                    </div>
+                <?php endif;
+                endfor; ?>
+              </dl>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endif; ?>
+
+
     <!-- Related Products -->
     <?php if ($related_products->num_rows > 0): ?>
-      <section class="mt-8">
-        <h2 class="text-2xl font-bold text-center mb-6">Related Products</h2>
+      <section class="mt-12 bg-gradient-to-br from-slate-50 to-gray-100 py-12 px-4 rounded-2xl">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header -->
+          <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold text-orange-500 mb-2">Related Products</h2>
+            <p class="text-gray-600 text-lg">Discover more amazing products you might like</p>
+            <div class="w-24 h-1 bg-gradient-to-r from-orange-500 to-orange-600 mx-auto mt-4 rounded-full"></div>
+          </div>
 
-        <!-- Swiper Container -->
-        <div class="swiper related-swiper">
-          <div class="swiper-wrapper">
-            <?php while ($row = $related_products->fetch_assoc()): ?>
-              <div class="swiper-slide">
-                <a href="product_view.php?id=<?= $row['id'] ?>"
-                  class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow block h-full">
-                  <div class="aspect-square mb-3 overflow-hidden rounded">
-                    <?php if ($row['main_image']): ?>
-                      <img src="data:image/jpeg;base64,<?= base64_encode($row['main_image']) ?>"
-                        class="w-full h-full object-contain" alt="<?= htmlspecialchars($row['product_name']) ?>">
-                    <?php else: ?>
-                      <div class="w-full h-full bg-gray-200 flex items-center justify-center">No Image</div>
-                    <?php endif; ?>
-                  </div>
-                  <h3 class="font-bold mb-2 text-sm"><?= htmlspecialchars($row['product_name']) ?></h3>
-                  <div class="text-xs text-gray-600">
-                    <span class="bg-orange-100 px-2 py-1 rounded"><?= htmlspecialchars($row['codename']) ?></span>
-                  </div>
-                </a>
-              </div>
-            <?php endwhile; ?>
+          <!-- Swiper Container -->
+          <div class="swiper related-swiper overflow-hidden">
+            <div class="swiper-wrapper pb-4">
+              <?php while ($row = $related_products->fetch_assoc()): ?>
+                <div class="swiper-slide">
+                  <a href="product_view.php?id=<?= $row['id'] ?>"
+                    class="group block bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full border border-gray-100 overflow-hidden">
+
+                    <!-- Product Image -->
+                    <div class="relative aspect-square overflow-hidden bg-gray-50">
+                      <?php if ($row['main_image']): ?>
+                        <img src="../<?= ($row['main_image']) ?>"
+                          class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                          alt="<?= htmlspecialchars($row['product_name']) ?>">
+                      <?php else: ?>
+                        <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                          <div class="text-center">
+                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">No Image</p>
+                          </div>
+                        </div>
+                      <?php endif; ?>
+
+                      <!-- Overlay on hover -->
+                      <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="p-5">
+                      <h3 class="font-bold text-gray-800 mb-3 text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2">
+                        <?= htmlspecialchars($row['product_name']) ?>
+                      </h3>
+
+                      <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300">
+
+                          <?= htmlspecialchars($row['codename']) ?>
+                        </span>
+
+                        <div class="flex items-center text-blue-600 group-hover:text-blue-700 transition-colors duration-200">
+                          <span class="text-sm font-medium">View</span>
+                          <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              <?php endwhile; ?>
+            </div>
           </div>
         </div>
       </section>
     <?php endif; ?>
 
+    <style>
+      .related-swiper {
+        padding: 0 60px;
+      }
+
+      .related-swiper .swiper-button-next,
+      .related-swiper .swiper-button-prev {
+        top: 50%;
+        transform: translateY(-50%);
+        margin-top: 0;
+      }
+
+      .related-swiper .swiper-button-next {
+        right: 10px;
+      }
+
+      .related-swiper .swiper-button-prev {
+        left: 10px;
+      }
+
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      @media (max-width: 768px) {
+        .related-swiper {
+          padding: 0 20px;
+        }
+
+        .related-swiper .swiper-button-next,
+        .related-swiper .swiper-button-prev {
+          display: none;
+        }
+      }
+    </style>
   </div>
 
 
+  <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
+    <!-- Decorative Elements -->
+    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+      <!-- Main Footer Content -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+
+        <!-- Enhanced Branding Section -->
+        <div class="lg:col-span-2">
+          <div class="flex items-center space-x-4 mb-6">
+            <!-- Logo with glow and pulse -->
+            <div class="relative">
+              <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
+                <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
+              </div>
+              <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
+            </div>
+
+            <!-- Text Branding -->
+            <div>
+              <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
+
+            </div>
+          </div>
+
+
+          <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
+            Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
+          </p>
+
+          <!-- Contact Info -->
+          <div class="space-y-3">
+            <div class="flex items-center space-x-3 text-sm">
+              <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+              </div>
+              <span class="text-gray-300">noblehomeconst.ph@gmail.com</span>
+            </div>
+            <div class="flex items-center space-x-3 text-sm">
+              <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+              </div>
+              <span class="text-gray-300">0968 591 6536</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h3 class="text-xl font-bold mb-6 text-white relative">
+            Quick Links
+            <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+          </h3>
+          <nav class="space-y-3">
+            <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
+            <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
+            <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
+          </nav>
+        </div>
+
+        <!-- Services -->
+        <div>
+          <h3 class="text-xl font-bold mb-6 text-white relative">
+            Our Services
+            <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+          </h3>
+          <ul class="space-y-3 text-gray-300">
+            <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
+            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
+            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
+            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
+            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
+
+      <!-- Bottom Section -->
+      <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+        <!-- Copyright -->
+        <div class="text-center lg:text-left">
+          <p class="text-gray-400 text-sm">
+            © 2025 Noble Home Construction. All rights reserved.
+          </p>
+          <p class="text-gray-500 text-xs mt-1">
+            Licensed & Insured | PCAB License No. 12345
+          </p>
+        </div>
+
+        <!-- Enhanced Social Media -->
+        <div class="flex items-center space-x-4">
+          <span class="text-gray-400 text-sm mr-2">Follow us:</span>
+
+          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
+            </svg>
+          </a>
+
+          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
+            </svg>
+          </a>
+
+          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="LinkedIn">
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+            </svg>
+          </a>
+        </div>
+
+        <!-- Back to Top Button -->
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+          class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Background Pattern -->
+    <div class="absolute bottom-0 right-0 opacity-5">
+      <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+        <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
+        <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
+        <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
+      </svg>
+    </div>
+  </footer>
+
   <script>
+    const colorSwiper = new Swiper(".colorSwiper", {
+      slidesPerView: "auto",
+      spaceBetween: 30,
+      freeMode: true,
+      grabCursor: true,
+    });
 
     // Initialize Swiper for related products
     const swiper = new Swiper('.related-swiper', {
@@ -705,54 +1033,54 @@ $related_products = $stmt->get_result();
         this.submitToCart();
       }
 
-async submitToCart() {
-  try {
-    const formData = this.buildFormData();
+      async submitToCart() {
+        try {
+          const formData = this.buildFormData();
 
-    const response = await fetch('cart/add_to_cart.php', {
-      method: 'POST',
-      body: formData
-    });
+          const response = await fetch('cart/add_to_cart.php', {
+            method: 'POST',
+            body: formData
+          });
 
-    const data = await response.json();
+          const data = await response.json();
 
-    if (data.success) {
-      this.showNotification(data.message || 'Product added to cart!', 'success');
-      this.updateCartCount(data.cart_count);
+          if (data.success) {
+            this.showNotification(data.message || 'Product added to cart!', 'success');
+            this.updateCartCount(data.cart_count);
 
-      if (data.item_added) {
-        console.log('Item added:', data.item_added);
-      }
-    } else {
-      // 🚫 User is not logged in
-      if (data.message === 'You must be logged in to pre-order.') {
-        this.showNotification('Please log in to pre-order.', 'error');
+            if (data.item_added) {
+              console.log('Item added:', data.item_added);
+            }
+          } else {
+            // 🚫 User is not logged in
+            if (data.message === 'You must be logged in to pre-order.') {
+              this.showNotification('Please log in to pre-order.', 'error');
 
-        // ✅ Open Alpine login dropdown safely
-        const loginDropdown = document.querySelector('#authDropdown');
-        if (loginDropdown) {
-          const alpineData = Alpine?.$data(loginDropdown);
-          if (alpineData) {
-            alpineData.loginOpen = true;
+              // ✅ Open Alpine login dropdown safely
+              const loginDropdown = document.querySelector('#authDropdown');
+              if (loginDropdown) {
+                const alpineData = Alpine?.$data(loginDropdown);
+                if (alpineData) {
+                  alpineData.loginOpen = true;
 
-            // Optional: focus email field after dropdown appears
-            setTimeout(() => {
-              const emailInput = loginDropdown.querySelector('input[type="email"]');
-              if (emailInput) emailInput.focus();
-            }, 100);
+                  // Optional: focus email field after dropdown appears
+                  setTimeout(() => {
+                    const emailInput = loginDropdown.querySelector('input[type="email"]');
+                    if (emailInput) emailInput.focus();
+                  }, 100);
+                }
+              }
+            } else {
+              // Other errors
+              throw new Error(data.message || 'Add to cart failed.');
+            }
           }
-        }
-      } else {
-        // Other errors
-        throw new Error(data.message || 'Add to cart failed.');
-      }
-    }
 
-  } catch (error) {
-    this.showNotification('Error: ' + error.message, 'error');
-    console.error('Add to cart error:', error);
-  }
-}
+        } catch (error) {
+          this.showNotification('Error: ' + error.message, 'error');
+          console.error('Add to cart error:', error);
+        }
+      }
 
       buildFormData() {
         const formData = new FormData();

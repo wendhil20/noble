@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../../connection/connect.php';
+include '../connection/connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = trim($_POST['name'] ?? '');

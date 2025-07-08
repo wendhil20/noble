@@ -2,9 +2,11 @@
 include '../../connection/connect.php';
 include 'auth.php';
 
+// ✅ Final check if logged in (either normal or Google)
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
+    // Not logged in, redirect to login/Google callback
+    header('Location: google-callback.php');
+    exit;
 }
 
 $user_id = $_SESSION['user_id'];

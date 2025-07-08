@@ -1,5 +1,5 @@
 <?php
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // Get all blocks (for selection)
 $blocks_result = $conn->query("SELECT id, name FROM blocks");

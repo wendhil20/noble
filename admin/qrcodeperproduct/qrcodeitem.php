@@ -63,7 +63,6 @@ $displayResult = $conn->query($displayQuery);
                         <th class="border border-gray-300 px-4 py-2">Name</th>
                         <th class="border border-gray-300 px-4 py-2">Codename</th>
                         <th class="border border-gray-300 px-4 py-2">Quantity</th>
-                        <th class="border border-gray-300 px-4 py-2">Price</th>
                         <th class="border border-gray-300 px-4 py-2">QR Code</th>
                         <th class="border border-gray-300 px-4 py-2">Action</th>
 
@@ -75,7 +74,6 @@ $displayResult = $conn->query($displayQuery);
                             <td class="border border-gray-300 px-4 py-2"><?= htmlspecialchars($product['product_name']) ?></td>
                             <td class="border border-gray-300 px-4 py-2"><?= htmlspecialchars($product['codename']) ?></td>
                             <td class="border border-gray-300 px-4 py-2"><?= $product['quantity'] ?></td>
-                            <td class="border border-gray-300 px-4 py-2">₱<?= number_format($product['price'], 2) ?></td>
                             <td class="border border-gray-300 px-4 py-2 text-center">
                                 <?php if (!empty($product['qr_code'])): ?>
                                     <?php $base64QR = base64_encode($product['qr_code']); ?>

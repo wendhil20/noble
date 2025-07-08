@@ -32,7 +32,7 @@ $product = $result->fetch_assoc();
     <div class="flex flex-col md:flex-row gap-6">
       <div class="flex-shrink-0">
         <?php if (!empty($product['main_image'])): ?>
-          <img src="data:image/jpeg;base64,<?= base64_encode($product['main_image']) ?>" class="w-64 h-64 object-cover rounded border">
+          <img src="../../<?=($product['main_image']) ?>" class="w-64 h-64 object-cover rounded border">
         <?php else: ?>
           <div class="w-64 h-64 bg-gray-200 flex items-center justify-center text-gray-500">No Image</div>
         <?php endif; ?>

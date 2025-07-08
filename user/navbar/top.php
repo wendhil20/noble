@@ -3,7 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-
 $cart = $_SESSION['cart'] ?? [];
 $total_cart_items = 0;
 
@@ -73,36 +72,55 @@ foreach ($cart as $item) {
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display: none;"
   class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-  <div class="bg-white rounded-lg p-8 flex items-center space-x-4 shadow-xl">
-    <div class="loading-spinner"></div>
-    <span class="text-gray-700 font-medium text-lg">Loading...</span>
+
+  <div class="rounded-2xl p-8 flex flex-col items-center space-y-5 shadow-2xl relative">
+
+    <!-- Spinner wrapper -->
+    <div class="relative w-28 h-28 flex items-center justify-center">
+      <!-- Rotating spinner around image -->
+      <div class="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+
+      <!-- Center image -->
+      <img src="img/logo/logo.png" alt="Loading" class="bg-white w-20 h-20 object-contain rounded-full shadow-md z-10" />
+    </div>
+
   </div>
 </div>
 
-<div class="bg-black text-white py-2 text-sm">
-  <div class=" px-4 flex justify-between items-center">
-    <div class="flex items-center space-x-4">
-      <span> Support: (02) 123-4567</span>
-      <span> info@noblehome.com</span>
+
+
+
+<div class="bg-black text-white py-2 ">
+  <div class="px-4 flex justify-between items-center flex-wrap">
+    <div class="flex items-center space-x-4 mb-2 md:mb-0 text-xs">
+      <span>Support: (02) 123-4567</span>
+      <span>info@noblehome.com</span>
     </div>
     <div class="flex items-center space-x-4">
       <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Help
       </a>
       <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
         </svg>
         Support
       </a>
+
+      <!-- Breadcrumb -->
+      <span class="mx-2">|</span>
+      <a href="about" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
+      <span class="mx-2">|</span>
+      <a href="contact" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
     </div>
   </div>
 </div>
+
 
 <!-- Navigation -->
 <nav x-data="{ mobileOpen: false }" class="bg-white shadow-lg sticky top-0 z-50 text-black font-bold">
@@ -111,108 +129,99 @@ foreach ($cart as $item) {
       <!-- Logo -->
       <a href="javascript:void(0)" onclick="navigateWithLoading('index')"
         class="flex items-center space-x-3 hover:opacity-80 transition">
-        <div class="w-10 h-10 rounded overflow-hidden">
-          <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-full h-full object-cover">
+        <div class="w-full h-[50px] rounded overflow-hidden">
+          <img src="img/a.png" alt="Noble Home Logo" class="w-full h-full object-contain">
         </div>
-        <div class="flex flex-col leading-tight">
-          <span class="text-2xl font-bold text-orange-500">NobleHome</span>
-          <span class="text-sm text-black">Construction</span>
-        </div>
+      
       </a>
 
       <!-- Desktop Links -->
       <div class="hidden md:flex space-x-6 items-center">
-        <a href="javascript:void(0)" onclick="navigateWithLoading('index')"
-          class="<?= $current_page == 'index' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition">
-          Home
-        </a>
-
+    
         <!-- Products Dropdown -->
         <div x-data="{ open: false, selected: null }" class="relative">
           <button @click="open = !open" class="text-black hover:text-orange-500 transition">Products</button>
 
           <div x-show="open" @click.away="open = false" x-transition x-cloak
-            class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-[500px] z-50">
+            class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
             <!-- Main Categories -->
             <div class="w-1/2 border-r p-4 space-y-2">
               <button @mouseenter="selected = 'materials'"
-                class="block w-full text-left hover:text-orange-500">Construction Materials</button>
+                class="block w-full text-left hover:text-orange-500 text-sm">Construction Materials</button>
               <button @mouseenter="selected = 'furniture'"
-                class="block w-full text-left hover:text-orange-500">Furniture</button>
+                class="block w-full text-left hover:text-orange-500 text-sm">Furniture</button>
             </div>
 
             <!-- Subpanel -->
             <div class="w-1/2 p-4">
               <template x-if="selected === 'materials'">
-                <div>
+                <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500">temporary</a>
+                    class="block hover:text-orange-500 text-sm">WPC Panels</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500">temporary</a>
+                    class="block hover:text-orange-500 text-sm">PVC Panels</a>
                 </div>
               </template>
 
               <template x-if="selected === 'furniture'">
-                <div>
+                <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500">temporary</a>
+                    class="block hover:text-orange-500 text-sm">Chairs</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500">temporary</a>
+                    class="block hover:text-orange-500 text-sm">Tables</a>
                 </div>
               </template>
             </div>
           </div>
         </div>
 
-        <a href="javascript:void(0)" onclick="navigateWithLoading('about')"
-          class="<?= $current_page == 'about' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition">
-          About
+        <a href="javascript:void(0)" onclick="navigateWithLoading('profile')"
+          class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition">
+          Profile
         </a>
 
-        <a href="javascript:void(0)" onclick="navigateWithLoading('contact')"
-          class="<?= $current_page == 'contact' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition">
-          Contact
-        </a>
 
-        <a href="javascript:void(0)" onclick="navigateWithLoading('shop')"
-          class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l1 11a1 1 0 001 1h14a1 1 0 001-1l1-11M4 9V7a1 1 0 011-1h14a1 1 0 011 1v2M9 22V12h6v10" />
-          </svg>
-          Shop
-        </a>
+   <a href="javascript:void(0)" onclick="navigateWithLoading('shop')"
+  class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1">
+  
+  <!-- Replace this with your actual image path -->
+  <img src="img/icon/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
 
-        <a href="javascript:void(0)" onclick="navigateWithLoading('cart_view')"
-          class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative">
-          <!-- Cart Icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7a1 1 0 00.9 1.5h11.1M16 21a1 1 0 100-2 1 1 0 000 2zm-8 0a1 1 0 100-2 1 1 0 000 2z" />
-          </svg>
-          <!-- Text -->
-          Cart
+  Shop
+</a>
+<a href="javascript:void(0)" onclick="navigateWithLoading('cart_view')"
+  class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative">
+  
+  <!-- Cart Icon Image -->
+  <img src="img/icon/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
 
-          <span id="cart-count-bubble" class="cart-count absolute -top-2 -right-3 bg-red-500 text-white text-[10px] px-1 py-0.5 p-1 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-            <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-          </span>
+  <!-- Text -->
+  Cart
 
+  <!-- Cart Count Bubble -->
+  <span id="cart-count-bubble" class="cart-count absolute -top-2 -right-3 bg-red-500 text-white text-[10px] px-1 py-0.5 p-1 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+    <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+  </span>
+</a>
 
-        </a>
+        
+
         <!-- Wrapper Alpine Component -->
         <div x-data="{ loginOpen: false, registerOpen: false }">
 
           <?php if (isset($_SESSION['user_name'])): ?>
             <!-- ✅ Logged in -->
-            <div class="text-black flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="text-sm"><strong><?= htmlspecialchars($_SESSION['user_name']) ?></strong></span>
-              <a href="logout.php" class="text-red-500 text-xs hover:underline">Logout</a>
-            </div>
+             <div class="text-black flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="text-sm"><strong><?= htmlspecialchars(substr($_SESSION['user_name'], 0, 1)) ?></strong></span> <!-- First letter only -->
+        <a href="logout.php" class="text-red-500 text-xs hover:underline">Logout</a>
+    </div>
 
           <?php else: ?>
+            
             <!-- ✅ Not Logged in -->
             <div class="relative">
 
@@ -261,6 +270,7 @@ foreach ($cart as $item) {
                     <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
                       class="text-orange-500 hover:underline font-medium">Register</a>
                   </div>
+
 
                   <!-- Google login button -->
                   <div class="text-center mt-4">
@@ -335,11 +345,9 @@ foreach ($cart as $item) {
             </div>
           </div>
         </div>
-
-
-
       </div>
 
+   
       <!-- Mobile Hamburger -->
       <div class="md:hidden">
         <button @click="mobileOpen = !mobileOpen" class="text-gray-700 focus:outline-none">
@@ -350,6 +358,7 @@ foreach ($cart as $item) {
         </button>
       </div>
     </div>
+    
 
     <!-- Mobile Dropdown -->
     <div x-show="mobileOpen" x-transition x-cloak class="md:hidden space-y-2 pb-4">
@@ -388,3 +397,116 @@ foreach ($cart as $item) {
     </div>
   </div>
 </nav>
+
+
+<!-- Second Navbar - Extended with Category -->
+<div class="bg-gray-100 border-b border-gray-300 text-sm font-medium shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center flex-wrap">
+
+    <!-- Dropdown Section -->
+    <div class="flex flex-wrap gap-6">
+
+      <!-- ✅ Category -->
+      <div x-data="{ open: false }" class="relative">
+        <button @click="open = !open"
+          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
+          Categories
+          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div x-show="open" @click.away="open = false" x-transition x-cloak
+          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
+          <a href="category/wall-panels.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Wall Panels</a>
+          <a href="category/ceiling-panels.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Ceiling Panels</a>
+          <a href="category/flooring.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Flooring</a>
+          <a href="category/furniture.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Furniture</a>
+          <a href="category/accessories.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Accessories</a>
+        </div>
+      </div>
+
+      <!-- Professional Services -->
+      <div x-data="{ open: false }" class="relative">
+        <button @click="open = !open"
+          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
+          Professional Services
+          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div x-show="open" @click.away="open = false" x-transition x-cloak
+          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
+          <a href="architects.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Architect Services</a>
+          <a href="interior.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Interior Designers</a>
+          <a href="builders.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Contractors</a>
+          <a href="projects.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Commercial Projects</a>
+        </div>
+      </div>
+
+      <!-- Resources -->
+      <div x-data="{ open: false }" class="relative">
+        <button @click="open = !open"
+          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
+          Resources
+          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div x-show="open" @click.away="open = false" x-transition x-cloak
+          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
+          <a href="guides.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Installation Guides</a>
+          <a href="catalogs.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Catalogs</a>
+          <a href="downloads.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Downloads</a>
+          <a href="certifications.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Certifications</a>
+        </div>
+      </div>
+
+      <!-- Company -->
+      <div x-data="{ open: false }" class="relative">
+        <button @click="open = !open"
+          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
+          Company
+          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div x-show="open" @click.away="open = false" x-transition x-cloak
+          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
+          <a href="about.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">About Us</a>
+          <a href="team.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Meet the Team</a>
+          <a href="careers.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Careers</a>
+          <a href="partnerships.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Partner With Us</a>
+        </div>
+      </div>
+
+      <!-- Support -->
+      <div x-data="{ open: false }" class="relative">
+        <button @click="open = !open"
+          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
+          Support
+          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div x-show="open" @click.away="open = false" x-transition x-cloak
+          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
+          <a href="faq.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">FAQ</a>
+          <a href="help.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Help Center</a>
+          <a href="support.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Customer Support</a>
+          <a href="warranty.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Warranty</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Static Right Links -->
+    <div class="hidden sm:flex gap-4 text-gray-700">
+      <a href="quote.php" class="hover:text-orange-500">Get a Quote</a>
+      <a href="contact.php" class="hover:text-orange-500">Contact</a>
+    </div>
+  </div>
+</div>

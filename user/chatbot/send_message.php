@@ -1,11 +1,14 @@
 <?php
+
 include '../../connection/connect.php';
 
 include 'auth.php';
 
+// ✅ Final check if logged in (either normal or Google)
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
+    // Not logged in, redirect to login/Google callback
+    header('Location: google-callback.php');
+    exit;
 }
 
 // If no users exist, reset auto_increment to 1
@@ -14,7 +17,6 @@ $row = $check->fetch_assoc();
 if ($row['total'] == 0) {
     $conn->query("ALTER TABLE messages AUTO_INCREMENT = 1");
 }
-
 
 $sender_id = $_SESSION['user_id'];
 $receiver_id = 1; // admin

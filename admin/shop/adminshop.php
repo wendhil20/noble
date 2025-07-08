@@ -16,7 +16,7 @@ ini_set('display_errors', 1);
 
 <?php include '../navbar/top.php'; ?>
 
-  <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow mt-5">
+  <div class=" bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Add Product</h2>
 
     <form action="upload_process.php" method="POST" enctype="multipart/form-data">

@@ -3,38 +3,106 @@ include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+
 // ✅ Handle Delete Request with CASCADE DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
-  $deleteId = (int) $_POST['delete_id'];
-  
-  try {
-    // Start transaction
+ $deleteId = (int) $_POST['delete_id'];
+
+try {
     $conn->begin_transaction();
-    
-    // Delete related records first (child tables)
+
+    // 🔎 Step 1: Get all related image paths
+    $imagesToDelete = [];
+
+    // Get main image
+    $res = $conn->prepare("SELECT main_image FROM products WHERE id = ?");
+    $res->bind_param("i", $deleteId);
+    $res->execute();
+    $res->bind_result($mainImage);
+    $res->fetch();
+    if ($mainImage && file_exists("../../" . $mainImage)) {
+        $imagesToDelete[] = "../../" . $mainImage;
+    }
+    $res->close();
+
+    // Get color images
+    $res = $conn->prepare("SELECT image FROM product_colors WHERE product_id = ?");
+    $res->bind_param("i", $deleteId);
+    $res->execute();
+    $result = $res->get_result();
+    while ($row = $result->fetch_assoc()) {
+        if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
+            $imagesToDelete[] = "../../" . $row['image'];
+        }
+    }
+    $res->close();
+
+    // Get type images and variant images
+    $typeIds = [];
+    $res = $conn->prepare("SELECT id, type_image FROM product_types WHERE product_id = ?");
+    $res->bind_param("i", $deleteId);
+    $res->execute();
+    $result = $res->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $typeIds[] = $row['id'];
+        if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) {
+            $imagesToDelete[] = "../../" . $row['type_image'];
+        }
+    }
+    $res->close();
+
+    // Variant images (optional if you store images per variant)
+    foreach ($typeIds as $typeId) {
+        $res = $conn->prepare("SELECT image FROM product_variants WHERE type_id = ?");
+        $res->bind_param("i", $typeId);
+        $res->execute();
+        $result = $res->get_result();
+        while ($row = $result->fetch_assoc()) {
+            if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
+                $imagesToDelete[] = "../../" . $row['image'];
+            }
+        }
+        $res->close();
+    }
+
+    // 🧹 Step 2: Delete image files
+    foreach ($imagesToDelete as $filePath) {
+        @unlink($filePath); // use @ to suppress errors in case file was already deleted
+    }
+
+    // 🗑 Step 3: Delete child records first
+    foreach ($typeIds as $typeId) {
+        $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
+        $stmt->bind_param("i", $typeId);
+        $stmt->execute();
+        $stmt->close();
+    }
+
     $stmt1 = $conn->prepare("DELETE FROM product_colors WHERE product_id = ?");
     $stmt1->bind_param("i", $deleteId);
     $stmt1->execute();
     $stmt1->close();
-    
-    
-    // Finally, delete the main product record
+
+    $stmt2 = $conn->prepare("DELETE FROM product_types WHERE product_id = ?");
+    $stmt2->bind_param("i", $deleteId);
+    $stmt2->execute();
+    $stmt2->close();
+
     $stmt3 = $conn->prepare("DELETE FROM products WHERE id = ?");
     $stmt3->bind_param("i", $deleteId);
     $stmt3->execute();
     $stmt3->close();
-    
-    // Commit transaction
+
     $conn->commit();
-    
+
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
-    
-  } catch (Exception $e) {
-    // Rollback transaction on error
+
+} catch (Exception $e) {
     $conn->rollback();
     echo "Error deleting product: " . $e->getMessage();
-  }
+}
+
 }
 
 // ✅ Fetch all products
@@ -88,12 +156,16 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
             </tr>
           </thead>
           <tbody>
+
             <?php while ($product = $products->fetch_assoc()): ?>
               <tr class="hover:bg-gray-50 product-row">
                 <td class="border border-gray-300 px-4 py-2">
                   <?php if (!empty($product['main_image'])): ?>
-                    <?php $imgData = base64_encode($product['main_image']); ?>
-                    <img src="data:image/jpeg;base64,<?= $imgData ?>" class="h-16 w-16 object-contain rounded" />
+                  <img src="../../<?= htmlspecialchars($product['main_image']) ?>" 
+     class="h-16 w-16 object-contain rounded" 
+     alt="Product Image">
+
+
                   <?php else: ?>
                     <span class="text-gray-400 italic">No image</span>
                   <?php endif; ?>

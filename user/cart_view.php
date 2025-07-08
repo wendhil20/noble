@@ -2,21 +2,43 @@
 session_start();
 include '../connection/connect.php';
 
-// ✅ Restore user if session expired but remember_token exists
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-  $token = $_COOKIE['remember_token'];
-  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-  $stmt->bind_param("s", $token);
-  $stmt->execute();
-  $res = $stmt->get_result();
 
-  if ($res->num_rows > 0) {
-    $user = $res->fetch_assoc();
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_name'] = $user['name'];
-  }
-  $stmt->close();
+// ✅ Restore session from remember_token (normal account or Google)
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['name'];
+        $_SESSION['user_email'] = $user['email'];
+        
+        // Check if the account is Google-based (optional flag or logic)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
+    }
+    $stmt->close();
 }
+
+// ✅ Final check if logged in (either normal or Google)
+if (!isset($_SESSION['user_id'])) {
+    // Not logged in, redirect to login/Google callback
+    header('Location: google-callback.php');
+    exit;
+}
+
+// ✅ Retrieve user info
+$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'] ?? 'Guest';
+$user_email = $_SESSION['user_email'] ?? 'example@example.com';
+$user_picture = $_SESSION['user_picture'] ?? null;
+
 
 $user_id = $_SESSION['user_id'] ?? 0;
 $cart_items = [];
@@ -27,12 +49,14 @@ unset($_SESSION['checkout_notice']);
 // ✅ Fetch cart items from database
 if ($user_id) {
 
-  $stmt = $conn->prepare("
-    SELECT c.*, t.type_image
-    FROM user_cart_items c
-    LEFT JOIN product_types t 
-        ON t.product_id = c.product_id AND t.type_name = c.type_name
-    WHERE c.user_id = ?
+$stmt = $conn->prepare("
+  SELECT c.*, t.type_image, v.descrip6, v.descrip7
+  FROM user_cart_items c
+  LEFT JOIN product_types t 
+      ON t.product_id = c.product_id AND t.type_name = c.type_name
+  LEFT JOIN product_variants v
+      ON c.variant_id = v.id
+  WHERE c.user_id = ?
 ");
 
 
@@ -56,22 +80,29 @@ if ($user_id) {
 </head>
 
 <body class="bg-gray-100 font-sans">
-
+ <!-- Hero Section -->
+  
   <?php include 'navbar/top.php'; ?>
+  <div class="bg-orange-600 text-white py-5">
+        <div class="container mx-auto px-4">
+            <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
+            <p class="text-xl text-center opacity-90">Review your items and proceed to checkout</p>
+        </div>
+    </div>
 
   <div class="px-4 py-4">
     <nav class="text-sm text-gray-600">
       <a href="index" class="hover:text-orange-600">Home</a>
-      <span class="mx-2">/</span>
+      <span class="mx-2">|</span>
       <a href="shop" class="hover:text-orange-600">Shop</a>
-      <span class="mx-2">/</span>
+      <span class="mx-2">|</span>
       <span class="text-orange-600 font-medium">Cart</span>
     </nav>
   </div>
 
-  <div class="px-4 py-2">
+  <div class="px-2 py-2">
     <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-3xl font-bold text-orange-700 mb-6 flex items-center gap-2">🛒 Your Cart</h2>
+      <h2 class="text-3xl font-bold text-orange-700 mb-6 flex items-center gap-2"> Your Cart</h2>
 
       <?php if ($notice): ?>
         <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow text-sm">
@@ -94,10 +125,7 @@ if ($user_id) {
                   <th class="py-3 px-4">Details</th>
                   <th class="py-3 px-4">Qty</th>
                   <th class="py-3 px-4">Unit Price</th>
-
                   <th class="py-3 px-4">Image</th>
-
-                  <th class="py-3 px-4">Product Name</th>
                   <th class="py-3 px-4">Remove</th>
                 </tr>
               </thead>
@@ -113,11 +141,14 @@ if ($user_id) {
                   <tr>
                     <td class="py-3 px-4 font-semibold text-gray-800"><?= htmlspecialchars($item['codename']) ?></td>
                     <td class="py-3 px-4 text-sm text-gray-700 space-y-1">
-                      <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
-                      <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
-                      <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
-                      <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
-                    </td>
+  <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
+  <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
+  <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
+  <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
+  <div><span class="font-semibold">Unit:</span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
+  <div><span class="font-semibold">Specification:</span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
+</td>
+
                     <td class="py-3 px-4">
                       <input type="number" name="quantities[<?= $item['id'] ?>]"
                         value="<?= $quantity ?>" min="1"
@@ -133,15 +164,12 @@ if ($user_id) {
                     
                     <td class="py-3 px-4">
                       <?php if (!empty($item['type_image'])): ?>
-                        <img src="data:image/jpeg;base64,<?= base64_encode($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
+                        <img src="../<?=($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
                       <?php else: ?>
                         <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">No Image</div>
                       <?php endif; ?>
                     </td>
-                    <td class="py-3 px-4 font-semibold text-gray-800">
-                      <?= htmlspecialchars($item['codename']) ?>
-                    </td>
-
+                  
                     <td class="py-3 px-4 align-middle">
                       <a href="cart/remove_from_cart.php?key=<?= $item['id'] ?>"
                         class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 transition"
@@ -159,14 +187,14 @@ if ($user_id) {
           </div>
 
           <div class="mt-6 flex justify-between items-center flex-wrap gap-4">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded shadow transition">Update Cart</button>
+            <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded shadow transition">Update Cart</button>
             <div class="text-xl font-bold text-orange-700">
               Total: ₱<?= number_format($total_price, 2) ?>
             </div>
           </div>
         </form>
         <div class="mt-6 flex flex-wrap gap-3 justify-end">
-          <a href="../shop.php" class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2 rounded transition">Continue Shopping</a>
+          <a href="shop.php" class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2 rounded transition">Continue Shopping</a>
           <a href="checkout.php" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded transition">Proceed to Checkout</a>
         </div>
       <?php endif; ?>

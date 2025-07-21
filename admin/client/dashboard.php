@@ -1,8 +1,29 @@
 <?php
+session_name("nobleadmin");
+session_start();
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
 
+require_role(['superadmin']); // allow only admin and superadmin
+
+// Check if user is logged in
+if (!isset($_SESSION['noble_user'])) {
+    // Redirect to login page
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+// Optional: Auto-logout after inactivity (e.g. 30 mins)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+    // Destroy session and redirect to login
+    session_unset();
+    session_destroy();
+    header("Location: ../../loginpage/index.php?timeout=true");
+    exit();
+}
+
+// Update last activity time
+$_SESSION['last_activity'] = time();
 
 // Handle search and filters
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -50,25 +71,23 @@ $total_pages = ceil($total_records / $records_per_page);
 // Get paginated unique emails
 $paginated_emails = array_slice($unique_emails, $offset, $records_per_page);
 
-// Build email list for query
 $email_list = array_column($paginated_emails, 'email');
-$email_placeholders = str_repeat('?,', count($email_list) - 1) . '?';
 
-// Fetch orders for unique emails only (get the latest order for each email)
-$final_orders = [];
-if (!empty($email_list)) {
+if (count($email_list) > 0) {
+    $email_placeholders = str_repeat('?,', count($email_list) - 1) . '?';
+
+    // Proceed with query using $email_placeholders
     $query = "SELECT o.*, 
                      ROW_NUMBER() OVER (PARTITION BY o.email ORDER BY o.created_at DESC) as rn
               FROM orders o 
               WHERE o.email IN ($email_placeholders) 
               ORDER BY o.created_at DESC";
-    
+
     $stmt = $conn->prepare($query);
     $stmt->bind_param(str_repeat('s', count($email_list)), ...$email_list);
     $stmt->execute();
     $all_results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    
-    // Filter to get only the latest order for each email
+
     foreach ($all_results as $row) {
         if ($row['rn'] == 1) {
             $final_orders[] = $row;
@@ -80,7 +99,8 @@ if (!empty($email_list)) {
 $status_options = $conn->query("SELECT DISTINCT status FROM orders WHERE status IS NOT NULL ORDER BY status")->fetch_all(MYSQLI_ASSOC);
 
 // Function to get order items
-function getOrderItems($conn, $order_id) {
+function getOrderItems($conn, $order_id)
+{
     $query = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('i', $order_id);
@@ -89,7 +109,8 @@ function getOrderItems($conn, $order_id) {
 }
 
 // Function to get all orders for a specific email
-function getOrdersByEmail($conn, $email) {
+function getOrdersByEmail($conn, $email)
+{
     $query = "SELECT * FROM orders WHERE email = ? ORDER BY created_at DESC";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('s', $email);
@@ -98,7 +119,8 @@ function getOrdersByEmail($conn, $email) {
 }
 
 // Function to check if email has multiple orders
-function hasMultipleOrders($conn, $email) {
+function hasMultipleOrders($conn, $email)
+{
     $query = "SELECT COUNT(*) as count FROM orders WHERE email = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('s', $email);
@@ -106,6 +128,18 @@ function hasMultipleOrders($conn, $email) {
     $result = $stmt->get_result()->fetch_assoc();
     return $result['count'] > 1;
 }
+
+// Function to get specific order details
+function getOrderDetails($conn, $order_id)
+{
+    $query = "SELECT * FROM orders WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param('i', $order_id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -129,7 +163,7 @@ function hasMultipleOrders($conn, $email) {
             const itemsRow = document.getElementById('items-' + orderId);
             const toggleBtn = document.getElementById('toggle-' + orderId);
             const icon = toggleBtn.querySelector('i');
-            
+
             if (itemsRow.style.display === 'none' || itemsRow.style.display === '') {
                 itemsRow.style.display = 'table-row';
                 icon.classList.remove('fa-plus');
@@ -148,7 +182,7 @@ function hasMultipleOrders($conn, $email) {
             const orderListRow = document.getElementById('orders-' + btoa(email));
             const toggleBtn = document.getElementById('toggle-orders-' + btoa(email));
             const icon = toggleBtn.querySelector('i');
-            
+
             if (orderListRow.style.display === 'none' || orderListRow.style.display === '') {
                 orderListRow.style.display = 'table-row';
                 icon.classList.remove('fa-plus');
@@ -162,34 +196,115 @@ function hasMultipleOrders($conn, $email) {
             }
         }
 
-        // Export to CSV function (enhanced with items)
-        function exportToCSV() {
-            const table = document.querySelector('table');
-            const rows = Array.from(table.querySelectorAll('tr:not(.items-row):not(.orders-row)'));
-            const csv = rows.map(row => {
-                const cells = Array.from(row.querySelectorAll('th, td'));
-                return cells.map(cell => {
-                    const text = cell.textContent.trim();
-                    return text.includes(',') ? `"${text}"` : text;
-                }).join(',');
-            }).join('\n');
+        // NEW: Toggle individual order items in the order list
+        function toggleIndividualOrderItems(orderId, email) {
+            const itemsDiv = document.getElementById('individual-items-' + orderId);
+            const toggleBtn = document.getElementById('toggle-individual-' + orderId);
+            const icon = toggleBtn.querySelector('i');
 
-            const blob = new Blob([csv], {
-                type: 'text/csv'
-            });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'client_info_' + new Date().toISOString().split('T')[0] + '.csv');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            if (itemsDiv.style.display === 'none' || itemsDiv.style.display === '') {
+                // Load items via AJAX if not already loaded
+                if (!itemsDiv.dataset.loaded) {
+                    loadOrderItems(orderId, email);
+                }
+                itemsDiv.style.display = 'block';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                toggleBtn.title = 'Hide Order Items';
+            } else {
+                itemsDiv.style.display = 'none';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                toggleBtn.title = 'Show Order Items';
+            }
         }
 
-        // Print function
-        function printTable() {
-            window.print();
+        // NEW: Load order items via AJAX
+        function loadOrderItems(orderId, email) {
+            const itemsDiv = document.getElementById('individual-items-' + orderId);
+            const loadingDiv = document.getElementById('loading-' + orderId);
+
+            if (loadingDiv) {
+                loadingDiv.style.display = 'block';
+            }
+
+            fetch('get_order_items.php?order_id=' + orderId)
+                .then(response => response.json())
+                .then(data => {
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+
+                    if (data.success && data.items.length > 0) {
+                        let itemsHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            `;
+
+                        data.items.forEach(item => {
+                            itemsHTML += `
+                    <div class="bg-white rounded-lg shadow border border-gray-200 p-4 flex flex-col justify-between h-full">
+                        <!-- Product Header -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-start mb-1">
+                                <h6 class="font-semibold text-gray-800 text-sm leading-tight">
+                                    ${item.product_name || 'Unnamed Product'}
+                                </h6>
+                                ${item.code ? `<span class="text-xs text-gray-500">${item.code}</span>` : ''}
+                            </div>
+
+                            ${item.name ? `
+                                <div class="text-xs text-gray-600">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Variant: ${item.name}
+                                </div>
+                            ` : ''}
+
+                            ${item.type_name ? `
+                                <div class="text-xs text-gray-600">
+                                    <i class="fas fa-tag mr-1"></i>
+                                    Type: ${item.type_name}
+                                </div>
+                            ` : ''}
+
+                            ${item.variant_color ? `
+                                <div class="text-xs text-gray-600">
+                                    <i class="fas fa-palette mr-1"></i>
+                                    Color: ${item.variant_color}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Price Details -->
+                        <div class="mt-auto border-t pt-2 border-gray-100 text-xs text-gray-700">
+                            <div class="flex justify-between">
+                                <span>Qty:</span>
+                                <span>${item.quantity || 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Price:</span>
+                                <span>₱${parseFloat(item.price || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between font-medium text-gray-800">
+                                <span>Total:</span>
+                                <span>₱${parseFloat(item.subtotal || 0).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                        });
+
+                        itemsHTML += '</div>';
+                        itemsDiv.innerHTML = itemsHTML;
+
+                    } else {
+                        itemsDiv.innerHTML = '<p class="text-gray-500 text-xs mt-2">No items found for this order.</p>';
+                    }
+
+                    itemsDiv.dataset.loaded = 'true';
+                })
+                .catch(error => {
+                    console.error('Error loading order items:', error);
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    itemsDiv.innerHTML = '<p class="text-red-500 text-xs mt-2">Error loading order items.</p>';
+                });
         }
 
         // Reset filters
@@ -207,23 +322,57 @@ function hasMultipleOrders($conn, $email) {
                 display: block !important;
             }
         }
-        
+
         .items-row {
             background-color: #f8fafc;
         }
-        
+
         .orders-row {
             background-color: #f1f5f9;
         }
-        
+
         .items-container {
             max-height: 300px;
             overflow-y: auto;
         }
-        
+
         .orders-container {
             max-height: 400px;
             overflow-y: auto;
+        }
+
+        .individual-order-items {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .order-card {
+            transition: all 0.3s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -232,17 +381,19 @@ function hasMultipleOrders($conn, $email) {
 
     <?php include '../navbar/top.php'; ?>
 
-    <!-- Access Denied Alert -->
     <?php if (isset($_SESSION['access_denied'])): ?>
-        <div id="alertBox" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md max-w-md mx-auto mt-6 text-sm shadow-md">
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <div>
-                    <strong class="font-bold">Access Denied:</strong>
-                    <span class="block"><?php echo htmlspecialchars($_SESSION['access_denied']); ?></span>
-                </div>
-            </div>
+        <div id="access-denied-msg" class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 transition-opacity duration-500">
+            <?= htmlspecialchars($_SESSION['access_denied']) ?>
         </div>
+        <script>
+            setTimeout(() => {
+                const msg = document.getElementById('access-denied-msg');
+                if (msg) {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500); // Fully remove after fade-out
+                }
+            }, 3000); // Hide after 3 seconds
+        </script>
         <?php unset($_SESSION['access_denied']); ?>
     <?php endif; ?>
 
@@ -303,19 +454,72 @@ function hasMultipleOrders($conn, $email) {
                     <button type="button" onclick="resetFilters()" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200">
                         <i class="fas fa-undo mr-2"></i>Reset
                     </button>
-                    <button type="button" onclick="exportToCSV()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200">
-                        <i class="fas fa-download mr-2"></i>Export CSV
-                    </button>
-                    <button type="button" onclick="printTable()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition duration-200">
-                        <i class="fas fa-print mr-2"></i>Print
-                    </button>
+                    <a href="add_driver.php" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Add Driver
+                    </a>
+                    <a href="add_tracking.php" class="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Set up Status Delivery
+                    </a>
+                      
+                    <a href="monitortracking.php" class="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Monitor Tracking Delivery 
+                    </a>
+
                 </div>
             </form>
         </div>
 
-       
+        <!-- Summary Statistics -->
+        <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Unique Clients</p>
+                        <p class="text-2xl font-bold text-gray-900"><?php echo $total_records; ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shopping-cart text-green-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Current Page Orders</p>
+                        <p class="text-2xl font-bold text-gray-900"><?php echo !empty($final_orders) ? count($final_orders) : 0; ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Current Page Value</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            ₱<?php
+                                $page_total = 0;
+                                if (!empty($final_orders)) {
+                                    foreach ($final_orders as $order) {
+                                        $page_total += $order['final_total'];
+                                    }
+                                }
+                                echo number_format($page_total, 2);
+                                ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Table Container -->
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden mt-2">
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm text-left text-gray-700">
                     <thead class="bg-blue-600 text-white">
@@ -329,7 +533,6 @@ function hasMultipleOrders($conn, $email) {
                             <th class="px-4 py-3">Zipcode</th>
                             <th class="px-4 py-3">Total</th>
                             <th class="px-4 py-3">Status</th>
-                            
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -338,18 +541,18 @@ function hasMultipleOrders($conn, $email) {
                                 <?php $has_multiple_orders = hasMultipleOrders($conn, $row['email']); ?>
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="px-4 py-3">
-                                        <div class="flex space-x-2 ">
-                                            <button id="toggle-<?php echo $row['id']; ?>" 
-                                                    onclick="toggleOrderItems(<?php echo $row['id']; ?>)"
-                                                    class="text-blue-600 hover:text-blue-800 transition duration-200" 
-                                                    title="Show Items">
+                                        <div class="flex space-x-2">
+                                            <button id="toggle-<?php echo $row['id']; ?>"
+                                                onclick="toggleOrderItems(<?php echo $row['id']; ?>)"
+                                                class="text-blue-600 hover:text-blue-800 transition duration-200"
+                                                title="Show Items">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                             <?php if ($has_multiple_orders): ?>
-                                                <button id="toggle-orders-<?php echo base64_encode($row['email']); ?>" 
-                                                        onclick="toggleOrderList('<?php echo htmlspecialchars($row['email']); ?>')"
-                                                        class="text-green-600 hover:text-green-800 transition duration-200" 
-                                                        title="Show Order List">
+                                                <button id="toggle-orders-<?php echo base64_encode($row['email']); ?>"
+                                                    onclick="toggleOrderList('<?php echo htmlspecialchars($row['email']); ?>')"
+                                                    class="text-green-600 hover:text-green-800 transition duration-200"
+                                                    title="Show Order List">
                                                     <i class="fas fa-list"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -370,7 +573,7 @@ function hasMultipleOrders($conn, $email) {
                                     <td class="px-4 py-3"><?php echo htmlspecialchars($row['mobile']); ?></td>
                                     <td class="px-4 py-3"><?php echo htmlspecialchars($row['address']); ?></td>
                                     <td class="px-4 py-3"><?php echo htmlspecialchars($row['zipcode']); ?></td>
-                                    <td class="px-4 py-3 ">₱<?php echo number_format($row['total'], 2); ?></td>
+                                    <td class="px-4 py-3">₱<?php echo number_format($row['final_total'], 2); ?></td>
                                     <td class="px-4 py-3">
                                         <span class="px-2 py-1 rounded-full text-xs font-medium 
                         <?php
@@ -400,18 +603,17 @@ function hasMultipleOrders($conn, $email) {
                                             <?php echo htmlspecialchars(ucwords($row['status'])); ?>
                                         </span>
                                     </td>
-                                
                                 </tr>
-                                
+
                                 <!-- Order Items Row -->
                                 <tr id="items-<?php echo $row['id']; ?>" class="items-row" style="display: <?php echo $show_items === '1' ? 'table-row' : 'none'; ?>;">
-                                    <td colspan="10" class="px-4 py-3 bg-gray-50">
+                                    <td colspan="9" class="px-4 py-3 bg-gray-50">
                                         <div class="items-container">
                                             <h4 class="font-semibold text-gray-800 mb-2">
                                                 <i class="fas fa-shopping-cart mr-1"></i>
                                                 Order Items for Order #<?php echo $row['id']; ?>:
                                             </h4>
-                                            <?php 
+                                            <?php
                                             $order_items = getOrderItems($conn, $row['id']);
                                             if (!empty($order_items)): ?>
                                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -427,28 +629,28 @@ function hasMultipleOrders($conn, $email) {
                                                                     </span>
                                                                 <?php endif; ?>
                                                             </div>
-                                                            
+
                                                             <?php if (!empty($item['variant_color'])): ?>
                                                                 <div class="text-xs text-gray-600 mb-1">
                                                                     <i class="fas fa-palette mr-1"></i>
                                                                     Color: <?php echo htmlspecialchars($item['variant_color']); ?>
                                                                 </div>
                                                             <?php endif; ?>
-                                                            
+
                                                             <?php if (!empty($item['type_name'])): ?>
                                                                 <div class="text-xs text-gray-600 mb-1">
                                                                     <i class="fas fa-tag mr-1"></i>
                                                                     Type: <?php echo htmlspecialchars($item['type_name']); ?>
                                                                 </div>
                                                             <?php endif; ?>
-                                                            
+
                                                             <?php if (!empty($item['name'])): ?>
                                                                 <div class="text-xs text-gray-600 mb-1">
                                                                     <i class="fas fa-info-circle mr-1"></i>
                                                                     Name: <?php echo htmlspecialchars($item['name']); ?>
                                                                 </div>
                                                             <?php endif; ?>
-                                                            
+
                                                             <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
                                                                 <div class="text-xs text-gray-600">
                                                                     Qty: <?php echo $item['quantity'] ?? 0; ?>
@@ -470,71 +672,104 @@ function hasMultipleOrders($conn, $email) {
                                     </td>
                                 </tr>
 
-                                <!-- Order List Row (only shown if multiple orders exist) -->
                                 <?php if ($has_multiple_orders): ?>
                                     <tr id="orders-<?php echo base64_encode($row['email']); ?>" class="orders-row" style="display: none;">
-                                        <td colspan="10" class="px-4 py-3 bg-slate-50">
+                                        <td colspan="9" class="px-4 py-3 bg-slate-50">
                                             <div class="orders-container">
-                                                <h4 class="font-semibold text-gray-800 mb-2">
-                                                    <i class="fas fa-list mr-1"></i>
+                                                <h4 class="font-semibold text-gray-800 mb-3">
+                                                    <i class="fas fa-history mr-1"></i>
                                                     All Orders for <?php echo htmlspecialchars($row['email']); ?>:
                                                 </h4>
-                                                <?php 
+                                                <?php
                                                 $all_orders = getOrdersByEmail($conn, $row['email']);
                                                 if (!empty($all_orders)): ?>
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                         <?php foreach ($all_orders as $order): ?>
-                                                            <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-                                                                <div class="flex justify-between items-start mb-2">
-                                                                    <h5 class="font-medium text-gray-800 text-sm">
-                                                                        Order #<?php echo $order['id']; ?>
-                                                                    </h5>
+                                                            <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm order-card">
+                                                                <div class="flex justify-between items-start mb-3">
+                                                                    <div>
+                                                                        <a href="order_details.php?id=<?php echo $order['id']; ?>"
+                                                                            class="font-medium text-blue-600 hover:text-blue-800 hover:underline transition duration-200">
+                                                                            Order #<?php echo $order['id']; ?>
+                                                                        </a>
+                                                                        <p class="text-xs text-gray-500">
+                                                                            <?php echo date('M j, Y - g:i A', strtotime($order['created_at'])); ?>
+                                                                        </p>
+                                                                    </div>
                                                                     <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                                                    <?php
-                                                                    switch (strtolower($order['status'])) {
-                                                                        case 'pending':
-                                                                            echo 'bg-yellow-100 text-yellow-800';
-                                                                            break;
-                                                                        case 'confirmed':
-                                                                            echo 'bg-green-100 text-green-800';
-                                                                            break;
-                                                                        case 'cancelled':
-                                                                            echo 'bg-red-100 text-red-800';
-                                                                            break;
-                                                                        case 'arrival':
-                                                                            echo 'bg-blue-100 text-blue-800';
-                                                                            break;
-                                                                        case 'departure':
-                                                                            echo 'bg-purple-100 text-purple-800';
-                                                                            break;
-                                                                        case 'complete':
-                                                                            echo 'bg-gray-200 text-gray-800';
-                                                                            break;
-                                                                        default:
-                                                                            echo 'bg-gray-100 text-gray-600';
-                                                                    }
-                                                                    ?>">
+                                                                        <?php
+                                                                        switch (strtolower($order['status'])) {
+                                                                            case 'pending':
+                                                                                echo 'bg-yellow-100 text-yellow-800';
+                                                                                break;
+                                                                            case 'confirmed':
+                                                                                echo 'bg-green-100 text-green-800';
+                                                                                break;
+                                                                            case 'cancelled':
+                                                                                echo 'bg-red-100 text-red-800';
+                                                                                break;
+                                                                            case 'arrival':
+                                                                                echo 'bg-blue-100 text-blue-800';
+                                                                                break;
+                                                                            case 'departure':
+                                                                                echo 'bg-purple-100 text-purple-800';
+                                                                                break;
+                                                                            case 'complete':
+                                                                                echo 'bg-gray-200 text-gray-800';
+                                                                                break;
+                                                                            default:
+                                                                                echo 'bg-gray-100 text-gray-600';
+                                                                        }
+                                                                        ?>">
                                                                         <?php echo htmlspecialchars(ucwords($order['status'])); ?>
                                                                     </span>
                                                                 </div>
-                                                                
-                                                                <div class="text-xs text-gray-600 mb-1">
-                                                                    <i class="fas fa-calendar mr-1"></i>
-                                                                    Order Date: <?php echo date('M d, Y', strtotime($order['created_at'])); ?>
-                                                                </div>
-                                                                
-                                                                <div class="text-xs text-gray-600 mb-1">
-                                                                    <i class="fas fa-truck mr-1"></i>
-                                                                    Est. Arrival: <?php echo date('M d, Y', strtotime($order['estimated_arrival_date'])); ?>
-                                                                </div>
-                                                                
-                                                                <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                                                                    <div class="text-xs text-gray-600">
-                                                                        <?php echo htmlspecialchars($order['customer_name']); ?>
+
+                                                                <div class="space-y-2 mb-3">
+                                                                    <div class="flex justify-between text-sm">
+                                                                        <span class="text-gray-600">Customer:</span>
+                                                                        <span class="font-medium"><?php echo htmlspecialchars($order['customer_name']); ?></span>
                                                                     </div>
-                                                                    <div class="text-sm font-medium text-gray-800">
-                                                                        ₱<?php echo number_format($order['total'], 2); ?>
+                                                                    <div class="flex justify-between text-sm">
+                                                                        <span class="text-gray-600">Total:</span>
+                                                                        <span class="font-medium text-green-600">₱<?php echo number_format($order['total'], 2); ?></span>
                                                                     </div>
+                                                                    <div class="flex justify-between text-sm">
+                                                                        <span class="text-gray-600">Address:</span>
+                                                                        <span class="font-medium text-right max-w-xs truncate"><?php echo htmlspecialchars($order['address']); ?></span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                                                                    <button id="toggle-individual-<?php echo $order['id']; ?>"
+                                                                        onclick="toggleIndividualOrderItems(<?php echo $order['id']; ?>, '<?php echo htmlspecialchars($order['email']); ?>')"
+                                                                        class="text-blue-600 hover:text-blue-800 text-sm transition duration-200"
+                                                                        title="Show Order Items">
+                                                                        <i class="fas fa-eye mr-1"></i>
+                                                                        View Items
+                                                                    </button>
+                                                                    <a href="order_details.php?id=<?php echo $order['id']; ?>"
+                                                                        class="text-green-600 hover:text-green-800 text-sm transition duration-200"
+                                                                        title="View Full Order Details">
+                                                                        <i class="fas fa-external-link-alt mr-1"></i>
+                                                                        Details
+                                                                    </a>
+                                                                    <span class="text-xs text-gray-500">
+                                                                        <?php echo $order['mobile']; ?>
+                                                                    </span>
+                                                                </div>
+
+                                                                <!-- Individual Order Items Container -->
+                                                                <div id="individual-items-<?php echo $order['id']; ?>"
+                                                                    class="individual-order-items mt-3 pt-3 border-t border-gray-100"
+                                                                    style="display: none;">
+                                                                    <div id="loading-<?php echo $order['id']; ?>"
+                                                                        class="text-center py-2"
+                                                                        style="display: none;">
+                                                                        <div class="loading-spinner mx-auto"></div>
+                                                                        <p class="text-xs text-gray-500 mt-1">Loading items...</p>
+                                                                    </div>
+                                                                    <!-- Items will be loaded here via AJAX -->
                                                                 </div>
                                                             </div>
                                                         <?php endforeach; ?>
@@ -549,9 +784,12 @@ function hasMultipleOrders($conn, $email) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="10" class="text-center py-12 text-gray-500">
-                                    <i class="fas fa-inbox text-2xl mb-2"></i><br>
-                                    No unique clients found.
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i>
+                                        <h3 class="text-lg font-medium mb-2">No Records Found</h3>
+                                        <p class="text-sm">Try adjusting your search criteria or filters.</p>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endif; ?>
@@ -562,55 +800,128 @@ function hasMultipleOrders($conn, $email) {
 
         <!-- Pagination -->
         <?php if ($total_pages > 1): ?>
-            <div class="bg-white rounded-lg shadow-md p-4 mt-6 no-print">
-                <div class="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
-                    <div class="flex space-x-1">
-                        <!-- Previous Page -->
-                        <?php if ($page > 1): ?>
-                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>"
-                                class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200">
-                                <i class="fas fa-chevron-left"></i> Previous
-                            </a>
-                        <?php endif; ?>
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow-md no-print">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <?php if ($page > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Previous
+                        </a>
+                    <?php endif; ?>
 
-                        <!-- Page Numbers -->
-                        <?php
-                        $start_page = max(1, $page - 2);
-                        $end_page = min($total_pages, $page + 2);
+                    <?php if ($page < $total_pages): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>"
+                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                        </a>
+                    <?php endif; ?>
+                </div>
 
-                        for ($i = $start_page; $i <= $end_page; $i++): ?>
-                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"
-                                class="px-3 py-2 text-sm border rounded-md transition duration-200 <?php echo $i == $page ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 hover:bg-gray-50'; ?>">
-                                <?php echo $i; ?>
-                            </a>
-                        <?php endfor; ?>
-
-                        <!-- Next Page -->
-                        <?php if ($page < $total_pages): ?>
-                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>"
-                                class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200">
-                                Next <i class="fas fa-chevron-right"></i>
-                            </a>
-                        <?php endif; ?>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium"><?php echo ($page - 1) * $records_per_page + 1; ?></span>
+                            to
+                            <span class="font-medium"><?php echo min($page * $records_per_page, $total_records); ?></span>
+                            of  
+                            <span class="font-medium"><?php echo $total_records; ?></span>
+                            results
+                        </p>
                     </div>
 
-                    <!-- Jump to Page -->
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-600">Go to page:</span>
-                        <input type="number" min="1" max="<?php echo $total_pages; ?>" value="<?php echo $page; ?>"
-                            class="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            onchange="window.location.href = '?<?php echo http_build_query(array_merge($_GET, ['page' => ''])); ?>' + this.value">
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <?php if ($page > 1): ?>
+                                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php
+                            $start_page = max(1, $page - 2);
+                            $end_page = min($total_pages, $page + 2);
+
+                            if ($start_page > 1): ?>
+                                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    1
+                                </a>
+                                <?php if ($start_page > 2): ?>
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                        ...
+                                    </span>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium 
+                                   <?php echo $i == $page ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'; ?>">
+                                    <?php echo $i; ?>
+                                </a>
+                            <?php endfor; ?>
+
+                            <?php if ($end_page < $total_pages): ?>
+                                <?php if ($end_page < $total_pages - 1): ?>
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                        ...
+                                    </span>
+                                <?php endif; ?>
+                                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $total_pages])); ?>"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    <?php echo $total_pages; ?>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php if ($page < $total_pages): ?>
+                                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            <?php endif; ?>
+                        </nav>
                     </div>
                 </div>
             </div>
         <?php endif; ?>
+
+
     </div>
 
-    <!-- Print Title (Hidden by default, shown when printing) -->
+    <!-- Print Title (hidden by default, shown when printing) -->
     <div class="print-title hidden text-center mb-4">
         <h1 class="text-2xl font-bold">Client Information Report</h1>
-        <p class="text-sm text-gray-600">Generated on <?php echo date('F j, Y'); ?></p>
+        <p class="text-gray-600">Generated on <?php echo date('F j, Y'); ?></p>
     </div>
+
+    <script>
+        // Show items initially if the show_items parameter is set
+        <?php if ($show_items === '1'): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Update all toggle buttons to show minus icon
+                const toggleButtons = document.querySelectorAll('[id^="toggle-"]');
+                toggleButtons.forEach(button => {
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-plus');
+                        icon.classList.add('fa-minus');
+                        button.title = 'Hide Items';
+                    }
+                });
+            });
+        <?php endif; ?>
+
+        // Auto-hide session messages
+        setTimeout(() => {
+            const accessMsg = document.getElementById('access-denied-msg');
+            if (accessMsg) {
+                accessMsg.style.opacity = '0';
+                setTimeout(() => accessMsg.remove(), 500);
+            }
+        }, 5000);
+    </script>
 
 </body>
 

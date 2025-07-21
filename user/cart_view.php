@@ -1,11 +1,12 @@
 <?php
+session_name("nobleuser");
 session_start();
 include '../connection/connect.php';
 
-
-// ✅ Restore session from remember_token (normal account or Google)
+// ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
@@ -13,23 +14,27 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
-        $_SESSION['user_email'] = $user['email'];
-        
-        // Check if the account is Google-based (optional flag or logic)
+
+        // 🔐 Store essential user session info
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_name']  = $user['name'];
+        $_SESSION['user_email'] = $user['email'] ?? '';
+        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+
+        // 👤 Check if it's a Google account (optional)
         if (!empty($user['google_id'])) {
             $_SESSION['google_logged_in'] = true;
             $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
         }
     }
+
     $stmt->close();
 }
 
-// ✅ Final check if logged in (either normal or Google)
+// ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-    // Not logged in, redirect to login/Google callback
-    header('Location: google-callback.php');
+    // Not logged in — redirect to login or Google auth
+    header('Location: google-callback.php'); // You may replace with `index.php` if default login
     exit;
 }
 
@@ -49,7 +54,7 @@ unset($_SESSION['checkout_notice']);
 // ✅ Fetch cart items from database
 if ($user_id) {
 
-$stmt = $conn->prepare("
+  $stmt = $conn->prepare("
   SELECT c.*, t.type_image, v.descrip6, v.descrip7
   FROM user_cart_items c
   LEFT JOIN product_types t 
@@ -80,15 +85,15 @@ $stmt = $conn->prepare("
 </head>
 
 <body class="bg-gray-100 font-sans">
- <!-- Hero Section -->
-  
+  <!-- Hero Section -->
+
   <?php include 'navbar/top.php'; ?>
   <div class="bg-orange-600 text-white py-5">
-        <div class="container mx-auto px-4">
-            <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
-            <p class="text-xl text-center opacity-90">Review your items and proceed to checkout</p>
-        </div>
+    <div class="container mx-auto px-4">
+      <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
+      <p class="text-xl text-center opacity-90">Review your items and proceed to checkout</p>
     </div>
+  </div>
 
   <div class="px-4 py-4">
     <nav class="text-sm text-gray-600">
@@ -141,13 +146,13 @@ $stmt = $conn->prepare("
                   <tr>
                     <td class="py-3 px-4 font-semibold text-gray-800"><?= htmlspecialchars($item['codename']) ?></td>
                     <td class="py-3 px-4 text-sm text-gray-700 space-y-1">
-  <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
-  <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
-  <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
-  <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
-  <div><span class="font-semibold">Unit:</span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
-  <div><span class="font-semibold">Specification:</span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
-</td>
+                      <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
+                      <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
+                      <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
+                      <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
+                      <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
+                      <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
+                    </td>
 
                     <td class="py-3 px-4">
                       <input type="number" name="quantities[<?= $item['id'] ?>]"
@@ -161,15 +166,15 @@ $stmt = $conn->prepare("
                     <td class="py-3 px-4 text-green-600 font-bold">
                       ₱<?= number_format($subtotal, 2) ?>
                     </td>
-                    
+
                     <td class="py-3 px-4">
                       <?php if (!empty($item['type_image'])): ?>
-                        <img src="../<?=($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
+                        <img src="../<?= ($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
                       <?php else: ?>
                         <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">No Image</div>
                       <?php endif; ?>
                     </td>
-                  
+
                     <td class="py-3 px-4 align-middle">
                       <a href="cart/remove_from_cart.php?key=<?= $item['id'] ?>"
                         class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 transition"

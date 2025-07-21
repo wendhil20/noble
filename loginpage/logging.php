@@ -1,171 +1,137 @@
 <?php
-// Start session with secure settings
+session_name("nobleadmin");
+// Secure session settings - 24 hours
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1);
+ini_set('session.cookie_secure', 1); // Only works if site uses HTTPS
 ini_set('session.use_strict_mode', 1);
-session_start();
+session_start([
+    'cookie_lifetime' => 86400, // 24 hours (24 * 60 * 60 = 86400 seconds)
+    'gc_maxlifetime' => 86400   // Session data lifetime - 24 hours
+]);
 
-// Include database connection
 include '../connection/connect.php';
 
-// Initialize response array for JSON responses
-$response = array();
+$response = [];
 
-// Check if request is POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: index.php");
     exit();
 }
 
 try {
-    // Sanitize and validate input
     $email = filter_var(trim($_POST["email"]), FILTER_SANITIZE_EMAIL);
     $password = trim($_POST["password"]);
-    
-    // Validate email format
+
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         throw new Exception("Invalid email format.");
     }
-    
-    // Check for empty fields
+
     if (empty($email) || empty($password)) {
         throw new Exception("Please fill in all required fields.");
     }
-    
-    // Prepare statement to prevent SQL injection
+
     $stmt = $conn->prepare("SELECT id, email, password, lvl, status, last_login, failed_attempts, locked_until FROM nobleaccount WHERE email = ? LIMIT 1");
-    
+
     if (!$stmt) {
-        throw new Exception("Database error occurred. Please try again.");
+        throw new Exception("Database error.");
     }
-    
+
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    // Check if user exists
+
     if ($result->num_rows !== 1) {
-        // Don't reveal if email exists or not for security
         throw new Exception("Invalid email or password.");
     }
-    
+
     $user = $result->fetch_assoc();
-    
-    // Check if account is active
-    if (isset($user['status']) && $user['status'] !== 'active') {
-        throw new Exception("Your account has been deactivated. Please contact support.");
+
+    // Status check
+    if ($user['status'] !== 'active') {
+        throw new Exception("Your account has been deactivated.");
     }
-    
-    // Check if account is temporarily locked
-    if (isset($user['locked_until']) && $user['locked_until'] && new DateTime() < new DateTime($user['locked_until'])) {
-        throw new Exception("Account temporarily locked due to multiple failed attempts. Please try again later.");
+
+    // Lockout check
+    if (!empty($user['locked_until']) && new DateTime() < new DateTime($user['locked_until'])) {
+        throw new Exception("Account locked due to failed login attempts. Try again later.");
     }
-    
-    // Verify password
+
+    // Password verify
     if (!password_verify($password, $user['password'])) {
-        // Increment failed attempts
-        $failed_attempts = isset($user['failed_attempts']) ? $user['failed_attempts'] + 1 : 1;
+        $failed_attempts = $user['failed_attempts'] + 1;
         $locked_until = null;
-        
-        // Lock account after 5 failed attempts for 30 minutes
+
         if ($failed_attempts >= 5) {
             $locked_until = date('Y-m-d H:i:s', strtotime('+30 minutes'));
         }
-        
-        // Update failed attempts
-        $update_stmt = $conn->prepare("UPDATE nobleaccount SET failed_attempts = ?, locked_until = ? WHERE email = ?");
-        $update_stmt->bind_param("iss", $failed_attempts, $locked_until, $email);
-        $update_stmt->execute();
-        $update_stmt->close();
-        
+
+        $update = $conn->prepare("UPDATE nobleaccount SET failed_attempts = ?, locked_until = ? WHERE email = ?");
+        $update->bind_param("iss", $failed_attempts, $locked_until, $email);
+        $update->execute();
+        $update->close();
+
         throw new Exception("Invalid email or password.");
     }
-    
-    // Successful login - Clear failed attempts and update last login
-    $update_stmt = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW() WHERE email = ?");
-    $update_stmt->bind_param("s", $email);
-    $update_stmt->execute();
-    $update_stmt->close();
-    
-    // Regenerate session ID for security
+
+    // Reset attempts on success
+    $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW() WHERE email = ?");
+    $reset->bind_param("s", $email);
+    $reset->execute();
+    $reset->close();
+
+    // Regenerate session ID
     session_regenerate_id(true);
-    
-    // Store user information in session
+
     $_SESSION['noble_user'] = $user['email'];
     $_SESSION['noble_lvl'] = $user['lvl'];
     $_SESSION['noble_id'] = $user['id'];
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
-    
-    // Log successful login (optional)
-    error_log("Successful login: " . $user['email'] . " at " . date('Y-m-d H:i:s'));
-    
-    // Determine redirect URL based on user level
-    $redirect_url = "";
-    switch (strtolower($user['lvl'])) {
-        case 'superadmin':
-            $redirect_url = "../admin/client/dashboard.php";
-            break;
-        case 'admin':
-            $redirect_url = "../admin/client/dashboard.php";
-            break;
-        case 'sales':
-            $redirect_url = "../sales/dashboard.php";
-            break;
-        case 'accountant':
-            $redirect_url = "../accountant/dashboard.php";
-            break;
-        default:
-            $redirect_url = "../admin/client/dashboard.php";
-            break;
-    }
-    
-    // Close statement
+    $_SESSION['session_expires'] = time() + 86400; // 24 hours from now
+
+    // Determine redirect
+    $redirect = match (strtolower($user['lvl'])) {
+        'superadmin', 'admin' => "../admin/client/dashboard.php",
+        'sales' => "../sales/dashboard.php",
+        'accountant' => "../accountant/dashboard.php",
+        default => "../admin/client/dashboard.php"
+    };
+
     $stmt->close();
-    
-    // If AJAX request, return JSON response
-    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-        $response['success'] = true;
-        $response['message'] = 'Login successful!';
-        $response['redirect'] = $redirect_url;
+
+    // AJAX or normal redirect
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        $response = [
+            'success' => true,
+            'message' => 'Login successful',
+            'redirect' => $redirect
+        ];
         header('Content-Type: application/json');
         echo json_encode($response);
-        exit();
+        exit;
     }
-    
-    // Regular form submission - redirect
-    header("Location: " . $redirect_url);
+
+    header("Location: " . $redirect);
     exit();
-    
+
 } catch (Exception $e) {
-    // Log the error
-    error_log("Login error: " . $e->getMessage() . " for email: " . ($email ?? 'unknown'));
-    
-    // Close statement if it exists
-    if (isset($stmt)) {
-        $stmt->close();
-    }
-    
-    // If AJAX request, return JSON error
-    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-        $response['success'] = false;
-        $response['message'] = $e->getMessage();
+    error_log("Login error: " . $e->getMessage());
+
+    if (isset($stmt)) $stmt->close();
+
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        $response = [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
         header('Content-Type: application/json');
         echo json_encode($response);
-        exit();
+        exit;
     }
-    
-    // Regular form submission - show alert and go back
-    echo "<script>
-        alert('" . addslashes($e->getMessage()) . "');
-        window.history.back();
-    </script>";
+
+    echo "<script>alert('" . addslashes($e->getMessage()) . "'); window.history.back();</script>";
     exit();
-    
 } finally {
-    // Always close database connection
-    if (isset($conn)) {
-        $conn->close();
-    }
+    if (isset($conn)) $conn->close();
 }
 ?>

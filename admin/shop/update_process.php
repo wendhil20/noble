@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 include '../../connection/connect.php';
 error_reporting(E_ALL);
@@ -45,11 +44,29 @@ function saveImageToFolder($file, $targetDir = '../../uploads/') {
     return null;
 }
 
-// Reset AUTO_INCREMENT if empty
-foreach (['products', 'product_colors', 'product_variants', 'product_types'] as $table) {
-    $row = $conn->query("SELECT COUNT(*) as total FROM $table")->fetch_assoc();
-    if ((int)$row['total'] === 0) $conn->query("ALTER TABLE $table AUTO_INCREMENT = 1");
+$tables = ['products', 'product_types', 'product_variants', 'product_colors'];
+
+foreach ($tables as $table) {
+    // Kunin ang current max id
+    $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
+    $row = $result->fetch_assoc();
+    $max_id = (int)$row['max_id'];
+
+    if ($max_id > 0) {
+        // Check if the max_id row exists
+        $result2 = $conn->query("SELECT COUNT(*) AS count FROM $table WHERE id = $max_id");
+        $row2 = $result2->fetch_assoc();
+
+        if ((int)$row2['count'] === 0) {
+            // Reset AUTO_INCREMENT to max_id
+            $conn->query("ALTER TABLE $table AUTO_INCREMENT = $max_id");
+        }
+    } else {
+        // Walang laman ang table, reset to 1
+        $conn->query("ALTER TABLE $table AUTO_INCREMENT = 1");
+    }
 }
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {

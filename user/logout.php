@@ -1,4 +1,6 @@
 <?php
+session_name("nobleuser");
+
 session_start();
 
 // Unset all session variables

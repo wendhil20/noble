@@ -1,6 +1,5 @@
 <?php 
 include '../../connection/connect.php';
-
 include '../role/roleaccount.php';
 require_role(['admin', 'superadmin']); // allow only admin and superadmin
 

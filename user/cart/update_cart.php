@@ -1,4 +1,5 @@
 <?php
+session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 

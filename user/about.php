@@ -5,113 +5,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noble Home Corp - About Us</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+          .font-poppins {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .font-opensans {
+    font-family: 'Open Sans', sans-serif;
+  }
+
+        .shadow-subtle {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .border-accent {
+            border-color: #e97517;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s ease;
+        }
+        .text-primary {
+            color: #1e40af;
+        }
+        .text-accent {
+            color: #e97517;
+        }
+        .bg-accent {
+            background-color: #e97517;
+        }
+        .bg-primary {
+            background-color: #1e40af;
+        }
+    </style>
+
+
 </head>
-<body class="bg-black font-sans"> 
+<body class="bg-gray-50">
     <?php include 'navbar/top.php'; ?>
-    <section class="about-us px-4 py-12">
-        <!-- Header Section -->
-        <div class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">About Us</h1>
-            <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
+    <!-- Header Section -->
+    <div class="bg-white border-b-4 border-accent">
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-orange-600 text-center font-poppins">About Us</h1>
+                  <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
         </div>
-        
-        <!-- About Content -->
-        <div class="bg-white rounded-lg shadow-lg p-8 mb-12">
+    </div>
+    
+    <div class=" px-6 py-12">
+        <!-- Company Introduction -->
+        <div class="bg-white rounded-lg shadow-subtle p-8 mb-12">
             <div class="flex flex-col md:flex-row items-center gap-8">
                 <div class="flex-shrink-0">
                     <img src="img/logo/logo.png" alt="Noble Home Corp Logo" class="w-32 h-32 object-contain">
                 </div>
                 <div class="flex-1">
-                    <p class="text-lg text-gray-700 leading-relaxed">
-                        Welcome to <span class="font-semibold text-blue-600">Noble Home Corp</span>, a leading provider of high-quality construction products. With years of experience, we pride ourselves on delivering top-notch products that transform spaces. Our goal is to offer solutions that enhance the functionality and aesthetic appeal of homes and commercial spaces alike.
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 font-poppins"><span class="text-orange-500">Noble Home</span> Contruction Corporation </h2>
+                    <p class="text-lg text-gray-700 leading-relaxed ">
+                        A trusted supplier of high-quality construction materials, serving builders, contractors, and developers across the Philippines. We offer a comprehensive range of products including AAC blocks, fiber cement boards, tiles, aluminum windows, and more—delivering reliable solutions for all types of construction projects.
                     </p>
                 </div>
             </div>
         </div>
         
         <!-- Mission & Vision Section -->
-        <div class="grid md:grid-cols-2 gap-8 mb-12">
-            <!-- Mission -->
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fas fa-bullseye text-blue-600 mr-3"></i>
-                    Our Mission
-                </h2>
-                <ul class="space-y-6">
-                    <li class="border-l-4 border-blue-600 pl-4">
-                        <strong class="text-gray-800 block mb-2">For Our Buyers:</strong>
-                        <p class="text-gray-600">We are committed to offering high-quality, aesthetically pleasing, and reasonably priced homes tailored to your needs and aspirations.</p>
-                    </li>
-                    <li class="border-l-4 border-green-600 pl-4">
-                        <strong class="text-gray-800 block mb-2">For Our Employees & Agents:</strong>
-                        <p class="text-gray-600">We provide a nurturing environment that encourages professional growth, personal development, and long-term financial success.</p>
-                    </li>
-                    <li class="border-l-4 border-purple-600 pl-4">
-                        <strong class="text-gray-800 block mb-2">For Our Business Partners:</strong>
-                        <p class="text-gray-600">We build long-lasting relationships grounded in trust, transparency, and mutual benefit.</p>
-                    </li>
-                </ul>
+        <div class="grid md:grid-cols-2 gap-12 items-start mb-12">
+            <!-- Left: Image -->
+            <div>
+                <img src="img/about.png" alt="Mission and Vision" class="w-full h-[530px] object-contain rounded-lg ">
             </div>
-            
-            <!-- Vision -->
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fas fa-eye text-blue-600 mr-3"></i>
-                    Our Vision
-                </h2>
-                <div class="space-y-4">
+
+            <!-- Right: Mission and Vision -->
+            <div class="space-y-8">
+                <!-- Mission -->
+                <div class="bg-white rounded-lg shadow-subtle p-8 hover-lift">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-bullseye text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-orange-500 font-poppins">Our Mission   <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div></h2>
+                            
+                    </div>
                     <p class="text-gray-700 leading-relaxed">
-                       To be the leading provider of premium furnishing supplies, offering customers a one-stop destination for style, quality, and affordability. We envision empowering every homeowner to create inspiring spaces that reflect their individual tastes and elevate their everyday living.
+                        At NobleHome Construction Corporation, our mission is to provide high-quality, innovative furnishing solutions that transform homes into timeless, elegant spaces. We are committed to delivering exceptional value, superior customer service, and a diverse range of products that meet the unique needs of every home.
+                    </p>
+                </div>
+
+                <!-- Vision -->
+                <div class="bg-white rounded-lg shadow-subtle p-8 hover-lift">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-accent rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-eye text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-orange-500 font-poppins">Our Vision <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div></h2>
+                              
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">
+                        To be the leading provider of premium furnishing supplies, offering customers a one-stop destination for style, quality, and affordability. We envision empowering every homeowner to create inspiring spaces that reflect their individual tastes and elevate their everyday living.
                     </p>
                 </div>
             </div>
         </div>
-        
+
         <!-- Core Values Section -->
-        <div class="bg-white rounded-lg shadow-lg p-8">
-            <h2 class="text-3xl font-bold text-gray-800 text-center mb-12">
-                Our Core Values
+        <div class="bg-white rounded-lg shadow-subtle p-8">
+            <h2 class="text-3xl font-bold text-orange-500 text-center mb-12 font-poppins">
+                Our Core Values   <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
             </h2>
             <div class="grid md:grid-cols-3 gap-8">
-                <!-- Quality -->
-                <div class="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                        <i class="fas fa-cogs text-3xl text-blue-600"></i>
+                <!-- Product Abilities -->
+                <div class="text-center hover-lift">
+                    <div class="w-20 h-20 bg-blue-50 border-2 border-primary rounded-lg flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-cogs text-2xl text-primary"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Quality</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        We ensure the highest standards in every product we offer. Precision and craftsmanship define our work.
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">PRODUCT ABILITIES</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        We have a warehouse that supplies all of our products and materials. With all of our sister companies Ecotex, Ecopipe, Realflooring, Realiving, Instyle and GrandEast, we can provide all the products in the market.
                     </p>
                 </div>
                 
-                <!-- Integrity -->
-                <div class="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                        <i class="fas fa-handshake text-3xl text-green-600"></i>
+                <!-- Design Abilities -->
+                <div class="text-center hover-lift">
+                    <div class="w-20 h-20 bg-orange-50 border-2 border-accent rounded-lg flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-pencil-ruler text-2xl text-accent"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Integrity</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Honesty and transparency are at the core of all our business practices. We build trust with our clients and partners.
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">DESIGN ABILITIES</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        We have expert designers, architects and engineers that collaborate to ensure the precision and accuracy of the design based on industry standards.
                     </p>
                 </div>
                 
-                <!-- Customer Focus -->
-                <div class="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                    <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
-                        <i class="fas fa-users text-3xl text-purple-600"></i>
+                <!-- Production Abilities -->
+                <div class="text-center hover-lift">
+                    <div class="w-20 h-20 bg-green-50 border-2 border-green-600 rounded-lg flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-industry text-2xl text-green-600"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Customer Focus</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Your satisfaction is our priority. We aim to deliver exceptional service and solutions tailored to your needs.
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">PRODUCTION ABILITIES</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        Using our automated machines CNC saw, CNC drilling, edge banding machine and other production equipment, we can manufacture and produce products on time. Our expert production team ensures quality and standards.
                     </p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <section class="bg-black">
-        <footer class=" text-white py-16 mt-12 relative overflow-hidden">
+   
+    <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
@@ -133,7 +173,7 @@
                         <!-- Text Branding -->
                         <div>
                             <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-                            <p class="text-orange-300 font-medium">Building quality homes since 2010</p>
+
                         </div>
                     </div>
 
@@ -171,11 +211,9 @@
                         <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </h3>
                     <nav class="space-y-3">
-                        <a href="index.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
-                        <a href="about.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
-                        <a href="contact.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
-                        <a href="portfolio.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Portfolio</a>
-                        <a href="services.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Services</a>
+                        <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
+                        <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
+                        <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
                     </nav>
                 </div>
 
@@ -252,6 +290,6 @@
             </svg>
         </div>
     </footer>
-    </section>
+
 </body>
 </html>

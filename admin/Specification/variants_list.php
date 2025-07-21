@@ -1,6 +1,27 @@
 <?php
-include '../../connection/connect.php';
+session_name("nobleadmin");
 
+session_start();
+include '../role/roleaccount.php';
+require_role(['admin', 'superadmin']); // allow only admin and superadmin
+
+// Check if user is logged in
+if (!isset($_SESSION['noble_user'])) {
+    // Redirect to login page
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+// Optional: Auto-logout after inactivity (e.g. 30 mins)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+    // Destroy session and redirect to login
+    session_unset();
+    session_destroy();
+    header("Location: ../../loginpage/index.php?timeout=true");
+    exit();
+}
+
+include '../../connection/connect.php';
 $result = $conn->query("SELECT id, namevariant FROM product_variants ORDER BY id ASC");
 ?>
 

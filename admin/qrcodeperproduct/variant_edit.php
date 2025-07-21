@@ -1,6 +1,24 @@
 <?php
+session_name("nobleadmin");
 include '../../connection/connect.php';
+require '../../vendor/autoload.php';
 session_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['noble_user'])) {
+    // Redirect to login page
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+// Optional: Auto-logout after inactivity (e.g. 30 mins)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+    // Destroy session and redirect to login
+    session_unset();
+    session_destroy();
+    header("Location: ../../loginpage/index.php?timeout=true");
+    exit();
+}
 
 // ➤ Helper: save image to uploads/ and convert to WebP
 function saveImageToFolder($file, $targetDir = '../../uploads/') {
@@ -113,6 +131,9 @@ if (!$variant) {
     exit;
 }
 ?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

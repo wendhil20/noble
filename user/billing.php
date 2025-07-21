@@ -1,11 +1,33 @@
 <?php
+session_name("nobleuser");
+session_start();
 include '../../connection/connect.php';
 
-$order_id = $_GET['order_id'] ?? 0;
-$ref_no = $_GET['ref'] ?? '';
+if (!isset($_SESSION['user_id'])) {
+    echo "User not logged in.";
+    exit();
+}
 
-$order = $conn->query("SELECT * FROM orders WHERE id = $order_id")->fetch_assoc();
-$client = $conn->query("SELECT * FROM client_info WHERE reference_no = '$ref_no'")->fetch_assoc();
+$user_id = $_SESSION['user_id'];
+
+$user = $conn->query("SELECT * FROM users WHERE id = $user_id")->fetch_assoc();
+if (!$user) {
+    echo "User not found.";
+    exit();
+}
+
+$user_email = $user['email'];
+
+$order = $conn->query("SELECT * FROM orders WHERE email = '$user_email' ORDER BY id DESC LIMIT 1")->fetch_assoc();
+if (!$order) {
+    echo "No orders found.";
+    exit();
+}
+
+$order_id = $order['id']; // Important!
+$ref_no = $order['reference_no'] ?? 'N/A';
+$amount_due = $order['amount_due'] ?? 0.00;
+
 ?>
 
 <!DOCTYPE html>
@@ -21,20 +43,21 @@ $client = $conn->query("SELECT * FROM client_info WHERE reference_no = '$ref_no'
     <form action="upload_proof.php" method="POST" enctype="multipart/form-data" class="space-y-4">
       <input type="hidden" name="order_id" value="<?= $order_id ?>">
       <input type="hidden" name="ref_no" value="<?= htmlspecialchars($ref_no) ?>">
+      <input type="hidden" name="user_id" value="<?= $user_id ?>">
 
       <div>
         <label class="block font-semibold text-sm">Client Name</label>
-        <input type="text" value="<?= htmlspecialchars($client['name']) ?>" class="w-full border px-3 py-2 rounded" readonly>
+        <input type="text" value="<?= htmlspecialchars($user['name']) ?>" class="w-full border px-3 py-2 rounded" readonly>
       </div>
 
       <div>
         <label class="block font-semibold text-sm">Email</label>
-        <input type="email" value="<?= htmlspecialchars($client['email']) ?>" class="w-full border px-3 py-2 rounded" readonly>
+        <input type="email" value="<?= htmlspecialchars($user['email']) ?>" class="w-full border px-3 py-2 rounded" readonly>
       </div>
 
       <div>
         <label class="block font-semibold text-sm">Amount Due</label>
-        <input type="text" value="₱<?= number_format($order['total'] - ($order['total'] * $order['discount'] / 100) + $order['shipping_fee'], 2) ?>" class="w-full border px-3 py-2 rounded bg-yellow-50 font-bold text-green-700" readonly>
+        <input type="text" value="₱<?= number_format($amount_due, 2) ?>" class="w-full border px-3 py-2 rounded bg-yellow-50 font-bold text-green-700" readonly>
       </div>
 
       <div>

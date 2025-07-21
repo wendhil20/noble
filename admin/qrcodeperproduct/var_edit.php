@@ -1,6 +1,9 @@
 <?php
 include '../../connection/connect.php';
 
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $variant_id = (int)$_POST['id'];
     $descriptionpic = $_POST['descriptionpic'];

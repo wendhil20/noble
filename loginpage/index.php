@@ -1,3 +1,22 @@
+<?php
+session_name("nobleadmin");
+session_start();
+
+if (isset($_SESSION['noble_user'])) {
+    $role = strtolower($_SESSION['noble_lvl'] ?? '');
+
+    $redirect = match ($role) {
+        'superadmin', 'admin' => "../admin/client/dashboard.php",
+        'sales' => "../sales/dashboard.php",
+        'accountant' => "../accountant/dashboard.php",
+        default => "../admin/client/dashboard.php"
+    };
+
+    header("Location: $redirect");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 

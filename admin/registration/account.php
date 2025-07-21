@@ -5,8 +5,10 @@ $success = "";
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $fullname = trim($_POST['fullname']);
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
+    $lvl = trim($_POST['lvl']);
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Check if email exists
@@ -18,9 +20,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($check->num_rows > 0) {
         $error = "Email is already registered.";
     } else {
-        // Insert into database
-        $stmt = $conn->prepare("INSERT INTO nobleaccount (email, password) VALUES (?, ?)");
-        $stmt->bind_param("s", $email, $hashed_password);
+        // Insert into database with fullname and level
+        $stmt = $conn->prepare("INSERT INTO nobleaccount (fullname, email, password, lvl) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $fullname, $email, $hashed_password, $lvl);
 
         if ($stmt->execute()) {
             $success = "Registration successful. You can now log in.";
@@ -55,22 +57,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <div class="bg-green-100 text-green-700 p-3 rounded mb-4"><?php echo $success; ?></div>
         <?php endif; ?>
 
-     <form action="register.php" method="POST" class="space-y-4">
-  <!-- Email -->
-  <input type="email" name="email" required class="w-full border px-4 py-2 rounded" placeholder="Email">
+        <form action="register.php" method="POST" class="space-y-4">
+            <!-- Full Name -->
+            <input type="text" name="fullname" required class="w-full border px-4 py-2 rounded" placeholder="Full Name">
 
-  <!-- Password -->
-  <input type="password" name="password" required class="w-full border px-4 py-2 rounded" placeholder="Password">
+            <!-- Email -->
+            <input type="email" name="email" required class="w-full border px-4 py-2 rounded" placeholder="Email">
 
-  <!-- Level (admin, superadmin, employee) -->
-  <select name="lvl" required class="w-full border px-4 py-2 rounded">
-    <option value="employee">Employee</option>
-    <option value="admin">Admin</option>
-    <option value="superadmin">Superadmin</option>
-  </select>
+            <!-- Password -->
+            <input type="password" name="password" required class="w-full border px-4 py-2 rounded" placeholder="Password">
 
-  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Register</button>
-</form>
+            <!-- Level (admin, superadmin, employee) -->
+            <select name="lvl" required class="w-full border px-4 py-2 rounded">
+                <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Superadmin</option>
+            </select>
+
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full">Register</button>
+        </form>
 
         <p class="text-sm text-center mt-4">Already have an account?
             <a href="login.php" class="text-blue-600 hover:underline">Login</a>

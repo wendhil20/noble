@@ -1,8 +1,31 @@
 <?php
+session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+include '../role/roleaccount.php';
+require_role(['admin', 'superadmin']);
+
+
+// Check if user is logged in
+if (!isset($_SESSION['noble_user'])) {
+    // Redirect to login page
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+// Optional: Auto-logout after inactivity (e.g. 30 mins)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+    // Destroy session and redirect to login
+    session_unset();
+    session_destroy();
+    header("Location: ../../loginpage/index.php?timeout=true");
+    exit();
+}
+
+// Update last activity time
+$_SESSION['last_activity'] = time();
 
 $product_id = $_GET['id'] ?? null;
 

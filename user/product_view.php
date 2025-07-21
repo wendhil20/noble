@@ -1,35 +1,42 @@
 <?php
+session_name("nobleuser");
 session_start();
 include '../connection/connect.php';
-// ✅ Restore session from remember_token (normal account or Google)
+// ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-  $token = $_COOKIE['remember_token'];
-  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-  $stmt->bind_param("s", $token);
-  $stmt->execute();
-  $res = $stmt->get_result();
+    $token = $_COOKIE['remember_token'];
 
-  if ($res->num_rows > 0) {
-    $user = $res->fetch_assoc();
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_email'] = $user['email'];
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
-    // Check if the account is Google-based (optional flag or logic)
-    if (!empty($user['google_id'])) {
-      $_SESSION['google_logged_in'] = true;
-      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+
+        // 🔐 Store essential user session info
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_name']  = $user['name'];
+        $_SESSION['user_email'] = $user['email'] ?? '';
+        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+
+        // 👤 Check if it's a Google account (optional)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
     }
-  }
-  $stmt->close();
+
+    $stmt->close();
 }
 
-// ✅ Final check if logged in (either normal or Google)
+// ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-  // Not logged in, redirect to login/Google callback
-  header('Location: google-callback.php');
-  exit;
+    // Not logged in — redirect to login or Google auth
+    header('Location: google-callback.php'); // You may replace with `index.php` if default login
+    exit;
 }
+
 
 // ✅ Retrieve user info
 $user_id = $_SESSION['user_id'];
@@ -112,6 +119,16 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Get average rating and count of raters
+$avg_stmt = $conn->prepare("SELECT ROUND(AVG(rating),1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+$avg_stmt->bind_param("i", $product['id']);
+$avg_stmt->execute();
+$avg_data = $avg_stmt->get_result()->fetch_assoc();
+$avg_rating = $avg_data['avg_rating'] ?? 0;
+$total_raters = $avg_data['total_raters'] ?? 0;
+$avg_stmt->close();
+
+
 ?>
 
 
@@ -134,10 +151,10 @@ $stmt->close();
     }
 
     .color-selected {
-      border: 3px;
+      border: 8px;
       border-color: rgb(227, 144, 85);
-      border-width: 6px;
-      box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+      border-width: 1px;
+      box-shadow: 0 0 0 9px rgba(249, 115, 22, 0.2);
     }
 
     .fade-in {
@@ -178,7 +195,7 @@ $stmt->close();
   <?php include 'navbar/top.php'; ?>
   <div class="bg-orange-600 text-white py-5">
     <div class="container mx-auto px-4">
-      <h1 class="text-4xl font-bold text-center mb-4">🛒Your Shopping</h1>
+      <h1 class="text-4xl font-bold text-center mb-4">Your Shopping</h1>
       <p class="text-xl text-center opacity-90">Learn more about this item and check if it fits your needs.</p>
     </div>
   </div>
@@ -203,23 +220,49 @@ $stmt->close();
 
         <!-- Product Image Section -->
         <div class="text-center">
-          <div class="aspect-square max-w-md mx-auto mb-4 relative">
+          <div class="aspect-square  mb-4 relative">
             <img id="main-product-image"
-     src="../<?= htmlspecialchars($product['main_image']) ?>"
-     class="w-full h-full object-contain rounded-lg"
-     alt="<?= htmlspecialchars($product['product_name']) ?>">
+              src="../<?= htmlspecialchars($product['main_image']) ?>"
+              class="w-full h-full object-contain rounded-lg "
+              alt="<?= htmlspecialchars($product['product_name']) ?>">
 
           </div>
 
           <!-- LEFT: Description (Simplified) -->
-          <div class=" px-4">
-            <h1 class="text-xl font-semibold text-gray-800 mb-2">
+          <div class="px-4">
+            <div class="mt-4">
+              <h3 class="font-semibold text-gray-700 mb-1 text-left">Average Rating:</h3>
+              <?php if ($total_raters > 0): ?>
+                <div class="flex items-center gap-2 text-yellow-400 text-sm">
+                  <!-- ⭐ Render average stars -->
+                  <?php
+                  $full = floor($avg_rating);
+                  $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                  $empty = 5 - $full - $half;
+
+                  for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                  if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                  for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                  ?>
+                  <span class="text-gray-700">(<?= $avg_rating ?>/5)</span>
+                  <span class="text-gray-400 text-xs"><?= $total_raters ?> rating<?= $total_raters == 1 ? '' : 's' ?></span>
+                </div>
+              <?php else: ?>
+                <p class="text-sm text-gray-500">No ratings yet.</p>
+              <?php endif; ?>
+            </div>
+
+            <!-- 🟧 Product Name -->
+            <h1 class="text-xl font-bold text-orange-500 underline mb-2">
               <?= htmlspecialchars($product['product_name']) ?>
             </h1>
-            <p class="text-black text-md leading-relaxed">
+
+            <!-- 📝 Product Description -->
+            <p class="text-black text-sm leading-relaxed">
               <?= htmlspecialchars($product['description'] ?? 'No description available.') ?>
             </p>
           </div>
+
 
           <div class="flex gap-4 mt-6 justify-start">
             <a href="product_specs.php?id=<?= $product['id'] ?>" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
@@ -249,64 +292,61 @@ $stmt->close();
             <div class="mt-6">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3 w-full">
-                  <h3 class="font-semibold text-lg text-gray-800 whitespace-nowrap">Available Colors</h3>
+                  <h3 class="font-bold text-lg  whitespace-nowrap">Available Colors :</h3>
                   <div class="flex-1 h-px bg-orange-300"></div>
                   <span class="text-sm text-gray-400 italic whitespace-nowrap">← drag to explore →</span>
                 </div>
               </div>
 
-              <!-- Swiper Container -->
-              <div class="swiper colorSwiper">
+
+              <div class="swiper colorSwiper px-2">
                 <div class="swiper-wrapper">
                   <?php foreach ($product_colors as $color): ?>
-                    <div class="swiper-slide w-auto">
-                      <div class="text-center">
+                    <div class="swiper-slide w-[80px]">
+                      <div class="flex flex-col items-center gap-1 p-2 rounded-lg ">
                         <button type="button"
                           onclick="selectColor(this, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, <?= $color['id'] ?>)"
-                          class="color-btn color-swatch hover:shadow-md w-12 h-12 rounded-full border border-orange-400"
+                          class="color-btn w-[60px] h-[60px] rounded-full border border-gray-400 transition"
                           style="background-color: <?= htmlspecialchars($color['color_code']) ?>;"
-                          data-color-id="<?= $color['id'] ?>"
-                          data-color-name="<?= htmlspecialchars($color['color_name']) ?>"
-                          data-color-price="<?= $color['price'] ?>"
                           title="<?= htmlspecialchars($color['color_name']) ?>">
                           <?php if ($color['image']): ?>
-                            <img src="../<?=($color['image']) ?>"
-                              class="w-full h-full object-contain rounded-full  hover:opacity-100 transition-opacity"
+                            <img src="../<?= ($color['image']) ?>"
+                              class="p-1 w-full h-full object-contain rounded-full"
                               alt="<?= htmlspecialchars($color['color_name']) ?>">
                           <?php endif; ?>
                         </button>
-                        <span class="text-xs text-black font-bold mt-1 block"><?= htmlspecialchars($color['color_name']) ?></span>
+                        <span class="text-[10px] text-gray-700 font-medium text-center break-words">
+                          <?= htmlspecialchars($color['color_name']) ?>
+                        </span>
                       </div>
                     </div>
                   <?php endforeach; ?>
                 </div>
               </div>
-
               <div id="selected-color-info" class="text-sm text-gray-500 italic mt-2">
                 Select a color to see pricing
               </div>
             </div>
           <?php endif; ?>
 
-
           <!-- Type Selection -->
           <?php if (!empty($types_data)): ?>
             <div>
-              <h3 class="font-semibold mb-3">Select Type</h3>
+              <h3 class="font-bold mb-3">Select Type :</h3>
               <div class="grid grid-cols-3 gap-3">
                 <?php foreach ($types_data as $index => $type): ?>
                   <button type="button"
                     onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
                     class="type-btn border-2 rounded-lg p-3 hover:border-orange-300 transition-all">
-                    <div class="aspect-square bg-gray-100 rounded mb-2 overflow-hidden">
+                    <div class="aspect-square rounded mb-2 overflow-hidden">
                       <?php if ($type['image']): ?>
-                        <img src="../<?=($type['image']) ?>"
+                        <img src="../<?= ($type['image']) ?>"
                           class="w-full h-full object-contain" alt="<?= htmlspecialchars($type['name']) ?>">
                       <?php else: ?>
                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                       <?php endif; ?>
                     </div>
-                    <span class="text-sm font-medium"><?= htmlspecialchars($type['name']) ?></span>
+                    <span class="text-sm font-bold text-orange-500"><?= htmlspecialchars($type['name']) ?></span>
                   </button>
                 <?php endforeach; ?>
               </div>
@@ -314,15 +354,18 @@ $stmt->close();
           <?php endif; ?>
 
           <!-- Variant Selection -->
-          <div>
-            <h3 class="font-semibold mb-3">Sizes</h3>
+          <div class="p-2">
+            <div class="flex items-center mb-3">
+              <h3 class="font-bold text-lg text-black mr-4">Sizes :</h3>
+              <div class="flex-grow border-t border-orange-500"></div>
+            </div>
 
             <div id="variant-container" class="text-gray-500">Please select a product type first.</div>
 
             <?php foreach ($types_data as $type): ?>
               <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
                 <?php if (!empty($type['variants'])): ?>
-                  <div class="grid grid-cols-3 gap-3">
+                  <div class="grid grid-cols-3 gap-3 mt-3">
                     <?php foreach ($type['variants'] as $variant):
                       $price = floatval($variant['variant_price']);
                       $percent = floatval($variant['percent']);
@@ -345,7 +388,7 @@ $stmt->close();
                         <?php endif; ?>
 
                         <div class="text-center">
-                          <div class="font-semibold"><?= htmlspecialchars($variant['namevariant']) ?></div>
+                          <div class="font-semibold text-orange-500"><?= htmlspecialchars($variant['namevariant']) ?></div>
                           <div class="text-gray-600"><?= htmlspecialchars($variant['size']) ?></div>
                           <div class="mt-0.5">
                             <?php if ($discount > 0): ?>
@@ -523,6 +566,7 @@ $stmt->close();
       .line-clamp-2 {
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
@@ -682,12 +726,32 @@ $stmt->close();
   </footer>
 
   <script>
+    function selectColor(button, colorName, price, colorId) {
+      // 1. Remove active style from all buttons
+      const allButtons = document.querySelectorAll('.color-btn');
+      allButtons.forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-orange-500');
+      });
+
+      // 2. Add active style to clicked button
+      button.classList.add('ring-2', 'ring-orange-500');
+
+      // 3. (Optional) Do something with selected color
+      console.log("Selected:", colorName, price, colorId);
+    }
+
     const colorSwiper = new Swiper(".colorSwiper", {
-      slidesPerView: "auto",
-      spaceBetween: 30,
+      slidesPerView: 2,
+      grid: {
+        rows: 2,
+        fill: 'row'
+      },
+      spaceBetween: 10,
       freeMode: true,
       grabCursor: true,
     });
+
+
 
     // Initialize Swiper for related products
     const swiper = new Swiper('.related-swiper', {

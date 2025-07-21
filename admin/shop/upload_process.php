@@ -54,15 +54,20 @@ function saveImageToFolder($file, $targetDir = '../../uploads/') {
     return null;
 }
 
-// Reset AUTO_INCREMENT if tables are empty
 $tables = ['products', 'product_types', 'product_variants', 'product_colors'];
+
 foreach ($tables as $table) {
-    $result = $conn->query("SELECT COUNT(*) as total FROM $table");
+    // Get the current highest ID that exists
+    $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
     $row = $result->fetch_assoc();
-    if ((int)$row['total'] === 0) {
-        $conn->query("ALTER TABLE $table AUTO_INCREMENT = 1");
-    }
+    $max_id = (int)$row['max_id'];
+
+    // Reset AUTO_INCREMENT to max_id + 1
+    $next_id = $max_id > 0 ? $max_id + 1 : 1;
+    $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
 }
+
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {

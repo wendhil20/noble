@@ -1,7 +1,9 @@
 <?php
 ob_start();
+session_name("nobleuser");
 session_start();
 include '../connection/connect.php'; // Adjust path if needed
+
 
 // Check if there's a login notification
 if (isset($_SESSION['login_needed'])) {
@@ -42,7 +44,7 @@ $material_querys = "
     LEFT JOIN 
         product_colors pc ON p.id = pc.product_id
     WHERE 
-        pv.discount = 40
+        pv.discount = 30
     ORDER BY 
         pv.percent ASC, p.id, pc.id
 ";
@@ -72,7 +74,7 @@ $material_querysone = "
     LEFT JOIN 
         product_colors pc ON p.id = pc.product_id
     WHERE 
-        pv.discount BETWEEN 1 AND 30 
+        pv.discount BETWEEN 1 AND 15
     ORDER BY 
         pv.percent ASC, p.id, pc.id
 ";
@@ -109,7 +111,6 @@ $material_querystwo = "
 
 $material_resultstwo = mysqli_query($conn, $material_querystwo);
 
-
 $discount_result = mysqli_query(
     $conn,
     "SELECT 
@@ -123,7 +124,8 @@ $discount_result = mysqli_query(
         p.description,
         pc.color_name AS color,
         pc.color_code,
-        pc.price AS color_price
+        pc.price AS color_price,
+        pc.image
      FROM product_variants pv
      JOIN product_types pt ON pv.type_id = pt.id
      JOIN products p ON pt.product_id = p.id
@@ -133,19 +135,49 @@ $discount_result = mysqli_query(
 );
 
 
-$filter = 'furniture'; // forced filter
-$query = "
-SELECT * FROM products 
-WHERE codename = '$filter' 
-ORDER BY id DESC
-";
-$result = mysqli_query($conn, $query);
+$filter = 'furniture';
 
+$query = "
+SELECT 
+    p.*, 
+    v.descrip6, 
+    v.descrip7 
+FROM products p
+LEFT JOIN product_variants v ON v.product_id = p.id
+WHERE p.codename = ?
+GROUP BY p.id
+ORDER BY p.id DESC
+";
+
+$stmt = $conn->prepare($query);
+$stmt->bind_param("s", $filter);
+$stmt->execute();
+$result = $stmt->get_result();
 
 // handle filtering
-$filters = 'material'; // force it
-$query = "SELECT * FROM products WHERE codename = '$filters' ORDER BY id DESC";
-$results = mysqli_query($conn, $query);
+$filter = 'material';
+
+$query = "
+SELECT 
+    p.*, 
+    v.descrip6, 
+    v.descrip7,
+    AVG(r.rating) AS avg_rating
+FROM products p
+LEFT JOIN (
+    SELECT * FROM product_variants
+    GROUP BY product_id
+) v ON v.product_id = p.id
+LEFT JOIN product_ratings r ON r.product_id = p.id
+WHERE p.codename = ?
+GROUP BY p.id
+ORDER BY p.id DESC
+";
+
+$stmt = $conn->prepare($query);
+$stmt->bind_param("s", $filter);
+$stmt->execute();
+$results = $stmt->get_result();
 
 // handle filtering
 $filters = 'furnituretwo'; // force it
@@ -165,7 +197,6 @@ if (!empty($products)) {
     $columns = [[], [], []]; // Empty columns as fallback
 }
 
-
 ?>
 
 <!DOCTYPE html>
@@ -184,6 +215,9 @@ if (!empty($products)) {
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script>
         // Function to hide the notification after 5 seconds
         setTimeout(function() {
@@ -196,8 +230,17 @@ if (!empty($products)) {
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-        body {
-            font-family: 'Inter', sans-serif;
+
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .font-opensans {
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .font-roboto {
+            font-family: 'Roboto', sans-serif;
         }
 
         .hero-bg {
@@ -319,7 +362,6 @@ if (!empty($products)) {
 
     <?php include 'navbar/top.php'; ?>
 
-
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-sm px-4 py-2 rounded shadow-lg z-50">
             <?= htmlspecialchars($_SESSION['toast']['message']) ?>
@@ -413,47 +455,47 @@ if (!empty($products)) {
     </section>
 
 
-   <section class="bg-white shadow-md py-4 px-6" x-data="{ activeModal: null }">
-  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-7">
+    <section class="bg-white shadow-md py-4 px-6" x-data="{ activeModal: null }">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-7">
 
-    <!-- Box 1 -->
-    <button @click="activeModal = 1" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
-      <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
-      <p class="text-sm text-gray-700">Send us a question or message.</p>
-    </button>
-                <div class="hidden md:block w-px bg-gray-300 h-10 mx-4"></div>
+            <!-- Box 1 -->
+            <button @click="activeModal = 1" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
+                <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
+                <p class="text-sm text-gray-700">Send us a question or message.</p>
+            </button>
+            <div class="hidden md:block w-px bg-gray-300 h-10 mx-4"></div>
 
-    <!-- Box 2 -->
-    <button @click="activeModal = 2" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
-      <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
-      <p class="text-sm text-gray-700">Book a consultation now.</p>
-    </button>
+            <!-- Box 2 -->
+            <button @click="activeModal = 2" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
+                <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
+                <p class="text-sm text-gray-700">Book a consultation now.</p>
+            </button>
             <div class="hidden md:block w-px bg-gray-300 h-10 mx-4"></div>
-    <!-- Box 3 -->
-    <button @click="activeModal = 3" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
-      <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
-      <p class="text-sm text-gray-700">Check your order status.</p>
-    </button>
+            <!-- Box 3 -->
+            <button @click="activeModal = 3" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
+                <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
+                <p class="text-sm text-gray-700">Check your order status.</p>
+            </button>
             <div class="hidden md:block w-px bg-gray-300 h-10 mx-4"></div>
-    <!-- Box 4 -->
-    <button @click="activeModal = 4" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
-      <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
-      <p class="text-sm text-gray-700">Get pricing for your project.</p>
-    </button>
+            <!-- Box 4 -->
+            <button @click="activeModal = 4" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
+                <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
+                <p class="text-sm text-gray-700">Get pricing for your project.</p>
+            </button>
             <div class="hidden md:block w-px bg-gray-300 h-10 mx-4"></div>
-    <!-- Box 5 -->
-    <button @click="activeModal = 5" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
-      <h3 class="text-lg font-semibold text-orange-700">Support</h3>
-      <p class="text-sm text-gray-700">We're here to help you.</p>
-    </button>
-  </div>
+            <!-- Box 5 -->
+            <button @click="activeModal = 5" class="flex-1 hover:bg-orange-200 transition rounded-lg p-4 text-center">
+                <h3 class="text-lg font-semibold text-orange-700">Support</h3>
+                <p class="text-sm text-gray-700">We're here to help you.</p>
+            </button>
+        </div>
 
-  <!-- Modals -->
-  <template x-if="activeModal">
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative">
-        <!-- Modal content -->
-        <h2 class="text-xl font-bold text-orange-600 mb-2" x-text="{
+        <!-- Modals -->
+        <template x-if="activeModal">
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative">
+                    <!-- Modal content -->
+                    <h2 class="text-xl font-bold text-orange-600 mb-2" x-text="{
           1: 'Inquire',
           2: 'Appointment',
           3: 'Track Order',
@@ -461,7 +503,7 @@ if (!empty($products)) {
           5: 'Support'
         }[activeModal]"></h2>
 
-        <p class="text-sm text-gray-700 mb-4" x-text="{
+                    <p class="text-sm text-gray-700 mb-4" x-text="{
           1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
           2: 'Schedule a face-to-face or virtual consultation with our experts.',
           3: 'Enter your order ID to track the delivery progress and timeline.',
@@ -469,26 +511,26 @@ if (!empty($products)) {
           5: 'Need help? Our support team is always ready to guide you through any issues.'
         }[activeModal]"></p>
 
-        <button @click="activeModal = null"
-          class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
-        <button @click="activeModal = null"
-          class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md">
-          Close
-        </button>
-      </div>
+                    <button @click="activeModal = null"
+                        class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                    <button @click="activeModal = null"
+                        class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </template>
+    </section>
+
+
+    <div class="text-center mb-12 text-black bg-orange-500 w-full p-3 text-white">
+        <h2 class="text-4xl font-bold mb-4">Products</h2>
+        <p class=" max-w-2xl mx-auto">Discover our wide range of quality materials and furniture for your home and construction needs.</p>
     </div>
-  </template>
-</section>
-
-
 
     <!-- Products Section -->
-    <section id="products" class="py-20">
-        <div class=" px-4">
-            <div class="text-center mb-12 text-black">
-                <h2 class="text-4xl font-bold mb-4">Products</h2>
-                <p class=" max-w-2xl mx-auto">Discover our wide range of quality materials and furniture for your home and construction needs.</p>
-            </div>
+    <section id="products" class="py-2">
+        <div class=" px-4 ">
 
             <section class="py-8 bg-white">
                 <div class="max-w-7xl mx-auto px-4">
@@ -508,28 +550,35 @@ if (!empty($products)) {
                                             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="700">
                                                 <?php foreach ($column as $v): ?>
                                                     <div class="swiper-slide">
-                                                        <div class="bg-white rounded-lg shadow text-center flex flex-col h-full p-3 justify-between">
-                                                            <div class="w-full aspect-square rounded mb-2 overflow-hidden flex items-center justify-center">
-                                                                <?php if (!empty($v['type_image'])): ?>
-                                                                    <img src="data:image/jpeg;base64,<?= base64_encode($v['type_image']) ?>"
+                                                        <div class="bg-white rounded-lg  text-left flex flex-row h-full p-3 gap-4 items-center">
+                                                            <!-- TEXT CONTENT LEFT -->
+                                                            <div class="flex-1">
+                                                                <h3 class="text-sm font-bold mb-1 text-orange-500 underline underline-offset-4 decoration-orange-500">
+                                                                    <?= htmlspecialchars($v['namevariant'] ?? 'No Name') ?>
+                                                                </h3>
+
+                                                                <ul class="text-xs text-gray-600 space-y-1 mb-1">
+                                                                    <li><strong>Color:</strong> <?= htmlspecialchars($v['color'] ?? 'N/A') ?></li>
+                                                                    <li><strong>Size:</strong> <?= htmlspecialchars($v['size'] ?? 'N/A') ?></li>
+                                                                </ul>
+                                                                <p class="text-[13px] font-semibold text-green-600">
+                                                                    ₱<?= number_format(floatval($v['price'] ?? 0), 2) ?>
+                                                                </p>
+                                                            </div>
+
+                                                            <!-- IMAGE RIGHT -->
+                                                            <div class="w-28 h-28 rounded overflow-hidden flex items-center justify-center">
+                                                                <?php if (!empty($v['image'])): ?>
+                                                                    <img src="../<?= htmlspecialchars($v['image']) ?>"
                                                                         alt="<?= htmlspecialchars($v['namevariant'] ?? 'Product') ?>"
                                                                         class="w-full h-full object-contain" />
                                                                 <?php else: ?>
                                                                     <span class="text-xs text-gray-400">No Image</span>
                                                                 <?php endif; ?>
                                                             </div>
-                                                            <h3 class="text-xs font-bold mb-1 text-black underline">
-                                                                <?= htmlspecialchars($v['namevariant'] ?? 'No Name') ?>
-                                                            </h3>
-                                                            <ul class="text-xs text-gray-600 space-y-1">
-                                                                <li><strong>Color:</strong> <?= htmlspecialchars($v['color'] ?? 'N/A') ?></li>
-                                                                <li><strong>Size:</strong> <?= htmlspecialchars($v['size'] ?? 'N/A') ?></li>
-                                                            </ul>
-                                                            <p class="text-[12px] font-semibold text-green-600 mt-1">
-                                                                ₱<?= number_format(floatval($v['price'] ?? 0), 2) ?>
-                                                            </p>
                                                         </div>
                                                     </div>
+
                                                 <?php endforeach; ?>
                                             </div>
                                         </div>
@@ -573,7 +622,7 @@ if (!empty($products)) {
                                     <!-- Product Image -->
                                     <div class="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-3">
                                         <?php if (!empty($row['main_image'])): ?>
-                                            <img src="data:image/jpeg;base64,<?= base64_encode($row['main_image']) ?>"
+                                            <img src="../<?=($row['main_image']) ?>"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>"
                                                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                         <?php else: ?>
@@ -583,7 +632,7 @@ if (!empty($products)) {
 
                                     <!-- Product Info -->
                                     <div class="mt-auto space-y-1">
-                                        <h2 class="text-sm font-semibold text-gray-800 leading-snug break-words underline mb-1">
+                                        <h2 class="text-sm font-semibold text-gray-800 leading-snug break-words underline underline-offset-4 mb-1">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h2>
 
@@ -607,7 +656,6 @@ if (!empty($products)) {
             <section class="p-3">
                 <div class="text-center mb-10">
                     <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Furniture</h2>
-
                     <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
                 </div>
 
@@ -617,7 +665,7 @@ if (!empty($products)) {
                         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
                             <div class="swiper-slide" data-aos="fade-up">
                                 <a href="product_view.php?id=<?= (int)$row['id'] ?>"
-                                    class="flex flex-col justify-between h-[380px] bg-white rounded-lg shadow-lg p-4 group text-center w-full relative">
+                                    class="flex flex-col justify-between h-[400px] bg-white rounded-lg shadow-lg p-4 group text-center w-full relative">
 
                                     <!-- Green Icon Bubble -->
                                     <div class="absolute top-0 left-0 w-14 h-14 z-10 flex items-start justify-start overflow-visible">
@@ -635,10 +683,9 @@ if (!empty($products)) {
                                     <!-- Image -->
                                     <div class="w-full aspect-square mb-3">
                                         <?php if (!empty($row['main_image'])): ?>
-<img src="../<?= htmlspecialchars($row['main_image']) ?>"
-    class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
-    alt="<?= htmlspecialchars($row['product_name']) ?>" />
-
+                                            <img src="../<?= htmlspecialchars($row['main_image']) ?>"
+                                                class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
+                                                alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                         <?php else: ?>
                                             <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500 text-sm">
                                                 No Image
@@ -646,34 +693,62 @@ if (!empty($products)) {
                                         <?php endif; ?>
                                     </div>
 
-                                 <!-- Name & Description (footer area) -->
-<div class="mt-auto">
-    <h2 class="text-md font-bold underline text-black text-center break-words mb-1">
-        <?= htmlspecialchars($row['product_name']) ?>
-    </h2>
+                                    <!-- Name & Description (footer area) -->
+                                    <div class="mt-auto text-left">
+                                        <?php
+                                        $product_id = (int)$row['id'];
+                                        $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                                        $rating_q->bind_param("i", $product_id);
+                                        $rating_q->execute();
+                                        $rating_result = $rating_q->get_result()->fetch_assoc();
+                                        $avg_rating = $rating_result['avg_rating'] ?? 0;
+                                        $total_raters = $rating_result['total_raters'] ?? 0;
+                                        $rating_q->close();
+                                        ?>
 
- <?php if (!empty($row['unit']) || !empty($row['specification'])): ?>
-  <p class="text-xs text-gray-700 leading-snug">
-    <?php if (!empty($row['unit'])): ?>
-      <span class="font-medium text-gray-500"></span> <?= htmlspecialchars($row['unit']) ?><br>
-    <?php endif; ?>
-    <?php if (!empty($row['specification'])): ?>
-      <span class="font-medium text-gray-500"></span> <?= htmlspecialchars($row['specification']) ?>
-    <?php endif; ?>
-  </p>
-<?php else: ?>
-  <p class="text-xs text-gray-400 italic h-10">No description.</p>
-<?php endif; ?>
+                                        <!-- Product Name + Stars in a row -->
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h2 class="text-sm font-bold text-orange-600 underline underline-offset-4 truncate max-w-[60%]">
+                                                <?= htmlspecialchars($row['product_name']) ?>
+                                            </h2>
 
-</div>
+                                            <?php if ($total_raters > 0): ?>
+                                                <div class="flex items-center gap-1 text-orange-400 text-xs">
+                                                    <?php
+                                                    $full = floor($avg_rating);
+                                                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                                                    $empty = 5 - $full - $half;
+
+                                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                                                    ?>
+                                                    <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="text-gray-400 text-xs italic">No ratings</div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Description -->
+                                        <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                            <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
+                                                <?= htmlspecialchars($row['descrip6'] ?? '') ?>
+                                                <?= !empty($row['descrip6']) && !empty($row['descrip7']) ? '<br>' : '' ?>
+                                                <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                            </p>
+                                        <?php else: ?>
+                                            <p class="text-xs text-gray-400 italic h-10">No description.</p>
+                                        <?php endif; ?>
+                                    </div>
 
                                 </a>
                             </div>
                         <?php endwhile; ?>
                     </div>
                 </div>
-
             </section>
+
 
             <section class="p-3">
                 <!-- Header -->
@@ -707,7 +782,7 @@ if (!empty($products)) {
                                     <!-- Image -->
                                     <div class="w-full aspect-square mb-3">
                                         <?php if (!empty($row['main_image'])): ?>
-                                            <img src="data:image/jpeg;base64,<?= base64_encode($row['main_image']) ?>"
+                                            <img src="../<?= ($row['main_image']) ?>"
                                                 class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                         <?php else: ?>
@@ -717,20 +792,48 @@ if (!empty($products)) {
                                         <?php endif; ?>
                                     </div>
 
+
                                     <!-- Name & Description (footer area) -->
                                     <div class="mt-auto">
-                                        <h2 class="text-sm font-semibold text-gray-800 text-center break-words mb-1">
-                                            <?= htmlspecialchars($row['product_name']) ?>
-                                        </h2>
+                                        <!-- Top Row: Product Name + Rating -->
+                                        <div class="flex justify-between items-start mb-1">
+                                            <!-- Product Name + Descriptions (Left Side) -->
+                                            <div class="text-left">
+                                                <!-- Product Name -->
+                                                <h2 class="text-lg font-bold text-orange-500 break-words">
+                                                    <?= htmlspecialchars($row['product_name']) ?>
+                                                </h2>
 
-                                        <?php if (!empty($row['description'])): ?>
-                                            <p class="text-xs text-gray-600 leading-snug line-clamp-2 h-[40px] overflow-hidden">
-                                                <?= htmlspecialchars($row['description']) ?>
-                                            </p>
-                                        <?php else: ?>
-                                            <p class="text-xs text-gray-400 italic h-[40px]">No description.</p>
-                                        <?php endif; ?>
+                                                <!-- Descriptions -->
+                                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                                    <p class="text-xs text-gray-700 leading-snug h-auto overflow-hidden">
+                                                        <?= htmlspecialchars($row['descrip6']) ?><br>
+                                                        <?= htmlspecialchars($row['descrip7']) ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Rating (Right Side) -->
+                                            <div class="text-right min-w-[90px]">
+                                                <?php if (isset($row['avg_rating']) && $row['avg_rating'] > 0): ?>
+                                                    <div class="flex justify-end items-center text-orange-500 text-sm">
+                                                        <?php
+                                                        $stars = round($row['avg_rating']);
+                                                        for ($i = 0; $i < 5; $i++) {
+                                                            echo $i < $stars ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+                                                        }
+                                                        ?>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 text-right">(<?= number_format($row['avg_rating'], 1) ?>)</p>
+                                                <?php else: ?>
+                                                    <p class="text-xs text-gray-400 italic text-right">No ratings</p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
                                     </div>
+
+
+
                                 </a>
                             </div>
                         <?php endwhile; ?>
@@ -744,7 +847,7 @@ if (!empty($products)) {
                 <div class="text-center mb-10">
                     <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
                     <h2 class="text-2xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">
-                        Get Up to <span class="text-red-500">40% Discount</span> on Select Items!
+                        Get Up to <span class="text-red-500">30% Discount</span> on Select Items!
                     </h2>
 
                     <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
@@ -776,7 +879,7 @@ if (!empty($products)) {
                                     <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
                                         <?php if (!empty($row['type_image'])): ?>
                                             <img
-                                                src="data:image/jpeg;base64,<?= base64_encode($row['type_image']) ?>"
+                                                src="../<?= ($row['type_image']) ?>"
                                                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                                 alt="<?= htmlspecialchars($row['namevariant']) ?>" />
                                         <?php else: ?>
@@ -786,11 +889,11 @@ if (!empty($products)) {
 
                                     <!-- Info -->
                                     <div class="mt-auto">
-                                        <h3 class="text-base font-semibold underline text-gray-800 leading-snug break-words">
+                                        <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
                                             <?= htmlspecialchars($row['namevariant']) ?>
                                         </h3>
-                                        <ul class="text-sm text-gray-700 text-center space-y-1 mb-2">
-                                            <li><span class="font-semibold">Color:</span> <?= htmlspecialchars($row['color']) ?></li>
+                                        <ul class="text-sm text-gray-700 text-center space-y-1 mb-2 mt-2">
+                                            <li><span class="font-semibold ">Color:</span> <?= htmlspecialchars($row['color']) ?></li>
                                             <li><span class="font-semibold">Size:</span> <?= htmlspecialchars($row['size']) ?></li>
                                         </ul>
                                         <!-- Price Display -->
@@ -855,7 +958,7 @@ if (!empty($products)) {
             <section class="px-4 py-10">
                 <!-- Header -->
                 <div class="text-center mb-10">
-                    <h2 class="text-2xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Discount Minimal <span class="text-red-500">up to 30%</span></h2>
+                    <h2 class="text-2xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Discount Minimal <span class="text-red-500">up to 15%</span></h2>
                     <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
                 </div>
 
@@ -885,7 +988,7 @@ if (!empty($products)) {
                                     <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
                                         <?php if (!empty($row['type_image'])): ?>
                                             <img
-                                                src="data:image/jpeg;base64,<?= base64_encode($row['type_image']) ?>"
+                                                src="../<?= ($row['type_image']) ?>"
                                                 class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                                 alt="<?= htmlspecialchars($row['namevariant']) ?>" />
                                         <?php else: ?>
@@ -895,10 +998,10 @@ if (!empty($products)) {
 
                                     <!-- Info -->
                                     <div class="mt-auto">
-                                        <h3 class="text-base font-semibold underline text-gray-800 leading-snug break-words">
+                                        <h3 class="text-base font-semibold text-orange-500 underline underline-offset-4 text-gray-800 leading-snug break-words">
                                             <?= htmlspecialchars($row['namevariant']) ?>
                                         </h3>
-                                        <ul class="text-sm text-gray-700 text-center space-y-1 mb-2">
+                                        <ul class="text-sm text-gray-700 text-center space-y-1 mb-2 mt-2">
                                             <li><span class="font-semibold">Color:</span> <?= htmlspecialchars($row['color']) ?></li>
                                             <li><span class="font-semibold">Size:</span> <?= htmlspecialchars($row['size']) ?></li>
                                         </ul>
@@ -951,7 +1054,6 @@ if (!empty($products)) {
                                                 </button>
                                             </form>
 
-
                                         </div>
                                     </div>
                                 </div>
@@ -999,7 +1101,7 @@ if (!empty($products)) {
                                         <div class="w-full aspect-square overflow-hidden rounded-lg bg-gray-50 border border-gray-200 mb-4">
                                             <?php if (!empty($row['type_image'])): ?>
                                                 <img
-                                                    src="data:image/jpeg;base64,<?= base64_encode($row['type_image']) ?>"
+                                                    src="../<?=($row['type_image']) ?>"
                                                     class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                                     alt="Material Variant" />
                                             <?php else: ?>
@@ -1022,7 +1124,7 @@ if (!empty($products)) {
 
                                         <!-- Info -->
                                         <div class="mt-auto">
-                                            <h3 class="text-base font-semibold underline text-gray-800 leading-snug break-words">
+                                            <h3 class="text-base font-semibold underline underline-offset-4 text-gray-800 leading-snug break-words">
                                                 <?= htmlspecialchars($row['namevariant']) ?>
                                             </h3>
                                             <ul class="text-sm text-gray-700 text-center space-y-1 mb-2">
@@ -1133,30 +1235,7 @@ if (!empty($products)) {
         </div>
     </section>
 
-    <div id="chat-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
 
-        <!-- ✅ CHAT TOGGLE BUTTON -->
-        <button id="chat-toggle" onclick="openChat()"
-            style="background-color:rgb(0, 0, 0); color: white; border: 1px solid white; padding: 12px 18px; border-radius: 50px; box-shadow: 0 0 10px rgba(0,0,0,0.3); font-size: 14px; cursor: pointer;">
-            Chat with us
-        </button>
-
-        <!-- ✅ CHATBOX IFRAME (Initially hidden) -->
-        <div id="chat-box" style="display: none; position: relative; margin-top: 10px;">
-            <!-- ❌ Close Button -->
-            <button onclick="closeChat()"
-                style="position: absolute; top: -10px; right: -10px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 16px; cursor: pointer; z-index: 10000;">
-                ×
-            </button>
-
-            <!-- 🧩 IFRAME CHATBOX -->
-            <iframe
-                src="chatbot/messenger"
-                style="width: 360px; height: 540px; border: none; border-radius: 14px; box-shadow: 0 0 15px rgba(0,0,0,0.2);"
-                allow="clipboard-write">
-            </iframe>
-        </div>
-    </div>
 
 
     <!-- Include Alpine.js -->

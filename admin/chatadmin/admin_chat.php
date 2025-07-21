@@ -1,6 +1,6 @@
 <?php
 include '../../connection/connect.php';
-
+session_name("nobleadmin");
 include '../role/roleaccount.php';
 require_role(['admin', 'superadmin']); // allow only admin and superadmin
 

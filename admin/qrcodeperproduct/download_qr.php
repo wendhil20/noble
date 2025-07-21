@@ -1,6 +1,8 @@
 <?php
 include '../../connection/connect.php';
 
+
+
 if (!isset($_GET['id'])) {
     die("No product ID provided.");
 }

@@ -1,14 +1,29 @@
 <?php
+session_name("nobleadmin");
 session_start();
 date_default_timezone_set('Asia/Manila');
-require_once '../../connection/connect.php';
+include '../../connection/connect.php';
+include '../role/roleaccount.php';
+
+require_role(['admin', 'superadmin']); // allow only admin and superadmin
+
+if (!isset($_SESSION['noble_user'])) {
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+    session_unset();
+    session_destroy();
+    header("Location: ../../loginpage/index.php?timeout=true");
+    exit();
+}
 
 $message = '';
 
-// Auto-update expired orders on page load
+// Auto-update expired orders
 updateExpiredCountdowns();
 
-// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['set_ongoing'])) {
         $orderId = (int)$_POST['order_id'];
@@ -21,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $result = setOrderOngoing($orderId, $months, $days, $hours);
             $message = $result['success'] ?
-                "Successfully set {$result['count']} orders to Ongoing for {$result['email']}" :
+                "Successfully set order ID {$orderId} to Ongoing" :
                 'Error: ' . $result['message'];
         }
     }
@@ -42,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'Error: ' . $result['message'];
     }
 
-    // Handle AJAX request for automatic updates
     if (isset($_POST['ajax_update_expired'])) {
         $result = updateExpiredCountdowns();
         header('Content-Type: application/json');
@@ -51,14 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Core functions
+// Fixed setOrderOngoing function
 function setOrderOngoing($orderId, $months, $days, $hours)
 {
     global $conn;
 
     try {
-        // Get order email
-        $stmt = $conn->prepare("SELECT email FROM orders WHERE id = ?");
+        $stmt = $conn->prepare("SELECT id FROM orders WHERE id = ?");
         $stmt->bind_param('i', $orderId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -67,9 +80,6 @@ function setOrderOngoing($orderId, $months, $days, $hours)
             throw new Exception('Order not found');
         }
 
-        $email = $result->fetch_assoc()['email'];
-
-        // Calculate arrival date
         $arrivalDate = new DateTime();
         if ($months > 0) $arrivalDate->add(new DateInterval("P{$months}M"));
         if ($days > 0) $arrivalDate->add(new DateInterval("P{$days}D"));
@@ -77,28 +87,29 @@ function setOrderOngoing($orderId, $months, $days, $hours)
 
         $arrivalDateStr = $arrivalDate->format('Y-m-d H:i:s');
 
-        // Update all orders with same email
+        // Update orders table - Only set final_total if it's NULL
         $updateStmt = $conn->prepare("
             UPDATE orders 
             SET status = 'Ongoing', 
                 estimated_arrival_date = ?,
-                final_total = COALESCE(total, 0) + COALESCE(shipping_fee, 0) - COALESCE(discount, 0)
-            WHERE email = ? AND status NOT IN ('Rejected', 'Arrival', 'Departure', 'Complete')
+                final_total = COALESCE(final_total, total + COALESCE(shipping_fee, 0) - COALESCE(discount, 0))
+            WHERE id = ?
         ");
-
-        $updateStmt->bind_param('ss', $arrivalDateStr, $email);
+        $updateStmt->bind_param('si', $arrivalDateStr, $orderId);
         $updateStmt->execute();
 
-        return [
-            'success' => true,
-            'count' => $updateStmt->affected_rows,
-            'email' => $email
-        ];
+        // Update variant_tracking table
+        $variantStmt = $conn->prepare("UPDATE variant_tracking SET status = 'Ongoing' WHERE order_id = ?");
+        $variantStmt->bind_param('i', $orderId);
+        $variantStmt->execute();
+
+        return ['success' => true, 'count' => $updateStmt->affected_rows];
     } catch (Exception $e) {
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
 
+// Fixed updateOrderStatus function
 function updateOrderStatus($orderId, $newStatus)
 {
     global $conn;
@@ -107,12 +118,16 @@ function updateOrderStatus($orderId, $newStatus)
         $stmt = $conn->prepare("
             UPDATE orders 
             SET status = ?,
-                final_total = COALESCE(total, 0) + COALESCE(shipping_fee, 0) - COALESCE(discount, 0)
+                final_total = COALESCE(final_total, total + COALESCE(shipping_fee, 0) - COALESCE(discount, 0))
             WHERE id = ?
         ");
-
         $stmt->bind_param('si', $newStatus, $orderId);
         $stmt->execute();
+
+        // Update variant_tracking table
+        $variantStmt = $conn->prepare("UPDATE variant_tracking SET status = ? WHERE order_id = ?");
+        $variantStmt->bind_param('si', $newStatus, $orderId);
+        $variantStmt->execute();
 
         return ['success' => true, 'count' => $stmt->affected_rows];
     } catch (Exception $e) {
@@ -120,6 +135,7 @@ function updateOrderStatus($orderId, $newStatus)
     }
 }
 
+// Fixed updateExpiredCountdowns function
 function updateExpiredCountdowns()
 {
     global $conn;
@@ -128,38 +144,46 @@ function updateExpiredCountdowns()
         $updateQuery = "
             UPDATE orders 
             SET status = 'Arrival',
-                final_total = COALESCE(total, 0) + COALESCE(shipping_fee, 0) - COALESCE(discount, 0)
+                final_total = COALESCE(final_total, total + COALESCE(shipping_fee, 0) - COALESCE(discount, 0))
             WHERE status = 'Ongoing' 
             AND estimated_arrival_date <= NOW()
         ";
+        $conn->query($updateQuery);
 
-        $result = $conn->query($updateQuery);
+        // Update variant_tracking table
+        $variantUpdateQuery = "
+            UPDATE variant_tracking
+            SET status = 'Arrival'
+            WHERE order_id IN (
+                SELECT id FROM orders
+                WHERE status = 'Arrival'
+            )
+        ";
+        $conn->query($variantUpdateQuery);
 
-        return [
-            'success' => true,
-            'count' => $conn->affected_rows
-        ];
+        return ['success' => true, 'count' => $conn->affected_rows];
     } catch (Exception $e) {
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
-
+// Get countdown orders
 function getCountdownOrders()
 {
     global $conn;
 
     $query = "
         SELECT 
+            id,
             email,
             customer_name,
             estimated_arrival_date,
-            COUNT(*) as order_count,
-            SUM(COALESCE(final_total, total + COALESCE(shipping_fee, 0) - COALESCE(discount, 0))) as total_amount,
+            COALESCE(final_total, total + COALESCE(shipping_fee, 0) - COALESCE(discount, 0)) as total_amount,
             TIMESTAMPDIFF(SECOND, NOW(), estimated_arrival_date) as seconds_remaining,
-            GROUP_CONCAT(id ORDER BY id ASC) as order_ids
+            total,
+            shipping_fee,
+            discount
         FROM orders 
         WHERE status = 'Ongoing' AND estimated_arrival_date IS NOT NULL
-        GROUP BY email, estimated_arrival_date
         ORDER BY estimated_arrival_date ASC
     ";
 
@@ -167,6 +191,7 @@ function getCountdownOrders()
     return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
+// Get all orders
 function getAllOrders()
 {
     global $conn;
@@ -183,6 +208,7 @@ function getAllOrders()
     return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
+// Order stats
 function getOrderStats()
 {
     global $conn;
@@ -206,6 +232,7 @@ $allOrders = getAllOrders();
 $orderStats = getOrderStats();
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -228,15 +255,8 @@ $orderStats = getOrderStats();
         }
 
         @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .status-badge {
@@ -253,7 +273,6 @@ $orderStats = getOrderStats();
 
     <?php include '../navbar/top.php'; ?>
     <div class="min-h-screen">
-
 
         <div class="container mx-auto px-6 py-8">
             <!-- Alert Messages -->
@@ -306,45 +325,39 @@ $orderStats = getOrderStats();
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <!-- Countdown Orders -->
+                <!-- Countdown Orders - MODIFIED to show individual orders -->
                 <div class="bg-white rounded-xl shadow-lg p-6 border">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-gray-800">Active Countdowns</h2>
-
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            <?php echo count($countdownOrders); ?> orders
+                        </span>
                     </div>
 
                     <div class="space-y-4 max-h-96 overflow-y-auto">
                         <?php if (count($countdownOrders) > 0): ?>
                             <?php foreach ($countdownOrders as $order): ?>
-                                <div class="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow"
-                                    data-email="<?php echo htmlspecialchars($order['email']); ?>">
+                                <div class="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
                                     <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <h4 class="font-semibold text-gray-800"><?php echo htmlspecialchars($order['customer_name']); ?></h4>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
+                                                    ID: <?php echo $order['id']; ?>
+                                                </span>
+                                                <h4 class="font-semibold text-gray-800"><?php echo htmlspecialchars($order['customer_name']); ?></h4>
+                                            </div>
                                             <p class="text-sm text-gray-600"><?php echo htmlspecialchars($order['email']); ?></p>
                                         </div>
                                         <div class="text-right">
-                                            <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                                                <?php echo $order['order_count']; ?> orders
-                                            </span>
-                                            <div class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <?php
-                                                $ids = explode(',', $order['order_ids']);
-                                                foreach ($ids as $oid):
-                                                ?>
-                                                    <form method="POST" class="flex items-center justify-between gap-2 bg-gray-100 rounded px-2 py-1 mb-1">
-                                                        <span class="text-gray-700 font-medium text-xs">Order ID: <?php echo $oid; ?></span>
-                                                        <input type="hidden" name="order_id" value="<?php echo $oid; ?>">
-                                                        <button type="submit" name="update_status" value="1"
-                                                            onclick="return confirm('Mark Order ID <?php echo $oid; ?> as Arrival?')"
-                                                            class="bg-purple-600 text-white text-xs px-2 py-1 rounded hover:bg-purple-700 transition">
-                                                            Mark Arrival
-                                                        </button>
-                                                        <input type="hidden" name="new_status" value="Arrival">
-                                                    </form>
-                                                <?php endforeach; ?>
-                                            </div>
-
+                                            <form method="POST" class="inline-block">
+                                                <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
+                                                <input type="hidden" name="new_status" value="Arrival">
+                                                <button type="submit" name="update_status" value="1"
+                                                    onclick="return confirm('Mark Order ID <?php echo $order['id']; ?> as Arrival?')"
+                                                    class="bg-purple-600 text-white text-xs px-3 py-1 rounded hover:bg-purple-700 transition">
+                                                    Mark Arrival
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
 
@@ -356,7 +369,8 @@ $orderStats = getOrderStats();
 
                                         <div class="text-center">
                                             <div class="countdown-timer <?php echo $order['seconds_remaining'] <= 0 ? 'expired text-red-600' : 'text-blue-600'; ?>"
-                                                data-seconds="<?php echo $order['seconds_remaining']; ?>">
+                                                data-seconds="<?php echo $order['seconds_remaining']; ?>"
+                                                data-order-id="<?php echo $order['id']; ?>">
                                                 <?php
                                                 $seconds = $order['seconds_remaining'];
                                                 if ($seconds > 0) {
@@ -530,10 +544,7 @@ $orderStats = getOrderStats();
         // Start the countdown
         setInterval(updateCountdowns, 1000);
 
-        // Auto-refresh page every 2 minutes to sync with server
-        setInterval(() => {
-            window.location.reload();
-        }, 120000);
+     
     </script>
 </body>
 

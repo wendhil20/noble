@@ -1,7 +1,9 @@
 <?php
+session_name("nobleuser");
 session_start();
 include '../connection/connect.php';
 
+// DESCRIBE product_variants;
 $tables = ['products'];
 foreach ($tables as $table) {
     $result = $conn->query("SELECT COUNT(*) as total FROM $table");
@@ -12,27 +14,57 @@ foreach ($tables as $table) {
 }
 
 
-if (!isset($_SESSION['google_logged_in'])) {
-    // Redirect if not logged in
-    header('Location: google-callback.php');
-    exit;
-}
-
-$userName = $_SESSION['user_name'] ?? null;
-$userEmail = $_SESSION['user_email'] ?? null;
-$userPic = $_SESSION['user_picture'] ?? null; // Only if you saved this in callback
-
-// ✅ Restore session from remember_token if needed
+// ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $res = $stmt->get_result();
+
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
+
+        // 🔐 Store essential user session info
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_name']  = $user['name'];
+        $_SESSION['user_email'] = $user['email'] ?? '';
+        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+
+        // 👤 Check if it's a Google account (optional)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
+    }
+
+    $stmt->close();
+}
+
+// ✅ Final session check
+if (!isset($_SESSION['user_id'])) {
+    // Not logged in — redirect to login or Google auth
+    header('Location: google-callback.php'); // You may replace with `index.php` if default login
+    exit;
+}
+
+
+$userName = $_SESSION['user_name'] ?? '';
+$userEmail = '';
+$userMobile = '';  // ✅ Added mobile variable
+
+// Fetch the correct email and mobile from database
+if (isset($_SESSION['user_id'])) {
+    $user_id_temp = $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT email, mobile FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id_temp);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $userEmail = $user_data['email'];
+        $userMobile = $user_data['mobile'];  // ✅ Get mobile from database
     }
     $stmt->close();
 }
@@ -56,110 +88,194 @@ if ($user_id) {
     $stmt->close();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['customer_name'];
-    $email = $_POST['email'];
-    $mobile = $_POST['mobile'];
-    $address = $_POST['address'];
-    $zipcode = $_POST['zipcode'];
-    $payment_method = $_POST['payment_method']; // New payment method field
-
-    if ($name && $email && $mobile && $address && $zipcode && $payment_method && !empty($cart_items)) {
-        // ✅ Reset auto-increment if needed
-        $conn->query("ALTER TABLE orders AUTO_INCREMENT = 1");
-        $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
-
-        // ✅ Save order (UPDATED to include payment_method)
-      $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssssd", $name, $email, $mobile, $address, $zipcode, $payment_method, $total_price);
-        $stmt->execute();
-        $order_id = $stmt->insert_id;
-        $stmt->close();
-
-        // ✅ Save each item (UPDATED to include size)
-        // ✅ Updated Save each item with descrip6 and descrip7
-$stmt = $conn->prepare("INSERT INTO order_items (
-    order_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-foreach ($cart_items as $item) {
-    $subtotal = $item['price'] * $item['quantity'];
-
-    $product_name = $item['product_name'] ?? $item['variant_name'];
-    $codename = $item['codename'];
-    $type_name = $item['type_name'];
-    $variant_color = $item['color_name'] ?: $item['variant_name'];
-    $size = $item['size'] ?? '';
-    $price = $item['price'];
-    $quantity = $item['quantity'];
-
-    // 🔍 Fetch descrip6 and descrip7 from product_variants
-    $desc_stmt = $conn->prepare("SELECT descrip6, descrip7 FROM product_variants WHERE namevariant = ? LIMIT 1");
-    $desc_stmt->bind_param("s", $codename);
-    $desc_stmt->execute();
-    $desc_result = $desc_stmt->get_result();
-    $desc_data = $desc_result->fetch_assoc();
-    $desc6 = $desc_data['descrip6'] ?? '';
-    $desc7 = $desc_data['descrip7'] ?? '';
-    $desc_stmt->close();
-
-    $stmt->bind_param(
-        "isssssiiiss",
-        $order_id,
-        $product_name,
-        $codename,
-        $type_name,
-        $variant_color,
-        $size,
-        $price,
-        $quantity,
-        $subtotal,
-        $desc6,
-        $desc7
-    );
-    $stmt->execute();
+function generateReferenceNumber() {
+    return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
 }
-$stmt->close();
 
 
-        // ✅ Clear cart
-        $stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-        $stmt->close();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['customer_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $mobile = trim($_POST['mobile'] ?? '');
+    $address = trim($_POST['address'] ?? '');
+    $zipcode = trim($_POST['zipcode'] ?? '');
+    $payment_method = trim($_POST['payment_method'] ?? ''); // New payment method field
 
-        // Set success flag to show modal
-        $order_success = true;
-        $_SESSION['checkout_notice'] = 'Order placed successfully!';
+
+    $reference_no = generateReferenceNumber();
+
+    // Enhanced validation with specific error messages
+    $validation_errors = [];
+
+    if (empty($name)) {
+        $validation_errors[] = "Full Name is required";
+    }
+
+    if (empty($email)) {
+        $validation_errors[] = "Email is required";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $validation_errors[] = "Invalid email format";
+    }
+
+    if (empty($mobile)) {
+        $validation_errors[] = "Mobile number is required";
+    } elseif (!preg_match('/^[0-9]{11}$/', $mobile)) {
+        $validation_errors[] = "Mobile number must be exactly 11 digits";
+    }
+
+    if (empty($address)) {
+        $validation_errors[] = "Address is required";
+    }
+
+    if (empty($zipcode)) {
+        $validation_errors[] = "ZIP Code is required";
+    } elseif (!preg_match('/^[0-9]{4}$/', $zipcode)) {
+        $validation_errors[] = "ZIP Code must be exactly 4 digits";
+    }
+
+    if (empty($payment_method)) {
+        $validation_errors[] = "Payment method is required";
+    }
+
+    if (empty($cart_items)) {
+        $validation_errors[] = "Your cart is empty";
+    }
+
+    // If there are validation errors, show them
+    if (!empty($validation_errors)) {
+        $error = implode(', ', $validation_errors);
     } else {
-        $error = "Please complete all fields and ensure your cart is not empty.";
+        // All validations passed, proceed with order
+        try {
+            // ✅ Reset auto-increment if needed
+            $conn->query("ALTER TABLE orders AUTO_INCREMENT = 1");
+            $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
+
+            // ✅ Save order (UPDATED to include payment_method)
+           $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("ssssssds", $name, $email, $mobile, $address, $zipcode, $payment_method, $total_price, $reference_no);
+
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to create order: " . $stmt->error);
+            }
+
+            $order_id = $stmt->insert_id;
+            $stmt->close();
+
+            // ✅ Save each item - FIXED to handle missing product_name column
+            $stmt = $conn->prepare("INSERT INTO order_items (
+                order_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+            foreach ($cart_items as $item) {
+                $subtotal = $item['price'] * $item['quantity'];
+                $product_name = $item['product_name'] ?? $item['variant_name'];
+                $codename = $item['codename'] ?? '';
+                $type_name = $item['type_name'] ?? '';
+                $variant_color = $item['color_name'] ?: ($item['variant_name'] ?? '');
+                $size = $item['size'] ?? '';
+                $price = $item['price'];
+                $quantity = $item['quantity'];
+
+                // ✅ SIMPLIFIED: Get descrip6 and descrip7 directly from cart item
+                $desc6 = $item['descrip6'] ?? '';
+                $desc7 = $item['descrip7'] ?? '';
+
+                $stmt->bind_param(
+                    "isssssiiiss",
+                    $order_id,
+                    $product_name,
+                    $codename,
+                    $type_name,
+                    $variant_color,
+                    $size,
+                    $price,
+                    $quantity,
+                    $subtotal,
+                    $desc6,
+                    $desc7
+                );
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Failed to save order item: " . $stmt->error);
+                }
+            }
+            $stmt->close();
+
+            // ✅ Clear cart
+            $stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
+            $stmt->bind_param("i", $user_id);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to clear cart: " . $stmt->error);
+            }
+            $stmt->close();
+
+            // Set success flag to show modal
+            $order_success = true;
+            $_SESSION['checkout_notice'] = 'Order placed successfully!';
+        } catch (Exception $e) {
+            $error = "An error occurred while processing your order. Please try again.";
+            // Log the actual error for debugging
+            error_log("Checkout error: " . $e->getMessage());
+        }
     }
 }
 
-// Helper function to format item details
 function formatItemDetails($item)
 {
     $details = [];
-
-    // Always show type
     if (!empty($item['type_name'])) {
-        $details[] = htmlspecialchars($item['type_name']);
+        $details[] = $item['type_name'];
     }
-
-    // Only show size if it exists and is not empty
     if (!empty($item['size']) && trim($item['size']) !== '') {
-        $details[] = htmlspecialchars($item['size']);
+        $details[] = 'Size: ' . $item['size'];
     }
-
-    // Show color if available
+    if (!empty($item['materials'])) {
+        $details[] = $item['materials'];
+    }
     if (!empty($item['color_name'])) {
-        $details[] = htmlspecialchars($item['color_name']);
-    } elseif (empty($item['color_name']) && !empty($item['variant_name'])) {
-        // Fallback to variant name if no color
-        $details[] = htmlspecialchars($item['variant_name']);
+        $details[] = 'Color: ' . $item['color_name'];
+    } elseif (!empty($item['variant_name'])) {
+        $details[] = $item['variant_name'];
+    }
+    if (!empty($item['codename'])) {
+        $details[] = 'Code: ' . $item['codename'];
+    }
+    if (!empty($item['descrip6'])) {
+        $details[] = ' ' . $item['descrip6'];
+    }
+    if (!empty($item['descrip7'])) {
+        $details[] = ' ' . $item['descrip7'];
+    }
+    return implode('<br>', array_map('htmlspecialchars', $details));
+}
+
+// SIMPLIFIED: Function to get descrip6 and descrip7 for display
+function getProductDescription($conn, $codename, $variant_name = '', $variant_id = null)
+{
+    // Since descrip6 and descrip7 are already in user_cart_items, 
+    // this function is not needed for cart items
+    // But keeping it for other potential uses
+    $desc6 = '';
+    $desc7 = '';
+
+    if (!empty($codename)) {
+        $desc_stmt = $conn->prepare("SELECT descrip6, descrip7 FROM product_variants WHERE namevariant = ? LIMIT 1");
+        $desc_stmt->bind_param("s", $codename);
+        $desc_stmt->execute();
+        $desc_result = $desc_stmt->get_result();
+
+        if ($desc_result->num_rows > 0) {
+            $desc_data = $desc_result->fetch_assoc();
+            $desc6 = $desc_data['descrip6'] ?? '';
+            $desc7 = $desc_data['descrip7'] ?? '';
+        }
+        $desc_stmt->close();
     }
 
-    return implode(' / ', $details);
+    return ['desc6' => $desc6, 'desc7' => $desc7];
 }
 ?>
 
@@ -178,8 +294,10 @@ function formatItemDetails($item)
     <div class="bg-white p-6 rounded shadow mt-3">
         <h2 class="text-2xl font-bold text-orange-700 mb-6">Checkout</h2>
 
-        <?php if (isset($error)): ?>
-            <p class="text-red-600 mb-4"><?= $error ?></p>
+        <?php if (!empty($error)): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <strong>Error:</strong> <?= htmlspecialchars($error) ?>
+            </div>
         <?php endif; ?>
 
         <form method="POST" class="space-y-4">
@@ -195,9 +313,18 @@ function formatItemDetails($item)
                     value="<?= htmlspecialchars($userEmail ?? '') ?>" readonly />
             </div>
 
-            <div><label class="block font-medium">Mobile Number</label>
-                <input type="tel" name="mobile" pattern="[0-9]{11}" required class="w-full border px-4 py-2 rounded" placeholder="e.g. 09171234567" />
+            <div>
+                <label class="block font-medium">Mobile Number</label>
+                <input
+                    type="tel"
+                    name="mobile"
+                    pattern="[0-9]{11}"
+                    required
+                    class="w-full border px-4 py-2 rounded bg-gray-50 focus:bg-white"
+                    value="<?= htmlspecialchars($userMobile ?? '') ?>"
+                    placeholder="e.g. 09171234567" />
             </div>
+
 
             <div><label class="block font-medium">Full Address</label>
                 <textarea name="address" rows="3" required class="w-full border px-4 py-2 rounded resize-none"></textarea>
@@ -257,6 +384,8 @@ function formatItemDetails($item)
                         </div>
                     </label>
 
+
+
                     <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="PayPal" required class="mr-3" />
                         <div class="flex items-center">
@@ -275,45 +404,44 @@ function formatItemDetails($item)
             </div>
 
             <!-- Order Summary -->
-           <h3 class="text-xl font-semibold mt-6 mb-2">Order Summary</h3>
-<ul class="divide-y text-sm max-h-60 overflow-y-auto border rounded-md p-2 bg-white">
-    <?php foreach ($cart_items as $item): ?>
-        <?php
-        // Fetch descrip6 and descrip7 for this item
-        $codename = $item['codename'];
-        $desc_stmt = $conn->prepare("SELECT descrip6, descrip7 FROM product_variants WHERE namevariant = ? LIMIT 1");
-        $desc_stmt->bind_param("s", $codename);
-        $desc_stmt->execute();
-        $desc_result = $desc_stmt->get_result();
-        $desc_data = $desc_result->fetch_assoc();
-        $desc6 = $desc_data['descrip6'] ?? '';
-        $desc7 = $desc_data['descrip7'] ?? '';
-        $desc_stmt->close();
-        ?>
-        <li class="py-2">
-            <div class="flex justify-between items-start">
-                <div class="w-2/3">
-                    <div class="font-medium"><?= htmlspecialchars($item['variant_name']) ?></div>
-                    <?php $details = formatItemDetails($item); ?>
-                    <?php if (!empty($details)): ?>
-                        <div class="text-gray-600 text-xs"><?= $details ?></div>
-                    <?php endif; ?>
-                    <?php if (!empty($desc6) || !empty($desc7)): ?>
-                        <div class="text-xs text-gray-500 mt-1 italic">
-                            <?= htmlspecialchars($desc6) ?><br>
-                            <?= htmlspecialchars($desc7) ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                <div class="text-right w-1/3">
-                    <div>₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?></div>
-                    <div class="text-xs text-gray-500">₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
-                </div>
-            </div>
-        </li>
-    <?php endforeach; ?>
-</ul>
+            <h3 class="text-xl font-semibold mt-6 mb-2">Order Summary</h3>
+            <ul class="divide-y text-sm max-h-60 overflow-y-auto border rounded-md p-2 bg-white">
+                <?php foreach ($cart_items as $item): ?>
+                    <?php
+                    // Use the new function to get descrip6 and descrip7
+                    $descriptions = getProductDescription($conn, $item['codename'], $item['product_name'] ?? '', $item['variant_name'] ?? '');
+                    $desc6 = $descriptions['desc6'];
+                    $desc7 = $descriptions['desc7'];
+                    ?>
+                    <li class="py-2">
+                        <div class="flex justify-between items-start">
+                            <div class="w-2/3">
+                                <div class="font-medium"><?= htmlspecialchars($item['variant_name']) ?></div>
+                                <?php $details = formatItemDetails($item); ?>
+                                <?php if (!empty($details)): ?>
+                                    <div class="text-gray-600 text-xs"><?= $details ?></div>
+                                <?php endif; ?>
 
+                                <?php if (!empty($desc6) || !empty($desc7)): ?>
+                                    <div class="text-xs text-gray-500 mt-1 italic leading-tight">
+                                        <?php if (!empty($desc6)): ?>
+                                            <span class="text-gray-600 font-medium"></span> <?= htmlspecialchars($desc6) ?><br>
+                                        <?php endif; ?>
+                                        <?php if (!empty($desc7)): ?>
+                                            <span class="text-gray-600 font-medium"></span> <?= htmlspecialchars($desc7) ?>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+
+                            </div>
+                            <div class="text-right w-1/3">
+                                <div>₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?></div>
+                                <div class="text-xs text-gray-500">₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
+                            </div>
+                        </div>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
 
             <div class="text-right text-xl mt-4 font-bold text-green-700">
                 Total: ₱<?= number_format($total_price, 2) ?>
@@ -350,12 +478,15 @@ function formatItemDetails($item)
                 <h3 class="text-2xl font-bold text-gray-900 mb-4">Thank You!</h3>
                 <p class="text-gray-600 mb-6">
                     Your request has been submitted successfully. We will review your order and contact you within 24 hours.
+                    Please note that the final total includes a 12% VAT and applicable shipping fees, which will be reflected in your order summary.
                 </p>
+
                 <button onclick="closeModal()" class="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition">
                     Continue Shopping
                 </button>
             </div>
         </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <script>
             function closeModal() {

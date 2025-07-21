@@ -1,14 +1,37 @@
 <?php
+session_name("nobleadmin");
+session_start();
 include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+include '../role/roleaccount.php';
+require_role(['admin', 'superadmin']); // allow only admin and superadmin
+
+// Check if user is logged in
+if (!isset($_SESSION['noble_user'])) {
+  // Redirect to login page
+  header("Location: ../../loginpage/index.php");
+  exit();
+}
+
+// Optional: Auto-logout after inactivity (e.g. 30 mins)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+  // Destroy session and redirect to login
+  session_unset();
+  session_destroy();
+  header("Location: ../../loginpage/index.php?timeout=true");
+  exit();
+}
+
+// Update last activity time
+$_SESSION['last_activity'] = time();
 
 
 // ✅ Handle Delete Request with CASCADE DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
- $deleteId = (int) $_POST['delete_id'];
+  $deleteId = (int) $_POST['delete_id'];
 
-try {
+  try {
     $conn->begin_transaction();
 
     // 🔎 Step 1: Get all related image paths
@@ -21,7 +44,7 @@ try {
     $res->bind_result($mainImage);
     $res->fetch();
     if ($mainImage && file_exists("../../" . $mainImage)) {
-        $imagesToDelete[] = "../../" . $mainImage;
+      $imagesToDelete[] = "../../" . $mainImage;
     }
     $res->close();
 
@@ -31,9 +54,9 @@ try {
     $res->execute();
     $result = $res->get_result();
     while ($row = $result->fetch_assoc()) {
-        if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
-            $imagesToDelete[] = "../../" . $row['image'];
-        }
+      if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
+        $imagesToDelete[] = "../../" . $row['image'];
+      }
     }
     $res->close();
 
@@ -44,38 +67,38 @@ try {
     $res->execute();
     $result = $res->get_result();
     while ($row = $result->fetch_assoc()) {
-        $typeIds[] = $row['id'];
-        if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) {
-            $imagesToDelete[] = "../../" . $row['type_image'];
-        }
+      $typeIds[] = $row['id'];
+      if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) {
+        $imagesToDelete[] = "../../" . $row['type_image'];
+      }
     }
     $res->close();
 
     // Variant images (optional if you store images per variant)
     foreach ($typeIds as $typeId) {
-        $res = $conn->prepare("SELECT image FROM product_variants WHERE type_id = ?");
-        $res->bind_param("i", $typeId);
-        $res->execute();
-        $result = $res->get_result();
-        while ($row = $result->fetch_assoc()) {
-            if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
-                $imagesToDelete[] = "../../" . $row['image'];
-            }
+      $res = $conn->prepare("SELECT image FROM product_variants WHERE type_id = ?");
+      $res->bind_param("i", $typeId);
+      $res->execute();
+      $result = $res->get_result();
+      while ($row = $result->fetch_assoc()) {
+        if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
+          $imagesToDelete[] = "../../" . $row['image'];
         }
-        $res->close();
+      }
+      $res->close();
     }
 
     // 🧹 Step 2: Delete image files
     foreach ($imagesToDelete as $filePath) {
-        @unlink($filePath); // use @ to suppress errors in case file was already deleted
+      @unlink($filePath); // use @ to suppress errors in case file was already deleted
     }
 
     // 🗑 Step 3: Delete child records first
     foreach ($typeIds as $typeId) {
-        $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
-        $stmt->bind_param("i", $typeId);
-        $stmt->execute();
-        $stmt->close();
+      $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
+      $stmt->bind_param("i", $typeId);
+      $stmt->execute();
+      $stmt->close();
     }
 
     $stmt1 = $conn->prepare("DELETE FROM product_colors WHERE product_id = ?");
@@ -97,12 +120,10 @@ try {
 
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
-
-} catch (Exception $e) {
+  } catch (Exception $e) {
     $conn->rollback();
     echo "Error deleting product: " . $e->getMessage();
-}
-
+  }
 }
 
 // ✅ Fetch all products
@@ -125,23 +146,21 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
   <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-6 text-orange-600">Select Product to Update</h2>
 
-   <!-- 🔍 Search -->
-  <input
-    type="text"
-    id="searchInput"
-    placeholder="Search by name or codename..."
-    class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-  />
+    <!-- 🔍 Search -->
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search by name or codename..."
+      class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" />
 
-  <!-- 🔽 Filter -->
-  <select
-    id="quantityFilter"
-    class="w-full md:w-1/4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-  >
-    <option value="all">All Quantities</option>
-    <option value="in-stock">In Stock</option>
-    <option value="out-of-stock">Out of Stock</option>
-  </select>
+    <!-- 🔽 Filter -->
+    <select
+      id="quantityFilter"
+      class="w-full md:w-1/4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500">
+      <option value="all">All Quantities</option>
+      <option value="in-stock">In Stock</option>
+      <option value="out-of-stock">Out of Stock</option>
+    </select>
 
     <?php if ($products->num_rows > 0): ?>
       <div class="overflow-x-auto mt-5">
@@ -161,9 +180,9 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
               <tr class="hover:bg-gray-50 product-row">
                 <td class="border border-gray-300 px-4 py-2">
                   <?php if (!empty($product['main_image'])): ?>
-                  <img src="../../<?= htmlspecialchars($product['main_image']) ?>" 
-     class="h-16 w-16 object-contain rounded" 
-     alt="Product Image">
+                    <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
+                      class="h-16 w-16 object-contain rounded"
+                      alt="Product Image">
 
 
                   <?php else: ?>
@@ -210,36 +229,36 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
     </div>
   </div>
 
- <script>
-  const searchInput = document.getElementById("searchInput");
-  const quantityFilter = document.getElementById("quantityFilter");
-  const rows = document.querySelectorAll(".product-row");
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const quantityFilter = document.getElementById("quantityFilter");
+    const rows = document.querySelectorAll(".product-row");
 
-  function filterRows() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const quantityValue = quantityFilter.value;
+    function filterRows() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const quantityValue = quantityFilter.value;
 
-    rows.forEach(row => {
-      const name = row.querySelector(".product-name").textContent.toLowerCase();
-      const code = row.querySelector(".product-code").textContent.toLowerCase();
-      const quantity = parseInt(row.querySelector(".product-qty").textContent);
+      rows.forEach(row => {
+        const name = row.querySelector(".product-name").textContent.toLowerCase();
+        const code = row.querySelector(".product-code").textContent.toLowerCase();
+        const quantity = parseInt(row.querySelector(".product-qty").textContent);
 
-      const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
-      let matchesFilter = true;
+        const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
+        let matchesFilter = true;
 
-      if (quantityValue === "in-stock") {
-        matchesFilter = quantity > 0;
-      } else if (quantityValue === "out-of-stock") {
-        matchesFilter = quantity === 0;
-      }
+        if (quantityValue === "in-stock") {
+          matchesFilter = quantity > 0;
+        } else if (quantityValue === "out-of-stock") {
+          matchesFilter = quantity === 0;
+        }
 
-      row.style.display = matchesSearch && matchesFilter ? "" : "none";
-    });
-  }
+        row.style.display = matchesSearch && matchesFilter ? "" : "none";
+      });
+    }
 
-  searchInput.addEventListener("input", filterRows);
-  quantityFilter.addEventListener("change", filterRows);
-</script>
+    searchInput.addEventListener("input", filterRows);
+    quantityFilter.addEventListener("change", filterRows);
+  </script>
 
 </body>
 

@@ -1,546 +1,689 @@
 <?php
-session_start();
 include '../../connection/connect.php';
+require_role(['admin', 'superadmin']);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require '../../vendor/autoload.php';
-
-// Fixed order confirmation section
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (isset($_POST['confirm_order'], $_POST['confirm_order_id'])) {
-    $orderId = (int) $_POST['confirm_order_id'];
-    if ($orderId <= 0) die("❌ Invalid order ID.");
-
-    $discount_percent = floatval($_POST['discount'] ?? 0);
-    $shipping_fee = floatval($_POST['shipping_fee'] ?? 0);
-
-    $order_result = $conn->query("SELECT * FROM orders WHERE id = $orderId");
-    if ($order_result && $order_result->num_rows > 0) {
-      $order_data = $order_result->fetch_assoc();
-      $total = floatval($order_data['total']);
-      $email = $order_data['email'];
-      $name = $order_data['customer_name'];
-      $discount_amount = ($total * $discount_percent) / 100;
-      $grand_total = ($total - $discount_amount) + $shipping_fee;
-
-      // ✅ FIX: Update the order status to 'Ongoing'
-      $update_result = $conn->query("UPDATE orders SET 
-        status='Ongoing', 
-        discount=$discount_percent, 
-        shipping_fee=$shipping_fee, 
-        final_total=$grand_total 
-        WHERE id=$orderId");
-
-      if ($update_result) {
-        $client_check = $conn->query("SELECT id, reference_no FROM client_info WHERE email = '$email'");
-        if ($client_check->num_rows == 0) {
-          $today = date('Ymd');
-          $count_result = $conn->query("SELECT COUNT(*) AS total FROM client_info WHERE DATE(created_at) = CURDATE()");
-          $count_row = $count_result->fetch_assoc();
-          $reference_no = 'NOBLE-' . $today . '-' . str_pad($count_row['total'] + 1, 4, '0', STR_PAD_LEFT);
-
-          $client_name = $conn->real_escape_string($order_data['customer_name']);
-          $client_email = $conn->real_escape_string($order_data['email']);
-          $client_address = $conn->real_escape_string($order_data['address']);
-          $client_contact = $conn->real_escape_string($order_data['mobile']);
-          $client_zip = $conn->real_escape_string($order_data['zipcode']);
-          $created_at = date('Y-m-d H:i:s');
-
-          $conn->query("INSERT INTO client_info 
-            (name, address, email, contact, country, client_type, sex, status, created_at, reference_no) 
-            VALUES 
-            ('$client_name', '$client_address', '$client_email', '$client_contact', '$client_zip', 'Customer', 'N/A', 'Ongoing', '$created_at', '$reference_no')");
-        } else {
-          $client = $client_check->fetch_assoc();
-          $reference_no = $client['reference_no'];
-        }
-
-        // ✅ Send Email
-        $mail = new PHPMailer(true);
-        try {
-          $mail->isSMTP();
-          $mail->Host = 'smtp.gmail.com';
-          $mail->SMTPAuth = true;
-          $mail->Username = 'wendhil10@gmail.com';
-          $mail->Password = 'tnjqjsuopqlwzoug';
-          $mail->SMTPSecure = 'tls';
-          $mail->Port = 587;
-
-          $mail->setFrom('no-reply@yourdomain.com', 'NobleHome Orders');
-          $mail->addAddress($email, $name);
-          $mail->isHTML(true);
-          $mail->Subject = "Order #$orderId Ongoing – Upload Payment";
-          $mail->Body = "
-            <div style='font-family: Arial, sans-serif; padding: 20px;'>
-              <h2 style='color: #10b981;'>🧾 Order #$orderId Ongoing</h2>
-              <p>Hi <strong>$name</strong>,</p>
-              <p>Your order has been confirmed and is now ongoing. Please proceed with the payment:</p>
-              <ul>
-                <li><strong>Subtotal:</strong> ₱" . number_format($total, 2) . "</li>
-                <li><strong>Discount:</strong> $discount_percent% (₱" . number_format($discount_amount, 2) . ")</li>
-                <li><strong>Shipping Fee:</strong> ₱" . number_format($shipping_fee, 2) . "</li>
-                <li><strong>Total:</strong> <span style='color:green;'>₱" . number_format($grand_total, 2) . "</span></li>
-              </ul>
-              <p>
-                <a href='http://localhost/noble/admin/orders/billing.php?order_id=$orderId' target='_blank'
-                  style='background:#10b981;color:white;padding:10px 18px;border-radius:6px;text-decoration:none;'>View Billing</a>
-              </p>
-              <p>Thank you for choosing <strong style='color:#ea580c;'>NobleHome</strong>!</p>
-            </div>";
-          $mail->send();
-        } catch (Exception $e) {
-          error_log("Mailer Error: {$mail->ErrorInfo}");
-        }
-
-        // ✅ FIX: Redirect to refresh the page and show updated data
-        echo "<script>
-          alert('Order #$orderId has been confirmed successfully!');
-          window.location.href='orders.php?tab=ongoing';
-        </script>";
-        exit;
-      } else {
-        echo "<script>
-          alert('Error updating order status. Please try again.');
-          window.location.href='orders.php?tab=pending';
-        </script>";
-        exit;
-      }
-    }
-  }
-
-  if (isset($_POST['reject_order'], $_POST['reject_order_id'])) {
-    $orderId = (int) $_POST['reject_order_id'];
-    if ($orderId > 0) {
-      $order_result = $conn->query("SELECT * FROM orders WHERE id = $orderId");
-      if ($order_result && $order_result->num_rows > 0) {
-        $order_data = $order_result->fetch_assoc();
-        $email = $order_data['email'];
-        $name = $order_data['customer_name'];
-
-        // ✅ Update order status first (instant)
-        $conn->query("UPDATE orders SET status='Rejected' WHERE id=$orderId");
-
-        // ✉️ Send rejection email with timeout
-        $mail = new PHPMailer(true);
-        try {
-          $mail->isSMTP();
-          $mail->Host = 'smtp.gmail.com';
-          $mail->SMTPAuth = true;
-          $mail->Username = 'wendhil10@gmail.com';
-          $mail->Password = 'tnjqjsuopqlwzoug';
-          $mail->SMTPSecure = 'tls';
-          $mail->Port = 587;
-          $mail->Timeout = 5; // 5 second timeout only
-          $mail->SMTPOptions = array(
-            'ssl' => array(
-              'verify_peer' => false,
-              'verify_peer_name' => false,
-              'allow_self_signed' => true
-            )
-          );
-
-          $mail->setFrom('no-reply@yourdomain.com', 'NobleHome Orders');
-          $mail->addAddress($email, $name);
-          $mail->isHTML(true);
-          $mail->Subject = "Order #$orderId Rejected";
-
-          $mail->Body = "
-          <div style='font-family: Arial, sans-serif; padding: 20px;'>
-            <h2 style='color: #dc2626;'> Order #$orderId Rejected</h2>
-            <p>Dear <strong>$name</strong>,</p>
-            <p>We regret to inform you that your recent order (#$orderId) has been rejected. This may be due to unavailability of items or other reasons.</p>
-            <p>If you believe this is a mistake or wish to reorder, please contact us or try placing a new order.</p>
-            <p>Thank you for understanding.<br><strong style='color:#ea580c;'>NobleHome</strong> Team</p>
-          </div>";
-
-          $mail->send();
-        } catch (Exception $e) {
-          error_log("Rejection Mailer Error: {$mail->ErrorInfo}");
-          // Don't let email failure stop the process
-        }
-
-        echo "<script>
-          alert('Order #$orderId has been rejected successfully!');
-          window.location.href='orders.php?tab=rejected';
-        </script>";
-        exit;
-      }
-    }
-  }
+if (!isset($_SESSION['noble_user'])) {
+  header("Location: ../../loginpage/index.php");
+  exit();
 }
 
-// ✅ FIX: More specific query for pending orders - only get orders with 'Pending' status
-$pendingOrders = $conn->query("SELECT * FROM orders WHERE status = 'Pending' OR status IS NULL OR status = '' ORDER BY created_at DESC");
-$confirmedOrders = $conn->query("SELECT * FROM orders WHERE status = 'Ongoing' ORDER BY created_at DESC");
-$rejectedOrders = $conn->query("SELECT * FROM orders WHERE status = 'Rejected' ORDER BY created_at DESC");
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+  session_unset();
+  session_destroy();
+  header("Location: ../../loginpage/index.php?timeout=true");
+  exit();
+}
 
-// Get counts for badges
-$pendingCount = $pendingOrders->num_rows;
-$ongoingCount = $confirmedOrders->num_rows;
-$rejectedCount = $rejectedOrders->num_rows;
-
-// Get active tab from URL parameter
-$activeTab = $_GET['tab'] ?? 'pending';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
-  <title>Admin - Orders</title>
+  <title>Admin Orders</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+              900: '#7c2d12',
+            }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    .tab-content {
+    .scrollbar-hide::-webkit-scrollbar {
       display: none;
     }
-    .tab-content.active {
-      display: block;
+
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      /* IE and Edge */
+      scrollbar-width: none;
+      /* Firefox */
     }
   </style>
 </head>
 
-<body class="bg-gray-100 font-sans">
-  <?php include '../navbar/top.php'; ?>
-
-  <div class="container mx-auto p-6">
-    <!-- Orders Navigation Tabs -->
-    <div class="bg-white rounded-lg shadow-sm mb-6">
-      <div class="border-b border-gray-200">
-        <nav class="flex space-x-0">
-          <button onclick="showTab('pending')" 
-                  class="tab-button px-6 py-4 text-sm font-medium border-b-2 transition-colors duration-200 
-                         <?php echo ($activeTab === 'pending') ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?>">
-            <span class="flex items-center">
-              Pending
-              <span class="ml-2 bg-orange-100 text-orange-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                <?php echo $pendingCount; ?>
-              </span>
-            </span>
-          </button>
-          
-          <button onclick="showTab('ongoing')" 
-                  class="tab-button px-6 py-4 text-sm font-medium border-b-2 transition-colors duration-200 
-                         <?php echo ($activeTab === 'ongoing') ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?>">
-            <span class="flex items-center">
-              Ongoing
-              <span class="ml-2 bg-green-100 text-green-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                <?php echo $ongoingCount; ?>
-              </span>
-            </span>
-          </button>
-          
-          <button onclick="showTab('rejected')" 
-                  class="tab-button px-6 py-4 text-sm font-medium border-b-2 transition-colors duration-200 
-                         <?php echo ($activeTab === 'rejected') ? 'border-red-500 text-red-600 bg-red-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?>">
-            <span class="flex items-center">
-              Rejected
-              <span class="ml-2 bg-red-100 text-red-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                <?php echo $rejectedCount; ?>
-              </span>
-            </span>
-          </button>
-        </nav>
-      </div>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="bg-white rounded-lg shadow-sm">
-      <!-- Pending Orders Tab -->
-      <div id="pending-tab" class="tab-content <?php echo ($activeTab === 'pending') ? 'active' : ''; ?> p-6">
-        <h2 class="text-2xl font-bold text-orange-700 mb-6 flex items-center">
-          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          Pending Orders
-        </h2>
-        
-        <div class="space-y-4">
-          <?php if ($pendingCount > 0): 
-            $pendingOrders->data_seek(0); // Reset pointer
-            while ($order = $pendingOrders->fetch_assoc()): 
-              renderOrderCard($order, $conn);
-            endwhile;
-          else: ?>
-            <div class="text-center py-12">
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <p class="text-gray-500 text-lg">No pending orders found</p>
-            </div>
-          <?php endif; ?>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+  <!-- Header Section -->
+  <div class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-3 rounded-xl shadow-lg">
+            <i class="fas fa-shopping-cart text-white text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Order Management</h1>
+            <p class="text-gray-600 mt-1">Manage and track all customer orders</p>
+          </div>
         </div>
-      </div>
-
-      <!-- Ongoing Orders Tab -->
-      <div id="ongoing-tab" class="tab-content <?php echo ($activeTab === 'ongoing') ? 'active' : ''; ?> p-6">
-        <h2 class="text-2xl font-bold text-green-700 mb-6 flex items-center">
-          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          Ongoing Orders
-        </h2>
-        
-        <div class="space-y-4">
-          <?php if ($ongoingCount > 0): 
-            $confirmedOrders->data_seek(0); // Reset pointer
-            while ($order = $confirmedOrders->fetch_assoc()): 
-              renderOrderCard($order, $conn);
-            endwhile;
-          else: ?>
-            <div class="text-center py-12">
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <p class="text-gray-500 text-lg">No ongoing orders found</p>
-            </div>
-          <?php endif; ?>
-        </div>
-      </div>
-
-      <!-- Rejected Orders Tab -->
-      <div id="rejected-tab" class="tab-content <?php echo ($activeTab === 'rejected') ? 'active' : ''; ?> p-6">
-        <h2 class="text-2xl font-bold text-red-700 mb-6 flex items-center">
-          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          Rejected Orders
-        </h2>
-        
-        <div class="space-y-4">
-          <?php if ($rejectedCount > 0): 
-            $rejectedOrders->data_seek(0); // Reset pointer
-            while ($order = $rejectedOrders->fetch_assoc()): 
-              renderOrderCard($order, $conn);
-            endwhile;
-          else: ?>
-            <div class="text-center py-12">
-              <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <p class="text-gray-500 text-lg">No rejected orders found</p>
-            </div>
-          <?php endif; ?>
+        <div class="flex items-center space-x-4">
+          <div class="bg-primary-50 px-4 py-2 rounded-lg">
+            <span class="text-primary-700 font-medium" id="orderCount">Loading...</span>
+          </div>
+          <button onclick="loadOrders()" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+            <i class="fas fa-sync-alt"></i>
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Main Content -->
+  <div class=" px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Alert Container -->
+    <div id="alertContainer" class="mb-6"></div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <span class="ml-3 text-gray-600">Loading orders...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-filter text-gray-400"></i>
+          <span class="text-gray-700 font-medium">Filter by Status:</span>
+        </div>
+        <div class="flex space-x-2">
+          <button onclick="filterOrders('all')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 active" data-filter="all">All</button>
+          <button onclick="filterOrders('pending')" class="filter-btn bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 transition-colors duration-200" data-filter="pending">Pending</button>
+          <button onclick="filterOrders('ongoing')" class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors duration-200" data-filter="ongoing">Ongoing</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <input
+        type="text"
+        id="orderSearch"
+        placeholder="Search orders..."
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" />
+    </div>
+
+    <!-- Orders Container -->
+    <div id="ordersContainer" class="space-y-6"></div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+      <div class="text-gray-400 mb-4">
+        <i class="fas fa-shopping-cart text-6xl"></i>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
+      <p class="text-gray-600">There are no orders to display at the moment.</p>
+    </div>
+  </div>
+
   <script>
-    function showTab(tabName) {
-      // Hide all tab contents
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
+    document.getElementById("orderSearch").addEventListener("input", function() {
+      const keyword = this.value.toLowerCase();
+      const orders = document.querySelectorAll("#ordersContainer > *");
+
+      orders.forEach(order => {
+        const text = order.textContent.toLowerCase();
+        order.style.display = text.includes(keyword) ? "" : "none";
       });
-      
-      // Remove active classes from all tab buttons
-      document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('border-orange-500', 'text-orange-600', 'bg-orange-50');
-        button.classList.remove('border-green-500', 'text-green-600', 'bg-green-50');
-        button.classList.remove('border-red-500', 'text-red-600', 'bg-red-50');
-        button.classList.add('border-transparent', 'text-gray-500');
-      });
-      
-      // Show selected tab content
-      document.getElementById(tabName + '-tab').classList.add('active');
-      
-      // Add active class to clicked button
-      const activeButton = event.target.closest('.tab-button');
-      activeButton.classList.remove('border-transparent', 'text-gray-500');
-      
-      if (tabName === 'pending') {
-        activeButton.classList.add('border-orange-500', 'text-orange-600', 'bg-orange-50');
-      } else if (tabName === 'ongoing') {
-        activeButton.classList.add('border-green-500', 'text-green-600', 'bg-green-50');
-      } else if (tabName === 'rejected') {
-        activeButton.classList.add('border-red-500', 'text-red-600', 'bg-red-50');
-      }
+    });
+
+    let allOrders = [];
+    let currentFilter = 'all';
+
+    // Calculate order total with proper precision
+    function calculateOrderTotal(order) {
+      const baseTotal = parseFloat(order.total) || 0;
+      const discountPercent = parseFloat(order.discount) || 0;
+      const shippingFee = parseFloat(order.shipping_fee) || 0;
+      const deliveryFee = parseFloat(order.delivery_fee) || 0;
+
+      const discountAmount = (baseTotal * discountPercent) / 100;
+      const subtotalAfterDiscount = baseTotal - discountAmount;
+      const vatAmount = subtotalAfterDiscount * 0.12;
+      const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee + deliveryFee;
+
+      return {
+        baseTotal: baseTotal.toFixed(2),
+        discountAmount: discountAmount.toFixed(2),
+        subtotalAfterDiscount: subtotalAfterDiscount.toFixed(2),
+        vatAmount: vatAmount.toFixed(2),
+        shippingFee: shippingFee.toFixed(2),
+        deliveryFee: deliveryFee.toFixed(2),
+        finalTotal: finalTotal.toFixed(2)
+      };
     }
 
-    // Dynamic total calculation function
-    function calculateTotal(orderId, baseTotal) {
-      const discountInput = document.getElementById('discount-' + orderId);
-      const shippingInput = document.getElementById('shipping-' + orderId);
-      const calculatedTotalSpan = document.getElementById('calculated-total-' + orderId);
-      
-      function updateTotal() {
-        const discount = parseFloat(discountInput.value) || 0;
-        const shipping = parseFloat(shippingInput.value) || 0;
-        
-        const discountAmount = (baseTotal * discount) / 100;
-        const finalTotal = (baseTotal - discountAmount) + shipping;
-        
-        calculatedTotalSpan.textContent = '₱' + finalTotal.toLocaleString('en-PH', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
+    // Show alert message
+    function showAlert(message, type = 'info') {
+      const alertContainer = document.getElementById('alertContainer');
+      const icons = {
+        success: 'fas fa-check-circle',
+        error: 'fas fa-exclamation-circle',
+        info: 'fas fa-info-circle'
+      };
+
+      const colors = {
+        success: 'bg-green-50 border-green-200 text-green-800',
+        error: 'bg-red-50 border-red-200 text-red-800',
+        info: 'bg-blue-50 border-blue-200 text-blue-800'
+      };
+
+      alertContainer.innerHTML = `
+    <div class="border-l-4 ${colors[type]} p-4 rounded-lg shadow-sm animate-pulse">
+      <div class="flex items-center">
+        <i class="${icons[type]} text-xl mr-3"></i>
+        <div>
+          <p class="font-medium">${message}</p>
+        </div>
+      </div>
+    </div>`;
+
+      setTimeout(() => {
+        alertContainer.innerHTML = '';
+      }, 5000);
+    }
+
+    // Filter orders - only show pending and ongoing
+    function filterOrders(status) {
+      currentFilter = status;
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-primary-100', 'text-primary-700', 'border-primary-200');
+        if (btn.dataset.filter === status) {
+          btn.classList.add('active', 'bg-primary-100', 'text-primary-700', 'border-primary-200');
+        }
+      });
+
+      renderOrders();
+    }
+
+    // Load orders - filter out rejected orders
+    function loadOrders() {
+      const loadingState = document.getElementById('loadingState');
+      const ordersContainer = document.getElementById('ordersContainer');
+
+      loadingState.classList.remove('hidden');
+      ordersContainer.innerHTML = '';
+
+      fetch('fetch_orders.php')
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch orders');
+          return res.json();
+        })
+        .then(orders => {
+          // Filter out rejected orders - only show pending and ongoing
+          allOrders = orders.filter(order => {
+            const status = (order.status || 'pending').toLowerCase();
+            return status === 'pending' || status === 'ongoing';
+          });
+
+          updateOrderCount();
+          renderOrders();
+        })
+        .catch(error => {
+          console.error('Error loading orders:', error);
+          showAlert('Failed to load orders. Please try again.', 'error');
+        })
+        .finally(() => {
+          loadingState.classList.add('hidden');
         });
-      }
-      
-      discountInput.addEventListener('input', updateTotal);
-      shippingInput.addEventListener('input', updateTotal);
     }
 
-    // Confirm reject with loading
-    function confirmReject(button) {
-      if (confirm('Are you sure you want to reject this order?')) {
-        button.innerHTML = '<span class="flex items-center"><svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Rejecting...</span>';
-        button.disabled = true;
-        return true;
-      }
-      return false;
+    // Update order count - only pending and ongoing
+    function updateOrderCount() {
+      const orderCount = document.getElementById('orderCount');
+      const total = allOrders.length;
+      const pending = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'pending').length;
+      const ongoing = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'ongoing').length;
+
+      orderCount.innerHTML = `${total} Total Orders • ${pending} Pending • ${ongoing} Ongoing`;
     }
 
-    // ✅ NEW: Excel download function
-    function downloadExcel(orderId) {
-      // Open the export in a new window
-      window.open('export_excel.php?order_id=' + orderId, '_blank');
+    // Render orders - only pending and ongoing
+    function renderOrders() {
+      const container = document.getElementById('ordersContainer');
+      const emptyState = document.getElementById('emptyState');
+
+      let filteredOrders = allOrders;
+      if (currentFilter !== 'all') {
+        filteredOrders = allOrders.filter(order =>
+          (order.status || 'pending').toLowerCase() === currentFilter
+        );
+      }
+
+      if (filteredOrders.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = '';
+
+      filteredOrders.forEach(order => {
+        const itemsHtml = order.items.map(item => `
+      <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
+        <div class="flex-1">
+          <div class="flex items-center space-x-3">
+            <div class="bg-primary-50 p-2 rounded-lg">
+              <i class="fas fa-box text-primary-600"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900">${item.product_name}</h4>
+              <p class="text-sm text-gray-600">
+                <span class="font-medium">Size:</span> ${item.size}, 
+                <span class="font-medium">Color:</span> ${item.variant_color}
+              </p>
+              <p class="text-xs text-gray-500">
+                <span class="font-medium">Code:</span> ${item.codename} • 
+                <span class="font-medium">Details:</span> ${item.descrip6 || ''} ${item.descrip7 || ''}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-gray-600">
+            <span class="font-medium">Price:</span> ₱${item.price} × 
+            <span class="font-medium">Qty:</span> ${item.quantity}
+          </div>
+          <div class="font-semibold text-gray-900">
+            <span class="text-sm font-medium text-gray-600">Subtotal:</span> ₱${item.subtotal}
+          </div>
+        </div>
+      </div>`).join('');
+
+        const totals = calculateOrderTotal(order);
+        const discountPercent = parseFloat(order.discount) || 0;
+        const shipping_fee = parseFloat(order.shipping_fee) || 0;
+        const delivery_fee = parseFloat(order.delivery_fee) || 0;
+
+        const status = (order.status || 'pending').toLowerCase();
+
+        // Only two statuses: pending and ongoing
+        const statusConfig = {
+          ongoing: {
+            class: 'bg-green-100 text-green-800 border-green-200',
+            icon: 'fas fa-truck',
+            text: 'Ongoing'
+          },
+          pending: {
+            class: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            icon: 'fas fa-clock',
+            text: 'Pending'
+          }
+        };
+
+        const statusBadge = `
+      <div class="flex items-center space-x-2 ${statusConfig[status].class} px-3 py-1 rounded-full border text-sm font-medium">
+        <i class="${statusConfig[status].icon}"></i>
+        <span>${statusConfig[status].text}</span>
+      </div>`;
+
+        const isDisabled = status === 'ongoing';
+        const disabledAttr = isDisabled ? 'disabled' : '';
+        const disabledClass = isDisabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white hover:bg-gray-50';
+
+        // Action buttons only for pending orders
+        let actionButtons = '';
+        if (status === 'pending') {
+          actionButtons = `
+        <button onclick="confirmOrder(${order.id})" 
+                class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm" 
+                id="confirm-btn-${order.id}">
+          <i class="fas fa-check"></i>
+          <span>Confirm</span>
+        </button>
+        <button onclick="rejectOrder(${order.id})" 
+                class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm" 
+                id="reject-btn-${order.id}">
+          <i class="fas fa-times"></i>
+          <span>Reject</span>
+        </button>`;
+        }
+
+        container.innerHTML += `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+        <!-- Order Header -->
+        <div class="p-6 border-b border-gray-100">
+          <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center space-x-4">
+              <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-3 rounded-xl">
+                <i class="fas fa-receipt text-white text-lg"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-gray-900">Order #${order.id}</h2>
+                <p class="text-sm text-gray-600">${order.created_at}</p>
+              </div>
+            </div>
+            ${statusBadge}
+          </div>
+          
+          <!-- Customer Information -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-2 flex items-center">
+                  <i class="fas fa-user text-primary-600 mr-2"></i>
+                  Customer Information
+                </h3>
+                <p class="text-gray-700">${order.customer_name}</p>
+                <p class="text-gray-600 text-sm">${order.email}</p>
+                <p class="text-gray-600 text-sm">${order.mobile}</p>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-2 flex items-center">
+                  <i class="fas fa-map-marker-alt text-primary-600 mr-2"></i>
+                  Delivery Address
+                </h3>
+                <p class="text-gray-700">${order.address}</p>
+                <p class="text-gray-600 text-sm">ZIP: ${order.zipcode}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+<!-- Order Items -->
+<div class="p-6 border-b border-gray-100">
+  <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+    <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
+    Order Items
+  </h3>
+
+  <!-- Scrollable and scrollbar hidden -->
+  <div class="max-h-60 overflow-y-auto scrollbar-hide space-y-1 pr-1">
+    ${itemsHtml}
+  </div>
+</div>
+
+        <!-- Fees and Totals -->
+        <div class="p-6 border-b border-gray-100">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-percent text-primary-600 mr-1"></i>
+                Discount (%)
+              </label>
+              <input type="number" value="${discountPercent}" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${disabledClass}" 
+                     onchange="saveFee(${order.id}, 'discount', this.value)" ${disabledAttr}>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-truck text-primary-600 mr-1"></i>
+                Shipping Fee (₱)
+              </label>
+              <input type="number" value="${shipping_fee}" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${disabledClass}" 
+                     onchange="saveFee(${order.id}, 'shipping_fee', this.value)" ${disabledAttr}>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-shipping-fast text-primary-600 mr-1"></i>
+                Delivery Fee (₱)
+              </label>
+              <input type="number" value="${delivery_fee}" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${disabledClass}" 
+                     onchange="saveFee(${order.id}, 'delivery_fee', this.value)" ${disabledAttr}>
+            </div>
+            <div class="bg-primary-50 p-4 rounded-lg">
+              <div class="text-center">
+                <div class="text-sm text-primary-600 mb-1">Final Total</div>
+                <div class="text-2xl font-bold text-primary-700">₱${totals.finalTotal}</div>
+                <div class="text-xs text-gray-500">(incl. VAT ₱${totals.vatAmount})</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Calculation Breakdown -->
+          <div class="bg-gray-50 rounded-lg p-4 text-sm">
+            <h4 class="font-semibold text-gray-900 mb-2">Calculation Breakdown:</h4>
+            <div class="space-y-1 text-gray-600">
+              <div class="flex justify-between">
+                <span>Base Total:</span>
+                <span>₱${totals.baseTotal}</span>
+              </div>
+              <div class="flex justify-between text-red-600">
+                <span>Discount (${discountPercent}%):</span>
+                <span>-₱${totals.discountAmount}</span>
+              </div>
+              <div class="flex justify-between border-t pt-1">
+                <span>Subtotal after discount:</span>
+                <span>₱${totals.subtotalAfterDiscount}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>VAT (12%):</span>
+                <span>₱${totals.vatAmount}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Shipping Fee:</span>
+                <span>₱${totals.shippingFee}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Delivery Fee:</span>
+                <span>₱${totals.deliveryFee}</span>
+              </div>
+              <div class="flex justify-between font-semibold text-gray-900 border-t pt-1">
+                <span>Final Total:</span>
+                <span>₱${totals.finalTotal}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="p-6 bg-gray-50 rounded-b-xl">
+          <div class="flex justify-between items-center">
+            <a href="export_excel.php?order_id=${order.id}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm" 
+               target="_blank">
+              <i class="fas fa-file-excel"></i>
+              <span>Export Excel</span>
+            </a>
+            <div class="flex space-x-3">
+              ${actionButtons}
+            </div>
+          </div>
+        </div>
+      </div>`;
+      });
     }
+
+    // Save fee function
+    function saveFee(orderId, field, value) {
+      const inputElement = document.querySelector(`input[onchange*="saveFee(${orderId}, '${field}'"]`);
+      if (inputElement) {
+        inputElement.disabled = true;
+        inputElement.classList.add('opacity-50');
+      }
+
+      const requestData = {
+        order_id: parseInt(orderId),
+        field: field,
+        value: parseFloat(value) || 0
+      };
+
+      fetch('update_order_fees.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to update');
+          return res.json();
+        })
+        .then(data => {
+          if (data.success) {
+            showAlert('Fee updated successfully!', 'success');
+            loadOrders();
+          } else {
+            throw new Error(data.error || 'Unknown error');
+          }
+        })
+        .catch(error => {
+          showAlert(`Failed to update: ${error.message}`, 'error');
+        })
+        .finally(() => {
+          if (inputElement) {
+            inputElement.disabled = false;
+            inputElement.classList.remove('opacity-50');
+          }
+        });
+    }
+
+    // Confirm order function
+    function confirmOrder(orderId) {
+      const btn = document.getElementById(`confirm-btn-${orderId}`);
+
+      if (!btn) {
+        showAlert('Button not found. Please refresh the page.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+      const rejectBtn = document.getElementById(`reject-btn-${orderId}`);
+      if (rejectBtn) {
+        rejectBtn.disabled = true;
+      }
+
+      fetch('update_order_status.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            order_id: parseInt(orderId),
+            action: 'confirm'
+          })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            showAlert('Order confirmed successfully!', 'success');
+            loadOrders();
+          } else {
+            throw new Error(data.message || data.error || 'Unknown error occurred');
+          }
+        })
+        .catch(error => {
+          console.error('Error confirming order:', error);
+          showAlert(`Failed to confirm order: ${error.message}`, 'error');
+
+          const currentBtn = document.getElementById(`confirm-btn-${orderId}`);
+          const currentRejectBtn = document.getElementById(`reject-btn-${orderId}`);
+
+          if (currentBtn) {
+            currentBtn.disabled = false;
+            currentBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Confirm';
+          }
+
+          if (currentRejectBtn) {
+            currentRejectBtn.disabled = false;
+          }
+        });
+    }
+
+    // Reject order function
+    function rejectOrder(orderId) {
+      const btn = document.getElementById(`reject-btn-${orderId}`);
+
+      if (!btn) {
+        showAlert('Button not found. Please refresh the page.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+      const confirmBtn = document.getElementById(`confirm-btn-${orderId}`);
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+      }
+
+      fetch('update_order_status.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            order_id: parseInt(orderId),
+            action: 'reject'
+          })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.text().then(text => {
+            try {
+              return JSON.parse(text);
+            } catch (e) {
+              console.error('Server response is not valid JSON:', text);
+              throw new Error('Server returned invalid response. Check console for details.');
+            }
+          });
+        })
+        .then(data => {
+          if (data.success) {
+            showAlert('Order rejected successfully!', 'success');
+            // Reload orders - rejected orders will be filtered out
+            loadOrders();
+          } else {
+            throw new Error(data.message || data.error || 'Unknown error occurred');
+          }
+        })
+        .catch(error => {
+          console.error('Error rejecting order:', error);
+          showAlert(`Failed to reject order: ${error.message}`, 'error');
+
+          const currentBtn = document.getElementById(`reject-btn-${orderId}`);
+          const currentConfirmBtn = document.getElementById(`confirm-btn-${orderId}`);
+
+          if (currentBtn) {
+            currentBtn.disabled = false;
+            currentBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Reject';
+          }
+
+          if (currentConfirmBtn) {
+            currentConfirmBtn.disabled = false;
+          }
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', loadOrders);
   </script>
 </body>
 
 </html>
-
-
-<?php
-function renderOrderCard($order, $conn)
-{
-  $order_id = $order['id'];
-  // Updated query to include size
-  $items = $conn->query("SELECT *, size FROM order_items WHERE order_id = $order_id");
-  
-  // OPTION 1: If you added final_total column
-  $subtotal = floatval($order['total']); // Original subtotal
-  $discount = floatval($order['discount']);
-  $shipping = floatval($order['shipping_fee']);
-  $final_total = isset($order['final_total']) ? floatval($order['final_total']) : (($subtotal - ($subtotal * $discount / 100)) + $shipping);
-
-  $statusColors = [
-    'Pending' => 'bg-orange-100 text-orange-800',
-    'Ongoing' => 'bg-green-100 text-green-800',
-    'Rejected' => 'bg-red-100 text-red-800',
-    'Arrival' => 'bg-blue-100 text-blue-800'
-  ];
-
-  echo '<div class="border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow duration-200">';
-  echo '<div class="flex justify-between items-start mb-4">';
-  echo '<div>';
-  echo '<h3 class="font-bold text-xl text-gray-900">Order #' . $order_id . '</h3>';
-  echo '<p class="text-sm text-gray-600 mt-1">' . date('F j, Y • h:i A', strtotime($order['created_at'])) . '</p>';
-  echo '</div>';
-  echo '<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ' . ($statusColors[$order['status']] ?? 'bg-gray-100 text-gray-800') . '">';
-  echo $order['status'];
-  echo '</span>';
-  echo '</div>';
-
-  echo '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">';
- echo '<div>';
-echo '<h4 class="font-semibold text-gray-900 mb-2">Customer Information</h4>';
-echo '<p class="text-sm text-gray-600"><strong>Name:</strong> ' . htmlspecialchars($order['customer_name']) . '</p>';
-echo '<p class="text-sm text-gray-600"><strong>Email:</strong> ' . htmlspecialchars($order['email']) . '</p>';
-echo '<p class="text-sm text-gray-600"><strong>Mobile:</strong> ' . htmlspecialchars($order['mobile']) . '</p>';
-echo '<p class="text-sm text-gray-600"><strong>Address:</strong> ' . htmlspecialchars($order['address']) . ', ' . htmlspecialchars($order['zipcode']) . '</p>';
-echo '<p class="text-sm text-gray-600"><strong>Payment Mode:</strong> ' . htmlspecialchars($order['mode_payment'] ?? 'N/A') . '</p>';
-echo '</div>';
-
-  
-  echo '<div>';
-  echo '<h4 class="font-semibold text-gray-900 mb-2">Order Summary</h4>';
-  echo '<div class="space-y-1">';
-  
-  echo '<div class="flex justify-between text-sm">';
-  echo '<span class="text-gray-600">Subtotal:</span>';
-  echo '<span class="font-medium">₱' . number_format($subtotal, 2) . '</span>';
-  echo '</div>';
-  echo '<div class="flex justify-between text-sm">';
-  echo '<span class="text-gray-600">Discount:</span>';
-  echo '<span class="font-medium">' . number_format($discount, 2) . '%</span>';
-  echo '</div>';
-  echo '<div class="flex justify-between text-sm">';
-  echo '<span class="text-gray-600">Shipping:</span>';
-  echo '<span class="font-medium">₱' . number_format($shipping, 2) . '</span>';
-  echo '</div>';
-  echo '<div class="flex justify-between text-base font-bold border-t pt-2">';
-  echo '<span class="text-gray-900">Total:</span>';
-  echo '<span class="text-orange-600">₱' . number_format($final_total, 2) . '</span>';
-  echo '</div>';
-  echo '</div>';
-  echo '</div>';
-  echo '</div>';
-
-  // ✅ FIX: Only show actions for pending orders
-  if ($order['status'] === 'Pending' || $order['status'] === '' || $order['status'] === null) {
-    echo '<div class="border-t pt-4 mb-4">';
-    echo '<h4 class="font-semibold text-gray-900 mb-3">Order Actions</h4>';
-    
-    // ✅ NEW: Excel Download Button - THIS IS THE BUTTON YOU ASKED FOR!
-    echo '<div class="mb-4">';
-    echo '<button onclick="downloadExcel(' . $order_id . ')" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors duration-200 shadow-sm">';
-    echo '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">';
-    echo '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>';
-    echo '</svg>';
-    echo '📊 Download Excel';
-    echo '</button>';
-    echo '</div>';
-    
-    echo '<form method="POST" class="space-y-3">';
-    echo '<input type="hidden" name="confirm_order_id" value="' . $order_id . '">';
-    echo '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
-    echo '<input type="number" id="discount-' . $order_id . '" name="discount" placeholder="Discount (%)" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />';
-    echo '<input type="number" id="shipping-' . $order_id . '" name="shipping_fee" placeholder="Shipping Fee (₱)" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />';
-    echo '</div>';
-    
-    // Add dynamic total display
-    echo '<div class="bg-gray-50 p-3 rounded-md">';
-    echo '<div class="flex justify-between items-center">';
-    echo '<span class="text-sm font-medium text-gray-700">Calculated Total:</span>';
-    echo '<span id="calculated-total-' . $order_id . '" class="text-lg font-bold text-orange-600">₱' . number_format($final_total, 2) . '</span>';
-    echo '</div>';
-    echo '</div>';
-    
-    echo '<div class="flex space-x-3">';
-    echo '<button type="submit" name="confirm_order" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex-1">Confirm & Send Email</button>';
-    echo '</form>';
-    
-    echo '<form method="POST" class="inline">';
-    echo '<input type="hidden" name="reject_order_id" value="' . $order_id . '">';
-    echo '<button type="submit" name="reject_order" onclick="return confirmReject(this)" class="bg-red-600 text-white px-4 py-2 rounded-md hover:red-700 transition-colors duration-200 text-sm font-medium flex-1">Reject Order</button>';
-    echo '</form>';
-    echo '</div>';
-    echo '</div>';
-    
-    // Initialize dynamic total calculation
-    echo '<script>calculateTotal(' . $order_id . ', ' . $subtotal . ');</script>';
-  }
-
-  // Order items section
-  echo '<div class="border-t pt-4">';
-  echo '<h4 class="font-semibold text-gray-900 mb-3">Order Items</h4>';
-  echo '<div class="space-y-2">';
-  
-  if ($items && $items->num_rows > 0) {
-    while ($item = $items->fetch_assoc()) {
-      echo '<div class="flex justify-between items-center bg-gray-50 p-3 rounded-md">';
-      echo '<div class="flex-1">';
-      echo '<p class="font-medium text-gray-900">' . htmlspecialchars($item['product_name']) . '</p>';
-      echo '<p class="text-sm text-gray-600">Size: ' . htmlspecialchars($item['size'] ?? 'N/A') . ' | Qty: ' . $item['quantity'] . '</p>';
-      echo '</div>';
-      echo '<div class="text-right">';
-      echo '<p class="font-medium text-gray-900">₱' . number_format($item['price'], 2) . '</p>';
-      echo '<p class="text-sm text-gray-600">₱' . number_format($item['price'] * $item['quantity'], 2) . ' total</p>';
-      echo '</div>';
-      echo '</div>';
-    }
-  } else {
-    echo '<p class="text-gray-500 text-center py-4">No items found for this order.</p>';
-  }
-  
-  echo '</div>';
-  echo '</div>';
-  echo '</div>';
-}
-
-// Close the database connection
-$conn->close();
-?>

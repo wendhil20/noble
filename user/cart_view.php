@@ -82,6 +82,9 @@ if ($user_id) {
   <meta charset="UTF-8">
   <title>Your Cart</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -95,15 +98,24 @@ if ($user_id) {
     </div>
   </div>
 
-  <div class="px-4 py-4">
-    <nav class="text-sm text-gray-600">
-      <a href="index" class="hover:text-orange-600">Home</a>
-      <span class="mx-2">|</span>
-      <a href="shop" class="hover:text-orange-600">Shop</a>
-      <span class="mx-2">|</span>
-      <span class="text-orange-600 font-medium">Cart</span>
-    </nav>
-  </div>
+ 
+    <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center space-x-2 text-sm">
+        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-600 font-medium">Cart</span>
+        <?php if (!empty($search_keyword)): ?>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+          <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  </nav>
+  
+
 
   <div class="px-2 py-2">
     <div class="bg-white shadow-lg rounded-lg p-6">

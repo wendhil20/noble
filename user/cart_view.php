@@ -139,9 +139,9 @@ if ($user_id) {
                 <tr>
                   <th class="py-3 px-4">Category</th>
                   <th class="py-3 px-4">Product</th>
-                  <th class="py-3 px-4">Details</th>
                   <th class="py-3 px-4">Qty</th>
                   <th class="py-3 px-4">Unit Price</th>
+                  <th class="py-3 px-4">Total</th>
                   <th class="py-3 px-4">Image</th>
                   <th class="py-3 px-4">Remove</th>
                 </tr>

@@ -284,7 +284,7 @@ if ($user_id) {
                 <h1 class="text-2xl md:text-4xl font-bold text-white drop-shadow-sm"><?= htmlspecialchars($user_name); ?></h1>
                 <p class="text-base md:text-lg text-white/90"><?= htmlspecialchars($user_email); ?></p>
                 <span class="inline-block mt-3 px-4 py-1 bg-white/10 border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
-                    <?= count($all_orders); ?> Orders
+                    <?= count($all_orders); ?> Orderss
                 </span>
             </div>
         </div>

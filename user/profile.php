@@ -295,7 +295,7 @@ if ($user_id) {
             <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                        <p class="text-sm font-medium text-gray-600">Total Orderss</p>
                         <p class="text-3xl md:text-4xl font-extrabold text-gray-900"><?= count($all_orders); ?></p>
                     </div>
                     <div class="w-12 h-12 md:w-14 md:h-14 bg-blue-100 rounded-xl flex items-center justify-center">

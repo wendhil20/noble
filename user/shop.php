@@ -333,7 +333,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
     <!-- Enhanced Header -->
     <div class="text-center mb-12" data-aos="fade-up">
       <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-        Our <span class="text-orange-500">Premium</span> Collection
+        Our <span class="text-orange-500">Premium</span> Collections
       </h1>
       <p class="text-gray-600 text-lg max-w-2xl mx-auto">
         Discover exceptional furniture and materials crafted with precision and designed for modern living

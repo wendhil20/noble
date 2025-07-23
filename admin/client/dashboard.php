@@ -446,6 +446,7 @@ function getOrderDetails($conn, $order_id)
                     </div>
                 </div>
 
+
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-2">
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
@@ -453,18 +454,7 @@ function getOrderDetails($conn, $order_id)
                     </button>
                     <button type="button" onclick="resetFilters()" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200">
                         <i class="fas fa-undo mr-2"></i>Reset
-                    </button>
-                    <a href="add_driver.php" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200">
-                        <i class="fas fa-plus mr-2"></i>Add Driver
-                    </a>
-                    <a href="add_tracking.php" class="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition duration-200">
-                        <i class="fas fa-plus mr-2"></i>Set up Status Delivery
-                    </a>
-                      
-                    <a href="monitortracking.php" class="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition duration-200">
-                        <i class="fas fa-plus mr-2"></i>Monitor Tracking Delivery 
-                    </a>
-
+                    </button> 
                 </div>
             </form>
         </div>

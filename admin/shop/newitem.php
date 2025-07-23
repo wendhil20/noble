@@ -6,7 +6,7 @@ include '../../connection/connect.php'; // your DB connection
 
 include '../role/roleaccount.php';
 
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+require_role(['productspecialist', 'superadmin']); // allow only admin and superadmin
 
 
 // Check if user is logged in

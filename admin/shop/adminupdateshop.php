@@ -5,7 +5,7 @@ include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include '../role/roleaccount.php';
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+require_role(['productspecialist', 'superadmin']); // allow only admin and superadmin
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {

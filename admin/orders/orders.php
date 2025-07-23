@@ -1,6 +1,6 @@
 <?php
 include '../../connection/connect.php';
-require_role(['admin', 'superadmin']);
+require_role(['sales', 'superadmin']);
 
 if (!isset($_SESSION['noble_user'])) {
   header("Location: ../../loginpage/index.php");

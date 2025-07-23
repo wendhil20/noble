@@ -4,10 +4,9 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include '../../connection/connect.php'; 
+require_once '../role/roleaccount.php'; 
 
-include '../role/roleaccount.php';
-
-require_role(['superadmin']);
+require_role(['productspecialist','superadmin']);
 
 
 // Check if user is logged in

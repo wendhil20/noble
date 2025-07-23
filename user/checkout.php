@@ -330,6 +330,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <textarea name="address" rows="3" required class="w-full border px-4 py-2 rounded resize-none"></textarea>
             </div>
 
+        
             <div><label class="block font-medium">ZIP Code</label>
                 <input type="text" name="zipcode" pattern="[0-9]{4}" required class="w-full border px-4 py-2 rounded" />
             </div>

@@ -25,47 +25,105 @@ foreach ($tables as $table) {
     }
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+$success = "";
+$error = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $fullname = trim($_POST['fullname']);
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
     $lvl = trim($_POST['lvl']);
+    $supplier_id = isset($_POST['supplier_id']) ? (int)$_POST['supplier_id'] : null;
 
     // Validate inputs
     if (empty($fullname) || empty($email) || empty($password) || empty($lvl)) {
-        echo "All fields are required!";
-        exit;
-    }
-
-    // Check if email already exists
-    $check = $conn->prepare("SELECT id FROM nobleaccount WHERE email = ?");
-    $check->bind_param("s", $email);
-    $check->execute();
-    $check->store_result();
-
-    if ($check->num_rows > 0) {
-        echo "Email is already registered!";
-        $check->close();
-        $conn->close();
-        exit;
-    }
-
-    $check->close();
-
-    // Secure password
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    // Insert into nobleaccount with fullname
-    $stmt = $conn->prepare("INSERT INTO nobleaccount (fullname, email, password, lvl) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $fullname, $email, $hashed_password, $lvl);
-
-    if ($stmt->execute()) {
-        echo "Account registered successfully!";
+        $error = "All fields are required!";
     } else {
-        echo "Error: " . $stmt->error;
-    }
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt->close();
+        // Check if email already exists
+        $check = $conn->prepare("SELECT id FROM nobleaccount WHERE email = ?");
+        $check->bind_param("s", $email);
+        $check->execute();
+        $check->store_result();
+
+        if ($check->num_rows > 0) {
+            $error = "Email is already registered!";
+        } else {
+            // For supplier level: ensure supplier_id is provided and valid
+            if ($lvl === 'supplier') {
+                if (empty($supplier_id)) {
+                    $error = "Please enter a supplier ID number.";
+                } else {
+                    // Check if the supplier_id exists in the database
+                    $checkSupplierExists = $conn->prepare("SELECT id FROM nobleaccount WHERE id = ?");
+                    $checkSupplierExists->bind_param("i", $supplier_id);
+                    $checkSupplierExists->execute();
+                    $checkSupplierExists->store_result();
+
+                    if ($checkSupplierExists->num_rows == 0) {
+                        $error = "Supplier ID does not exist.";
+                    } else {
+                        // Check if supplier_id is already linked to another account
+                        $checkSupplier = $conn->prepare("SELECT id FROM nobleaccount WHERE supplier_id = ?");
+                        $checkSupplier->bind_param("i", $supplier_id);
+                        $checkSupplier->execute();
+                        $checkSupplier->store_result();
+
+                        if ($checkSupplier->num_rows > 0) {
+                            $error = "This supplier ID is already linked to another account.";
+                        } else {
+                            $stmt = $conn->prepare("INSERT INTO nobleaccount (fullname, email, password, lvl, supplier_id) VALUES (?, ?, ?, ?, ?)");
+                            $stmt->bind_param("ssssi", $fullname, $email, $hashed_password, $lvl, $supplier_id);
+                            if ($stmt->execute()) {
+                                $success = "Supplier registration successful!";
+                                // Close connections before redirect
+                                $stmt->close();
+                                $checkSupplier->close();
+                                $checkSupplierExists->close();
+                                $check->close();
+                                $conn->close();
+                                
+                                // Redirect with success message
+                                header("Location: " . $_SERVER['PHP_SELF'] . "?success=" . urlencode($success));
+                                exit();
+                            } else {
+                                $error = "Error: " . $stmt->error;
+                            }
+                            $stmt->close();
+                        }
+                        $checkSupplier->close();
+                    }
+                    $checkSupplierExists->close();
+                }
+            } else {
+                // For non-supplier levels (no supplier_id needed)
+                $stmt = $conn->prepare("INSERT INTO nobleaccount (fullname, email, password, lvl) VALUES (?, ?, ?, ?)");
+                $stmt->bind_param("ssss", $fullname, $email, $hashed_password, $lvl);
+                if ($stmt->execute()) {
+                    $success = "Account registered successfully!";
+                    // Close connections before redirect
+                    $stmt->close();
+                    $check->close();
+                    $conn->close();
+                    
+                    // Redirect with success message
+                    header("Location: " . $_SERVER['PHP_SELF'] . "?success=" . urlencode($success));
+                    exit();
+                } else {
+                    $error = "Error: " . $stmt->error;
+                }
+                $stmt->close();
+            }
+        }
+
+        $check->close();
+    }
     $conn->close();
+}
+
+// Check for success message from redirect
+if (isset($_GET['success'])) {
+    $success = $_GET['success'];
 }
 ?>

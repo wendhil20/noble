@@ -5,7 +5,7 @@ date_default_timezone_set('Asia/Manila');
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
 
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+require_role(['superadmin']); // allow only admin and superadmin
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");

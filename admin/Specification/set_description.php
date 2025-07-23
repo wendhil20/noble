@@ -5,7 +5,7 @@ session_start();
 include '../../connection/connect.php';
 include 'link_product_ids.php'; // ✅ Function to link variant to product
 include '../role/roleaccount.php';
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+require_role(['productspecialist', 'superadmin']); // allow only productspecialist and superadmin
 
 
 // Check if user is logged in

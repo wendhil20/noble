@@ -2,14 +2,14 @@
 session_name("nobleadmin");
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+
+require_role(['sales', 'superadmin']); // allow only admin and superadmin
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();
 }
-
 // Optional: Auto-logout after inactivity (e.g. 30 mins)
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
     session_unset();

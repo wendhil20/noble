@@ -4,7 +4,7 @@ session_start();
 include '../../connection/connect.php';
 require '../../vendor/autoload.php';
 include '../role/roleaccount.php';
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+require_role(['sales', 'superadmin']); // allow only admin and superadmin
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {

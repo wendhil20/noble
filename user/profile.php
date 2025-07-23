@@ -235,7 +235,7 @@ function getLatestOrderStatus($conn, $order_id)
 
     <?php include 'navbar/top.php'; ?>
 
-    <div class="container">
+    <div class="container max-w-8xl mx-auto ">
         <!-- Hero Section with Profile -->
         <div class="relative overflow-hidden bg-orange-500 p-8 mb-8 text-white  shadow-xl animate-fade-in">
             <div class="absolute inset-0 bg-black/10"></div>

@@ -4,7 +4,7 @@ session_start();
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
 
-require_role(['superadmin']); // allow only admin and superadmin
+require_role(['superadmin', 'logistic']); // allow only admin and superadmin
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");

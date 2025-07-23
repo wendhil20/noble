@@ -92,8 +92,11 @@ try {
     // Determine redirect
     $redirect = match (strtolower($user['lvl'])) {
         'superadmin', 'admin' => "../admin/client/dashboard.php",
-        'sales' => "../sales/dashboard.php",
-        'accountant' => "../accountant/dashboard.php",
+        'sales' => "../admin/orders/ordering",
+        'accountant' => "../admin/accountant/dashboard.php",
+        'supplier' => "../admin/productspecialist/dashboard.php",
+        'productspecialist' => "../admin/shop/adminshop.php",
+        'logistic' => "../admin/client/monitortracking",
         default => "../admin/client/dashboard.php"
     };
 

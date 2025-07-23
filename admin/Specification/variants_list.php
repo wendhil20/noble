@@ -3,7 +3,7 @@ session_name("nobleadmin");
 
 session_start();
 include '../role/roleaccount.php';
-require_role(['admin', 'superadmin']); // allow only admin and superadmin
+require_role(['productspecialist', 'superadmin']); // allow only productspecialist and superadmin
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {

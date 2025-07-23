@@ -664,8 +664,8 @@ if (!empty($products)) {
                     <div class="swiper-wrapper p-2">
                         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
                             <div class="swiper-slide" data-aos="fade-up">
-                                <a href="product_view.php?id=<?= (int)$row['id'] ?>"
-                                    class="flex flex-col justify-between h-[400px] bg-white rounded-lg shadow-lg p-4 group text-center w-full relative">
+                                 <a href="product_view.php?id=<?= (int)$row['id'] ?>"
+        class="flex flex-col justify-between h-[400px] bg-white rounded-lg shadow-lg p-4 group text-center w-full max-w-[300px] sm:max-w-[280px] md:max-w-[260px] xl:max-w-[250px] relative">
 
                                     <!-- Green Icon Bubble -->
                                     <div class="absolute top-0 left-0 w-14 h-14 z-10 flex items-start justify-start overflow-visible">
@@ -831,9 +831,6 @@ if (!empty($products)) {
                                             </div>
                                         </div>
                                     </div>
-
-
-
                                 </a>
                             </div>
                         <?php endwhile; ?>
@@ -1388,26 +1385,31 @@ if (!empty($products)) {
         AOS.init();
     </script>
     <script>
-        const swiper = new Swiper(".mySwiper-indoor", {
-            slidesPerView: 1,
-            spaceBetween: 20,
-            loop: true,
-            autoplay: {
-                delay: 3000, // milliseconds per slide
-                disableOnInteraction: false // continue even after swipe
-            },
-            breakpoints: {
-                640: {
-                    slidesPerView: 2
-                },
-                768: {
-                    slidesPerView: 3
-                },
-                1024: {
-                    slidesPerView: 5
-                }
-            }
-        });
+  var swiper = new Swiper(".mySwiper-indoor", {
+  slidesPerView: 1,
+  spaceBetween: 20,
+  autoplay: {
+    delay: 3000, // delay in milliseconds (3000ms = 3 seconds)
+    disableOnInteraction: false, // continue autoplay after user interaction
+  },
+  loop: true, // optional: allows infinite loop of slides
+  breakpoints: {
+    640: {
+      slidesPerView: 2,
+    },
+    1024: {
+      slidesPerView: 3,
+    },
+    1440: {
+      slidesPerView: 5,
+    },
+    1920: {
+      slidesPerView: 5,
+    }
+  }
+});
+
+
 
         document.addEventListener('DOMContentLoaded', function() {
             new Swiper('.mySwiper-material', {

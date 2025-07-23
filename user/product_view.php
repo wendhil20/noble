@@ -287,6 +287,30 @@ $avg_stmt->close();
             </div>
           </div>
 
+               <!-- Type Selection -->
+          <?php if (!empty($types_data)): ?>
+            <div>
+              <h3 class="font-bold mb-3">Select Type :</h3>
+              <div class="grid grid-cols-3 gap-3">
+                <?php foreach ($types_data as $index => $type): ?>
+                  <button type="button"
+                    onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
+                    class="type-btn border-2 p-3 hover:border-orange-300 transition-all">
+                    <div class="aspect-square rounded mb-2 overflow-hidden">
+                      <?php if ($type['image']): ?>
+                        <img src="../<?= ($type['image']) ?>"
+                          class="w-full h-full object-contain" alt="<?= htmlspecialchars($type['name']) ?>">
+                      <?php else: ?>
+                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                      <?php endif; ?>
+                    </div>
+                    <span class="text-sm font-bold text-orange-500"><?= htmlspecialchars($type['name']) ?></span>
+                  </button>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          <?php endif; ?>
+
           <!-- Color Selection -->
           <?php if (!empty($product_colors)): ?>
             <div class="mt-6">
@@ -329,29 +353,7 @@ $avg_stmt->close();
             </div>
           <?php endif; ?>
 
-          <!-- Type Selection -->
-          <?php if (!empty($types_data)): ?>
-            <div>
-              <h3 class="font-bold mb-3">Select Type :</h3>
-              <div class="grid grid-cols-3 gap-3">
-                <?php foreach ($types_data as $index => $type): ?>
-                  <button type="button"
-                    onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
-                    class="type-btn border-2 rounded-lg p-3 hover:border-orange-300 transition-all">
-                    <div class="aspect-square rounded mb-2 overflow-hidden">
-                      <?php if ($type['image']): ?>
-                        <img src="../<?= ($type['image']) ?>"
-                          class="w-full h-full object-contain" alt="<?= htmlspecialchars($type['name']) ?>">
-                      <?php else: ?>
-                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                      <?php endif; ?>
-                    </div>
-                    <span class="text-sm font-bold text-orange-500"><?= htmlspecialchars($type['name']) ?></span>
-                  </button>
-                <?php endforeach; ?>
-              </div>
-            </div>
-          <?php endif; ?>
+     
 
           <!-- Variant Selection -->
           <div class="p-2">
@@ -375,7 +377,7 @@ $avg_stmt->close();
                     ?>
                       <button type="button"
                         onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
-                        class="variant-btn border rounded-md p-2 hover:border-orange-300 relative text-xs"
+                        class="variant-btn border p-2 hover:border-orange-300 relative text-xs"
                         data-price="<?= $price ?>"
                         data-percent="<?= $percent ?>"
                         data-discount="<?= $discount ?>"
@@ -422,7 +424,7 @@ $avg_stmt->close();
               <input type="hidden" name="variant_id" id="variant_id">
 
               <!-- Total Price Section -->
-              <div class="bg-green-50 rounded-lg p-4 border">
+              <div class="bg-green-50  p-4 border">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                   <div>
                     <p class="text-sm text-gray-600">Total Price</p>
@@ -437,7 +439,7 @@ $avg_stmt->close();
               <!-- Add to Cart Button -->
               <button type="submit" id="addToCartBtn"
                 <?= !$is_logged_in ? 'disabled' : '' ?>
-                class="w-full <?= $is_logged_in ? 'bg-gray-400' : 'bg-red-400' ?> text-white font-bold py-3 rounded-lg disabled:cursor-not-allowed transition-all hover:opacity-90">
+                class="w-full <?= $is_logged_in ? 'bg-gray-400' : 'bg-red-400' ?> text-white font-bold py-3  disabled:cursor-not-allowed transition-all hover:opacity-90">
                 <span id="btnText">
                   <?= $is_logged_in ? 'Select Options to Pre-Order' : 'Login to Pre-Order' ?>
                 </span>

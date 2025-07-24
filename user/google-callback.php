@@ -64,7 +64,7 @@ if (isset($_GET['code'])) {
         exit;
     }
 } else {
-    $_SESSION['login_needed'] = 'No Google auth code received.';
+    $_SESSION['login_needed'] = 'Please Sign in First';
     header("Location: index.php");
     exit;
 }

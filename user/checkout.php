@@ -13,7 +13,6 @@ foreach ($tables as $table) {
     }
 }
 
-
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -49,7 +48,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-
 $userName = $_SESSION['user_name'] ?? '';
 $userEmail = '';
 $userMobile = '';  // ✅ Added mobile variable
@@ -75,6 +73,19 @@ $total_price = 0;
 $error = null;
 $order_success = false;
 
+// ✅ Fetch billing addresses for the user
+$billing_addresses = [];
+if ($user_id) {
+    $stmt = $conn->prepare("SELECT * FROM billing_addresses WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $billing_addresses[] = $row;
+    }
+    $stmt->close();
+}
+
 if ($user_id) {
     // ✅ Fetch cart items
     $stmt = $conn->prepare("SELECT * FROM user_cart_items WHERE user_id = ?");
@@ -92,15 +103,16 @@ function generateReferenceNumber() {
     return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['customer_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $mobile = trim($_POST['mobile'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $zipcode = trim($_POST['zipcode'] ?? '');
-    $payment_method = trim($_POST['payment_method'] ?? ''); // New payment method field
-
+    $payment_method = trim($_POST['payment_method'] ?? '');
+    $billing_address_id = trim($_POST['billing_address_id'] ?? ''); // New billing address ID
+    $latitude = null;
+    $longitude = null;
 
     $reference_no = generateReferenceNumber();
 
@@ -118,10 +130,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($mobile)) {
-        $validation_errors[] = "Mobile number is required";
-    } elseif (!preg_match('/^[0-9]{11}$/', $mobile)) {
-        $validation_errors[] = "Mobile number must be exactly 11 digits";
+    $validation_errors[] = "Mobile number is required";
+} else {
+    // Clean the mobile number - remove spaces, dashes, parentheses, plus signs
+    $cleaned_mobile = preg_replace('/[\s\-\(\)\+]/', '', $mobile);
+    
+    // Check if it starts with +63 and convert to 09 format
+    if (preg_match('/^63([0-9]{10})$/', $cleaned_mobile, $matches)) {
+        $cleaned_mobile = '0' . $matches[1];
     }
+    
+    // Validate cleaned mobile number
+    if (!preg_match('/^09[0-9]{9}$/', $cleaned_mobile)) {
+        $validation_errors[] = "Mobile number must be a valid Philippine mobile number (e.g., 09171234567)";
+    } else {
+        // Update the mobile variable with cleaned format
+        $mobile = $cleaned_mobile;
+    }
+}
 
     if (empty($address)) {
         $validation_errors[] = "Address is required";
@@ -141,6 +167,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $validation_errors[] = "Your cart is empty";
     }
 
+    // ✅ If billing address is selected, fetch coordinates
+    if (!empty($billing_address_id) && is_numeric($billing_address_id)) {
+        $stmt = $conn->prepare("SELECT latitude, longitude FROM billing_addresses WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $billing_address_id, $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $billing_data = $result->fetch_assoc();
+            $latitude = $billing_data['latitude'];
+            $longitude = $billing_data['longitude'];
+        }
+        $stmt->close();
+    }
+
     // If there are validation errors, show them
     if (!empty($validation_errors)) {
         $error = implode(', ', $validation_errors);
@@ -151,10 +191,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE orders AUTO_INCREMENT = 1");
             $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
 
-            // ✅ Save order (UPDATED to include payment_method)
-           $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssssds", $name, $email, $mobile, $address, $zipcode, $payment_method, $total_price, $reference_no);
-
+            // ✅ Save order (UPDATED to include billing_address_id, latitude, longitude)
+            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssdsiddi", $name, $email, $mobile, $address, $zipcode, $payment_method, $total_price, $reference_no, $billing_address_id, $latitude, $longitude, $user_id);
 
             if (!$stmt->execute()) {
                 throw new Exception("Failed to create order: " . $stmt->error);
@@ -313,11 +352,50 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     value="<?= htmlspecialchars($userEmail ?? '') ?>" readonly />
             </div>
 
+            <!-- ✅ NEW: Billing Address Selector -->
+            <?php if (!empty($billing_addresses)): ?>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block font-medium">Select Billing Address</label>
+                    <button type="button" id="toggleBillingSelector" class="bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">
+                        Select from Saved Addresses
+                    </button>
+                </div>
+                
+                <div id="billingAddressSelector" class="hidden border rounded-lg p-4 bg-gray-50">
+                    <div class="space-y-3 max-h-40 overflow-y-auto">
+                        <?php foreach ($billing_addresses as $addr): ?>
+                            <label class="flex items-start p-3 border rounded cursor-pointer hover:bg-white billing-address-option">
+                                <input type="radio" name="billing_address_id" value="<?= $addr['id'] ?>" class="mt-1 mr-3" 
+                                       data-full-name="<?= htmlspecialchars($addr['full_name']) ?>"
+                                       data-phone="<?= htmlspecialchars($addr['phone']) ?>"
+                                       data-address="<?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?>"
+                                       data-postal-code="<?= htmlspecialchars($addr['postal_code']) ?>" />
+                                <div class="flex-1">
+                                    <div class="font-medium"><?= htmlspecialchars($addr['full_name']) ?></div>
+                                    <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['phone']) ?></div>
+                                    <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?></div>
+                                    <div class="text-sm text-gray-500">ZIP: <?= htmlspecialchars($addr['postal_code']) ?></div>
+                                    <?php if (!empty($addr['notes'])): ?>
+                                        <div class="text-xs text-gray-500 italic"><?= htmlspecialchars($addr['notes']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" id="clearBillingSelection" class="mt-3 text-sm text-gray-600 hover:text-gray-800">
+                        Clear Selection & Enter Manually
+                    </button>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div>
                 <label class="block font-medium">Mobile Number</label>
                 <input
                     type="tel"
                     name="mobile"
+                    id="mobileInput"
                     pattern="[0-9]{11}"
                     required
                     class="w-full border px-4 py-2 rounded bg-gray-50 focus:bg-white"
@@ -325,14 +403,14 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     placeholder="e.g. 09171234567" />
             </div>
 
-
-            <div><label class="block font-medium">Full Address</label>
-                <textarea name="address" rows="3" required class="w-full border px-4 py-2 rounded resize-none"></textarea>
+            <div>
+                <label class="block font-medium">Full Address</label>
+                <textarea name="address" id="addressInput" rows="3" required class="w-full border px-4 py-2 rounded resize-none"></textarea>
             </div>
 
-        
-            <div><label class="block font-medium">ZIP Code</label>
-                <input type="text" name="zipcode" pattern="[0-9]{4}" required class="w-full border px-4 py-2 rounded" />
+            <div>
+                <label class="block font-medium">ZIP Code</label>
+                <input type="text" name="zipcode" id="zipcodeInput" pattern="[0-9]{4}" required class="w-full border px-4 py-2 rounded" />
             </div>
 
             <!-- Payment Method Section -->
@@ -384,8 +462,6 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             </div>
                         </div>
                     </label>
-
-
 
                     <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="PayPal" required class="mr-3" />
@@ -501,6 +577,87 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             }, 5000);
         </script>
     <?php endif; ?>
+
+    <script>
+        // ✅ Billing Address Selector JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleBillingSelector');
+            const selector = document.getElementById('billingAddressSelector');
+            const clearBtn = document.getElementById('clearBillingSelection');
+            const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
+            
+            const mobileInput = document.getElementById('mobileInput');
+            const addressInput = document.getElementById('addressInput');
+            const zipcodeInput = document.getElementById('zipcodeInput');
+
+            // Toggle billing address selector
+            if (toggleBtn && selector) {
+                toggleBtn.addEventListener('click', function() {
+                    selector.classList.toggle('hidden');
+                    toggleBtn.textContent = selector.classList.contains('hidden') 
+                        ? 'Select from Saved Addresses' 
+                        : 'Hide Address Selector';
+                });
+            }
+
+            // Handle billing address selection
+            billingRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+    if (this.checked) {
+        // Clean and format mobile number
+        let phone = this.dataset.phone;
+        // Remove spaces, dashes, parentheses, plus signs
+        phone = phone.replace(/[\s\-\(\)\+]/g, '');
+        // Convert +63 format to 09 format
+        if (phone.match(/^63([0-9]{10})$/)) {
+            phone = '0' + phone.substring(2);
+        }
+        
+        mobileInput.value = phone;
+                        addressInput.value = this.dataset.address;
+                        zipcodeInput.value = this.dataset.postalCode;
+                        
+                        // Make fields readonly when using saved address
+                        mobileInput.classList.remove('focus:bg-white');
+                        mobileInput.classList.add('bg-gray-50');
+                        mobileInput.readOnly = true;
+                        addressInput.readOnly = true;
+                        zipcodeInput.readOnly = true;
+                        
+                        addressInput.classList.add('bg-gray-50');
+                        zipcodeInput.classList.add('bg-gray-50');
+                    }
+                });
+            });
+
+            // Clear selection and allow manual entry
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    // Uncheck all billing address radios
+                    billingRadios.forEach(radio => radio.checked = false);
+                    
+                    // Clear form fields
+                    mobileInput.value = '<?= htmlspecialchars($userMobile ?? '') ?>';
+                    addressInput.value = '';
+                    zipcodeInput.value = '';
+                    
+                    // Make fields editable again
+                    mobileInput.readOnly = false;
+                    addressInput.readOnly = false;
+                    zipcodeInput.readOnly = false;
+                    
+                    mobileInput.classList.add('focus:bg-white');
+                    mobileInput.classList.remove('bg-gray-50');
+                    addressInput.classList.remove('bg-gray-50');
+                    zipcodeInput.classList.remove('bg-gray-50');
+                    
+                    // Hide selector
+                    selector.classList.add('hidden');
+                    toggleBtn.textContent = 'Select from Saved Addresses';
+                });
+            }
+        });
+    </script>
 
 </body>
 

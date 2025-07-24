@@ -94,9 +94,10 @@ try {
         'superadmin', 'admin' => "../admin/client/dashboard.php",
         'sales' => "../admin/orders/ordering",
         'accountant' => "../admin/accountant/dashboard.php",
-        'supplier' => "../admin/productspecialist/dashboard.php",
+        'supplier' => "../admin/supplier/supplier",
         'productspecialist' => "../admin/shop/adminshop.php",
         'logistic' => "../admin/client/monitortracking",
+        'warehouse' => "../admin/warehouse/warehouse",
         default => "../admin/client/dashboard.php"
     };
 

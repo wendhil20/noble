@@ -55,7 +55,7 @@ if ($_POST && isset($_POST['add_address'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Billing Address - Noble Home</title>
+    <title>Add Delivery Address - Noble Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -162,7 +162,7 @@ if ($_POST && isset($_POST['add_address'])) {
                     </svg>
                 </a>
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Add Billing Address</h1>
+                    <h1 class="text-3xl font-bold text-gray-900">Add Delivery Address</h1>
                     <p class="text-gray-600">Add a new billing address to your account</p>
                 </div>
             </div>
@@ -395,7 +395,7 @@ if ($_POST && isset($_POST['add_address'])) {
                                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
-                                Add Billing Address
+                                Add Dilevery Address
                             </button>
                             <a
                                 href="profile.php"

@@ -356,7 +356,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             <?php if (!empty($billing_addresses)): ?>
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-3">
-                    <label class="block font-medium">Select Billing Address</label>
+                    <label class="block font-medium">Select Delivery Address</label>
                     <button type="button" id="toggleBillingSelector" class="bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">
                         Select from Saved Addresses
                     </button>

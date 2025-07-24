@@ -1183,7 +1183,8 @@ $avg_stmt->close();
           info: 'bg-blue-500'
         } [type] || 'bg-blue-500';
 
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg`;
+        notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300
+`;
         notification.textContent = message;
 
         document.body.appendChild(notification);

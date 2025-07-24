@@ -355,7 +355,7 @@ if (!empty($products)) {
     <?php include 'navbar/top.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
-        <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-sm px-4 py-2 rounded shadow-lg z-50">
+        <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-lg px-4 py-2 rounded shadow-lg z-50">
             <?= htmlspecialchars($_SESSION['toast']['message']) ?>
         </div>
         <script>
@@ -1002,23 +1002,22 @@ if (!empty($products)) {
                                         <?php endif; ?>
 
                                         <!-- Buttons -->
-                                        <div class="mt-4 flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0">
+                                        <div class="mt-4 flex flex-col md:flex-row md:justify-center md:items-center gap-3">
                                             <!-- Buy Button -->
-                                            <form action="product_view.php" method="GET" class="w-full sm:w-1/2">
+                                            <form action="product_view.php" method="GET" class="w-full md:w-auto">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit"
-                                                    class="w-full sm:w-auto border border-red-600 bg-red-500 text-white text-sm md:text-base px-4 py-2 rounded-full hover:bg-red-600 transition flex items-center justify-center gap-2 shadow hover:shadow-md">
+                                                    class="ring-2 ring-red-200 px-4 py-2 w-full md:w-auto border border-red-600 bg-red-500 text-white text-sm md:text-base rounded-full hover:bg-red-600 transition flex items-center justify-center gap-2 shadow hover:shadow-md">
                                                     <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
                                                     </svg>
                                                     <span class="text-xs sm:text-sm md:text-base">Buy</span>
                                                 </button>
-
                                             </form>
 
                                             <!-- Pre-Order Button -->
-                                            <form class="productForm w-full sm:w-1/2" data-product-id="<?= (int)$row['product_id'] ?>">
+                                            <form class="productForm w-full md:w-auto" data-product-id="<?= (int)$row['product_id'] ?>">
                                                 <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
                                                 <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
                                                 <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
@@ -1030,13 +1029,13 @@ if (!empty($products)) {
                                                 <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                 <input type="hidden" name="return_url" value="index.php">
                                                 <button type="submit"
-                                                    class="w-full sm:w-auto bg-orange-500 text-white text-sm md:text-base px-4 py-2 rounded-full hover:bg-orange-600 transition flex items-center justify-center gap-2 shadow hover:shadow-md whitespace-nowrap">
-                                                    <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4 md:w-5 md:h-5" />
+                                                    class="px-4 py-2 w-full md:w-auto bg-orange-500 text-white text-sm md:text-base rounded-full hover:bg-orange-600 transition flex items-center justify-center gap-2 shadow hover:shadow-md whitespace-nowrap">
+                                                    <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
                                                     <span class="text-xs sm:text-sm md:text-base">Pre-Order</span>
                                                 </button>
-
                                             </form>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -1369,6 +1368,8 @@ if (!empty($products)) {
     <script>
         AOS.init();
     </script>
+
+    
     <script>
         const productsSwiper = new Swiper(".mySwiper-products", {
             slidesPerView: 1,
@@ -1544,7 +1545,8 @@ if (!empty($products)) {
                 info: 'bg-blue-500'
             } [type] || 'bg-blue-500';
 
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300 translate-x-full`;
+            notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300
+`;
             notification.textContent = message;
 
             document.body.appendChild(notification);

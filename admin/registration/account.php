@@ -252,6 +252,7 @@ if (isset($conn) && $conn) {
                     <option value="supplier" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'supplier' && empty($success)) ? 'selected' : ''; ?>>Supplier</option>
                     <option value="accountant" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'accountant' && empty($success)) ? 'selected' : ''; ?>>Accountant</option>
                     <option value="logistic" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'logistic' && empty($success)) ? 'selected' : ''; ?>>Logistic</option>
+                    <option value="warehouse" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'warehouse' && empty($success)) ? 'selected' : ''; ?>>Warehouse</option>
                 </select>
             </div>
 

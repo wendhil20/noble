@@ -332,7 +332,7 @@ if ($user_id) {
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Billing Addresses</p>
+                            <p class="text-sm font-medium text-gray-600">Delivery Addresses</p>
                             <p class="text-lg font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
                         </div>
                     </div>

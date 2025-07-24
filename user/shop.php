@@ -110,7 +110,7 @@ $stmt->close();
 // Calculate pagination
 $total_pages = ceil($total_products / $per_page);
 
-// ✅ Enhanced categories
+//git Enhanced categories
 $all_categories = [
   'furniture' => 'Furniture',
   'material' => 'Materials',
@@ -148,6 +148,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
     .line-clamp-3 {
       display: -webkit-box;
       -webkit-line-clamp: 3;
+      line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }

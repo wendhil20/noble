@@ -49,6 +49,7 @@ $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $products[] = $row;
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -76,8 +77,7 @@ while ($row = $result->fetch_assoc()) {
     </button>
 
   </div>
-</section>
-
+</section> 
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-1 px-4">
     <!-- LEFT: Upload Product Form -->

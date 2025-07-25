@@ -368,38 +368,38 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
                         <span>Dashboard</span>
                     </a>
                 <?php endif; ?>
-               
 
-                    <!-- Mobile Products Section -->
-                    <div class="space-y-2">
-                        <button @click="activeDropdown = activeDropdown === 'mobile-products' ? null : 'mobile-products'"
-                            class="flex items-center justify-between w-full p-3 rounded-lg text-gray-700 hover:text-orange-500 hover:bg-gray-50 transition-all duration-300">
-                            <div class="flex items-center space-x-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                </svg>
-                                <span>Products</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform duration-300" :class="activeDropdown === 'mobile-products' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+
+                <!-- Mobile Products Section -->
+                <div class="space-y-2">
+                    <button @click="activeDropdown = activeDropdown === 'mobile-products' ? null : 'mobile-products'"
+                        class="flex items-center justify-between w-full p-3 rounded-lg text-gray-700 hover:text-orange-500 hover:bg-gray-50 transition-all duration-300">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                             </svg>
-                        </button>
+                            <span>Products</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-300" :class="activeDropdown === 'mobile-products' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
 
-                        <div x-show="activeDropdown === 'mobile-products'"
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 transform -translate-y-2"
-                            x-transition:enter-end="opacity-1 transform translate-y-0"
-                            x-cloak
-                            class="pl-8 space-y-2">
-                             <?php if (hasAnyRole(['', 'superadmin'])): ?>
+                    <div x-show="activeDropdown === 'mobile-products'"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 transform -translate-y-2"
+                        x-transition:enter-end="opacity-1 transform translate-y-0"
+                        x-cloak
+                        class="pl-8 space-y-2">
+                        <?php if (hasAnyRole(['', 'superadmin'])): ?>
                             <a href="../shop/adminshop.php" class="block p-2 text-gray-600 hover:text-orange-600 transition-colors">Upload Product</a>
                             <a href="../shop/adminupdateshop.php" class="block p-2 text-gray-600 hover:text-orange-600 transition-colors">Update Product</a>
                             <a href="../orders/orders" class="block p-2 text-gray-600 hover:text-orange-600 transition-colors">Order Management</a>
                             <a href="../qrcodeperproduct/qrcodeitem" class="block p-2 text-gray-600 hover:text-orange-600 transition-colors">Product QR Codes</a>
-                            <?php endif; ?>
-                        </div>
+                        <?php endif; ?>
                     </div>
-
+                </div>
+                <?php if (hasAnyRole(['', 'superadmin'])): ?>
                     <a href="../addclient/insertclient"
                         class="flex items-center space-x-3 p-3 rounded-lg <?= $current_page == 'insertclient' ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:text-orange-500 hover:bg-gray-50' ?> transition-all duration-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,7 +407,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
                         </svg>
                         <span>Client Management</span>
                     </a>
+                <?php endif; ?>
 
+                <?php if (hasAnyRole(['', 'superadmin'])): ?>
                     <a href="contact.php"
                         class="flex items-center space-x-3 p-3 rounded-lg <?= $current_page == 'contact.php' ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:text-orange-500 hover:bg-gray-50' ?> transition-all duration-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -415,7 +417,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
                         </svg>
                         <span>Inquiries</span>
                     </a>
+                <?php endif; ?>
 
+                <?php if (hasAnyRole(['', 'superadmin'])): ?>
                     <a href="quote.php"
                         class="flex items-center space-x-3 p-3 rounded-lg <?= $current_page == 'quote.php' ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:text-orange-500 hover:bg-gray-50' ?> transition-all duration-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -423,144 +427,145 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
                         </svg>
                         <span>Transactions</span>
                     </a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
 
 
 
-<!-- Quick Action Bar -->
-<div class="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200 py-3">
-    <div class=" px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <!-- Left: Quick Actions -->
-            <div class="w-full">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
-                    <span class="text-sm font-medium text-gray-700">Quick Actions:</span>
-                    <div class="flex flex-wrap gap-2">
-                        <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
-                            <a href="../shop/adminshop.php"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                <span>Add Product</span>
-                            </a>
-                        <?php endif; ?>
+    <!-- Quick Action Bar -->
+    <div class="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200 py-3">
+        <div class=" px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <!-- Left: Quick Actions -->
+                <div class="w-full">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                        <span class="text-sm font-medium text-gray-700">Quick Actions:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                <a href="../shop/adminshop.php"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    <span>Add Product</span>
+                                </a>
+                            <?php endif; ?>
 
-                        <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
-                            <a href="../orders/ordering"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                                <span>Orders</span>
-                            </a>
-                        <?php endif; ?>
-                        <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
+                            <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
+                                <a href="../orders/ordering"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
+                                    <span>Orders</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
 
-                            <a href="../client/approvingorder"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <span>Arrival Management</span>
-                            </a>
-                        <?php endif; ?>
-                        <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                <a href="../client/approvingorder"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Arrival Management</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
 
-                            <a href="../Specification/variants_list"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <span>Specification Products</span>
-                            </a>
-                        <?php endif; ?>
+                                <a href="../Specification/variants_list"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Specification Products</span>
+                                </a>
+                            <?php endif; ?>
 
-                        <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
+                            <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
 
-                            <a href="../client/add_driver"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <span>Add Driver</span>
-                            </a>
-                        <?php endif; ?>
+                                <a href="../client/add_driver"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Add Driver</span>
+                                </a>
+                            <?php endif; ?>
 
-                        <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
+                            <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
 
-                            <a href="../client/add_tracking"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <span>Add Tracking</span>
-                            </a>
-                        <?php endif; ?>
+                                <a href="../client/add_tracking"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Add Tracking</span>
+                                </a>
+                            <?php endif; ?>
 
-                        <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
+                            <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
 
-                            <a href="../client/monitortracking"
-                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
-                                <span>Monitor Tracking</span>
-                            </a>
-                        <?php endif; ?>
+                                <a href="../client/monitortracking"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Monitor Tracking</span>
+                                </a>
+                            <?php endif; ?>
 
 
 
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Right: User Info -->
-            <div class="flex items-center space-x-2 text-sm">
-                <?php if (isset($_SESSION['noble_lvl'])): ?>
-                    <span class="text-gray-600">(<?= htmlspecialchars($_SESSION['noble_lvl']) ?>)</span>
-                <?php endif; ?>
-                <?php if (isset($_SESSION['noble_name'])): ?>
-                    <span class="font-semibold text-gray-800"><?= htmlspecialchars($_SESSION['noble_name']) ?></span>
-                <?php endif; ?>
-                <div class="w-3 h-2 bg-green-400 rounded-full"></div>
-            </div>
+                <!-- Right: User Info -->
+                <div class="flex items-center space-x-2 text-sm">
+                    <?php if (isset($_SESSION['noble_lvl'])): ?>
+                        <span class="text-gray-600">(<?= htmlspecialchars($_SESSION['noble_lvl']) ?>)</span>
+                    <?php endif; ?>
+                    <?php if (isset($_SESSION['noble_name'])): ?>
+                        <span class="font-semibold text-gray-800"><?= htmlspecialchars($_SESSION['noble_name']) ?></span>
+                    <?php endif; ?>
+                    <div class="w-3 h-2 bg-green-400 rounded-full"></div>
+                </div>
 
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    // Auto-hide dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        const dropdowns = document.querySelectorAll('[x-data]');
-        dropdowns.forEach(dropdown => {
-            if (!dropdown.contains(e.target)) {
-                Alpine.store('activeDropdown', null);
-            }
+    <script>
+        // Auto-hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdowns = document.querySelectorAll('[x-data]');
+            dropdowns.forEach(dropdown => {
+                if (!dropdown.contains(e.target)) {
+                    Alpine.store('activeDropdown', null);
+                }
+            });
         });
-    });
 
-    // Smooth scroll for internal links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
         });
-    });
 
-    // Add loading states for navigation links
-    document.querySelectorAll('a[href]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.href && !this.href.startsWith('#')) {
-                const spinner = document.createElement('div');
-                spinner.className = 'inline-block w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin ml-2';
-                this.appendChild(spinner);
+        // Add loading states for navigation links
+        document.querySelectorAll('a[href]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.href.startsWith('#')) {
+                    const spinner = document.createElement('div');
+                    spinner.className = 'inline-block w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin ml-2';
+                    this.appendChild(spinner);
 
-                setTimeout(() => {
-                    if (spinner.parentNode) {
-                        spinner.remove();
-                    }
-                }, 3000);
-            }
+                    setTimeout(() => {
+                        if (spinner.parentNode) {
+                            spinner.remove();
+                        }
+                    }, 3000);
+                }
+            });
         });
-    });
-</script>
+    </script>
 </body>
 
 </html>

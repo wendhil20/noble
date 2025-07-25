@@ -432,8 +432,6 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
         </div>
     </nav>
 
-
-
     <!-- Quick Action Bar -->
     <div class="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200 py-3">
         <div class=" px-4 sm:px-6 lg:px-8">

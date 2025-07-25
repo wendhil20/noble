@@ -91,14 +91,14 @@ try {
 
     // Determine redirect
     $redirect = match (strtolower($user['lvl'])) {
-        'superadmin', 'admin' => "../admin/client/dashboard.php",
+        'superadmin', 'admin' => "../admin/client/dashboard",
         'sales' => "../admin/orders/ordering",
-        'accountant' => "../admin/accountant/dashboard.php",
-        'supplier' => "../admin/supplier/supplier",
-        'productspecialist' => "../admin/shop/adminshop.php",
+        'accountant' => "../admin/accountant/dashboard",
+        'supplier' => "../admin/suppliermain/suppliercompany",
+        'productspecialist' => "../admin/shop/adminshop",
         'logistic' => "../admin/client/monitortracking",
-        'warehouse' => "../admin/warehouse/warehouse",
-        default => "../admin/client/dashboard.php"
+        'warehouse' => "../admin/warehouse/warehouses",
+        default => "../admin/client/dashboard"
     };
 
     $stmt->close();

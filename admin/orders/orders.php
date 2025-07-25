@@ -2,6 +2,23 @@
 include '../../connection/connect.php';
 require_role(['sales', 'superadmin']);
 
+// ✅ Set noble_name and noble_lvl from DB if not already set
+if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
+    $email = $_SESSION['noble_user'];
+    $stmt = $conn->prepare("SELECT fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->bind_result($name, $lvl);
+    if ($stmt->fetch()) {
+        $_SESSION['noble_name'] = $name;
+        $_SESSION['noble_lvl'] = $lvl; // ← ✅ Store the user's role
+    } else {
+        $_SESSION['noble_name'] = "Unknown User";
+        $_SESSION['noble_lvl'] = "guest"; // fallback role
+    }
+    $stmt->close();
+}
+
 if (!isset($_SESSION['noble_user'])) {
   header("Location: ../../loginpage/index.php");
   exit();

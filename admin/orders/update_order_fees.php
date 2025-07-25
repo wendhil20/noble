@@ -2,7 +2,7 @@
 session_name("nobleadmin");
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
-require_role(['sales', 'superadmin']);
+require_role(['admin', 'superadmin']);
 
 header('Content-Type: application/json');
 error_reporting(E_ALL);

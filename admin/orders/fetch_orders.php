@@ -1,87 +1,94 @@
 <?php
 session_name("nobleadmin");
-include '../../connection/connect.php';
-include '../role/roleaccount.php';
-require_role(['sales', 'superadmin']);
-
+session_start();
 header('Content-Type: application/json');
+require_once '../../connection/connect.php';
 
-try {
-    if (!$conn) {
-        throw new Exception('Database connection failed');
-    }
-
-    // Fetch all orders first
-    $orders_result = $conn->query("
-        SELECT 
-            id, customer_name, email, mobile, address, zipcode, total, created_at,
-            COALESCE(status, 'pending') as status,
-            COALESCE(discount, 0) as discount,
-            COALESCE(shipping_fee, 0) as shipping_fee,
-            COALESCE(delivery_fee, 0) as delivery_fee,
-            COALESCE(vat_amount, 0) as vat_amount,
-            COALESCE(final_total, 0) as final_total
-        FROM orders
-        ORDER BY created_at DESC
-    ");
-    if (!$orders_result) {
-        throw new Exception('Orders query failed: ' . $conn->error);
-    }
-
-    $orders = [];
-    $order_ids = [];
-
-    while ($order = $orders_result->fetch_assoc()) {
-        // Format date
-        $order['created_at'] = date('M j, Y g:i A', strtotime($order['created_at']));
-        $orders[$order['id']] = $order;
-        $order_ids[] = $order['id'];
-    }
-
-    if (count($order_ids) > 0) {
-        // Prepare a query to fetch all order items for these orders in one go
-        $ids_placeholder = implode(',', array_fill(0, count($order_ids), '?'));
-        $types = str_repeat('i', count($order_ids));
-        $stmt = $conn->prepare("SELECT * FROM order_items WHERE order_id IN ($ids_placeholder)");
-        if (!$stmt) {
-            throw new Exception('Prepare order_items failed: ' . $conn->error);
-        }
-        $stmt->bind_param($types, ...$order_ids);
-        $stmt->execute();
-        $items_result = $stmt->get_result();
-
-        // Group items by order_id
-        while ($item = $items_result->fetch_assoc()) {
-            $order_id = $item['order_id'];
-            $processed_item = [
-                'product_name' => $item['product_name'] ?? $item['name'] ?? 'Unknown Product',
-                'size' => $item['size'] ?? 'N/A',
-                'variant_color' => $item['variant_color'] ?? $item['color'] ?? 'N/A',
-                'price' => number_format($item['price'] ?? 0, 2),
-                'quantity' => $item['quantity'] ?? 0,
-                'subtotal' => number_format($item['subtotal'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 0)), 2),
-                'codename' => $item['codename'] ?? '',
-                'descrip6' => $item['descrip6'] ?? '',
-                'descrip7' => $item['descrip7'] ?? ''
-            ];
-            $orders[$order_id]['items'][] = $processed_item;
-        }
-        $stmt->close();
-    }
-
-    // Convert orders from associative by id to indexed array for JSON
-    $orders = array_values($orders);
-
-    echo json_encode($orders);
-
-} catch (Exception $e) {
-    error_log("Error in fetch_orders.php: " . $e->getMessage());
-
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage()
-    ]);
+// 1. Make sure the user is logged in
+if (!isset($_SESSION['noble_user'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'User not logged in']);
+    exit;
 }
 
-?>
+// 2. Lookup this user’s emp_id
+$email = $_SESSION['noble_user'];
+$stmt = $conn->prepare("SELECT id FROM nobleaccount WHERE email = ? LIMIT 1");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$stmt->bind_result($emp_id);
+$stmt->fetch();
+$stmt->close();
+
+if (!$emp_id) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Employee record not found']);
+    exit;
+}
+
+// 3. Fetch only orders assigned to this emp_id
+$stmt = $conn->prepare("
+    SELECT 
+        id,
+        customer_name,
+        email,
+        mobile,
+        address,
+        zipcode,
+        total,
+        created_at,
+        COALESCE(status, 'pending')    AS status,
+        COALESCE(discount, 0)         AS discount,
+        COALESCE(shipping_fee, 0)     AS shipping_fee,
+        COALESCE(delivery_fee, 0)     AS delivery_fee
+    FROM orders
+    WHERE emp_id = ?
+    ORDER BY created_at DESC
+");
+$stmt->bind_param("i", $emp_id);
+$stmt->execute();
+$orders_result = $stmt->get_result();
+$stmt->close();
+
+$orders = [];
+
+while ($order = $orders_result->fetch_assoc()) {
+    // format the date exactly as your front-end expects
+    $order['created_at'] = date('M j, Y g:i A', strtotime($order['created_at']));
+
+    // 4. For each order, fetch its items
+    $itemStmt = $conn->prepare("
+        SELECT 
+            product_name,
+            size,
+            variant_color,
+            codename,
+            descrip6,
+            descrip7,
+            price,
+            quantity,
+            subtotal
+        FROM order_items
+        WHERE order_id = ?
+    ");
+    $itemStmt->bind_param("i", $order['id']);
+    $itemStmt->execute();
+    $itemsRes = $itemStmt->get_result();
+
+    $items = [];
+    while ($it = $itemsRes->fetch_assoc()) {
+        // ensure numeric formatting matches JS expectations
+        $it['price']    = number_format((float)$it['price'], 2, '.', '');
+        $it['subtotal'] = number_format((float)$it['subtotal'], 2, '.', '');
+        $items[] = $it;
+    }
+    $itemStmt->close();
+
+    // 5. Attach as `items` (not `products`)
+    $order['items'] = $items;
+
+    $orders[] = $order;
+}
+
+// 6. Return a JSON **array** — front-end does `orders.filter(...)`, so passing an array is critical
+echo json_encode($orders);

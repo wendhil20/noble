@@ -1373,7 +1373,7 @@ if (!empty($products)) {
     <script>
         const productsSwiper = new Swiper(".mySwiper-products", {
             slidesPerView: 1,
-            spaceBetween: 16,
+            spaceBetween: 30,
             loop: true,
             autoplay: {
                 delay: 3000,
@@ -1430,7 +1430,7 @@ if (!empty($products)) {
                     slidesPerView: 5,
                 },
                 1920: {
-                    slidesPerView: 5,
+                    slidesPerView: 6,
                 }
             }
         });

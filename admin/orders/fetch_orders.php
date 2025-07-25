@@ -1,6 +1,5 @@
 <?php
 session_name("nobleadmin");
-session_start();
 header('Content-Type: application/json');
 require_once '../../connection/connect.php';
 

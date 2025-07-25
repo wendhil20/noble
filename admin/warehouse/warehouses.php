@@ -61,7 +61,7 @@ $activePage = $_GET['page'] ?? 'suppliers';
 
     <button data-page="inventoryorders" class="tab-button px-4 py-3 text-sm font-medium border-b-2 rounded-md <?php echo $activePage === 'inventoryorders' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100'; ?>">
       <span class="flex items-center">
-        <span class="ml-2">Inventory Suppliers</span>
+        <span class="ml-2">Inventory</span>
        
       </span>
     </button>

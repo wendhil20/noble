@@ -3,7 +3,7 @@ session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
-require_role(['sales', 'superadmin']);
+require_role(['admin', 'superadmin']);
 
 // Import PHPMailer classes
 use PHPMailer\PHPMailer\PHPMailer;

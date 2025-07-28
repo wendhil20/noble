@@ -35,7 +35,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
     $stmt->bind_result($name, $lvl);
     if ($stmt->fetch()) {
         $_SESSION['noble_name'] = $name;
-        $_SESSION['noble_lvl'] = $lvl; // ← ✅ Store the user's role
+        $_SESSION['noble_lvl'] = $lvl; // ← Store the user's role
     } else {
         $_SESSION['noble_name'] = "Unknown User";
         $_SESSION['noble_lvl'] = "guest"; // fallback role
@@ -485,6 +485,13 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
                                 <a href="../Specification/variants_list"
                                     class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
                                     <span>Specification Products</span>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                <a href="../Specification/banner"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Banner Discount</span>
                                 </a>
                             <?php endif; ?>
 

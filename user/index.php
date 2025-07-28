@@ -4,7 +4,6 @@ session_name("nobleuser");
 session_start();
 include '../connection/connect.php'; // Adjust path if needed
 
-
 // Check if there's a login notification
 if (isset($_SESSION['login_needed'])) {
     $notification_message = $_SESSION['login_needed'];
@@ -368,8 +367,10 @@ if (!empty($products)) {
     <?php endif; ?>
 
     <?php if (isset($notification_message)): ?>
-        <div id="loginNotification" class="p-4 mb-4 bg-yellow-200 text-yellow-800 border-l-4 border-yellow-500">
-            <p><?= htmlspecialchars($notification_message) ?></p>
+        <div id="loginNotification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50">
+            <div class="bg-red-200 text-yellow-800 border-l-4 border-red-500 p-4 rounded shadow-lg max-w-md w-full text-center">
+                <p><?= htmlspecialchars($notification_message) ?></p>
+            </div>
         </div>
     <?php endif; ?>
 
@@ -732,7 +733,7 @@ if (!empty($products)) {
                                         <!-- View Button -->
                                         <div class="mt-2">
                                             <a href="product_view.php?id=<?= (int)$row['id'] ?>"
-                                                class="p-2 inline-block w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
+                                                class="p-2 inline-block text-center w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
                                                 View Product
                                             </a>
                                         </div>
@@ -1369,7 +1370,7 @@ if (!empty($products)) {
         AOS.init();
     </script>
 
-    
+
     <script>
         const productsSwiper = new Swiper(".mySwiper-products", {
             slidesPerView: 1,

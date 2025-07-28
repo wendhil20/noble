@@ -2,26 +2,36 @@
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
-include '../role/roleaccount.php';
 
-require_role(['sales', 'superadmin']);
-
-// Redirect if not logged in
-if (!isset($_SESSION['noble_user']) || !isset($_SESSION['noble_id'])) {
+if (!isset($_SESSION['noble_id'])) {
     header("Location: ../../loginpage/index.php");
     exit();
 }
 
-$order_id = $_POST['order_id'] ?? null;
-$user_id = $_SESSION['noble_id'];
+$order_id = isset($_POST['order_id']) ? intval($_POST['order_id']) : 0;
+$employee_id = $_SESSION['noble_id'];
 
-if ($order_id && is_numeric($order_id)) {
-    $stmt = $conn->prepare("UPDATE orders SET emp_id = ? WHERE id = ?");
-    $stmt->bind_param("ii", $user_id, $order_id);
-    $stmt->execute();
-    $stmt->close();
+// Check if the order is still unassigned
+$stmt = $conn->prepare("SELECT emp_id FROM orders WHERE id = ? LIMIT 1");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$stmt->bind_result($emp_id);
+$stmt->fetch();
+$stmt->close();
+
+if ($emp_id === null || $emp_id == '') {
+    // Proceed with accepting the order
+    $update = $conn->prepare("UPDATE orders SET emp_id = ? WHERE id = ?");
+    $update->bind_param("ii", $employee_id, $order_id);
+    if ($update->execute()) {
+        header("Location: unassigned_orders.php?accepted=true");
+    } else {
+        header("Location: unassigned_orders.php?error=update_failed");
+    }
+    $update->close();
+} else {
+    // Order already assigned
+    header("Location: unassigned_orders.php?error=already_accepted");
 }
 
-// Redirect with success message
-header("Location: unassigned_orders.php?accepted=true");
-exit();
+$conn->close();

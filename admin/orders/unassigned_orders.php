@@ -7,13 +7,11 @@ include '../navbar/top.php';
 
 require_role(['sales', 'superadmin']);
 
-// Redirect if not logged in
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();
 }
 
-// Set noble_name, noble_lvl, and noble_id if not yet set
 if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset($_SESSION['noble_id'])) {
     $email = $_SESSION['noble_user'];
     $stmt = $conn->prepare("SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1");
@@ -32,7 +30,6 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     $stmt->close();
 }
 
-// Fetch unassigned orders
 $sql = "SELECT id, customer_name, email, mobile, total, address FROM orders WHERE emp_id IS NULL OR emp_id = ''";
 $result = $conn->query($sql);
 ?>
@@ -48,9 +45,18 @@ $result = $conn->query($sql);
   <div class="container mx-auto bg-white p-6 rounded-lg shadow-md">
     <h1 class="text-2xl font-bold mb-4 text-orange-600">Unassigned Orders</h1>
 
+    <!-- Feedback Messages -->
     <?php if (isset($_GET['accepted']) && $_GET['accepted'] == "true"): ?>
       <div class="mb-4 p-3 bg-green-100 text-green-700 rounded">
         ✅ Order accepted successfully!
+      </div>
+    <?php elseif (isset($_GET['error']) && $_GET['error'] == "already_accepted"): ?>
+      <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        ❌ This order has already been accepted by another employee.
+      </div>
+    <?php elseif (isset($_GET['error']) && $_GET['error'] == "update_failed"): ?>
+      <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        ❌ Failed to accept the order. Please try again.
       </div>
     <?php endif; ?>
 
@@ -92,5 +98,16 @@ $result = $conn->query($sql);
       </tbody>
     </table>
   </div>
+
+  <!-- Optional: Disable button on click -->
+  <script>
+    document.querySelectorAll("form").forEach(form => {
+      form.addEventListener("submit", function () {
+        const button = this.querySelector("button[type='submit']");
+        button.disabled = true;
+        button.textContent = "Accepting...";
+      });
+    });
+  </script>
 </body>
 </html>

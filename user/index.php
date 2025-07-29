@@ -157,7 +157,7 @@ $stmt->execute();
 $results = $stmt->get_result();
 
 // 9. Filter by furnituretwo codename
-$filters = 'furnituretwo';
+$filters = 'bed';
 $query = "SELECT * FROM products WHERE codename = '$filters' ORDER BY id DESC";
 $resultss = mysqli_query($conn, $query);
 
@@ -200,6 +200,8 @@ $slideresult = $conn->query($sql);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link href="css/promotionslide.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <script>
         // Function to hide the notification after 5 seconds
         setTimeout(function() {
@@ -489,23 +491,44 @@ $slideresult = $conn->query($sql);
     </section>
 
 
-<section class="flex flex-wrap justify-center gap-4 px-4 py-6">
-  <?php
-  $categories = [
-    'furniture' => 'Furniture',
-    'material' => 'Materials',
-    'decoration' => 'Table',
-    'lighting' => 'Bed',
-    'outdoor' => 'Outdoor'
-  ];
+<section class="px-4 py-8 bg-white">
+  <!-- Heading and description -->
+  <div class="text-center mb-6">
+    <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
+    <p class="text-black text-sm sm:text-base">
+      Browse products by category to quickly find what you need.
+    </p>
+  </div>
 
-  foreach ($categories as $code => $label): ?>
-    <a href="shop.php?category[]=<?= $code ?>"
-       class="w-24 h-24 rounded-full flex items-center justify-center bg-orange-500 hover:bg-orange-300 text-white font-bold shadow-md">
-       <?= $label ?>
-    </a>
-  <?php endforeach; ?>
+  <!-- Category buttons -->
+  <div class="flex flex-wrap justify-center gap-4">
+    <?php
+    $categories = [
+      'furniture' => ['label' => 'Furniture', 'icon' => 'sofa'],
+      'material'  => ['label' => 'Materials', 'icon' => 'layers'],
+      'table'     => ['label' => 'Table',     'icon' => 'table'],
+      'bed'       => ['label' => 'Bed',       'icon' => 'bed-double'],
+      'light'     => ['label' => 'Light',     'icon' => 'lightbulb'],
+      'aircon'    => ['label' => 'Aircon',    'icon' => 'snowflake']
+    ];
+
+    foreach ($categories as $code => $data): ?>
+      <a href="shop.php?category[]=<?= $code ?>"
+         class="w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-500 hover:bg-orange-400 text-white font-semibold shadow-lg transition text-center text-sm">
+         <i data-lucide="<?= $data['icon'] ?>" class="w-6 h-6 mb-1"></i>
+         <?= $data['label'] ?>
+      </a>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Init Lucide icons -->
+  <script>
+    lucide.createIcons();
+  </script>
 </section>
+
+
+
 
   <section class="px-4 sm:px-6 lg:px-8 py-6">
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

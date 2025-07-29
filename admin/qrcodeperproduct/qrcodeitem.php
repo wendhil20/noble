@@ -56,9 +56,21 @@ while ($row = $fetchResult->fetch_assoc()) {
     $stmt->execute();
 }
 
-
-// ✅ Fetch again for display
-$displayQuery = "SELECT id, product_name, codename, quantity, price, qr_code FROM products ORDER BY product_name";
+// ✅ Fetch products with their corresponding variant IDs for display
+$displayQuery = "
+    SELECT 
+        p.id as product_id, 
+        p.product_name, 
+        p.codename, 
+        p.quantity, 
+        p.price, 
+        p.qr_code,
+        pv.id as variant_id,
+        pv.namevariant
+    FROM products p 
+    LEFT JOIN product_variants pv ON p.id = pv.product_id 
+    ORDER BY p.product_name
+";
 $displayResult = $conn->query($displayQuery);
 ?>
 
@@ -84,10 +96,10 @@ $displayResult = $conn->query($displayQuery);
                     <tr>
                         <th class="border border-gray-300 px-4 py-2">Name</th>
                         <th class="border border-gray-300 px-4 py-2">Codename</th>
+                        <th class="border border-gray-300 px-4 py-2">Variant</th>
                         <th class="border border-gray-300 px-4 py-2">Quantity</th>
                         <th class="border border-gray-300 px-4 py-2">QR Code</th>
                         <th class="border border-gray-300 px-4 py-2">Action</th>
-
                     </tr>
                 </thead>
                 <tbody>
@@ -95,29 +107,34 @@ $displayResult = $conn->query($displayQuery);
                         <tr class="hover:bg-gray-50">
                             <td class="border border-gray-300 px-4 py-2"><?= htmlspecialchars($product['product_name']) ?></td>
                             <td class="border border-gray-300 px-4 py-2"><?= htmlspecialchars($product['codename']) ?></td>
+                            <td class="border border-gray-300 px-4 py-2">
+                                <?= $product['namevariant'] ? htmlspecialchars($product['namevariant']) : '<span class="text-gray-400">No variant</span>' ?>
+                            </td>
                             <td class="border border-gray-300 px-4 py-2"><?= $product['quantity'] ?></td>
                             <td class="border border-gray-300 px-4 py-2 text-center">
                                 <?php if (!empty($product['qr_code'])): ?>
                                     <?php $base64QR = base64_encode($product['qr_code']); ?>
-                                    <a href="view_product.php?id=<?= $product['id'] ?>" target="_blank">
+                                    <a href="view_product.php?id=<?= $product['product_id'] ?>" target="_blank">
                                         <img src="data:image/png;base64,<?= $base64QR ?>" class="h-16 w-16 mx-auto mb-2 hover:scale-105 transition-transform" alt="QR Code" />
                                     </a>
-                                    <a href="data:image/png;base64,<?= $base64QR ?>" download="qr_<?= $product['id'] ?>.png"
+                                    <a href="data:image/png;base64,<?= $base64QR ?>" download="qr_<?= $product['product_id'] ?>.png"
                                         class="inline-block mt-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded">
                                         Download
                                     </a>
-                            <td class="border border-gray-300 px-4 py-2">
-                                <a href="variant_edit.php?id=<?= $product['id'] ?>"
-                                    class="inline-block bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">
-                                    Update
-                                </a>
+                                <?php else: ?>
+                                    <span class="text-gray-400 italic">No QR</span>
+                                <?php endif; ?>
                             </td>
-
-                        <?php else: ?>
-                            <span class="text-gray-400 italic">No QR</span>
-                        <?php endif; ?>
-
-                        </td>
+                            <td class="border border-gray-300 px-4 py-2">
+                                <?php if ($product['variant_id']): ?>
+                                    <a href="variant_edit.php?id=<?= $product['variant_id'] ?>"
+                                        class="inline-block bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">
+                                        Update
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-gray-400 text-xs">No variant</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>

@@ -39,7 +39,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 
-
 // ✅ Enhanced input validation and sanitization
 $selected_categories = isset($_GET['category']) && is_array($_GET['category']) ? $_GET['category'] : [];
 $search_keyword = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -128,6 +127,8 @@ foreach ($all_categories as $cat_key => $cat_name) {
   $category_counts[$cat_key] = $cat_stmt->get_result()->fetch_assoc()['count'];
   $cat_stmt->close();
 }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -354,6 +355,9 @@ foreach ($all_categories as $cat_key => $cat_name) {
         </span>
       </div>
     </div>
+
+    <section class="flex flex-wrap justify-center gap-4 px-4 py-6">
+
 
     <!-- ✅ FIXED: Mobile Filter Toggle Button -->
     <div class="mobile-filter-toggle mb-6">

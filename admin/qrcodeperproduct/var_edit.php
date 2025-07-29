@@ -1,6 +1,9 @@
 <?php
+session_name("nobleadmin");
+session_start();
 include '../../connection/connect.php';
-
+require_once '../role/roleaccount.php'; 
+require_role(['productspecialist','superadmin']);
 
 
 

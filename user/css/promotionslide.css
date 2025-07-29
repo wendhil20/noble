@@ -1,0 +1,53 @@
+/* Default for very small devices (e.g. 320px - iPhone SE) */
+.swiper-slide {
+  height: 220px;
+}
+
+/* Small phones (e.g. 375px - iPhone 12 mini) */
+@media (min-width: 360px) {
+  .swiper-slide {
+    height: 250px;
+  }
+}
+
+/* Base smartphones (e.g. 414px - iPhone 12/13) */
+@media (min-width: 414px) {
+  .swiper-slide {
+    height: 280px;
+  }
+}
+
+/* Small tablets and large phones (sm breakpoint) */
+@media (min-width: 640px) {
+  .swiper-slide {
+    height: 350px;
+  }
+}
+
+/* Medium tablets (md breakpoint) */
+@media (min-width: 768px) {
+  .swiper-slide {
+    height: 450px;
+  }
+}
+
+/* Standard laptops (lg breakpoint) */
+@media (min-width: 1024px) {
+  .swiper-slide {
+    height: 550px;
+  }
+}
+
+/* Large desktops (xl breakpoint) */
+@media (min-width: 1280px) {
+  .swiper-slide {
+    height: 600px;
+  }
+}
+
+/* Extra large 2K+ screens (2xl breakpoint) */
+@media (min-width: 1536px) {
+  .swiper-slide {
+    height: 650px;
+  }
+}

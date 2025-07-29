@@ -1,21 +1,50 @@
 <?php
 session_name("nobleadmin");
-session_start();
 include '../role/roleaccount.php';
-
 require_role(['productspecialist', 'superadmin']); // allow only productspecialist and superadmin
+include '../../connection/connect.php';
 
 
-// === IMAGE UPLOAD & CONVERT TO WEBP ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images'])) {
-    $uploadDir = "../../uploads/";
-    if (!file_exists($uploadDir)) mkdir($uploadDir, 0777, true);
+$absoluteUploadPath = "../../uploads/";
+$relativeUploadPath = "../uploads/";
 
-    foreach ($_FILES['images']['tmp_name'] as $i => $tmpName) {
-        $originalName = $_FILES['images']['name'][$i];
-        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // ✅ Upload images
+    if (isset($_FILES['images'])) {
+        foreach ($_FILES['images']['tmp_name'] as $i => $tmpName) {
+            $originalName = $_FILES['images']['name'][$i];
+            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            $newName = uniqid() . '.webp';
+            $absoluteDestination = $absoluteUploadPath . $newName;
+            $relativePath = $relativeUploadPath . $newName;
+
+            switch ($ext) {
+                case 'jpg':
+                case 'jpeg':
+                    $image = imagecreatefromjpeg($tmpName); break;
+                case 'png':
+                    $image = imagecreatefrompng($tmpName); break;
+                case 'webp':
+                    move_uploaded_file($tmpName, $absoluteDestination);
+                    $conn->query("INSERT INTO discount_images (filename) VALUES ('$relativePath')");
+                    continue 2;
+                default: continue 2;
+            }
+
+            imagewebp($image, $absoluteDestination, 80);
+            imagedestroy($image);
+            $conn->query("INSERT INTO discount_images (filename) VALUES ('$relativePath')");
+        }
+    }
+
+    // ✅ Update image
+    if (isset($_POST['update_id']) && isset($_FILES['update_image'])) {
+        $id = intval($_POST['update_id']);
+        $tmpName = $_FILES['update_image']['tmp_name'];
+        $ext = strtolower(pathinfo($_FILES['update_image']['name'], PATHINFO_EXTENSION));
         $newName = uniqid() . '.webp';
-        $destination = $uploadDir . $newName;
+        $absoluteDestination = $absoluteUploadPath . $newName;
+        $relativePath = $relativeUploadPath . $newName;
 
         switch ($ext) {
             case 'jpg':
@@ -24,69 +53,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images'])) {
             case 'png':
                 $image = imagecreatefrompng($tmpName); break;
             case 'webp':
-                move_uploaded_file($tmpName, $destination);
-                $conn->query("INSERT INTO discount_images (filename) VALUES ('$newName')");
-                continue 2;
-            default: continue 2;
+                move_uploaded_file($tmpName, $absoluteDestination);
+                break;
+            default:
+                die("Unsupported file type.");
         }
 
-        imagewebp($image, $destination, 80);
-        imagedestroy($image);
+        if ($ext !== 'webp') {
+            imagewebp($image, $absoluteDestination, 80);
+            imagedestroy($image);
+        }
 
-        $conn->query("INSERT INTO discount_images (filename) VALUES ('$newName')");
+        // Delete old file
+        $res = $conn->query("SELECT filename FROM discount_images WHERE id=$id");
+        if ($row = $res->fetch_assoc()) {
+            $oldPath = str_replace("../uploads/", "../../uploads/", $row['filename']);
+            if (file_exists($oldPath)) unlink($oldPath);
+        }
+
+        $conn->query("UPDATE discount_images SET filename='$relativePath' WHERE id=$id");
     }
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit();
-}
 
-// === DELETE IMAGE ===
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    $res = $conn->query("SELECT filename FROM discount_images WHERE id=$id");
-    if ($row = $res->fetch_assoc()) {
-        unlink("../../uploads/" . $row['filename']);
+    // ✅ Delete image
+    if (isset($_POST['delete_id'])) {
+        $id = intval($_POST['delete_id']);
+        $res = $conn->query("SELECT filename FROM discount_images WHERE id=$id");
+        if ($row = $res->fetch_assoc()) {
+            $filePath = str_replace("../uploads/", "../../uploads/", $row['filename']);
+            if (file_exists($filePath)) unlink($filePath);
+        }
         $conn->query("DELETE FROM discount_images WHERE id=$id");
     }
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit();
-}
 
-// === UPDATE PLACEHOLDER ===
-if (isset($_POST['update_id']) && isset($_FILES['update_image'])) {
-    $id = (int)$_POST['update_id'];
-    $tmpName = $_FILES['update_image']['tmp_name'];
-    $ext = strtolower(pathinfo($_FILES['update_image']['name'], PATHINFO_EXTENSION));
-    $newName = uniqid() . '.webp';
-    $destination = "../../uploads/" . $newName;
-
-    switch ($ext) {
-        case 'jpg': case 'jpeg':
-            $image = imagecreatefromjpeg($tmpName); break;
-        case 'png':
-            $image = imagecreatefrompng($tmpName); break;
-        case 'webp':
-            move_uploaded_file($tmpName, $destination);
-            break;
-        default:
-            die("Unsupported file type.");
-    }
-
-    if ($ext !== 'webp') {
-        imagewebp($image, $destination, 80);
-        imagedestroy($image);
-    }
-
-    // Delete old image
-    $res = $conn->query("SELECT filename FROM discount_images WHERE id=$id");
-    if ($row = $res->fetch_assoc()) {
-        unlink("uploads/" . $row['filename']);
-    }
-
-    $conn->query("UPDATE discount_images SET filename='$newName' WHERE id=$id");
-    header("Location: ".$_SERVER['PHP_SELF']);
+    header("Location: banner.php"); // Redirect after processing
     exit();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

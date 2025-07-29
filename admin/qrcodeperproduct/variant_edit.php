@@ -2,7 +2,10 @@
 session_name("nobleadmin");
 include '../../connection/connect.php';
 require '../../vendor/autoload.php';
+session_name("nobleadmin");
 session_start();
+require_once '../role/roleaccount.php'; 
+require_role(['productspecialist','superadmin']);
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
@@ -141,7 +144,8 @@ if (!$variant) {
   <title>Edit Variant Images</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 py-8">
+<body class="bg-gray-50">
+<?php include '../navbar/top.php'; ?>
   <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
 
     <h2 class="text-2xl font-semibold mb-4">Edit Variant: <?= htmlspecialchars($variant['namevariant'] ?? '') ?></h2>

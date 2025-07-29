@@ -2,7 +2,6 @@
 session_name("nobleadmin");
 include '../../connection/connect.php';
 require '../../vendor/autoload.php';
-session_name("nobleadmin");
 session_start();
 require_once '../role/roleaccount.php'; 
 require_role(['productspecialist','superadmin']);
@@ -115,15 +114,20 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     if (!$stmt) $error = "Prepare failed: ".$conn->error;
     else {
         $stmt->bind_param($types, ...$params);
-        if ($stmt->execute()) $success = 'Variant updated.';
+        if ($stmt->execute()) $success = 'Variant updated successfully.';
         else $error = 'Execute failed: '.$stmt->error;
         $stmt->close();
     }
 }
 
-// ➤ Fetch variant to display/update
+// ➤ Fetch variant with product info to display/update
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$stmt = $conn->prepare("SELECT * FROM product_variants WHERE id=?");
+$stmt = $conn->prepare("
+    SELECT pv.*, p.product_name 
+    FROM product_variants pv 
+    LEFT JOIN products p ON pv.product_id = p.id 
+    WHERE pv.id=?
+");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $variant = $stmt->get_result()->fetch_assoc() ?: null;
@@ -135,8 +139,6 @@ if (!$variant) {
 }
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,60 +146,71 @@ if (!$variant) {
   <title>Edit Variant Images</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100 min-h-screen font-sans">
 <?php include '../navbar/top.php'; ?>
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
 
-    <h2 class="text-2xl font-semibold mb-4">Edit Variant: <?= htmlspecialchars($variant['namevariant'] ?? '') ?></h2>
-    <?php if ($success): ?>
-      <div class="mb-4 p-3 bg-green-100 text-green-800 rounded"><?= htmlspecialchars($success) ?></div>
-    <?php endif; ?>
-    <?php if ($error): ?>
-      <div class="mb-4 p-3 bg-red-100 text-red-800 rounded"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
+<div class="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
+  <h1 class="text-3xl font-bold text-gray-800 mb-2 border-b pb-2">
+     Edit Variant: <span class="text-orange-600"><?= htmlspecialchars($variant['namevariant'] ?? '') ?></span>
+  </h1>
+  <p class="text-gray-600 mb-6">
+    Product: <span class="font-semibold"><?= htmlspecialchars($variant['product_name'] ?? '') ?></span> | 
+    Variant ID: <span class="font-semibold"><?= $variant['id'] ?></span>
+  </p>
 
-    <form method="POST" enctype="multipart/form-data" class="space-y-6">
-      <input type="hidden" name="id" value="<?= $id ?>">
+  <?php if ($success): ?>
+    <div class="mb-4 p-4 rounded bg-green-100 text-green-800 border border-green-300">
+       <?= htmlspecialchars($success) ?>
+    </div>
+  <?php endif; ?>
 
-      <label class="block"><span class="font-medium">Text Description</span>
-        <textarea name="descriptionpic"
-                  class="w-full mt-1 border rounded p-2"
-                  rows="4"><?= htmlspecialchars($variant['descriptionpic'] ?? '') ?></textarea>
-      </label>
+  <?php if ($error): ?>
+    <div class="mb-4 p-4 rounded bg-red-100 text-red-800 border border-red-300">
+      <?= htmlspecialchars($error) ?>
+    </div>
+  <?php endif; ?>
 
+  <form method="POST" enctype="multipart/form-data" class="space-y-6">
+    <input type="hidden" name="id" value="<?= $id ?>">
+
+    <!-- Text Description -->
+    <div>
+      <label class="block font-semibold text-gray-700 mb-1"> Text Description</label>
+      <textarea name="descriptionpic" class="w-full border rounded-md p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400" rows="4"><?= htmlspecialchars($variant['descriptionpic'] ?? '') ?></textarea>
+    </div>
+
+    <!-- Images Upload -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <?php
       $labels = [
-        'imagedescription'=>'Image 1', 
-        'imagedescriptiontwo'=>'Image 2', 
-        'imagedescriptiontree'=>'Image 3', 
-        'imagedescriptionfour'=>'Image 4'
+        'imagedescription'     => 'Image 1',
+        'imagedescriptiontwo'  => 'Image 2',
+        'imagedescriptiontree' => 'Image 3',
+        'imagedescriptionfour' => 'Image 4'
       ];
-      foreach ($labels as $field=>$label):
+      foreach ($labels as $field => $label):
       ?>
       <div>
-        <span class="font-medium"><?= htmlspecialchars($label) ?></span>
+        <label class="block font-medium text-gray-700 mb-1"><?= htmlspecialchars($label) ?></label>
         <?php if (!empty($variant[$field]) && file_exists("../../" . $variant[$field])): ?>
-            <div class="relative mt-2 mb-2">
-              <img src="../../<?= htmlspecialchars($variant[$field]) ?>"
-                   class="w-32 h-32 object-contain rounded border" alt="">
-              <a href="?id=<?= $id ?>&delete_image=<?= $field ?>"
-                 onclick="return confirm('Delete this image?')"
-                 class="absolute top-0 right-0 bg-red-600 text-white px-2 py-1 text-xs rounded">X</a>
-            </div>
+          <div class="relative group w-fit mb-2">
+            <img src="../../<?= htmlspecialchars($variant[$field]) ?>" class="w-32 h-32 object-contain border rounded-md shadow-sm" alt="">
+            <a href="?id=<?= $id ?>&delete_image=<?= $field ?>" onclick="return confirm('Delete this image?')" class="absolute top-0 right-0 bg-red-600 text-white text-xs px-2 py-1 rounded-full opacity-90 group-hover:opacity-100 transition">✖</a>
+          </div>
         <?php endif; ?>
-
-        <input type="file" name="<?= $field ?>" accept="image/jpeg,image/png,image/gif,image/webp" class="mt-1" />
+        <input type="file" name="<?= $field ?>" accept="image/jpeg,image/png,image/gif,image/webp" class="block w-full text-sm mt-1 text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200" />
       </div>
       <?php endforeach; ?>
-
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        Save Changes
-      </button>
-    </form>
-
-    <div class="mt-4">
-      <a href="qrcodeitem.php" class="text-blue-600">&larr; Back</a>
     </div>
+
+    <div class="pt-4">
+      <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition"> Save Changes</button>
+    </div>
+  </form>
+
+  <div class="mt-6">
+    <a href="qrcodeitem.php" class="inline-block text-sm text-blue-600 hover:underline">&larr; Back to Products</a>
   </div>
+</div>
 </body>
 </html>

@@ -147,7 +147,7 @@ foreach ($cart as $item) {
             <!-- Main Categories -->
             <div class="w-1/2 border-r p-4 space-y-2">
               <button @mouseenter="selected = 'materials'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Construction Materials</button>
+                class="block w-full text-left hover:text-orange-500 text-sm">Materials</button>
               <button @mouseenter="selected = 'furniture'"
                 class="block w-full text-left hover:text-orange-500 text-sm">Furniture</button>
             </div>
@@ -408,103 +408,3 @@ foreach ($cart as $item) {
   </div>
 </nav>
 
-
-<!-- Second Navbar - Extended with Category -->
-<div class="bg-gray-100 border-b border-gray-300 text-sm font-medium shadow-sm">
-  <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center flex-wrap">
-
-    <!-- Dropdown Section -->
-    <div class="flex flex-wrap gap-6">
-
-      <!-- ✅ Category -->
-      <div x-data="{ open: false }" class="relative">
-        <button @click="open = !open"
-          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
-          Categories
-          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-     <div x-show="open" @click.away="open = false" x-transition x-cloak
-     class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
-
-  <a href="category/wall-panels.php" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700">
-    <!-- Icon -->
-    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.5"
-         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
-         d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z"/></svg>
-    Wall Panels
-  </a>
-
-  <a href="category/ceiling-panels.php" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700">
-    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.5"
-         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
-         d="M4.5 4.5h15v15h-15z" /></svg>
-    Ceiling Panels
-  </a>
-
-  <a href="category/flooring.php" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700">
-    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.5"
-         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
-         d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z" /></svg>
-    Flooring
-  </a>
-
-  <a href="category/furniture.php" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700">
-    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.5"
-         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
-         d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-    Furniture
-  </a>
-
-  <a href="category/accessories.php" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700">
-    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.5"
-         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
-         d="M12 6v6h6" /></svg>
-    Accessories
-  </a>
-</div>
-
-      </div>
-
-      <!-- Company -->
-      <div x-data="{ open: false }" class="relative">
-        <button @click="open = !open"
-          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
-          Company
-          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        <div x-show="open" @click.away="open = false" x-transition x-cloak
-          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
-          <a href="about.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">About Us</a>
-          <a href="team.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Meet the Team</a>
-          <a href="careers.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Careers</a>
-          <a href="partnerships.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Partner With Us</a>
-        </div>
-      </div>
-
-      <!-- Support -->
-      <div x-data="{ open: false }" class="relative">
-        <button @click="open = !open"
-          class="flex items-center gap-1 text-gray-700 hover:text-orange-500 transition">
-          Support
-          <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        <div x-show="open" @click.away="open = false" x-transition x-cloak
-          class="absolute bg-white mt-2 rounded-md shadow-lg py-2 w-56 z-40">
-          <a href="faq.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">FAQ</a>
-          <a href="help.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Help Center</a>
-          <a href="support.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Customer Support</a>
-          <a href="warranty.php" class="block px-4 py-2 hover:bg-gray-100 text-gray-700">Warranty</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>

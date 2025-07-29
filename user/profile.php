@@ -256,7 +256,7 @@ if ($user_id) {
 
     <div class="container max-w-8xl mx-auto ">
         <!-- Hero Section with Profile -->
-        <div class="relative overflow-hidden bg-orange-500 p-6 md:p-8 mb-8 text-white shadow-xl animate-fade-in rounded-2xl">
+        <div class="relative overflow-hidden bg-orange-500 p-6 md:p-8 mb-8 text-white shadow-xl animate-fade-in">
     <div class="absolute inset-0 bg-black/10"></div>
 
     <div class="relative z-10 flex flex-col md:flex-row gap-8">

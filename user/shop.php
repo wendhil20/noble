@@ -113,9 +113,10 @@ $total_pages = ceil($total_products / $per_page);
 $all_categories = [
   'furniture' => 'Furniture',
   'material' => 'Materials',
-  'decoration' => 'Decorations',
-  'lighting' => 'Lighting',
-  'outdoor' => 'Outdoor'
+  'table' => 'Table',
+  'bed' => 'Bed',
+  'light' => 'Light',
+  'aircon' => 'Aircon'
 ];
 
 // Get category counts

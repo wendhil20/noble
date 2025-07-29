@@ -203,7 +203,7 @@ $avg_stmt->close();
 
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
-    <div class="max-w-7xl mx-auto">
+    <div class="">
       <div class="flex items-center space-x-2 text-sm">
         <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
@@ -265,7 +265,7 @@ $avg_stmt->close();
 
 
           <div class="flex gap-4 mt-6 justify-start">
-            <a href="product_specs.php?id=<?= $product['id'] ?>" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
+            <a href="product_info.php?id=<?= $product['id'] ?>" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
               View Details
             </a>
             <button onclick="shareProduct()" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">

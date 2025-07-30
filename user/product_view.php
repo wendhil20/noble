@@ -4,37 +4,37 @@ session_start();
 include '../connection/connect.php';
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-    $token = $_COOKIE['remember_token'];
+  $token = $_COOKIE['remember_token'];
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $res = $stmt->get_result();
+  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+  $stmt->bind_param("s", $token);
+  $stmt->execute();
+  $res = $stmt->get_result();
 
-    if ($res->num_rows > 0) {
-        $user = $res->fetch_assoc();
+  if ($res->num_rows > 0) {
+    $user = $res->fetch_assoc();
 
-        // 🔐 Store essential user session info
-        $_SESSION['user_id']    = $user['id'];
-        $_SESSION['user_name']  = $user['name'];
-        $_SESSION['user_email'] = $user['email'] ?? '';
-        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+    // 🔐 Store essential user session info
+    $_SESSION['user_id']    = $user['id'];
+    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_email'] = $user['email'] ?? '';
+    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
 
-        // 👤 Check if it's a Google account (optional)
-        if (!empty($user['google_id'])) {
-            $_SESSION['google_logged_in'] = true;
-            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
-        }
+    // 👤 Check if it's a Google account (optional)
+    if (!empty($user['google_id'])) {
+      $_SESSION['google_logged_in'] = true;
+      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
     }
+  }
 
-    $stmt->close();
+  $stmt->close();
 }
 
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-    // Not logged in — redirect to login or Google auth
-    header('Location: google-callback.php'); // You may replace with `index.php` if default login
-    exit;
+  // Not logged in — redirect to login or Google auth
+  header('Location: google-callback.php'); // You may replace with `index.php` if default login
+  exit;
 }
 
 
@@ -131,7 +131,6 @@ $avg_stmt->close();
 
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -141,22 +140,31 @@ $avg_stmt->close();
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Selection States */
     .selected {
       border-color: #f97316;
-
+      /* Tailwind's orange-500 */
+      border-width: 2px;
+      box-shadow: 0 10px 15px -3px rgba(251, 146, 60, 0.2), 0 4px 6px -4px rgba(251, 146, 60, 0.2);
     }
 
     .color-selected {
-      border: 8px;
-      border-color: rgb(227, 144, 85);
-      border-width: 1px;
-      box-shadow: 0 0 0 9px rgba(249, 115, 22, 0.2);
+      border-color: #f97316;
+      /* Tailwind's orange-500 */
+      border-width: 4px;
+      box-shadow: 0 10px 15px -3px rgba(251, 146, 60, 0.2), 0 4px 6px -4px rgba(251, 146, 60, 0.2);
+      transform: scale(1.10);
     }
 
+    /* Animations */
     .fade-in {
       animation: fadeIn 0.3s ease-in-out;
     }
@@ -164,46 +172,203 @@ $avg_stmt->close();
     @keyframes fadeIn {
       from {
         opacity: 0;
+        transform: translateY(10px);
       }
 
       to {
         opacity: 1;
+        transform: translateY(0);
       }
     }
 
+    /* Interactive Elements */
     .color-swatch {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 2px solid #e5e7eb;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s;
+      /* scale-105 on hover */
+      /* shadow-lg on hover */
     }
 
     .color-swatch:hover {
-      transform: scale(1.1);
-      border-color: #9ca3af;
+      transform: scale(1.05);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
 
-    body {
-      font-family: 'Poppins', sans-serif;
+    .type-btn,
+    .variant-btn {
+      transition: all 0.3s;
+      /* On hover: translateY(-0.25rem) and shadow */
+    }
+
+    .type-btn:hover,
+    .variant-btn:hover {
+      transform: translateY(-0.25rem);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Gradient Background */
+    .gradient-bg {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    }
+
+    /* Swiper Styles */
+    .related-swiper {
+      @apply relative px-4 md:px-16;
+    }
+
+    .related-swiper .swiper-button-next,
+    .related-swiper .swiper-button-prev {
+      @apply top-1/2 -translate-y-1/2 w-10 h-10 bg-orange-500 rounded-full text-white transition-all duration-300 hover:bg-orange-600 hover:scale-110;
+    }
+
+    .related-swiper .swiper-button-next {
+      right: 0.5rem;
+      /* Tailwind's right-2 */
+    }
+
+    .related-swiper .swiper-button-prev {
+      left: 0.5rem;
+      /* Tailwind's left-2 */
+    }
+
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Focus States */
+    .type-btn:focus,
+    .variant-btn:focus,
+    .color-btn:focus {
+      @apply outline-2 outline-orange-500 outline-offset-2;
+    }
+
+    /* Mobile Swiper Hide Navigation */
+    @media (max-width: 768px) {
+
+      .related-swiper .swiper-button-next,
+      .related-swiper .swiper-button-prev {
+        @apply hidden;
+      }
     }
   </style>
 </head>
 
-<body class="bg-gray-50 ">
+<body class="bg-gray-50">
   <?php include 'navbar/top.php'; ?>
-  <div class="bg-orange-600 text-white py-5">
-    <div class="container mx-auto px-4">
-      <h1 class="text-4xl font-bold text-center mb-4">Your Shopping</h1>
-      <p class="text-xl text-center opacity-90">Learn more about this item and check if it fits your needs.</p>
-    </div>
-  </div>
 
+  <!-- Hero Section with Bouncing Bubbles Background -->
+  <div class="gradient-bg text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
+    <!-- Bouncing Bubbles SVG Layer -->
+    <div class="absolute inset-0 pointer-events-none z-0">
+      <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+        <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
+        <circle class="bubble bubble2" cx="25%" cy="90%" r="18" fill="#fff" fill-opacity="0.10" />
+        <circle class="bubble bubble3" cx="40%" cy="85%" r="24" fill="#fff" fill-opacity="0.09" />
+        <circle class="bubble bubble4" cx="60%" cy="92%" r="14" fill="#fff" fill-opacity="0.11" />
+        <circle class="bubble bubble5" cx="75%" cy="88%" r="28" fill="#fff" fill-opacity="0.12" />
+        <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
+      </svg>
+    </div>
+    <div class="container mx-auto px-4 relative z-10">
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-center mb-2 sm:mb-4">Your Shopping</h1>
+      <p class="text-sm sm:text-lg lg:text-xl text-center opacity-90 max-w-2xl mx-auto">
+        Learn more about this item and check if it fits your needs.<br>
+        Discover detailed specifications, available options, and make the best choice for your home.
+      </p>
+    </div>
+    <style>
+      /* Bouncing animation for bubbles */
+      .bubble1 {
+        animation: bubble-bounce1 7s ease-in-out infinite alternate;
+      }
+
+      .bubble2 {
+        animation: bubble-bounce2 6s ease-in-out infinite alternate;
+      }
+
+      .bubble3 {
+        animation: bubble-bounce3 8s ease-in-out infinite alternate;
+      }
+
+      .bubble4 {
+        animation: bubble-bounce4 5.5s ease-in-out infinite alternate;
+      }
+
+      .bubble5 {
+        animation: bubble-bounce5 7.5s ease-in-out infinite alternate;
+      }
+
+      .bubble6 {
+        animation: bubble-bounce6 6.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes bubble-bounce1 {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+
+        100% {
+          transform: translateY(-60px) scale(1.08);
+        }
+      }
+
+      @keyframes bubble-bounce2 {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+
+        100% {
+          transform: translateY(-40px) scale(1.12);
+        }
+      }
+
+      @keyframes bubble-bounce3 {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+
+        100% {
+          transform: translateY(-70px) scale(1.05);
+        }
+      }
+
+      @keyframes bubble-bounce4 {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+
+        100% {
+          transform: translateY(-30px) scale(1.15);
+        }
+      }
+
+      @keyframes bubble-bounce5 {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+
+        100% {
+          transform: translateY(-55px) scale(1.09);
+        }
+      }
+
+      @keyframes bubble-bounce6 {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+
+        100% {
+          transform: translateY(-35px) scale(1.13);
+        }
+      }
+    </style>
+  </div>
 
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
-    <div class="">
+    <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm">
         <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
@@ -214,97 +379,115 @@ $avg_stmt->close();
     </div>
   </nav>
 
-  <div class="px-4 pb-8 min-h-screen flex flex-col">
-    <div class=" rounded-lg overflow-hidden flex-grow">
-      <div class="grid md:grid-cols-2 gap-8 p-8 items-start">
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-6 lg:py-8">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-        <!-- Product Image Section -->
-        <div class="text-center">
-          <div class="aspect-square  mb-4 relative">
+        <!-- Product Image & Info Section -->
+        <div class="p-4 lg:p-8">
+          <!-- Product Image -->
+          <div class="aspect-square mb-4 lg:mb-6 relative bg-gray-50 rounded-lg overflow-hidden">
             <img id="main-product-image"
               src="../<?= htmlspecialchars($product['main_image']) ?>"
-              class="w-full h-full object-contain rounded-lg "
+              class="w-full h-full object-contain"
               alt="<?= htmlspecialchars($product['product_name']) ?>">
-
           </div>
 
-          <!-- LEFT: Description (Simplified) -->
-          <div class="px-4">
-            <div class="mt-4">
-              <h3 class="font-semibold text-gray-700 mb-1 text-left">Average Rating:</h3>
+          <!-- Product Basic Info -->
+          <div class="space-y-4 lg:space-y-6">
+            <!-- Rating -->
+            <div>
+              <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
               <?php if ($total_raters > 0): ?>
-                <div class="flex items-center gap-2 text-yellow-400 text-sm">
-                  <!-- ⭐ Render average stars -->
-                  <?php
-                  $full = floor($avg_rating);
-                  $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                  $empty = 5 - $full - $half;
+                <div class="flex items-center gap-2 text-yellow-400">
+                  <div class="flex text-lg">
+                    <?php
+                    $full = floor($avg_rating);
+                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                    $empty = 5 - $full - $half;
 
-                  for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                  if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                  for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                  ?>
-                  <span class="text-gray-700">(<?= $avg_rating ?>/5)</span>
-                  <span class="text-gray-400 text-xs"><?= $total_raters ?> rating<?= $total_raters == 1 ? '' : 's' ?></span>
+                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                    ?>
+                  </div>
+                  <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
+                  <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
                 </div>
               <?php else: ?>
-                <p class="text-sm text-gray-500">No ratings yet.</p>
+                <p class="text-sm text-gray-500">No reviews yet</p>
               <?php endif; ?>
             </div>
 
-            <!-- 🟧 Product Name -->
-            <h1 class="text-xl font-bold text-orange-500 underline mb-2">
-              <?= htmlspecialchars($product['product_name']) ?>
-            </h1>
+            <!-- Product Name -->
+            <div>
+              <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-600 mb-2">
+                <?= htmlspecialchars($product['product_name']) ?>
+              </h1>
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <?= htmlspecialchars($product['codename']) ?>
+                </span>
 
-            <!-- 📝 Product Description -->
-            <p class="text-black text-sm leading-relaxed">
-              <?= htmlspecialchars($product['description'] ?? 'No description available.') ?>
-            </p>
-          </div>
+              </div>
+            </div>
 
+            <!-- Description -->
+            <div>
+              <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
+                <?= htmlspecialchars($product['description'] ?? 'No description available.') ?>
+              </p>
+            </div>
 
-          <div class="flex gap-4 mt-6 justify-start">
-            <a href="product_info.php?id=<?= $product['id'] ?>" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
-              View Details
-            </a>
-            <button onclick="shareProduct()" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
-              Share
-            </button>
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+              <a href="product_info.php?id=<?= $product['id'] ?>"
+                class="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+                <i class="fas fa-info-circle mr-2"></i>View Details
+              </a>
+              <button onclick="shareProduct()"
+                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                <i class="fas fa-share-alt mr-2"></i>Share
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Product Options -->
-        <div class="space-y-6 flex flex-col h-full">
+        <!-- Product Options Section -->
+        <div class="p-4 lg:p-8 bg-gray-50 flex flex-col">
 
-          <div>
-            <h2 class="text-xl font-bold mb-4"><?= htmlspecialchars($product['product_name']) ?></h2>
-            <div class="flex gap-2 text-sm mb-4">
-              <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                Code: <?= htmlspecialchars($product['codename']) ?>
-              </span>
-              <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Furniture</span>
-            </div>
-          </div>
-
-               <!-- Type Selection -->
+          <!-- Type Selection -->
           <?php if (!empty($types_data)): ?>
-            <div>
-              <h3 class="font-bold mb-3">Select Type :</h3>
-              <div class="grid grid-cols-3 gap-3">
+            <div class="mb-6 lg:mb-8">
+              <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Select Type</h3>
+
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
                 <?php foreach ($types_data as $index => $type): ?>
                   <button type="button"
                     onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
-                    class="type-btn border-2 p-3 hover:border-orange-300 transition-all">
-                    <div class="aspect-square rounded mb-2 overflow-hidden">
-                      <?php if ($type['image']): ?>
-                        <img src="../<?= ($type['image']) ?>"
-                          class="w-full h-full object-contain" alt="<?= htmlspecialchars($type['name']) ?>">
+                    class="type-btn border-2 border-gray-200 p-3 lg:p-4 rounded-lg hover:border-orange-300 transition-all bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300">
+
+                    <div class="aspect-square rounded-lg mb-2 overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                      <?php if (!empty($type['image']) && file_exists("../" . $type['image'])): ?>
+                        <img src="../<?= htmlspecialchars($type['image']) ?>"
+                          class="w-full h-full object-contain"
+                          alt="<?= htmlspecialchars($type['name']) ?>"
+                          loading="lazy"
+                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-full h-full flex items-center justify-center text-gray-400" style="display: none;">
+                          <i class="fas fa-image text-2xl"></i>
+                        </div>
                       <?php else: ?>
-                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                          <i class="fas fa-image text-2xl"></i>
+                        </div>
                       <?php endif; ?>
                     </div>
-                    <span class="text-sm font-bold text-orange-500"><?= htmlspecialchars($type['name']) ?></span>
+
+                    <span class="text-sm font-semibold text-orange-600 block truncate">
+                      <?= htmlspecialchars($type['name']) ?>
+                    </span>
                   </button>
                 <?php endforeach; ?>
               </div>
@@ -313,109 +496,120 @@ $avg_stmt->close();
 
           <!-- Color Selection -->
           <?php if (!empty($product_colors)): ?>
-            <div class="mt-6">
+            <div class="mb-6 lg:mb-8">
+              <!-- Section Header -->
               <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3 w-full">
-                  <h3 class="font-bold text-lg  whitespace-nowrap">Available Colors :</h3>
-                  <div class="flex-1 h-px bg-orange-300"></div>
-                  <span class="text-sm text-gray-400 italic whitespace-nowrap">← drag to explore →</span>
-                </div>
+                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Available Colors</h3>
+                <span class="text-sm text-gray-500 italic block sm:hidden">Swipe to explore →</span>
               </div>
 
+              <!-- Swiper Container -->
+              <div class="relative">
+                <!-- Swiper Navigation Buttons (hidden on md and up) -->
+                <div class="swiper-button-prev color-swiper-prev !left-0 !z-10 !w-6 !h-6 md:!hidden" style="width:1.5rem;height:1.5rem;min-width:unset;min-height:unset;font-size:1rem;"></div>
+                <div class="swiper-button-next color-swiper-next !right-0 !z-10 !w-6 !h-6 md:!hidden" style="width:1.5rem;height:1.5rem;min-width:unset;min-height:unset;font-size:1rem;"></div>
 
-              <div class="swiper colorSwiper px-2">
-                <div class="swiper-wrapper">
-                  <?php foreach ($product_colors as $color): ?>
-                    <div class="swiper-slide w-[80px]">
-                      <div class="flex flex-col items-center gap-1 p-2 rounded-lg ">
-                        <button type="button"
-                          onclick="selectColor(this, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, <?= $color['id'] ?>)"
-                          class="color-btn w-[60px] h-[60px] rounded-full border border-gray-400 transition"
-                          style="background-color: <?= htmlspecialchars($color['color_code']) ?>;"
-                          title="<?= htmlspecialchars($color['color_name']) ?>">
-                          <?php if ($color['image']): ?>
-                            <img src="../<?= ($color['image']) ?>"
-                              class="p-1 w-full h-full object-contain rounded-full"
-                              alt="<?= htmlspecialchars($color['color_name']) ?>">
-                          <?php endif; ?>
-                        </button>
-                        <span class="text-[10px] text-gray-700 font-medium text-center break-words">
-                          <?= htmlspecialchars($color['color_name']) ?>
-                        </span>
+                <div class="swiper colorSwiper">
+                  <div class="swiper-wrapper pb-2">
+                    <?php foreach ($product_colors as $color): ?>
+                      <div class="swiper-slide w-16 p-3">
+                        <div class="flex flex-col items-center gap-2 p-6">
+                          <!-- Color Button -->
+                          <button
+                            type="button"
+                            onclick="selectColor(this, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, <?= $color['id'] ?>)"
+                            class="color-btn color-swatch w-12 h-12 lg:w-14 lg:h-14 rounded-full border-2 border-gray-300 overflow-hidden relative"
+                            style="background-color: <?= htmlspecialchars($color['color_code']) ?>;"
+                            title="<?= htmlspecialchars($color['color_name']) ?>">
+                            <?php if (!empty($color['image'])): ?>
+                              <img
+                                src="../<?= htmlspecialchars($color['image']) ?>"
+                                alt="<?= htmlspecialchars($color['color_name']) ?>"
+                                class="p-1 w-full h-full object-contain rounded-full">
+                            <?php endif; ?>
+                          </button>
+
+                          <!-- Color Name -->
+                          <span class="text-xs text-gray-700 font-medium text-center leading-tight">
+                            <?= htmlspecialchars($color['color_name']) ?>
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  <?php endforeach; ?>
+                    <?php endforeach; ?>
+                  </div>
                 </div>
               </div>
-              <div id="selected-color-info" class="text-sm text-gray-500 italic mt-2">
+
+              <!-- Info Box -->
+              <div id="selected-color-info" class="text-sm text-gray-600 mt-3 p-3 bg-white rounded-lg shadow-sm">
+                <i class="fas fa-info-circle text-orange-500 mr-2"></i>
                 Select a color to see pricing
               </div>
             </div>
           <?php endif; ?>
 
-     
 
-          <!-- Variant Selection -->
-          <div class="p-2">
-            <div class="flex items-center mb-3">
-              <h3 class="font-bold text-lg text-black mr-4">Sizes :</h3>
-              <div class="flex-grow border-t border-orange-500"></div>
+          <!-- Size/Variant Selection -->
+          <div class="mb-6 lg:mb-8">
+            <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Available Sizes</h3>
+
+            <div id="variant-container" class="text-gray-500 p-4 bg-white rounded-lg text-center">
+              <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+              <p>Please select a product</p>
             </div>
-
-            <div id="variant-container" class="text-gray-500">Please select a product type first.</div>
 
             <?php foreach ($types_data as $type): ?>
               <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
                 <?php if (!empty($type['variants'])): ?>
-                  <div class="grid grid-cols-3 gap-3 mt-3">
-                    <?php foreach ($type['variants'] as $variant):
-                      $price = floatval($variant['variant_price']);
-                      $percent = floatval($variant['percent']);
-                      $discount = floatval($variant['discount'] ?? 0);
-                      $priceWithMarkup = $price + ($price * $percent / 100);
-                      $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                    ?>
-                      <button type="button"
-                        onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
-                        class="variant-btn border p-2 hover:border-orange-300 relative text-xs"
-                        data-price="<?= $price ?>"
-                        data-percent="<?= $percent ?>"
-                        data-discount="<?= $discount ?>"
-                        data-variant-id="<?= $variant['variant_id'] ?>">
-
-                        <?php if ($discount > 0): ?>
-                          <span class="absolute top-1 right-1 bg-red-500 text-white text-[10px] px-1 rounded">
-                            <?= number_format($discount, 0) ?>% OFF
-                          </span>
-                        <?php endif; ?>
-
-                        <div class="text-center">
-                          <div class="font-semibold text-orange-500"><?= htmlspecialchars($variant['namevariant']) ?></div>
-                          <div class="text-gray-600"><?= htmlspecialchars($variant['size']) ?></div>
-                          <div class="mt-0.5">
+                  <div class="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 lg:gap-4">
+                      <?php foreach ($type['variants'] as $variant): ?>
+                        <?php
+                        $price = floatval($variant['variant_price']);
+                        $percent = floatval($variant['percent']);
+                        $discount = floatval($variant['discount'] ?? 0);
+                        $priceWithMarkup = $price + ($price * $percent / 100);
+                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                        ?>
+                        <button type="button"
+                          onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
+                          class="variant-btn border-2 border-gray-200 p-3 lg:p-4 hover:border-orange-300 relative bg-white rounded-lg text-left"
+                          data-price="<?= $price ?>"
+                          data-percent="<?= $percent ?>"
+                          data-discount="<?= $discount ?>"
+                          data-variant-id="<?= $variant['variant_id'] ?>">
                             <?php if ($discount > 0): ?>
-                              <span class="text-[11px] text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></span>
-                              <span class="text-red-600 font-bold text-sm">₱<?= number_format($finalPrice, 2) ?></span>
-                            <?php else: ?>
-                              <span class="font-bold text-sm text-red-500">₱<?= number_format($finalPrice, 2) ?></span>
+                            <span class="absolute 2-top- -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10">
+                              <?= number_format($discount, 0) ?>% OFF
+                            </span>
                             <?php endif; ?>
+
+                          <div class="text-center">
+                            <div class="font-semibold text-orange-600 mb-1 text-sm lg:text-base"><?= htmlspecialchars($variant['namevariant']) ?></div>
+                            <div class="text-gray-600 text-sm mb-2"><?= htmlspecialchars($variant['size']) ?></div>
+                            <div>
+                              <?php if ($discount > 0): ?>
+                                <div class="text-xs text-gray-400 line-through mb-1">₱<?= number_format($priceWithMarkup, 2) ?></div>
+                                <div class="text-red-600 font-bold text-sm lg:text-base">₱<?= number_format($finalPrice, 2) ?></div>
+                              <?php else: ?>
+                                <div class="font-bold text-green-600 text-sm lg:text-base">₱<?= number_format($finalPrice, 2) ?></div>
+                              <?php endif; ?>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    <?php endforeach; ?>
+                        </button>
+                      <?php endforeach; ?>
+                    </div>
                   </div>
                 <?php else: ?>
-                  <p class="text-gray-500">No variants available for this type.</p>
+                  <p class="text-gray-500 text-center p-4">No variants available for this type.</p>
                 <?php endif; ?>
               </div>
             <?php endforeach; ?>
           </div>
 
-
           <!-- Purchase Section -->
-          <div class="border-t pt-6 mt-auto">
-
-            <form id="productForm" class="space-y-4 max-w-2xl mx-auto" method="POST">
+          <div class="mt-auto">
+            <form id="productForm" method="POST" class="space-y-4">
               <input type="hidden" name="product_id" value="<?= $product_id ?>" />
               <input type="hidden" name="selected_color_id" id="selected_color_id">
               <input type="hidden" name="selected_color" id="selected_color">
@@ -423,15 +617,15 @@ $avg_stmt->close();
               <input type="hidden" name="selected_variant" id="selected_variant">
               <input type="hidden" name="variant_id" id="variant_id">
 
-              <!-- Total Price Section -->
-              <div class="bg-green-50  p-4 border">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <!-- Total Price Display -->
+              <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <div>
-                    <p class="text-sm text-gray-600">Total Price</p>
-                    <p id="totalPrice" class="text-xl font-bold text-green-600">₱0.00</p>
+                    <p class="text-sm text-gray-600 mb-1">Total Price</p>
+                    <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
                   </div>
-                  <div id="selectionStatus" class="text-sm text-gray-500 text-right">
-                    <?= $is_logged_in ? 'Select options' : 'Please log in to pre-order' ?>
+                  <div id="selectionStatus" class="text-sm text-gray-500 sm:text-right">
+                    <?= $is_logged_in ? 'Select all options above' : 'Please log in to pre-order' ?>
                   </div>
                 </div>
               </div>
@@ -439,51 +633,58 @@ $avg_stmt->close();
               <!-- Add to Cart Button -->
               <button type="submit" id="addToCartBtn"
                 <?= !$is_logged_in ? 'disabled' : '' ?>
-                class="w-full <?= $is_logged_in ? 'bg-gray-400' : 'bg-red-400' ?> text-white font-bold py-3  disabled:cursor-not-allowed transition-all hover:opacity-90">
-                <span id="btnText">
+                class="w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300
+                  <?= $is_logged_in ? 'bg-gray-400 hover:bg-orange-500' : 'bg-red-400' ?> 
+                  text-white disabled:cursor-not-allowed disabled:opacity-75">
+                <span id="btnText" class="flex items-center justify-center gap-2">
+                  <i class="fas fa-shopping-cart"></i>
                   <?= $is_logged_in ? 'Select Options to Pre-Order' : 'Login to Pre-Order' ?>
                 </span>
               </button>
             </form>
-
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Specifications Section -->
     <?php if (!empty($variants)): ?>
-      <section class="mt-3">
-        <div class="bg-white rounded-lg p-3 border border-gray-200">
-          <h2 class="text-2xl font-bold text-orange-700 mb-4"> Specifications</h2>
+      <section class="mt-6 lg:mt-8">
+        <div class="bg-white rounded-xl shadow-lg p-4 lg:p-8">
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
+            <i class="fas fa-list-alt"></i>
+            Product Specifications
+          </h2>
 
           <?php foreach ($variants as $variant): ?>
-            <div class="mb-6">
-              <dl class="divide-y divide-gray-200 text-sm text-black bg-gray-50 rounded-md p-4">
-                <?php for ($i = 1; $i <= 10; $i++):
-                  $key = "descrip$i";
-                  if (!empty($variant[$key])):
-                ?>
-                    <div class="flex justify-between py-1">
-                      <dd class="text-left"><?= htmlspecialchars($variant[$key]) ?></dd>
-                    </div>
-                <?php endif;
-                endfor; ?>
-              </dl>
+            <div class="mb-4 lg:mb-6">
+              <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
+                <dl class="space-y-3">
+                  <?php for ($i = 1; $i <= 10; $i++):
+                    $key = "descrip$i";
+                    if (!empty($variant[$key])):
+                  ?>
+                      <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
+                        <dd class="text-gray-700 text-sm lg:text-base"><?= htmlspecialchars($variant[$key]) ?></dd>
+                      </div>
+                  <?php endif;
+                  endfor; ?>
+                </dl>
+              </div>
             </div>
           <?php endforeach; ?>
         </div>
       </section>
     <?php endif; ?>
 
-
     <!-- Related Products -->
     <?php if ($related_products->num_rows > 0): ?>
-      <section class="mt-12 bg-gradient-to-br from-slate-50 to-gray-100 py-12 px-4 rounded-2xl">
+      <section class="mt-8 lg:mt-12 bg-gradient-to-br from-slate-50 to-gray-100 py-8 lg:py-12 px-4 rounded-2xl">
         <div class="max-w-7xl mx-auto">
           <!-- Header -->
-          <div class="text-center mb-10">
-            <h2 class="text-3xl font-bold text-orange-500 mb-2">Related Products</h2>
-            <p class="text-gray-600 text-lg">Discover more amazing products you might like</p>
+          <div class="text-center mb-8 lg:mb-10">
+            <h2 class="text-2xl lg:text-3xl font-bold text-orange-500 mb-2">Related Products</h2>
+            <p class="text-gray-600 text-sm lg:text-lg">Discover more amazing products you might like</p>
             <div class="w-24 h-1 bg-gradient-to-r from-orange-500 to-orange-600 mx-auto mt-4 rounded-full"></div>
           </div>
 
@@ -517,14 +718,13 @@ $avg_stmt->close();
                     </div>
 
                     <!-- Product Info -->
-                    <div class="p-5">
-                      <h3 class="font-bold text-gray-800 mb-3 text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2">
+                    <div class="p-4 lg:p-5">
+                      <h3 class="font-bold text-gray-800 mb-3 text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2">
                         <?= htmlspecialchars($row['product_name']) ?>
                       </h3>
 
                       <div class="flex items-center justify-between">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300">
-
+                        <span class="inline-flex items-center px-2 lg:px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300">
                           <?= htmlspecialchars($row['codename']) ?>
                         </span>
 
@@ -545,45 +745,6 @@ $avg_stmt->close();
       </section>
     <?php endif; ?>
 
-    <style>
-      .related-swiper {
-        padding: 0 60px;
-      }
-
-      .related-swiper .swiper-button-next,
-      .related-swiper .swiper-button-prev {
-        top: 50%;
-        transform: translateY(-50%);
-        margin-top: 0;
-      }
-
-      .related-swiper .swiper-button-next {
-        right: 10px;
-      }
-
-      .related-swiper .swiper-button-prev {
-        left: 10px;
-      }
-
-      .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-
-      @media (max-width: 768px) {
-        .related-swiper {
-          padding: 0 20px;
-        }
-
-        .related-swiper .swiper-button-next,
-        .related-swiper .swiper-button-prev {
-          display: none;
-        }
-      }
-    </style>
   </div>
 
 
@@ -728,21 +889,9 @@ $avg_stmt->close();
   </footer>
 
   <script>
-    function selectColor(button, colorName, price, colorId) {
-      // 1. Remove active style from all buttons
-      const allButtons = document.querySelectorAll('.color-btn');
-      allButtons.forEach(btn => {
-        btn.classList.remove('ring-2', 'ring-orange-500');
-      });
-
-      // 2. Add active style to clicked button
-      button.classList.add('ring-2', 'ring-orange-500');
-
-      // 3. (Optional) Do something with selected color
-      console.log("Selected:", colorName, price, colorId);
-    }
-
-    const colorSwiper = new Swiper(".colorSwiper", {
+    // Re-initialize Swiper for colorSwiper with navigation
+    if (window.colorSwiper) window.colorSwiper.destroy(true, true);
+    window.colorSwiper = new Swiper(".colorSwiper", {
       slidesPerView: 2,
       grid: {
         rows: 2,
@@ -751,18 +900,68 @@ $avg_stmt->close();
       spaceBetween: 10,
       freeMode: true,
       grabCursor: true,
+      navigation: {
+        nextEl: '.color-swiper-next',
+        prevEl: '.color-swiper-prev',
+      },
+      breakpoints: {
+        0: {
+          slidesPerView: 'auto', // Show all slides in view on small screens
+          spaceBetween: 8,
+          grid: {
+            rows: 1
+          }
+        },
+        640: {
+          slidesPerView: 6,
+          spaceBetween: 15,
+          grid: {
+            rows: 2
+          }
+        },
+        768: {
+          slidesPerView: 8,
+          spaceBetween: 20,
+          grid: {
+            rows: 2
+          }
+        },
+        1024: {
+          slidesPerView: 10,
+          spaceBetween: 25,
+          grid: {
+            rows: 2
+          }
+        }
+      }
     });
 
-
+    // When navigation is clicked, scroll to show all color swatches on small screens
+    document.querySelectorAll('.color-swiper-next, .color-swiper-prev').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (window.innerWidth < 640) {
+          setTimeout(() => {
+            document.querySelector('.colorSwiper').scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+          }, 200);
+        }
+      });
+    });
 
     // Initialize Swiper for related products
-    const swiper = new Swiper('.related-swiper', {
+    const relatedSwiper = new Swiper('.related-swiper', {
       slidesPerView: 2,
       spaceBetween: 10,
       loop: true,
       autoplay: {
         delay: 2500,
         disableOnInteraction: false,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
       },
       breakpoints: {
         640: {
@@ -844,7 +1043,8 @@ $avg_stmt->close();
       }
 
       unselectColor(button) {
-        button.classList.remove('color-selected');
+        // Remove selection indicator
+        button.classList.remove('color-selected', 'ring-2', 'ring-orange-500', 'scale-110');
         this.selectedColorData = null;
 
         // Clear hidden fields
@@ -853,17 +1053,17 @@ $avg_stmt->close();
 
         // Reset to original product image
         this.elements.mainImage.src = this.elements.mainImage.dataset.originalSrc || this.elements.mainImage.src;
-        this.elements.colorInfo.innerHTML = 'Select a color to see pricing';
+        this.elements.colorInfo.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to see pricing';
       }
 
       setColorSelection(button, colorName, colorPrice, colorId) {
-        // Remove previous selection
+        // Remove previous selection indicators
         document.querySelectorAll('.color-btn').forEach(btn => {
-          btn.classList.remove('color-selected');
+          btn.classList.remove('color-selected', 'ring-2', 'ring-orange-500', 'scale-110');
         });
 
-        // Set new selection
-        button.classList.add('color-selected');
+        // Add selection indicators to clicked button
+        button.classList.add('color-selected', 'ring-2', 'ring-orange-500', 'scale-110');
 
         this.selectedColorData = {
           id: colorId,
@@ -877,7 +1077,7 @@ $avg_stmt->close();
 
         // Update display
         this.elements.colorInfo.innerHTML =
-          `Selected: <strong>${colorName}</strong> - Additional ₱${parseFloat(colorPrice).toFixed(2)}`;
+          `<i class="fas fa-check-circle text-green-500 mr-2"></i>Selected: <strong>${colorName}</strong> - Additional ₱${parseFloat(colorPrice).toFixed(2)}`;
 
         // Update image if available
         const colorImage = button.querySelector('img');
@@ -900,7 +1100,10 @@ $avg_stmt->close();
       }
 
       unselectType(button) {
-        button.classList.remove('selected');
+        // Remove selection indicators
+        button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.add('border-gray-200', 'bg-white');
+
         this.selectedTypeId = null;
         this.elements.selectedType.value = '';
 
@@ -913,7 +1116,13 @@ $avg_stmt->close();
         this.clearVariantSelection();
 
         // Show default message
-        this.elements.variantContainer.textContent = 'Please select a product type first.';
+        this.elements.variantContainer.style.display = 'block';
+        this.elements.variantContainer.innerHTML = `
+          <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
+            <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+            <p>Please select a product type first</p>
+          </div>
+        `;
       }
 
       setTypeSelection(button, typeId, typeName) {
@@ -927,13 +1136,16 @@ $avg_stmt->close();
         if (variantGroup) {
           variantGroup.classList.remove('hidden');
           variantGroup.classList.add('fade-in');
+          this.elements.variantContainer.style.display = 'none';
         }
 
-        // Update type selection
+        // Update type selection indicators
         document.querySelectorAll('.type-btn').forEach(btn => {
-          btn.classList.remove('selected');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.add('border-gray-200', 'bg-white');
         });
-        button.classList.add('selected');
+        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.remove('border-gray-200', 'bg-white');
 
         this.selectedTypeId = typeId;
         this.elements.selectedType.value = typeName;
@@ -955,18 +1167,25 @@ $avg_stmt->close();
       }
 
       unselectVariant(button) {
-        button.classList.remove('selected');
+        // Remove selection indicators
+        button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.add('border-gray-200', 'bg-white');
+
         this.selectedVariantData = null;
         this.elements.selectedVariant.value = '';
         this.elements.variantId.value = '';
       }
 
       setVariantSelection(button, color) {
-        // Remove previous selection
+        // Remove previous selection indicators
         document.querySelectorAll('.variant-btn').forEach(btn => {
-          btn.classList.remove('selected');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.add('border-gray-200', 'bg-white');
         });
-        button.classList.add('selected');
+
+        // Add selection indicators to clicked button
+        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.remove('border-gray-200', 'bg-white');
 
         const price = parseFloat(button.dataset.price);
         const percent = parseFloat(button.dataset.percent);
@@ -996,7 +1215,8 @@ $avg_stmt->close();
         this.elements.selectedVariant.value = '';
         this.elements.variantId.value = '';
         document.querySelectorAll('.variant-btn').forEach(btn => {
-          btn.classList.remove('selected');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.add('border-gray-200', 'bg-white');
         });
       }
 
@@ -1036,7 +1256,7 @@ $avg_stmt->close();
         if (hasSelections) {
           this.elements.totalPrice.textContent = `₱${totalPrice.toFixed(2)}`;
         } else {
-          this.elements.totalPrice.textContent = 'Select options';
+          this.elements.totalPrice.textContent = '₱0.00';
         }
 
         // Update selection status
@@ -1045,7 +1265,7 @@ $avg_stmt->close();
         if (this.selectedVariantData) status.push(`Variant: ${this.selectedVariantData.color}`);
 
         this.elements.selectionStatus.textContent =
-          status.length > 0 ? status.join(', ') : 'Select options';
+          status.length > 0 ? status.join(', ') : 'Select all options above';
       }
 
       updatePurchaseButton() {
@@ -1054,12 +1274,12 @@ $avg_stmt->close();
 
         if (hasRequiredSelections) {
           this.elements.addToCartBtn.disabled = false;
-          this.elements.addToCartBtn.className = 'w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all';
-          this.elements.btnText.textContent = 'Add to Pre-Order';
+          this.elements.addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white';
+          this.elements.btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Pre-Order';
         } else {
           this.elements.addToCartBtn.disabled = true;
-          this.elements.addToCartBtn.className = 'w-full bg-gray-400 text-white font-bold py-3 rounded-lg disabled:cursor-not-allowed';
-          this.elements.btnText.textContent = 'Select Options to Pre-Order';
+          this.elements.addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+          this.elements.btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Select Options to Pre-Order';
         }
       }
 
@@ -1118,18 +1338,15 @@ $avg_stmt->close();
               console.log('Item added:', data.item_added);
             }
           } else {
-            // 🚫 User is not logged in
             if (data.message === 'You must be logged in to pre-order.') {
               this.showNotification('Please log in to pre-order.', 'error');
 
-              // ✅ Open Alpine login dropdown safely
               const loginDropdown = document.querySelector('#authDropdown');
               if (loginDropdown) {
                 const alpineData = Alpine?.$data(loginDropdown);
                 if (alpineData) {
                   alpineData.loginOpen = true;
 
-                  // Optional: focus email field after dropdown appears
                   setTimeout(() => {
                     const emailInput = loginDropdown.querySelector('input[type="email"]');
                     if (emailInput) emailInput.focus();
@@ -1137,7 +1354,6 @@ $avg_stmt->close();
                 }
               }
             } else {
-              // Other errors
               throw new Error(data.message || 'Add to cart failed.');
             }
           }
@@ -1183,8 +1399,7 @@ $avg_stmt->close();
           info: 'bg-blue-500'
         } [type] || 'bg-blue-500';
 
-        notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300
-`;
+        notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
         notification.textContent = message;
 
         document.body.appendChild(notification);

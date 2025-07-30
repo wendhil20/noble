@@ -412,22 +412,27 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
         const disabledClass = isDisabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white hover:bg-gray-50';
 
         // Action buttons only for pending orders
-        let actionButtons = '';
-        if (status === 'pending') {
-          actionButtons = `
-            <button onclick="confirmOrder(${order.id})" 
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
-                    id="confirm-btn-${order.id}">
-              <i class="fas fa-check"></i>
-              <span>Confirm</span>
-            </button>
-            <button onclick="rejectOrder(${order.id})" 
-                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
-                    id="reject-btn-${order.id}">
-              <i class="fas fa-times"></i>
-              <span>Reject</span>
-            </button>`;
-        }
+let actionButtons = '';
+if (status === 'pending') {
+  actionButtons = `
+    <a href="order_details.php?order_id=${order.id}" 
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
+      <i class="fas fa-folder-open"></i>
+      <span>Open</span>
+    </a>
+    <button onclick="confirmOrder(${order.id})" 
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
+            id="confirm-btn-${order.id}">
+      <i class="fas fa-check"></i>
+      <span>Confirm</span>
+    </button>
+    <button onclick="rejectOrder(${order.id})" 
+            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
+            id="reject-btn-${order.id}">
+      <i class="fas fa-times"></i>
+      <span>Reject</span>
+    </button>`;
+}
 
         // Create collapsible order item
         container.innerHTML += `

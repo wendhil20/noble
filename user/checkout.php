@@ -87,8 +87,13 @@ if ($user_id) {
 }
 
 if ($user_id) {
-    // ✅ Fetch cart items
-    $stmt = $conn->prepare("SELECT * FROM user_cart_items WHERE user_id = ?");
+    // ✅ Fetch cart items with origin from product_variants
+    $stmt = $conn->prepare("
+    SELECT uci.*, COALESCE(pv.origin, '') as origin 
+    FROM user_cart_items uci 
+    LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
+    WHERE uci.user_id = ?
+");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -203,9 +208,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
 
             // ✅ Save each item - FIXED to handle missing product_name column
-            $stmt = $conn->prepare("INSERT INTO order_items (
-                order_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO order_items (
+    order_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             foreach ($cart_items as $item) {
                 $subtotal = $item['price'] * $item['quantity'];
@@ -220,21 +225,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // ✅ SIMPLIFIED: Get descrip6 and descrip7 directly from cart item
                 $desc6 = $item['descrip6'] ?? '';
                 $desc7 = $item['descrip7'] ?? '';
+                $origin = $item['origin'] ?? '';  // ADD THIS LINE
 
                 $stmt->bind_param(
-                    "isssssiiiss",
-                    $order_id,
-                    $product_name,
-                    $codename,
-                    $type_name,
-                    $variant_color,
-                    $size,
-                    $price,
-                    $quantity,
-                    $subtotal,
-                    $desc6,
-                    $desc7
-                );
+    "isssssiiisss",
+    $order_id,
+    $product_name,
+    $codename,
+    $type_name,
+    $variant_color,
+    $size,
+    $price,
+    $quantity,
+    $subtotal,
+    $desc6,
+    $desc7,
+    $origin  // Use the variable instead
+);
 
                 if (!$stmt->execute()) {
                     throw new Exception("Failed to save order item: " . $stmt->error);
@@ -281,6 +288,10 @@ function formatItemDetails($item)
     }
     if (!empty($item['codename'])) {
         $details[] = 'Code: ' . $item['codename'];
+    }
+    // ADD THIS LINE:
+    if (!empty($item['origin'])) {
+        $details[] = 'Origin: ' . $item['origin'];
     }
     if (!empty($item['descrip6'])) {
         $details[] = ' ' . $item['descrip6'];
@@ -481,47 +492,73 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             </div>
 
             <!-- Order Summary -->
-            <h3 class="text-xl font-semibold mt-6 mb-2">Order Summary</h3>
-            <ul class="divide-y text-sm max-h-60 overflow-y-auto border rounded-md p-2 bg-white">
-                <?php foreach ($cart_items as $item): ?>
-                    <?php
-                    // Use the new function to get descrip6 and descrip7
-                    $descriptions = getProductDescription($conn, $item['codename'], $item['product_name'] ?? '', $item['variant_name'] ?? '');
-                    $desc6 = $descriptions['desc6'];
-                    $desc7 = $descriptions['desc7'];
-                    ?>
-                    <li class="py-2">
-                        <div class="flex justify-between items-start">
-                            <div class="w-2/3">
-                                <div class="font-medium"><?= htmlspecialchars($item['variant_name']) ?></div>
-                                <?php $details = formatItemDetails($item); ?>
-                                <?php if (!empty($details)): ?>
-                                    <div class="text-gray-600 text-xs"><?= $details ?></div>
-                                <?php endif; ?>
+            <h3 class="text-xl font-semibold mt-6 mb-4">Order Summary</h3>
+            <div class="border rounded-lg overflow-hidden bg-white">
+                <?php foreach ($cart_items as $index => $item): ?>
+                    <div class="<?= $index > 0 ? 'border-t' : '' ?> p-4">
+                        <div class="flex justify-between items-start gap-4">
+                            <!-- Left side: Product details -->
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-medium text-gray-900 mb-2 break-words">
+                                    <?= htmlspecialchars($item['variant_name']) ?>
+                                </h4>
+                                
+                                <!-- Product details grid -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                                    <?php if (!empty($item['type_name'])): ?>
+                                        <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name']) ?></div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
+                                        <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size']) ?></div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($item['color_name'])): ?>
+                                        <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['color_name']) ?></div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($item['codename'])): ?>
+                                        <div><span class="font-medium">Code:</span> <?= htmlspecialchars($item['codename']) ?></div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($item['origin'])): ?>
+                                        <div><span class="font-medium text-blue-600">Origin:</span> <span class="text-blue-700"><?= htmlspecialchars($item['origin']) ?></span></div>
+                                    <?php endif; ?>
+                                </div>
 
-                                <?php if (!empty($desc6) || !empty($desc7)): ?>
-                                    <div class="text-xs text-gray-500 mt-1 italic leading-tight">
-                                        <?php if (!empty($desc6)): ?>
-                                            <span class="text-gray-600 font-medium"></span> <?= htmlspecialchars($desc6) ?><br>
+                                <!-- Descriptions -->
+                                <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                                    <div class="mt-2 text-xs text-gray-500 space-y-1">
+                                        <?php if (!empty($item['descrip6'])): ?>
+                                            <div class="italic"><?= htmlspecialchars($item['descrip6']) ?></div>
                                         <?php endif; ?>
-                                        <?php if (!empty($desc7)): ?>
-                                            <span class="text-gray-600 font-medium"></span> <?= htmlspecialchars($desc7) ?>
+                                        <?php if (!empty($item['descrip7'])): ?>
+                                            <div class="italic"><?= htmlspecialchars($item['descrip7']) ?></div>
                                         <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
-
                             </div>
-                            <div class="text-right w-1/3">
-                                <div>₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?></div>
-                                <div class="text-xs text-gray-500">₱<?= number_format($item['price'] * $item['quantity'], 2) ?></div>
+
+                            <!-- Right side: Pricing -->
+                            <div class="text-right flex-shrink-0 min-w-[140px]">
+                                <div class="text-sm text-gray-600 mb-1">
+                                    ₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?>
+                                </div>
+                                <div class="text-lg font-bold text-green-600">
+                                    ₱<?= number_format($item['price'] * $item['quantity'], 2) ?>
+                                </div>
                             </div>
                         </div>
-                    </li>
+                    </div>
                 <?php endforeach; ?>
-            </ul>
-
-            <div class="text-right text-xl mt-4 font-bold text-green-700">
-                Total: ₱<?= number_format($total_price, 2) ?>
+                
+                <!-- Total section -->
+                <div class="border-t bg-gray-50 p-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-semibold text-gray-900">Total:</span>
+                        <span class="text-2xl font-bold text-green-700">₱<?= number_format($total_price, 2) ?></span>
+                    </div>
+                </div>
             </div>
 
             <div class="text-sm text-gray-600 text-center mt-4">
@@ -603,17 +640,17 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             // Handle billing address selection
             billingRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
-    if (this.checked) {
-        // Clean and format mobile number
-        let phone = this.dataset.phone;
-        // Remove spaces, dashes, parentheses, plus signs
-        phone = phone.replace(/[\s\-\(\)\+]/g, '');
-        // Convert +63 format to 09 format
-        if (phone.match(/^63([0-9]{10})$/)) {
-            phone = '0' + phone.substring(2);
-        }
-        
-        mobileInput.value = phone;
+                    if (this.checked) {
+                        // Clean and format mobile number
+                        let phone = this.dataset.phone;
+                        // Remove spaces, dashes, parentheses, plus signs
+                        phone = phone.replace(/[\s\-\(\)\+]/g, '');
+                        // Convert +63 format to 09 format
+                        if (phone.match(/^63([0-9]{10})$/)) {
+                            phone = '0' + phone.substring(2);
+                        }
+                        
+                        mobileInput.value = phone;
                         addressInput.value = this.dataset.address;
                         zipcodeInput.value = this.dataset.postalCode;
                         

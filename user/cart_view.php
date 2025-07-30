@@ -237,19 +237,20 @@ if ($user_id) {
             <table class="w-full text-sm text-left border-collapse ">
 
               <thead class="bg-orange-600 text-white uppercase text-xs rounded-lg">
-                <tr>
-                  <th class="py-3 px-4">Category</th>
-                  <th class="py-3 px-4">Product</th>
-                  <th class="py-3 px-4">Qty</th>
-                  <th class="py-3 px-4">Unit Price</th>
-                  <th class="py-3 px-4">Total</th>
-                  <th class="py-3 px-4">Image</th>
-                  <th class="py-3 px-4">Origin</th>
-                  <th class="py-3 px-4">Action</th>
-                </tr>
-              </thead>
+  <tr>
+    <th class="py-3 px-4">Category</th>
+    <th class="py-3 px-4">Product</th>
+    <th class="py-3 px-4">Qty</th>
+    <th class="py-3 px-4">Unit Price</th>
+    <th class="py-3 px-4">Total</th>
+    <th class="py-3 px-4">Image</th>
+    <th class="py-3 px-4">Origin</th>
+    <th class="py-3 px-4">Remove</th>
+  </tr>
+</thead>
+              
+              
 
-              </thead>
               <tbody class="divide-y divide-gray-200">
                 <?php foreach ($cart_items as $item):
                   $unit_price = floatval($item['price']);

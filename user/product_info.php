@@ -6,28 +6,28 @@ include '../connection/connect.php';
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
-    
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $res = $stmt->get_result();
-    
+
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-        
+
         // 🔐 Store essential user session info
         $_SESSION['user_id']    = $user['id'];
         $_SESSION['user_name']  = $user['name'];
         $_SESSION['user_email'] = $user['email'] ?? '';
         $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-        
+
         // 👤 Check if it's a Google account (optional)
         if (!empty($user['google_id'])) {
             $_SESSION['google_logged_in'] = true;
             $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
         }
     }
-    
+
     $stmt->close();
 }
 
@@ -105,7 +105,7 @@ if (empty($variants)) {
 $variant = $variants[0]; // Default to first variant
 if (isset($_GET['variant_id'])) {
     $variant_id = $_GET['variant_id'];
-    
+
     // Find the selected variant
     foreach ($variants as $v) {
         if ($v['id'] == $variant_id) {
@@ -114,10 +114,12 @@ if (isset($_GET['variant_id'])) {
         }
     }
 }
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -128,28 +130,35 @@ if (isset($_GET['variant_id'])) {
         .hover-lift {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .hover-lift:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
+
         .image-zoom {
             transition: transform 0.3s ease;
         }
+
         .image-zoom:hover {
             transform: scale(1.05);
         }
+
         .variant-card {
             transition: all 0.2s ease;
         }
+
         .variant-card:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         .price-badge {
             background: linear-gradient(135deg, #059669, #10b981);
         }
     </style>
 </head>
+
 <body class="bg-slate-50 min-h-screen">
     <?php include 'navbar/top.php'; ?>
     <!-- Navigation Breadcrumb -->
@@ -176,7 +185,7 @@ if (isset($_GET['variant_id'])) {
                         <h1 class="text-3xl font-bold mb-3">
                             <?= htmlspecialchars($product['product_name']) ?>
                         </h1>
-                        <div class="flex flex-wrap gap-4 text-slate-300">
+                        <div class="flex flex-wrap gap-4 text-white">
                             <div class="flex items-center">
                                 <i class="fas fa-tag mr-2"></i>
                                 <span>ID: <?= $product['id'] ?></span>
@@ -197,89 +206,78 @@ if (isset($_GET['variant_id'])) {
             <div class="p-8">
                 <!-- Variant Selection -->
                 <?php if (count($variants) > 1): ?>
-                <div class="mb-8">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4 flex items-center">
-                        <i class="fas fa-layer-group mr-2 text-blue-600"></i>
-                        Available Variants
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <?php foreach ($variants as $v): ?>
-                        <a href="?id=<?= $product_id ?>&variant_id=<?= $v['id'] ?>" 
-                           class="variant-card block p-5 border-2 rounded-xl <?= ($v['id'] == $variant['id']) ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-slate-200 bg-white hover:border-slate-300' ?>">
-                            <div class="flex items-start justify-between mb-3">
-                                <h4 class="font-semibold text-slate-800"><?= htmlspecialchars($v['namevariant']) ?></h4>
-                                <?php if ($v['id'] == $variant['id']): ?>
-                                <i class="fas fa-check-circle text-blue-500"></i>
-                                <?php endif; ?>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-lg font-bold text-green-600">₱<?= number_format($v['price'], 2) ?></span>
-                                <div class="text-right text-sm text-slate-500">
-                                    <div><?= htmlspecialchars($v['color'] ?? 'N/A') ?></div>
-                                    <div><?= htmlspecialchars($v['size'] ?? 'N/A') ?></div>
-                                </div>
-                            </div>
-                        </a>
-                        <?php endforeach; ?>
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4 flex items-center">
+                            <i class="fas fa-layer-group mr-2 text-blue-600"></i>
+                            Available Variants
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <?php foreach ($variants as $v): ?>
+                                <a href="?id=<?= $product_id ?>&variant_id=<?= $v['id'] ?>"
+                                    class="variant-card block p-5 border-2 rounded-xl <?= ($v['id'] == $variant['id']) ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-slate-200 bg-white hover:border-slate-300' ?>">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h4 class="font-semibold text-slate-800"><?= htmlspecialchars($v['namevariant']) ?></h4>
+                                        <?php if ($v['id'] == $variant['id']): ?>
+                                            <i class="fas fa-check-circle text-blue-500"></i>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-lg font-bold text-green-600">₱<?= number_format($v['price'], 2) ?></span>
+                                        <div class="text-right text-sm text-slate-500">
+                                            <div><?= htmlspecialchars($v['color'] ?? 'N/A') ?></div>
+                                            <div><?= htmlspecialchars($v['size'] ?? 'N/A') ?></div>
+                                        </div>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
-                <!-- Product Images Gallery -->
-               <div class="mb-8">
-    <h3 class="text-xl font-semibold text-slate-800 mb-4 flex items-center">
-        <i class="fas fa-images mr-2 text-purple-600"></i>
-        Product Gallery
-    </h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <?php
-        $imageFields = [
-            'imagedescription' => 'Image 1',
-            'imagedescriptiontwo' => 'Image 2', 
-            'imagedescriptiontree' => 'Image 3',
-            'imagedescriptionfour' => 'Image 4'
-        ];
-        
-        foreach ($imageFields as $field => $label):
-        ?>
-        <div class="bg-white shadow-xl border border-slate-200 rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300">
-            <!-- Window-style header -->
-            <div class="bg-gradient-to-r from-slate-100 to-slate-200 px-4 py-2 border-b border-slate-300 flex items-center justify-between">
-                <span class="text-xs text-slate-600 font-semibold"><?= $label ?></span>
-                <div class="flex space-x-1">
-                    <span class="w-2 h-2 rounded-full bg-red-400"></span>
-                    <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
-                </div>
-            </div>
+                <!-- Compact Centered Bintana-Style Description Image Viewer -->
+                <div class="mb-6 flex justify-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-3 text-center">Product Description</h3>
 
-            <!-- Image preview -->
-            <?php if (!empty($variant[$field])): ?>
-                <div class="relative">
-                    <img src="../<?= htmlspecialchars($variant[$field]) ?>" 
-                         class="w-full h-48 object-cover cursor-pointer transition-transform duration-300 hover:scale-105" 
-                         alt="<?= $label ?>"
-                         onclick="openImageModal(this.src)"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="text-red-500 text-sm hidden bg-red-50 p-4 rounded-lg border border-red-200 text-center">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        <span>Image not available</span>
-                    </div>
-                    <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
-                        <i class="fas fa-search-plus text-white opacity-0 hover:opacity-100 transition-opacity text-2xl"></i>
+                        <div class="grid grid-cols-2 gap-1 border-2 border-slate-300 rounded-lg overflow-hidden shadow-sm w-[550px] h-[550px] bg-white">
+                            <?php
+                            $imageFields = [
+                                'imagedescription' => 'Top Left',
+                                'imagedescriptiontwo' => 'Top Right',
+                                'imagedescriptiontree' => 'Bottom Left',
+                                'imagedescriptionfour' => 'Bottom Right'
+                            ];
+
+                            foreach ($imageFields as $field => $position):
+                            ?>
+                                <div class="relative group overflow-hidden">
+                                    <?php if (!empty($variant[$field])): ?>
+                                        <img
+                                            src="../<?= htmlspecialchars($variant[$field]) ?>"
+                                            alt="<?= $position ?>"
+                                            class="w-full h-full object-cover transition duration-200 group-hover:scale-105 cursor-pointer"
+                                            onclick="openImageModal(this.src)"
+                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="hidden absolute inset-0 items-center justify-center text-red-500 bg-white text-xs">
+                                            <i class="fas fa-times-circle mr-1"></i> Not found
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100 text-xs">
+                                            <i class="fas fa-image text-base mr-1"></i> No image
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
-            <?php else: ?>
-                <div class="w-full h-48 bg-slate-100 flex flex-col items-center justify-center">
-                    <i class="fas fa-image text-slate-400 text-3xl mb-2"></i>
-                    <p class="text-slate-400 text-sm">No image available</p>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php endforeach; ?>
-    </div>
-</div>
 
+                <script>
+                    function openImageModal(src) {
+                        const win = window.open("");
+                        win.document.write('<img src="' + src + '" style="width:100%">');
+                    }
+                </script>
 
                 <!-- Product Description -->
                 <div class="mb-8">
@@ -304,7 +302,7 @@ if (isset($_GET['variant_id'])) {
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="product_view.php?id=<?= $product['id'] ?>"
-                       class="inline-flex items-center justify-center px-6 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200">
+                        class="inline-flex items-center justify-center px-6 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Products
                     </a>
@@ -317,6 +315,9 @@ if (isset($_GET['variant_id'])) {
         </div>
     </div>
 
+    <section></section>
+    
+
     <!-- Enhanced Image Modal -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
         <div class="relative max-w-5xl max-h-full">
@@ -326,6 +327,7 @@ if (isset($_GET['variant_id'])) {
             <img id="modalImage" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
         </div>
     </div>
+
 
     <script>
         function openImageModal(src) {
@@ -348,7 +350,7 @@ if (isset($_GET['variant_id'])) {
 
         // Add smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 document.querySelector(this.getAttribute('href')).scrollIntoView({
                     behavior: 'smooth'
@@ -357,4 +359,5 @@ if (isset($_GET['variant_id'])) {
         });
     </script>
 </body>
+
 </html>

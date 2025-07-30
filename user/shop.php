@@ -109,14 +109,20 @@ $stmt->close();
 // Calculate pagination
 $total_pages = ceil($total_products / $per_page);
 
-//git Enhanced categories
 $all_categories = [
   'furniture' => 'Furniture',
   'material' => 'Materials',
-  'table' => 'Table',
-  'bed' => 'Bed',
-  'light' => 'Light',
-  'aircon' => 'Aircon'
+  'electrical' => 'Electrical',
+  'lighting' => 'Lighting',
+  'bedroom' => 'Bedroom Furniture',
+  'aircon' => 'Air Conditioners',
+  'doors' => 'Doors',
+  'tiles' => 'Tiles',
+  'windows' => 'Windows',
+  'bathroom' => 'Bathroom Fixtures',
+  'kitchen' => 'Kitchen Fixtures',
+  'pipes' => 'Pipes',
+  'aacblock' => 'AAC BLOCKS',
 ];
 
 // Get category counts
@@ -128,7 +134,6 @@ foreach ($all_categories as $cat_key => $cat_name) {
   $category_counts[$cat_key] = $cat_stmt->get_result()->fetch_assoc()['count'];
   $cat_stmt->close();
 }
-
 
 ?>
 
@@ -147,6 +152,10 @@ foreach ($all_categories as $cat_key => $cat_name) {
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
   <style>
+           body {
+      font-family: 'Poppins', sans-serif;
+    }
+
     .line-clamp-3 {
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -317,7 +326,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
   <!-- Enhanced Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
-    <div class="max-w-7xl mx-auto">
+    <div class="">
       <div class="flex items-center space-x-2 text-sm">
         <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
@@ -333,8 +342,10 @@ foreach ($all_categories as $cat_key => $cat_name) {
   </nav>
 
   <div class=" px-4 py-8">
-    <!-- Enhanced Header -->
-    <div class="text-center mb-12" data-aos="fade-up">
+    <div class="relative">
+      <!-- Bubble Canvas -->
+      <canvas id="bubble-bg-canvas" class=" absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+      <div class="relative z-10 text-center mb-12" data-aos="fade-up">
       <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
         Our <span class="text-orange-500">Premium</span> Collections
       </h1>
@@ -343,20 +354,21 @@ foreach ($all_categories as $cat_key => $cat_name) {
       </p>
       <div class="mt-6 flex items-center justify-center space-x-4 text-sm text-gray-500">
         <span class="flex items-center">
-          <i class="fas fa-check-circle text-green-500 mr-1"></i>
-          Quality Guaranteed
+        <i class="fas fa-check-circle text-green-500 mr-1"></i>
+        Quality Guaranteed
         </span>
         <span class="flex items-center">
-          <i class="fas fa-shipping-fast text-blue-500 mr-1"></i>
-          Fast Delivery
+        <i class="fas fa-shipping-fast text-blue-500 mr-1"></i>
+        Fast Delivery
         </span>
         <span class="flex items-center">
-          <i class="fas fa-award text-yellow-500 mr-1"></i>
-          Premium Materials
+        <i class="fas fa-award text-yellow-500 mr-1"></i>
+        Premium Materials
         </span>
       </div>
+      </div>
     </div>
-
+   
     <section class="flex flex-wrap justify-center gap-4 px-4 py-6">
 
 
@@ -462,7 +474,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
         </div>
 
         <!-- Product Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
           <?php while ($row = $products->fetch_assoc()): ?>
             <?php
               $product_id = (int)$row['id'];
@@ -524,7 +536,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
                   </div>
 
                   <div class="absolute top-3 left-3">
-                    <span class="bg-white bg-opacity-90 text-gray-700 px-3 py-1 rounded-full text-xs font-medium capitalize">
+                    <span class="bg-orange-500 bg-opacity-90 text-white px-3 py-1 rounded-full text-xs font-medium capitalize">
                       <?= htmlspecialchars($row['codename']) ?>
                     </span>
                   </div>
@@ -760,6 +772,67 @@ foreach ($all_categories as $cat_key => $cat_name) {
       once: true,
       offset: 100
     });
+
+     // Bubble background animation
+      (function() {
+      const canvas = document.getElementById('bubble-bg-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width = 0, height = 0;
+      function resize() {
+        width = canvas.width = canvas.offsetWidth;
+        height = canvas.height = canvas.offsetHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Bubble properties
+      const bubbleCount = 18;
+      const bubbles = [];
+      for (let i = 0; i < bubbleCount; i++) {
+        const radius = Math.random() * 32 + 18;
+        bubbles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: radius,
+        dx: (Math.random() - 0.5) * 1.2,
+        dy: (Math.random() - 0.5) * 1.2,
+        color: [
+          'rgba(255,179,71,0.18)', // orange
+          'rgba(255,255,255,0.13)', // white
+          'rgba(255,204,128,0.15)', // light orange
+          'rgba(255,255,255,0.09)', // white
+          'rgba(255,179,71,0.12)' // orange
+        ][Math.floor(Math.random() * 5)]
+        });
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        for (let b of bubbles) {
+        // Move
+        b.x += b.dx;
+        b.y += b.dy;
+
+        // Bounce on edges
+        if (b.x - b.r < 0) { b.x = b.r; b.dx *= -1; }
+        if (b.x + b.r > width) { b.x = width - b.r; b.dx *= -1; }
+        if (b.y - b.r < 0) { b.y = b.r; b.dy *= -1; }
+        if (b.y + b.r > height) { b.y = height - b.r; b.dy *= -1; }
+
+        // Draw
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = b.color;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 16;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        }
+        requestAnimationFrame(animate);
+      }
+      animate();
+      })();
 
     // ✅ Mobile Filter Toggle System
     const mobileFilterToggle = document.getElementById('mobileFilterToggle');

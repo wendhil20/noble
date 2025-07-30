@@ -134,9 +134,62 @@ foreach ($cart as $item) {
         </div>
       </a>
 
-
       <!-- Desktop Links -->
       <div class="hidden md:flex space-x-6 items-center">
+
+        <div x-data="{
+    openModal: false,
+    search: '',
+    results: [],
+    fetchResults() {
+        if (this.search.trim() === '') return;
+        fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
+            .then(res => res.json())
+            .then(data => {
+                this.results = data;
+                this.openModal = true;
+            });
+    }
+}" class="relative">
+
+          <!-- Input + Button -->
+          <div class="flex items-center space-x-2">
+            <input
+              type="text"
+              x-model="search"
+              @keydown.enter="fetchResults"
+              placeholder="Search products..."
+              class="border border-gray-300 px-3 py-1.5 rounded w-48 md:w-64 text-sm outline-orange-500">
+            <button
+              @click="fetchResults"
+              class="bg-orange-500 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition">
+              Search
+            </button>
+          </div>
+
+          <!-- Modal Dropdown -->
+          <div
+            x-show="openModal"
+            x-cloak
+            @click.away="openModal = false"
+            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-64 md:w-96 max-h-80 overflow-y-auto border border-gray-200">
+            <template x-if="results.length > 0">
+              <ul>
+                <template x-for="item in results" :key="item.id">
+                  <li class="border-b last:border-0">
+                    <a
+                      class="block px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
+                      :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
+                      x-text="item.product_name"></a>
+                  </li>
+                </template>
+              </ul>
+            </template>
+            <template x-if="results.length === 0 && search.length > 1">
+              <p class="p-4 text-sm text-gray-500">No results found.</p>
+            </template>
+          </div>
+        </div>
 
         <!-- Products Dropdown -->
         <div x-data="{ open: false, selected: null }" class="relative">
@@ -175,11 +228,13 @@ foreach ($cart as $item) {
           </div>
         </div>
 
+
+
+
         <a href="javascript:void(0)" onclick="navigateWithLoading('profile')"
           class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition">
           Profile
         </a>
-
 
         <a href="javascript:void(0)" onclick="navigateWithLoading('shop')"
           class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1">
@@ -204,156 +259,156 @@ foreach ($cart as $item) {
           </span>
         </a>
 
-       <!-- Wrapper Alpine Component -->
-<div x-data="{ loginOpen: false, registerOpen: false }">
+        <!-- Wrapper Alpine Component -->
+        <div x-data="{ loginOpen: false, registerOpen: false }">
 
-  <?php if (isset($_SESSION['user_name'])): ?>
-    <!-- ✅ Logged in -->
-    <div class="text-black flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-      <span class="text-sm"><strong><?= htmlspecialchars(substr($_SESSION['user_name'], 0, 1)) ?></strong></span>
-      <a href="logout.php" class="text-red-500 text-xs hover:underline">Logout</a>
-    </div>
-
-  <?php else: ?>
-
-    <!-- ✅ Not Logged in -->
-    <div class="relative">
-      <button @click="loginOpen = !loginOpen"
-        class="text-black hover:text-orange-500 transition flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        Login
-      </button>
-
-      <!-- ✅ Login Dropdown -->
-      <div id="authDropdown" x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
-        class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-        <form action="login.php" method="POST" class="space-y-3">
-          <div>
-            <label for="login" class="block text-sm font-medium text-gray-600">Email or Mobile</label>
-            <input type="text" id="login" name="login" required
-              placeholder="you@example.com or 09123456789"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-          </div>
-
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-600">Password</label>
-            <input type="password" id="password" name="password" required
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-          </div>
-
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
-            <label for="remember" class="text-sm text-gray-600">Remember me</label>
-          </div>
-
-          <button type="submit"
-            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg">
-            Log In
-          </button>
-
-          <div class="text-center text-sm mt-2">
-            <a href="forgot_password.php" class="text-orange-500 hover:underline">Forgot password?</a>
-          </div>
-
-          <div class="text-center text-sm mt-1">
-            <span>Don't have an account?</span>
-            <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
-              class="text-orange-500 hover:underline font-medium">Register</a>
-          </div>
-
-          <!-- Google Login Button -->
-          <div class="text-center mt-4">
-            <a href="google-login.php"
-              class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
-              <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
-                <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
-                <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
-                <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
-                <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
+          <?php if (isset($_SESSION['user_name'])): ?>
+            <!-- ✅ Logged in -->
+            <div class="text-black flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Login with Google
-            </a>
+              <span class="text-sm"><strong><?= htmlspecialchars(substr($_SESSION['user_name'], 0, 1)) ?></strong></span>
+              <a href="logout.php" class="text-red-500 text-xs hover:underline">Logout</a>
+            </div>
+
+          <?php else: ?>
+
+            <!-- ✅ Not Logged in -->
+            <div class="relative">
+              <button @click="loginOpen = !loginOpen"
+                class="text-black hover:text-orange-500 transition flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Login
+              </button>
+
+              <!-- ✅ Login Dropdown -->
+              <div id="authDropdown" x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
+                class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <form action="login" method="POST" class="space-y-3">
+                  <div>
+                    <label for="login" class="block text-sm font-medium text-gray-600">Email or Mobile</label>
+                    <input type="text" id="login" name="login" required
+                      placeholder="you@example.com or 09123456789"
+                      class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  </div>
+
+                  <div>
+                    <label for="password" class="block text-sm font-medium text-gray-600">Password</label>
+                    <input type="password" id="password" name="password" required
+                      class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
+                    <label for="remember" class="text-sm text-gray-600">Remember me</label>
+                  </div>
+
+                  <button type="submit"
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg">
+                    Log In
+                  </button>
+
+                  <div class="text-center text-sm mt-2">
+                    <a href="forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
+                  </div>
+
+                  <div class="text-center text-sm mt-1">
+                    <span>Don't have an account?</span>
+                    <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
+                      class="text-orange-500 hover:underline font-medium">Register</a>
+                  </div>
+
+                  <!-- Google Login Button -->
+                  <div class="text-center mt-4">
+                    <a href="google-login.php"
+                      class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
+                      <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
+                        <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
+                        <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
+                        <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
+                      </svg>
+                      Login with Google
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          <?php endif; ?>
+
+          <!-- ✅ Register Modal -->
+          <div x-show="registerOpen" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
+            <div @click.away="registerOpen = false"
+              class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative space-y-4">
+
+              <h2 class="text-xl font-bold text-gray-800 mb-2 text-center">Create Your Account</h2>
+              <form action="register.php" method="POST" class="space-y-4">
+
+                <!-- Name -->
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                  <input type="text" name="name" id="name" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- Email -->
+                <div>
+                  <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                  <input type="email" name="email" id="email"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="you@example.com">
+                </div>
+
+                <!-- Mobile -->
+                <div>
+                  <label for="mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
+                  <input type="tel" name="mobile" id="mobile"
+                    pattern="^09\d{9}$" maxlength="11"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="09123456789">
+                  <p class="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX</p>
+                </div>
+
+                <!-- Password -->
+                <div>
+                  <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                  <input type="password" name="password" id="password" required minlength="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                  <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                  <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                  class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-md transition">
+                  Create Account
+                </button>
+
+                <!-- Switch to Login -->
+                <div class="text-center text-sm text-gray-600 mt-2">
+                  <span>Already have an account?</span>
+                  <a href="#" @click.prevent="registerOpen = false; loginOpen = true"
+                    class="text-orange-500 hover:underline">Login here</a>
+                </div>
+              </form>
+
+              <!-- ❌ Close -->
+              <button @click="registerOpen = false"
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
-  <?php endif; ?>
+        </div>
 
- <!-- ✅ Register Modal -->
-<div x-show="registerOpen" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
-  <div @click.away="registerOpen = false"
-    class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative space-y-4">
-
-    <h2 class="text-xl font-bold text-gray-800 mb-2 text-center">Create Your Account</h2>
-    <form action="register.php" method="POST" class="space-y-4">
-
-      <!-- Name -->
-      <div>
-        <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
-        <input type="text" name="name" id="name" required
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-      </div>
-
-      <!-- Email -->
-      <div>
-        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-        <input type="email" name="email" id="email"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          placeholder="you@example.com">
-      </div>
-
-      <!-- Mobile -->
-      <div>
-        <label for="mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
-        <input type="tel" name="mobile" id="mobile"
-          pattern="^09\d{9}$" maxlength="11"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          placeholder="09123456789">
-        <p class="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX</p>
-      </div>
-
-      <!-- Password -->
-      <div>
-        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-        <input type="password" name="password" id="password" required minlength="6"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-      </div>
-
-      <!-- Confirm Password -->
-      <div>
-        <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-        <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-      </div>
-
-      <!-- Submit -->
-      <button type="submit"
-        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-md transition">
-        Create Account
-      </button>
-
-      <!-- Switch to Login -->
-      <div class="text-center text-sm text-gray-600 mt-2">
-        <span>Already have an account?</span>
-        <a href="#" @click.prevent="registerOpen = false; loginOpen = true"
-          class="text-orange-500 hover:underline">Login here</a>
-      </div>
-    </form>
-
-    <!-- ❌ Close -->
-    <button @click="registerOpen = false"
-      class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
-  </div>
-</div>
-
-</div>
 
       </div>
 
@@ -381,30 +436,47 @@ foreach ($cart as $item) {
       <div x-data="{ open: false }">
         <button @click="open = !open" class="block w-full text-left text-gray-700 hover:text-orange-500 transition">Products</button>
         <div x-show="open" x-transition x-cloak class="pl-4 space-y-1">
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/wpc.php')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('products/wpc')"
             class="block hover:text-orange-500">WPC Fluted</a>
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/pvc.php')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('products/pvc')"
             class="block hover:text-orange-500">PVC Panels</a>
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/ceiling-flat.php')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('products/ceiling-flat')"
             class="block hover:text-orange-500">Flat Ceiling</a>
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/deck-composite.php')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('products/deck-composite')"
             class="block hover:text-orange-500">Composite Decking</a>
         </div>
       </div>
 
-      <a href="javascript:void(0)" onclick="navigateWithLoading('about.php')"
-        class="<?= $current_page == 'about.php' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
+      <a href="javascript:void(0)" onclick="navigateWithLoading('about')"
+        class="<?= $current_page == 'about' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
         About
       </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('contact.php')"
-        class="<?= $current_page == 'contact.php' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
+      <a href="javascript:void(0)" onclick="navigateWithLoading('contact')"
+        class="<?= $current_page == 'contact' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
         Contact
       </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('quote.php')"
-        class="<?= $current_page == 'quote.php' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
+      <a href="javascript:void(0)" onclick="navigateWithLoading('quote')"
+        class="<?= $current_page == 'quote' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
         Get Free Quote
       </a>
     </div>
   </div>
 </nav>
+<script>
+  function fetchResults() {
+    fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
+      .then(res => res.json())
+      .then(data => {
+        this.results = data;
+      });
+  }
 
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('searchData', () => ({
+      openModal: false,
+      search: '',
+      results: [],
+      fetchResults
+    }));
+  });
+</script>

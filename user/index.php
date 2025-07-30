@@ -416,7 +416,7 @@ $slideresult = $conn->query($sql);
             </div>
 
             <!-- Action Button -->
-            <a href="shop.php#discounts" class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
+            <a href="shop#discounts" class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
                 Shop Now
             </a>
         </div>
@@ -491,103 +491,110 @@ $slideresult = $conn->query($sql);
     </section>
 
 
-<section class="px-4 py-8 bg-white">
-  <!-- Heading and description -->
-  <div class="text-center mb-6">
-    <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
-    <p class="text-black text-sm sm:text-base">
-      Browse products by category to quickly find what you need.
-    </p>
-  </div>
-
-  <!-- Category buttons -->
-  <div class="flex flex-wrap justify-center gap-4">
-    <?php
-    $categories = [
-      'furniture' => ['label' => 'Furniture', 'icon' => 'sofa'],
-      'material'  => ['label' => 'Materials', 'icon' => 'layers'],
-      'table'     => ['label' => 'Table',     'icon' => 'table'],
-      'bed'       => ['label' => 'Bed',       'icon' => 'bed-double'],
-      'light'     => ['label' => 'Light',     'icon' => 'lightbulb'],
-      'aircon'    => ['label' => 'Aircon',    'icon' => 'snowflake']
-    ];
-
-    foreach ($categories as $code => $data): ?>
-      <a href="shop.php?category[]=<?= $code ?>"
-         class="w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-500 hover:bg-orange-400 text-white font-semibold shadow-lg transition text-center text-sm">
-         <i data-lucide="<?= $data['icon'] ?>" class="w-6 h-6 mb-1"></i>
-         <?= $data['label'] ?>
-      </a>
-    <?php endforeach; ?>
-  </div>
-
-  <!-- Init Lucide icons -->
-  <script>
-    lucide.createIcons();
-  </script>
-</section>
-
-
-
-
-  <section class="px-4 sm:px-6 lg:px-8 py-6">
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-    
-    <!-- Banner 1 -->
-    <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-      <img src="img/promo/a.png" class="w-full h-full object-contain" alt="Banner 1">
-   
-    </div>
-
-    <!-- Banner 2 -->
-    <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-      <img src="assets/images/banner2.webp" class="w-full h-full object-cover" alt="Banner 2">
-      <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-        <div class="text-white text-center">
-          <h2 class="text-lg font-bold">🛒 Weekend Sale</h2>
+    <section class="px-4 py-8 bg-white">
+        <!-- Heading and description -->
+        <div class="text-center mb-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
+            <p class="text-black text-sm sm:text-base">
+                Browse products by category to quickly find what you need.
+            </p>
         </div>
-      </div>
-    </div>
 
-    <!-- Banner 3 -->
-    <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-      <img src="assets/images/banner3.webp" class="w-full h-full object-cover" alt="Banner 3">
-      <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-        <div class="text-white text-center">
-          <h2 class="text-lg font-bold">🎁 Free Shipping</h2>
+        <!-- Category buttons -->
+        <div class="flex flex-wrap justify-center gap-4">
+            <?php
+
+            $categories = [
+                'furniture'   => ['label' => 'Furniture',           'icon' => 'sofa'],
+                'materials'   => ['label' => 'Materials',           'icon' => 'layers'],
+                'bedroom'     => ['label' => 'Bedroom Furniture',   'icon' => 'bed-double'],
+                'table'       => ['label' => 'Tables',              'icon' => 'table'],
+                'lighting'    => ['label' => 'Lighting fixture',    'icon' => 'lightbulb'],
+                'aircon'      => ['label' => 'Air Conditioners',    'icon' => 'snowflake'],
+                'doors'       => ['label' => 'Doors',               'icon' => 'door-closed'],
+                'tiles'       => ['label' => 'Tiles',               'icon' => 'grid'],
+                'windows'     => ['label' => 'Windows',             'icon' => 'square'],
+                'bathroom'    => ['label' => 'Bathroom Fixtures',   'icon' => 'shower-head'],
+                'kitchen'     => ['label' => 'Kitchen Fixtures',    'icon' => 'utensils-crossed'],
+                'pipes'       => ['label' => 'Pipes',               'icon' => 'pipe'],
+                'aacblock'    => ['label' => 'AAC BLOCKS',          'icon' => 'box'],
+            ];
+
+
+            foreach ($categories as $code => $data): ?>
+                <a href="shop?category[]=<?= $code ?>"
+                    class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-500 hover:bg-orange-400 text-white font-semibold shadow-lg transition text-center text-sm">
+                    <i data-lucide="<?= $data['icon'] ?>" class="w-6 h-6 mb-1"></i>
+                    <?= $data['label'] ?>
+                </a>
+            <?php endforeach; ?>
         </div>
-      </div>
-    </div>
 
-    <!-- Banner 4 -->
-    <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-      <img src="assets/images/banner4.webp" class="w-full h-full object-cover" alt="Banner 4">
-      <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-        <div class="text-white text-center">
-          <h2 class="text-lg font-bold">💥 Clearance</h2>
+        <!-- Init Lucide icons -->
+        <script>
+            lucide.createIcons();
+        </script>
+    </section>
+
+
+
+
+    <section class="px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+            <!-- Banner 1 -->
+            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
+                <img src="img/promo/a.png" class="w-full h-full object-contain" alt="Banner 1">
+
+            </div>
+
+            <!-- Banner 2 -->
+            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
+                <img src="assets/images/banner2.webp" class="w-full h-full object-cover" alt="Banner 2">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div class="text-white text-center">
+                        <h2 class="text-lg font-bold"></h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner 3 -->
+            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
+                <img src="assets/images/banner3.webp" class="w-full h-full object-cover" alt="Banner 3">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div class="text-white text-center">
+                        <h2 class="text-lg font-bold"> </h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner 4 -->
+            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
+                <img src="assets/images/banner4.webp" class="w-full h-full object-cover" alt="Banner 4">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div class="text-white text-center">
+                        <h2 class="text-lg font-bold"> </h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner 5 -->
+            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
+                <img src="assets/images/banner5.webp" class="w-full h-full object-cover" alt="Banner 5">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div class="text-white text-center">
+                        <h2 class="text-lg font-bold"></h2>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      </div>
-    </div>
-
-    <!-- Banner 5 -->
-    <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-      <img src="assets/images/banner5.webp" class="w-full h-full object-cover" alt="Banner 5">
-      <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-        <div class="text-white text-center">
-          <h2 class="text-lg font-bold">🆕 New Arrivals</h2>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-
+    </section>
 
     <section class="px-4 py-10">
         <!-- Header -->
         <div class="text-center mb-10" data-aos="fade-up" data-aos-delay="200">
-            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight">Bed Room</h2>
+            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight">Bed Furniture</h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
         </div>
 
@@ -596,7 +603,7 @@ $slideresult = $conn->query($sql);
             <div class="swiper-wrapper px-1 sm:px-2">
                 <?php while ($row = mysqli_fetch_assoc($resultss)) : ?>
                     <div class="swiper-slide p-2">
-                        <a href="product_view.php?id=<?= (int)$row['id'] ?>"
+                        <a href="product_view?id=<?= (int)$row['id'] ?>"
                             class="flex flex-col justify-between h-[400px] bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 group text-center w-full relative">
 
                             <!-- Triangle Badge -->
@@ -645,10 +652,39 @@ $slideresult = $conn->query($sql);
     </section>
 
     <section class="p-3 w-full">
-        <div class="text-center mb-10">
-            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Furniture</h2>
-            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
+        <div class="text-center mb-10 relative">
+            <!-- Multiple Bouncing Bubbles Background -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
+                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
+                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
+                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
+            </div>
+            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight relative z-10" data-aos="fade-up">Furniture</h2>
+            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full relative z-10" data-aos="fade-up"></div>
         </div>
+        <style>
+            .bubble-bounce {
+                position: absolute;
+                display: inline-block;
+                opacity: 0.18;
+                border-radius: 50%;
+                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
+                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
+            }
+
+            @keyframes bubble-bounce {
+
+                0%,
+                100% {
+                    transform: translateY(0) scale(1);
+                }
+
+                50% {
+                    transform: translateY(-30px) scale(1.08);
+                }
+            }
+        </style>
 
         <!-- Swiper -->
         <div class="swiper mySwiper-indoor">
@@ -656,15 +692,12 @@ $slideresult = $conn->query($sql);
                 <?php while ($row = mysqli_fetch_assoc($result)) : ?>
                     <div class="swiper-slide flex-shrink-0" data-aos="fade-up">
                         <div class="flex flex-col justify-between h-[460px] bg-white rounded-lg shadow-lg p-4 group text-center w-full max-w-[300px] sm:max-w-[280px] md:max-w-[260px] xl:max-w-[250px] relative">
-
                             <!-- Ribbon Icon -->
                             <div class="absolute top-0 left-0 w-14 h-14 z-10">
                                 <div class="w-16 h-16 relative">
                                     <img src="img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
                                 </div>
                             </div>
-
-
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
@@ -676,8 +709,6 @@ $slideresult = $conn->query($sql);
                                         No Image
                                     </div>
                                 <?php endif; ?>
-
-
                             </div>
 
                             <!-- Info -->
@@ -735,7 +766,7 @@ $slideresult = $conn->query($sql);
 
                                 <!-- View Button -->
                                 <div class="mt-2">
-                                    <a href="product_view.php?id=<?= (int)$row['id'] ?>"
+                                    <a href="product_view?id=<?= (int)$row['id'] ?>"
                                         class="p-2 inline-block text-center w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
                                         View Product
                                     </a>
@@ -750,27 +781,52 @@ $slideresult = $conn->query($sql);
 
 
     <section class="p-3 w-full">
-        <!-- Header -->
-        <div class="text-center mb-10">
-            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Materials</h2>
-            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
+        <div class="text-center mb-10 relative">
+            <!-- Multiple Bouncing Bubbles Background -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
+                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
+                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
+                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
+            </div>
+            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight relative z-10" data-aos="fade-up">Materials</h2>
+            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full relative z-10" data-aos="fade-up"></div>
         </div>
+        <style>
+            .bubble-bounce {
+                position: absolute;
+                display: inline-block;
+                opacity: 0.18;
+                border-radius: 50%;
+                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
+                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
+            }
 
-        <!-- Swiper Slider -->
-        <div class="swiper mySwiper-indoor">
+            @keyframes bubble-bounce {
+
+                0%,
+                100% {
+                    transform: translateY(0) scale(1);
+                }
+
+                50% {
+                    transform: translateY(-30px) scale(1.08);
+                }
+            }
+        </style>
+
+        <!-- Swiper -->
+        <div class="swiper mySwiper-material">
             <div class="swiper-wrapper p-2">
                 <?php while ($row = mysqli_fetch_assoc($results)) : ?>
-                    <div class="swiper-slide flex-shrink-0" data-aos="fade-up" data-aos-delay="400">
+                    <div class="swiper-slide flex-shrink-0" data-aos="fade-up">
                         <div class="flex flex-col justify-between h-[460px] bg-white rounded-lg shadow-lg p-4 group text-center w-full max-w-[300px] sm:max-w-[280px] md:max-w-[260px] xl:max-w-[250px] relative">
-
-                            <!-- Corner Icon -->
+                            <!-- Ribbon Icon -->
                             <div class="absolute top-0 left-0 w-14 h-14 z-10">
-                                <div class="w-14 h-14 relative">
-                                    <img src="img/icon/d.png" alt="Check Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
+                                <div class="w-16 h-16 relative">
+                                    <img src="img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
                                 </div>
                             </div>
-
-
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
@@ -784,52 +840,63 @@ $slideresult = $conn->query($sql);
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Details -->
+                            <!-- Info -->
                             <div class="mt-auto text-left space-y-2">
-                                <div class="flex justify-between items-start">
-                                    <!-- Name + Description -->
-                                    <div>
-                                        <h2 class="text-sm font-bold text-orange-600 underline underline-offset-4 break-words max-w-[70%]">
-                                            <?= htmlspecialchars($row['product_name']) ?>
-                                        </h2>
-                                        <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                            <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                                <?= htmlspecialchars($row['descrip6'] ?? '') ?><br>
-                                                <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-                                            </p>
-                                            <p class="text-sm text-gray-600">
-                                                Origin:
-                                                <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                                    <?= ucfirst($row['origin']) ?>
-                                                </span>
-                                            </p>
-                                        <?php else: ?>
-                                            <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <!-- Ratings -->
-                                    <div class="text-right min-w-[90px]">
-                                        <?php if (isset($row['avg_rating']) && $row['avg_rating'] > 0): ?>
-                                            <div class="flex justify-end items-center text-orange-500 text-sm">
-                                                <?php
-                                                $stars = round($row['avg_rating']);
-                                                for ($i = 0; $i < 5; $i++) {
-                                                    echo $i < $stars ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
-                                                }
-                                                ?>
-                                            </div>
-                                            <p class="text-xs text-gray-600 text-right">(<?= number_format($row['avg_rating'], 1) ?>)</p>
-                                        <?php else: ?>
-                                            <p class="text-xs text-gray-400 italic text-right">No ratings</p>
-                                        <?php endif; ?>
-                                    </div>
+                                <!-- Name + Ratings -->
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-sm font-bold text-orange-600 underline underline-offset-4 truncate max-w-[60%]">
+                                        <?= htmlspecialchars($row['product_name']) ?>
+                                    </h2>
+                                    <?php
+                                    $product_id = (int)$row['id'];
+                                    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                                    $rating_q->bind_param("i", $product_id);
+                                    $rating_q->execute();
+                                    $rating_result = $rating_q->get_result()->fetch_assoc();
+                                    $avg_rating = $rating_result['avg_rating'] ?? 0;
+                                    $total_raters = $rating_result['total_raters'] ?? 0;
+                                    $rating_q->close();
+                                    ?>
+                                    <?php if ($total_raters > 0): ?>
+                                        <div class="flex items-center gap-1 text-orange-400 text-xs">
+                                            <?php
+                                            $full = floor($avg_rating);
+                                            $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                                            $empty = 5 - $full - $half;
+                                            for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                            if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                            for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                                            ?>
+                                            <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="text-gray-400 text-xs italic">No ratings</div>
+                                    <?php endif; ?>
                                 </div>
 
+                                <!-- Description -->
+                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                    <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
+                                        <?= htmlspecialchars($row['descrip6'] ?? '') ?>
+                                        <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
+                                        <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+
+                                    </p>
+                                    <!-- Display Origin (Local / International) -->
+                                    <p class="text-sm text-gray-600">
+                                        Origin:
+                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
+                                            <?= ucfirst($row['origin']) ?>
+                                        </span>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="text-xs text-gray-400 italic h-10">No description.</p>
+                                <?php endif; ?>
+
                                 <!-- View Button -->
-                                <div>
-                                    <a href="product_view.php?id=<?= (int)$row['id'] ?>"
-                                        class="p-2 inline-block w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200 mt-1">
+                                <div class="mt-2">
+                                    <a href="product_view?id=<?= (int)$row['id'] ?>"
+                                        class="p-2 inline-block text-center w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
                                         View Product
                                     </a>
                                 </div>
@@ -841,17 +908,45 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
-
     <!-- Top Sales Section -->
     <section class="px-4 py-10">
         <!-- Header -->
-        <div class="text-center mb-10">
+        <div class="text-center mb-10 relative">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
+                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
+                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
+                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
+            </div>
             <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
             <h2 class="text-2xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">
                 Get Up to <span class="text-red-500">30% Discount</span> on Select Items!
             </h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
         </div>
+
+        <style>
+            .bubble-bounce {
+                position: absolute;
+                display: inline-block;
+                opacity: 0.18;
+                border-radius: 50%;
+                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
+                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
+            }
+
+            @keyframes bubble-bounce {
+
+                0%,
+                100% {
+                    transform: translateY(0) scale(1);
+                }
+
+                50% {
+                    transform: translateY(-30px) scale(1.08);
+                }
+            }
+        </style>
 
         <!-- Swiper Container -->
         <div class="swiper mySwiper-material">
@@ -914,7 +1009,7 @@ $slideresult = $conn->query($sql);
                                 <!-- Buttons -->
                                 <div class="flex justify-center gap-2 mt-2 flex-wrap">
                                     <!-- Buy Button -->
-                                    <form action="product_view.php" method="GET">
+                                    <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
                                             class="bg-red-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-red-200">
@@ -937,7 +1032,7 @@ $slideresult = $conn->query($sql);
                                         <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                         <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="return_url" value="index.php">
+                                        <input type="hidden" name="return_url" value="index">
 
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
@@ -957,7 +1052,13 @@ $slideresult = $conn->query($sql);
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
         <!-- Header -->
-        <div class="text-center mb-8 sm:mb-12">
+        <div class="text-center mb-8 sm:mb-12 relative">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
+                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
+                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
+                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
+            </div>
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
                 Discount Minimal <span class="text-red-600 drop-shadow-sm">up to 15%</span>
             </h2>
@@ -966,6 +1067,28 @@ $slideresult = $conn->query($sql);
                 Discover amazing deals on premium products with exclusive discounts
             </p>
         </div>
+        <style>
+            .bubble-bounce {
+                position: absolute;
+                display: inline-block;
+                opacity: 0.18;
+                border-radius: 50%;
+                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
+                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
+            }
+
+            @keyframes bubble-bounce {
+
+                0%,
+                100% {
+                    transform: translateY(0) scale(1);
+                }
+
+                50% {
+                    transform: translateY(-30px) scale(1.08);
+                }
+            }
+        </style>
 
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
@@ -1029,7 +1152,7 @@ $slideresult = $conn->query($sql);
                                 <!-- Buttons -->
                                 <div class="flex justify-center gap-2 mt-2 flex-wrap">
                                     <!-- Buy Button -->
-                                    <form action="product_view.php" method="GET">
+                                    <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
                                             class="bg-red-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-red-200">
@@ -1052,7 +1175,7 @@ $slideresult = $conn->query($sql);
                                         <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                         <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="return_url" value="index.php">
+                                        <input type="hidden" name="return_url" value="index">
 
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
@@ -1142,7 +1265,7 @@ $slideresult = $conn->query($sql);
 
                                     <div class="flex justify-center gap-2 mt-2">
                                         <!-- Shop Button -->
-                                        <form action="product_view.php" method="GET">
+                                        <form action="product_view" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button
                                                 type="submit"
@@ -1167,7 +1290,7 @@ $slideresult = $conn->query($sql);
                                             <input type="hidden" name="color_price" value="<?= $row['color_price'] ?? 0 ?>">
                                             <input type="hidden" name="variant_price" value="<?= $row['variant_price'] ?? 0 ?>">
                                             <input type="hidden" name="total_price" value="<?= $row['variant_price'] ?? 0 ?>">
-                                            <input type="hidden" name="return_url" value="index.php">
+                                            <input type="hidden" name="return_url" value="index">
 
                                             <button
                                                 type="submit"
@@ -1396,8 +1519,6 @@ $slideresult = $conn->query($sql);
 
 
     <script>
-
-  
         const swiperss = new Swiper(".mySwiper", {
             loop: true,
             autoplay: {
@@ -1544,7 +1665,7 @@ $slideresult = $conn->query($sql);
                             formData.set('color_price', '0');
                         }
 
-                        const response = await fetch('cart/add_to_cart.php', {
+                        const response = await fetch('cart/add_to_cart', {
                             method: 'POST',
                             body: formData
                         });

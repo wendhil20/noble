@@ -27,6 +27,8 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
 
 // Update last activity time
 $_SESSION['last_activity'] = time();
+$categoryQuery = "SELECT * FROM categories";
+$categoryResult = mysqli_query($conn, $categoryQuery);
 
 ?>
 
@@ -60,10 +62,18 @@ $_SESSION['last_activity'] = time();
         <input type="file" name="main_image" accept="image/*" required class="w-full" />
       </div>
 
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Codename</label>
-        <input type="text" name="codename" required class="w-full border p-2 rounded" />
-      </div>
+  <div class="mb-4">
+  <label class="block font-semibold mb-1">Category</label>
+  <select name="codename" required class="w-full border p-2 rounded">
+    <option value="">-- Select Category --</option>
+    <?php while($row = mysqli_fetch_assoc($categoryResult)): ?>
+      <option value="<?= htmlspecialchars($row['name']) ?>">
+        <?= htmlspecialchars($row['name']) ?>
+      </option>
+    <?php endwhile; ?>
+  </select>
+</div>
+
 
       <div class="mb-4">
         <label class="block font-semibold mb-1">Quantity</label>

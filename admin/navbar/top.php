@@ -495,6 +495,13 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl'])) {
                                 </a>
                             <?php endif; ?>
 
+                                 <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                <a href="../shop/add_category"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Add Category</span>
+                                </a>
+                            <?php endif; ?>
+
                             <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
 
                                 <a href="../client/add_driver"

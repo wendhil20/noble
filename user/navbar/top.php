@@ -16,10 +16,12 @@ foreach ($cart as $item) {
 <!-- Tailwind + Alpine CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <style>
+      .nav {
+      font-family: 'Poppins', sans-serif;
+    }
   [x-cloak] {
     display: none !important;
   }
@@ -266,8 +268,8 @@ foreach ($cart as $item) {
 
           <?php if (isset($_SESSION['user_name'])): ?>
             <!-- ✅ Logged in -->
-            <div class="text-black flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="text-black flex items-center gap-2    ">
+              <svg xmlns="http://www.w3.org/2000/svg" class="bg-black w-5 h-5 text-orange-500 rounded-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>

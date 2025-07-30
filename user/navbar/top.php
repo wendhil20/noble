@@ -175,14 +175,16 @@ foreach ($cart as $item) {
             class="absolute z-50 bg-white shadow-lg rounded mt-2 w-64 md:w-96 max-h-80 overflow-y-auto border border-gray-200">
             <template x-if="results.length > 0">
               <ul>
-                <template x-for="item in results" :key="item.id">
-                  <li class="border-b last:border-0">
-                    <a
-                      class="block px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
-                      :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
-                      x-text="item.product_name"></a>
-                  </li>
-                </template>
+               <template x-for="item in results" :key="item.id">
+  <li class="border-b last:border-0">
+    <a
+      class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
+      :href="'shop.php?search=' + encodeURIComponent(item.product_name)">
+      <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+      <span x-text="item.product_name"></span>
+    </a>
+  </li>
+</template>
               </ul>
             </template>
             <template x-if="results.length === 0 && search.length > 1">

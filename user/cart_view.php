@@ -243,7 +243,8 @@ if ($user_id) {
                   <th class="py-3 px-4">Unit Price</th>
                   <th class="py-3 px-4">Total</th>
                   <th class="py-3 px-4">Image</th>
-                  <th class="py-3 px-4">Remove</th>
+                  <th class="py-3 px-4">Origin</th>
+                  <th class="py-3 px-4">Action</th>
                 </tr>
               </thead>
 

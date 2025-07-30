@@ -235,7 +235,6 @@ if ($user_id) {
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left border-collapse ">
 
-<<<<<<<<< Temporary merge branch 1
               <thead class="bg-orange-600 text-white uppercase text-xs rounded-lg">
   <tr>
     <th class="py-3 px-4">Category</th>

@@ -55,7 +55,7 @@ unset($_SESSION['checkout_notice']);
 if ($user_id) {
 
   $stmt = $conn->prepare("
-  SELECT c.*, t.type_image, v.descrip6, v.descrip7
+  SELECT c.*, t.type_image, v.descrip6, v.descrip7, v.origin
   FROM user_cart_items c
   LEFT JOIN product_types t 
       ON t.product_id = c.product_id AND t.type_name = c.type_name
@@ -286,6 +286,15 @@ if ($user_id) {
                         <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">No Image</div>
                       <?php endif; ?>
                     </td>
+
+                    <!-- ADD THIS NEW CELL FOR ORIGIN -->
+<td class="py-3 px-4">
+  <?php if (!empty($item['origin'])): ?>
+    <span class="text-blue-600 font-medium text-sm"><?= htmlspecialchars($item['origin']) ?></span>
+  <?php else: ?>
+    <span class="text-gray-400 text-sm">—</span>
+  <?php endif; ?>
+</td>
 
                     <td class="py-3 px-4 align-middle">
                       <a href="cart/remove_from_cart.php?key=<?= $item['id'] ?>"

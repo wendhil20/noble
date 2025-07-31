@@ -1,4 +1,5 @@
 <?php
+//order_details.php
 session_name("nobleadmin");
 include '../../connection/connect.php';
 include '../role/roleaccount.php';
@@ -294,6 +295,9 @@ include '../navbar/top.php';
                       <span class="font-medium">Details:</span> ${item.descrip6 || ''} ${item.descrip7 || ''}
                     </p>
                   ` : ''}
+                  <p class="text-sm text-gray-600">
+  <span class="font-medium">Origin:</span> ${item.origin || 'N/A'}
+</p>
                 </div>
               </div>
             </div>

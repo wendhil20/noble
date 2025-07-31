@@ -159,6 +159,7 @@ if ($user_id) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -177,6 +178,53 @@ if ($user_id) {
                         'slide-up': 'slideUp 0.3s ease-out',
                         'bounce-in': 'bounceIn 0.6s ease-out',
                         'pulse-slow': 'pulse 3s infinite'
+                    }
+
+                }
+
+            }
+        }
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        // Sans-serif fonts
+                        poppins: ['Poppins', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                        lato: ['Lato', 'sans-serif'],
+                        opensans: ['"Open Sans"', 'sans-serif'],
+                        source: ['"Source Sans Pro"', 'sans-serif'],
+                        raleway: ['Raleway', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                        mont: ['Montserrat', 'sans-serif'],
+                        roboto: ['Roboto', 'sans-serif'],
+                        quicksand: ['Quicksand', 'sans-serif'],
+                        work: ['"Work Sans"', 'sans-serif'],
+                        rubik: ['Rubik', 'sans-serif'],
+                        fira: ['"Fira Sans"', 'sans-serif'],
+                        ubuntu: ['Ubuntu', 'sans-serif'],
+                        barlow: ['Barlow', 'sans-serif'],
+                        manrope: ['Manrope', 'sans-serif'],
+                        dmsans: ['"DM Sans"', 'sans-serif'],
+                        space: ['"Space Grotesk"', 'sans-serif'],
+
+                        // Serif fonts
+                        merri: ['Merriweather', 'serif'],
+                        playfair: ['"Playfair Display"', 'serif'],
+                        libre: ['"Libre Baskerville"', 'serif'],
+                        crimson: ['"Crimson Text"', 'serif'],
+                        garamond: ['"EB Garamond"', 'serif'],
+                        lora: ['Lora', 'serif'],
+
+                        // Display/Decorative fonts
+                        vibes: ['"Great Vibes"', 'cursive'],
+                        dancing: ['"Dancing Script"', 'cursive'],
+                        pacifico: ['Pacifico', 'cursive'],
+                        lobster: ['Lobster', 'cursive'],
+                        oswald: ['Oswald', 'sans-serif'],
+                        bebas: ['"Bebas Neue"', 'sans-serif'],
+                        anton: ['Anton', 'sans-serif'],
                     }
                 }
             }
@@ -247,119 +295,262 @@ if ($user_id) {
             transform: translateY(-5px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Bouncing animation for bubbles */
+        .bubble1 {
+            animation: bubble-bounce1 7s ease-in-out infinite alternate;
+        }
+
+        .bubble2 {
+            animation: bubble-bounce2 6s ease-in-out infinite alternate;
+        }
+
+        .bubble3 {
+            animation: bubble-bounce3 8s ease-in-out infinite alternate;
+        }
+
+        .bubble4 {
+            animation: bubble-bounce4 5.5s ease-in-out infinite alternate;
+        }
+
+        .bubble5 {
+            animation: bubble-bounce5 7.5s ease-in-out infinite alternate;
+        }
+
+        .bubble6 {
+            animation: bubble-bounce6 6.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes bubble-bounce1 {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-60px) scale(1.08);
+            }
+        }
+
+        @keyframes bubble-bounce2 {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-40px) scale(1.12);
+            }
+        }
+
+        @keyframes bubble-bounce3 {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-70px) scale(1.05);
+            }
+        }
+
+        @keyframes bubble-bounce4 {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-30px) scale(1.15);
+            }
+        }
+
+        @keyframes bubble-bounce5 {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-55px) scale(1.09);
+            }
+        }
+
+        @keyframes bubble-bounce6 {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-35px) scale(1.13);
+            }
+        }
+
+        @keyframes bounceFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15%);
+            }
+        }
+
+        .animate-bounce-slow {
+            animation: bounceFloat 5s ease-in-out infinite;
+        }
+
+        .animate-bounce-med {
+            animation: bounceFloat 3s ease-in-out infinite;
+        }
+
+        .animate-bounce-fast {
+            animation: bounceFloat 2s ease-in-out infinite;
+        }
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
+<body class="bg-orange-50 ">
 
     <?php include 'navbar/top.php'; ?>
 
-    <div class="container max-w-8xl mx-auto ">
-        <!-- Hero Section with Profile -->
-        <div class="relative overflow-hidden bg-orange-500 p-6 md:p-8 mb-8 text-white shadow-xl animate-fade-in">
-    <div class="absolute inset-0 bg-black/10"></div>
 
-    <div class="relative z-10 flex flex-col md:flex-row gap-8">
-        <!-- LEFT: Profile Section -->
-        <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
-            <!-- Profile Picture -->
-            <div class="relative group">
-                <div class="w-28 h-28 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm flex items-center justify-center overflow-hidden border-4 border-white/30 group-hover:scale-105 transition-transform duration-300 shadow-xl">
-                    <?php if ($user_picture): ?>
-                        <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile" class="w-full h-full object-cover">
-                    <?php else: ?>
-                        <span class="text-3xl md:text-4xl font-bold text-white"><?= strtoupper(substr($user_name, 0, 1)); ?></span>
-                    <?php endif; ?>
-                </div>
-                <!-- Verified Badge -->
-                <div class="absolute -bottom-2 right-2 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
+    <div class="container max-w-full mx-auto">
+        <!-- Hero Section -->
+        <div class="gradient-bg text-white relative overflow-hidden">
+            <div class="absolute inset-0 pointer-events-none z-0">
+                <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
+                    <circle class="bubble bubble2" cx="25%" cy="90%" r="18" fill="#fff" fill-opacity="0.10" />
+                    <circle class="bubble bubble3" cx="40%" cy="85%" r="24" fill="#fff" fill-opacity="0.09" />
+                    <circle class="bubble bubble4" cx="60%" cy="92%" r="14" fill="#fff" fill-opacity="0.11" />
+                    <circle class="bubble bubble5" cx="75%" cy="88%" r="28" fill="#fff" fill-opacity="0.12" />
+                    <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
+                </svg>
+            </div>
+            <div class="bg-orange-400 text-black py-5">
+                <div class="container mx-auto px-4 font-mont uppercase">
+                    <h1 class="text-4xl font-bold text-center mb-4">Profile</h1>
+                    <p class="text-xl text-center opacity-90 font-bold">Manage your account information, orders, and saved addresses</p>
                 </div>
             </div>
 
-            <!-- Name & Email -->
-            <div>
-                <h1 class="text-2xl md:text-4xl font-bold text-white drop-shadow-sm"><?= htmlspecialchars($user_name); ?></h1>
-                <p class="text-base md:text-lg text-white/90"><?= htmlspecialchars($user_email); ?></p>
-                <span class="inline-block mt-3 px-4 py-1 bg-white/10 border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
-                    <?= count($all_orders); ?> Orderss
-                </span>
-            </div>
         </div>
 
-        <!-- RIGHT: Stats Section -->
-        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-            <!-- Total Orders -->
-            <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Total Orders</p>
-                        <p class="text-3xl md:text-4xl font-extrabold text-gray-900"><?= count($all_orders); ?></p>
-                    </div>
-                    <div class="w-12 h-12 md:w-14 md:h-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 md:w-7 md:h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                    </div>
-                </div>
+        <div class="relative overflow-hidden bg-orange-400 p-6 md:p-8 mb-8 text-white shadow-xl animate-fade-in">
+            <!-- Bubbles -->
+            <div class="absolute inset-0 overflow-hidden z-0 pointer-events-none">
+                <div class="absolute w-16 h-16 bg-white/20 rounded-full top-10 left-10 animate-bounce-slow"></div>
+                <div class="absolute w-12 h-12 bg-white/10 rounded-full bottom-16 right-8 animate-bounce-med"></div>
+                <div class="absolute w-20 h-20 bg-white/30 rounded-full top-32 right-24 animate-bounce-fast"></div>
+                <div class="absolute w-10 h-10 bg-white/15 rounded-full bottom-12 left-20 animate-bounce-med"></div>
             </div>
 
-            <!-- Pending Orders -->
-            <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Pending Orders</p>
-                        <p class="text-3xl md:text-4xl font-extrabold text-yellow-500"><?= count($pending_orders); ?></p>
-                    </div>
-                    <div class="w-12 h-12 md:w-14 md:h-14 bg-yellow-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 md:w-7 md:h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
+            <!-- Main content -->
+            <div class="relative z-20 flex flex-col md:flex-row gap-8">
+                <!-- LEFT: Profile Section -->
+                <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
+                    <!-- Profile Picture Section -->
+<div class="relative group">
+  <!-- Profile Image Container -->
+  <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
+    <?php if ($user_picture): ?>
+      <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+    <?php else: ?>
+      <span class="text-3xl md:text-4xl font-bold text-black font-serif">
+        <?= strtoupper(substr($user_name, 0, 1)); ?>
+      </span>
+    <?php endif; ?>
+  </div>
 
-            <!-- Billing Address -->
-            <div class="col-span-1 sm:col-span-2 bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                    <div class="flex items-center w-full sm:w-auto">
-                        <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 rounded-xl flex items-center justify-center mr-4">
-                            <svg class="w-6 h-6 md:w-7 md:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Delivery Addresses</p>
-                            <p class="text-lg font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
-                        </div>
-                    </div>
-
-                    <div class="w-full sm:w-auto">
-                        <button onclick="openBillingModal()" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex justify-center items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                           
-                        </button>
-                    </div>
-                </div>
-
-                <button onclick="window.location.href='update_billing_add.php'" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add New Address
-                </button>
-            </div>
-        </div>
-    </div>
+  <!-- Verified Badge -->
+  <div class="absolute -bottom-2 right-2 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Verified Account">
+    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+    </svg>
+  </div>
 </div>
 
 
+                    <!-- Name & Email -->
+                    <div class="font-mont">
+                        <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm "><?= htmlspecialchars($user_name); ?></h1>
+                        <p class="text-base md:text-lg text-black "><?= htmlspecialchars($user_email); ?></p>
+                        <span class="inline-block mt-3 px-4 py-1 bg-black border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
+                            <?= count($all_orders); ?> Orders
+                        </span>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Stats Section -->
+                <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full font-mont">
+                    <!-- Total Orders -->
+                    <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                                <p class="text-3xl md:text-4xl font-extrabold text-gray-900"><?= count($all_orders); ?></p>
+                            </div>
+                            <div class="w-12 h-12 md:w-14 md:h-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 md:w-7 md:h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Orders -->
+                    <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 ">Pending Orders</p>
+                                <p class="text-3xl md:text-4xl font-extrabold text-yellow-500"><?= count($pending_orders); ?></p>
+                            </div>
+                            <div class="w-12 h-12 md:w-14 md:h-14 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 md:w-7 md:h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Billing Address -->
+                    <div class="col-span-1 sm:col-span-2 bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center w-full sm:w-auto">
+                                <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6 md:w-7 md:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600 ">Delivery Addresses</p>
+                                    <p class="text-lg font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
+                                </div>
+                            </div>
+
+                            <div class="w-full sm:w-auto">
+                                <button onclick="openBillingModal()" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex justify-center items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onclick="window.location.href='update_billing_add.php'" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add New Address
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Main Content Grid - SWAPPED LAYOUT -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-1">
@@ -425,28 +616,28 @@ if ($user_id) {
                                         <div class="text-right">
                                             <p class="font-bold text-lg text-gray-900">₱<?php echo number_format($order['final_total'], 2); ?></p>
                                             <span class="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full
-<?php
-                                switch ($order['status']) {
-                                    case 'Pending':
-                                        echo 'bg-orange-100 text-orange-800';
-                                        break;
-                                    case 'Ongoing':
-                                        echo 'bg-blue-100 text-blue-800';
-                                        break;
-                                    case 'Arrival':
-                                        echo 'bg-purple-100 text-purple-800';
-                                        break;
-                                    case 'Departure':
-                                        echo 'bg-yellow-100 text-yellow-800';
-                                        break;
-                                    case 'Complete':
-                                        echo 'bg-green-100 text-green-800';
-                                        break;
-                                    default:
-                                        echo 'bg-gray-100 text-gray-800';
-                                        break;
-                                }
-?>">
+                                 <?php
+                                    switch ($order['status']) {
+                                        case 'Pending':
+                                            echo 'bg-orange-100 text-orange-800';
+                                            break;
+                                        case 'Ongoing':
+                                            echo 'bg-blue-100 text-blue-800';
+                                            break;
+                                        case 'Arrival':
+                                            echo 'bg-purple-100 text-purple-800';
+                                            break;
+                                        case 'Departure':
+                                            echo 'bg-yellow-100 text-yellow-800';
+                                            break;
+                                        case 'Complete':
+                                            echo 'bg-green-100 text-green-800';
+                                            break;
+                                        default:
+                                            echo 'bg-gray-100 text-gray-800';
+                                            break;
+                                    }
+                                    ?>">
                                                 <?php if ($order['status'] === 'Pending'): ?>
                                                     <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
                                                 <?php elseif ($order['status'] === 'Complete'): ?>

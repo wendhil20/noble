@@ -398,8 +398,6 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
-
-
     <section class="bg-gradient-to-r from-orange-500 to-red-500 text-white py-1 px-2 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 
@@ -523,7 +521,7 @@ $slideresult = $conn->query($sql);
 
             foreach ($categories as $code => $data): ?>
                 <a href="shop?category[]=<?= $code ?>"
-                    class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-500 hover:bg-orange-400 text-white font-semibold shadow-lg transition text-center text-sm">
+                    class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
                     <i data-lucide="<?= $data['icon'] ?>" class="w-6 h-6 mb-1"></i>
                     <?= $data['label'] ?>
                 </a>

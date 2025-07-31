@@ -1,5 +1,5 @@
 <?php
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 $search = trim($_GET['search'] ?? '');
 
@@ -17,7 +17,7 @@ $res = $stmt->get_result();
 $results = [];
 while ($row = $res->fetch_assoc()) {
   // Optionally add base path to the image if needed
-  $row['main_image'] = '../' . $row['main_image'];  // <-- adjust path if needed
+  $row['main_image'] = '../../' . $row['main_image'];  // <-- adjust path if needed
   $results[] = $row;
 }
 

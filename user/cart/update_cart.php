@@ -5,7 +5,7 @@ include '../../connection/connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['user_id'])) {
-        header("Location: ../cart_view.php");
+        header("Location: ../otherpage/cart_view.php");
         exit;
     }
 
@@ -24,5 +24,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-header("Location: ../cart_view.php");
+header("Location: ../otherpage/cart_view.php");
 exit;

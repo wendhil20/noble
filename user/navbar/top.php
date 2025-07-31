@@ -43,7 +43,7 @@ foreach ($cart as $item) {
     }
   }
 
-   /* Hide scrollbar by default, show on hover/scroll */
+  /* Hide scrollbar by default, show on hover/scroll */
   .scroll-hidden::-webkit-scrollbar {
     height: 4px;
   }
@@ -54,8 +54,9 @@ foreach ($cart as $item) {
   }
 
   .scroll-hidden {
-    scrollbar-width: thin; /* Firefox */
-    scrollbar-color: rgba(0,0,0,0.3) transparent;
+    scrollbar-width: thin;
+    /* Firefox */
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
   }
 
   .scroll-hidden::-webkit-scrollbar {
@@ -64,6 +65,18 @@ foreach ($cart as $item) {
 
   .scroll-hidden:hover::-webkit-scrollbar {
     visibility: visible;
+  }
+
+  .scroll-hidden {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+  }
+
+  .scroll-hidden::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
   }
 </style>
 
@@ -150,7 +163,7 @@ foreach ($cart as $item) {
       <div class="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
 
       <!-- Center image -->
-      <img src="img/logo/logo.png" alt="Loading" class="bg-white w-20 h-20 object-contain rounded-full shadow-md z-10 p-2" />
+      <img src="../img/logo.png" alt="Loading" class="bg-white w-20 h-20 object-contain rounded-full shadow-md z-10 p-2" />
     </div>
   </div>
 </div>
@@ -180,29 +193,35 @@ foreach ($cart as $item) {
 
       <!-- Breadcrumb -->
       <span class="mx-2">|</span>
-      <a href="about" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
+      <a href="about/about" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
       <span class="mx-2">|</span>
-      <a href="contact" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
+      <a href="contact/contact" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
     </div>
   </div>
 </div>
 
-
 <!-- Navigation -->
-<nav x-data="{ mobileOpen: false }" class="bg-white shadow-lg sticky top-0 z-50 text-black font-bold">
-  <div class=" px-4">
-    <div class="flex justify-between items-center py-4">
-      <a href="javascript:void(0)" onclick="navigateWithLoading('index')"
-        class="flex items-center space-x-3 hover:opacity-80 transition duration-200">
+<nav x-data="{ 
+    mobileOpen: false, 
+    loginOpen: false, 
+    registerOpen: false,
+    productsOpen: false,
+    profileOpen: false,
+    selectedCategory: null
+}" class="bg-white shadow-lg sticky top-0 z-50 text-black font-bold">
 
-        <!-- Logo Image -->
-        <div class="w-12 h-12 verflow-hidden">
-          <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain ">
+  <div class="max-w-full mx-auto px-3 sm:px-4 lg:px-6">
+    <div class="flex justify-between items-center py-3 sm:py-4">
+
+      <!-- Logo - Made more compact on mobile -->
+      <a href="javascript:void(0)" onclick="navigateWithLoading('index.php')"
+        class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
+
+        <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
+          <img src="../logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
         </div>
-
-        <!-- Text Branding -->
         <div class="leading-snug">
-          <span class="block text-[1.5rem] font-extrabold text-orange-400 tracking-tight font-mont">
+          <span class="block text-sm sm:text-lg lg:text-xl font-extrabold text-orange-400 tracking-tight font-mont">
             NobleHome
           </span>
           <span class="block text-xs text-gray-800 tracking-tight font-semibold font-mont">
@@ -211,26 +230,81 @@ foreach ($cart as $item) {
         </div>
       </a>
 
+      <!-- Mobile Cart & User Icons (visible on mobile before hamburger) -->
+      <div class="flex items-center space-x-3 lg:hidden">
+        
+        <!-- Mobile Cart Icon -->
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/cart_view')"
+          class="relative p-2 hover:bg-gray-100 rounded-full transition">
+          <img src="../img/ecommerce.png" alt="Cart" class="w-5 h-5 object-contain" />
+          <span class="cart-count absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+            <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+          </span>
+        </a>
 
-      <!-- Desktop Links -->
-      <div class="hidden md:flex space-x-6 items-center uppercase">
+        <!-- Mobile User Icon -->
+        <?php if (isset($_SESSION['user_name'])): ?>
+          <div class="relative">
+            <button @click="profileOpen = !profileOpen" class="flex items-center focus:outline-none p-1">
+              <div class="w-7 h-7 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
+                <?php if (!empty($_SESSION['user_picture'])): ?>
+                  <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile" class="w-full h-full object-cover">
+                <?php else: ?>
+                  <div class="w-full h-full flex items-center justify-center bg-orange-100">
+                    <span class="text-xs font-bold text-orange-800 font-mont">
+                      <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                    </span>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </button>
 
+            <!-- Mobile Profile Dropdown -->
+            <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
+              class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+              <div class="py-2 px-3 text-sm text-gray-700 border-b">
+                <span class="block truncate"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+              </div>
+              <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                Logout
+              </a>
+            </div>
+          </div>
+        <?php else: ?>
+          <button @click="loginOpen = true" class="p-2 hover:bg-gray-100 rounded-full transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        <?php endif; ?>
+
+        <!-- Mobile Hamburger -->
+        <button @click="mobileOpen = !mobileOpen" class="text-gray-700 focus:outline-none p-2 hover:bg-gray-100 rounded-lg transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              :d="mobileOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <div class="hidden lg:flex space-x-6 items-center uppercase">
+
+        <!-- Search -->
         <div x-data="{
-    openModal: false,
-    search: '',
-    results: [],
-    fetchResults() {
-        if (this.search.trim() === '') return;
-        fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
-            .then(res => res.json())
-            .then(data => {
-                this.results = data;
-                this.openModal = true;
-            });
-    }
-}" class="relative">
+            search: '',
+            results: [],
+            fetchResults() {
+                if (this.search.trim() === '') return;
+                fetch(`../otherpage/search_ajax.php?search=${encodeURIComponent(this.search)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.results = data;
+                    });
+            }
+        }" class="relative">
 
-          <!-- Input + Button -->
           <div class="flex items-center space-x-2 font-mont">
             <input
               type="text"
@@ -240,54 +314,46 @@ foreach ($cart as $item) {
               class="border border-gray-300 px-3 py-1.5 rounded w-48 md:w-64 text-sm outline-orange-500">
             <button
               @click="fetchResults"
-              class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition ">
+              class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition">
               Search
             </button>
           </div>
 
-          <!-- Modal Dropdown -->
           <div
-            x-show="openModal"
+            x-show="results.length > 0"
             x-cloak
-            @click.away="openModal = false"
+            @click.away="results = []"
             class="absolute z-50 bg-white shadow-lg rounded mt-2 w-64 md:w-96 max-h-80 overflow-y-auto border border-gray-200">
-            <template x-if="results.length > 0">
-              <ul>
-                <template x-for="item in results" :key="item.id">
-                  <li class="border-b last:border-0">
-                    <a
-                      class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
-                      :href="'shop.php?search=' + encodeURIComponent(item.product_name)">
-                      <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
-                      <span x-text="item.product_name"></span>
-                    </a>
-                  </li>
-                </template>
-              </ul>
-            </template>
-            <template x-if="results.length === 0 && search.length > 1">
-              <p class="p-4 text-sm text-gray-500">No results found.</p>
-            </template>
+            <ul>
+              <template x-for="item in results" :key="item.id">
+                <li class="border-b last:border-0">
+                  <a
+                    class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
+                    :href="'../otherpage/shop.php?search=' + encodeURIComponent(item.product_name)">
+                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+                    <span x-text="item.product_name"></span>
+                  </a>
+                </li>
+              </template>
+            </ul>
           </div>
         </div>
 
         <!-- Products Dropdown -->
-        <div x-data="{ open: false, selected: null }" class="relative">
-          <button @click="open = !open" class="text-black hover:text-orange-500 transition font-mont uppercase">Products</button>
+        <div class="relative">
+          <button @click="productsOpen = !productsOpen" class="text-black hover:text-orange-500 transition font-mont uppercase">Products</button>
 
-          <div x-show="open" @click.away="open = false" x-transition x-cloak
+          <div x-show="productsOpen" @click.away="productsOpen = false" x-transition x-cloak
             class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
-            <!-- Main Categories -->
             <div class="w-1/2 border-r p-4 space-y-2 font-mont">
-              <button @mouseenter="selected = 'materials'"
+              <button @mouseenter="selectedCategory = 'materials'"
                 class="block w-full text-left hover:text-orange-500 text-sm">Materials</button>
-              <button @mouseenter="selected = 'furniture'"
+              <button @mouseenter="selectedCategory = 'furniture'"
                 class="block w-full text-left hover:text-orange-500 text-sm">Furniture</button>
             </div>
 
-            <!-- Subpanel -->
             <div class="w-1/2 p-4 font-mont">
-              <template x-if="selected === 'materials'">
+              <template x-if="selectedCategory === 'materials'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
                     class="block hover:text-orange-500 text-sm">WPC Panels</a>
@@ -296,7 +362,7 @@ foreach ($cart as $item) {
                 </div>
               </template>
 
-              <template x-if="selected === 'furniture'">
+              <template x-if="selectedCategory === 'furniture'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
                     class="block hover:text-orange-500 text-sm">Chairs</a>
@@ -308,275 +374,740 @@ foreach ($cart as $item) {
           </div>
         </div>
 
-
-
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('profile')"
+        <!-- Profile Link -->
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
           class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition font-mont">
           Profile
         </a>
 
-        <a href="javascript:void(0)" onclick="navigateWithLoading('shop')"
+        <!-- Shop Link -->
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
           class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
-          <!-- Replace this with your actual image path -->
-          <img src="img/icon/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
+          <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
           Shop
         </a>
 
-        <a href="javascript:void(0)" onclick="navigateWithLoading('cart_view')"
+        <!-- Cart Link -->
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/cart_view')"
           class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont">
-          <!-- Cart Icon Image -->
-          <img src="img/icon/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-          <!-- Text -->
+          <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
           Cart
-          <!-- Cart Count Bubble -->
           <span id="cart-count-bubble" class="cart-count absolute -top-2 -right-3 bg-red-500 text-white text-[10px] px-1 py-0.5 p-1 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
             <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
           </span>
         </a>
 
-        <!-- Wrapper Alpine Component -->
-        <div x-data="{ loginOpen: false, registerOpen: false }">
+        <!-- User Authentication -->
+        <?php if (isset($_SESSION['user_name'])): ?>
+          <div class="relative">
+            <button @click="profileOpen = !profileOpen" class="flex items-center gap-2 focus:outline-none">
+              <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
+                <?php if (!empty($_SESSION['user_picture'])): ?>
+                  <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile" class="w-full h-full object-cover">
+                <?php else: ?>
+                  <div class="w-full h-full flex items-center justify-center bg-orange-100">
+                    <span class="text-xs font-bold text-orange-800 font-mont">
+                      <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                    </span>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </button>
 
-     <?php if (isset($_SESSION['user_name'])): ?>
-  <div x-data="{ open: false }" class="relative inline-block text-left">
-    <!-- ✅ Profile Trigger -->
-    <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
-      <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
-        <?php if (!empty($_SESSION['user_picture'])): ?>
-          <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile" class="w-full h-full object-cover">
+            <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
+              class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+              <div class="py-2 px-2 text-sm text-gray-700 border-b max-w-full overflow-x-auto whitespace-nowrap">
+                <span class="block w-max"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+              </div>
+              <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                Logout
+              </a>
+            </div>
+          </div>
         <?php else: ?>
-          <div class="w-full h-full flex items-center justify-center bg-orange-100">
-            <span class="text-xs font-bold text-orange-800 font-mont">
-              <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
-            </span>
+          <div class="relative">
+            <button @click="loginOpen = !loginOpen" class="text-black hover:text-orange-500 transition flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Login
+            </button>
+
+            <!-- Desktop Login Dropdown -->
+            <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
+              class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50">
+              
+              <h2 class="text-xl font-bold text-gray-800 mb-4">Login</h2>
+              
+              <form x-data="loginForm()" @submit.prevent="handleLogin($event)">
+                <!-- Email/Mobile Input -->
+                <div class="mb-4">
+                  <label for="login_input" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
+                  <input type="text" id="login_input" name="login" x-model="loginInput" @input="checkLoginType"
+                    placeholder="you@example.com or 09123456789" required
+                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- Password field (shown for mobile or after OTP verified for email) -->
+                <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="mb-4">
+                  <label for="password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
+                  <input type="password" id="password" name="password" x-model="password"
+                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- OTP Send Button (shown for email before OTP is sent) -->
+                <div x-show="isEmail && !otpSent && !otpVerified" x-transition>
+                  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
+                  <button
+                    type="button"
+                    @click="sendOTP"
+                    :disabled="otpLoading || resendCooldown > 0"
+                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded mb-2">
+                    <template x-if="!otpLoading && resendCooldown === 0">
+                      <span>Send OTP</span>
+                    </template>
+                    <template x-if="otpLoading">
+                      <span>Sending...</span>
+                    </template>
+                    <template x-if="!otpLoading && resendCooldown > 0">
+                      <span>Resend in <span x-text="resendCooldown"></span>s</span>
+                    </template>
+                  </button>
+                </div>
+
+                <!-- OTP Input Section (shown after OTP is sent but not verified) -->
+                <div x-show="otpSent && !otpVerified" x-transition class="mb-4">
+                  <label class="block text-sm font-medium text-gray-600 mb-2">Enter OTP</label>
+                  <p class="text-xs text-gray-500 mb-2">We sent a verification code to your email</p>
+
+                  <input type="text" x-model="otp" maxlength="6"
+                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 mb-3 text-center text-lg tracking-widest"
+                    placeholder="000000">
+
+                  <div class="flex gap-2">
+                    <button type="button" @click="cancelOTP"
+                      class="flex-1 py-2 bg-gray-300 rounded hover:bg-gray-400 text-sm">Cancel</button>
+                    <button type="button" @click="verifyOTP" :disabled="!otp || otp.length < 4"
+                      class="flex-1 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-orange-300 text-sm">
+                      Verify
+                    </button>
+                  </div>
+
+                  <!-- Resend OTP section -->
+                  <div class="mt-3 text-center">
+                    <template x-if="resendCooldown > 0">
+                      <p class="text-sm text-gray-500">Resend in <span x-text="resendCooldown"></span>s</p>
+                    </template>
+                    <template x-if="resendCooldown === 0">
+                      <button @click="sendOTP" class="text-blue-500 hover:underline text-sm" type="button">
+                        Resend OTP
+                      </button>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Remember Me (for mobile only) -->
+                <div class="flex items-center gap-2 mb-4" x-show="isMobile">
+                  <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
+                  <label for="remember" class="text-sm text-gray-600">Remember me</label>
+                </div>
+
+                <!-- Login Button (shown for mobile or after OTP verified for email) -->
+                <button
+                  type="submit"
+                  :disabled="submitLoading"
+                  x-show="(isMobile || (isEmail && otpVerified))"
+                  class="w-full mb-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-2 px-4 rounded-lg">
+                  <span x-show="!submitLoading">Log In</span>
+                  <span x-show="submitLoading">Logging in...</span>
+                </button>
+
+                <!-- Error/Success Messages -->
+                <div x-show="errorMessage" x-transition class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  <span x-text="errorMessage"></span>
+                </div>
+
+                <div x-show="successMessage" x-transition class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                  <span x-text="successMessage"></span>
+                </div>
+
+                <!-- Additional Links -->
+                <div class="text-center text-xs mb-2">
+                  <a href="forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
+                </div>
+
+                <div class="text-center text-xs mb-4">
+                  <span>Don't have an account?</span>
+                  <a href="#" @click.prevent="registerOpen = true; loginOpen = false" class="text-orange-500 hover:underline font-medium">Register</a>
+                </div>
+
+                <!-- Google Login -->
+                <div class="text-center">
+                  <a href="../google-login.php"
+                    class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
+                    <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
+                      <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
+                      <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
+                      <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
+                    </svg>
+                    Login with Google
+                  </a>
+                </div>
+              </form>
+            </div>
           </div>
         <?php endif; ?>
       </div>
-    </button>
+    </div>
 
-    <!-- ✅ Dropdown Menu -->
-    <div x-show="open" @click.outside="open = false"
-         class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50"
-         x-transition>
-         
-      <!-- ✅ Scrollable Name Area -->
-      <div class="py-2 px-2 text-sm text-gray-700 border-b max-w-full overflow-x-auto whitespace-nowrap scroll-hidden">
-        <span class="block w-max">
-          <?= htmlspecialchars($_SESSION['user_name']) ?>
-        </span>
+    <!-- Mobile Menu -->
+    <div x-show="mobileOpen" x-cloak @click.away="mobileOpen = false" x-transition
+      class="lg:hidden border-t border-gray-200 py-4 space-y-4 bg-white">
+
+      <!-- Mobile Search -->
+      <div x-data="{
+          search: '',
+          results: [],
+          searchOpen: false,
+          fetchResults() {
+              if (this.search.trim() === '') {
+                this.results = [];
+                this.searchOpen = false;
+                return;
+              }
+              fetch(`../otherpage/search_ajax.php?search=${encodeURIComponent(this.search)}`)
+                  .then(res => res.json())
+                  .then(data => {
+                      this.results = data;
+                      this.searchOpen = true;
+                  });
+          }
+      }" class="px-4">
+        <div class="flex items-center space-x-2">
+          <input
+            type="text"
+            x-model="search"
+            @input="fetchResults"
+            @keydown.enter="fetchResults"
+            @focus="searchOpen = true"
+            placeholder="Search products..."
+            class="flex-1 border border-gray-300 px-3 py-3 rounded-lg text-sm outline-orange-500 focus:border-orange-500">
+          <button
+            @click="fetchResults"
+            class="bg-orange-400 text-white px-4 py-3 rounded-lg text-sm hover:bg-orange-600 transition flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5A7 7 0 11 1 9a7 7 0 0112 0z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div x-show="searchOpen && results.length > 0" x-cloak x-transition @click.away="searchOpen = false"
+          class="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <template x-for="item in results" :key="item.id">
+            <a :href="'../otherpage/shop.php?search=' + encodeURIComponent(item.product_name)"
+              class="flex items-center gap-3 px-4 py-3 hover:bg-orange-50 border-b last:border-0">
+              <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-200">
+              <span x-text="item.product_name" class="text-sm text-gray-700 flex-1"></span>
+            </a>
+          </template>
+        </div>
       </div>
 
-      <!-- ✅ Logout -->
-      <a href="logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-        Logout
-      </a>
-    </div>
-  </div>
-<?php else: ?>
+      <!-- Mobile Links -->
+      <div class="space-y-1 px-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
+          class="block py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont">Profile</a>
 
-            <!-- ✅ Not Logged in -->
-            <div class="relative">
-              <button @click="loginOpen = !loginOpen"
-                class="text-black hover:text-orange-500 transition flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
+          class="flex items-center gap-3 py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont">
+          <img src="../img/shopping-cart.png" alt="Shop" class="w-5 h-5 object-contain" />
+          Shop
+        </a>
+
+        <!-- Mobile Products -->
+        <div class="py-2">
+          <button @click="productsOpen = !productsOpen" 
+            class="w-full text-left py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont flex items-center justify-between">
+            <span>Products</span>
+            <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-180': productsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          
+          <div x-show="productsOpen" x-cloak x-transition class="mt-2 ml-4 space-y-2">
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'materials' ? null : 'materials'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Materials</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'materials' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-                Login
               </button>
-
-              <!-- ✅ Login Dropdown -->
-              <div id="authDropdown" x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
-                class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                <form action="login" method="POST" class="space-y-3">
-                  <div>
-                    <label for="login" class="block text-sm font-medium text-gray-600">Email or Mobile</label>
-                    <input type="text" id="login" name="login" required
-                      placeholder="you@example.com or 09123456789"
-                      class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                  </div>
-
-                  <div>
-                    <label for="password" class="block text-sm font-medium text-gray-600">Password</label>
-                    <input type="password" id="password" name="password" required
-                      class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                  </div>
-
-                  <div class="flex items-center gap-2">
-                    <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
-                    <label for="remember" class="text-sm text-gray-600">Remember me</label>
-                  </div>
-
-                  <button type="submit"
-                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg">
-                    Log In
-                  </button>
-
-                  <div class="text-center text-sm mt-2">
-                    <a href="forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
-                  </div>
-
-                  <div class="text-center text-sm mt-1">
-                    <span>Don't have an account?</span>
-                    <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
-                      class="text-orange-500 hover:underline font-medium">Register</a>
-                  </div>
-
-                  <!-- Google Login Button -->
-                  <div class="text-center mt-4">
-                    <a href="google-login.php"
-                      class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
-                      <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
-                        <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
-                        <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
-                        <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
-                        <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
-                      </svg>
-                      Login with Google
-                    </a>
-                  </div>
-                </form>
+              <div x-show="selectedCategory === 'materials'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">WPC Panels</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">PVC Panels</a>
               </div>
             </div>
-          <?php endif; ?>
-
-          <!-- ✅ Register Modal -->
-          <div x-show="registerOpen" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
-            <div @click.away="registerOpen = false"
-              class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative space-y-4">
-
-              <h2 class="text-xl font-bold text-gray-800 mb-2 text-center">Create Your Account</h2>
-              <form action="register.php" method="POST" class="space-y-4">
-
-                <!-- Name -->
-                <div>
-                  <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                  <input type="text" name="name" id="name" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- Email -->
-                <div>
-                  <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                  <input type="email" name="email" id="email"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="you@example.com">
-                </div>
-
-                <!-- Mobile -->
-                <div>
-                  <label for="mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
-                  <input type="tel" name="mobile" id="mobile"
-                    pattern="^09\d{9}$" maxlength="11"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="09123456789">
-                  <p class="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX</p>
-                </div>
-
-                <!-- Password -->
-                <div>
-                  <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                  <input type="password" name="password" id="password" required minlength="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- Confirm Password -->
-                <div>
-                  <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                  <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- Submit -->
-                <button type="submit"
-                  class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-md transition">
-                  Create Account
-                </button>
-
-                <!-- Switch to Login -->
-                <div class="text-center text-sm text-gray-600 mt-2">
-                  <span>Already have an account?</span>
-                  <a href="#" @click.prevent="registerOpen = false; loginOpen = true"
-                    class="text-orange-500 hover:underline">Login here</a>
-                </div>
-              </form>
-
-              <!-- ❌ Close -->
-              <button @click="registerOpen = false"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
+            
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'furniture' ? null : 'furniture'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Furniture</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'furniture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div x-show="selectedCategory === 'furniture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
             </div>
           </div>
         </div>
-
-
       </div>
 
+      <!-- Mobile Auth Section (only show if not logged in) -->
+      <?php if (!isset($_SESSION['user_name'])): ?>
+        <div class="border-t border-gray-200 pt-4 px-4">
+          <div class="space-y-2">
+            <button @click="loginOpen = true; mobileOpen = false"
+              class="w-full py-3 px-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-medium">
+              Login
+            </button>
+            <button @click="registerOpen = true; mobileOpen = false"
+              class="w-full py-3 px-4 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-50 transition font-medium">
+              Register
+            </button>
+          </div>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
 
-      <!-- Mobile Hamburger -->
-      <div class="md:hidden">
-        <button @click="mobileOpen = !mobileOpen" class="text-gray-700 focus:outline-none">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+  <!-- Login Modal - Full Screen on Mobile -->
+  <div x-show="loginOpen" x-cloak x-transition
+    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4 lg:hidden">
+
+    <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
+      
+      <!-- Modal Header -->
+      <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-800">Login</h2>
+        <button @click="loginOpen = false" class="text-gray-500 hover:text-gray-800 text-2xl font-bold p-1">
+          &times;
         </button>
       </div>
+
+      <!-- Modal Content -->
+      <div class="p-6">
+        <form x-data="loginForm()" @submit.prevent="handleLogin($event)" class="space-y-4">
+          <div>
+            <label for="mobile_login" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
+            <input type="text" id="mobile_login" name="login" x-model="loginInput" @input="checkLoginType"
+              placeholder="you@example.com or 09123456789" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+          </div>
+
+          <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="space-y-2">
+            <label for="mobile_password" class="block text-sm font-medium text-gray-600">Password</label>
+            <input type="password" id="mobile_password" name="password" x-model="password"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+          </div>
+
+          <div x-show="isEmail && !otpSent && !otpVerified" x-transition class="space-y-2">
+            <label class="block text-sm font-medium text-gray-600">OTP Verification</label>
+            <button
+              type="button"
+              @click="sendOTP"
+              :disabled="otpLoading || resendCooldown > 0"
+              class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium">
+              <template x-if="!otpLoading && resendCooldown === 0">
+                <span>Send OTP</span>
+              </template>
+              <template x-if="otpLoading">
+                <span>Sending...</span>
+              </template>
+              <template x-if="!otpLoading && resendCooldown > 0">
+                <span>Resend in <span x-text="resendCooldown"></span>s</span>
+              </template>
+            </button>
+          </div>
+
+          <div x-show="otpSent && !otpVerified" x-transition class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-2">Enter OTP</label>
+              <p class="text-xs text-gray-500 mb-3">We sent a verification code to your email</p>
+              <input type="text" x-model="otp" maxlength="6"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg tracking-widest"
+                placeholder="000000">
+            </div>
+            
+            <div class="flex gap-3">
+              <button type="button" @click="cancelOTP"
+                class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">Cancel</button>
+              <button type="button" @click="verifyOTP" :disabled="!otp || otp.length < 4"
+                class="flex-1 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-orange-300 transition font-medium">
+                Verify
+              </button>
+            </div>
+
+            <div class="text-center">
+              <template x-if="resendCooldown > 0">
+                <p class="text-sm text-gray-500">Resend in <span x-text="resendCooldown"></span>s</p>
+              </template>
+              <template x-if="resendCooldown === 0">
+                <button @click="sendOTP" class="text-blue-500 hover:underline text-sm font-medium" type="button">
+                  Resend OTP
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2" x-show="isMobile">
+            <input type="checkbox" id="mobile_remember" name="remember" class="h-4 w-4 text-orange-500 rounded">
+            <label for="mobile_remember" class="text-sm text-gray-600">Remember me</label>
+          </div>
+
+          <button type="submit" :disabled="submitLoading"
+            class="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-4 rounded-lg transition"
+            x-show="(isMobile) || (isEmail && otpVerified)">
+            <span x-show="!submitLoading">Log In</span>
+            <span x-show="submitLoading">Logging in...</span>
+          </button>
+
+          <div x-show="errorMessage" x-transition class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            <span x-text="errorMessage"></span>
+          </div>
+
+          <div x-show="successMessage" x-transition class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+            <span x-text="successMessage"></span>
+          </div>
+
+          <div class="text-center space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <a href="forgot_password" class="text-orange-500 hover:underline text-sm font-medium">Forgot password?</a>
+            </div>
+            <div>
+              <span class="text-sm text-gray-600">Don't have an account?</span>
+              <a href="#" @click.prevent="registerOpen = true; loginOpen = false"
+                class="text-orange-500 hover:underline font-medium text-sm">Register</a>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-gray-200">
+            <a href="../google-login.php"
+              class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition">
+              <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
+                <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
+                <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
+                <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
+              </svg>
+              Login with Google
+            </a>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 
+  <!-- Register Modal -->
+  <div x-show="registerOpen" x-cloak x-transition
+    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
 
-    <!-- Mobile Dropdown -->
-    <div x-show="mobileOpen" x-transition x-cloak class="md:hidden space-y-2 pb-4">
-      <a href="javascript:void(0)" onclick="navigateWithLoading('index.php')"
-        class="<?= $current_page == 'index.php' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
-        Home
-      </a>
-
-      <!-- Mobile Products Dropdown -->
-      <div x-data="{ open: false }">
-        <button @click="open = !open" class="block w-full text-left text-gray-700 hover:text-orange-500 transition">Products</button>
-        <div x-show="open" x-transition x-cloak class="pl-4 space-y-1">
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/wpc')"
-            class="block hover:text-orange-500">WPC Fluted</a>
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/pvc')"
-            class="block hover:text-orange-500">PVC Panels</a>
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/ceiling-flat')"
-            class="block hover:text-orange-500">Flat Ceiling</a>
-          <a href="javascript:void(0)" onclick="navigateWithLoading('products/deck-composite')"
-            class="block hover:text-orange-500">Composite Decking</a>
-        </div>
+      <!-- Modal Header -->
+      <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-800">Create Account</h2>
+        <button @click="registerOpen = false" class="text-gray-500 hover:text-gray-800 text-2xl font-bold p-1">
+          &times;
+        </button>
       </div>
 
-      <a href="javascript:void(0)" onclick="navigateWithLoading('about')"
-        class="<?= $current_page == 'about' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
-        About
-      </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('contact')"
-        class="<?= $current_page == 'contact' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
-        Contact
-      </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('quote')"
-        class="<?= $current_page == 'quote' ? 'text-orange-600 underline font-bold' : 'text-gray-700' ?> block hover:text-orange-500 transition">
-        Get Free Quote
-      </a>
+      <!-- Modal Content -->
+      <div class="p-6">
+        <form action="register.php" method="POST" class="space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <input type="text" name="name" id="name" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+          </div>
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input type="email" name="email" id="email"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              placeholder="you@example.com">
+          </div>
+
+          <div>
+            <label for="mobile" class="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
+            <input type="tel" name="mobile" id="mobile"
+              pattern="^09\d{9}$" maxlength="11"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              placeholder="09123456789">
+            <p class="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX</p>
+          </div>
+
+          <div>
+            <label for="reg_password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <input type="password" name="password" id="reg_password" required minlength="6"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+          </div>
+
+          <div>
+            <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+            <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+          </div>
+
+          <button type="submit"
+            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition">
+            Create Account
+          </button>
+
+          <div class="text-center pt-4 border-t border-gray-200">
+            <span class="text-sm text-gray-600">Already have an account?</span>
+            <a href="#" @click.prevent="registerOpen = false; loginOpen = true"
+              class="text-orange-500 hover:underline font-medium text-sm">Login here</a>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </nav>
-<script>
-  function fetchResults() {
-    fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
-      .then(res => res.json())
-      .then(data => {
-        this.results = data;
-      });
-  }
 
-  document.addEventListener('alpine:init', () => {
-    Alpine.data('searchData', () => ({
-      openModal: false,
-      search: '',
-      results: [],
-      fetchResults
-    }));
-  });
+<script>
+  function loginForm() {
+    return {
+        // User input
+        loginInput: '',
+        password: '',
+        otp: '',
+
+        // State flags
+        isMobile: false,
+        isEmail: false,
+        otpSent: false,
+        otpVerified: false,
+        otpLoading: false,
+        submitLoading: false,
+
+        // Feedback
+        errorMessage: '',
+        successMessage: '',
+        messageTimeout: null,
+
+        // Resend cooldown
+        resendCooldown: 0,
+        resendTimer: null,
+        cooldownDuration: 20,
+
+        // Initialize
+        init() {
+            this.resumeCooldown();
+        },
+
+        // Detect if input is email or mobile
+        checkLoginType() {
+            const mobilePattern = /^09\d{9}$/;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            this.isMobile = mobilePattern.test(this.loginInput);
+            this.isEmail = emailPattern.test(this.loginInput);
+
+            // Reset states when input changes
+            this.resetOTPStates();
+        },
+
+        // Reset OTP related states
+        resetOTPStates() {
+            this.otpSent = false;
+            this.otpVerified = false;
+            this.errorMessage = '';
+            this.successMessage = '';
+            this.otp = '';
+            this.password = '';
+            this.resendCooldown = 0;
+            if (this.resendTimer) {
+                clearInterval(this.resendTimer);
+            }
+        },
+
+        // Send OTP to email
+        sendOTP() {
+            if (this.resendCooldown > 0) return;
+
+            this.otpLoading = true;
+            this.errorMessage = '';
+            this.successMessage = '';
+
+            fetch('../send_otp.php', {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: this.loginInput
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.otpLoading = false;
+                if (data.success) {
+                    this.otpSent = true;
+                    this.successMessage = data.message || 'OTP sent successfully';
+                    this.startResendCooldown();
+                } else {
+                    this.errorMessage = data.message || 'Failed to send OTP';
+                }
+                this.clearMessages();
+            })
+            .catch(() => {
+                this.otpLoading = false;
+                this.errorMessage = 'Network error while sending OTP.';
+                this.clearMessages();
+            });
+        },
+
+        // Verify OTP
+        verifyOTP() {
+            if (!this.otp || this.otp.length < 4) {
+                this.errorMessage = 'Please enter a valid OTP';
+                this.clearMessages();
+                return;
+            }
+
+            this.submitLoading = true;
+            this.errorMessage = '';
+            this.successMessage = '';
+
+            fetch('../verify_otp.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: this.loginInput,
+                    otp: this.otp
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.submitLoading = false;
+
+                if (data.success) {
+                    this.successMessage = 'OTP verified! Please enter your password.';
+                    this.otpVerified = true;
+                    this.otpSent = false;
+                    this.otp = '';
+                    this.resendCooldown = 0;
+                    if (this.resendTimer) {
+                        clearInterval(this.resendTimer);
+                    }
+                } else {
+                    this.errorMessage = data.message || 'Invalid OTP.';
+                }
+
+                this.clearMessages();
+            })
+            .catch(() => {
+                this.submitLoading = false;
+                this.errorMessage = 'Network error occurred.';
+                this.clearMessages();
+            });
+        },
+
+        // Cancel OTP process
+        cancelOTP() {
+            this.resetOTPStates();
+        },
+
+        // Handle form submission
+        handleLogin(event) {
+            if (this.isEmail && !this.otpVerified) {
+                this.errorMessage = 'Please verify your email with OTP first.';
+                this.clearMessages();
+                return;
+            }
+
+            if (!this.password) {
+                this.errorMessage = 'Please enter your password.';
+                this.clearMessages();
+                return;
+            }
+
+            this.submitLoading = true;
+            this.errorMessage = '';
+            this.successMessage = '';
+
+            const formElement = event.target.closest('form');
+            const formData = new FormData(formElement);
+
+            fetch('../login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.submitLoading = false;
+                if (data.success) {
+                    this.successMessage = 'Login successful!';
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '../otherpage/index.php';
+                    }, 1000);
+                } else {
+                    this.errorMessage = data.message || 'Login failed.';
+                    this.clearMessages();
+                }
+            })
+            .catch(() => {
+                this.submitLoading = false;
+                this.errorMessage = 'Network error occurred.';
+                this.clearMessages();
+            });
+        },
+
+        // Start resend cooldown timer
+        startResendCooldown() {
+            this.resendCooldown = this.cooldownDuration;
+            const expiresAt = Date.now() + this.cooldownDuration * 1000;
+            this.cooldownExpiry = expiresAt;
+
+            if (this.resendTimer) clearInterval(this.resendTimer);
+            this.resendTimer = setInterval(() => {
+                this.resendCooldown--;
+                if (this.resendCooldown <= 0) {
+                    clearInterval(this.resendTimer);
+                    this.cooldownExpiry = null;
+                }
+            }, 1000);
+        },
+
+        // Resume cooldown on page reload
+        resumeCooldown() {
+            if (this.cooldownExpiry) {
+                const remaining = Math.ceil((this.cooldownExpiry - Date.now()) / 1000);
+                if (remaining > 0) {
+                    this.resendCooldown = remaining;
+                    this.otpSent = true;
+                    this.startResendCooldown();
+                } else {
+                    this.cooldownExpiry = null;
+                }
+            }
+        },
+
+        // Auto-hide messages after 3 seconds
+        clearMessages() {
+            if (this.messageTimeout) clearTimeout(this.messageTimeout);
+            this.messageTimeout = setTimeout(() => {
+                this.successMessage = '';
+                this.errorMessage = '';
+            }, 3000);
+        }
+    };
+}
 </script>

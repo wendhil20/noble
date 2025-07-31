@@ -18,10 +18,8 @@ foreach ($cart as $item) {
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-      .nav {
-      font-family: 'Poppins', sans-serif;
-    }
   [x-cloak] {
     display: none !important;
   }
@@ -44,9 +42,78 @@ foreach ($cart as $item) {
       transform: rotate(360deg);
     }
   }
+
+   /* Hide scrollbar by default, show on hover/scroll */
+  .scroll-hidden::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .scroll-hidden::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+  }
+
+  .scroll-hidden {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(0,0,0,0.3) transparent;
+  }
+
+  .scroll-hidden::-webkit-scrollbar {
+    visibility: hidden;
+  }
+
+  .scroll-hidden:hover::-webkit-scrollbar {
+    visibility: visible;
+  }
 </style>
 
 <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          // Sans-serif fonts
+          poppins: ['Poppins', 'sans-serif'],
+          inter: ['Inter', 'sans-serif'],
+          lato: ['Lato', 'sans-serif'],
+          opensans: ['"Open Sans"', 'sans-serif'],
+          source: ['"Source Sans Pro"', 'sans-serif'],
+          raleway: ['Raleway', 'sans-serif'],
+          nunito: ['Nunito', 'sans-serif'],
+          mont: ['Montserrat', 'sans-serif'],
+          roboto: ['Roboto', 'sans-serif'],
+          quicksand: ['Quicksand', 'sans-serif'],
+          work: ['"Work Sans"', 'sans-serif'],
+          rubik: ['Rubik', 'sans-serif'],
+          fira: ['"Fira Sans"', 'sans-serif'],
+          ubuntu: ['Ubuntu', 'sans-serif'],
+          barlow: ['Barlow', 'sans-serif'],
+          manrope: ['Manrope', 'sans-serif'],
+          dmsans: ['"DM Sans"', 'sans-serif'],
+          space: ['"Space Grotesk"', 'sans-serif'],
+
+          // Serif fonts
+          merri: ['Merriweather', 'serif'],
+          playfair: ['"Playfair Display"', 'serif'],
+          libre: ['"Libre Baskerville"', 'serif'],
+          crimson: ['"Crimson Text"', 'serif'],
+          garamond: ['"EB Garamond"', 'serif'],
+          lora: ['Lora', 'serif'],
+
+          // Display/Decorative fonts
+          vibes: ['"Great Vibes"', 'cursive'],
+          dancing: ['"Dancing Script"', 'cursive'],
+          pacifico: ['Pacifico', 'cursive'],
+          lobster: ['Lobster', 'cursive'],
+          oswald: ['Oswald', 'sans-serif'],
+          bebas: ['"Bebas Neue"', 'sans-serif'],
+          anton: ['Anton', 'sans-serif'],
+        }
+      }
+    }
+  }
+
+
   // Simple global loading functions
   function showLoading() {
     document.getElementById('loadingOverlay').style.display = 'flex';
@@ -126,18 +193,27 @@ foreach ($cart as $item) {
   <div class=" px-4">
     <div class="flex justify-between items-center py-4">
       <a href="javascript:void(0)" onclick="navigateWithLoading('index')"
-        class="flex items-center space-x-2 hover:opacity-80 transition">
-        <div class="w-12 h-12 rounded overflow-hidden flex-shrink-0">
-          <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
+        class="flex items-center space-x-3 hover:opacity-80 transition duration-200">
+
+        <!-- Logo Image -->
+        <div class="w-12 h-12 verflow-hidden">
+          <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain ">
         </div>
-        <div class="leading-tight">
-          <span class="block text-xl font-bold text-orange-600">NobleHome</span>
-          <span class="block text-xs text-gray-700 -mt-1">Depot</span>
+
+        <!-- Text Branding -->
+        <div class="leading-snug">
+          <span class="block text-[1.5rem] font-extrabold text-orange-400 tracking-tight font-mont">
+            NobleHome
+          </span>
+          <span class="block text-xs text-gray-800 tracking-tight font-semibold font-mont">
+            Depot
+          </span>
         </div>
       </a>
 
+
       <!-- Desktop Links -->
-      <div class="hidden md:flex space-x-6 items-center">
+      <div class="hidden md:flex space-x-6 items-center uppercase">
 
         <div x-data="{
     openModal: false,
@@ -155,7 +231,7 @@ foreach ($cart as $item) {
 }" class="relative">
 
           <!-- Input + Button -->
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-2 font-mont">
             <input
               type="text"
               x-model="search"
@@ -164,7 +240,7 @@ foreach ($cart as $item) {
               class="border border-gray-300 px-3 py-1.5 rounded w-48 md:w-64 text-sm outline-orange-500">
             <button
               @click="fetchResults"
-              class="bg-orange-500 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition">
+              class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition ">
               Search
             </button>
           </div>
@@ -177,16 +253,16 @@ foreach ($cart as $item) {
             class="absolute z-50 bg-white shadow-lg rounded mt-2 w-64 md:w-96 max-h-80 overflow-y-auto border border-gray-200">
             <template x-if="results.length > 0">
               <ul>
-               <template x-for="item in results" :key="item.id">
-  <li class="border-b last:border-0">
-    <a
-      class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
-      :href="'shop.php?search=' + encodeURIComponent(item.product_name)">
-      <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
-      <span x-text="item.product_name"></span>
-    </a>
-  </li>
-</template>
+                <template x-for="item in results" :key="item.id">
+                  <li class="border-b last:border-0">
+                    <a
+                      class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
+                      :href="'shop.php?search=' + encodeURIComponent(item.product_name)">
+                      <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+                      <span x-text="item.product_name"></span>
+                    </a>
+                  </li>
+                </template>
               </ul>
             </template>
             <template x-if="results.length === 0 && search.length > 1">
@@ -197,12 +273,12 @@ foreach ($cart as $item) {
 
         <!-- Products Dropdown -->
         <div x-data="{ open: false, selected: null }" class="relative">
-          <button @click="open = !open" class="text-black hover:text-orange-500 transition">Products</button>
+          <button @click="open = !open" class="text-black hover:text-orange-500 transition font-mont uppercase">Products</button>
 
           <div x-show="open" @click.away="open = false" x-transition x-cloak
             class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
             <!-- Main Categories -->
-            <div class="w-1/2 border-r p-4 space-y-2">
+            <div class="w-1/2 border-r p-4 space-y-2 font-mont">
               <button @mouseenter="selected = 'materials'"
                 class="block w-full text-left hover:text-orange-500 text-sm">Materials</button>
               <button @mouseenter="selected = 'furniture'"
@@ -210,7 +286,7 @@ foreach ($cart as $item) {
             </div>
 
             <!-- Subpanel -->
-            <div class="w-1/2 p-4">
+            <div class="w-1/2 p-4 font-mont">
               <template x-if="selected === 'materials'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
@@ -236,27 +312,23 @@ foreach ($cart as $item) {
 
 
         <a href="javascript:void(0)" onclick="navigateWithLoading('profile')"
-          class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition">
+          class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition font-mont">
           Profile
         </a>
 
         <a href="javascript:void(0)" onclick="navigateWithLoading('shop')"
-          class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1">
-
+          class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
           <!-- Replace this with your actual image path -->
           <img src="img/icon/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
-
           Shop
         </a>
-        <a href="javascript:void(0)" onclick="navigateWithLoading('cart_view')"
-          class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative">
 
+        <a href="javascript:void(0)" onclick="navigateWithLoading('cart_view')"
+          class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont">
           <!-- Cart Icon Image -->
           <img src="img/icon/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-
           <!-- Text -->
           Cart
-
           <!-- Cart Count Bubble -->
           <span id="cart-count-bubble" class="cart-count absolute -top-2 -right-3 bg-red-500 text-white text-[10px] px-1 py-0.5 p-1 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
             <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
@@ -266,18 +338,42 @@ foreach ($cart as $item) {
         <!-- Wrapper Alpine Component -->
         <div x-data="{ loginOpen: false, registerOpen: false }">
 
-          <?php if (isset($_SESSION['user_name'])): ?>
-            <!-- ✅ Logged in -->
-            <div class="text-black flex items-center gap-2    ">
-              <svg xmlns="http://www.w3.org/2000/svg" class="bg-black w-5 h-5 text-orange-500 rounded-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="text-sm"><strong><?= htmlspecialchars(substr($_SESSION['user_name'], 0, 1)) ?></strong></span>
-              <a href="logout.php" class="text-red-500 text-xs hover:underline">Logout</a>
-            </div>
+     <?php if (isset($_SESSION['user_name'])): ?>
+  <div x-data="{ open: false }" class="relative inline-block text-left">
+    <!-- ✅ Profile Trigger -->
+    <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
+      <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
+        <?php if (!empty($_SESSION['user_picture'])): ?>
+          <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile" class="w-full h-full object-cover">
+        <?php else: ?>
+          <div class="w-full h-full flex items-center justify-center bg-orange-100">
+            <span class="text-xs font-bold text-orange-800 font-mont">
+              <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+            </span>
+          </div>
+        <?php endif; ?>
+      </div>
+    </button>
 
-          <?php else: ?>
+    <!-- ✅ Dropdown Menu -->
+    <div x-show="open" @click.outside="open = false"
+         class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+         x-transition>
+         
+      <!-- ✅ Scrollable Name Area -->
+      <div class="py-2 px-2 text-sm text-gray-700 border-b max-w-full overflow-x-auto whitespace-nowrap scroll-hidden">
+        <span class="block w-max">
+          <?= htmlspecialchars($_SESSION['user_name']) ?>
+        </span>
+      </div>
+
+      <!-- ✅ Logout -->
+      <a href="logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+        Logout
+      </a>
+    </div>
+  </div>
+<?php else: ?>
 
             <!-- ✅ Not Logged in -->
             <div class="relative">

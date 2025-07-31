@@ -24,6 +24,7 @@ if (isset($_GET['code'])) {
 
         $email = $google_user->email;
         $name = $google_user->name;
+        $picture = $google_user->picture; // ✅ Google profile image URL
         $remember_token = bin2hex(random_bytes(16));
 
         // Check if user exists
@@ -33,25 +34,26 @@ if (isset($_GET['code'])) {
         $result = $stmt->get_result();
 
         if ($result->num_rows === 0) {
-            // Auto-register new Google user
-            $insert = $conn->prepare("INSERT INTO users (name, email, password, remember_token) VALUES (?, ?, '', ?)");
-            $insert->bind_param("sss", $name, $email, $remember_token);
+            // ✅ Auto-register new Google user (include image)
+            $insert = $conn->prepare("INSERT INTO users (name, email, password, remember_token, profile_picture) VALUES (?, ?, '', ?, ?)");
+            $insert->bind_param("ssss", $name, $email, $remember_token, $picture);
             $insert->execute();
             $user_id = $insert->insert_id;
         } else {
             $row = $result->fetch_assoc();
             $user_id = $row['id'];
 
-            // Optionally update remember_token if needed
-            $update = $conn->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
-            $update->bind_param("si", $remember_token, $user_id);
+            // ✅ Update token and image if needed
+            $update = $conn->prepare("UPDATE users SET remember_token = ?, profile_picture = ? WHERE id = ?");
+            $update->bind_param("ssi", $remember_token, $picture, $user_id);
             $update->execute();
         }
 
-        // Set session and cookie
+        // ✅ Set session and cookie
         $_SESSION['user_id'] = $user_id;
         $_SESSION['user_name'] = $name;
         $_SESSION['user_email'] = $email;
+        $_SESSION['user_picture'] = $picture;
         $_SESSION['google_logged_in'] = true;
 
         setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), "/");

@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -34,7 +34,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
     // Not logged in — redirect to login or Google auth
-    header('Location: google-callback.php'); // You may replace with `index.php` if default login
+    header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
     exit;
 }
 
@@ -322,7 +322,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
 <body class="bg-gray-50 font-sans text-gray-800">
 
-  <?php include 'navbar/top.php'; ?>
+  <?php include '../navbar/top.php'; ?>
 
   <!-- Enhanced Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
@@ -520,7 +520,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
               <a href="product_view.php?id=<?= $product_id ?>">
                 <div class="relative aspect-square bg-gray-50 overflow-hidden mt-3">
                   <?php if (!empty($row['main_image'])): ?>
-                    <img src="../<?= htmlspecialchars($row['main_image']) ?>" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy">
                   <?php else: ?>
                     <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                       <i class="fas fa-image text-4xl"></i>
@@ -878,7 +878,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
           const rating = parseInt(star.dataset.rating);
           
           // Send rating to server
-          fetch('rate_product.php', {
+          fetch('rate/rate_product.php', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -1,11 +1,11 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: google-callback.php');
+    header('Location: ../google-callback.php');
     exit;
 }
 

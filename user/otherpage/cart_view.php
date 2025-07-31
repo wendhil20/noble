@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -34,7 +34,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
   // Not logged in — redirect to login or Google auth
-  header('Location: google-callback.php'); // You may replace with `index.php` if default login
+  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
   exit;
 }
 
@@ -100,7 +100,7 @@ if ($user_id) {
         <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
       </svg>
     </div>
-    <?php include 'navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
     <div class="bg-orange-600 text-white py-5">
       <div class="container mx-auto px-4">
         <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
@@ -284,7 +284,7 @@ if ($user_id) {
 
                     <td class="py-3 px-4">
                       <?php if (!empty($item['type_image'])): ?>
-                        <img src="../<?= ($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
+                        <img src="../../<?= ($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
                       <?php else: ?>
                         <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">No Image</div>
                       <?php endif; ?>
@@ -300,7 +300,7 @@ if ($user_id) {
                     </td>
 
                     <td class="py-3 px-4 align-middle">
-                      <a href="cart/remove_from_cart.php?key=<?= $item['id'] ?>"
+                      <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
                         class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 transition"
                         title="Remove">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -343,7 +343,7 @@ if ($user_id) {
             <!-- Logo with glow and pulse -->
             <div class="relative">
               <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
+                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
               </div>
               <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
             </div>

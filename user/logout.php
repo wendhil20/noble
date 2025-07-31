@@ -16,7 +16,7 @@ setcookie("remember_token", "", time() - 3600, "/"); // Expire the cookie
 $googleLogoutUrl = 'https://accounts.google.com/Logout';
 
 // Google logout works as expected, but we need a workaround to return to your site after logout.
-$redirectUrl = 'http://localhost/noble/user/index.php'; // Change to your actual redirect URL (e.g., 'index.php')
+$redirectUrl = 'http://localhost/noble/user/otherpage/index.php'; // Change to your actual redirect URL (e.g., 'index.php')
 
 // Set up the location header to redirect after Google logout
 header("Location: $googleLogoutUrl");

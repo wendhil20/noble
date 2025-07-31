@@ -1,4 +1,5 @@
 <?php
+//fetch_order_details.php
 session_name("nobleadmin");
 session_start();
 header('Content-Type: application/json');
@@ -78,6 +79,7 @@ $itemStmt = $conn->prepare("
         codename,
         descrip6,
         descrip7,
+        origin,
         price,
         quantity,
         subtotal

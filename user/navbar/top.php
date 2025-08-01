@@ -458,23 +458,39 @@ foreach ($cart as $item) {
 
                 <!-- OTP Send Button (shown for email before OTP is sent) -->
                 <div x-show="isEmail && !otpSent && !otpVerified" x-transition>
-                  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
-                  <button
-                    type="button"
-                    @click="sendOTP"
-                    :disabled="otpLoading || resendCooldown > 0"
-                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded mb-2">
-                    <template x-if="!otpLoading && resendCooldown === 0">
-                      <span>Send OTP</span>
-                    </template>
-                    <template x-if="otpLoading">
-                      <span>Sending...</span>
-                    </template>
-                    <template x-if="!otpLoading && resendCooldown > 0">
-                      <span>Resend in <span x-text="resendCooldown"></span>s</span>
-                    </template>
-                  </button>
-                </div>
+  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
+  <button
+    type="button"
+    @click="sendOTP"
+    :disabled="otpLoading || resendCooldown > 0"
+    class="w-full bg-black hover:bg-red-700 disabled:bg-black text-white px-4 py-3 rounded mb-2 flex items-center justify-center space-x-2">
+    
+    <!-- Show "Send OTP" -->
+    <template x-if="!otpLoading && resendCooldown === 0">
+      <span>Send OTP</span>
+    </template>
+
+    <!-- Show animated spinner + "Loading..." -->
+    <template x-if="otpLoading">
+      <div class="flex items-center space-x-2">
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10"
+            stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span>Verifying...</span>
+      </div>
+    </template>
+
+    <!-- Show "Resend in Xs" -->
+    <template x-if="!otpLoading && resendCooldown > 0">
+      <span>Resend in <span x-text="resendCooldown"></span>s</span>
+    </template>
+  </button>
+</div>
+
 
                 <!-- OTP Input Section (shown after OTP is sent but not verified) -->
                 <div x-show="otpSent && !otpVerified" x-transition class="mb-4">
@@ -716,24 +732,38 @@ foreach ($cart as $item) {
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
           </div>
 
-          <div x-show="isEmail && !otpSent && !otpVerified" x-transition class="space-y-2">
-            <label class="block text-sm font-medium text-gray-600">OTP Verification</label>
-            <button
-              type="button"
-              @click="sendOTP"
-              :disabled="otpLoading || resendCooldown > 0"
-              class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium">
-              <template x-if="!otpLoading && resendCooldown === 0">
-                <span>Send OTP</span>
-              </template>
-              <template x-if="otpLoading">
-                <span>Sending...</span>
-              </template>
-              <template x-if="!otpLoading && resendCooldown > 0">
-                <span>Resend in <span x-text="resendCooldown"></span>s</span>
-              </template>
-            </button>
-          </div>
+       <div x-show="isEmail && !otpSent && !otpVerified" x-transition class="space-y-2">
+  <label class="block text-sm font-medium text-gray-600">OTP Verification</label>
+  <button
+    type="button"
+    @click="sendOTP"
+    :disabled="otpLoading || resendCooldown > 0"
+    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center space-x-2">
+    
+    <template x-if="!otpLoading && resendCooldown === 0">
+      <span>Send OTP</span>
+    </template>
+
+    <template x-if="otpLoading">
+      <div class="flex items-center space-x-2">
+        <!-- Spinner -->
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10"
+            stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span>Verifying...</span>
+      </div>
+    </template>
+
+    <template x-if="!otpLoading && resendCooldown > 0">
+      <span>Resend in <span x-text="resendCooldown"></span>s</span>
+    </template>
+  </button>
+</div>
+
 
           <div x-show="otpSent && !otpVerified" x-transition class="space-y-3">
             <div>
@@ -828,7 +858,7 @@ foreach ($cart as $item) {
 
       <!-- Modal Content -->
       <div class="p-6">
-        <form action="register.php" method="POST" class="space-y-4">
+        <form action="../register.php" method="POST" class="space-y-4">
           <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
             <input type="text" name="name" id="name" required

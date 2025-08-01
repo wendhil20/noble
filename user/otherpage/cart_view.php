@@ -101,7 +101,7 @@ if ($user_id) {
       </svg>
     </div>
     <?php include '../navbar/top.php'; ?>
-    <div class="bg-orange-600 text-white py-5">
+    <div class="bg-orange-400 text-white py-5">
       <div class="container mx-auto px-4">
         <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
         <p class="text-xl text-center opacity-90">Review your items and proceed to checkout</p>
@@ -217,10 +217,9 @@ if ($user_id) {
   </nav>
 
 
-
   <div class="px-2 py-2">
     <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-3xl font-bold text-orange-700 mb-6 flex items-center gap-2"> Your Cart</h2>
+      <h2 class="text-3xl font-bold text-orange-400 mb-6 flex items-center gap-2"> Your Cart</h2>
 
       <?php if ($notice): ?>
         <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow text-sm">
@@ -230,26 +229,25 @@ if ($user_id) {
 
       <?php if (empty($cart_items)): ?>
         <p class="text-gray-600 text-lg">Your cart is currently empty.</p>
-        <a href="shop" class="inline-block mt-4 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition">Continue Shopping</a>
+        <a href="shop" class="inline-block mt-4 bg-orange-400 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition">Continue Shopping</a>
       <?php else: ?>
         <form action="cart/update_cart.php" method="POST">
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left border-collapse ">
 
-              <thead class="bg-orange-600 text-white uppercase text-xs rounded-lg">
-  <tr>
-    <th class="py-3 px-4">Category</th>
-    <th class="py-3 px-4">Product</th>
-    <th class="py-3 px-4">Qty</th>
-    <th class="py-3 px-4">Unit Price</th>
-    <th class="py-3 px-4">Total</th>
-    <th class="py-3 px-4">Image</th>
-    <th class="py-3 px-4">Origin</th>
-    <th class="py-3 px-4">Remove</th>
-  </tr>
-</thead>
-              
-              
+              <thead class="bg-orange-400 text-white uppercase text-xs rounded-lg">
+                <tr>
+                  <th class="py-3 px-4">Category</th>
+                  <th class="py-3 px-4">Product</th>
+                  <th class="py-3 px-4">Qty</th>
+                  <th class="py-3 px-4">Unit Price</th>
+                  <th class="py-3 px-4">Total</th>
+                  <th class="py-3 px-4">Image</th>
+                  <th class="py-3 px-4">Origin</th>
+                  <th class="py-3 px-4">Remove</th>
+                </tr>
+              </thead>
+
 
               <tbody class="divide-y divide-gray-200">
                 <?php foreach ($cart_items as $item):
@@ -293,11 +291,18 @@ if ($user_id) {
                     <!-- ADD THIS NEW CELL FOR ORIGIN -->
                     <td class="py-3 px-4">
                       <?php if (!empty($item['origin'])): ?>
-                        <span class="text-blue-600 font-medium text-sm"><?= htmlspecialchars($item['origin']) ?></span>
+                        <?php if ($item['origin'] === 'local'): ?>
+                          <span class="text-blue-600 font-medium text-sm">Local</span>
+                        <?php elseif ($item['origin'] === 'international'): ?>
+                          <span class="text-red-600 font-medium text-sm">International</span>
+                        <?php else: ?>
+                          <span class="text-gray-600 font-medium text-sm"><?= htmlspecialchars($item['origin']) ?></span>
+                        <?php endif; ?>
                       <?php else: ?>
                         <span class="text-gray-400 text-sm">—</span>
                       <?php endif; ?>
                     </td>
+
 
                     <td class="py-3 px-4 align-middle">
                       <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
@@ -316,15 +321,15 @@ if ($user_id) {
           </div>
 
           <div class="mt-6 flex justify-between items-center flex-wrap gap-4">
-            <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded shadow transition">Update Cart</button>
+            <button type="submit" class="bg-orange-400 hover:bg-orange-700 text-white px-5 py-2 rounded shadow transition">Update Cart</button>
             <div class="text-xl font-bold text-orange-700">
               Total: ₱<?= number_format($total_price, 2) ?>
             </div>
           </div>
         </form>
         <div class="mt-6 flex flex-wrap gap-3 justify-end">
-          <a href="shop.php" class="bg-orange-500 hover:bg-gray-800 text-white px-5 py-2 rounded transition">Continue Shopping</a>
-          <a href="checkout.php" class="bg-orange-500 hover:bg-green-700 text-white px-5 py-2 rounded transition">Proceed to Checkout</a>
+          <a href="shop.php" class="bg-orange-400 hover:bg-gray-800 text-white px-5 py-2 rounded transition">Continue Shopping</a>
+          <a href="checkout.php" class="bg-orange-400 hover:bg-green-700 text-white px-5 py-2 rounded transition">Proceed to Checkout</a>
         </div>
       <?php endif; ?>
     </div>

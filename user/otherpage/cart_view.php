@@ -231,7 +231,7 @@ if ($user_id) {
         <p class="text-gray-600 text-lg">Your cart is currently empty.</p>
         <a href="shop" class="inline-block mt-4 bg-orange-400 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition">Continue Shopping</a>
       <?php else: ?>
-        <form action="cart/update_cart.php" method="POST">
+        <form action="../cart/update_cart.php" method="POST">
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left border-collapse ">
 

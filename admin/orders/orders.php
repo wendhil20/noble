@@ -1,4 +1,5 @@
 <?php
+//orders.php
 include '../../connection/connect.php';
 require_role(['sales', 'superadmin']);
 
@@ -372,36 +373,52 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
           </div>`;
 
         // Generate items HTML for expanded view
-        const itemsHtml = order.items.map(item => `
-          <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
-            <div class="flex-1">
-              <div class="flex items-center space-x-3">
-                <div class="bg-primary-50 p-2 rounded-lg">
-                  <i class="fas fa-box text-primary-600"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-gray-900">${item.product_name}</h4>
-                  <p class="text-sm text-gray-600">
-                    <span class="font-medium">Size:</span> ${item.size}, 
-                    <span class="font-medium">Color:</span> ${item.variant_color}
-                  </p>
-                  <p class="text-xs text-gray-500">
-                    <span class="font-medium">Code:</span> ${item.codename} • 
-                    <span class="font-medium">Details:</span> ${item.descrip6 || ''} ${item.descrip7 || ''}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-sm text-gray-600">
-                <span class="font-medium">Price:</span> ₱${item.price} × 
-                <span class="font-medium">Qty:</span> ${item.quantity}
-              </div>
-              <div class="font-semibold text-gray-900">
-                <span class="text-sm font-medium text-gray-600">Subtotal:</span> ₱${item.subtotal}
-              </div>
-            </div>
-          </div>`).join('');
+const itemsHtml = order.items.map((item, itemIndex) => `
+  <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
+    <div class="flex-1">
+      <div class="flex items-center space-x-3">
+        <div class="bg-primary-50 p-2 rounded-lg">
+          <i class="fas fa-box text-primary-600"></i>
+        </div>
+        <div>
+          <h4 class="font-semibold text-gray-900">${item.product_name}</h4>
+          <p class="text-sm text-gray-600">
+            <span class="font-medium">Size:</span> ${item.size}, 
+            <span class="font-medium">Color:</span> ${item.variant_color}
+          </p>
+          <p class="text-xs text-gray-500">
+            <span class="font-medium">Code:</span> ${item.codename} • 
+            <span class="font-medium">Details:</span> ${item.descrip6 || ''} ${item.descrip7 || ''}
+          </p>
+          <!-- ORIGIN DISPLAY -->
+          <p class="text-xs text-blue-600 font-medium">
+            <i class="fas fa-map-marker-alt mr-1"></i>
+            <span class="font-medium">Origin:</span> ${item.origin || 'Not specified'}
+          </p>
+          <!-- CURRENT SUPPLIER DISPLAY -->
+          <p class="text-xs text-green-600 font-medium">
+            <i class="fas fa-user-tie mr-1"></i>
+            <span class="font-medium">Current Supplier:</span> ${item.supplier_name || 'Not Assigned'}
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="text-right">
+      <div class="text-sm text-gray-600 mb-2">
+        <span class="font-medium">Price:</span> ₱${item.price} × 
+        <span class="font-medium">Qty:</span> ${item.quantity}
+      </div>
+      <div class="font-semibold text-gray-900 mb-3">
+        <span class="text-sm font-medium text-gray-600">Subtotal:</span> ₱${item.subtotal}
+      </div>
+      <!-- SET SUPPLIER BUTTON FOR EACH ITEM -->
+      <a href="set_supplier.php?order_id=${order.id}&item_index=${itemIndex}" 
+         class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition-colors duration-200 flex items-center space-x-1 shadow-sm text-xs">
+        <i class="fas fa-truck-loading"></i>
+        <span>Set Supplier</span>
+      </a>
+    </div>
+  </div>`).join('');
 
         const discountPercent = parseFloat(order.discount) || 0;
         const shipping_fee = parseFloat(order.shipping_fee) || 0;
@@ -415,11 +432,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
 let actionButtons = '';
 if (status === 'pending') {
   actionButtons = `
-    <a href="order_details.php?order_id=${order.id}" 
-       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
-      <i class="fas fa-folder-open"></i>
-      <span>Open</span>
-    </a>
     <button onclick="confirmOrder(${order.id})" 
             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
             id="confirm-btn-${order.id}">

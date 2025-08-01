@@ -1,4 +1,5 @@
 <?php
+//fetch_orders.php
 session_name("nobleadmin");
 session_start();
 header('Content-Type: application/json');
@@ -56,33 +57,37 @@ while ($order = $orders_result->fetch_assoc()) {
     // format the date exactly as your front-end expects
     $order['created_at'] = date('M j, Y g:i A', strtotime($order['created_at']));
 
-    // 4. For each order, fetch its items
-    $itemStmt = $conn->prepare("
-        SELECT 
-            product_name,
-            size,
-            variant_color,
-            codename,
-            descrip6,
-            descrip7,
-            price,
-            quantity,
-            subtotal
-        FROM order_items
-        WHERE order_id = ?
-    ");
-    $itemStmt->bind_param("i", $order['id']);
-    $itemStmt->execute();
-    $itemsRes = $itemStmt->get_result();
+    // 4. For each order, fetch its items WITH SUPPLIER INFO
+$itemStmt = $conn->prepare("
+    SELECT 
+        oi.product_name,
+        oi.size,
+        oi.variant_color,
+        oi.codename,
+        oi.descrip6,
+        oi.descrip7,
+        oi.price,
+        oi.quantity,
+        oi.subtotal,
+        oi.origin,
+        oi.supplier_id,
+        COALESCE(na.fullname, 'Not Assigned') AS supplier_name
+    FROM order_items oi
+    LEFT JOIN nobleaccount na ON oi.supplier_id = na.id
+    WHERE oi.order_id = ?
+");
+$itemStmt->bind_param("i", $order['id']);
+$itemStmt->execute();
+$itemsRes = $itemStmt->get_result();
 
-    $items = [];
-    while ($it = $itemsRes->fetch_assoc()) {
-        // ensure numeric formatting matches JS expectations
-        $it['price']    = number_format((float)$it['price'], 2, '.', '');
-        $it['subtotal'] = number_format((float)$it['subtotal'], 2, '.', '');
-        $items[] = $it;
-    }
-    $itemStmt->close();
+$items = [];
+while ($it = $itemsRes->fetch_assoc()) {
+    // ensure numeric formatting matches JS expectations
+    $it['price']    = number_format((float)$it['price'], 2, '.', '');
+    $it['subtotal'] = number_format((float)$it['subtotal'], 2, '.', '');
+    $items[] = $it;
+}
+$itemStmt->close();
 
     // 5. Attach as `items` (not `products`)
     $order['items'] = $items;

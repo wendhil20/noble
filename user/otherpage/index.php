@@ -2,7 +2,7 @@
 ob_start();
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // Check login notification
 if (isset($_SESSION['login_needed'])) {
@@ -199,6 +199,7 @@ $slideresult = $conn->query($sql);
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="css/promotionslide.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -210,6 +211,51 @@ $slideresult = $conn->query($sql);
                 notification.style.display = 'none';
             }
         }, 5000); // 5000ms = 5 seconds
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        // Sans-serif fonts
+                        poppins: ['Poppins', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                        lato: ['Lato', 'sans-serif'],
+                        opensans: ['"Open Sans"', 'sans-serif'],
+                        source: ['"Source Sans Pro"', 'sans-serif'],
+                        raleway: ['Raleway', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                        mont: ['Montserrat', 'sans-serif'],
+                        roboto: ['Roboto', 'sans-serif'],
+                        quicksand: ['Quicksand', 'sans-serif'],
+                        work: ['"Work Sans"', 'sans-serif'],
+                        rubik: ['Rubik', 'sans-serif'],
+                        fira: ['"Fira Sans"', 'sans-serif'],
+                        ubuntu: ['Ubuntu', 'sans-serif'],
+                        barlow: ['Barlow', 'sans-serif'],
+                        manrope: ['Manrope', 'sans-serif'],
+                        dmsans: ['"DM Sans"', 'sans-serif'],
+                        space: ['"Space Grotesk"', 'sans-serif'],
+
+                        // Serif fonts
+                        merri: ['Merriweather', 'serif'],
+                        playfair: ['"Playfair Display"', 'serif'],
+                        libre: ['"Libre Baskerville"', 'serif'],
+                        crimson: ['"Crimson Text"', 'serif'],
+                        garamond: ['"EB Garamond"', 'serif'],
+                        lora: ['Lora', 'serif'],
+
+                        // Display/Decorative fonts
+                        vibes: ['"Great Vibes"', 'cursive'],
+                        dancing: ['"Dancing Script"', 'cursive'],
+                        pacifico: ['Pacifico', 'cursive'],
+                        lobster: ['Lobster', 'cursive'],
+                        oswald: ['Oswald', 'sans-serif'],
+                        bebas: ['"Bebas Neue"', 'sans-serif'],
+                        anton: ['Anton', 'sans-serif'],
+                    }
+                }
+            }
+        }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -356,9 +402,9 @@ $slideresult = $conn->query($sql);
     </style>
 </head>
 
-<body class="">
+<body class="font-mont">
 
-    <?php include 'navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-lg px-4 py-2 rounded shadow-lg z-50">
@@ -381,12 +427,48 @@ $slideresult = $conn->query($sql);
         </div>
     <?php endif; ?>
 
+    <?php if (isset($_SESSION['login_success'])): ?>
+        <div id="login-alert" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50
+      bg-green-100 border border-green-300 text-green-800 px-6 py-3 rounded shadow-lg transition-opacity duration-1000">
+            <?= $_SESSION['login_success'] ?>
+        </div>
+        <script>
+            setTimeout(() => {
+                const alert = document.getElementById('login-alert');
+                if (alert) {
+                    alert.classList.add('opacity-0');
+                    setTimeout(() => alert.remove(), 1000); // wait for fade-out
+                }
+            }, 3000);
+        </script>
+        <?php unset($_SESSION['login_success']); ?>
+    <?php endif; ?>
+
+<?php if (isset($_SESSION['login_error'])): ?>
+    <div id="error-alert" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50
+      bg-red-100 border border-red-300 text-red-800 px-6 py-3 rounded shadow-lg transition-opacity duration-1000">
+        <?= $_SESSION['login_error'] ?>
+    </div>
+    <script>
+        setTimeout(() => {
+            const alert = document.getElementById('error-alert');
+            if (alert) {
+                alert.classList.add('opacity-0');
+                setTimeout(() => alert.remove(), 1000);
+            }
+        }, 3000);
+    </script>
+    <?php unset($_SESSION['login_error']); ?>
+<?php endif; ?>
+
+
+
     <section class="w-full bg-gray-100 overflow-hidden">
         <div class="mySwiper relative w-full">
             <div class="swiper-wrapper">
                 <?php while ($row = $slideresult->fetch_assoc()): ?>
                     <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px]">
-                        <img src="../uploads/<?= htmlspecialchars($row['filename']) ?>" alt="Discount"
+                        <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>" alt="Discount"
                             class="w-full h-full object-cover rounded" />
                     </div>
                 <?php endwhile; ?>
@@ -398,7 +480,7 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
-    <section class="bg-gradient-to-r from-orange-500 to-red-500 text-white py-1 px-2 shadow-md">
+    <section class="bg-orange-400 text-white py-1 px-2 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 
             <!-- Discount Text -->
@@ -508,7 +590,7 @@ $slideresult = $conn->query($sql);
                 'bedroom'     => ['label' => 'Bedroom Furniture',   'icon' => 'bed-double'],
                 'table'       => ['label' => 'Tables',              'icon' => 'table'],
                 'lighting'    => ['label' => 'Lighting fixture',    'icon' => 'lightbulb'],
-                'aircon'      => ['label' => 'Air Conditioners',    'icon' => 'snowflake'],
+                'aircon'      => ['label' => 'Aircon',              'icon' => 'snowflake'],
                 'doors'       => ['label' => 'Doors',               'icon' => 'door-closed'],
                 'tiles'       => ['label' => 'Tiles',               'icon' => 'grid'],
                 'windows'     => ['label' => 'Windows',             'icon' => 'square'],
@@ -542,7 +624,7 @@ $slideresult = $conn->query($sql);
 
             <!-- Banner 1 -->
             <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-                <img src="img/promo/a.png" class="w-full h-full object-contain" alt="Banner 1">
+                <img src="../img/promo/a.png" class="w-full h-full object-contain" alt="Banner 1">
 
             </div>
 
@@ -607,7 +689,7 @@ $slideresult = $conn->query($sql);
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 w-12 h-12 z-10">
                                 <div class="w-12 h-12 bg-blue-400 clip-triangle relative">
-                                    <img src="img/icon/b.png" alt="Icon" class="absolute top-1.5 left-1.5 w-5 h-5 object-contain" />
+                                    <img src="../img/icon/b.png" alt="Icon" class="absolute top-1.5 left-1.5 w-5 h-5 object-contain" />
                                 </div>
                             </div>
 
@@ -620,7 +702,7 @@ $slideresult = $conn->query($sql);
                             <!-- Product Image -->
                             <div class="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../<?= ($row['main_image']) ?>"
+                                    <img src="../../<?= ($row['main_image']) ?>"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
@@ -693,13 +775,13 @@ $slideresult = $conn->query($sql);
                             <!-- Ribbon Icon -->
                             <div class="absolute top-0 left-0 w-14 h-14 z-10">
                                 <div class="w-16 h-16 relative">
-                                    <img src="img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
                                 </div>
                             </div>
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../<?= htmlspecialchars($row['main_image']) ?>"
+                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
                                         class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                 <?php else: ?>
@@ -822,13 +904,13 @@ $slideresult = $conn->query($sql);
                             <!-- Ribbon Icon -->
                             <div class="absolute top-0 left-0 w-14 h-14 z-10">
                                 <div class="w-16 h-16 relative">
-                                    <img src="img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
                                 </div>
                             </div>
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../<?= htmlspecialchars($row['main_image']) ?>"
+                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
                                         class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                 <?php else: ?>
@@ -961,14 +1043,14 @@ $slideresult = $conn->query($sql);
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
-                                    <img src="img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
                                 </div>
                             </div>
 
                             <!-- Product Image -->
                             <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                    <img src="../../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
@@ -1034,7 +1116,7 @@ $slideresult = $conn->query($sql);
 
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
-                                            <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
+                                            <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
                                             Pre-Order
                                         </button>
                                     </form>
@@ -1104,14 +1186,14 @@ $slideresult = $conn->query($sql);
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
-                                    <img src="img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
                                 </div>
                             </div>
 
                             <!-- Product Image -->
                             <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                    <img src="../../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
@@ -1177,7 +1259,7 @@ $slideresult = $conn->query($sql);
 
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
-                                            <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
+                                            <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
                                             Pre-Order
                                         </button>
                                     </form>
@@ -1220,7 +1302,7 @@ $slideresult = $conn->query($sql);
                                 <!-- Corner Icon Bubble -->
                                 <div class="absolute top-0 left-0 w-12 h-12 z-10 flex items-start justify-start overflow-visible">
                                     <div class="w-12 h-12 bg-red-400 clip-triangle relative">
-                                        <img src="img/icon/b.png" alt="Check Icon" class="absolute top-1 left-1 w-5 h-5 object-contain" />
+                                        <img src="../img/icon/b.png" alt="Check Icon" class="absolute top-1 left-1 w-5 h-5 object-contain" />
                                     </div>
                                 </div>
 
@@ -1228,7 +1310,7 @@ $slideresult = $conn->query($sql);
                                 <div class="w-full aspect-square overflow-hidden rounded-lg bg-gray-50 border border-gray-200 mb-4">
                                     <?php if (!empty($row['type_image'])): ?>
                                         <img
-                                            src="../<?= ($row['type_image']) ?>"
+                                            src="../../<?= ($row['type_image']) ?>"
                                             class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                                             alt="Material Variant" />
                                     <?php else: ?>
@@ -1293,7 +1375,7 @@ $slideresult = $conn->query($sql);
                                             <button
                                                 type="submit"
                                                 class="bg-orange-500 text-white text-sm px-2 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
-                                                <img src="img/icon/ecommerce.png" alt="Cart" class="w-4 h-4" />
+                                                <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
                                                 Pre-Order
                                             </button>
                                         </form>
@@ -1383,7 +1465,7 @@ $slideresult = $conn->query($sql);
                         <!-- Logo with glow and pulse -->
                         <div class="relative">
                             <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                                <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
+                                <img src="../img/logo/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
                             </div>
                             <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
                         </div>

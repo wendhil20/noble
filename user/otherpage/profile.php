@@ -1,8 +1,7 @@
 <?php
 session_name("nobleuser");
-
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // ✅ Restore session from remember_token (normal account or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
@@ -30,7 +29,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // ✅ Final check if logged in (either normal or Google)
 if (!isset($_SESSION['user_id'])) {
     // Not logged in, redirect to login/Google callback
-    header('Location: google-callback.php');
+    header('Location: ../google-callback.php');
     exit;
 }
 
@@ -413,7 +412,7 @@ if ($user_id) {
 
 <body class="bg-orange-50 ">
 
-    <?php include 'navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
 
 
     <div class="container max-w-full mx-auto">
@@ -871,7 +870,7 @@ if ($user_id) {
                         <!-- Logo with glow and pulse -->
                         <div class="relative">
                             <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                                <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
+                                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
                             </div>
                             <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
                         </div>

@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // DESCRIBE product_variants;
 $tables = ['products'];
@@ -44,7 +44,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
     // Not logged in — redirect to login or Google auth
-    header('Location: google-callback.php'); // You may replace with `index.php` if default login
+    header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
     exit;
 }
 
@@ -339,7 +339,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 </head>
 
 <body class="bg-gray-100 font-sans">
-    <?php include 'navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
 
     <div class="bg-white p-6 rounded shadow mt-3">
         <h2 class="text-2xl font-bold text-orange-700 mb-6">Checkout</h2>

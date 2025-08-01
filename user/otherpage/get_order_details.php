@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 if (!isset($_GET['order_id']) || empty($_GET['order_id'])) {
     echo '<div class="text-center py-8">

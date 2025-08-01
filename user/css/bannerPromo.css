@@ -1,0 +1,182 @@
+
+.banner-section {
+  padding: 1rem;
+}
+
+.banner-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+.banner-item {
+  position: relative;
+  height: 180px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+ 
+  transition: all 0.3s ease;
+}
+
+.banner-item:hover {
+  
+  transform: translateY(-2px);
+}
+
+.banner-item img {
+  width: 100%;
+  height: 100%;
+}
+
+.banner-item.contain-style {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ 
+}
+
+.banner-item.contain-style img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.banner-item.cover-style img {
+  object-fit: contain;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-text {
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.banner-text h2 {
+  font-size: 0.875rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+
+/* Mobile First - Extra Small (475px+) */
+@media (min-width: 475px) {
+  .banner-section {
+    padding: 1.25rem;
+  }
+  
+  .banner-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .banner-item {
+    height: 200px;
+  }
+  
+  .banner-text h2 {
+    font-size: 1rem;
+  }
+}
+
+/* Small (640px+) */
+@media (min-width: 640px) {
+  .banner-section {
+    padding: 1.5rem 2rem;
+  }
+  
+  .banner-item {
+    height: 220px;
+    border-radius: 0.75rem;
+  }
+  
+  .banner-text h2 {
+    font-size: 1.125rem;
+  }
+}
+
+/* Medium (768px+) */
+@media (min-width: 768px) {
+  .banner-section {
+    padding: 1.5rem 2.5rem;
+  }
+  
+  .banner-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+  
+  .banner-item {
+    height: 240px;
+  }
+  
+  .banner-text h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Large (1024px+) */
+@media (min-width: 1024px) {
+  .banner-section {
+    padding: 2rem 3rem;
+  }
+  
+  .banner-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .banner-item {
+    height: 260px;
+  }
+  
+  .banner-text h2 {
+    font-size: 1.375rem;
+  }
+}
+
+/* Extra Large (1280px+) */
+@media (min-width: 1280px) {
+  .banner-section {
+    padding: 2rem 4rem;
+  }
+  
+  .banner-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .banner-item {
+    height: 280px;
+  }
+  
+  .banner-text h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* 2XL (1536px+) */
+@media (min-width: 1536px) {
+  .banner-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2rem;
+  }
+  
+  .banner-item {
+    height: 300px;
+  }
+}
+
+/* 3XL (1600px+) */
+@media (min-width: 1600px) {
+  .banner-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}

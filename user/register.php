@@ -3,74 +3,75 @@ session_name("nobleuser");
 session_start();
 include '../connection/connect.php';
 
-// ✅ Reset AUTO_INCREMENT if needed
-$tables = ['users', 'product_ratings'];
-foreach ($tables as $table) {
-    $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
-    $row = $result->fetch_assoc();
-    $max_id = (int)$row['max_id'];
-    $next_id = $max_id > 0 ? $max_id + 1 : 1;
-    $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
+// Function definitions...
+function validateMobileNumber($mobile) {
+    return preg_match('/^09\d{9}$/', $mobile);
+}
+function validateEmail($email) {
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+function emailExists($conn, $email) {
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
+}
+function mobileExists($conn, $mobile) {
+    $stmt = $conn->prepare("SELECT id FROM users WHERE mobile = ?");
+    $stmt->bind_param("s", $mobile);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
 }
 
-// ✅ Handle Registration
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+$errors = [];
+
+// If submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $mobile = trim($_POST['mobile'] ?? '');
     $password = $_POST['password'] ?? '';
-    $confirm = $_POST['confirm_password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
 
-    // ✅ Basic Validation
-    if (empty($name) || empty($email) || empty($mobile) || empty($password) || empty($confirm)) {
-        $_SESSION['register_error'] = "Please fill in all fields.";
-        header("Location: register.php");
-        exit;
+    // Validate
+    if (empty($name) || strlen($name) < 2) {
+        $errors[] = "Full name is required and must be at least 2 characters.";
+    }
+    if (empty($email) || !validateEmail($email)) {
+        $errors[] = "A valid email is required.";
+    } elseif (emailExists($conn, $email)) {
+        $errors[] = "Email already exists.";
+    }
+    if (empty($mobile) || !validateMobileNumber($mobile)) {
+        $errors[] = "A valid mobile number is required.";
+    } elseif (mobileExists($conn, $mobile)) {
+        $errors[] = "Mobile number already exists.";
+    }
+    if (empty($password) || strlen($password) < 6) {
+        $errors[] = "Password must be at least 6 characters.";
+    }
+    if ($password !== $confirm_password) {
+        $errors[] = "Passwords do not match.";
     }
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['register_error'] = "Invalid email format.";
-        header("Location: register.php");
-        exit;
-    }
+    // Save or redirect
+    if (empty($errors)) {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO users (name, email, mobile, password, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->bind_param("ssss", $name, $email, $mobile, $hashed_password);
 
-    if (!preg_match('/^09\d{9}$/', $mobile)) {
-        $_SESSION['register_error'] = "Invalid mobile number format. Example: 09123456789";
-        header("Location: register.php");
-        exit;
-    }
+        if ($stmt->execute()) {
+            $_SESSION['register_success'] = "Registration successful! Please log in.";
+        } else {
+            $_SESSION['register_error'] = "Something went wrong. Try again.";
+        }
 
-    if ($password !== $confirm) {
-        $_SESSION['register_error'] = "Passwords do not match.";
-        header("Location: register.php");
-        exit;
-    }
-
-    // ✅ Check for existing email or mobile
-    $check = $conn->prepare("SELECT id FROM users WHERE email = ? OR mobile = ?");
-    $check->bind_param("ss", $email, $mobile);
-    $check->execute();
-    $check->store_result();
-
-    if ($check->num_rows > 0) {
-        $_SESSION['register_error'] = "Email or mobile number already in use.";
-        header("Location: register.php");
-        exit;
-    }
-
-    // ✅ Insert new user
-    $hashed = password_hash($password, PASSWORD_DEFAULT);
-    $insert = $conn->prepare("INSERT INTO users (name, email, mobile, password) VALUES (?, ?, ?, ?)");
-    $insert->bind_param("ssss", $name, $email, $mobile, $hashed);
-
-    if ($insert->execute()) {
-        $_SESSION['register_success'] = "Registration successful! Please log in.";
-        header("Location: index.php");
-        exit;
+        header("Location: otherpage/index.php");
+        exit();
     } else {
-        $_SESSION['register_error'] = "Database Error: " . $insert->error;
-        header("Location: register.php");
-        exit;
+        $_SESSION['register_error'] = implode("<br>", $errors);
+        header("Location: otherpage/index.php");
+        exit();
     }
 }
 ?>

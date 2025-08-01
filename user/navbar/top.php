@@ -218,7 +218,7 @@ foreach ($cart as $item) {
         class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
 
         <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
-          <img src="../logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
+          <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
         </div>
         <div class="leading-snug">
           <span class="block text-sm sm:text-lg lg:text-xl font-extrabold text-orange-400 tracking-tight font-mont">

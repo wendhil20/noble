@@ -176,9 +176,7 @@ if (!empty($products)) {
 $sql = "SELECT filename FROM discount_images ORDER BY uploaded_at DESC";
 $slideresult = $conn->query($sql);
 
-
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -200,7 +198,8 @@ $slideresult = $conn->query($sql);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="css/promotionslide.css" rel="stylesheet">
+    <link href="../css/promotionslide.css" rel="stylesheet">
+    <link href="../css/bannerPromo.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
@@ -405,6 +404,7 @@ $slideresult = $conn->query($sql);
 <body class="font-mont">
 
     <?php include '../navbar/top.php'; ?>
+    <?php include 'flash_notification.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-lg px-4 py-2 rounded shadow-lg z-50">
@@ -444,22 +444,22 @@ $slideresult = $conn->query($sql);
         <?php unset($_SESSION['login_success']); ?>
     <?php endif; ?>
 
-<?php if (isset($_SESSION['login_error'])): ?>
-    <div id="error-alert" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50
+    <?php if (isset($_SESSION['login_error'])): ?>
+        <div id="error-alert" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50
       bg-red-100 border border-red-300 text-red-800 px-6 py-3 rounded shadow-lg transition-opacity duration-1000">
-        <?= $_SESSION['login_error'] ?>
-    </div>
-    <script>
-        setTimeout(() => {
-            const alert = document.getElementById('error-alert');
-            if (alert) {
-                alert.classList.add('opacity-0');
-                setTimeout(() => alert.remove(), 1000);
-            }
-        }, 3000);
-    </script>
-    <?php unset($_SESSION['login_error']); ?>
-<?php endif; ?>
+            <?= $_SESSION['login_error'] ?>
+        </div>
+        <script>
+            setTimeout(() => {
+                const alert = document.getElementById('error-alert');
+                if (alert) {
+                    alert.classList.add('opacity-0');
+                    setTimeout(() => alert.remove(), 1000);
+                }
+            }, 3000);
+        </script>
+        <?php unset($_SESSION['login_error']); ?>
+    <?php endif; ?>
 
 
 
@@ -618,54 +618,35 @@ $slideresult = $conn->query($sql);
 
 
 
-
-    <section class="px-4 sm:px-6 lg:px-8 py-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <section class="banner-section">
+        <div class="banner-grid">
 
             <!-- Banner 1 -->
-            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-                <img src="../img/promo/a.png" class="w-full h-full object-contain" alt="Banner 1">
-
+            <div class="banner-item contain-style">
+                <img src="../img/promo/a.png" alt="Banner 1">
             </div>
 
             <!-- Banner 2 -->
-            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-                <img src="assets/images/banner2.webp" class="w-full h-full object-cover" alt="Banner 2">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div class="text-white text-center">
-                        <h2 class="text-lg font-bold"></h2>
-                    </div>
-                </div>
+            <div class="banner-item cover-style">
+                <img src="../img/promo/2.png" alt="Banner 2">
+
             </div>
 
             <!-- Banner 3 -->
-            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-                <img src="assets/images/banner3.webp" class="w-full h-full object-cover" alt="Banner 3">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div class="text-white text-center">
-                        <h2 class="text-lg font-bold"> </h2>
-                    </div>
-                </div>
+            <div class="banner-item cover-style">
+                <img src="../img/promo/3.png" alt="Banner 3">
+
             </div>
 
             <!-- Banner 4 -->
-            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-                <img src="assets/images/banner4.webp" class="w-full h-full object-cover" alt="Banner 4">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div class="text-white text-center">
-                        <h2 class="text-lg font-bold"> </h2>
-                    </div>
-                </div>
+            <div class="banner-item cover-style">
+                <img src="../img/promo/4.png" alt="Banner 4">
+
             </div>
 
             <!-- Banner 5 -->
-            <div class="relative h-[300px] rounded-xl overflow-hidden shadow">
-                <img src="assets/images/banner5.webp" class="w-full h-full object-cover" alt="Banner 5">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div class="text-white text-center">
-                        <h2 class="text-lg font-bold"></h2>
-                    </div>
-                </div>
+            <div class="banner-item contain-style special-border">
+                <img src="../img/promo/1.png" alt="Banner 5">
             </div>
 
         </div>
@@ -847,7 +828,7 @@ $slideresult = $conn->query($sql);
                                 <!-- View Button -->
                                 <div class="mt-2">
                                     <a href="product_view?id=<?= (int)$row['id'] ?>"
-                                        class="p-2 inline-block text-center w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
+                                        class="p-2 inline-block text-center w-full bg-black hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
                                         View Product
                                     </a>
                                 </div>
@@ -976,7 +957,7 @@ $slideresult = $conn->query($sql);
                                 <!-- View Button -->
                                 <div class="mt-2">
                                     <a href="product_view?id=<?= (int)$row['id'] ?>"
-                                        class="p-2 inline-block text-center w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
+                                        class="p-2 inline-block text-center w-full bg-black hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
                                         View Product
                                     </a>
                                 </div>
@@ -1092,7 +1073,7 @@ $slideresult = $conn->query($sql);
                                     <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
-                                            class="bg-red-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-red-200">
+                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
@@ -1235,7 +1216,7 @@ $slideresult = $conn->query($sql);
                                     <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
-                                            class="bg-red-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-red-200">
+                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
@@ -1745,7 +1726,7 @@ $slideresult = $conn->query($sql);
                             formData.set('color_price', '0');
                         }
 
-                        const response = await fetch('cart/add_to_cart', {
+                        const response = await fetch('../cart/add_to_cart', {
                             method: 'POST',
                             body: formData
                         });

@@ -160,7 +160,7 @@ if (isset($_GET['variant_id'])) {
 </head>
 
 <body class="bg-slate-50 min-h-screen">
-    <?php include 'navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
     <!-- Navigation Breadcrumb -->
     <div class="bg-white border-b border-slate-200">
         <div class=" px-4 py-3">

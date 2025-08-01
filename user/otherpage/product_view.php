@@ -207,7 +207,7 @@ $avg_stmt->close();
 
     /* Gradient Background */
     .gradient-bg {
-      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      background: linear-gradient(135deg, #f97316 100%, #f97316 100%);
     }
 
     /* Swiper Styles */
@@ -255,8 +255,8 @@ $avg_stmt->close();
   </style>
 </head>
 
-<body class="bg-gray-50">
-  <?php include 'navbar/top.php'; ?>
+<body class="bg-gray-50 ">
+  <?php include '../navbar/top.php'; ?>
 
   <!-- Hero Section with Bouncing Bubbles Background -->
   <div class="gradient-bg text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
@@ -389,7 +389,7 @@ $avg_stmt->close();
           <!-- Product Image -->
           <div class="aspect-square mb-4 lg:mb-6 relative bg-gray-50 rounded-lg overflow-hidden">
             <img id="main-product-image"
-              src="../<?= htmlspecialchars($product['main_image']) ?>"
+              src="../../<?= htmlspecialchars($product['main_image']) ?>"
               class="w-full h-full object-contain"
               alt="<?= htmlspecialchars($product['product_name']) ?>">
           </div>
@@ -469,8 +469,8 @@ $avg_stmt->close();
                     class="type-btn border-2 border-gray-200 p-3 lg:p-4 rounded-lg hover:border-orange-300 transition-all bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300">
 
                     <div class="aspect-square rounded-lg mb-2 overflow-hidden bg-gray-100 flex items-center justify-center relative">
-                      <?php if (!empty($type['image']) && file_exists("../" . $type['image'])): ?>
-                        <img src="../<?= htmlspecialchars($type['image']) ?>"
+                      <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
+                        <img src="../../<?= htmlspecialchars($type['image']) ?>"
                           class="w-full h-full object-contain"
                           alt="<?= htmlspecialchars($type['name']) ?>"
                           loading="lazy"
@@ -523,7 +523,7 @@ $avg_stmt->close();
                             title="<?= htmlspecialchars($color['color_name']) ?>">
                             <?php if (!empty($color['image'])): ?>
                               <img
-                                src="../<?= htmlspecialchars($color['image']) ?>"
+                                src="../../<?= htmlspecialchars($color['image']) ?>"
                                 alt="<?= htmlspecialchars($color['color_name']) ?>"
                                 class="p-1 w-full h-full object-contain rounded-full">
                             <?php endif; ?>
@@ -578,11 +578,11 @@ $avg_stmt->close();
                           data-percent="<?= $percent ?>"
                           data-discount="<?= $discount ?>"
                           data-variant-id="<?= $variant['variant_id'] ?>">
-                            <?php if ($discount > 0): ?>
+                          <?php if ($discount > 0): ?>
                             <span class="absolute 2-top- -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10">
                               <?= number_format($discount, 0) ?>% OFF
                             </span>
-                            <?php endif; ?>
+                          <?php endif; ?>
 
                           <div class="text-center">
                             <div class="font-semibold text-orange-600 mb-1 text-sm lg:text-base"><?= htmlspecialchars($variant['namevariant']) ?></div>
@@ -699,7 +699,7 @@ $avg_stmt->close();
                     <!-- Product Image -->
                     <div class="relative aspect-square overflow-hidden bg-gray-50">
                       <?php if ($row['main_image']): ?>
-                        <img src="../<?= ($row['main_image']) ?>"
+                        <img src="../../<?= ($row['main_image']) ?>"
                           class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                           alt="<?= htmlspecialchars($row['product_name']) ?>">
                       <?php else: ?>
@@ -762,7 +762,7 @@ $avg_stmt->close();
             <!-- Logo with glow and pulse -->
             <div class="relative">
               <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                <img src="img/logo/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
+                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
               </div>
               <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
             </div>
@@ -1323,7 +1323,7 @@ $avg_stmt->close();
         try {
           const formData = this.buildFormData();
 
-          const response = await fetch('cart/add_to_cart.php', {
+          const response = await fetch('../cart/add_to_cart.php', {
             method: 'POST',
             body: formData
           });

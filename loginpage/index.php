@@ -156,7 +156,7 @@ if (isset($_SESSION['noble_user'])) {
         <!-- Logo and Company Section -->
         <div class="text-center mb-8 fade-in-up">
             <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation bg-white rounded-full p-1" >
-                <img src="../user/img/logo/logo.png" alt="Logo" class="w-full h-full object-contain" />
+                <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain" />
             </div>
 
             <h1 class="text-2xl font-semibold text-black mb-1">Admin panel</h1>

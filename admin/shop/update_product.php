@@ -10,18 +10,18 @@ require_role(['productspecialist', 'superadmin']);
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
-    // Redirect to login page
-    header("Location: ../../loginpage/index.php");
-    exit();
+  // Redirect to login page
+  header("Location: ../../loginpage/index.php");
+  exit();
 }
 
 // Optional: Auto-logout after inactivity (e.g. 30 mins)
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
-    // Destroy session and redirect to login
-    session_unset();
-    session_destroy();
-    header("Location: ../../loginpage/index.php?timeout=true");
-    exit();
+  // Destroy session and redirect to login
+  session_unset();
+  session_destroy();
+  header("Location: ../../loginpage/index.php?timeout=true");
+  exit();
 }
 
 // Update last activity time
@@ -52,7 +52,7 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
 
 <body class="bg-gray-100">
 
-<?php include '../navbar/top.php'; ?>
+  <?php include '../navbar/top.php'; ?>
 
   <div class="bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Update Product</h2>
@@ -65,14 +65,14 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
         <label class="block font-semibold mb-1">Product Name</label>
         <input type="text" name="product_name" value="<?php echo htmlspecialchars($product['product_name']); ?>" required class="w-full border p-2 rounded" />
       </div>
-      
+
       <div class="mb-4">
         <label class="block font-semibold mb-1">Main Image (Leave blank if no change)</label>
         <?php if (!empty($product['main_image'])): ?>
           <div class="mb-2">
-                <img src="../../<?= htmlspecialchars($product['main_image']) ?>" 
-     class="h-16 w-16 object-contain rounded" 
-     alt="Product Image">
+            <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
+              class="h-16 w-16 object-contain rounded"
+              alt="Product Image">
           </div>
         <?php endif; ?>
         <input type="file" name="main_image" accept="image/*" class="w-full" />
@@ -97,40 +97,40 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
       <div class="mb-6 border p-4 rounded bg-green-50">
         <h3 class="font-semibold text-lg text-gray-700 mb-3">Product Colors</h3>
         <div id="colors-section">
-          <?php 
+          <?php
           $colorIndex = 0;
           while ($color = $colors->fetch_assoc()) { ?>
             <div class="flex gap-2 mb-2 items-center bg-white p-2 rounded border">
               <input type="hidden" name="color_id[]" value="<?php echo $color['id']; ?>" />
-              
+
               <!-- Delete checkbox -->
               <div class="flex items-center">
                 <input type="checkbox" name="delete_color[]" value="<?php echo $color['id']; ?>" />
                 <label class="text-sm text-gray-600 ml-1">Delete</label>
               </div>
-              
+
               <!-- Color Name -->
               <input type="text" name="color_name[]" value="<?php echo htmlspecialchars($color['color_name']); ?>" placeholder="Color Name" class="border p-2 w-1/5 rounded" required />
-              
+
               <!-- Color Code -->
               <input type="text" name="color_code[]" value="<?php echo htmlspecialchars($color['color_code']); ?>" placeholder="Color Code (#hex)" class="border p-2 w-1/5 rounded" />
-              
+
               <!-- Image -->
               <div class="w-1/5">
                 <?php if (!empty($color['image'])): ?>
-                <img src="../../<?= htmlspecialchars($color['image']) ?>" alt="Color Image" class="w-12 h-12 object-contain rounded mb-1 border" />
+                  <img src="../../<?= htmlspecialchars($color['image']) ?>" alt="Color Image" class="w-12 h-12 object-contain rounded mb-1 border" />
 
                 <?php endif; ?>
                 <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" />
               </div>
-              
+
               <!-- Price -->
               <input type="number" step="0.01" name="color_price[]" value="<?php echo htmlspecialchars($color['price']); ?>" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
-              
+
               <!-- Remove Button -->
               <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
             </div>
-          <?php 
+          <?php
             $colorIndex++;
           } ?>
         </div>
@@ -164,9 +164,9 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
 
               <div class="w-1/2">
                 <?php if (!empty($type['type_image'])): ?>
-                <img src="../../<?php echo htmlspecialchars($type['type_image']); ?>"
-     alt="Type Image"
-     class="w-20 h-20 object-contain rounded mb-1 border" />
+                  <img src="../../<?php echo htmlspecialchars($type['type_image']); ?>"
+                    alt="Type Image"
+                    class="w-20 h-20 object-contain rounded mb-1 border" />
 
                 <?php endif; ?>
                 <input type="file" name="type_image[]" accept="image/*" class="w-full" />
@@ -261,7 +261,7 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
       const colorsSection = document.getElementById('colors-section');
       const div = document.createElement('div');
       div.className = 'flex gap-2 mb-2 items-center bg-white p-2 rounded border';
-      
+
       div.innerHTML = `
         <input type="hidden" name="color_id[]" value="new" />
         
@@ -287,7 +287,7 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
         <!-- Remove Button -->
         <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
       `;
-      
+
       colorsSection.appendChild(div);
     }
 
@@ -306,9 +306,9 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
     function getLastVariantData(index) {
       const variantSection = document.getElementById('variant-section-' + index);
       const lastVariant = variantSection.querySelector('.flex:last-child');
-      
+
       if (!lastVariant) return null;
-      
+
       return {
         size: lastVariant.querySelector('input[name*="variant_size"]')?.value || '',
         price: lastVariant.querySelector('input[name*="variant_price"]')?.value || '',
@@ -321,7 +321,7 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
     function addVariant(index) {
       const variantSection = document.getElementById('variant-section-' + index);
       const lastData = getLastVariantData(index);
-      
+
       const div = document.createElement('div');
       div.classList.add('flex', 'gap-2', 'mb-2', 'items-center', 'bg-blue-50', 'p-2', 'rounded');
 
@@ -390,7 +390,7 @@ $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product
 
       // Calculate initial markup and final price
       applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay);
-      
+
       // Focus on the size input
       sizeInput.focus();
     }

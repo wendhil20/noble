@@ -68,7 +68,7 @@ if (isset($_SESSION['noble_user'])) {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #000000ff 0%, #000000ff 100%);
             transition: all 0.2s ease-in-out;
         }
 
@@ -156,7 +156,7 @@ if (isset($_SESSION['noble_user'])) {
         <!-- Logo and Company Section -->
         <div class="text-center mb-8 fade-in-up">
             <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation bg-white rounded-full p-1" >
-                <img src="../user/img/logo/logo.png" alt="Logo" class="w-full h-full object-contain" />
+                <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain" />
             </div>
 
             <h1 class="text-2xl font-semibold text-black mb-1">Admin panel</h1>
@@ -168,8 +168,8 @@ if (isset($_SESSION['noble_user'])) {
 
             <!-- Form Header -->
             <div class="mb-6">
-                <h2 class="text-xl font-medium text-gray-900 mb-1">Sign in to your account</h2>
-                <p class="text-sm text-gray-600">Please enter your credentials to continue</p>
+                <h2 class="text-xl font-bold text-orange-400 mb-1 ">Sign in to your account</h2>
+                <p class="text-sm text-gray-600 ">Please enter your credentials to continue</p>
             </div>
 
             <!-- Error Message -->

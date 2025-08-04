@@ -3,26 +3,26 @@ session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-include '../../connection/connect.php'; 
-require_once '../role/roleaccount.php'; 
+include '../../connection/connect.php';
+require_once '../role/roleaccount.php';
 
-require_role(['productspecialist','superadmin']);
+require_role(['productspecialist', 'superadmin']);
 
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
-    // Redirect to login page
-    header("Location: ../../loginpage/index.php");
-    exit();
+  // Redirect to login page
+  header("Location: ../../loginpage/index.php");
+  exit();
 }
 
 // Optional: Auto-logout after inactivity (e.g. 30 mins)
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
-    // Destroy session and redirect to login
-    session_unset();
-    session_destroy();
-    header("Location: ../../loginpage/index.php?timeout=true");
-    exit();
+  // Destroy session and redirect to login
+  session_unset();
+  session_destroy();
+  header("Location: ../../loginpage/index.php?timeout=true");
+  exit();
 }
 
 // Update last activity time
@@ -45,10 +45,21 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
 
 <body class="bg-gray-100 ">
 
-<?php include '../navbar/top.php'; ?>
+  <?php include '../navbar/top.php'; ?>
 
   <div class=" bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Add Product</h2>
+    <div class="bg-white p-6 rounded-lg shadow mt-5">
+  <h2 class="text-2xl font-bold mb-4 text-orange-600">Import Products via CSV</h2>
+  <form action="import_csv.php" method="POST" enctype="multipart/form-data">
+    <div class="mb-4">
+      <label class="block font-semibold mb-1">CSV File</label>
+      <input type="file" name="csv_file" accept=".csv" required class="w-full border p-2 rounded">
+    </div>
+    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Import CSV</button>
+  </form>
+</div>
+
 
     <form action="upload_process.php" method="POST" enctype="multipart/form-data">
       <!-- Product Info -->
@@ -62,17 +73,17 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
         <input type="file" name="main_image" accept="image/*" required class="w-full" />
       </div>
 
-  <div class="mb-4">
-  <label class="block font-semibold mb-1">Category</label>
-  <select name="codename" required class="w-full border p-2 rounded">
-    <option value="">-- Select Category --</option>
-    <?php while($row = mysqli_fetch_assoc($categoryResult)): ?>
-      <option value="<?= htmlspecialchars($row['name']) ?>">
-        <?= htmlspecialchars($row['name']) ?>
-      </option>
-    <?php endwhile; ?>
-  </select>
-</div>
+      <div class="mb-4">
+        <label class="block font-semibold mb-1">Category</label>
+        <select name="codename" required class="w-full border p-2 rounded">
+          <option value="">-- Select Category --</option>
+          <?php while ($row = mysqli_fetch_assoc($categoryResult)): ?>
+            <option value="<?= htmlspecialchars($row['name']) ?>">
+              <?= htmlspecialchars($row['name']) ?>
+            </option>
+          <?php endwhile; ?>
+        </select>
+      </div>
 
 
       <div class="mb-4">
@@ -108,13 +119,13 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
   <script>
     let typeIndex = 0;
 
- function addType() {
-  const section = document.getElementById('types-section');
-  const wrapper = document.createElement('div');
-  wrapper.classList.add('mb-6', 'border', 'p-4', 'rounded', 'bg-gray-50', 'relative');
-  wrapper.setAttribute('data-type-index', typeIndex);
+    function addType() {
+      const section = document.getElementById('types-section');
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('mb-6', 'border', 'p-4', 'rounded', 'bg-gray-50', 'relative');
+      wrapper.setAttribute('data-type-index', typeIndex);
 
-  wrapper.innerHTML = `
+      wrapper.innerHTML = `
     <div class="flex justify-between items-center mb-2">
       <h3 class="font-semibold text-lg text-gray-700">Product Type ${typeIndex + 1}</h3>
       <button type="button" onclick="removeType(this)" class="text-red-600 text-sm hover:underline">Remove Type</button>
@@ -143,12 +154,12 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     </div>
   `;
 
-  section.appendChild(wrapper);
-  typeIndex++;
-}
+      section.appendChild(wrapper);
+      typeIndex++;
+    }
 
-function colorRowHTML(index) {
-  return `
+    function colorRowHTML(index) {
+      return `
     <div class="flex gap-2 mb-2 items-center bg-green-50 p-2 rounded">
       <input type="text" name="color_name[${index}][]" placeholder="Color Name" class="border p-2 w-1/4 rounded" required />
       <input type="text" name="color_code[${index}][]" placeholder="Color Code (#hex)" class="border p-2 w-1/4 rounded" />
@@ -157,10 +168,10 @@ function colorRowHTML(index) {
       <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
     </div>
   `;
-}
+    }
 
-function variantRowHTML(index) {
-  return `
+    function variantRowHTML(index) {
+      return `
     <div class="flex gap-2 mb-2 items-center bg-blue-50 p-2 rounded">
       <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-1/5 rounded" />
       <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 w-1/5 rounded" />
@@ -170,44 +181,44 @@ function variantRowHTML(index) {
       <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
     </div>
   `;
-}
+    }
 
-function addColor(index) {
-  const colorSection = document.getElementById(`color-section-${index}`);
-  const div = document.createElement('div');
-  div.innerHTML = colorRowHTML(index);
-  colorSection.appendChild(div);
-}
+    function addColor(index) {
+      const colorSection = document.getElementById(`color-section-${index}`);
+      const div = document.createElement('div');
+      div.innerHTML = colorRowHTML(index);
+      colorSection.appendChild(div);
+    }
 
-function addVariant(index) {
-  const variantSection = document.getElementById(`variant-section-${index}`);
-  const div = document.createElement('div');
-  div.innerHTML = variantRowHTML(index);
-  variantSection.appendChild(div);
-}
+    function addVariant(index) {
+      const variantSection = document.getElementById(`variant-section-${index}`);
+      const div = document.createElement('div');
+      div.innerHTML = variantRowHTML(index);
+      variantSection.appendChild(div);
+    }
 
-function removeColor(button) {
-  button.parentElement.remove();
-}
+    function removeColor(button) {
+      button.parentElement.remove();
+    }
 
-function removeVariant(button) {
-  button.parentElement.remove();
-}
+    function removeVariant(button) {
+      button.parentElement.remove();
+    }
 
-function removeType(button) {
-  button.closest('[data-type-index]').remove();
-}
+    function removeType(button) {
+      button.closest('[data-type-index]').remove();
+    }
 
-function updatePriceFromPercent(percentInput) {
-  const parent = percentInput.closest('.flex');
-  const priceInput = parent.querySelector('input[name^="variant_price"]');
-  
-  const basePrice = parseFloat(priceInput.value) || 0;
-  const percent = parseFloat(percentInput.value) || 0;
+    function updatePriceFromPercent(percentInput) {
+      const parent = percentInput.closest('.flex');
+      const priceInput = parent.querySelector('input[name^="variant_price"]');
 
-  const finalPrice = basePrice + (basePrice * percent / 100);
-  priceInput.value = finalPrice.toFixed(2);
-}
+      const basePrice = parseFloat(priceInput.value) || 0;
+      const percent = parseFloat(percentInput.value) || 0;
+
+      const finalPrice = basePrice + (basePrice * percent / 100);
+      priceInput.value = finalPrice.toFixed(2);
+    }
   </script>
 </body>
 

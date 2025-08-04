@@ -1,5 +1,5 @@
 <?php
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // Get all blocks (for selection)
 $blocks_result = $conn->query("SELECT id, name FROM blocks");
@@ -73,7 +73,7 @@ $thickness = isset($_GET['thickness']) ? max(50, min(1000, (int)$_GET['thickness
 
 <body class="bg-gray-100 min-h-screen">
   
-<?php include 'navbar/top.php'; ?>
+<?php include '../navbar/top.php'; ?>
 
   <div class="bg-white p-6 rounded-lg shadow grid grid-cols-1 md:grid-cols-4 gap-6">
 

@@ -6,7 +6,7 @@
     <title>Document</title>
     <meta http-equiv="refresh" content="0;url=index.php">
     <script>
-        window.location.href = "user/index.php";
+        window.location.href = "user/otherpage/index.php";
     </script>
 </head>
 <body>

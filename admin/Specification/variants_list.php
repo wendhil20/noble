@@ -1,20 +1,15 @@
 <?php
 session_name("nobleadmin");
-
 session_start();
 include '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin']); // allow only productspecialist and superadmin
 
-// Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
-    // Redirect to login page
     header("Location: ../../loginpage/index.php");
     exit();
 }
 
-// Optional: Auto-logout after inactivity (e.g. 30 mins)
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
-    // Destroy session and redirect to login
     session_unset();
     session_destroy();
     header("Location: ../../loginpage/index.php?timeout=true");
@@ -36,35 +31,24 @@ $result = $conn->query("SELECT id, namevariant FROM product_variants ORDER BY id
 
 <?php include '../navbar/top.php'; ?> 
 
-  <div class=" py-10 px-4">
-    <h2 class="text-3xl font-bold text-orange-700 mb-6"> Product Variants Description</h2>
+<div class="py-10 px-4">
+  <h2 class="text-3xl font-bold text-orange-700 mb-6">Product Variants Description</h2>
 
-    <div class="overflow-x-auto bg-white shadow-md rounded-lg">
-      <table class="min-w-full text-sm text-left">
-        <thead class="bg-orange-100 text-orange-800 uppercase text-xs">
-          <tr>
-            <th class="px-6 py-3 border-b border-gray-200">ID</th>
-            <th class="px-6 py-3 border-b border-gray-200">Variant Name</th>
-            <th class="px-6 py-3 border-b border-gray-200">Action</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 text-gray-700">
-          <?php while ($row = $result->fetch_assoc()): ?>
-            <tr class="hover:bg-orange-50 transition">
-              <td class="px-6 py-4 font-semibold"><?= $row['id'] ?></td>
-              <td class="px-6 py-4"><?= htmlspecialchars($row['namevariant'] ?? '-') ?></td>
-              <td class="px-6 py-4">
-                <a href="set_description.php?id=<?= $row['id'] ?>"
-                   class="inline-block bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
-                  Set Descriptions
-                </a>
-              </td>
-            </tr>
-          <?php endwhile; ?>
-        </tbody>
-      </table>
-    </div>
+  <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <?php while ($row = $result->fetch_assoc()): ?>
+      <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+        <div class="text-sm text-gray-500 mb-2">Variant ID: <?= $row['id'] ?></div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+          <?= htmlspecialchars($row['namevariant'] ?? '-') ?>
+        </h3>
+        <a href="set_description.php?id=<?= $row['id'] ?>"
+           class="inline-block bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+          Set Descriptions
+        </a>
+      </div>
+    <?php endwhile; ?>
   </div>
+</div>
 
 </body>
 </html>

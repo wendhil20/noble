@@ -74,14 +74,14 @@
 
 <body class="min-h-screen">
 
-<?php include 'navbar/top.php'; ?>
+<?php include '../navbar/top.php'; ?>
     <!-- Hero Section -->
     <div class=" relative overflow-hidden bg-no-repeat bg-cover " style="background-image: url(img/bodyimg/g.jpg);">
         <div class="absolute inset-0 bg-black opacity-50"></div>
         <div class="relative max-w-4xl mx-auto px-4 py-16 text-center">
             <div class="animate-float inline-block mb-6">
                 <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border border-orange-500 ">
-                    <img src="img/logo/logo.png" alt="Noble Housing Logo" class="w-16 h-16 object-contain">
+                    <img src="../img/logo.png" alt="Noble Housing Logo" class="w-16 h-16 object-contain">
                 </div>
             </div>
             <h1 class="text-5xl font-bold text-white mb-4">Contact us</h1>

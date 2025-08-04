@@ -5,62 +5,50 @@ include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin']); // allow only admin and superadmin
+require_role(['productspecialist', 'superadmin']);
 
-// Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
-  // Redirect to login page
   header("Location: ../../loginpage/index.php");
   exit();
 }
 
-// Optional: Auto-logout after inactivity (e.g. 30 mins)
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
-  // Destroy session and redirect to login
   session_unset();
   session_destroy();
   header("Location: ../../loginpage/index.php?timeout=true");
   exit();
 }
-
-// Update last activity time
 $_SESSION['last_activity'] = time();
 
-
-// ✅ Handle Delete Request with CASCADE DELETE
+// DELETE LOGIC
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
   $deleteId = (int) $_POST['delete_id'];
 
   try {
     $conn->begin_transaction();
 
-    // 🔎 Step 1: Get all related image paths
     $imagesToDelete = [];
 
-    // Get main image
+    // Main image
     $res = $conn->prepare("SELECT main_image FROM products WHERE id = ?");
     $res->bind_param("i", $deleteId);
     $res->execute();
     $res->bind_result($mainImage);
     $res->fetch();
-    if ($mainImage && file_exists("../../" . $mainImage)) {
-      $imagesToDelete[] = "../../" . $mainImage;
-    }
+    if ($mainImage && file_exists("../../" . $mainImage)) $imagesToDelete[] = "../../" . $mainImage;
     $res->close();
 
-    // Get color images
+    // Color images
     $res = $conn->prepare("SELECT image FROM product_colors WHERE product_id = ?");
     $res->bind_param("i", $deleteId);
     $res->execute();
     $result = $res->get_result();
     while ($row = $result->fetch_assoc()) {
-      if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
-        $imagesToDelete[] = "../../" . $row['image'];
-      }
+      if (!empty($row['image']) && file_exists("../../" . $row['image'])) $imagesToDelete[] = "../../" . $row['image'];
     }
     $res->close();
 
-    // Get type images and variant images
+    // Type images
     $typeIds = [];
     $res = $conn->prepare("SELECT id, type_image FROM product_types WHERE product_id = ?");
     $res->bind_param("i", $deleteId);
@@ -68,32 +56,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $result = $res->get_result();
     while ($row = $result->fetch_assoc()) {
       $typeIds[] = $row['id'];
-      if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) {
-        $imagesToDelete[] = "../../" . $row['type_image'];
-      }
+      if (!empty($row['type_image']) && file_exists("../../" . $row['type_image'])) $imagesToDelete[] = "../../" . $row['type_image'];
     }
     $res->close();
 
-    // Variant images (optional if you store images per variant)
     foreach ($typeIds as $typeId) {
       $res = $conn->prepare("SELECT image FROM product_variants WHERE type_id = ?");
       $res->bind_param("i", $typeId);
       $res->execute();
       $result = $res->get_result();
       while ($row = $result->fetch_assoc()) {
-        if (!empty($row['image']) && file_exists("../../" . $row['image'])) {
-          $imagesToDelete[] = "../../" . $row['image'];
-        }
+        if (!empty($row['image']) && file_exists("../../" . $row['image'])) $imagesToDelete[] = "../../" . $row['image'];
       }
       $res->close();
     }
 
-    // 🧹 Step 2: Delete image files
-    foreach ($imagesToDelete as $filePath) {
-      @unlink($filePath); // use @ to suppress errors in case file was already deleted
-    }
+    foreach ($imagesToDelete as $filePath) @unlink($filePath);
 
-    // 🗑 Step 3: Delete child records first
     foreach ($typeIds as $typeId) {
       $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
       $stmt->bind_param("i", $typeId);
@@ -117,7 +96,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $stmt3->close();
 
     $conn->commit();
-
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
   } catch (Exception $e) {
@@ -126,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
   }
 }
 
-// ✅ Fetch all products
-$products = $conn->query("SELECT id, product_name, codename, quantity, main_image FROM products ORDER BY product_name");
+$products = $conn->query("SELECT id, product_name, codename, quantity, main_image, created_at, updated_at FROM products ORDER BY product_name");
+
 ?>
 
 <!DOCTYPE html>
@@ -143,70 +121,74 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
 <body class="bg-gray-100">
   <?php include '../navbar/top.php'; ?>
 
-  <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow mt-5">
+  <div class="max-w-full mx-auto bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-6 text-orange-600">Select Product to Update</h2>
 
-    <!-- 🔍 Search -->
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search by name or codename..."
-      class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" />
-
-    <!-- 🔽 Filter -->
-    <select
-      id="quantityFilter"
-      class="w-full md:w-1/4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500">
-      <option value="all">All Quantities</option>
-      <option value="in-stock">In Stock</option>
-      <option value="out-of-stock">Out of Stock</option>
-    </select>
+    <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by name or codename..."
+        class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" />
+      <select
+        id="quantityFilter"
+        class="w-full md:w-1/4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500">
+        <option value="all">All Quantities</option>
+        <option value="in-stock">In Stock</option>
+        <option value="out-of-stock">Out of Stock</option>
+      </select>
+    </div>
 
     <?php if ($products->num_rows > 0): ?>
-      <div class="overflow-x-auto mt-5">
-        <table class="w-full table-auto border-collapse border border-gray-300" id="productTable">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="border border-gray-300 px-4 py-2 text-left">Image</th>
-              <th class="border border-gray-300 px-4 py-2 text-left">Product Name</th>
-              <th class="border border-gray-300 px-4 py-2 text-left">Codename</th>
-              <th class="border border-gray-300 px-4 py-2 text-left">Quantity</th>
-              <th class="border border-gray-300 px-4 py-2 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-6" id="productGrid">
+       <?php while ($product = $products->fetch_assoc()): ?>
+  <?php
+    $createdAt = strtotime($product['created_at']);
+    $updatedAt = strtotime($product['updated_at']);
+ $isFirstTime = $createdAt === $updatedAt;
+$canUpdate = $isFirstTime || ((time() - $updatedAt) >= (7 * 24 * 60 * 60));
 
-            <?php while ($product = $products->fetch_assoc()): ?>
-              <tr class="hover:bg-gray-50 product-row">
-                <td class="border border-gray-300 px-4 py-2">
-                  <?php if (!empty($product['main_image'])): ?>
-                    <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
-                      class="h-16 w-16 object-contain rounded"
-                      alt="Product Image">
+  ?>
+  <div class="bg-white border rounded-lg p-4 shadow product-card">
+    <div class="w-full aspect-square bg-gray-100 rounded mb-3 flex items-center justify-center overflow-hidden">
+      <?php if (!empty($product['main_image'])): ?>
+        <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
+             alt="Product Image"
+             class="h-full w-full object-contain rounded" />
+      <?php else: ?>
+        <span class="text-gray-400 text-sm italic">No image</span>
+      <?php endif; ?>
+    </div>
+    <div class="space-y-1 text-sm">
+      <div class="font-bold text-orange-600 truncate product-name"><?= htmlspecialchars($product['product_name']) ?></div>
+      <div class="text-gray-500 truncate product-code"><?= htmlspecialchars($product['codename']) ?></div>
+      <div class="text-xs text-gray-600">
+        Quantity: <span class="font-medium product-qty"><?= $product['quantity'] ?></span>
+      </div>
+      <div class="text-xs text-gray-600">
+        Created: <span class="font-medium"><?= date('Y-m-d', $createdAt) ?></span>
+      </div>
+      <div class="text-xs text-gray-600">
+        Last Updated: <span class="font-medium"><?= date('Y-m-d', $updatedAt) ?></span>
+      </div>
+    </div>
+    <div class="mt-4 flex justify-between">
+      <a href="update_product.php?id=<?= $product['id'] ?>"
+         class="<?= $canUpdate ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-400 cursor-not-allowed' ?> text-white px-3 py-1 rounded text-xs transition"
+         <?= $canUpdate ? '' : 'onclick="return false;" title=\'You can only update this product after 1 week from last update.\'' ?>>
+        Update
+      </a>
+      <form method="POST" onsubmit="return confirm('⚠️ This will permanently delete the product. Continue?');">
+        <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
+        <button type="submit"
+                class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">
+          Delete
+        </button>
+      </form>
+    </div>
+  </div>
+<?php endwhile; ?>
 
-
-                  <?php else: ?>
-                    <span class="text-gray-400 italic">No image</span>
-                  <?php endif; ?>
-                </td>
-                <td class="border border-gray-300 px-4 py-2 product-name"><?= htmlspecialchars($product['product_name']) ?></td>
-                <td class="border border-gray-300 px-4 py-2 product-code"><?= htmlspecialchars($product['codename']) ?></td>
-                <td class="border border-gray-300 px-4 py-2 product-qty"><?= $product['quantity'] ?></td>
-                <td class="border border-gray-300 px-4 py-2 text-center space-x-2">
-                  <a href="update_product.php?id=<?= $product['id'] ?>" class="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700">
-                    Update
-                  </a>
-                  <form action="" method="POST" class="inline-block" onsubmit="return confirm('⚠️ WARNING: This will permanently delete this product and ALL its related data (colors, images, etc.). Are you sure you want to continue?');">
-                    <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
-                    <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
-                      Delete
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            <?php endwhile; ?>
-          </tbody>
-        </table>
       </div>
     <?php else: ?>
       <div class="text-center py-8">
@@ -217,31 +199,29 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
       </div>
     <?php endif; ?>
 
-    <div class="mt-6 text-center">
-      <div class="inline-flex gap-4">
-        <a href="adminshop" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          Back to Dashboard
-        </a>
-        <a href="newitem" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          Update New Item
-        </a>
-      </div>
+    <div class="mt-8 text-center">
+      <a href="adminshop" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 mr-4">
+        Back to Dashboard
+      </a>
+      <a href="newitem" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+        Update New Item
+      </a>
     </div>
   </div>
 
   <script>
     const searchInput = document.getElementById("searchInput");
     const quantityFilter = document.getElementById("quantityFilter");
-    const rows = document.querySelectorAll(".product-row");
+    const cards = document.querySelectorAll(".product-card");
 
-    function filterRows() {
+    function filterCards() {
       const searchTerm = searchInput.value.toLowerCase();
       const quantityValue = quantityFilter.value;
 
-      rows.forEach(row => {
-        const name = row.querySelector(".product-name").textContent.toLowerCase();
-        const code = row.querySelector(".product-code").textContent.toLowerCase();
-        const quantity = parseInt(row.querySelector(".product-qty").textContent);
+      cards.forEach(card => {
+        const name = card.querySelector(".product-name").textContent.toLowerCase();
+        const code = card.querySelector(".product-code").textContent.toLowerCase();
+        const quantity = parseInt(card.querySelector(".product-qty").textContent);
 
         const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
         let matchesFilter = true;
@@ -252,14 +232,13 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
           matchesFilter = quantity === 0;
         }
 
-        row.style.display = matchesSearch && matchesFilter ? "" : "none";
+        card.style.display = matchesSearch && matchesFilter ? "" : "none";
       });
     }
 
-    searchInput.addEventListener("input", filterRows);
-    quantityFilter.addEventListener("change", filterRows);
+    searchInput.addEventListener("input", filterCards);
+    quantityFilter.addEventListener("change", filterCards);
   </script>
 
 </body>
-
 </html>

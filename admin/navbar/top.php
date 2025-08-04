@@ -454,6 +454,17 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                             </a>
                         <?php endif; ?>
 
+                           <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                            <a href="../shop/adminupdateshop.php"
+                                class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span>Update Product</span>
+                            </a>
+                        <?php endif; ?>
+
                         <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
                                 <a href="../orders/unassigned_orders.php"
                                     class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">

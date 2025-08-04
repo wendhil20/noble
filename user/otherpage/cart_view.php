@@ -75,11 +75,15 @@ if ($user_id) {
 }
 ?>
 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Cart</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
@@ -101,7 +105,7 @@ if ($user_id) {
       </svg>
     </div>
     <?php include '../navbar/top.php'; ?>
-    <div class="bg-orange-400 text-white py-5">
+    <div class="bg-orange-400 text-white py-5 z-0">
       <div class="container mx-auto px-4">
         <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
         <p class="text-xl text-center opacity-90">Review your items and proceed to checkout</p>
@@ -200,7 +204,7 @@ if ($user_id) {
   </div>
 
 
-  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+  <nav class="bg-white border-b border-gray-200 px-4 py-3 ">
     <div class="">
       <div class="flex items-center space-x-2 text-sm">
         <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
@@ -219,7 +223,7 @@ if ($user_id) {
 
   <div class="px-2 py-2">
     <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-3xl font-bold text-orange-400 mb-6 flex items-center gap-2"> Your Cart</h2>
+      <h2 class="text-3xl font-bold text-orange-400 mb-6 flex items-center gap-2">Your Cart</h2>
 
       <?php if ($notice): ?>
         <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow text-sm">
@@ -334,6 +338,7 @@ if ($user_id) {
       <?php endif; ?>
     </div>
   </div>
+
   <footer class="bg-black pattern-bg text-white py-16 relative overflow-hidden">
     <!-- Decorative Elements -->
     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>

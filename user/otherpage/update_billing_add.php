@@ -150,7 +150,7 @@ if ($_POST && isset($_POST['add_address'])) {
 
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
     
-    <?php include 'navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
 
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->

@@ -1,5 +1,6 @@
 <?php
 session_name("nobleuser");
+session_start();
 include '../../connection/connect.php';
 header('Content-Type: application/json');
 

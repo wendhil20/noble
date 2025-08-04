@@ -1,7 +1,7 @@
 <?php
 session_name("nobleuser");
 session_start();
-include '../connection/connect.php';
+include '../../connection/connect.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');

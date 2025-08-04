@@ -68,7 +68,7 @@ if (isset($_SESSION['noble_user'])) {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #000000ff 0%, #000000ff 100%);
             transition: all 0.2s ease-in-out;
         }
 
@@ -168,8 +168,8 @@ if (isset($_SESSION['noble_user'])) {
 
             <!-- Form Header -->
             <div class="mb-6">
-                <h2 class="text-xl font-medium text-gray-900 mb-1">Sign in to your account</h2>
-                <p class="text-sm text-gray-600">Please enter your credentials to continue</p>
+                <h2 class="text-xl font-bold text-orange-400 mb-1 ">Sign in to your account</h2>
+                <p class="text-sm text-gray-600 ">Please enter your credentials to continue</p>
             </div>
 
             <!-- Error Message -->

@@ -3,12 +3,65 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
+include '../../connection/connect.php';
+
 $cart = $_SESSION['cart'] ?? [];
 $total_cart_items = 0;
 
 foreach ($cart as $item) {
   $total_cart_items += $item['quantity'];
 }
+
+
+// ✅ Restore session from remember_token (email or mobile-based or Google)
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+  $token = $_COOKIE['remember_token'];
+
+  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+  $stmt->bind_param("s", $token);
+  $stmt->execute();
+  $res = $stmt->get_result();
+
+  if ($res->num_rows > 0) {
+    $user = $res->fetch_assoc();
+
+    // 🔐 Store essential user session info
+    $_SESSION['user_id']    = $user['id'];
+    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_email'] = $user['email'] ?? '';
+    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+
+    // 👤 Check if it's a Google account (optional)
+    if (!empty($user['google_id'])) {
+      $_SESSION['google_logged_in'] = true;
+      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+    }
+  }
+
+  $stmt->close();
+}
+
+// ✅ Final session check
+if (!isset($_SESSION['user_id'])) {
+  // Not logged in — redirect to login or Google auth
+  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+  exit;
+}
+$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'] ?? 'Guest';
+$user_email = $_SESSION['user_email'] ?? 'example@example.com';
+$user_picture = $_SESSION['user_picture'] ?? null;
+// Add this sa top ng page mo after session check
+if ($user_id) {
+    $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
+    $count_stmt->bind_param("i", $user_id);
+    $count_stmt->execute();
+    $count_result = $count_stmt->get_result();
+    $count_row = $count_result->fetch_assoc();
+    $total_cart_items = $count_row['count'] ?? 0;
+    $count_stmt->close();
+}
+
 ?>
 
 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
@@ -193,9 +246,9 @@ foreach ($cart as $item) {
 
       <!-- Breadcrumb -->
       <span class="mx-2">|</span>
-      <a href="about/about" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
+      <a href="../about/about.php" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
       <span class="mx-2">|</span>
-      <a href="contact/contact" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
+      <a href="../contact/contact.php" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
     </div>
   </div>
 </div>
@@ -214,7 +267,7 @@ foreach ($cart as $item) {
     <div class="flex justify-between items-center py-3 sm:py-4">
 
       <!-- Logo - Made more compact on mobile -->
-      <a href="javascript:void(0)" onclick="navigateWithLoading('index.php')"
+      <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index.php')"
         class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
 
         <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
@@ -387,15 +440,236 @@ foreach ($cart as $item) {
           Shop
         </a>
 
-        <!-- Cart Link -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/cart_view')"
-          class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont">
-          <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-          Cart
-          <span id="cart-count-bubble" class="cart-count absolute -top-2 -right-3 bg-red-500 text-white text-[10px] px-1 py-0.5 p-1 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+<!-- Cart Link with Hover Modal -->
+<div class="relative" id="cart-container">
+    <a href="javascript:void(0)" 
+       onclick="navigateWithLoading('../otherpage/cart_view')"
+       class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+       id="cart-link">
+        <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+        Cart
+        <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
             <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-          </span>
-        </a>
+        </span>
+    </a>
+
+    <!-- Cart Hover Modal -->
+    <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <i class="fas fa-shopping-cart"></i>
+                    Your Cart
+                </h3>
+                <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
+                    <?= $total_cart_items ?> items
+                </span>
+            </div>
+        </div>
+
+        <!-- Cart Items -->
+        <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+            <?php if ($total_cart_items > 0): ?>
+                <div class="space-y-3">
+                    <?php 
+                    // Fetch cart items for modal display
+                    $modal_stmt = $conn->prepare("
+                        SELECT c.*, t.type_image, v.descrip6, v.descrip7
+                        FROM user_cart_items c
+                        LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
+                        LEFT JOIN product_variants v ON c.variant_id = v.id
+                        WHERE c.user_id = ?
+                    ");
+                    $modal_stmt->bind_param("i", $user_id);
+                    $modal_stmt->execute();
+                    $modal_result = $modal_stmt->get_result();
+                    
+                    while ($item = $modal_result->fetch_assoc()):
+                        $unit_price = floatval($item['price']);
+                        $quantity = intval($item['quantity']);
+                    ?>
+                        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+                            <?php if (!empty($item['type_image'])): ?>
+                                <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                            <?php else: ?>
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-image text-gray-400 text-xs"></i>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
+                                <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                                    <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+                                    <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+                                    <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+                                </p>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                                    <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+                                </div>
+                            </div>
+                            
+                            <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+                                <i class="fas fa-times text-xs"></i>
+                            </a>
+                        </div>
+                    <?php endwhile; 
+                    $modal_stmt->close(); 
+                    ?>
+                </div>
+
+                <!-- Show all items, no limit indicator needed -->
+            <?php else: ?>
+                <!-- Empty Cart -->
+                <div class="text-center py-8">
+                    <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500 text-sm">Your cart is empty</p>
+                    <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+                        Start Shopping
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Modal Footer -->
+        <?php if ($total_cart_items > 0): ?>
+            <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
+                <!-- Total Price -->
+                <div class="flex justify-between items-center mb-3">
+                    <span class="font-medium text-sm text-gray-700">Total:</span>
+                    <span class="font-bold text-base sm:text-lg text-orange-600">
+                        ₱<?php 
+                        // Calculate total for modal
+                        $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
+                        $total_stmt->bind_param("i", $user_id);
+                        $total_stmt->execute();
+                        $total_result = $total_stmt->get_result();
+                        $total_row = $total_result->fetch_assoc();
+                        echo number_format($total_row['total'] ?? 0, 2);
+                        $total_stmt->close();
+                        ?>
+                    </span>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="../otherpage/cart_view.php" 
+                       class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
+                        View Cart
+                    </a>
+                    <a href="checkout.php" 
+                       class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
+                        Checkout
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Add JavaScript for hover functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cartContainer = document.getElementById('cart-container');
+    const cartModal = document.getElementById('cart-modal');
+    let hoverTimeout;
+
+    // Ensure modal is hidden on page load
+    cartModal.classList.remove('show');
+
+    // Show modal on hover
+    cartContainer.addEventListener('mouseenter', function() {
+        clearTimeout(hoverTimeout);
+        
+        // Position modal relative to cart container
+        const cartRect = cartContainer.getBoundingClientRect();
+        const modalWidth = 320; // w-80 = 320px
+        const viewportWidth = window.innerWidth;
+        
+        // Calculate position
+        let rightPos = viewportWidth - cartRect.right;
+        
+        // Adjust if modal would go off-screen
+        if (cartRect.right - modalWidth < 0) {
+            rightPos = 16; // 1rem
+        }
+        
+        cartModal.style.right = rightPos + 'px';
+        cartModal.style.top = (cartRect.bottom + 8) + 'px'; // 8px gap
+        
+        cartModal.classList.add('show');
+    });
+
+    // Hide modal when leaving both cart link and modal
+    cartContainer.addEventListener('mouseleave', function() {
+        hoverTimeout = setTimeout(() => {
+            cartModal.classList.remove('show');
+        }, 300); // Small delay to allow moving to modal
+    });
+
+    // Keep modal open when hovering over it
+    cartModal.addEventListener('mouseenter', function() {
+        clearTimeout(hoverTimeout);
+    });
+
+    cartModal.addEventListener('mouseleave', function() {
+        hoverTimeout = setTimeout(() => {
+            cartModal.classList.remove('show');
+        }, 300);
+    });
+});
+</script>
+
+<style>
+.cart-modal {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-10px);
+    transition: all 0.3s ease-in-out;
+    z-index: 9999 !important;
+    display: none;
+}
+
+.cart-modal.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0);
+    display: block;
+}
+
+.cart-item-slide {
+    animation: slideInRight 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive positioning for mobile */
+@media (max-width: 640px) {
+    .cart-modal {
+        right: 1rem !important;
+        left: 1rem !important;
+        width: auto !important;
+        max-width: none !important;
+        top: 4rem !important;
+    }
+}
+
+/* Ensure modal appears above all other elements */
+.cart-modal {
+    position: fixed !important;
+}
+</style>
 
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>

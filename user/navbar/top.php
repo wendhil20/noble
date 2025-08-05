@@ -7,51 +7,18 @@ include '../../connection/connect.php';
 
 $cart = $_SESSION['cart'] ?? [];
 $total_cart_items = 0;
-
+$user_id = $_SESSION['user_id'] ?? null;
 foreach ($cart as $item) {
   $total_cart_items += $item['quantity'];
 }
 
-
-// ✅ Restore session from remember_token (email or mobile-based or Google)
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-  $token = $_COOKIE['remember_token'];
-
-  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-  $stmt->bind_param("s", $token);
-  $stmt->execute();
-  $res = $stmt->get_result();
-
-  if ($res->num_rows > 0) {
-    $user = $res->fetch_assoc();
-
-    // 🔐 Store essential user session info
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
-    $_SESSION['user_email'] = $user['email'] ?? '';
-    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-
-    // 👤 Check if it's a Google account (optional)
-    if (!empty($user['google_id'])) {
-      $_SESSION['google_logged_in'] = true;
-      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
-    }
-  }
-
-  $stmt->close();
-}
-
-// ✅ Final session check
-if (!isset($_SESSION['user_id'])) {
-  // Not logged in — redirect to login or Google auth
-  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
-  exit;
-}
-$user_id = $_SESSION['user_id'];
+// ✅ Retrieve user info (REMOVE the duplicate assignment that causes the warning)
+// $user_id = $_SESSION['user_id']; // ❌ REMOVE THIS LINE - it causes the warning
 $user_name = $_SESSION['user_name'] ?? 'Guest';
-$user_email = $_SESSION['user_email'] ?? 'example@example.com';
+$user_email = $_SESSION['user_email'] ?? null;
 $user_picture = $_SESSION['user_picture'] ?? null;
-// Add this sa top ng page mo after session check
+
+// Get cart items count and data
 if ($user_id) {
     $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
     $count_stmt->bind_param("i", $user_id);
@@ -285,7 +252,7 @@ if ($user_id) {
 
       <!-- Mobile Cart & User Icons (visible on mobile before hamburger) -->
       <div class="flex items-center space-x-3 lg:hidden">
-        
+
         <!-- Mobile Cart Icon -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/cart_view')"
           class="relative p-2 hover:bg-gray-100 rounded-full transition">
@@ -440,236 +407,244 @@ if ($user_id) {
           Shop
         </a>
 
-<!-- Cart Link with Hover Modal -->
-<div class="relative" id="cart-container">
-    <a href="javascript:void(0)" 
-       onclick="navigateWithLoading('../otherpage/cart_view')"
-       class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
-       id="cart-link">
-        <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-        Cart
-        <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-            <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-        </span>
-    </a>
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/allproduct.php')"
+          class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
+          <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
+          All Products
+        </a>
 
-    <!-- Cart Hover Modal -->
-    <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
-        <!-- Modal Header -->
-        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
-            <div class="flex items-center justify-between">
+
+        <!-- Cart Link with Hover Modal -->
+        <div class="relative" id="cart-container">
+          <a href="javascript:void(0)"
+            onclick="navigateWithLoading('../otherpage/cart_view')"
+            class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+            id="cart-link">
+            <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+            Cart
+            <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+              <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+            </span>
+          </a>
+
+          <!-- Cart Hover Modal -->
+          <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
+              <div class="flex items-center justify-between">
                 <h3 class="font-bold text-lg flex items-center gap-2">
-                    <i class="fas fa-shopping-cart"></i>
-                    Your Cart
+                  <i class="fas fa-shopping-cart"></i>
+                  Your Cart
                 </h3>
                 <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
-                    <?= $total_cart_items ?> items
+                  <?= $total_cart_items ?> items
                 </span>
+              </div>
             </div>
-        </div>
 
-        <!-- Cart Items -->
-        <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-            <?php if ($total_cart_items > 0): ?>
+            <!-- Cart Items -->
+            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+              <?php if ($total_cart_items > 0): ?>
                 <div class="space-y-3">
-                    <?php 
-                    // Fetch cart items for modal display
-                    $modal_stmt = $conn->prepare("
+                  <?php
+                  // Fetch cart items for modal display
+                  $modal_stmt = $conn->prepare("
                         SELECT c.*, t.type_image, v.descrip6, v.descrip7
                         FROM user_cart_items c
                         LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
                         LEFT JOIN product_variants v ON c.variant_id = v.id
                         WHERE c.user_id = ?
                     ");
-                    $modal_stmt->bind_param("i", $user_id);
-                    $modal_stmt->execute();
-                    $modal_result = $modal_stmt->get_result();
-                    
-                    while ($item = $modal_result->fetch_assoc()):
-                        $unit_price = floatval($item['price']);
-                        $quantity = intval($item['quantity']);
-                    ?>
-                        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                            <?php if (!empty($item['type_image'])): ?>
-                                <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
-                            <?php else: ?>
-                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-image text-gray-400 text-xs"></i>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
-                                <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                                    <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                                    <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                                    <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                                </p>
-                                <div class="flex items-center justify-between mt-1">
-                                    <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                                    <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                                </div>
-                            </div>
-                            
-                            <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                                <i class="fas fa-times text-xs"></i>
-                            </a>
+                  $modal_stmt->bind_param("i", $user_id);
+                  $modal_stmt->execute();
+                  $modal_result = $modal_stmt->get_result();
+
+                  while ($item = $modal_result->fetch_assoc()):
+                    $unit_price = floatval($item['price']);
+                    $quantity = intval($item['quantity']);
+                  ?>
+                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+                      <?php if (!empty($item['type_image'])): ?>
+                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                      <?php else: ?>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i class="fas fa-image text-gray-400 text-xs"></i>
                         </div>
-                    <?php endwhile; 
-                    $modal_stmt->close(); 
-                    ?>
+                      <?php endif; ?>
+
+                      <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
+                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+                        </p>
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+                        </div>
+                      </div>
+
+                      <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+                        <i class="fas fa-times text-xs"></i>
+                      </a>
+                    </div>
+                  <?php endwhile;
+                  $modal_stmt->close();
+                  ?>
                 </div>
 
                 <!-- Show all items, no limit indicator needed -->
-            <?php else: ?>
+              <?php else: ?>
                 <!-- Empty Cart -->
                 <div class="text-center py-8">
-                    <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-                    <p class="text-gray-500 text-sm">Your cart is empty</p>
-                    <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
-                        Start Shopping
-                    </a>
+                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+                  <p class="text-gray-500 text-sm">Your cart is empty</p>
+                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+                    Start Shopping
+                  </a>
                 </div>
-            <?php endif; ?>
-        </div>
+              <?php endif; ?>
+            </div>
 
-        <!-- Modal Footer -->
-        <?php if ($total_cart_items > 0): ?>
-            <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
+            <!-- Modal Footer -->
+            <?php if ($total_cart_items > 0): ?>
+              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
                 <!-- Total Price -->
                 <div class="flex justify-between items-center mb-3">
-                    <span class="font-medium text-sm text-gray-700">Total:</span>
-                    <span class="font-bold text-base sm:text-lg text-orange-600">
-                        ₱<?php 
-                        // Calculate total for modal
-                        $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
-                        $total_stmt->bind_param("i", $user_id);
-                        $total_stmt->execute();
-                        $total_result = $total_stmt->get_result();
-                        $total_row = $total_result->fetch_assoc();
-                        echo number_format($total_row['total'] ?? 0, 2);
-                        $total_stmt->close();
-                        ?>
-                    </span>
+                  <span class="font-medium text-sm text-gray-700">Total:</span>
+                  <span class="font-bold text-base sm:text-lg text-orange-600">
+                    ₱<?php
+                      // Calculate total for modal
+                      $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
+                      $total_stmt->bind_param("i", $user_id);
+                      $total_stmt->execute();
+                      $total_result = $total_stmt->get_result();
+                      $total_row = $total_result->fetch_assoc();
+                      echo number_format($total_row['total'] ?? 0, 2);
+                      $total_stmt->close();
+                      ?>
+                  </span>
                 </div>
-                
+
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-2 gap-2">
-                    <a href="../otherpage/cart_view.php" 
-                       class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
-                        View Cart
-                    </a>
-                    <a href="checkout.php" 
-                       class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
-                        Checkout
-                    </a>
+                  <a href="../otherpage/cart_view.php"
+                    class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
+                    View Cart
+                  </a>
+                  <a href="checkout.php"
+                    class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
+                    Checkout
+                  </a>
                 </div>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
 
-<!-- Add JavaScript for hover functionality -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const cartContainer = document.getElementById('cart-container');
-    const cartModal = document.getElementById('cart-modal');
-    let hoverTimeout;
+        <!-- Add JavaScript for hover functionality -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const cartContainer = document.getElementById('cart-container');
+            const cartModal = document.getElementById('cart-modal');
+            let hoverTimeout;
 
-    // Ensure modal is hidden on page load
-    cartModal.classList.remove('show');
-
-    // Show modal on hover
-    cartContainer.addEventListener('mouseenter', function() {
-        clearTimeout(hoverTimeout);
-        
-        // Position modal relative to cart container
-        const cartRect = cartContainer.getBoundingClientRect();
-        const modalWidth = 320; // w-80 = 320px
-        const viewportWidth = window.innerWidth;
-        
-        // Calculate position
-        let rightPos = viewportWidth - cartRect.right;
-        
-        // Adjust if modal would go off-screen
-        if (cartRect.right - modalWidth < 0) {
-            rightPos = 16; // 1rem
-        }
-        
-        cartModal.style.right = rightPos + 'px';
-        cartModal.style.top = (cartRect.bottom + 8) + 'px'; // 8px gap
-        
-        cartModal.classList.add('show');
-    });
-
-    // Hide modal when leaving both cart link and modal
-    cartContainer.addEventListener('mouseleave', function() {
-        hoverTimeout = setTimeout(() => {
+            // Ensure modal is hidden on page load
             cartModal.classList.remove('show');
-        }, 300); // Small delay to allow moving to modal
-    });
 
-    // Keep modal open when hovering over it
-    cartModal.addEventListener('mouseenter', function() {
-        clearTimeout(hoverTimeout);
-    });
+            // Show modal on hover
+            cartContainer.addEventListener('mouseenter', function() {
+              clearTimeout(hoverTimeout);
 
-    cartModal.addEventListener('mouseleave', function() {
-        hoverTimeout = setTimeout(() => {
-            cartModal.classList.remove('show');
-        }, 300);
-    });
-});
-</script>
+              // Position modal relative to cart container
+              const cartRect = cartContainer.getBoundingClientRect();
+              const modalWidth = 320; // w-80 = 320px
+              const viewportWidth = window.innerWidth;
 
-<style>
-.cart-modal {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(-10px);
-    transition: all 0.3s ease-in-out;
-    z-index: 9999 !important;
-    display: none;
-}
+              // Calculate position
+              let rightPos = viewportWidth - cartRect.right;
 
-.cart-modal.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0);
-    display: block;
-}
+              // Adjust if modal would go off-screen
+              if (cartRect.right - modalWidth < 0) {
+                rightPos = 16; // 1rem
+              }
 
-.cart-item-slide {
-    animation: slideInRight 0.3s ease-out forwards;
-}
+              cartModal.style.right = rightPos + 'px';
+              cartModal.style.top = (cartRect.bottom + 8) + 'px'; // 8px gap
 
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
+              cartModal.classList.add('show');
+            });
 
-/* Responsive positioning for mobile */
-@media (max-width: 640px) {
-    .cart-modal {
-        right: 1rem !important;
-        left: 1rem !important;
-        width: auto !important;
-        max-width: none !important;
-        top: 4rem !important;
-    }
-}
+            // Hide modal when leaving both cart link and modal
+            cartContainer.addEventListener('mouseleave', function() {
+              hoverTimeout = setTimeout(() => {
+                cartModal.classList.remove('show');
+              }, 300); // Small delay to allow moving to modal
+            });
 
-/* Ensure modal appears above all other elements */
-.cart-modal {
-    position: fixed !important;
-}
-</style>
+            // Keep modal open when hovering over it
+            cartModal.addEventListener('mouseenter', function() {
+              clearTimeout(hoverTimeout);
+            });
+
+            cartModal.addEventListener('mouseleave', function() {
+              hoverTimeout = setTimeout(() => {
+                cartModal.classList.remove('show');
+              }, 300);
+            });
+          });
+        </script>
+
+        <style>
+          .cart-modal {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-in-out;
+            z-index: 9999 !important;
+            display: none;
+          }
+
+          .cart-modal.show {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: translateY(0);
+            display: block;
+          }
+
+          .cart-item-slide {
+            animation: slideInRight 0.3s ease-out forwards;
+          }
+
+          @keyframes slideInRight {
+            from {
+              opacity: 0;
+              transform: translateX(20px);
+            }
+
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+
+          /* Responsive positioning for mobile */
+          @media (max-width: 640px) {
+            .cart-modal {
+              right: 1rem !important;
+              left: 1rem !important;
+              width: auto !important;
+              max-width: none !important;
+              top: 4rem !important;
+            }
+          }
+
+          /* Ensure modal appears above all other elements */
+          .cart-modal {
+            position: fixed !important;
+          }
+        </style>
 
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
@@ -711,9 +686,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- Desktop Login Dropdown -->
             <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
               class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50">
-              
+
               <h2 class="text-xl font-bold text-gray-800 mb-4">Login</h2>
-              
+
               <form x-data="loginForm()" @submit.prevent="handleLogin($event)">
                 <!-- Email/Mobile Input -->
                 <div class="mb-4">
@@ -732,38 +707,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <!-- OTP Send Button (shown for email before OTP is sent) -->
                 <div x-show="isEmail && !otpSent && !otpVerified" x-transition>
-  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
-  <button
-    type="button"
-    @click="sendOTP"
-    :disabled="otpLoading || resendCooldown > 0"
-    class="w-full bg-black hover:bg-red-700 disabled:bg-black text-white px-4 py-3 rounded mb-2 flex items-center justify-center space-x-2">
-    
-    <!-- Show "Send OTP" -->
-    <template x-if="!otpLoading && resendCooldown === 0">
-      <span>Send OTP</span>
-    </template>
+                  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
+                  <button
+                    type="button"
+                    @click="sendOTP"
+                    :disabled="otpLoading || resendCooldown > 0"
+                    class="w-full bg-black hover:bg-red-700 disabled:bg-black text-white px-4 py-3 rounded mb-2 flex items-center justify-center space-x-2">
 
-    <!-- Show animated spinner + "Loading..." -->
-    <template x-if="otpLoading">
-      <div class="flex items-center space-x-2">
-        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-          viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10"
-            stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-        <span>Verifying...</span>
-      </div>
-    </template>
+                    <!-- Show "Send OTP" -->
+                    <template x-if="!otpLoading && resendCooldown === 0">
+                      <span>Send OTP</span>
+                    </template>
 
-    <!-- Show "Resend in Xs" -->
-    <template x-if="!otpLoading && resendCooldown > 0">
-      <span>Resend in <span x-text="resendCooldown"></span>s</span>
-    </template>
-  </button>
-</div>
+                    <!-- Show animated spinner + "Loading..." -->
+                    <template x-if="otpLoading">
+                      <div class="flex items-center space-x-2">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                          viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10"
+                            stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        <span>Verifying...</span>
+                      </div>
+                    </template>
+
+                    <!-- Show "Resend in Xs" -->
+                    <template x-if="!otpLoading && resendCooldown > 0">
+                      <span>Resend in <span x-text="resendCooldown"></span>s</span>
+                    </template>
+                  </button>
+                </div>
 
 
                 <!-- OTP Input Section (shown after OTP is sent but not verified) -->
@@ -918,14 +893,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- Mobile Products -->
         <div class="py-2">
-          <button @click="productsOpen = !productsOpen" 
+          <button @click="productsOpen = !productsOpen"
             class="w-full text-left py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont flex items-center justify-between">
             <span>Products</span>
             <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-180': productsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
-          
+
           <div x-show="productsOpen" x-cloak x-transition class="mt-2 ml-4 space-y-2">
             <div>
               <button @click="selectedCategory = selectedCategory === 'materials' ? null : 'materials'"
@@ -940,7 +915,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">PVC Panels</a>
               </div>
             </div>
-            
+
             <div>
               <button @click="selectedCategory = selectedCategory === 'furniture' ? null : 'furniture'"
                 class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
@@ -981,7 +956,7 @@ document.addEventListener('DOMContentLoaded', function() {
     class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4 lg:hidden">
 
     <div class="bg-white w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg shadow-lg relative">
-      
+
       <!-- Modal Header -->
       <div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
         <h2 class="text-xl font-bold text-gray-800">Login</h2>
@@ -1006,37 +981,37 @@ document.addEventListener('DOMContentLoaded', function() {
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
           </div>
 
-       <div x-show="isEmail && !otpSent && !otpVerified" x-transition class="space-y-2">
-  <label class="block text-sm font-medium text-gray-600">OTP Verification</label>
-  <button
-    type="button"
-    @click="sendOTP"
-    :disabled="otpLoading || resendCooldown > 0"
-    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center space-x-2">
-    
-    <template x-if="!otpLoading && resendCooldown === 0">
-      <span>Send OTP</span>
-    </template>
+          <div x-show="isEmail && !otpSent && !otpVerified" x-transition class="space-y-2">
+            <label class="block text-sm font-medium text-gray-600">OTP Verification</label>
+            <button
+              type="button"
+              @click="sendOTP"
+              :disabled="otpLoading || resendCooldown > 0"
+              class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center space-x-2">
 
-    <template x-if="otpLoading">
-      <div class="flex items-center space-x-2">
-        <!-- Spinner -->
-        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-          viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10"
-            stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-        <span>Verifying...</span>
-      </div>
-    </template>
+              <template x-if="!otpLoading && resendCooldown === 0">
+                <span>Send OTP</span>
+              </template>
 
-    <template x-if="!otpLoading && resendCooldown > 0">
-      <span>Resend in <span x-text="resendCooldown"></span>s</span>
-    </template>
-  </button>
-</div>
+              <template x-if="otpLoading">
+                <div class="flex items-center space-x-2">
+                  <!-- Spinner -->
+                  <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                      stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  <span>Verifying...</span>
+                </div>
+              </template>
+
+              <template x-if="!otpLoading && resendCooldown > 0">
+                <span>Resend in <span x-text="resendCooldown"></span>s</span>
+              </template>
+            </button>
+          </div>
 
 
           <div x-show="otpSent && !otpVerified" x-transition class="space-y-3">
@@ -1047,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg tracking-widest"
                 placeholder="000000">
             </div>
-            
+
             <div class="flex gap-3">
               <button type="button" @click="cancelOTP"
                 class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">Cancel</button>
@@ -1186,232 +1161,232 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
   function loginForm() {
     return {
-        // User input
-        loginInput: '',
-        password: '',
-        otp: '',
+      // User input
+      loginInput: '',
+      password: '',
+      otp: '',
 
-        // State flags
-        isMobile: false,
-        isEmail: false,
-        otpSent: false,
-        otpVerified: false,
-        otpLoading: false,
-        submitLoading: false,
+      // State flags
+      isMobile: false,
+      isEmail: false,
+      otpSent: false,
+      otpVerified: false,
+      otpLoading: false,
+      submitLoading: false,
 
-        // Feedback
-        errorMessage: '',
-        successMessage: '',
-        messageTimeout: null,
+      // Feedback
+      errorMessage: '',
+      successMessage: '',
+      messageTimeout: null,
 
-        // Resend cooldown
-        resendCooldown: 0,
-        resendTimer: null,
-        cooldownDuration: 20,
+      // Resend cooldown
+      resendCooldown: 0,
+      resendTimer: null,
+      cooldownDuration: 20,
 
-        // Initialize
-        init() {
-            this.resumeCooldown();
-        },
+      // Initialize
+      init() {
+        this.resumeCooldown();
+      },
 
-        // Detect if input is email or mobile
-        checkLoginType() {
-            const mobilePattern = /^09\d{9}$/;
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Detect if input is email or mobile
+      checkLoginType() {
+        const mobilePattern = /^09\d{9}$/;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-            this.isMobile = mobilePattern.test(this.loginInput);
-            this.isEmail = emailPattern.test(this.loginInput);
+        this.isMobile = mobilePattern.test(this.loginInput);
+        this.isEmail = emailPattern.test(this.loginInput);
 
-            // Reset states when input changes
-            this.resetOTPStates();
-        },
+        // Reset states when input changes
+        this.resetOTPStates();
+      },
 
-        // Reset OTP related states
-        resetOTPStates() {
-            this.otpSent = false;
-            this.otpVerified = false;
-            this.errorMessage = '';
-            this.successMessage = '';
-            this.otp = '';
-            this.password = '';
-            this.resendCooldown = 0;
-            if (this.resendTimer) {
-                clearInterval(this.resendTimer);
-            }
-        },
-
-        // Send OTP to email
-        sendOTP() {
-            if (this.resendCooldown > 0) return;
-
-            this.otpLoading = true;
-            this.errorMessage = '';
-            this.successMessage = '';
-
-            fetch('../send_otp.php', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: this.loginInput
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.otpLoading = false;
-                if (data.success) {
-                    this.otpSent = true;
-                    this.successMessage = data.message || 'OTP sent successfully';
-                    this.startResendCooldown();
-                } else {
-                    this.errorMessage = data.message || 'Failed to send OTP';
-                }
-                this.clearMessages();
-            })
-            .catch(() => {
-                this.otpLoading = false;
-                this.errorMessage = 'Network error while sending OTP.';
-                this.clearMessages();
-            });
-        },
-
-        // Verify OTP
-        verifyOTP() {
-            if (!this.otp || this.otp.length < 4) {
-                this.errorMessage = 'Please enter a valid OTP';
-                this.clearMessages();
-                return;
-            }
-
-            this.submitLoading = true;
-            this.errorMessage = '';
-            this.successMessage = '';
-
-            fetch('../verify_otp.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: this.loginInput,
-                    otp: this.otp
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.submitLoading = false;
-
-                if (data.success) {
-                    this.successMessage = 'OTP verified! Please enter your password.';
-                    this.otpVerified = true;
-                    this.otpSent = false;
-                    this.otp = '';
-                    this.resendCooldown = 0;
-                    if (this.resendTimer) {
-                        clearInterval(this.resendTimer);
-                    }
-                } else {
-                    this.errorMessage = data.message || 'Invalid OTP.';
-                }
-
-                this.clearMessages();
-            })
-            .catch(() => {
-                this.submitLoading = false;
-                this.errorMessage = 'Network error occurred.';
-                this.clearMessages();
-            });
-        },
-
-        // Cancel OTP process
-        cancelOTP() {
-            this.resetOTPStates();
-        },
-
-        // Handle form submission
-        handleLogin(event) {
-            if (this.isEmail && !this.otpVerified) {
-                this.errorMessage = 'Please verify your email with OTP first.';
-                this.clearMessages();
-                return;
-            }
-
-            if (!this.password) {
-                this.errorMessage = 'Please enter your password.';
-                this.clearMessages();
-                return;
-            }
-
-            this.submitLoading = true;
-            this.errorMessage = '';
-            this.successMessage = '';
-
-            const formElement = event.target.closest('form');
-            const formData = new FormData(formElement);
-
-            fetch('../login.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.submitLoading = false;
-                if (data.success) {
-                    this.successMessage = 'Login successful!';
-                    setTimeout(() => {
-                        window.location.href = data.redirect || '../otherpage/index.php';
-                    }, 1000);
-                } else {
-                    this.errorMessage = data.message || 'Login failed.';
-                    this.clearMessages();
-                }
-            })
-            .catch(() => {
-                this.submitLoading = false;
-                this.errorMessage = 'Network error occurred.';
-                this.clearMessages();
-            });
-        },
-
-        // Start resend cooldown timer
-        startResendCooldown() {
-            this.resendCooldown = this.cooldownDuration;
-            const expiresAt = Date.now() + this.cooldownDuration * 1000;
-            this.cooldownExpiry = expiresAt;
-
-            if (this.resendTimer) clearInterval(this.resendTimer);
-            this.resendTimer = setInterval(() => {
-                this.resendCooldown--;
-                if (this.resendCooldown <= 0) {
-                    clearInterval(this.resendTimer);
-                    this.cooldownExpiry = null;
-                }
-            }, 1000);
-        },
-
-        // Resume cooldown on page reload
-        resumeCooldown() {
-            if (this.cooldownExpiry) {
-                const remaining = Math.ceil((this.cooldownExpiry - Date.now()) / 1000);
-                if (remaining > 0) {
-                    this.resendCooldown = remaining;
-                    this.otpSent = true;
-                    this.startResendCooldown();
-                } else {
-                    this.cooldownExpiry = null;
-                }
-            }
-        },
-
-        // Auto-hide messages after 3 seconds
-        clearMessages() {
-            if (this.messageTimeout) clearTimeout(this.messageTimeout);
-            this.messageTimeout = setTimeout(() => {
-                this.successMessage = '';
-                this.errorMessage = '';
-            }, 3000);
+      // Reset OTP related states
+      resetOTPStates() {
+        this.otpSent = false;
+        this.otpVerified = false;
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.otp = '';
+        this.password = '';
+        this.resendCooldown = 0;
+        if (this.resendTimer) {
+          clearInterval(this.resendTimer);
         }
+      },
+
+      // Send OTP to email
+      sendOTP() {
+        if (this.resendCooldown > 0) return;
+
+        this.otpLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+
+        fetch('../send_otp.php', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: this.loginInput
+            }),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            this.otpLoading = false;
+            if (data.success) {
+              this.otpSent = true;
+              this.successMessage = data.message || 'OTP sent successfully';
+              this.startResendCooldown();
+            } else {
+              this.errorMessage = data.message || 'Failed to send OTP';
+            }
+            this.clearMessages();
+          })
+          .catch(() => {
+            this.otpLoading = false;
+            this.errorMessage = 'Network error while sending OTP.';
+            this.clearMessages();
+          });
+      },
+
+      // Verify OTP
+      verifyOTP() {
+        if (!this.otp || this.otp.length < 4) {
+          this.errorMessage = 'Please enter a valid OTP';
+          this.clearMessages();
+          return;
+        }
+
+        this.submitLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+
+        fetch('../verify_otp.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: this.loginInput,
+              otp: this.otp
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            this.submitLoading = false;
+
+            if (data.success) {
+              this.successMessage = 'OTP verified! Please enter your password.';
+              this.otpVerified = true;
+              this.otpSent = false;
+              this.otp = '';
+              this.resendCooldown = 0;
+              if (this.resendTimer) {
+                clearInterval(this.resendTimer);
+              }
+            } else {
+              this.errorMessage = data.message || 'Invalid OTP.';
+            }
+
+            this.clearMessages();
+          })
+          .catch(() => {
+            this.submitLoading = false;
+            this.errorMessage = 'Network error occurred.';
+            this.clearMessages();
+          });
+      },
+
+      // Cancel OTP process
+      cancelOTP() {
+        this.resetOTPStates();
+      },
+
+      // Handle form submission
+      handleLogin(event) {
+        if (this.isEmail && !this.otpVerified) {
+          this.errorMessage = 'Please verify your email with OTP first.';
+          this.clearMessages();
+          return;
+        }
+
+        if (!this.password) {
+          this.errorMessage = 'Please enter your password.';
+          this.clearMessages();
+          return;
+        }
+
+        this.submitLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+
+        const formElement = event.target.closest('form');
+        const formData = new FormData(formElement);
+
+        fetch('../login.php', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            this.submitLoading = false;
+            if (data.success) {
+              this.successMessage = 'Login successful!';
+              setTimeout(() => {
+                window.location.href = data.redirect || '../otherpage/index.php';
+              }, 1000);
+            } else {
+              this.errorMessage = data.message || 'Login failed.';
+              this.clearMessages();
+            }
+          })
+          .catch(() => {
+            this.submitLoading = false;
+            this.errorMessage = 'Network error occurred.';
+            this.clearMessages();
+          });
+      },
+
+      // Start resend cooldown timer
+      startResendCooldown() {
+        this.resendCooldown = this.cooldownDuration;
+        const expiresAt = Date.now() + this.cooldownDuration * 1000;
+        this.cooldownExpiry = expiresAt;
+
+        if (this.resendTimer) clearInterval(this.resendTimer);
+        this.resendTimer = setInterval(() => {
+          this.resendCooldown--;
+          if (this.resendCooldown <= 0) {
+            clearInterval(this.resendTimer);
+            this.cooldownExpiry = null;
+          }
+        }, 1000);
+      },
+
+      // Resume cooldown on page reload
+      resumeCooldown() {
+        if (this.cooldownExpiry) {
+          const remaining = Math.ceil((this.cooldownExpiry - Date.now()) / 1000);
+          if (remaining > 0) {
+            this.resendCooldown = remaining;
+            this.otpSent = true;
+            this.startResendCooldown();
+          } else {
+            this.cooldownExpiry = null;
+          }
+        }
+      },
+
+      // Auto-hide messages after 3 seconds
+      clearMessages() {
+        if (this.messageTimeout) clearTimeout(this.messageTimeout);
+        this.messageTimeout = setTimeout(() => {
+          this.successMessage = '';
+          this.errorMessage = '';
+        }, 3000);
+      }
     };
-}
+  }
 </script>

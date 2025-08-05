@@ -2,9 +2,6 @@
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
-
-
-
 ?>
 
 <!-- Cart Link with Hover Modal -->

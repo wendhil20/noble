@@ -112,6 +112,7 @@ while ($row = $types_result->fetch_assoc()) {
     </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <?php include '../navbar/top.php'; ?>
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="mb-8">
@@ -195,7 +196,7 @@ while ($row = $types_result->fetch_assoc()) {
                                 <!-- Logo Section -->
                                 <div class="flex-shrink-0">
                                     <?php 
-                                    $logo_path = !empty($supplier['logo_path']) ? '../uploads/supplier_logos/' . basename($supplier['logo_path']) : '';
+                                    $logo_path = !empty($supplier['logo_path']) ? '../../uploads/supplier_logos/' . basename($supplier['logo_path']) : '';
                                     $logo_exists = !empty($logo_path) && file_exists($logo_path);
                                     
                                     if ($logo_exists): ?>
@@ -308,9 +309,37 @@ while ($row = $types_result->fetch_assoc()) {
                                 <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200">
                                     <i class="fas fa-edit mr-2"></i>Edit
                                 </button>
-                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
+                                <div class="relative">
+                                    <button onclick="toggleDropdown(<?= $supplier['id'] ?>)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <!-- Dropdown Menu -->
+                                    <div id="dropdown-<?= $supplier['id'] ?>" class="hidden absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                        <div class="py-1">
+                                            <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
+                                               class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-noble-primary transition-colors duration-200">
+                                                <i class="fas fa-link mr-3 text-gray-400"></i>
+                                                Link Products
+                                            </a>
+                                            <a href="supplier_management.php?edit_id=<?= $supplier['id'] ?>" 
+                                               class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-noble-primary transition-colors duration-200">
+                                                <i class="fas fa-edit mr-3 text-gray-400"></i>
+                                                Edit Supplier
+                                            </a>
+                                            <a href="view_supplier.php?id=<?= $supplier['id'] ?>" 
+                                               class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-noble-primary transition-colors duration-200">
+                                                <i class="fas fa-eye mr-3 text-gray-400"></i>
+                                                View Details
+                                            </a>
+                                            <hr class="my-1 border-gray-200">
+                                            <button onclick="confirmDelete(<?= $supplier['id'] ?>, '<?= htmlspecialchars($supplier['business_name'], ENT_QUOTES) ?>')" 
+                                                    class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200">
+                                                <i class="fas fa-trash mr-3 text-red-400"></i>
+                                                Delete Supplier
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -344,6 +373,40 @@ while ($row = $types_result->fetch_assoc()) {
                 this.style.transform = 'translateY(0)';
             });
         });
+
+        // Dropdown functionality
+        function toggleDropdown(supplierId) {
+            const dropdown = document.getElementById('dropdown-' + supplierId);
+            const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+            
+            // Close all other dropdowns
+            allDropdowns.forEach(dd => {
+                if (dd.id !== 'dropdown-' + supplierId) {
+                    dd.classList.add('hidden');
+                }
+            });
+            
+            // Toggle current dropdown
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('[onclick*="toggleDropdown"]') && !event.target.closest('[id^="dropdown-"]')) {
+                document.querySelectorAll('[id^="dropdown-"]').forEach(dropdown => {
+                    dropdown.classList.add('hidden');
+                });
+            }
+        });
+
+        // Delete confirmation
+        function confirmDelete(supplierId, supplierName) {
+            if (confirm('Are you sure you want to delete "' + supplierName + '"? This action cannot be undone.')) {
+                // You can implement the delete functionality here
+                // For now, just redirect to a delete script
+                window.location.href = 'delete_supplier.php?id=' + supplierId;
+            }
+        }
     </script>
 </body>
 </html>

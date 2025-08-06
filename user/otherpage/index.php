@@ -417,6 +417,44 @@ $slideresult = $conn->query($sql);
         .carousel-item {
             transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        .swiper-pagination-bullet {
+            background: #ea580c;
+            opacity: 0.5;
+        }
+        
+        .swiper-pagination-bullet-active {
+            background: #ea580c;
+            opacity: 1;
+        }
+        
+        .contact-swiper .swiper-pagination {
+            position: relative !important;
+            bottom: auto !important;
+            margin-top: 2rem !important;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-enter { animation: fadeIn 0.2s ease-out; }
+        
+        .swiper-pagination-bullet {
+            background: #fb923c;
+            opacity: 0.5;
+        }
+        
+        .swiper-pagination-bullet-active {
+            background: #fb923c;
+            opacity: 1;
+        }
+        
+        .category-swiper .swiper-pagination {
+            position: relative !important;
+            bottom: auto !important;
+            margin-top: 2rem !important;
+        }
     </style>
 </head>
 
@@ -522,66 +560,137 @@ $slideresult = $conn->query($sql);
     </section>
 
 
-    <section class="bg-white shadow-md py-2 px-4 sm:px-6" x-data="{ activeModal: null }">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-
-            <!-- Box 1 -->
-            <button @click="activeModal = 1" class="hover:bg-orange-100 transition rounded-lg p-4 text-center border">
-                <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
-                <p class="text-sm text-gray-700">Send us a question or message.</p>
-            </button>
-
-            <!-- Box 2 -->
-            <button @click="activeModal = 2" class="hover:bg-orange-100 transition rounded-lg p-4 text-center border">
-                <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
-                <p class="text-sm text-gray-700">Book a consultation now.</p>
-            </button>
-
-            <!-- Box 3 -->
-            <button @click="activeModal = 3" class="hover:bg-orange-100 transition rounded-lg p-4 text-center border">
-                <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
-                <p class="text-sm text-gray-700">Check your order status.</p>
-            </button>
-
-            <!-- Box 4 -->
-            <button @click="activeModal = 4" class="hover:bg-orange-100 transition rounded-lg p-4 text-center border">
-                <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
-                <p class="text-sm text-gray-700">Get pricing for your project.</p>
-            </button>
-
-            <!-- Box 5 -->
-            <button @click="activeModal = 5" class="hover:bg-orange-100 transition rounded-lg p-4 text-center border">
-                <h3 class="text-lg font-semibold text-orange-700">Support</h3>
-                <p class="text-sm text-gray-700">We're here to help you.</p>
-            </button>
-
-        </div>
-
+    <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">         
+        <div class="max-w-7xl mx-auto">
+            <!-- Mobile View (lg and below) - Swiper -->
+            <div class="block lg:hidden">
+                <div class="swiper contact-swiper" x-init="
+                    setTimeout(() => {
+                        new Swiper($el, {
+                            slidesPerView: 1.2,
+                            spaceBetween: 16,
+                            centeredSlides: false,
+                            breakpoints: {
+                                480: {
+                                    slidesPerView: 1.8,
+                                    spaceBetween: 20,
+                                },
+                                640: {
+                                    slidesPerView: 2.5,
+                                    spaceBetween: 20,
+                                }
+                            }
+                        });
+                    }, 100);
+                ">
+                    <div class="swiper-wrapper">
+                        <!-- Slide 1 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 1" 
+                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
+                                <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
+                            </button>
+                        </div>
+                        
+                        <!-- Slide 2 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 2" 
+                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
+                                <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
+                            </button>
+                        </div>
+                        
+                        <!-- Slide 3 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 3" 
+                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
+                                <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
+                            </button>
+                        </div>
+                        
+                        <!-- Slide 4 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 4" 
+                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
+                                <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
+                            </button>
+                        </div>
+                        
+                        <!-- Slide 5 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 5" 
+                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                <h3 class="text-lg font-semibold text-orange-700">Support</h3>
+                                <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Desktop View (lg and above) - Grid -->
+            <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">              
+                <!-- Box 1 -->
+                <button @click="currentModal = 1" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                    <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
+                    <p class="text-sm text-gray-700">Send us a question or message.</p>
+                </button>
+                
+                <!-- Box 2 -->
+                <button @click="currentModal = 2" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                    <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
+                    <p class="text-sm text-gray-700">Book a consultation now.</p>
+                </button>
+                
+                <!-- Box 3 -->
+                <button @click="currentModal = 3" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                    <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
+                    <p class="text-sm text-gray-700">Check your order status.</p>
+                </button>
+                
+                <!-- Box 4 -->
+                <button @click="currentModal = 4" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                    <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
+                    <p class="text-sm text-gray-700">Get pricing for your project.</p>
+                </button>
+                
+                <!-- Box 5 -->
+                <button @click="currentModal = 5" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                    <h3 class="text-lg font-semibold text-orange-700">Support</h3>
+                    <p class="text-sm text-gray-700">We're here to help you.</p>
+                </button>
+            </div>
+        </div>          
+        
         <!-- Modals -->
-        <template x-if="activeModal">
+        <template x-if="currentModal">
             <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4">
-                <div class="bg-white w-full max-w-md p-6 mt-10 mb-10 rounded-lg shadow-lg relative">
+                <div class="bg-white w-full max-w-md p-6 mt-10 mb-10 rounded-lg shadow-lg relative modal-enter">
                     <!-- Modal Title -->
                     <h2 class="text-xl font-bold text-orange-600 mb-2" x-text="{
-          1: 'Inquire',
-          2: 'Appointment',
-          3: 'Track Order',
-          4: 'Request Quote',
-          5: 'Support'
-        }[activeModal]"></h2>
-
+                        1: 'Inquire',
+                        2: 'Appointment',
+                        3: 'Track Order',
+                        4: 'Request Quote',
+                        5: 'Support'
+                    }[currentModal]"></h2>
+                    
                     <!-- Modal Description -->
                     <p class="text-sm text-gray-700 mb-4" x-text="{
-          1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
-          2: 'Schedule a face-to-face or virtual consultation with our experts.',
-          3: 'Enter your order ID to track the delivery progress and timeline.',
-          4: 'Get a detailed quote based on your construction needs and preferences.',
-          5: 'Need help? Our support team is always ready to guide you through any issues.'
-        }[activeModal]"></p>
-
+                        1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
+                        2: 'Schedule a face-to-face or virtual consultation with our experts.',
+                        3: 'Enter your order ID to track the delivery progress and timeline.',
+                        4: 'Get a detailed quote based on your construction needs and preferences.',
+                        5: 'Need help? Our support team is always ready to guide you through any issues.'
+                    }[currentModal]"></p>
+                    
                     <!-- Close Button -->
-                    <button @click="activeModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
-                    <button @click="activeModal = null" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md">
+                    <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                    <button @click="currentModal = null" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md transition duration-200">
                         Close
                     </button>
                 </div>
@@ -590,49 +699,230 @@ $slideresult = $conn->query($sql);
     </section>
 
 
-    <section class="px-4 py-8 bg-white">
-        <!-- Heading and description -->
-        <div class="text-center mb-6">
-            <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
-            <p class="text-black text-sm sm:text-base">
-                Browse products by category to quickly find what you need.
-            </p>
+
+   <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
+    <!-- Heading and description -->
+    <div class="text-center mb-6">
+        <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
+        <p class="text-black text-sm sm:text-base">
+            Browse products by category to quickly find what you need.
+        </p>
+    </div>
+
+    <!-- Mobile View (lg and below) - Swiper -->
+    <div class="block lg:hidden">
+        <div class="swiper category-swiper" x-init="
+            setTimeout(() => {
+                new Swiper($el, {
+                    slidesPerView: 2,
+                    spaceBetween: 16,
+                    centeredSlides: false,
+                    breakpoints: {
+                        480: {
+                            slidesPerView: 3,
+                            spaceBetween: 20,
+                        },
+                        640: {
+                            slidesPerView: 4,
+                            spaceBetween: 20,
+                        }
+                    }
+                });
+                lucide.createIcons();
+            }, 100);
+        ">
+            <div class="swiper-wrapper">
+                <!-- Furniture -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=furniture"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="sofa" class="w-6 h-6 mb-1"></i>
+                        Furniture
+                    </a>
+                </div>
+                
+                <!-- Materials -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=materials"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="layers" class="w-6 h-6 mb-1"></i>
+                        Materials
+                    </a>
+                </div>
+                
+                <!-- Bedroom Furniture -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=bedfurniture"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="bed-double" class="w-6 h-6 mb-1"></i>
+                        Bedroom Furniture
+                    </a>
+                </div>
+                
+                <!-- Lighting -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=lighting"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
+                        Lighting fixture
+                    </a>
+                </div>
+                
+                <!-- Aircon -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=aircon"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="snowflake" class="w-6 h-6 mb-1"></i>
+                        Aircon
+                    </a>
+                </div>
+                
+                <!-- Doors -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=doors"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="door-closed" class="w-6 h-6 mb-1"></i>
+                        Doors
+                    </a>
+                </div>
+                
+                <!-- Tiles -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=tiles"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
+                        Tiles
+                    </a>
+                </div>
+                
+                <!-- Windows -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=windows"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="square" class="w-6 h-6 mb-1"></i>
+                        Windows
+                    </a>
+                </div>
+                
+                <!-- Bathroom -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=bathroom"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="shower-head" class="w-6 h-6 mb-1"></i>
+                        Bathroom Fixtures
+                    </a>
+                </div>
+                
+                <!-- Kitchen -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=kitchen"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="utensils-crossed" class="w-6 h-6 mb-1"></i>
+                        Kitchen Fixtures
+                    </a>
+                </div>
+                
+                <!-- Pipes -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=pipes"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="pipe" class="w-6 h-6 mb-1"></i>
+                        Pipes
+                    </a>
+                </div>
+                
+                <!-- AAC Blocks -->
+                <div class="swiper-slide">
+                    <a href="shop?category[]=aacblock"
+                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                        <i data-lucide="box" class="w-6 h-6 mb-1"></i>
+                        AAC BLOCKS
+                    </a>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <!-- Category buttons -->
-        <div class="flex flex-wrap justify-center gap-4">
-            <?php
+    <!-- Desktop View (lg and above) - Flex Wrap -->
+    <div class="hidden lg:flex flex-wrap justify-center gap-4">
+        <a href="shop?category[]=furniture"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="sofa" class="w-6 h-6 mb-1"></i>
+            Furniture
+        </a>
+        
+        <a href="shop?category[]=materials"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="layers" class="w-6 h-6 mb-1"></i>
+            Materials
+        </a>
+        
+        <a href="shop?category[]=bedfurniture"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="bed-double" class="w-6 h-6 mb-1"></i>
+            Bedroom Furniture
+        </a>
+        
+        <a href="shop?category[]=lighting"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
+            Lighting fixture
+        </a>
+        
+        <a href="shop?category[]=aircon"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="snowflake" class="w-6 h-6 mb-1"></i>
+            Aircon
+        </a>
+        
+        <a href="shop?category[]=doors"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="door-closed" class="w-6 h-6 mb-1"></i>
+            Doors
+        </a>
+        
+        <a href="shop?category[]=tiles"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
+            Tiles
+        </a>
+        
+        <a href="shop?category[]=windows"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="square" class="w-6 h-6 mb-1"></i>
+            Windows
+        </a>
+        
+        <a href="shop?category[]=bathroom"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="shower-head" class="w-6 h-6 mb-1"></i>
+            Bathroom Fixtures
+        </a>
+        
+        <a href="shop?category[]=kitchen"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="utensils-crossed" class="w-6 h-6 mb-1"></i>
+            Kitchen Fixtures
+        </a>
+        
+        <a href="shop?category[]=pipes"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="pipe" class="w-6 h-6 mb-1"></i>
+            Pipes
+        </a>
+        
+        <a href="shop?category[]=aacblock"
+           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+            <i data-lucide="box" class="w-6 h-6 mb-1"></i>
+            AAC BLOCKS
+        </a>
+    </div>
 
-            $categories = [
-                'furniture'   => ['label' => 'Furniture',           'icon' => 'sofa'],
-                'materials'   => ['label' => 'Materials',           'icon' => 'layers'],
-                'bedfurniture' => ['label' => 'Bedroom Furniture',   'icon' => 'bed-double'],
-                'lighting'    => ['label' => 'Lighting fixture',    'icon' => 'lightbulb'],
-                'aircon'      => ['label' => 'Aircon',              'icon' => 'snowflake'],
-                'doors'       => ['label' => 'Doors',               'icon' => 'door-closed'],
-                'tiles'       => ['label' => 'Tiles',               'icon' => 'grid'],
-                'windows'     => ['label' => 'Windows',             'icon' => 'square'],
-                'bathroom'    => ['label' => 'Bathroom Fixtures',   'icon' => 'shower-head'],
-                'kitchen'     => ['label' => 'Kitchen Fixtures',    'icon' => 'utensils-crossed'],
-                'pipes'       => ['label' => 'Pipes',               'icon' => 'pipe'],
-                'aacblock'    => ['label' => 'AAC BLOCKS',          'icon' => 'box'],
-            ];
-
-
-            foreach ($categories as $code => $data): ?>
-                <a href="shop?category[]=<?= $code ?>"
-                    class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-                    <i data-lucide="<?= $data['icon'] ?>" class="w-6 h-6 mb-1"></i>
-                    <?= $data['label'] ?>
-                </a>
-            <?php endforeach; ?>
-        </div>
-
-        <!-- Init Lucide icons -->
-        <script>
-            lucide.createIcons();
-        </script>
-    </section>
+    <!-- Init Lucide icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+</section>
 
 
 
@@ -1661,7 +1951,8 @@ $slideresult = $conn->query($sql);
     <script>
         AOS.init();
     </script>
-    <script src="../src/index.js"></script>
+    <script src="../src/index-obf.js"></script>
+
 </body>
 
 </html>

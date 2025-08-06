@@ -1,4 +1,5 @@
-   const swiperss = new Swiper(".mySwiper", {
+
+const swiperss = new Swiper(".mySwiper", {
             loop: true,
             autoplay: {
                 delay: 3000,
@@ -15,7 +16,7 @@
         });
 
         const productsSwiper = new Swiper(".mySwiper-products", {
-            slidesPerView: 1,
+            slidesPerView: 2,
             spaceBetween: 30,
             loop: true,
             autoplay: {
@@ -55,7 +56,7 @@
 
 
         var swiper = new Swiper(".mySwiper-indoor", {
-            slidesPerView: 1,
+            slidesPerView: 2,
             spaceBetween: 20,
             autoplay: {
                 delay: 3000, // delay in milliseconds (3000ms = 3 seconds)

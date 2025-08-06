@@ -1,0 +1,1 @@
+javascript-obfuscator myscript.js --output myscript-obf.js --compact true --control-flow-flattening true

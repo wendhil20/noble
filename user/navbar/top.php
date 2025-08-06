@@ -12,8 +12,8 @@ foreach ($cart as $item) {
   $total_cart_items += $item['quantity'];
 }
 
-// ✅ Retrieve user info (REMOVE the duplicate assignment that causes the warning)
-// $user_id = $_SESSION['user_id']; // ❌ REMOVE THIS LINE - it causes the warning
+
+// $user_id = $_SESSION['user_id']; //  REMOVE THIS LINE - it causes the warning
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? null;
 $user_picture = $_SESSION['user_picture'] ?? null;
@@ -35,7 +35,7 @@ if ($user_id) {
 
 <!-- Tailwind + Alpine CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -189,33 +189,68 @@ if ($user_id) {
 </div>
 
 
-<div class="bg-black text-white py-2 ">
-  <div class="px-4 flex justify-between items-center flex-wrap">
-    <div class="flex items-center space-x-4 mb-2 md:mb-0 text-xs">
-      <span>Support: (02) 123-4567</span>
-      <span>info@noblehome.com</span>
+<div class="bg-black text-white py-2">
+  <div class="px-4">
+    <!-- Mobile Layout (sm and below) -->
+    <div class="block sm:hidden">
+      <!-- First Row: Contact Info -->
+      <div class="flex justify-center items-center mb-2">
+        <div class="flex items-center space-x-3 text-xs">
+          <span>(02) 123-4567</span>
+          <span class="text-gray-400">|</span>
+          <span>info@noblehome.com</span>
+        </div>
+      </div>
+      
+      <!-- Second Row: Navigation -->
+      <div class="flex justify-center items-center space-x-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+           class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Help
+        </a>
+        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+           class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+          </svg>
+          Support
+        </a>
+        <span class="text-gray-400">|</span>
+        <a href="../about/about.php" class="text-white hover:text-orange-300 text-xs">About</a>
+        <span class="text-gray-400">|</span>
+        <a href="../contact/contact.php" class="text-white hover:text-orange-300 text-xs">Contact</a>
+      </div>
     </div>
-    <div class="flex items-center space-x-4">
-      <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Help
-      </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-        </svg>
-        Support
-      </a>
 
-      <!-- Breadcrumb -->
-      <span class="mx-2">|</span>
-      <a href="../about/about.php" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
-      <span class="mx-2">|</span>
-      <a href="../contact/contact.php" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
+    <!-- Desktop Layout (sm and above) -->
+    <div class="hidden sm:flex justify-between items-center flex-wrap">
+      <div class="flex items-center space-x-4 mb-2 md:mb-0 text-xs">
+        <span>Support: (02) 123-4567</span>
+        <span>info@noblehome.com</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Help
+        </a>
+        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+          </svg>
+          Support
+        </a>
+        <span class="mx-2">|</span>
+        <a href="../about/about.php" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
+        <span class="mx-2">|</span>
+        <a href="../contact/contact.php" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
+      </div>
     </div>
   </div>
 </div>
@@ -406,13 +441,6 @@ if ($user_id) {
           <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
           Shop
         </a>
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/allproduct.php')"
-          class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
-          <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
-          All Products
-        </a>
-
 
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">

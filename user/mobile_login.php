@@ -88,7 +88,7 @@ try {
     // Success response
     echo json_encode([
         'success' => true,
-        'message' => 'Welcome back, ' . htmlspecialchars($user['name']) . '!',
+        'message' => 'Welcome, ' . htmlspecialchars($user['name']) . '!',
         'redirect' => 'index.php',
         'user' => [
             'id' => $user['id'],

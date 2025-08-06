@@ -547,6 +547,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 </a>
                             <?php endif; ?>
 
+                            <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+
+                                <a href="../supplier_management/suppliers_list"
+                                    class="inline-flex items-center space-x-2 px-3 py-1 bg-white rounded-full text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm">
+                                    <span>Supplier Management</span>
+                                </a>
+                            <?php endif; ?>
+
                         </div>
                     </div>
                 </div>

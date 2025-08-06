@@ -75,6 +75,7 @@ $order_success = false;
 
 // ✅ Fetch billing addresses for the user
 $billing_addresses = [];
+$has_billing_addresses = false;
 if ($user_id) {
     $stmt = $conn->prepare("SELECT * FROM billing_addresses WHERE user_id = ? ORDER BY created_at DESC");
     $stmt->bind_param("i", $user_id);
@@ -83,6 +84,7 @@ if ($user_id) {
     while ($row = $result->fetch_assoc()) {
         $billing_addresses[] = $row;
     }
+    $has_billing_addresses = count($billing_addresses) > 0;
     $stmt->close();
 }
 
@@ -363,21 +365,50 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     value="<?= htmlspecialchars($userEmail ?? '') ?>" readonly />
             </div>
 
-            <!-- ✅ NEW: Billing Address Selector -->
-            <?php if (!empty($billing_addresses)): ?>
+            <!-- ✅ UPDATED: Billing Address Selector with Setup Button -->
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-3">
-                    <label class="block font-medium">Select Delivery Address</label>
-                    <button type="button" id="toggleBillingSelector" class="bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">
-                        Select from Saved Addresses
-                    </button>
+                    <label class="block font-medium">Delivery Address</label>
+                    <?php if ($has_billing_addresses): ?>
+                        <div class="flex gap-2">
+                            <button type="button" id="toggleBillingSelector" class="bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">
+                                Select from Saved Addresses
+                            </button>
+                            <a href="update_billing_add.php" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add New
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <a href="update_billing_add.php" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Set up your address
+                        </a>
+                    <?php endif; ?>
                 </div>
                 
-                <div id="billingAddressSelector" class="hidden border rounded-lg p-4 bg-gray-50">
+                <?php if ($has_billing_addresses): ?>
+                <div class="border rounded-lg p-4 bg-blue-50 border-blue-200 mb-4">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-blue-900">Select Your Delivery Address</h4>
+                            <p class="text-sm text-blue-700">Please choose one of your saved addresses below. You cannot manually enter address details.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="billingAddressSelector" class="border rounded-lg p-4 bg-gray-50">
                     <div class="space-y-3 max-h-40 overflow-y-auto">
                         <?php foreach ($billing_addresses as $addr): ?>
                             <label class="flex items-start p-3 border rounded cursor-pointer hover:bg-white billing-address-option">
-                                <input type="radio" name="billing_address_id" value="<?= $addr['id'] ?>" class="mt-1 mr-3" 
+                                <input type="radio" name="billing_address_id" value="<?= $addr['id'] ?>" class="mt-1 mr-3" required
                                        data-full-name="<?= htmlspecialchars($addr['full_name']) ?>"
                                        data-phone="<?= htmlspecialchars($addr['phone']) ?>"
                                        data-address="<?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?>"
@@ -394,13 +425,27 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             </label>
                         <?php endforeach; ?>
                     </div>
-                    <button type="button" id="clearBillingSelection" class="mt-3 text-sm text-gray-600 hover:text-gray-800">
-                        Clear Selection & Enter Manually
-                    </button>
                 </div>
+                <?php else: ?>
+                <div class="border rounded-lg p-6 bg-red-50 border-red-200">
+                    <div class="text-center">
+                        <svg class="mx-auto w-12 h-12 text-red-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <h4 class="font-bold text-red-900 text-lg mb-2">Address Required</h4>
+                        <p class="text-red-700 mb-4">You must set up at least one delivery address before you can place an order. This ensures accurate delivery and better service.</p>
+                        <a href="update_billing_add.php" class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-medium">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Set up your address now
+                        </a>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
 
+            <!-- ✅ Address Fields - Always disabled, populated by address selection -->
             <div>
                 <label class="block font-medium">Mobile Number</label>
                 <input
@@ -409,19 +454,35 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     id="mobileInput"
                     pattern="[0-9]{11}"
                     required
-                    class="w-full border px-4 py-2 rounded bg-gray-50 focus:bg-white"
+                    class="w-full border px-4 py-2 rounded bg-gray-200 cursor-not-allowed"
                     value="<?= htmlspecialchars($userMobile ?? '') ?>"
-                    placeholder="e.g. 09171234567" />
+                    placeholder="<?= !$has_billing_addresses ? 'Please set up your address first' : 'Will be filled when you select an address' ?>"
+                    disabled readonly />
             </div>
 
             <div>
                 <label class="block font-medium">Full Address</label>
-                <textarea name="address" id="addressInput" rows="3" required class="w-full border px-4 py-2 rounded resize-none"></textarea>
+                <textarea 
+                    name="address" 
+                    id="addressInput" 
+                    rows="3" 
+                    required 
+                    class="w-full border px-4 py-2 rounded resize-none bg-gray-200 cursor-not-allowed"
+                    placeholder="<?= !$has_billing_addresses ? 'Please set up your address first' : 'Will be filled when you select an address' ?>"
+                    disabled readonly></textarea>
             </div>
 
             <div>
                 <label class="block font-medium">ZIP Code</label>
-                <input type="text" name="zipcode" id="zipcodeInput" pattern="[0-9]{4}" required class="w-full border px-4 py-2 rounded" />
+                <input 
+                    type="text" 
+                    name="zipcode" 
+                    id="zipcodeInput" 
+                    pattern="[0-9]{4}" 
+                    required 
+                    class="w-full border px-4 py-2 rounded bg-gray-200 cursor-not-allowed"
+                    placeholder="<?= !$has_billing_addresses ? 'Please set up your address first' : 'Will be filled when you select an address' ?>"
+                    disabled readonly />
             </div>
 
             <!-- Payment Method Section -->
@@ -568,8 +629,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <a href="privacy_policy.php" class="text-blue-600 underline hover:text-blue-800" target="_blank">Privacy Policy</a>.
             </div>
 
-            <button type="submit" class="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 mt-6">
-                Place Order
+            <button type="submit" class="<?= !$has_billing_addresses ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700' ?> text-white px-6 py-2 rounded mt-6" <?= !$has_billing_addresses ? 'disabled' : '' ?> id="placeOrderBtn">
+                <?= !$has_billing_addresses ? 'Set up address to continue' : 'Place Order' ?>
             </button>
 
             <div class="mt-4">
@@ -616,25 +677,39 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <?php endif; ?>
 
     <script>
-        // ✅ Billing Address Selector JavaScript
+        // ✅ Updated Billing Address Selector JavaScript
         document.addEventListener('DOMContentLoaded', function() {
             const toggleBtn = document.getElementById('toggleBillingSelector');
             const selector = document.getElementById('billingAddressSelector');
-            const clearBtn = document.getElementById('clearBillingSelection');
             const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
             
             const mobileInput = document.getElementById('mobileInput');
             const addressInput = document.getElementById('addressInput');
             const zipcodeInput = document.getElementById('zipcodeInput');
 
-            // Toggle billing address selector
-            if (toggleBtn && selector) {
-                toggleBtn.addEventListener('click', function() {
-                    selector.classList.toggle('hidden');
-                    toggleBtn.textContent = selector.classList.contains('hidden') 
-                        ? 'Select from Saved Addresses' 
-                        : 'Hide Address Selector';
-                });
+            // Check if user has addresses
+            const hasAddresses = <?= $has_billing_addresses ? 'true' : 'false' ?>;
+
+            // For users with addresses, show selector by default and require selection
+            if (hasAddresses) {
+                // Initially disable the place order button until an address is selected
+                if (placeOrderBtn) {
+                    placeOrderBtn.disabled = true;
+                    placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    placeOrderBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                    placeOrderBtn.textContent = 'Please select an address';
+                }
+
+                // Toggle functionality for the selector button (optional collapse/expand)
+                if (toggleBtn && selector) {
+                    toggleBtn.addEventListener('click', function() {
+                        selector.classList.toggle('hidden');
+                        toggleBtn.textContent = selector.classList.contains('hidden') 
+                            ? 'Show Address Selector' 
+                            : 'Hide Address Selector';
+                    });
+                }
             }
 
             // Handle billing address selection
@@ -650,47 +725,44 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             phone = '0' + phone.substring(2);
                         }
                         
+                        // Populate the fields and enable them
                         mobileInput.value = phone;
                         addressInput.value = this.dataset.address;
                         zipcodeInput.value = this.dataset.postalCode;
                         
-                        // Make fields readonly when using saved address
-                        mobileInput.classList.remove('focus:bg-white');
-                        mobileInput.classList.add('bg-gray-50');
+                        // Enable fields for form submission but keep them visually disabled
+                        mobileInput.disabled = false;
+                        addressInput.disabled = false;
+                        zipcodeInput.disabled = false;
+                        
+                        // Make them readonly instead of disabled so they submit but can't be edited
                         mobileInput.readOnly = true;
                         addressInput.readOnly = true;
                         zipcodeInput.readOnly = true;
                         
-                        addressInput.classList.add('bg-gray-50');
-                        zipcodeInput.classList.add('bg-gray-50');
+                        // Enable the place order button when an address is selected
+                        if (placeOrderBtn) {
+                            placeOrderBtn.disabled = false;
+                            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                            placeOrderBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                            placeOrderBtn.textContent = 'Place Order';
+                        }
                     }
                 });
             });
 
-            // Clear selection and allow manual entry
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function() {
-                    // Uncheck all billing address radios
-                    billingRadios.forEach(radio => radio.checked = false);
-                    
-                    // Clear form fields
-                    mobileInput.value = '<?= htmlspecialchars($userMobile ?? '') ?>';
-                    addressInput.value = '';
-                    zipcodeInput.value = '';
-                    
-                    // Make fields editable again
-                    mobileInput.readOnly = false;
-                    addressInput.readOnly = false;
-                    zipcodeInput.readOnly = false;
-                    
-                    mobileInput.classList.add('focus:bg-white');
-                    mobileInput.classList.remove('bg-gray-50');
-                    addressInput.classList.remove('bg-gray-50');
-                    zipcodeInput.classList.remove('bg-gray-50');
-                    
-                    // Hide selector
-                    selector.classList.add('hidden');
-                    toggleBtn.textContent = 'Select from Saved Addresses';
+            // Form submission handler - no longer needed since fields are enabled
+            const checkoutForm = document.querySelector('form');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function(e) {
+                    // Double-check that required fields have values before submission
+                    if (hasAddresses) {
+                        if (!mobileInput.value.trim() || !addressInput.value.trim() || !zipcodeInput.value.trim()) {
+                            e.preventDefault();
+                            alert('Please select an address before placing your order.');
+                            return false;
+                        }
+                    }
                 });
             }
         });

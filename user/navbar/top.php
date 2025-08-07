@@ -20,13 +20,13 @@ $user_picture = $_SESSION['user_picture'] ?? null;
 
 // Get cart items count and data
 if ($user_id) {
-    $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
-    $count_stmt->bind_param("i", $user_id);
-    $count_stmt->execute();
-    $count_result = $count_stmt->get_result();
-    $count_row = $count_result->fetch_assoc();
-    $total_cart_items = $count_row['count'] ?? 0;
-    $count_stmt->close();
+  $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
+  $count_stmt->bind_param("i", $user_id);
+  $count_stmt->execute();
+  $count_result = $count_stmt->get_result();
+  $count_row = $count_result->fetch_assoc();
+  $total_cart_items = $count_row['count'] ?? 0;
+  $count_stmt->close();
 }
 
 ?>
@@ -187,93 +187,94 @@ if ($user_id) {
     </div>
   </div>
 </div>
+
 <div class="bg-black text-white py-3 text-xs sm:text-sm">
-        <div class="container mx-auto px-4">
-            <!-- Mobile Layout (Stack vertically) -->
-            <div class="flex flex-col gap-3 sm:hidden">
-                <!-- Contact Info - Mobile -->
-                <div class="flex flex-col items-center gap-1 text-center">
-                    <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
-                        Support: (02) 123-4567
-                    </a>
-                    <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
-                        info@noblehome.com
-                    </a>
-                </div>
-                
-                <!-- Links - Mobile -->
-                <div class="flex justify-center items-center gap-4">
-                    <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Help
-                    </a>
-                    
-                    <span class="text-gray-400">|</span>
-                    
-                    <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
-                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-                        </svg>
-                        Support
-                    </a>
-                    
-                    <span class="text-gray-400">|</span>
-                    
-                    <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
-                        About
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Desktop Layout (Side by side) -->
-            <div class="hidden sm:flex sm:justify-between sm:items-center">
-                <!-- Left: Contact Info -->
-                <div class="flex items-center gap-4">
-                    <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
-                        Support: (02) 123-4567
-                    </a>
-                    <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
-                        info@noblehome.com
-                    </a>
-                </div>
-                
-                <!-- Right: Links -->
-                <div class="flex items-center gap-4">
-                    <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Help
-                    </a>
-                    
-                    <span class="text-gray-400">|</span>
-                    
-                    <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
-                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-                        </svg>
-                        Support
-                    </a>
-                    
-                    <span class="text-gray-400">|</span>
-                    
-                    <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
-                        About
-                    </a>
-                </div>
-            </div>
-        </div>
+  <div class="container mx-auto px-4">
+    <!-- Mobile Layout (Stack vertically) -->
+    <div class="flex flex-col gap-3 sm:hidden">
+      <!-- Contact Info - Mobile -->
+      <div class="flex flex-col items-center gap-1 text-center">
+        <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
+          Support: (02) 123-4567
+        </a>
+        <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
+          info@noblehome.com
+        </a>
+      </div>
+
+      <!-- Links - Mobile -->
+      <div class="flex justify-center items-center gap-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Help
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+          </svg>
+          Support
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
+          About
+        </a>
+      </div>
     </div>
+
+    <!-- Desktop Layout (Side by side) -->
+    <div class="hidden sm:flex sm:justify-between sm:items-center">
+      <!-- Left: Contact Info -->
+      <div class="flex items-center gap-4">
+        <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
+          Support: (02) 123-4567
+        </a>
+        <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
+          info@noblehome.com
+        </a>
+      </div>
+
+      <!-- Right: Links -->
+      <div class="flex items-center gap-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Help
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+          </svg>
+          Support
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
+          About
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <!-- Navigation -->
@@ -464,322 +465,327 @@ if ($user_id) {
         </a>
 
         <!-- Cart Link with Hover Modal -->
-<div class="relative" id="cart-container">
-  <a href="javascript:void(0)"
-    onclick="navigateWithLoading('../otherpage/cart_view')"
-    class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
-    id="cart-link">
-    <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-    Cart
-    <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-      <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-    </span>
-  </a>
+        <div class="relative" id="cart-container">
+          <a href="javascript:void(0)"
+            onclick="navigateWithLoading('../otherpage/cart_view')"
+            class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+            id="cart-link">
+            <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+            Cart
+            <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+              <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+            </span>
+          </a>
 
-  <!-- Cart Hover Modal -->
-  <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
-    <!-- Modal Header -->
-    <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
-      <div class="flex items-center justify-between">
-        <h3 class="font-bold text-lg flex items-center gap-2">
-          <i class="fas fa-shopping-cart"></i>
-          Your Cart
-        </h3>
-        <div class="flex items-center gap-2">
-          <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
-            <?= $total_cart_items ?> items
-          </span>
-          <!-- Refresh Button -->
-          <button onclick="refreshCart()" id="refresh-cart-btn" class="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-all duration-200" title="Refresh Cart">
-            <i class="fas fa-sync-alt text-sm"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+          <!-- Cart Hover Modal -->
+          <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                  <i class="fas fa-shopping-cart"></i>
+                  Your Cart
+                </h3>
+                <div class="flex items-center gap-2">
+                  <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
+                    <?= $total_cart_items ?> items
+                  </span>
+                  <!-- Refresh Button -->
+                  <button onclick="refreshCart()" id="refresh-cart-btn" class="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-all duration-200" title="Refresh Cart">
+                    <i class="fas fa-sync-alt text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
 
-    <!-- Loading Indicator -->
-    <div id="cart-loading" class="hidden p-4 text-center">
-      <i class="fas fa-spinner fa-spin text-orange-500 text-xl"></i>
-      <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
-    </div>
+            <!-- Loading Indicator -->
+            <div id="cart-loading" class="hidden p-4 text-center">
+              <i class="fas fa-spinner fa-spin text-orange-500 text-xl"></i>
+              <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
+            </div>
 
-    <!-- Cart Items -->
-    <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-      <?php if ($total_cart_items > 0): ?>
-        <div class="space-y-3">
-          <?php
-          // Fetch cart items for modal display
-          $modal_stmt = $conn->prepare("
+            <!-- Cart Items -->
+            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+              <?php if ($total_cart_items > 0): ?>
+                <div class="space-y-3">
+                  <?php
+                  // Fetch cart items for modal display
+                  $modal_stmt = $conn->prepare("
                 SELECT c.*, t.type_image, v.descrip6, v.descrip7
                 FROM user_cart_items c
                 LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
                 LEFT JOIN product_variants v ON c.variant_id = v.id
                 WHERE c.user_id = ?
             ");
-          $modal_stmt->bind_param("i", $user_id);
-          $modal_stmt->execute();
-          $modal_result = $modal_stmt->get_result();
+                  $modal_stmt->bind_param("i", $user_id);
+                  $modal_stmt->execute();
+                  $modal_result = $modal_stmt->get_result();
 
-          while ($item = $modal_result->fetch_assoc()):
-            $unit_price = floatval($item['price']);
-            $quantity = intval($item['quantity']);
-          ?>
-            <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-              <?php if (!empty($item['type_image'])): ?>
-                <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                  while ($item = $modal_result->fetch_assoc()):
+                    $unit_price = floatval($item['price']);
+                    $quantity = intval($item['quantity']);
+                  ?>
+                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+                      <?php if (!empty($item['type_image'])): ?>
+                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                      <?php else: ?>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i class="fas fa-image text-gray-400 text-xs"></i>
+                        </div>
+                      <?php endif; ?>
+
+                      <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
+                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+                        </p>
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+                        </div>
+                      </div>
+
+                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+                        <i class="fas fa-times text-xs"></i>
+                      </a>
+                    </div>
+                  <?php endwhile;
+                  $modal_stmt->close();
+                  ?>
+                </div>
+
+                <!-- Show all items, no limit indicator needed -->
               <?php else: ?>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-image text-gray-400 text-xs"></i>
+                <!-- Empty Cart -->
+                <div class="text-center py-8">
+                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+                  <p class="text-gray-500 text-sm">Your cart is empty</p>
+                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+                    Start Shopping
+                  </a>
                 </div>
               <?php endif; ?>
+            </div>
 
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
-                <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                  <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                  <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                  <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                </p>
-                <div class="flex items-center justify-between mt-1">
-                  <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                  <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+            <!-- Modal Footer -->
+            <?php if ($total_cart_items > 0): ?>
+              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
+                <!-- Total Price -->
+                <div class="flex justify-between items-center mb-3">
+                  <span class="font-medium text-sm text-gray-700">Total:</span>
+                  <span class="font-bold text-base sm:text-lg text-orange-600" id="cart-total">
+                    ₱<?php
+                      // Calculate total for modal
+                      $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
+                      $total_stmt->bind_param("i", $user_id);
+                      $total_stmt->execute();
+                      $total_result = $total_stmt->get_result();
+                      $total_row = $total_result->fetch_assoc();
+                      echo number_format($total_row['total'] ?? 0, 2);
+                      $total_stmt->close();
+                      ?>
+                  </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-2">
+                  <a href="../otherpage/cart_view.php"
+                    class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
+                    View Cart
+                  </a>
+                  <a href="checkout.php"
+                    class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
+                    Checkout
+                  </a>
                 </div>
               </div>
-
-              <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                <i class="fas fa-times text-xs"></i>
-              </a>
-            </div>
-          <?php endwhile;
-          $modal_stmt->close();
-          ?>
+            <?php endif; ?>
+          </div>
         </div>
 
-        <!-- Show all items, no limit indicator needed -->
-      <?php else: ?>
-        <!-- Empty Cart -->
-        <div class="text-center py-8">
-          <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-          <p class="text-gray-500 text-sm">Your cart is empty</p>
-          <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
-            Start Shopping
-          </a>
-        </div>
-      <?php endif; ?>
-    </div>
+        <script src="../navbar/topcart-obf.js"></script>
 
-    <!-- Modal Footer -->
-    <?php if ($total_cart_items > 0): ?>
-      <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
-        <!-- Total Price -->
-        <div class="flex justify-between items-center mb-3">
-          <span class="font-medium text-sm text-gray-700">Total:</span>
-          <span class="font-bold text-base sm:text-lg text-orange-600" id="cart-total">
-            ₱<?php
-              // Calculate total for modal
-              $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
-              $total_stmt->bind_param("i", $user_id);
-              $total_stmt->execute();
-              $total_result = $total_stmt->get_result();
-              $total_row = $total_result->fetch_assoc();
-              echo number_format($total_row['total'] ?? 0, 2);
-              $total_stmt->close();
-              ?>
-          </span>
-        </div>
+        <style>
+          .cart-modal {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-in-out;
+            z-index: 9999 !important;
+            display: none;
+          }
 
-        <!-- Action Buttons -->
-        <div class="grid grid-cols-2 gap-2">
-          <a href="../otherpage/cart_view.php"
-            class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
-            View Cart
-          </a>
-          <a href="checkout.php"
-            class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
-            Checkout
-          </a>
-        </div>
-      </div>
-    <?php endif; ?>
-  </div>
-</div>
+          .cart-modal.show {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: translateY(0);
+            display: block;
+          }
 
-<script src="topcart-obf.js"></script>
+          .cart-item-slide {
+            animation: slideInRight 0.3s ease-out forwards;
+          }
 
-<style>
-  .cart-modal {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(-10px);
-    transition: all 0.3s ease-in-out;
-    z-index: 9999 !important;
-    display: none;
-  }
+          @keyframes slideInRight {
+            from {
+              opacity: 0;
+              transform: translateX(20px);
+            }
 
-  .cart-modal.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0);
-    display: block;
-  }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
 
-  .cart-item-slide {
-    animation: slideInRight 0.3s ease-out forwards;
-  }
+          /* Hide scrollbar for cart items container */
+          #cart-items-container {
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* Internet Explorer 10+ */
+          }
 
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
+          #cart-items-container::-webkit-scrollbar {
+            display: none;
+            /* WebKit */
+          }
 
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
+          /* Responsive positioning */
+          @media (max-width: 640px) {
+            .cart-modal {
+              right: 0.5rem !important;
+              left: 0.5rem !important;
+              width: auto !important;
+              max-width: none !important;
+              top: 4rem !important;
+            }
+          }
 
-  /* Hide scrollbar for cart items container */
-  #cart-items-container {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-  }
+          @media (max-width: 480px) {
+            .cart-modal {
+              right: 0.25rem !important;
+              left: 0.25rem !important;
+              top: 3.5rem !important;
+              max-height: 85vh !important;
+            }
 
-  #cart-items-container::-webkit-scrollbar {
-    display: none; /* WebKit */
-  }
+            /* Adjust padding for mobile */
+            .cart-modal .p-4 {
+              padding: 0.75rem !important;
+            }
 
-  /* Responsive positioning */
-  @media (max-width: 640px) {
-    .cart-modal {
-      right: 0.5rem !important;
-      left: 0.5rem !important;
-      width: auto !important;
-      max-width: none !important;
-      top: 4rem !important;
-    }
-  }
+            .cart-modal .p-3 {
+              padding: 0.5rem !important;
+            }
 
-  @media (max-width: 480px) {
-    .cart-modal {
-      right: 0.25rem !important;
-      left: 0.25rem !important;
-      top: 3.5rem !important;
-      max-height: 85vh !important;
-    }
+            /* Make cart items more compact on mobile */
+            .cart-modal .space-y-3 {
+              gap: 0.5rem;
+            }
 
-    /* Adjust padding for mobile */
-    .cart-modal .p-4 {
-      padding: 0.75rem !important;
-    }
+            .cart-modal .space-y-3>*+* {
+              margin-top: 0.5rem;
+            }
+          }
 
-    .cart-modal .p-3 {
-      padding: 0.5rem !important;
-    }
+          @media (max-width: 375px) {
+            .cart-modal {
+              right: 0.125rem !important;
+              left: 0.125rem !important;
+              max-height: 80vh !important;
+            }
 
-    /* Make cart items more compact on mobile */
-    .cart-modal .space-y-3 {
-      gap: 0.5rem;
-    }
+            /* Further reduce spacing for very small screens */
+            #cart-items-container {
+              max-height: 12rem !important;
+              /* Reduce max height */
+            }
+          }
 
-    .cart-modal .space-y-3 > * + * {
-      margin-top: 0.5rem;
-    }
-  }
+          /* Ensure modal appears above all other elements */
+          .cart-modal {
+            position: fixed !important;
+          }
 
-  @media (max-width: 375px) {
-    .cart-modal {
-      right: 0.125rem !important;
-      left: 0.125rem !important;
-      max-height: 80vh !important;
-    }
+          /* Button hover effects */
+          #refresh-cart-btn:hover i {
+            transform: rotate(180deg);
+            transition: transform 0.3s ease;
+          }
 
-    /* Further reduce spacing for very small screens */
-    #cart-items-container {
-      max-height: 12rem !important; /* Reduce max height */
-    }
-  }
+          #refresh-cart-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
 
-  /* Ensure modal appears above all other elements */
-  .cart-modal {
-    position: fixed !important;
-  }
+          /* Smooth scrolling for cart items */
+          #cart-items-container {
+            scroll-behavior: smooth;
+          }
 
-  /* Button hover effects */
-  #refresh-cart-btn:hover i {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-  }
+          /* Add subtle gradient fade at bottom when scrolling */
+          #cart-items-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          }
 
-  #refresh-cart-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+          #cart-items-container.has-scroll::after {
+            opacity: 1;
+          }
 
-  /* Smooth scrolling for cart items */
-  #cart-items-container {
-    scroll-behavior: smooth;
-  }
+          /* Responsive text sizes */
+          @media (max-width: 640px) {
+            .cart-modal h3 {
+              font-size: 1rem !important;
+            }
 
-  /* Add subtle gradient fade at bottom when scrolling */
-  #cart-items-container::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 20px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
+            .cart-modal .text-lg {
+              font-size: 1rem !important;
+            }
 
-  #cart-items-container.has-scroll::after {
-    opacity: 1;
-  }
+            .cart-modal .text-base {
+              font-size: 0.875rem !important;
+            }
+          }
 
-  /* Responsive text sizes */
-  @media (max-width: 640px) {
-    .cart-modal h3 {
-      font-size: 1rem !important;
-    }
+          @media (max-width: 480px) {
+            .cart-modal h3 {
+              font-size: 0.875rem !important;
+            }
 
-    .cart-modal .text-lg {
-      font-size: 1rem !important;
-    }
+            .cart-modal .font-bold.text-lg {
+              font-size: 0.875rem !important;
+            }
+          }
 
-    .cart-modal .text-base {
-      font-size: 0.875rem !important;
-    }
-  }
+          /* Improve touch targets for mobile */
+          @media (max-width: 640px) {
 
-  @media (max-width: 480px) {
-    .cart-modal h3 {
-      font-size: 0.875rem !important;
-    }
+            .cart-modal a,
+            .cart-modal button {
+              min-height: 44px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
 
-    .cart-modal .font-bold.text-lg {
-      font-size: 0.875rem !important;
-    }
-  }
-
-  /* Improve touch targets for mobile */
-  @media (max-width: 640px) {
-    .cart-modal a,
-    .cart-modal button {
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Remove item button */
-    .cart-modal .fa-times {
-      padding: 0.5rem;
-    }
-  }
-</style>
+            /* Remove item button */
+            .cart-modal .fa-times {
+              padding: 0.5rem;
+            }
+          }
+        </style>
 
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
@@ -1293,4 +1299,4 @@ if ($user_id) {
   </div>
 </nav>
 
-<script src="top-obf.js"></script>
+<script src="../navbar/top-obf.js"></script>

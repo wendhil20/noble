@@ -20,13 +20,13 @@ $user_picture = $_SESSION['user_picture'] ?? null;
 
 // Get cart items count and data
 if ($user_id) {
-    $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
-    $count_stmt->bind_param("i", $user_id);
-    $count_stmt->execute();
-    $count_result = $count_stmt->get_result();
-    $count_row = $count_result->fetch_assoc();
-    $total_cart_items = $count_row['count'] ?? 0;
-    $count_stmt->close();
+  $count_stmt = $conn->prepare("SELECT COUNT(*) as count FROM user_cart_items WHERE user_id = ?");
+  $count_stmt->bind_param("i", $user_id);
+  $count_stmt->execute();
+  $count_result = $count_stmt->get_result();
+  $count_row = $count_result->fetch_assoc();
+  $total_cart_items = $count_row['count'] ?? 0;
+  $count_stmt->close();
 }
 
 ?>
@@ -188,37 +188,94 @@ if ($user_id) {
   </div>
 </div>
 
+<div class="bg-black text-white py-3 text-xs sm:text-sm">
+  <div class="container mx-auto px-4">
+    <!-- Mobile Layout (Stack vertically) -->
+    <div class="flex flex-col gap-3 sm:hidden">
+      <!-- Contact Info - Mobile -->
+      <div class="flex flex-col items-center gap-1 text-center">
+        <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
+          Support: (02) 123-4567
+        </a>
+        <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
+          info@noblehome.com
+        </a>
+      </div>
 
-<div class="bg-black text-white py-2 ">
-  <div class="px-4 flex justify-between items-center flex-wrap">
-    <div class="flex items-center space-x-4 mb-2 md:mb-0 text-xs">
-      <span>Support: (02) 123-4567</span>
-      <span>info@noblehome.com</span>
+      <!-- Links - Mobile -->
+      <div class="flex justify-center items-center gap-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Help
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+          </svg>
+          Support
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
+          About
+        </a>
+      </div>
     </div>
-    <div class="flex items-center space-x-4">
-      <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Help
-      </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-        </svg>
-        Support
-      </a>
 
-      <!-- Breadcrumb -->
-      <span class="mx-2">|</span>
-      <a href="../about/about.php" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
-      <span class="mx-2">|</span>
-      <a href="../contact/contact.php" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
+    <!-- Desktop Layout (Side by side) -->
+    <div class="hidden sm:flex sm:justify-between sm:items-center">
+      <!-- Left: Contact Info -->
+      <div class="flex items-center gap-4">
+        <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
+          Support: (02) 123-4567
+        </a>
+        <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
+          info@noblehome.com
+        </a>
+      </div>
+
+      <!-- Right: Links -->
+      <div class="flex items-center gap-4">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Help
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+          class="hover:text-orange-300 transition inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+          </svg>
+          Support
+        </a>
+
+        <span class="text-gray-400">|</span>
+
+        <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
+          About
+        </a>
+      </div>
     </div>
   </div>
 </div>
+
 
 <!-- Navigation -->
 <nav x-data="{ 
@@ -408,761 +465,327 @@ if ($user_id) {
         </a>
 
         <!-- Cart Link with Hover Modal -->
-<div class="relative" id="cart-container">
-  <a href="javascript:void(0)"
-    onclick="navigateWithLoading('../otherpage/cart_view')"
-    class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
-    id="cart-link">
-    <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-    Cart
-    <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-      <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-    </span>
-  </a>
+        <div class="relative" id="cart-container">
+          <a href="javascript:void(0)"
+            onclick="navigateWithLoading('../otherpage/cart_view')"
+            class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+            id="cart-link">
+            <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+            Cart
+            <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+              <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+            </span>
+          </a>
 
-  <!-- Cart Hover Modal -->
-  <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
-    <!-- Modal Header -->
-    <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
-      <div class="flex items-center justify-between">
-        <h3 class="font-bold text-lg flex items-center gap-2">
-          <i class="fas fa-shopping-cart"></i>
-          Your Cart
-        </h3>
-        <div class="flex items-center gap-2">
-          <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
-            <?= $total_cart_items ?> items
-          </span>
-          <!-- Refresh Button -->
-          <button onclick="refreshCart()" id="refresh-cart-btn" class="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-all duration-200" title="Refresh Cart">
-            <i class="fas fa-sync-alt text-sm"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+          <!-- Cart Hover Modal -->
+          <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                  <i class="fas fa-shopping-cart"></i>
+                  Your Cart
+                </h3>
+                <div class="flex items-center gap-2">
+                  <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
+                    <?= $total_cart_items ?> items
+                  </span>
+                  <!-- Refresh Button -->
+                  <button onclick="refreshCart()" id="refresh-cart-btn" class="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-all duration-200" title="Refresh Cart">
+                    <i class="fas fa-sync-alt text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
 
-    <!-- Loading Indicator -->
-    <div id="cart-loading" class="hidden p-4 text-center">
-      <i class="fas fa-spinner fa-spin text-orange-500 text-xl"></i>
-      <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
-    </div>
+            <!-- Loading Indicator -->
+            <div id="cart-loading" class="hidden p-4 text-center">
+              <i class="fas fa-spinner fa-spin text-orange-500 text-xl"></i>
+              <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
+            </div>
 
-    <!-- Cart Items -->
-    <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-      <?php if ($total_cart_items > 0): ?>
-        <div class="space-y-3">
-          <?php
-          // Fetch cart items for modal display
-          $modal_stmt = $conn->prepare("
+            <!-- Cart Items -->
+            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+              <?php if ($total_cart_items > 0): ?>
+                <div class="space-y-3">
+                  <?php
+                  // Fetch cart items for modal display
+                  $modal_stmt = $conn->prepare("
                 SELECT c.*, t.type_image, v.descrip6, v.descrip7
                 FROM user_cart_items c
                 LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
                 LEFT JOIN product_variants v ON c.variant_id = v.id
                 WHERE c.user_id = ?
             ");
-          $modal_stmt->bind_param("i", $user_id);
-          $modal_stmt->execute();
-          $modal_result = $modal_stmt->get_result();
+                  $modal_stmt->bind_param("i", $user_id);
+                  $modal_stmt->execute();
+                  $modal_result = $modal_stmt->get_result();
 
-          while ($item = $modal_result->fetch_assoc()):
-            $unit_price = floatval($item['price']);
-            $quantity = intval($item['quantity']);
-          ?>
-            <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-              <?php if (!empty($item['type_image'])): ?>
-                <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                  while ($item = $modal_result->fetch_assoc()):
+                    $unit_price = floatval($item['price']);
+                    $quantity = intval($item['quantity']);
+                  ?>
+                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+                      <?php if (!empty($item['type_image'])): ?>
+                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                      <?php else: ?>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i class="fas fa-image text-gray-400 text-xs"></i>
+                        </div>
+                      <?php endif; ?>
+
+                      <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
+                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+                        </p>
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+                        </div>
+                      </div>
+
+                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+                        <i class="fas fa-times text-xs"></i>
+                      </a>
+                    </div>
+                  <?php endwhile;
+                  $modal_stmt->close();
+                  ?>
+                </div>
+
+                <!-- Show all items, no limit indicator needed -->
               <?php else: ?>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-image text-gray-400 text-xs"></i>
+                <!-- Empty Cart -->
+                <div class="text-center py-8">
+                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+                  <p class="text-gray-500 text-sm">Your cart is empty</p>
+                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+                    Start Shopping
+                  </a>
                 </div>
               <?php endif; ?>
+            </div>
 
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
-                <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                  <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                  <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                  <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                </p>
-                <div class="flex items-center justify-between mt-1">
-                  <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                  <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+            <!-- Modal Footer -->
+            <?php if ($total_cart_items > 0): ?>
+              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
+                <!-- Total Price -->
+                <div class="flex justify-between items-center mb-3">
+                  <span class="font-medium text-sm text-gray-700">Total:</span>
+                  <span class="font-bold text-base sm:text-lg text-orange-600" id="cart-total">
+                    ₱<?php
+                      // Calculate total for modal
+                      $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
+                      $total_stmt->bind_param("i", $user_id);
+                      $total_stmt->execute();
+                      $total_result = $total_stmt->get_result();
+                      $total_row = $total_result->fetch_assoc();
+                      echo number_format($total_row['total'] ?? 0, 2);
+                      $total_stmt->close();
+                      ?>
+                  </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-2">
+                  <a href="../otherpage/cart_view.php"
+                    class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
+                    View Cart
+                  </a>
+                  <a href="checkout.php"
+                    class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
+                    Checkout
+                  </a>
                 </div>
               </div>
-
-              <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                <i class="fas fa-times text-xs"></i>
-              </a>
-            </div>
-          <?php endwhile;
-          $modal_stmt->close();
-          ?>
+            <?php endif; ?>
+          </div>
         </div>
 
-        <!-- Show all items, no limit indicator needed -->
-      <?php else: ?>
-        <!-- Empty Cart -->
-        <div class="text-center py-8">
-          <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-          <p class="text-gray-500 text-sm">Your cart is empty</p>
-          <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
-            Start Shopping
-          </a>
-        </div>
-      <?php endif; ?>
-    </div>
+        <script src="../navbar/topcart-obf.js"></script>
 
-    <!-- Modal Footer -->
-    <?php if ($total_cart_items > 0): ?>
-      <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
-        <!-- Total Price -->
-        <div class="flex justify-between items-center mb-3">
-          <span class="font-medium text-sm text-gray-700">Total:</span>
-          <span class="font-bold text-base sm:text-lg text-orange-600" id="cart-total">
-            ₱<?php
-              // Calculate total for modal
-              $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
-              $total_stmt->bind_param("i", $user_id);
-              $total_stmt->execute();
-              $total_result = $total_stmt->get_result();
-              $total_row = $total_result->fetch_assoc();
-              echo number_format($total_row['total'] ?? 0, 2);
-              $total_stmt->close();
-              ?>
-          </span>
-        </div>
+        <style>
+          .cart-modal {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-in-out;
+            z-index: 9999 !important;
+            display: none;
+          }
 
-        <!-- Action Buttons -->
-        <div class="grid grid-cols-2 gap-2">
-          <a href="../otherpage/cart_view.php"
-            class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
-            View Cart
-          </a>
-          <a href="checkout.php"
-            class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
-            Checkout
-          </a>
-        </div>
-      </div>
-    <?php endif; ?>
-  </div>
-</div>
+          .cart-modal.show {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: translateY(0);
+            display: block;
+          }
 
-<!-- Add JavaScript for hover functionality and refresh -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const cartContainer = document.getElementById('cart-container');
-    const cartModal = document.getElementById('cart-modal');
-    let hoverTimeout;
+          .cart-item-slide {
+            animation: slideInRight 0.3s ease-out forwards;
+          }
 
-    cartModal.classList.remove('show');
-
-    cartContainer.addEventListener('mouseenter', function () {
-      clearTimeout(hoverTimeout);
-      const cartRect = cartContainer.getBoundingClientRect();
-      const modalWidth = 320;
-      const viewportWidth = window.innerWidth;
-
-      let rightPos = viewportWidth - cartRect.right;
-      if (cartRect.right - modalWidth < 0) {
-        rightPos = 16;
-      }
-
-      cartModal.style.right = rightPos + 'px';
-      cartModal.style.top = (cartRect.bottom + 8) + 'px';
-      cartModal.classList.add('show');
-    });
-
-    cartContainer.addEventListener('mouseleave', function () {
-      hoverTimeout = setTimeout(() => {
-        cartModal.classList.remove('show');
-      }, 300);
-    });
-
-    cartModal.addEventListener('mouseenter', function () {
-      clearTimeout(hoverTimeout);
-    });
-
-    cartModal.addEventListener('mouseleave', function () {
-      hoverTimeout = setTimeout(() => {
-        cartModal.classList.remove('show');
-      }, 300);
-    });
-  });
-
-function refreshCart() {
-    const refreshBtn = document.getElementById('refresh-cart-btn');
-    const cartItemsContainer = document.getElementById('cart-items-container');
-    const cartFooter = document.getElementById('cart-footer');
-    const cartLoading = document.getElementById('cart-loading');
-    const modalCartCount = document.getElementById('modal-cart-count');
-    const cartCountBubble = document.getElementById('cart-count-bubble');
-    const cartCountSpan = document.querySelector('.cart-count[data-cart-count]');
-
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
-    refreshBtn.disabled = true;
-    cartLoading.classList.remove('hidden');
-    cartItemsContainer.style.opacity = '0.5';
-
-    // Since refresh_cart.php is in navbar folder
-    // Try these paths based on your folder structure
-    const possiblePaths = [
-        'navbar/refresh_cart.php',           // If navbar is in same directory as index.php
-        '../navbar/refresh_cart.php',        // If navbar is one level up
-        '../../navbar/refresh_cart.php',     // If navbar is two levels up
-        '/Noble/user/otherpage/navbar/refresh_cart.php',  // Absolute path
-        '/Noble/user/navbar/refresh_cart.php',            // If navbar is in user folder
-        '/Noble/navbar/refresh_cart.php'     // If navbar is in root Noble folder
-    ];
-
-    async function tryFetchPath(pathIndex = 0) {
-        if (pathIndex >= possiblePaths.length) {
-            throw new Error('Could not find refresh_cart.php in navbar folder');
-        }
-
-        const currentPath = possiblePaths[pathIndex];
-        console.log(`🔍 Trying navbar path ${pathIndex + 1}/${possiblePaths.length}:`, currentPath);
-
-        try {
-            const response = await fetch(currentPath, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-
-            const responseText = await response.text();
-            
-            console.log(`📝 Response for ${currentPath}:`, {
-                status: response.status,
-                contentType: response.headers.get("content-type"),
-                preview: responseText.substring(0, 150) + '...'
-            });
-
-            // Check if we got HTML redirect instead of JSON
-            if (responseText.trim().startsWith('<!DOCTYPE html>') || 
-                responseText.trim().startsWith('<html')) {
-                console.log('❌ Got HTML redirect, trying next path...');
-                return tryFetchPath(pathIndex + 1);
+          @keyframes slideInRight {
+            from {
+              opacity: 0;
+              transform: translateX(20px);
             }
 
-            // Check for 404 or other errors
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.log('❌ File not found (404), trying next path...');
-                } else {
-                    console.log(`❌ HTTP ${response.status}, trying next path...`);
-                }
-                return tryFetchPath(pathIndex + 1);
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+
+          /* Hide scrollbar for cart items container */
+          #cart-items-container {
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* Internet Explorer 10+ */
+          }
+
+          #cart-items-container::-webkit-scrollbar {
+            display: none;
+            /* WebKit */
+          }
+
+          /* Responsive positioning */
+          @media (max-width: 640px) {
+            .cart-modal {
+              right: 0.5rem !important;
+              left: 0.5rem !important;
+              width: auto !important;
+              max-width: none !important;
+              top: 4rem !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .cart-modal {
+              right: 0.25rem !important;
+              left: 0.25rem !important;
+              top: 3.5rem !important;
+              max-height: 85vh !important;
             }
 
-            // Try to parse JSON
-            try {
-                const data = JSON.parse(responseText);
-                console.log('✅ SUCCESS! Found refresh_cart.php at:', currentPath);
-                console.log('📊 Response data:', data);
-                return data;
-            } catch (parseError) {
-                console.log('❌ JSON parse failed, trying next path...', parseError.message);
-                return tryFetchPath(pathIndex + 1);
+            /* Adjust padding for mobile */
+            .cart-modal .p-4 {
+              padding: 0.75rem !important;
             }
 
-        } catch (error) {
-            console.log(`❌ Network error for ${currentPath}:`, error.message);
-            return tryFetchPath(pathIndex + 1);
-        }
-    }
-
-    tryFetchPath()
-        .then(data => {
-            if (data && data.success) {
-                console.log('🎉 Cart refresh successful!');
-                
-                // Update cart items
-                if (data.cart_html) {
-                    cartItemsContainer.innerHTML = data.cart_html;
-                    console.log('✅ Cart HTML updated');
-                }
-                
-                // Update item count
-                if (modalCartCount && data.total_items !== undefined) {
-                    modalCartCount.textContent = data.total_items + ' items';
-                    console.log(`✅ Item count updated: ${data.total_items}`);
-                }
-                
-                if (cartCountSpan && data.total_items !== undefined) {
-                    cartCountSpan.textContent = data.total_items;
-                }
-
-                // Show/hide cart count bubble
-                if (cartCountBubble) {
-                    if (data.total_items > 0) {
-                        cartCountBubble.classList.remove('hidden');
-                    } else {
-                        cartCountBubble.classList.add('hidden');
-                    }
-                }
-
-                // Update footer
-                if (data.footer_html) {
-                    if (cartFooter) {
-                        cartFooter.innerHTML = data.footer_html;
-                        console.log('✅ Footer updated');
-                    } else {
-                        // Create footer if it doesn't exist
-                        const footerDiv = document.createElement('div');
-                        footerDiv.id = 'cart-footer';
-                        footerDiv.className = 'border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl';
-                        footerDiv.innerHTML = data.footer_html;
-                        document.getElementById('cart-modal').appendChild(footerDiv);
-                        console.log('✅ Footer created');
-                    }
-                } else if (cartFooter) {
-                    cartFooter.remove();
-                    console.log('✅ Footer removed (empty cart)');
-                }
-
-                // Restore opacity and add animations
-                cartItemsContainer.style.opacity = '1';
-                const items = cartItemsContainer.querySelectorAll('.cart-item-slide');
-                items.forEach((item, index) => {
-                    item.style.animation = `slideInRight 0.3s ease-out ${index * 0.1}s forwards`;
-                });
-                
-            } else {
-                throw new Error(data?.message || 'Server returned success=false');
-            }
-        })
-        .catch(error => {
-            console.error('💥 Cart refresh failed:', error);
-            cartItemsContainer.innerHTML = `
-                <div class="text-center py-4 text-red-500">
-                    <i class="fas fa-exclamation-triangle mb-2 text-xl"></i>
-                    <p class="text-sm font-medium">Failed to refresh cart</p>
-                    <p class="text-xs text-gray-600 mt-1 mb-3">${error.message}</p>
-                    <button onclick="refreshCart()" class="px-4 py-2 text-xs bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
-                        🔄 Try Again
-                    </button>
-                    <div class="mt-2">
-                        <button onclick="window.location.reload()" class="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition">
-                            🔃 Reload Page
-                        </button>
-                    </div>
-                </div>`;
-        })
-        .finally(() => {
-            // Reset button state
-            refreshBtn.innerHTML = '<i class="fas fa-sync-alt text-sm"></i>';
-            refreshBtn.disabled = false;
-            cartLoading.classList.add('hidden');
-            cartItemsContainer.style.opacity = '1';
-            console.log('🏁 Refresh process completed');
-        });
-}
-function removeFromCart(itemId) {
-    // Quick session check - if cart is empty on frontend but we're trying to remove, something's wrong
-    const cartCount = document.querySelector('.cart-count[data-cart-count]');
-    if (cartCount && cartCount.textContent === '0') {
-        alert('Cart appears to be empty. Please refresh the page.');
-        return;
-    }
-
-    // Show loading state
-    const removeButton = document.querySelector(`[onclick="removeFromCart(${itemId})"]`);
-    const originalContent = removeButton ? removeButton.innerHTML : '';
-    if (removeButton) {
-        removeButton.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
-        removeButton.disabled = true;
-    }
-
-    // Try multiple possible paths for the remove script (including navbar folder)
-    const possiblePaths = [
-        'remove_from_cart_ajax.php',                          // Same directory
-        'navbar/remove_from_cart_ajax.php',                   // In navbar subfolder
-        '../remove_from_cart_ajax.php',                       // One level up
-        '../navbar/remove_from_cart_ajax.php',                // navbar folder one level up
-        '/noble/navbar/remove_from_cart_ajax.php'             // Lowercase absolute path - navbar in root
-    ];
-
-    async function tryRemovePath(pathIndex = 0) {
-        if (pathIndex >= possiblePaths.length) {
-            throw new Error('Could not find remove_from_cart_ajax.php in any expected location');
-        }
-
-        const currentPath = possiblePaths[pathIndex];
-        console.log(`🗑️ Trying remove path ${pathIndex + 1}/${possiblePaths.length}:`, currentPath);
-
-        try {
-            const response = await fetch(currentPath, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache'
-                },
-                credentials: 'same-origin',
-                body: 'key=' + encodeURIComponent(itemId)
-            });
-
-            const responseText = await response.text();
-            
-            console.log(`📝 Remove response for ${currentPath}:`, {
-                status: response.status,
-                contentType: response.headers.get("content-type"),
-                preview: responseText.substring(0, 200) + '...',
-                fullResponse: responseText.length > 500 ? responseText.substring(0, 500) + '... (truncated)' : responseText
-            });
-
-            // Check if we got HTML redirect instead of JSON
-            if (responseText.trim().startsWith('<!DOCTYPE html>') || 
-                responseText.trim().startsWith('<html')) {
-                console.log(' Got HTML redirect (probably login page), trying next path...');
-                return tryRemovePath(pathIndex + 1);
+            .cart-modal .p-3 {
+              padding: 0.5rem !important;
             }
 
-            // Check for session/login related responses
-            if (responseText.includes('login') || responseText.includes('signin') || 
-                responseText.includes('authentication') || responseText.includes('session')) {
-                console.log(' Got login/session related response, trying next path...');
-                return tryRemovePath(pathIndex + 1);
+            /* Make cart items more compact on mobile */
+            .cart-modal .space-y-3 {
+              gap: 0.5rem;
             }
 
-            // Check for 404 or other errors
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.log(' File not found (404), trying next path...');
-                } else if (response.status === 403) {
-                    console.log(' Forbidden (403), might be session issue, trying next path...');
-                } else {
-                    console.log(` HTTP ${response.status}, trying next path...`);
-                }
-                return tryRemovePath(pathIndex + 1);
+            .cart-modal .space-y-3>*+* {
+              margin-top: 0.5rem;
+            }
+          }
+
+          @media (max-width: 375px) {
+            .cart-modal {
+              right: 0.125rem !important;
+              left: 0.125rem !important;
+              max-height: 80vh !important;
             }
 
-            // Try to parse JSON
-            try {
-                const data = JSON.parse(responseText);
-                console.log('SUCCESS! Found remove script at:', currentPath);
-                console.log(' Remove response data:', data);
-                
-                // Check for session/auth errors in JSON response
-                if (!data.success && data.message && 
-                    (data.message.toLowerCase().includes('not logged in') || 
-                     data.message.toLowerCase().includes('session') ||
-                     data.message.toLowerCase().includes('authentication'))) {
-                    
-                    console.log(' Session/Auth error detected:', data.message);
-                    
-                    // Check if server provided a redirect URL
-                    if (data.redirect) {
-                        console.log('Server suggested redirect to:', data.redirect);
-                        if (confirm('Session expired. Redirect to login page?')) {
-                            window.location.href = data.redirect;
-                            return;
-                        }
-                    }
-                    
-                    // Check if user appears to be logged in on frontend
-                    const cartCount = document.querySelector('.cart-count[data-cart-count]');
-                    if (cartCount && cartCount.textContent !== '0') {
-                        console.log('Frontend shows user as logged in, but backend says not logged in');
-                        console.log('This might be a session timeout or path issue');
-                        
-                        // Try to refresh the page to restore session
-                        if (confirm('Session expired. Refresh page to continue?')) {
-                            window.location.reload();
-                            return;
-                        }
-                    }
-                }
-                
-                return data;
-            } catch (parseError) {
-                console.log(' JSON parse failed, trying next path...', parseError.message);
-                console.log(' Raw response that failed to parse:', responseText);
-                return tryRemovePath(pathIndex + 1);
+            /* Further reduce spacing for very small screens */
+            #cart-items-container {
+              max-height: 12rem !important;
+              /* Reduce max height */
+            }
+          }
+
+          /* Ensure modal appears above all other elements */
+          .cart-modal {
+            position: fixed !important;
+          }
+
+          /* Button hover effects */
+          #refresh-cart-btn:hover i {
+            transform: rotate(180deg);
+            transition: transform 0.3s ease;
+          }
+
+          #refresh-cart-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          /* Smooth scrolling for cart items */
+          #cart-items-container {
+            scroll-behavior: smooth;
+          }
+
+          /* Add subtle gradient fade at bottom when scrolling */
+          #cart-items-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          }
+
+          #cart-items-container.has-scroll::after {
+            opacity: 1;
+          }
+
+          /* Responsive text sizes */
+          @media (max-width: 640px) {
+            .cart-modal h3 {
+              font-size: 1rem !important;
             }
 
-        } catch (error) {
-            console.log(` Network error for ${currentPath}:`, error.message);
-            return tryRemovePath(pathIndex + 1);
-        }
-    }
-
-    tryRemovePath()
-        .then(data => {
-            if (data && data.success) {
-                console.log('🎉 Item removed successfully!');
-                
-                // Refresh cart to update the display
-                refreshCart();
-                
-                // Optional: Show success message
-                const successMsg = document.createElement('div');
-                successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-[10000] text-sm animate-pulse';
-                successMsg.innerHTML = '<i class="fas fa-check mr-2"></i>Item removed from cart';
-                document.body.appendChild(successMsg);
-                
-                // Remove success message after 3 seconds
-                setTimeout(() => {
-                    if (successMsg.parentElement) {
-                        successMsg.remove();
-                    }
-                }, 3000);
-                
-            } else {
-                throw new Error(data?.message || 'Failed to remove item from cart');
+            .cart-modal .text-lg {
+              font-size: 1rem !important;
             }
-        })
-        .catch(error => {
-            console.error(' Remove item failed:', error);
-            
-            // Check if it's a session/login related error
-            const isSessionError = error.message.toLowerCase().includes('not logged in') ||
-                                 error.message.toLowerCase().includes('session') ||
-                                 error.message.toLowerCase().includes('authentication');
-            
-            // Show appropriate error message
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-[10000] text-sm max-w-sm';
-            
-            if (isSessionError) {
-                errorMsg.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span><i class="fas fa-user-times mr-2"></i>Session Expired</span>
-                        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-                            <i class="fas fa-times text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="text-xs mt-1 opacity-90">Please refresh the page and login again</div>
-                    <div class="mt-2 flex gap-2">
-                        <button onclick="window.location.reload();" 
-                                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-xs transition">
-                             Refresh Page
-                        </button>
-                        <button onclick="window.location.href='../auth/login.php';" 
-                                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-xs transition">
-                             Login
-                        </button>
-                    </div>
-                `;
-            } else {
-                errorMsg.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span><i class="fas fa-exclamation-triangle mr-2"></i>Failed to remove item</span>
-                        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-                            <i class="fas fa-times text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="text-xs mt-1 opacity-90">${error.message}</div>
-                    <div class="mt-2">
-                        <button onclick="removeFromCart(${itemId}); this.parentElement.parentElement.remove();" 
-                                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-xs transition">
-                             Try Again
-                        </button>
-                    </div>
-                `;
+
+            .cart-modal .text-base {
+              font-size: 0.875rem !important;
             }
-            
-            document.body.appendChild(errorMsg);
-            
-            // Auto remove error message after 10 seconds for session errors, 8 for others
-            setTimeout(() => {
-                if (errorMsg.parentElement) {
-                    errorMsg.remove();
-                }
-            }, isSessionError ? 10000 : 8000);
-            
-        })
-        .finally(() => {
-            // Reset button state
-            if (removeButton) {
-                removeButton.innerHTML = originalContent;
-                removeButton.disabled = false;
+          }
+
+          @media (max-width: 480px) {
+            .cart-modal h3 {
+              font-size: 0.875rem !important;
             }
-            console.log('🏁 Remove process completed');
-        });
-}
-</script>
 
-<style>
-  .cart-modal {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(-10px);
-    transition: all 0.3s ease-in-out;
-    z-index: 9999 !important;
-    display: none;
-  }
+            .cart-modal .font-bold.text-lg {
+              font-size: 0.875rem !important;
+            }
+          }
 
-  .cart-modal.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0);
-    display: block;
-  }
+          /* Improve touch targets for mobile */
+          @media (max-width: 640px) {
 
-  .cart-item-slide {
-    animation: slideInRight 0.3s ease-out forwards;
-  }
+            .cart-modal a,
+            .cart-modal button {
+              min-height: 44px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
 
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  /* Hide scrollbar for cart items container */
-  #cart-items-container {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-  }
-
-  #cart-items-container::-webkit-scrollbar {
-    display: none; /* WebKit */
-  }
-
-  /* Responsive positioning */
-  @media (max-width: 640px) {
-    .cart-modal {
-      right: 0.5rem !important;
-      left: 0.5rem !important;
-      width: auto !important;
-      max-width: none !important;
-      top: 4rem !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .cart-modal {
-      right: 0.25rem !important;
-      left: 0.25rem !important;
-      top: 3.5rem !important;
-      max-height: 85vh !important;
-    }
-
-    /* Adjust padding for mobile */
-    .cart-modal .p-4 {
-      padding: 0.75rem !important;
-    }
-
-    .cart-modal .p-3 {
-      padding: 0.5rem !important;
-    }
-
-    /* Make cart items more compact on mobile */
-    .cart-modal .space-y-3 {
-      gap: 0.5rem;
-    }
-
-    .cart-modal .space-y-3 > * + * {
-      margin-top: 0.5rem;
-    }
-  }
-
-  @media (max-width: 375px) {
-    .cart-modal {
-      right: 0.125rem !important;
-      left: 0.125rem !important;
-      max-height: 80vh !important;
-    }
-
-    /* Further reduce spacing for very small screens */
-    #cart-items-container {
-      max-height: 12rem !important; /* Reduce max height */
-    }
-  }
-
-  /* Ensure modal appears above all other elements */
-  .cart-modal {
-    position: fixed !important;
-  }
-
-  /* Button hover effects */
-  #refresh-cart-btn:hover i {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-  }
-
-  #refresh-cart-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  /* Smooth scrolling for cart items */
-  #cart-items-container {
-    scroll-behavior: smooth;
-  }
-
-  /* Add subtle gradient fade at bottom when scrolling */
-  #cart-items-container::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 20px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  #cart-items-container.has-scroll::after {
-    opacity: 1;
-  }
-
-  /* Responsive text sizes */
-  @media (max-width: 640px) {
-    .cart-modal h3 {
-      font-size: 1rem !important;
-    }
-
-    .cart-modal .text-lg {
-      font-size: 1rem !important;
-    }
-
-    .cart-modal .text-base {
-      font-size: 0.875rem !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .cart-modal h3 {
-      font-size: 0.875rem !important;
-    }
-
-    .cart-modal .font-bold.text-lg {
-      font-size: 0.875rem !important;
-    }
-  }
-
-  /* Improve touch targets for mobile */
-  @media (max-width: 640px) {
-    .cart-modal a,
-    .cart-modal button {
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Remove item button */
-    .cart-modal .fa-times {
-      padding: 0.5rem;
-    }
-  }
-</style>
+            /* Remove item button */
+            .cart-modal .fa-times {
+              padding: 0.5rem;
+            }
+          }
+        </style>
 
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
@@ -1676,235 +1299,4 @@ function removeFromCart(itemId) {
   </div>
 </nav>
 
-<script>
-  function loginForm() {
-    return {
-      // User input
-      loginInput: '',
-      password: '',
-      otp: '',
-
-      // State flags
-      isMobile: false,
-      isEmail: false,
-      otpSent: false,
-      otpVerified: false,
-      otpLoading: false,
-      submitLoading: false,
-
-      // Feedback
-      errorMessage: '',
-      successMessage: '',
-      messageTimeout: null,
-
-      // Resend cooldown
-      resendCooldown: 0,
-      resendTimer: null,
-      cooldownDuration: 20,
-
-      // Initialize
-      init() {
-        this.resumeCooldown();
-      },
-
-      // Detect if input is email or mobile
-      checkLoginType() {
-        const mobilePattern = /^09\d{9}$/;
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        this.isMobile = mobilePattern.test(this.loginInput);
-        this.isEmail = emailPattern.test(this.loginInput);
-
-        // Reset states when input changes
-        this.resetOTPStates();
-      },
-
-      // Reset OTP related states
-      resetOTPStates() {
-        this.otpSent = false;
-        this.otpVerified = false;
-        this.errorMessage = '';
-        this.successMessage = '';
-        this.otp = '';
-        this.password = '';
-        this.resendCooldown = 0;
-        if (this.resendTimer) {
-          clearInterval(this.resendTimer);
-        }
-      },
-
-      // Send OTP to email
-      sendOTP() {
-        if (this.resendCooldown > 0) return;
-
-        this.otpLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        fetch('../send_otp.php', {
-            method: 'POST',
-            body: JSON.stringify({
-              email: this.loginInput
-            }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-          .then(res => res.json())
-          .then(data => {
-            this.otpLoading = false;
-            if (data.success) {
-              this.otpSent = true;
-              this.successMessage = data.message || 'OTP sent successfully';
-              this.startResendCooldown();
-            } else {
-              this.errorMessage = data.message || 'Failed to send OTP';
-            }
-            this.clearMessages();
-          })
-          .catch(() => {
-            this.otpLoading = false;
-            this.errorMessage = 'Network error while sending OTP.';
-            this.clearMessages();
-          });
-      },
-
-      // Verify OTP
-      verifyOTP() {
-        if (!this.otp || this.otp.length < 4) {
-          this.errorMessage = 'Please enter a valid OTP';
-          this.clearMessages();
-          return;
-        }
-
-        this.submitLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        fetch('../verify_otp.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: this.loginInput,
-              otp: this.otp
-            })
-          })
-          .then(res => res.json())
-          .then(data => {
-            this.submitLoading = false;
-
-            if (data.success) {
-              this.successMessage = 'OTP verified! Please enter your password.';
-              this.otpVerified = true;
-              this.otpSent = false;
-              this.otp = '';
-              this.resendCooldown = 0;
-              if (this.resendTimer) {
-                clearInterval(this.resendTimer);
-              }
-            } else {
-              this.errorMessage = data.message || 'Invalid OTP.';
-            }
-
-            this.clearMessages();
-          })
-          .catch(() => {
-            this.submitLoading = false;
-            this.errorMessage = 'Network error occurred.';
-            this.clearMessages();
-          });
-      },
-
-      // Cancel OTP process
-      cancelOTP() {
-        this.resetOTPStates();
-      },
-
-      // Handle form submission
-      handleLogin(event) {
-        if (this.isEmail && !this.otpVerified) {
-          this.errorMessage = 'Please verify your email with OTP first.';
-          this.clearMessages();
-          return;
-        }
-
-        if (!this.password) {
-          this.errorMessage = 'Please enter your password.';
-          this.clearMessages();
-          return;
-        }
-
-        this.submitLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        const formElement = event.target.closest('form');
-        const formData = new FormData(formElement);
-
-        fetch('../login.php', {
-            method: 'POST',
-            body: formData
-          })
-          .then(res => res.json())
-          .then(data => {
-            this.submitLoading = false;
-            if (data.success) {
-              this.successMessage = 'Login successful!';
-              setTimeout(() => {
-                window.location.href = data.redirect || '../otherpage/index.php';
-              }, 1000);
-            } else {
-              this.errorMessage = data.message || 'Login failed.';
-              this.clearMessages();
-            }
-          })
-          .catch(() => {
-            this.submitLoading = false;
-            this.errorMessage = 'Network error occurred.';
-            this.clearMessages();
-          });
-      },
-
-      // Start resend cooldown timer
-      startResendCooldown() {
-        this.resendCooldown = this.cooldownDuration;
-        const expiresAt = Date.now() + this.cooldownDuration * 1000;
-        this.cooldownExpiry = expiresAt;
-
-        if (this.resendTimer) clearInterval(this.resendTimer);
-        this.resendTimer = setInterval(() => {
-          this.resendCooldown--;
-          if (this.resendCooldown <= 0) {
-            clearInterval(this.resendTimer);
-            this.cooldownExpiry = null;
-          }
-        }, 1000);
-      },
-
-      // Resume cooldown on page reload
-      resumeCooldown() {
-        if (this.cooldownExpiry) {
-          const remaining = Math.ceil((this.cooldownExpiry - Date.now()) / 1000);
-          if (remaining > 0) {
-            this.resendCooldown = remaining;
-            this.otpSent = true;
-            this.startResendCooldown();
-          } else {
-            this.cooldownExpiry = null;
-          }
-        }
-      },
-
-      // Auto-hide messages after 3 seconds
-      clearMessages() {
-        if (this.messageTimeout) clearTimeout(this.messageTimeout);
-        this.messageTimeout = setTimeout(() => {
-          this.successMessage = '';
-          this.errorMessage = '';
-        }, 3000);
-      }
-    };
-  }
-</script>
+<script src="../navbar/top-obf.js"></script>

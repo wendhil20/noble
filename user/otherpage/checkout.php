@@ -263,9 +263,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Set success flag to show modal
             $order_success = true;
-           $_SESSION['checkout_notice'] = 'Order placed successfully!';
-header('Location: order_receipt.php?order_id=' . $order_id);
-exit;
+            $_SESSION['checkout_notice'] = 'Order placed successfully!';
+            header('Location: order_receipt.php?order_id=' . $order_id);
+            exit;
         } catch (Exception $e) {
             $error = "An error occurred while processing your order. Please try again.";
             // Log the actual error for debugging
@@ -644,54 +644,54 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         </form>
     </div>
 
-  
+
 
     <script>
         // AJAX Checkout with Receipt Display
-document.addEventListener('DOMContentLoaded', function() {
-    const checkoutForm = document.querySelector('form');
-    const placeOrderBtn = document.getElementById('placeOrderBtn');
-    
-    checkoutForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent normal form submission
-        
-        // Show loading state
-        const originalText = placeOrderBtn.textContent;
-        placeOrderBtn.textContent = 'Processing...';
-        placeOrderBtn.disabled = true;
-        
-        // Create FormData object
-        const formData = new FormData(checkoutForm);
-        
-        // Send AJAX request
-        fetch('process_checkout.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show receipt modal
-                showReceiptModal(data.order);
-            } else {
-                // Show error
-                alert('Error: ' + data.message);
-                placeOrderBtn.textContent = originalText;
-                placeOrderBtn.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-            placeOrderBtn.textContent = originalText;
-            placeOrderBtn.disabled = false;
-        });
-    });
-});
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkoutForm = document.querySelector('form');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
 
-function showReceiptModal(orderData) {
-    // Create modal HTML
-    const modalHTML = `
+            checkoutForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevent normal form submission
+
+                // Show loading state
+                const originalText = placeOrderBtn.textContent;
+                placeOrderBtn.textContent = 'Processing...';
+                placeOrderBtn.disabled = true;
+
+                // Create FormData object
+                const formData = new FormData(checkoutForm);
+
+                // Send AJAX request
+                fetch('process_checkout.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show receipt modal
+                            showReceiptModal(data.order);
+                        } else {
+                            // Show error
+                            alert('Error: ' + data.message);
+                            placeOrderBtn.textContent = originalText;
+                            placeOrderBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        placeOrderBtn.textContent = originalText;
+                        placeOrderBtn.disabled = false;
+                    });
+            });
+        });
+
+        function showReceiptModal(orderData) {
+            // Create modal HTML
+            const modalHTML = `
         <div id="receiptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
             <div class="bg-white rounded-lg max-w-4xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
                 <!-- Receipt Header -->
@@ -787,17 +787,17 @@ function showReceiptModal(orderData) {
             </div>
         </div>
     `;
-    
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
 
-function closeReceiptModal() {
-    const modal = document.getElementById('receiptModal');
-    if (modal) {
-        modal.remove();
-    }
-}
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeReceiptModal() {
+            const modal = document.getElementById('receiptModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
         // ✅ Updated Billing Address Selector JavaScript
         document.addEventListener('DOMContentLoaded', function() {
             const toggleBtn = document.getElementById('toggleBillingSelector');

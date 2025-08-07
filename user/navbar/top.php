@@ -187,38 +187,94 @@ if ($user_id) {
     </div>
   </div>
 </div>
-
-
-<div class="bg-black text-white py-2 ">
-  <div class="px-4 flex justify-between items-center flex-wrap">
-    <div class="flex items-center space-x-4 mb-2 md:mb-0 text-xs">
-      <span>Support: (02) 123-4567</span>
-      <span>info@noblehome.com</span>
+<div class="bg-black text-white py-3 text-xs sm:text-sm">
+        <div class="container mx-auto px-4">
+            <!-- Mobile Layout (Stack vertically) -->
+            <div class="flex flex-col gap-3 sm:hidden">
+                <!-- Contact Info - Mobile -->
+                <div class="flex flex-col items-center gap-1 text-center">
+                    <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
+                        Support: (02) 123-4567
+                    </a>
+                    <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
+                        info@noblehome.com
+                    </a>
+                </div>
+                
+                <!-- Links - Mobile -->
+                <div class="flex justify-center items-center gap-4">
+                    <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Help
+                    </a>
+                    
+                    <span class="text-gray-400">|</span>
+                    
+                    <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+                        </svg>
+                        Support
+                    </a>
+                    
+                    <span class="text-gray-400">|</span>
+                    
+                    <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
+                        About
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Desktop Layout (Side by side) -->
+            <div class="hidden sm:flex sm:justify-between sm:items-center">
+                <!-- Left: Contact Info -->
+                <div class="flex items-center gap-4">
+                    <a href="tel:(02)123-4567" class="hover:text-orange-300 transition">
+                        Support: (02) 123-4567
+                    </a>
+                    <a href="mailto:info@noblehome.com" class="hover:text-orange-300 transition">
+                        info@noblehome.com
+                    </a>
+                </div>
+                
+                <!-- Right: Links -->
+                <div class="flex items-center gap-4">
+                    <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
+                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Help
+                    </a>
+                    
+                    <span class="text-gray-400">|</span>
+                    
+                    <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+                       class="hover:text-orange-300 transition inline-flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
+                        </svg>
+                        Support
+                    </a>
+                    
+                    <span class="text-gray-400">|</span>
+                    
+                    <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
+                        About
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="flex items-center space-x-4">
-      <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Help
-      </a>
-      <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
-        class="hover:text-orange-300 transition inline-flex items-center gap-1 text-xs xs:text-base">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-        </svg>
-        Support
-      </a>
 
-      <!-- Breadcrumb -->
-      <span class="mx-2">|</span>
-      <a href="../about/about.php" class="text-white hover:text-orange-800 text-xs xs:text-base">About</a>
-      <span class="mx-2">|</span>
-      <a href="../contact/contact.php" class="text-white hover:text-orange-800 text-xs xs:text-base">Contact</a>
-    </div>
-  </div>
-</div>
 
 <!-- Navigation -->
 <nav x-data="{ 
@@ -548,446 +604,7 @@ if ($user_id) {
   </div>
 </div>
 
-<!-- Add JavaScript for hover functionality and refresh -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const cartContainer = document.getElementById('cart-container');
-    const cartModal = document.getElementById('cart-modal');
-    let hoverTimeout;
-
-    cartModal.classList.remove('show');
-
-    cartContainer.addEventListener('mouseenter', function () {
-      clearTimeout(hoverTimeout);
-      const cartRect = cartContainer.getBoundingClientRect();
-      const modalWidth = 320;
-      const viewportWidth = window.innerWidth;
-
-      let rightPos = viewportWidth - cartRect.right;
-      if (cartRect.right - modalWidth < 0) {
-        rightPos = 16;
-      }
-
-      cartModal.style.right = rightPos + 'px';
-      cartModal.style.top = (cartRect.bottom + 8) + 'px';
-      cartModal.classList.add('show');
-    });
-
-    cartContainer.addEventListener('mouseleave', function () {
-      hoverTimeout = setTimeout(() => {
-        cartModal.classList.remove('show');
-      }, 300);
-    });
-
-    cartModal.addEventListener('mouseenter', function () {
-      clearTimeout(hoverTimeout);
-    });
-
-    cartModal.addEventListener('mouseleave', function () {
-      hoverTimeout = setTimeout(() => {
-        cartModal.classList.remove('show');
-      }, 300);
-    });
-  });
-
-function refreshCart() {
-    const refreshBtn = document.getElementById('refresh-cart-btn');
-    const cartItemsContainer = document.getElementById('cart-items-container');
-    const cartFooter = document.getElementById('cart-footer');
-    const cartLoading = document.getElementById('cart-loading');
-    const modalCartCount = document.getElementById('modal-cart-count');
-    const cartCountBubble = document.getElementById('cart-count-bubble');
-    const cartCountSpan = document.querySelector('.cart-count[data-cart-count]');
-
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
-    refreshBtn.disabled = true;
-    cartLoading.classList.remove('hidden');
-    cartItemsContainer.style.opacity = '0.5';
-
-    // Since refresh_cart.php is in navbar folder
-    // Try these paths based on your folder structure
-    const possiblePaths = [
-        'navbar/refresh_cart.php',           // If navbar is in same directory as index.php
-        '../navbar/refresh_cart.php',        // If navbar is one level up
-        '../../navbar/refresh_cart.php',     // If navbar is two levels up
-        '/Noble/user/otherpage/navbar/refresh_cart.php',  // Absolute path
-        '/Noble/user/navbar/refresh_cart.php',            // If navbar is in user folder
-        '/Noble/navbar/refresh_cart.php'     // If navbar is in root Noble folder
-    ];
-
-    async function tryFetchPath(pathIndex = 0) {
-        if (pathIndex >= possiblePaths.length) {
-            throw new Error('Could not find refresh_cart.php in navbar folder');
-        }
-
-        const currentPath = possiblePaths[pathIndex];
-        console.log(`🔍 Trying navbar path ${pathIndex + 1}/${possiblePaths.length}:`, currentPath);
-
-        try {
-            const response = await fetch(currentPath, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-
-            const responseText = await response.text();
-            
-            console.log(`📝 Response for ${currentPath}:`, {
-                status: response.status,
-                contentType: response.headers.get("content-type"),
-                preview: responseText.substring(0, 150) + '...'
-            });
-
-            // Check if we got HTML redirect instead of JSON
-            if (responseText.trim().startsWith('<!DOCTYPE html>') || 
-                responseText.trim().startsWith('<html')) {
-                console.log('❌ Got HTML redirect, trying next path...');
-                return tryFetchPath(pathIndex + 1);
-            }
-
-            // Check for 404 or other errors
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.log('❌ File not found (404), trying next path...');
-                } else {
-                    console.log(`❌ HTTP ${response.status}, trying next path...`);
-                }
-                return tryFetchPath(pathIndex + 1);
-            }
-
-            // Try to parse JSON
-            try {
-                const data = JSON.parse(responseText);
-                console.log('✅ SUCCESS! Found refresh_cart.php at:', currentPath);
-                console.log('📊 Response data:', data);
-                return data;
-            } catch (parseError) {
-                console.log('❌ JSON parse failed, trying next path...', parseError.message);
-                return tryFetchPath(pathIndex + 1);
-            }
-
-        } catch (error) {
-            console.log(`❌ Network error for ${currentPath}:`, error.message);
-            return tryFetchPath(pathIndex + 1);
-        }
-    }
-
-    tryFetchPath()
-        .then(data => {
-            if (data && data.success) {
-                console.log('🎉 Cart refresh successful!');
-                
-                // Update cart items
-                if (data.cart_html) {
-                    cartItemsContainer.innerHTML = data.cart_html;
-                    console.log('✅ Cart HTML updated');
-                }
-                
-                // Update item count
-                if (modalCartCount && data.total_items !== undefined) {
-                    modalCartCount.textContent = data.total_items + ' items';
-                    console.log(`✅ Item count updated: ${data.total_items}`);
-                }
-                
-                if (cartCountSpan && data.total_items !== undefined) {
-                    cartCountSpan.textContent = data.total_items;
-                }
-
-                // Show/hide cart count bubble
-                if (cartCountBubble) {
-                    if (data.total_items > 0) {
-                        cartCountBubble.classList.remove('hidden');
-                    } else {
-                        cartCountBubble.classList.add('hidden');
-                    }
-                }
-
-                // Update footer
-                if (data.footer_html) {
-                    if (cartFooter) {
-                        cartFooter.innerHTML = data.footer_html;
-                        console.log('✅ Footer updated');
-                    } else {
-                        // Create footer if it doesn't exist
-                        const footerDiv = document.createElement('div');
-                        footerDiv.id = 'cart-footer';
-                        footerDiv.className = 'border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl';
-                        footerDiv.innerHTML = data.footer_html;
-                        document.getElementById('cart-modal').appendChild(footerDiv);
-                        console.log('✅ Footer created');
-                    }
-                } else if (cartFooter) {
-                    cartFooter.remove();
-                    console.log('✅ Footer removed (empty cart)');
-                }
-
-                // Restore opacity and add animations
-                cartItemsContainer.style.opacity = '1';
-                const items = cartItemsContainer.querySelectorAll('.cart-item-slide');
-                items.forEach((item, index) => {
-                    item.style.animation = `slideInRight 0.3s ease-out ${index * 0.1}s forwards`;
-                });
-                
-            } else {
-                throw new Error(data?.message || 'Server returned success=false');
-            }
-        })
-        .catch(error => {
-            console.error('💥 Cart refresh failed:', error);
-            cartItemsContainer.innerHTML = `
-                <div class="text-center py-4 text-red-500">
-                    <i class="fas fa-exclamation-triangle mb-2 text-xl"></i>
-                    <p class="text-sm font-medium">Failed to refresh cart</p>
-                    <p class="text-xs text-gray-600 mt-1 mb-3">${error.message}</p>
-                    <button onclick="refreshCart()" class="px-4 py-2 text-xs bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
-                        🔄 Try Again
-                    </button>
-                    <div class="mt-2">
-                        <button onclick="window.location.reload()" class="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition">
-                            🔃 Reload Page
-                        </button>
-                    </div>
-                </div>`;
-        })
-        .finally(() => {
-            // Reset button state
-            refreshBtn.innerHTML = '<i class="fas fa-sync-alt text-sm"></i>';
-            refreshBtn.disabled = false;
-            cartLoading.classList.add('hidden');
-            cartItemsContainer.style.opacity = '1';
-            console.log('🏁 Refresh process completed');
-        });
-}
-function removeFromCart(itemId) {
-    // Quick session check - if cart is empty on frontend but we're trying to remove, something's wrong
-    const cartCount = document.querySelector('.cart-count[data-cart-count]');
-    if (cartCount && cartCount.textContent === '0') {
-        alert('Cart appears to be empty. Please refresh the page.');
-        return;
-    }
-
-    // Show loading state
-    const removeButton = document.querySelector(`[onclick="removeFromCart(${itemId})"]`);
-    const originalContent = removeButton ? removeButton.innerHTML : '';
-    if (removeButton) {
-        removeButton.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
-        removeButton.disabled = true;
-    }
-
-    // Try multiple possible paths for the remove script (including navbar folder)
-    const possiblePaths = [
-        'remove_from_cart_ajax.php',                          // Same directory
-        'navbar/remove_from_cart_ajax.php',                   // In navbar subfolder
-        '../remove_from_cart_ajax.php',                       // One level up
-        '../navbar/remove_from_cart_ajax.php',                // navbar folder one level up
-        '/noble/navbar/remove_from_cart_ajax.php'             // Lowercase absolute path - navbar in root
-    ];
-
-    async function tryRemovePath(pathIndex = 0) {
-        if (pathIndex >= possiblePaths.length) {
-            throw new Error('Could not find remove_from_cart_ajax.php in any expected location');
-        }
-
-        const currentPath = possiblePaths[pathIndex];
-        console.log(`🗑️ Trying remove path ${pathIndex + 1}/${possiblePaths.length}:`, currentPath);
-
-        try {
-            const response = await fetch(currentPath, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache'
-                },
-                credentials: 'same-origin',
-                body: 'key=' + encodeURIComponent(itemId)
-            });
-
-            const responseText = await response.text();
-            
-            console.log(`📝 Remove response for ${currentPath}:`, {
-                status: response.status,
-                contentType: response.headers.get("content-type"),
-                preview: responseText.substring(0, 200) + '...',
-                fullResponse: responseText.length > 500 ? responseText.substring(0, 500) + '... (truncated)' : responseText
-            });
-
-            // Check if we got HTML redirect instead of JSON
-            if (responseText.trim().startsWith('<!DOCTYPE html>') || 
-                responseText.trim().startsWith('<html')) {
-                console.log(' Got HTML redirect (probably login page), trying next path...');
-                return tryRemovePath(pathIndex + 1);
-            }
-
-            // Check for session/login related responses
-            if (responseText.includes('login') || responseText.includes('signin') || 
-                responseText.includes('authentication') || responseText.includes('session')) {
-                console.log(' Got login/session related response, trying next path...');
-                return tryRemovePath(pathIndex + 1);
-            }
-
-            // Check for 404 or other errors
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.log(' File not found (404), trying next path...');
-                } else if (response.status === 403) {
-                    console.log(' Forbidden (403), might be session issue, trying next path...');
-                } else {
-                    console.log(` HTTP ${response.status}, trying next path...`);
-                }
-                return tryRemovePath(pathIndex + 1);
-            }
-
-            // Try to parse JSON
-            try {
-                const data = JSON.parse(responseText);
-                console.log('SUCCESS! Found remove script at:', currentPath);
-                console.log(' Remove response data:', data);
-                
-                // Check for session/auth errors in JSON response
-                if (!data.success && data.message && 
-                    (data.message.toLowerCase().includes('not logged in') || 
-                     data.message.toLowerCase().includes('session') ||
-                     data.message.toLowerCase().includes('authentication'))) {
-                    
-                    console.log(' Session/Auth error detected:', data.message);
-                    
-                    // Check if server provided a redirect URL
-                    if (data.redirect) {
-                        console.log('Server suggested redirect to:', data.redirect);
-                        if (confirm('Session expired. Redirect to login page?')) {
-                            window.location.href = data.redirect;
-                            return;
-                        }
-                    }
-                    
-                    // Check if user appears to be logged in on frontend
-                    const cartCount = document.querySelector('.cart-count[data-cart-count]');
-                    if (cartCount && cartCount.textContent !== '0') {
-                        console.log('Frontend shows user as logged in, but backend says not logged in');
-                        console.log('This might be a session timeout or path issue');
-                        
-                        // Try to refresh the page to restore session
-                        if (confirm('Session expired. Refresh page to continue?')) {
-                            window.location.reload();
-                            return;
-                        }
-                    }
-                }
-                
-                return data;
-            } catch (parseError) {
-                console.log(' JSON parse failed, trying next path...', parseError.message);
-                console.log(' Raw response that failed to parse:', responseText);
-                return tryRemovePath(pathIndex + 1);
-            }
-
-        } catch (error) {
-            console.log(` Network error for ${currentPath}:`, error.message);
-            return tryRemovePath(pathIndex + 1);
-        }
-    }
-
-    tryRemovePath()
-        .then(data => {
-            if (data && data.success) {
-                console.log('🎉 Item removed successfully!');
-                
-                // Refresh cart to update the display
-                refreshCart();
-                
-                // Optional: Show success message
-                const successMsg = document.createElement('div');
-                successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-[10000] text-sm animate-pulse';
-                successMsg.innerHTML = '<i class="fas fa-check mr-2"></i>Item removed from cart';
-                document.body.appendChild(successMsg);
-                
-                // Remove success message after 3 seconds
-                setTimeout(() => {
-                    if (successMsg.parentElement) {
-                        successMsg.remove();
-                    }
-                }, 3000);
-                
-            } else {
-                throw new Error(data?.message || 'Failed to remove item from cart');
-            }
-        })
-        .catch(error => {
-            console.error(' Remove item failed:', error);
-            
-            // Check if it's a session/login related error
-            const isSessionError = error.message.toLowerCase().includes('not logged in') ||
-                                 error.message.toLowerCase().includes('session') ||
-                                 error.message.toLowerCase().includes('authentication');
-            
-            // Show appropriate error message
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-[10000] text-sm max-w-sm';
-            
-            if (isSessionError) {
-                errorMsg.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span><i class="fas fa-user-times mr-2"></i>Session Expired</span>
-                        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-                            <i class="fas fa-times text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="text-xs mt-1 opacity-90">Please refresh the page and login again</div>
-                    <div class="mt-2 flex gap-2">
-                        <button onclick="window.location.reload();" 
-                                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-xs transition">
-                             Refresh Page
-                        </button>
-                        <button onclick="window.location.href='../auth/login.php';" 
-                                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-xs transition">
-                             Login
-                        </button>
-                    </div>
-                `;
-            } else {
-                errorMsg.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span><i class="fas fa-exclamation-triangle mr-2"></i>Failed to remove item</span>
-                        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-                            <i class="fas fa-times text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="text-xs mt-1 opacity-90">${error.message}</div>
-                    <div class="mt-2">
-                        <button onclick="removeFromCart(${itemId}); this.parentElement.parentElement.remove();" 
-                                class="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-xs transition">
-                             Try Again
-                        </button>
-                    </div>
-                `;
-            }
-            
-            document.body.appendChild(errorMsg);
-            
-            // Auto remove error message after 10 seconds for session errors, 8 for others
-            setTimeout(() => {
-                if (errorMsg.parentElement) {
-                    errorMsg.remove();
-                }
-            }, isSessionError ? 10000 : 8000);
-            
-        })
-        .finally(() => {
-            // Reset button state
-            if (removeButton) {
-                removeButton.innerHTML = originalContent;
-                removeButton.disabled = false;
-            }
-            console.log('🏁 Remove process completed');
-        });
-}
-</script>
+<script src="topcart-obf.js"></script>
 
 <style>
   .cart-modal {
@@ -1676,235 +1293,4 @@ function removeFromCart(itemId) {
   </div>
 </nav>
 
-<script>
-  function loginForm() {
-    return {
-      // User input
-      loginInput: '',
-      password: '',
-      otp: '',
-
-      // State flags
-      isMobile: false,
-      isEmail: false,
-      otpSent: false,
-      otpVerified: false,
-      otpLoading: false,
-      submitLoading: false,
-
-      // Feedback
-      errorMessage: '',
-      successMessage: '',
-      messageTimeout: null,
-
-      // Resend cooldown
-      resendCooldown: 0,
-      resendTimer: null,
-      cooldownDuration: 20,
-
-      // Initialize
-      init() {
-        this.resumeCooldown();
-      },
-
-      // Detect if input is email or mobile
-      checkLoginType() {
-        const mobilePattern = /^09\d{9}$/;
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        this.isMobile = mobilePattern.test(this.loginInput);
-        this.isEmail = emailPattern.test(this.loginInput);
-
-        // Reset states when input changes
-        this.resetOTPStates();
-      },
-
-      // Reset OTP related states
-      resetOTPStates() {
-        this.otpSent = false;
-        this.otpVerified = false;
-        this.errorMessage = '';
-        this.successMessage = '';
-        this.otp = '';
-        this.password = '';
-        this.resendCooldown = 0;
-        if (this.resendTimer) {
-          clearInterval(this.resendTimer);
-        }
-      },
-
-      // Send OTP to email
-      sendOTP() {
-        if (this.resendCooldown > 0) return;
-
-        this.otpLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        fetch('../send_otp.php', {
-            method: 'POST',
-            body: JSON.stringify({
-              email: this.loginInput
-            }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-          .then(res => res.json())
-          .then(data => {
-            this.otpLoading = false;
-            if (data.success) {
-              this.otpSent = true;
-              this.successMessage = data.message || 'OTP sent successfully';
-              this.startResendCooldown();
-            } else {
-              this.errorMessage = data.message || 'Failed to send OTP';
-            }
-            this.clearMessages();
-          })
-          .catch(() => {
-            this.otpLoading = false;
-            this.errorMessage = 'Network error while sending OTP.';
-            this.clearMessages();
-          });
-      },
-
-      // Verify OTP
-      verifyOTP() {
-        if (!this.otp || this.otp.length < 4) {
-          this.errorMessage = 'Please enter a valid OTP';
-          this.clearMessages();
-          return;
-        }
-
-        this.submitLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        fetch('../verify_otp.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: this.loginInput,
-              otp: this.otp
-            })
-          })
-          .then(res => res.json())
-          .then(data => {
-            this.submitLoading = false;
-
-            if (data.success) {
-              this.successMessage = 'OTP verified! Please enter your password.';
-              this.otpVerified = true;
-              this.otpSent = false;
-              this.otp = '';
-              this.resendCooldown = 0;
-              if (this.resendTimer) {
-                clearInterval(this.resendTimer);
-              }
-            } else {
-              this.errorMessage = data.message || 'Invalid OTP.';
-            }
-
-            this.clearMessages();
-          })
-          .catch(() => {
-            this.submitLoading = false;
-            this.errorMessage = 'Network error occurred.';
-            this.clearMessages();
-          });
-      },
-
-      // Cancel OTP process
-      cancelOTP() {
-        this.resetOTPStates();
-      },
-
-      // Handle form submission
-      handleLogin(event) {
-        if (this.isEmail && !this.otpVerified) {
-          this.errorMessage = 'Please verify your email with OTP first.';
-          this.clearMessages();
-          return;
-        }
-
-        if (!this.password) {
-          this.errorMessage = 'Please enter your password.';
-          this.clearMessages();
-          return;
-        }
-
-        this.submitLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        const formElement = event.target.closest('form');
-        const formData = new FormData(formElement);
-
-        fetch('../login.php', {
-            method: 'POST',
-            body: formData
-          })
-          .then(res => res.json())
-          .then(data => {
-            this.submitLoading = false;
-            if (data.success) {
-              this.successMessage = 'Login successful!';
-              setTimeout(() => {
-                window.location.href = data.redirect || '../otherpage/index.php';
-              }, 1000);
-            } else {
-              this.errorMessage = data.message || 'Login failed.';
-              this.clearMessages();
-            }
-          })
-          .catch(() => {
-            this.submitLoading = false;
-            this.errorMessage = 'Network error occurred.';
-            this.clearMessages();
-          });
-      },
-
-      // Start resend cooldown timer
-      startResendCooldown() {
-        this.resendCooldown = this.cooldownDuration;
-        const expiresAt = Date.now() + this.cooldownDuration * 1000;
-        this.cooldownExpiry = expiresAt;
-
-        if (this.resendTimer) clearInterval(this.resendTimer);
-        this.resendTimer = setInterval(() => {
-          this.resendCooldown--;
-          if (this.resendCooldown <= 0) {
-            clearInterval(this.resendTimer);
-            this.cooldownExpiry = null;
-          }
-        }, 1000);
-      },
-
-      // Resume cooldown on page reload
-      resumeCooldown() {
-        if (this.cooldownExpiry) {
-          const remaining = Math.ceil((this.cooldownExpiry - Date.now()) / 1000);
-          if (remaining > 0) {
-            this.resendCooldown = remaining;
-            this.otpSent = true;
-            this.startResendCooldown();
-          } else {
-            this.cooldownExpiry = null;
-          }
-        }
-      },
-
-      // Auto-hide messages after 3 seconds
-      clearMessages() {
-        if (this.messageTimeout) clearTimeout(this.messageTimeout);
-        this.messageTimeout = setTimeout(() => {
-          this.successMessage = '';
-          this.errorMessage = '';
-        }, 3000);
-      }
-    };
-  }
-</script>
+<script src="top-obf.js"></script>

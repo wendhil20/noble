@@ -106,7 +106,8 @@ if ($user_id) {
     $stmt->close();
 }
 
-function generateReferenceNumber() {
+function generateReferenceNumber()
+{
     return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
 }
 
@@ -137,24 +138,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($mobile)) {
-    $validation_errors[] = "Mobile number is required";
-} else {
-    // Clean the mobile number - remove spaces, dashes, parentheses, plus signs
-    $cleaned_mobile = preg_replace('/[\s\-\(\)\+]/', '', $mobile);
-    
-    // Check if it starts with +63 and convert to 09 format
-    if (preg_match('/^63([0-9]{10})$/', $cleaned_mobile, $matches)) {
-        $cleaned_mobile = '0' . $matches[1];
-    }
-    
-    // Validate cleaned mobile number
-    if (!preg_match('/^09[0-9]{9}$/', $cleaned_mobile)) {
-        $validation_errors[] = "Mobile number must be a valid Philippine mobile number (e.g., 09171234567)";
+        $validation_errors[] = "Mobile number is required";
     } else {
-        // Update the mobile variable with cleaned format
-        $mobile = $cleaned_mobile;
+        // Clean the mobile number - remove spaces, dashes, parentheses, plus signs
+        $cleaned_mobile = preg_replace('/[\s\-\(\)\+]/', '', $mobile);
+
+        // Check if it starts with +63 and convert to 09 format
+        if (preg_match('/^63([0-9]{10})$/', $cleaned_mobile, $matches)) {
+            $cleaned_mobile = '0' . $matches[1];
+        }
+
+        // Validate cleaned mobile number
+        if (!preg_match('/^09[0-9]{9}$/', $cleaned_mobile)) {
+            $validation_errors[] = "Mobile number must be a valid Philippine mobile number (e.g., 09171234567)";
+        } else {
+            // Update the mobile variable with cleaned format
+            $mobile = $cleaned_mobile;
+        }
     }
-}
 
     if (empty($address)) {
         $validation_errors[] = "Address is required";
@@ -210,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
 
             // ✅ Save each item - FIXED to handle missing product_name column
-$stmt = $conn->prepare("INSERT INTO order_items (
+            $stmt = $conn->prepare("INSERT INTO order_items (
     order_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -230,20 +231,20 @@ $stmt = $conn->prepare("INSERT INTO order_items (
                 $origin = $item['origin'] ?? '';  // ADD THIS LINE
 
                 $stmt->bind_param(
-    "isssssiiisss",
-    $order_id,
-    $product_name,
-    $codename,
-    $type_name,
-    $variant_color,
-    $size,
-    $price,
-    $quantity,
-    $subtotal,
-    $desc6,
-    $desc7,
-    $origin  // Use the variable instead
-);
+                    "isssssiiisss",
+                    $order_id,
+                    $product_name,
+                    $codename,
+                    $type_name,
+                    $variant_color,
+                    $size,
+                    $price,
+                    $quantity,
+                    $subtotal,
+                    $desc6,
+                    $desc7,
+                    $origin  // Use the variable instead
+                );
 
                 if (!$stmt->execute()) {
                     throw new Exception("Failed to save order item: " . $stmt->error);
@@ -262,7 +263,9 @@ $stmt = $conn->prepare("INSERT INTO order_items (
 
             // Set success flag to show modal
             $order_success = true;
-            $_SESSION['checkout_notice'] = 'Order placed successfully!';
+           $_SESSION['checkout_notice'] = 'Order placed successfully!';
+header('Location: order_receipt.php?order_id=' . $order_id);
+exit;
         } catch (Exception $e) {
             $error = "An error occurred while processing your order. Please try again.";
             // Log the actual error for debugging
@@ -390,58 +393,58 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         </a>
                     <?php endif; ?>
                 </div>
-                
+
                 <?php if ($has_billing_addresses): ?>
-                <div class="border rounded-lg p-4 bg-blue-50 border-blue-200 mb-4">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <div>
-                            <h4 class="font-medium text-blue-900">Select Your Delivery Address</h4>
-                            <p class="text-sm text-blue-700">Please choose one of your saved addresses below. You cannot manually enter address details.</p>
+                    <div class="border rounded-lg p-4 bg-blue-50 border-blue-200 mb-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h4 class="font-medium text-blue-900">Select Your Delivery Address</h4>
+                                <p class="text-sm text-blue-700">Please choose one of your saved addresses below. You cannot manually enter address details.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div id="billingAddressSelector" class="border rounded-lg p-4 bg-gray-50">
-                    <div class="space-y-3 max-h-40 overflow-y-auto">
-                        <?php foreach ($billing_addresses as $addr): ?>
-                            <label class="flex items-start p-3 border rounded cursor-pointer hover:bg-white billing-address-option">
-                                <input type="radio" name="billing_address_id" value="<?= $addr['id'] ?>" class="mt-1 mr-3" required
-                                       data-full-name="<?= htmlspecialchars($addr['full_name']) ?>"
-                                       data-phone="<?= htmlspecialchars($addr['phone']) ?>"
-                                       data-address="<?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?>"
-                                       data-postal-code="<?= htmlspecialchars($addr['postal_code']) ?>" />
-                                <div class="flex-1">
-                                    <div class="font-medium"><?= htmlspecialchars($addr['full_name']) ?></div>
-                                    <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['phone']) ?></div>
-                                    <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?></div>
-                                    <div class="text-sm text-gray-500">ZIP: <?= htmlspecialchars($addr['postal_code']) ?></div>
-                                    <?php if (!empty($addr['notes'])): ?>
-                                        <div class="text-xs text-gray-500 italic"><?= htmlspecialchars($addr['notes']) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </label>
-                        <?php endforeach; ?>
+
+                    <div id="billingAddressSelector" class="border rounded-lg p-4 bg-gray-50">
+                        <div class="space-y-3 max-h-40 overflow-y-auto">
+                            <?php foreach ($billing_addresses as $addr): ?>
+                                <label class="flex items-start p-3 border rounded cursor-pointer hover:bg-white billing-address-option">
+                                    <input type="radio" name="billing_address_id" value="<?= $addr['id'] ?>" class="mt-1 mr-3" required
+                                        data-full-name="<?= htmlspecialchars($addr['full_name']) ?>"
+                                        data-phone="<?= htmlspecialchars($addr['phone']) ?>"
+                                        data-address="<?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?>"
+                                        data-postal-code="<?= htmlspecialchars($addr['postal_code']) ?>" />
+                                    <div class="flex-1">
+                                        <div class="font-medium"><?= htmlspecialchars($addr['full_name']) ?></div>
+                                        <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['phone']) ?></div>
+                                        <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?></div>
+                                        <div class="text-sm text-gray-500">ZIP: <?= htmlspecialchars($addr['postal_code']) ?></div>
+                                        <?php if (!empty($addr['notes'])): ?>
+                                            <div class="text-xs text-gray-500 italic"><?= htmlspecialchars($addr['notes']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                </div>
                 <?php else: ?>
-                <div class="border rounded-lg p-6 bg-red-50 border-red-200">
-                    <div class="text-center">
-                        <svg class="mx-auto w-12 h-12 text-red-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                        <h4 class="font-bold text-red-900 text-lg mb-2">Address Required</h4>
-                        <p class="text-red-700 mb-4">You must set up at least one delivery address before you can place an order. This ensures accurate delivery and better service.</p>
-                        <a href="update_billing_add.php" class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-medium">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    <div class="border rounded-lg p-6 bg-red-50 border-red-200">
+                        <div class="text-center">
+                            <svg class="mx-auto w-12 h-12 text-red-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                             </svg>
-                            Set up your address now
-                        </a>
+                            <h4 class="font-bold text-red-900 text-lg mb-2">Address Required</h4>
+                            <p class="text-red-700 mb-4">You must set up at least one delivery address before you can place an order. This ensures accurate delivery and better service.</p>
+                            <a href="update_billing_add.php" class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-medium">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Set up your address now
+                            </a>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
             </div>
 
@@ -462,11 +465,11 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <div>
                 <label class="block font-medium">Full Address</label>
-                <textarea 
-                    name="address" 
-                    id="addressInput" 
-                    rows="3" 
-                    required 
+                <textarea
+                    name="address"
+                    id="addressInput"
+                    rows="3"
+                    required
                     class="w-full border px-4 py-2 rounded resize-none bg-gray-200 cursor-not-allowed"
                     placeholder="<?= !$has_billing_addresses ? 'Please set up your address first' : 'Will be filled when you select an address' ?>"
                     disabled readonly></textarea>
@@ -474,12 +477,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <div>
                 <label class="block font-medium">ZIP Code</label>
-                <input 
-                    type="text" 
-                    name="zipcode" 
-                    id="zipcodeInput" 
-                    pattern="[0-9]{4}" 
-                    required 
+                <input
+                    type="text"
+                    name="zipcode"
+                    id="zipcodeInput"
+                    pattern="[0-9]{4}"
+                    required
                     class="w-full border px-4 py-2 rounded bg-gray-200 cursor-not-allowed"
                     placeholder="<?= !$has_billing_addresses ? 'Please set up your address first' : 'Will be filled when you select an address' ?>"
                     disabled readonly />
@@ -489,21 +492,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             <div class="mt-6">
                 <label class="block font-medium mb-3">Payment Method</label>
                 <div class="space-y-3">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="payment_method" value="Cash on Delivery" required class="mr-3" />
-                        <div class="flex items-center">
-                            <div class="text-green-600 mr-2">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
-                                    <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="font-medium">Cash on Delivery</div>
-                                <div class="text-sm text-gray-600">Pay when you receive your order</div>
-                            </div>
-                        </div>
-                    </label>
+
 
                     <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="GCash" required class="mr-3" />
@@ -552,68 +541,81 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 </div>
             </div>
 
-            <!-- Order Summary -->
-            <h3 class="text-xl font-semibold mt-6 mb-4">Order Summary</h3>
-            <div class="border rounded-lg overflow-hidden bg-white">
-                <?php foreach ($cart_items as $index => $item): ?>
-                    <div class="<?= $index > 0 ? 'border-t' : '' ?> p-4">
-                        <div class="flex justify-between items-start gap-4">
-                            <!-- Left side: Product details -->
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-900 mb-2 break-words">
-                                    <?= htmlspecialchars($item['variant_name']) ?>
-                                </h4>
-                                
-                                <!-- Product details grid -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
-                                    <?php if (!empty($item['type_name'])): ?>
-                                        <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name']) ?></div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
-                                        <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size']) ?></div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (!empty($item['color_name'])): ?>
-                                        <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['color_name']) ?></div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (!empty($item['codename'])): ?>
-                                        <div><span class="font-medium">Code:</span> <?= htmlspecialchars($item['codename']) ?></div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (!empty($item['origin'])): ?>
-                                        <div><span class="font-medium text-blue-600">Origin:</span> <span class="text-blue-700"><?= htmlspecialchars($item['origin']) ?></span></div>
-                                    <?php endif; ?>
-                                </div>
+            <div class="border rounded-lg overflow-hidden bg-white max-h-[500px] flex flex-col">
 
-                                <!-- Descriptions -->
-                                <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                                    <div class="mt-2 text-xs text-gray-500 space-y-1">
-                                        <?php if (!empty($item['descrip6'])): ?>
-                                            <div class="italic"><?= htmlspecialchars($item['descrip6']) ?></div>
+                <!-- Scrollable cart items -->
+                <div class="overflow-y-auto divide-y divide-gray-200 flex-1">
+                    <?php foreach ($cart_items as $index => $item): ?>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start gap-4">
+                                <!-- Left side: Product details -->
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-orange-500 mb-2 break-words">
+                                        <?= htmlspecialchars($item['variant_name']) ?>
+                                    </h4>
+
+                                    <!-- Product details grid -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                                        <?php if (!empty($item['type_name'])): ?>
+                                            <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name']) ?></div>
                                         <?php endif; ?>
-                                        <?php if (!empty($item['descrip7'])): ?>
-                                            <div class="italic"><?= htmlspecialchars($item['descrip7']) ?></div>
+
+                                        <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
+                                            <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size']) ?></div>
                                         <?php endif; ?>
+
+                                        <?php if (!empty($item['color_name'])): ?>
+                                            <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['color_name']) ?></div>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($item['codename'])): ?>
+                                            <div><span class="font-medium">Code:</span> <?= htmlspecialchars($item['codename']) ?></div>
+                                        <?php endif; ?>
+
+
+
+                                        <?php if (!empty($item['origin'])): ?>
+                                            <?php
+                                            $is_local = stripos($item['origin'], 'local') !== false;
+                                            $origin_label_class = $is_local ? 'text-blue-600' : 'text-red-600';
+                                            $origin_value_class = $is_local ? 'text-blue-700' : 'text-red-700';
+                                            ?>
+                                            <div>
+                                                <span class="font-medium <?= $origin_label_class ?>">Origin:</span>
+                                                <span class="<?= $origin_value_class ?>"><?= htmlspecialchars($item['origin']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+
                                     </div>
-                                <?php endif; ?>
-                            </div>
 
-                            <!-- Right side: Pricing -->
-                            <div class="text-right flex-shrink-0 min-w-[140px]">
-                                <div class="text-sm text-gray-600 mb-1">
-                                    ₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?>
+                                    <!-- Descriptions -->
+                                    <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                                        <div class="mt-2 text-xs text-gray-500 space-y-1">
+                                            <?php if (!empty($item['descrip6'])): ?>
+                                                <div class="italic"><?= htmlspecialchars($item['descrip6']) ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['descrip7'])): ?>
+                                                <div class="italic"><?= htmlspecialchars($item['descrip7']) ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="text-lg font-bold text-green-600">
-                                    ₱<?= number_format($item['price'] * $item['quantity'], 2) ?>
+
+                                <!-- Right side: Pricing -->
+                                <div class="text-right flex-shrink-0 min-w-[140px]">
+                                    <div class="text-sm text-gray-600 mb-1">
+                                        ₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?>
+                                    </div>
+                                    <div class="text-lg font-bold text-green-600">
+                                        ₱<?= number_format($item['price'] * $item['quantity'], 2) ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-                
-                <!-- Total section -->
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Fixed Total section -->
                 <div class="border-t bg-gray-50 p-4">
                     <div class="flex justify-between items-center">
                         <span class="text-lg font-semibold text-gray-900">Total:</span>
@@ -621,6 +623,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     </div>
                 </div>
             </div>
+
 
             <div class="text-sm text-gray-600 text-center mt-4">
                 By placing your order, you agree to our
@@ -641,49 +644,167 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         </form>
     </div>
 
-    <!-- Success Modal -->
-    <?php if ($order_success): ?>
-        <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
-                <div class="mb-4">
-                    <svg class="mx-auto h-16 w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Thank You!</h3>
-                <p class="text-gray-600 mb-6">
-                    Your request has been submitted successfully. We will review your order and contact you within 24 hours.
-                    Please note that the final total includes a 12% VAT and applicable shipping fees, which will be reflected in your order summary.
-                </p>
-
-                <button onclick="closeModal()" class="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition">
-                    Continue Shopping
-                </button>
-            </div>
-        </div>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-        <script>
-            function closeModal() {
-                document.getElementById('successModal').style.display = 'none';
-                window.location.href = 'cart_view.php';
-            }
-
-            // Auto close modal after 5 seconds
-            setTimeout(function() {
-                closeModal();
-            }, 5000);
-        </script>
-    <?php endif; ?>
+  
 
     <script>
+        // AJAX Checkout with Receipt Display
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutForm = document.querySelector('form');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    
+    checkoutForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent normal form submission
+        
+        // Show loading state
+        const originalText = placeOrderBtn.textContent;
+        placeOrderBtn.textContent = 'Processing...';
+        placeOrderBtn.disabled = true;
+        
+        // Create FormData object
+        const formData = new FormData(checkoutForm);
+        
+        // Send AJAX request
+        fetch('process_checkout.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show receipt modal
+                showReceiptModal(data.order);
+            } else {
+                // Show error
+                alert('Error: ' + data.message);
+                placeOrderBtn.textContent = originalText;
+                placeOrderBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            placeOrderBtn.textContent = originalText;
+            placeOrderBtn.disabled = false;
+        });
+    });
+});
+
+function showReceiptModal(orderData) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="receiptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+            <div class="bg-white rounded-lg max-w-4xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
+                <!-- Receipt Header -->
+                <div class="bg-orange-600 text-white p-6 sticky top-0">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-bold">Order Confirmation</h1>
+                            <p class="text-orange-100">Thank you for your order!</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold">${orderData.reference_no}</div>
+                            <button onclick="closeReceiptModal()" class="mt-2 text-orange-200 hover:text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Receipt Content -->
+                <div class="p-6">
+                    <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h3 class="font-semibold text-green-900">Order Placed Successfully!</h3>
+                                <p class="text-sm text-green-700">We will review your order and contact you within 24 hours.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Info -->
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h3 class="font-bold text-gray-900 mb-3">Customer Information</h3>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-medium">Name:</span> ${orderData.customer_name}</div>
+                                <div><span class="font-medium">Email:</span> ${orderData.email}</div>
+                                <div><span class="font-medium">Mobile:</span> ${orderData.mobile}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 mb-3">Payment Method</h3>
+                            <div class="text-sm">${orderData.payment_method}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Items -->
+                    <div class="mb-6">
+                        <h3 class="font-bold text-gray-900 mb-3">Order Items</h3>
+                        <div class="space-y-3">
+                            ${orderData.items.map(item => `
+                                <div class="border rounded p-3">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium">${item.product_name}</h4>
+                                            <div class="text-sm text-gray-600">
+                                                ${item.details || ''}
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm text-gray-600">₱${parseFloat(item.price).toFixed(2)} × ${item.quantity}</div>
+                                            <div class="font-bold">₱${parseFloat(item.subtotal).toFixed(2)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between items-center text-lg font-bold">
+                            <span>Total:</span>
+                            <span class="text-green-700">₱${parseFloat(orderData.total).toFixed(2)}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">*Final total includes 12% VAT and applicable shipping fees</p>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="border-t p-6 flex gap-3 justify-end">
+                    <a href="order_receipt.php?order_id=${orderData.id}" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                        View Full Receipt
+                    </a>
+                    <button onclick="closeReceiptModal(); window.location.href='dashboard.php'" class="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700">
+                        Continue Shopping
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeReceiptModal() {
+    const modal = document.getElementById('receiptModal');
+    if (modal) {
+        modal.remove();
+    }
+}
         // ✅ Updated Billing Address Selector JavaScript
         document.addEventListener('DOMContentLoaded', function() {
             const toggleBtn = document.getElementById('toggleBillingSelector');
             const selector = document.getElementById('billingAddressSelector');
             const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
             const placeOrderBtn = document.getElementById('placeOrderBtn');
-            
+
             const mobileInput = document.getElementById('mobileInput');
             const addressInput = document.getElementById('addressInput');
             const zipcodeInput = document.getElementById('zipcodeInput');
@@ -705,9 +826,9 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 if (toggleBtn && selector) {
                     toggleBtn.addEventListener('click', function() {
                         selector.classList.toggle('hidden');
-                        toggleBtn.textContent = selector.classList.contains('hidden') 
-                            ? 'Show Address Selector' 
-                            : 'Hide Address Selector';
+                        toggleBtn.textContent = selector.classList.contains('hidden') ?
+                            'Show Address Selector' :
+                            'Hide Address Selector';
                     });
                 }
             }
@@ -724,22 +845,22 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         if (phone.match(/^63([0-9]{10})$/)) {
                             phone = '0' + phone.substring(2);
                         }
-                        
+
                         // Populate the fields and enable them
                         mobileInput.value = phone;
                         addressInput.value = this.dataset.address;
                         zipcodeInput.value = this.dataset.postalCode;
-                        
+
                         // Enable fields for form submission but keep them visually disabled
                         mobileInput.disabled = false;
                         addressInput.disabled = false;
                         zipcodeInput.disabled = false;
-                        
+
                         // Make them readonly instead of disabled so they submit but can't be edited
                         mobileInput.readOnly = true;
                         addressInput.readOnly = true;
                         zipcodeInput.readOnly = true;
-                        
+
                         // Enable the place order button when an address is selected
                         if (placeOrderBtn) {
                             placeOrderBtn.disabled = false;

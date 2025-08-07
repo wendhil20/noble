@@ -443,237 +443,497 @@ if ($user_id) {
         </a>
 
         <!-- Cart Link with Hover Modal -->
-        <div class="relative" id="cart-container">
-          <a href="javascript:void(0)"
-            onclick="navigateWithLoading('../otherpage/cart_view')"
-            class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
-            id="cart-link">
-            <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-            Cart
-            <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-              <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-            </span>
-          </a>
+       <div class="relative" id="cart-container">
+  <a href="javascript:void(0)"
+    onclick="navigateWithLoading('../otherpage/cart_view')"
+    class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+    id="cart-link">
+    <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+    Cart
+    <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+      <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+    </span>
+  </a>
 
-          <!-- Cart Hover Modal -->
-          <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
-            <!-- Modal Header -->
-            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
-              <div class="flex items-center justify-between">
-                <h3 class="font-bold text-lg flex items-center gap-2">
-                  <i class="fas fa-shopping-cart"></i>
-                  Your Cart
-                </h3>
-                <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
-                  <?= $total_cart_items ?> items
-                </span>
-              </div>
-            </div>
+  <!-- Cart Hover Modal -->
+  <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i class="fas fa-shopping-cart"></i>
+          Your Cart
+        </h3>
+        <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
+          0 items
+        </span>
+      </div>
+    </div>
 
-            <!-- Cart Items -->
-            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-              <?php if ($total_cart_items > 0): ?>
-                <div class="space-y-3">
-                  <?php
-                  // Fetch cart items for modal display
-                  $modal_stmt = $conn->prepare("
-                        SELECT c.*, t.type_image, v.descrip6, v.descrip7
-                        FROM user_cart_items c
-                        LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-                        LEFT JOIN product_variants v ON c.variant_id = v.id
-                        WHERE c.user_id = ?
-                    ");
-                  $modal_stmt->bind_param("i", $user_id);
-                  $modal_stmt->execute();
-                  $modal_result = $modal_stmt->get_result();
+    <!-- Loading State -->
+    <div id="cart-loading" class="hidden p-4 text-center">
+      <div class="flex items-center justify-center space-x-2">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+        <span class="text-gray-500">Loading cart...</span>
+      </div>
+    </div>
 
-                  while ($item = $modal_result->fetch_assoc()):
-                    $unit_price = floatval($item['price']);
-                    $quantity = intval($item['quantity']);
-                  ?>
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                      <?php if (!empty($item['type_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
-                      <?php else: ?>
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i class="fas fa-image text-gray-400 text-xs"></i>
-                        </div>
-                      <?php endif; ?>
+    <!-- Cart Items -->
+    <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+      <!-- Cart items will be loaded here via AJAX -->
+    </div>
 
-                      <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        </p>
-                        <div class="flex items-center justify-between mt-1">
-                          <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                        </div>
-                      </div>
+    <!-- Modal Footer -->
+    <div id="cart-footer" class="hidden border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
+      <!-- Total Price -->
+      <div class="flex justify-between items-center mb-3">
+        <span class="font-medium text-sm text-gray-700">Total:</span>
+        <span class="font-bold text-base sm:text-lg text-orange-600" id="cart-total">
+          ₱0.00
+        </span>
+      </div>
 
-                      <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                        <i class="fas fa-times text-xs"></i>
-                      </a>
-                    </div>
-                  <?php endwhile;
-                  $modal_stmt->close();
-                  ?>
-                </div>
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2">
+        <a href="../otherpage/cart_view.php"
+          class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
+          View Cart
+        </a>
+        <a href="checkout.php"
+          class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
+          Checkout
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- AJAX Cart JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Cart script loaded');
+  
+  const cartContainer = document.getElementById('cart-container');
+  const cartModal = document.getElementById('cart-modal');
+  const cartItemsContainer = document.getElementById('cart-items-container');
+  const cartLoading = document.getElementById('cart-loading');
+  const cartFooter = document.getElementById('cart-footer');
+  const modalCartCount = document.getElementById('modal-cart-count');
+  const cartTotal = document.getElementById('cart-total');
+  const cartCountBubble = document.getElementById('cart-count-bubble');
+  const cartCountSpan = document.querySelector('.cart-count[data-cart-count]');
+  
+  // Debug: Check if all elements are found
+  console.log('Elements found:', {
+    cartContainer: !!cartContainer,
+    cartModal: !!cartModal,
+    cartItemsContainer: !!cartItemsContainer,
+    cartLoading: !!cartLoading,
+    cartFooter: !!cartFooter,
+    modalCartCount: !!modalCartCount,
+    cartTotal: !!cartTotal,
+    cartCountBubble: !!cartCountBubble,
+    cartCountSpan: !!cartCountSpan
+  });
+  
+  let hoverTimeout;
+  let cartDataCache = null;
+  let cacheTime = 0;
+  const CACHE_DURATION = 30000; // 30 seconds cache
 
-                <!-- Show all items, no limit indicator needed -->
-              <?php else: ?>
-                <!-- Empty Cart -->
-                <div class="text-center py-8">
-                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-                  <p class="text-gray-500 text-sm">Your cart is empty</p>
-                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
-                    Start Shopping
-                  </a>
-                </div>
-              <?php endif; ?>
-            </div>
+  // Ensure modal is hidden on page load
+  if (cartModal) {
+    cartModal.classList.remove('show');
+  }
 
-            <!-- Modal Footer -->
-            <?php if ($total_cart_items > 0): ?>
-              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
-                <!-- Total Price -->
-                <div class="flex justify-between items-center mb-3">
-                  <span class="font-medium text-sm text-gray-700">Total:</span>
-                  <span class="font-bold text-base sm:text-lg text-orange-600">
-                    ₱<?php
-                      // Calculate total for modal
-                      $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
-                      $total_stmt->bind_param("i", $user_id);
-                      $total_stmt->execute();
-                      $total_result = $total_stmt->get_result();
-                      $total_row = $total_result->fetch_assoc();
-                      echo number_format($total_row['total'] ?? 0, 2);
-                      $total_stmt->close();
-                      ?>
-                  </span>
-                </div>
+  // Function to load cart data via AJAX - CLEANED UP
+  function loadCartData(callback) {
+    console.log('loadCartData called');
+    const now = Date.now();
+    
+    // Use cached data if available and not expired
+    if (cartDataCache && (now - cacheTime) < CACHE_DURATION) {
+      console.log('Using cached data');
+      callback(cartDataCache);
+      return;
+    }
 
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2">
-                  <a href="../otherpage/cart_view.php"
-                    class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
-                    View Cart
-                  </a>
-                  <a href="checkout.php"
-                    class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
-                    Checkout
-                  </a>
-                </div>
-              </div>
-            <?php endif; ?>
+    console.log('Loading fresh cart data...');
+    
+    // Show loading state
+    if (cartLoading) cartLoading.classList.remove('hidden');
+    if (cartItemsContainer) cartItemsContainer.innerHTML = '';
+    if (cartFooter) cartFooter.classList.add('hidden');
+
+    // Single, clean fetch request
+    fetch('get_cart_data.php', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      console.log('Response received:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Cart data received:', data);
+      
+      // Cache the data
+      cartDataCache = data;
+      cacheTime = now;
+      
+      if (cartLoading) cartLoading.classList.add('hidden');
+      callback(data);
+    })
+    .catch(error => {
+      console.error('Error loading cart data:', error);
+      if (cartLoading) cartLoading.classList.add('hidden');
+      showErrorState();
+    });
+  }
+
+  // Function to render cart items - UPDATED with data type fixes
+  function renderCartItems(data) {
+    console.log('renderCartItems called with:', data);
+    
+    if (!data) {
+      console.error('No data provided to renderCartItems');
+      showErrorState();
+      return;
+    }
+    
+    if (!data.success) {
+      console.error('Cart data indicates failure:', data);
+      showErrorState();
+      return;
+    }
+
+    const { items, total_items, total_price } = data;
+    
+    // Convert string values to numbers if needed - FIX FOR DATA TYPE MISMATCH
+    const totalItemsNum = parseInt(total_items) || 0;
+    const totalPriceNum = parseFloat(total_price) || 0;
+    
+    console.log('Extracted data:', { 
+      items: items?.length, 
+      total_items: totalItemsNum, 
+      total_price: totalPriceNum 
+    });
+
+    // Update cart count - FIXED
+    if (modalCartCount) {
+      modalCartCount.textContent = `${totalItemsNum} item${totalItemsNum === 1 ? '' : 's'}`;
+      console.log('Updated modal cart count to:', totalItemsNum);
+    }
+    
+    if (cartCountSpan) {
+      cartCountSpan.textContent = totalItemsNum;
+      console.log('Updated cart count span to:', totalItemsNum);
+    }
+    
+    // Show/hide cart count bubble - FIXED
+    if (cartCountBubble) {
+      if (totalItemsNum > 0) {
+        cartCountBubble.classList.remove('hidden');
+      } else {
+        cartCountBubble.classList.add('hidden');
+      }
+    }
+
+    if (!items || items.length === 0) {
+      console.log('No items found, showing empty cart');
+      
+      // Show empty cart state
+      if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = `
+          <div class="text-center py-8">
+            <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-500 text-sm">Your cart is empty</p>
+            <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+              Start Shopping
+            </a>
           </div>
-        </div>
+        `;
+      }
+      
+      if (cartFooter) cartFooter.classList.add('hidden');
+    } else {
+      console.log('Rendering', items.length, 'items');
+      
+      // Render cart items
+      let itemsHtml = '<div class="space-y-3">';
+      
+      items.forEach((item, index) => {
+        console.log(`Processing item ${index}:`, item);
+        
+        // Handle price and quantity - could be string or number - FIXED
+        const unitPrice = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity) || 0;
+        
+        // Handle image path - remove leading slash if present to avoid double slashes - FIXED
+        const imagePath = item.type_image ? item.type_image.replace(/^\/+/, '') : '';
+        const imageHtml = imagePath 
+          ? `<img src="../${escapeHtml(imagePath)}" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0" onerror="this.parentElement.innerHTML='<div class=\\'w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0\\'><i class=\\'fas fa-image text-gray-400 text-xs\\'></i></div>'">`
+          : `<div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+               <i class="fas fa-image text-gray-400 text-xs"></i>
+             </div>`;
 
-        <!-- Add JavaScript for hover functionality -->
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            const cartContainer = document.getElementById('cart-container');
-            const cartModal = document.getElementById('cart-modal');
-            let hoverTimeout;
-
-            // Ensure modal is hidden on page load
-            cartModal.classList.remove('show');
-
-            // Show modal on hover
-            cartContainer.addEventListener('mouseenter', function() {
-              clearTimeout(hoverTimeout);
-
-              // Position modal relative to cart container
-              const cartRect = cartContainer.getBoundingClientRect();
-              const modalWidth = 320; // w-80 = 320px
-              const viewportWidth = window.innerWidth;
-
-              // Calculate position
-              let rightPos = viewportWidth - cartRect.right;
-
-              // Adjust if modal would go off-screen
-              if (cartRect.right - modalWidth < 0) {
-                rightPos = 16; // 1rem
-              }
-
-              cartModal.style.right = rightPos + 'px';
-              cartModal.style.top = (cartRect.bottom + 8) + 'px'; // 8px gap
-
-              cartModal.classList.add('show');
-            });
-
-            // Hide modal when leaving both cart link and modal
-            cartContainer.addEventListener('mouseleave', function() {
-              hoverTimeout = setTimeout(() => {
-                cartModal.classList.remove('show');
-              }, 300); // Small delay to allow moving to modal
-            });
-
-            // Keep modal open when hovering over it
-            cartModal.addEventListener('mouseenter', function() {
-              clearTimeout(hoverTimeout);
-            });
-
-            cartModal.addEventListener('mouseleave', function() {
-              hoverTimeout = setTimeout(() => {
-                cartModal.classList.remove('show');
-              }, 300);
-            });
+        itemsHtml += `
+          <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+            ${imageHtml}
+            <div class="flex-1 min-w-0">
+              <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">${escapeHtml(item.codename || '')}</h4>
+              <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                ${escapeHtml(item.variant_name || '')}${item.color_name ? ', ' + escapeHtml(item.color_name) : ''}${item.size ? ', ' + escapeHtml(item.size) : ''}
+              </p>
+              <div class="flex items-center justify-between mt-1">
+                <span class="text-xs sm:text-sm font-semibold text-orange-600">₱${unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span class="text-[10px] sm:text-xs text-gray-500">Qty: ${quantity}</span>
+              </div>
+            </div>
+            <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0" title="Remove item">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
+        `;
+      });
+      
+      itemsHtml += '</div>';
+      
+      console.log('Generated HTML length:', itemsHtml.length);
+      
+      if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = itemsHtml;
+        console.log('HTML inserted into container');
+        
+        // Add animation delay for better UX
+        setTimeout(() => {
+          const itemElements = cartItemsContainer.querySelectorAll('.cart-item-slide');
+          itemElements.forEach((el, index) => {
+            el.style.animationDelay = `${index * 0.1}s`;
           });
-        </script>
+        }, 50);
+      } else {
+        console.error('cartItemsContainer not found!');
+      }
 
-        <style>
-          .cart-modal {
-            opacity: 0 !important;
-            visibility: hidden !important;
-            transform: translateY(-10px);
-            transition: all 0.3s ease-in-out;
-            z-index: 9999 !important;
-            display: none;
-          }
+      // Update total and show footer - use formatted_total if available - FIXED
+      if (cartTotal) {
+        const displayTotal = data.formatted_total 
+          ? `₱${data.formatted_total}` 
+          : `₱${totalPriceNum.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        cartTotal.textContent = displayTotal;
+        console.log('Updated cart total to:', displayTotal);
+      }
+      
+      if (cartFooter) {
+        cartFooter.classList.remove('hidden');
+        console.log('Footer shown');
+      }
+    }
+  }
 
-          .cart-modal.show {
-            opacity: 1 !important;
-            visibility: visible !important;
-            transform: translateY(0);
-            display: block;
-          }
+  // Function to show error state
+  function showErrorState() {
+    console.log('Showing error state');
+    
+    if (cartItemsContainer) {
+      cartItemsContainer.innerHTML = `
+        <div class="text-center py-8">
+          <i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-3"></i>
+          <p class="text-red-500 text-sm">Error loading cart</p>
+          <button onclick="location.reload()" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+            Retry
+          </button>
+        </div>
+      `;
+    }
+    
+    if (cartFooter) cartFooter.classList.add('hidden');
+  }
 
-          .cart-item-slide {
-            animation: slideInRight 0.3s ease-out forwards;
-          }
+  // Function to remove item from cart
+  window.removeFromCart = function(itemId) {
+    console.log('removeFromCart called for item:', itemId);
+    
+    // Show loading on the specific item
+    const itemElement = event.target.closest('.cart-item-slide');
+    if (itemElement) {
+      itemElement.style.opacity = '0.5';
+    }
 
-          @keyframes slideInRight {
-            from {
-              opacity: 0;
-              transform: translateX(20px);
-            }
+    fetch('remove_from_cart_ajax.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ item_id: itemId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Remove item response:', data);
+      
+      if (data.success) {
+        // Clear cache to force refresh
+        cartDataCache = null;
+        // Reload cart data
+        loadCartData(renderCartItems);
+      } else {
+        alert(data.message || 'Error removing item from cart');
+        if (itemElement) {
+          itemElement.style.opacity = '1';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error removing item:', error);
+      alert('Error removing item from cart');
+      if (itemElement) {
+        itemElement.style.opacity = '1';
+      }
+    });
+  };
 
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
+  // Function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
-          /* Responsive positioning for mobile */
-          @media (max-width: 640px) {
-            .cart-modal {
-              right: 1rem !important;
-              left: 1rem !important;
-              width: auto !important;
-              max-width: none !important;
-              top: 4rem !important;
-            }
-          }
+  // Show modal on hover
+  if (cartContainer) {
+    cartContainer.addEventListener('mouseenter', function() {
+      console.log('Cart hover started');
+      clearTimeout(hoverTimeout);
 
-          /* Ensure modal appears above all other elements */
-          .cart-modal {
-            position: fixed !important;
-          }
-        </style>
+      // Position modal relative to cart container
+      const cartRect = cartContainer.getBoundingClientRect();
+      const modalWidth = 320; // w-80 = 320px
+      const viewportWidth = window.innerWidth;
 
+      // Calculate position
+      let rightPos = viewportWidth - cartRect.right;
+
+      // Adjust if modal would go off-screen
+      if (cartRect.right - modalWidth < 0) {
+        rightPos = 16; // 1rem
+      }
+
+      if (cartModal) {
+        cartModal.style.right = rightPos + 'px';
+        cartModal.style.top = (cartRect.bottom + 8) + 'px'; // 8px gap
+        cartModal.classList.add('show');
+        console.log('Modal shown');
+      }
+
+      // Load cart data
+      loadCartData(renderCartItems);
+    });
+
+    // Hide modal when leaving both cart link and modal
+    cartContainer.addEventListener('mouseleave', function() {
+      console.log('Cart hover ended');
+      hoverTimeout = setTimeout(() => {
+        if (cartModal) {
+          cartModal.classList.remove('show');
+          console.log('Modal hidden');
+        }
+      }, 300); // Small delay to allow moving to modal
+    });
+  }
+
+  // Keep modal open when hovering over it
+  if (cartModal) {
+    cartModal.addEventListener('mouseenter', function() {
+      console.log('Modal hover started');
+      clearTimeout(hoverTimeout);
+    });
+
+    cartModal.addEventListener('mouseleave', function() {
+      console.log('Modal hover ended');
+      hoverTimeout = setTimeout(() => {
+        cartModal.classList.remove('show');
+        console.log('Modal hidden from modal leave');
+      }, 300);
+    });
+  }
+
+  // Function to refresh cart data (can be called from other parts of the app)
+  window.refreshCartData = function() {
+    console.log('refreshCartData called');
+    cartDataCache = null; // Clear cache
+    if (cartModal && cartModal.classList.contains('show')) {
+      loadCartData(renderCartItems);
+    }
+  };
+});
+</script>
+
+<style>
+.cart-modal {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(-10px);
+  transition: all 0.3s ease-in-out;
+  z-index: 9999 !important;
+  /* REMOVED: display: none !important; - This was blocking the modal from appearing */
+}
+
+.cart-modal.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0);
+  /* REMOVED: display: block !important; - Let visibility handle the showing/hiding */
+}
+
+.cart-item-slide {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive positioning for mobile */
+@media (max-width: 640px) {
+  .cart-modal {
+    right: 1rem !important;
+    left: 1rem !important;
+    width: auto !important;
+    max-width: none !important;
+    top: 4rem !important;
+  }
+}
+
+/* Ensure modal appears above all other elements */
+.cart-modal {
+  position: fixed !important;
+}
+
+/* Loading animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+</style>
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
           <div class="relative">

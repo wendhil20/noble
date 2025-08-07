@@ -120,36 +120,284 @@ function sendConfirmationEmail($order) {
 
         $billing_link = "http://localhost/noble/admin/orders/billing.php?order_id=" . $order['id'];
 
-        $mail->Body = "
-        <html><body>
+       $mail->Body = "
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .header .icon {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .message {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .order-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .order-info h3 {
+            color: #333;
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .info-value {
+            color: #333;
+            text-align: right;
+            flex: 1;
+            margin-left: 20px;
+        }
+        .items-section {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .items-section h4 {
+            color: #333;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .items-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #444;
+            white-space: pre-wrap;
+        }
+        .summary-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .summary-section h4 {
+            color: #333;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 10px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+            color: #28a745;
+            background-color: #e8f5e8;
+            padding: 15px;
+            margin: 10px -20px -20px -20px;
+            border-radius: 0 0 8px 8px;
+        }
+        .summary-label {
+            font-weight: 500;
+        }
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 25px;
+        }
+        .footer p {
+            margin: 0;
+            font-size: 16px;
+        }
+        .status-badge {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            .content {
+                padding: 20px;
+            }
+            .info-row, .summary-row {
+                flex-direction: column;
+            }
+            .info-value {
+                text-align: left;
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <div class='icon'>✓</div>
             <h1>Order Confirmed!</h1>
-            <p>Dear {$order['customer_name']},</p>
-            <p>Great news! Your order has been confirmed and is now being processed.</p>
-            <h3>Order Details</h3>
-            <p><strong>Order ID:</strong> #{$order['id']}</p>
-            <p><strong>Order Date:</strong> {$order['created_at']}</p>
-            <p><strong>Delivery Address:</strong> {$order['address']}, {$order['zipcode']}</p>
-            <p><strong>Contact:</strong> {$order['mobile']}</p>
-            <h4>Items Ordered:</h4>
-            <pre>{$order['items_list']}</pre>
-            <h4>Order Summary:</h4>
-            <p>Subtotal: ₱" . number_format($order['total'], 2) . "</p>
-            <p>VAT (12%): ₱" . number_format($vat, 2) . "</p>";
+            <div class='status-badge'>Confirmed</div>
+        </div>
+        
+        <div class='content'>
+            <div class='greeting'>
+                Dear {$order['customer_name']},
+            </div>
+            
+            <div class='message'>
+                Great news! Your order has been confirmed and is now being processed. We'll keep you updated on its progress.
+            </div>
+            
+            <div class='order-info'>
+                <h3>📋 Order Details</h3>
+                <div class='info-row'>
+                    <span class='info-label'>Order ID:</span>
+                    <span class='info-value'>#{$order['id']}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Order Date:</span>
+                    <span class='info-value'>{$order['created_at']}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Delivery Address:</span>
+                    <span class='info-value'>{$order['address']}, {$order['zipcode']}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Contact Number:</span>
+                    <span class='info-value'>{$order['mobile']}</span>
+                </div>
+            </div>
+            
+            <div class='items-section'>
+                <h4>📦 Items Ordered</h4>
+                <div class='items-list'>{$order['items_list']}</div>
+            </div>
+            
+            <div class='summary-section'>
+                <h4>💰 Order Summary</h4>
+                <div class='summary-row'>
+                    <span class='summary-label'>Subtotal:</span>
+                    <span class='summary-value'>₱" . number_format($order['total'], 2) . "</span>
+                </div>
+                <div class='summary-row'>
+                    <span class='summary-label'>VAT (12%):</span>
+                    <span class='summary-value'>₱" . number_format($vat, 2) . "</span>
+                </div>";
 
-        if ($discount > 0) {
-            $mail->Body .= "<p>Discount: -₱" . number_format($discount, 2) . "</p>";
-        }
-        if ($shipping_fee > 0) {
-            $mail->Body .= "<p>Shipping Fee: ₱" . number_format($shipping_fee, 2) . "</p>";
-        }
-        if ($delivery_fee > 0) {
-            $mail->Body .= "<p>Delivery Fee: ₱" . number_format($delivery_fee, 2) . "</p>";
-        }
+if ($discount > 0) {
+    $mail->Body .= "
+                <div class='summary-row'>
+                    <span class='summary-label'>Discount:</span>
+                    <span class='summary-value' style='color: #dc3545;'>-₱" . number_format($discount, 2) . "</span>
+                </div>";
+}
 
-        $mail->Body .= "
-            <p><strong>Final Total: ₱" . number_format($final_total, 2) . "</strong></p> 
-            <p>Thank you for choosing us!</p>
-        </body></html>";
+if ($shipping_fee > 0) {
+    $mail->Body .= "
+                <div class='summary-row'>
+                    <span class='summary-label'>Shipping Fee:</span>
+                    <span class='summary-value'>₱" . number_format($shipping_fee, 2) . "</span>
+                </div>";
+}
+
+if ($delivery_fee > 0) {
+    $mail->Body .= "
+                <div class='summary-row'>
+                    <span class='summary-label'>Delivery Fee:</span>
+                    <span class='summary-value'>₱" . number_format($delivery_fee, 2) . "</span>
+                </div>";
+}
+
+$mail->Body .= "
+                <div class='summary-row'>
+                    <span class='summary-label'>FINAL TOTAL:</span>
+                    <span class='summary-value'>₱" . number_format($final_total, 2) . "</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <p>🙏 Thank you for choosing us!</p>
+            <p style='font-size: 14px; margin-top: 10px; opacity: 0.8;'>
+                We appreciate your business and look forward to serving you again.
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
 
         $mail->send();
     } catch (Exception $e) {

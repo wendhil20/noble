@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
     }
 
-    header("Location: order_details.php?id=" . $order_id);
+    header("Location: monitortracking.php?id=" . $order_id);
     exit();
 } else {
     echo "Invalid request method.";

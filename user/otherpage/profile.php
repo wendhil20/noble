@@ -451,25 +451,25 @@ if ($user_id) {
                 <!-- LEFT: Profile Section -->
                 <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
                     <!-- Profile Picture Section -->
-<div class="relative group">
-  <!-- Profile Image Container -->
-  <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
-    <?php if ($user_picture): ?>
-      <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
-    <?php else: ?>
-      <span class="text-3xl md:text-4xl font-bold text-black font-serif">
-        <?= strtoupper(substr($user_name, 0, 1)); ?>
-      </span>
-    <?php endif; ?>
-  </div>
+                    <div class="relative group">
+                        <!-- Profile Image Container -->
+                        <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
+                            <?php if ($user_picture): ?>
+                                <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+                            <?php else: ?>
+                                <span class="text-3xl md:text-4xl font-bold text-black font-serif">
+                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
 
-  <!-- Verified Badge -->
-  <div class="absolute -bottom-2 right-2 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Verified Account">
-    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-    </svg>
-  </div>
-</div>
+                        <!-- Verified Badge -->
+                        <div class="absolute -bottom-2 right-2 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Verified Account">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
 
 
                     <!-- Name & Email -->
@@ -512,6 +512,15 @@ if ($user_id) {
                                 </svg>
                             </div>
                         </div>
+                          <!-- View History Receipt Button -->
+    <div class="mt-4">
+        <a href="order_history.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 rounded-lg transition-all duration-200 shadow">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m1 0h-5m-6 4v2a2 2 0 002 2h6a2 2 0 002-2v-2a6 6 0 00-6-6h-4a2 2 0 00-2 2v2z" />
+            </svg>
+            View History Receipt
+        </a>
+    </div>
                     </div>
 
                     <!-- Billing Address -->

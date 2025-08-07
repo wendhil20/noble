@@ -82,6 +82,23 @@ function getStatusBadge($status) {
 <body class="bg-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
+<!-- Enhanced Breadcrumb -->
+  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="">
+      <div class="flex items-center space-x-2 text-sm">
+        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-600 font-medium">History</span>
+        <?php if (!empty($search_keyword)): ?>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+          <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  </nav>
+
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">

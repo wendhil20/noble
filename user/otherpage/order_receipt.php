@@ -84,17 +84,34 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
 
 <body class="bg-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
+
+    <!-- Enhanced Breadcrumb -->
+  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="">
+      <div class="flex items-center space-x-2 text-sm">
+        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        
+        <i class="fas fa-chevron-right text-gray-400"></i>
+          <a href="order_history" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          Recent History
+        </a>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-600 font-medium">receipt</span>
+        <?php if (!empty($search_keyword)): ?>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+          <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  </nav>
+
+
     <div class="max-w-4xl mx-auto px-4">
         <!-- Header with Actions -->
-        <div class="no-print mb-6 flex justify-between items-center">
-            <a href="order_history.php" class="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Back to Dashboard
-            </a>
-        </div>
-
+      
+       
         <!-- Receipt Container -->
         <div class="bg-white shadow-lg print-shadow rounded-lg overflow-hidden" id="receipt">
             <!-- Receipt Header -->

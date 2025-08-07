@@ -1462,7 +1462,7 @@ $slideresult = $conn->query($sql);
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
                                             </svg>
-                                            Buy
+                                            view
                                         </button>
                                     </form>
 
@@ -1482,7 +1482,7 @@ $slideresult = $conn->query($sql);
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
                                             <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                            Pre-Order
+                                            Add to Cart
                                         </button>
                                     </form>
                                 </div>
@@ -1605,7 +1605,7 @@ $slideresult = $conn->query($sql);
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
                                             </svg>
-                                            Buy
+                                            view
                                         </button>
                                     </form>
 
@@ -1625,7 +1625,7 @@ $slideresult = $conn->query($sql);
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
                                             <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                            Pre-Order
+                                            Add to Cart
                                         </button>
                                     </form>
                                 </div>
@@ -1720,7 +1720,7 @@ $slideresult = $conn->query($sql);
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
                                             </svg>
-                                            Buy
+                                            view
                                         </button>
                                     </form>
 
@@ -1739,7 +1739,7 @@ $slideresult = $conn->query($sql);
                                         <button type="submit"
                                             class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
                                             <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                            Pre-Order
+                                            Add to Cart
                                         </button>
                                     </form>
                                 </div>

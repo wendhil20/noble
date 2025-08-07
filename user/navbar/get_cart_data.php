@@ -2,6 +2,8 @@
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
+// Set content type to JSON
+header('Content-Type: application/json');
 
 // // Check if request is AJAX
 // if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
@@ -35,8 +37,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
-// Set content type to JSON
-header('Content-Type: application/json');
+
 
 try {
     // ADD DETAILED DEBUGGING

@@ -1,4 +1,5 @@
 <?php
+//adminshop.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -173,11 +174,12 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     function variantRowHTML(index) {
       return `
     <div class="flex gap-2 mb-2 items-center bg-blue-50 p-2 rounded">
-      <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-1/5 rounded" />
-      <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 w-1/5 rounded" />
-      <input type="number" name="variant_percent[${index}][]" placeholder="Percent" class="border p-2 w-1/5 rounded" oninput="updatePriceFromPercent(this)" />
-      <input type="text" name="variant_namevariant[${index}][]" placeholder="Name Variant" class="border p-2 w-1/5 rounded" />
-      <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount" class="border p-2 w-1/5 rounded" />
+      <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-1/6 rounded" />
+      <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 w-1/6 rounded" required oninput="copyToBasePrice(this)" />
+      <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 w-1/6 rounded" />
+      <input type="number" name="variant_percent[${index}][]" placeholder="Percent" class="border p-2 w-1/6 rounded" oninput="updatePriceFromPercent(this)" />
+      <input type="text" name="variant_namevariant[${index}][]" placeholder="Name Variant" class="border p-2 w-1/6 rounded" />
+      <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount" class="border p-2 w-1/6 rounded" />
       <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
     </div>
   `;
@@ -210,15 +212,32 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     }
 
     function updatePriceFromPercent(percentInput) {
-      const parent = percentInput.closest('.flex');
-      const priceInput = parent.querySelector('input[name^="variant_price"]');
+  const parent = percentInput.closest('.flex');
+  const originalPriceInput = parent.querySelector('input[name^="variant_original_price"]');
+  const priceInput = parent.querySelector('input[name^="variant_price"]');
 
-      const basePrice = parseFloat(priceInput.value) || 0;
-      const percent = parseFloat(percentInput.value) || 0;
+  // Use original price as base, fall back to current price if original is empty
+  const basePrice = parseFloat(originalPriceInput.value) || parseFloat(priceInput.value) || 0;
+  const percent = parseFloat(percentInput.value) || 0;
 
-      const finalPrice = basePrice + (basePrice * percent / 100);
-      priceInput.value = finalPrice.toFixed(2);
-    }
+  const finalPrice = basePrice + (basePrice * percent / 100);
+  priceInput.value = finalPrice.toFixed(2);
+}
+
+// ADD THIS NEW FUNCTION
+function copyToBasePrice(originalPriceInput) {
+  const parent = originalPriceInput.closest('.flex');
+  const basePriceInput = parent.querySelector('input[name^="variant_price"]');
+  
+  // Copy the original price value to base price
+  basePriceInput.value = originalPriceInput.value;
+  
+  // Also trigger the percent calculation if there's a percent value
+  const percentInput = parent.querySelector('input[name^="variant_percent"]');
+  if (percentInput && percentInput.value) {
+    updatePriceFromPercent(percentInput);
+  }
+}
   </script>
 </body>
 

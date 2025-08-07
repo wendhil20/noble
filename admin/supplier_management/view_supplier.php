@@ -1,0 +1,452 @@
+<?php
+session_name("nobleadmin");
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+include '../../connection/connect.php';
+require_once '../role/roleaccount.php';
+
+require_role(['productspecialist', 'superadmin']);
+
+// Check if user is logged in
+if (!isset($_SESSION['noble_user'])) {
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+// Get supplier ID from URL
+$supplier_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+if (!$supplier_id) {
+    header("Location: supplier_directory.php");
+    exit();
+}
+
+// Get supplier information
+$supplier_sql = "SELECT * FROM supplier_list WHERE id = ?";
+$supplier_stmt = $conn->prepare($supplier_sql);
+$supplier_stmt->bind_param("i", $supplier_id);
+$supplier_stmt->execute();
+$supplier_result = $supplier_stmt->get_result();
+$supplier = $supplier_result->fetch_assoc();
+$supplier_stmt->close();
+
+if (!$supplier) {
+    header("Location: supplier_directory.php?error=supplier_not_found");
+    exit();
+}
+
+// Get linked products for this supplier
+$products_sql = "SELECT p.*, slp.status as link_status, slp.created_at as linked_date
+                 FROM supp_link_products slp
+                 INNER JOIN products p ON slp.product_id = p.id
+                 WHERE slp.supplier_id = ?
+                 ORDER BY p.product_name ASC";
+
+$products_stmt = $conn->prepare($products_sql);
+$products_stmt->bind_param("i", $supplier_id);
+$products_stmt->execute();
+$products_result = $products_stmt->get_result();
+$linked_products = $products_result->fetch_all(MYSQLI_ASSOC);
+$products_stmt->close();
+
+// Count active and inactive linked products
+$active_products = count(array_filter($linked_products, function($product) {
+    return $product['link_status'] === 'active';
+}));
+$inactive_products = count($linked_products) - $active_products;
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($supplier['business_name']) ?> - Supplier Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'noble': {
+                            'primary': '#1e40af',
+                            'secondary': '#3b82f6',
+                            'accent': '#60a5fa'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <?php include '../navbar/top.php'; ?>
+    
+    <div class="container mx-auto px-4 py-8">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="suppliers_list.php" class="inline-flex items-center text-noble-primary hover:text-blue-700 transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Supplier Directory
+            </a>
+        </div>
+
+        <!-- Supplier Information Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-8">
+                <div class="flex items-start space-x-6">
+                    <!-- Logo Section -->
+                    <div class="flex-shrink-0">
+                        <?php 
+                        $logo_path = !empty($supplier['logo_path']) ? '../../uploads/supplier_logos/' . basename($supplier['logo_path']) : '';
+                        $logo_exists = !empty($logo_path) && file_exists($logo_path);
+                        
+                        if ($logo_exists): ?>
+                            <img src="<?= htmlspecialchars($logo_path) ?>" 
+                                 alt="<?= htmlspecialchars($supplier['business_name']) ?> logo"
+                                 class="w-20 h-20 rounded-xl object-cover border-2 border-gray-200">
+                        <?php else: 
+                            // Create acronym from business name
+                            $words = explode(' ', trim($supplier['business_name']));
+                            $acronym = '';
+                            foreach ($words as $word) {
+                                if (!empty($word)) {
+                                    $acronym .= strtoupper(substr($word, 0, 1));
+                                    if (strlen($acronym) >= 2) break;
+                                }
+                            }
+                            if (empty($acronym)) {
+                                $acronym = strtoupper(substr($supplier['business_name'], 0, 2));
+                            }
+                            
+                            // Generate a consistent color
+                            $colors = [
+                                'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
+                                'bg-yellow-500', 'bg-indigo-500', 'bg-red-500', 'bg-teal-500'
+                            ];
+                            $color_index = abs(crc32($supplier['business_name'])) % count($colors);
+                            $bg_color = $colors[$color_index];
+                        ?>
+                            <div class="w-20 h-20 rounded-xl <?= $bg_color ?> flex items-center justify-center text-white font-bold text-xl border-2 border-gray-200">
+                                <?= htmlspecialchars($acronym) ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Business Information -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                                    <?= htmlspecialchars($supplier['business_name']) ?>
+                                </h1>
+                                <div class="flex items-center space-x-4 mb-3">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        <?= $supplier['business_type'] == 'Manufacturer' ? 'bg-blue-100 text-blue-800' :
+                                           ($supplier['business_type'] == 'Wholesaler' ? 'bg-green-100 text-green-800' :
+                                           ($supplier['business_type'] == 'Distributor' ? 'bg-purple-100 text-purple-800' :
+                                           ($supplier['business_type'] == 'Retailer' ? 'bg-yellow-100 text-yellow-800' :
+                                           'bg-gray-100 text-gray-800'))) ?>">
+                                        <?= htmlspecialchars($supplier['business_type']) ?>
+                                    </span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        <?= $supplier['status'] == 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                                        <span class="w-2 h-2 rounded-full mr-2 
+                                            <?= $supplier['status'] == 'active' ? 'bg-green-400' : 'bg-red-400' ?>"></span>
+                                        <?= ucfirst($supplier['status']) ?>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="supplier_management.php?edit_id=<?= $supplier['id'] ?>" 
+                                   class="bg-noble-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+                                    <i class="fas fa-edit mr-2"></i>Edit Supplier
+                                </a>
+                                <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+                                    <i class="fas fa-link mr-2"></i>Link Products
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user text-gray-400 w-5 text-center mr-4"></i>
+                                    <div>
+                                        <p class="font-medium text-gray-900"><?= !empty($supplier['primary_contact_name']) ? htmlspecialchars($supplier['primary_contact_name']) : 'No contact name' ?></p>
+                                        <p class="text-sm text-gray-600"><?= !empty($supplier['job_title']) ? htmlspecialchars($supplier['job_title']) : 'No job title specified' ?></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <i class="fas fa-envelope text-gray-400 w-5 text-center mr-4"></i>
+                                    <?php if (!empty($supplier['email_address'])): ?>
+                                        <a href="mailto:<?= htmlspecialchars($supplier['email_address']) ?>" 
+                                           class="text-noble-primary hover:text-blue-700 hover:underline">
+                                            <?= htmlspecialchars($supplier['email_address']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-gray-500 italic">No email address</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-phone text-gray-400 w-5 text-center mr-4"></i>
+                                    <?php if (!empty($supplier['phone_number'])): ?>
+                                        <a href="tel:<?= htmlspecialchars($supplier['phone_number']) ?>" 
+                                           class="text-gray-700 hover:text-noble-primary">
+                                            <?= htmlspecialchars($supplier['phone_number']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-gray-500 italic">No phone number</span>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <i class="fas fa-map-marker-alt text-gray-400 w-5 text-center mr-4"></i>
+                                    <span class="text-gray-700"><?= !empty($supplier['country_region']) ? htmlspecialchars($supplier['country_region']) : 'No location specified' ?></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Info -->
+                        <div class="mt-6 pt-6 border-t border-gray-200 text-sm text-gray-600">
+                            <i class="fas fa-calendar mr-2"></i>
+                            Supplier added on <?= date('F j, Y', strtotime($supplier['created_at'])) ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linked Products Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Linked Products</h2>
+                        <p class="text-gray-600">Products associated with this supplier</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-400 mr-1"></span>
+                                <?= $active_products ?> Active
+                            </span>
+                            <?php if ($inactive_products > 0): ?>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400 mr-1"></span>
+                                    <?= $inactive_products ?> Inactive
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
+                           class="bg-noble-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center text-sm">
+                            <i class="fas fa-plus mr-2"></i>Add Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <?php if (empty($linked_products)): ?>
+    <div class="text-center py-12">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+            <i class="fas fa-box text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No products linked</h3>
+        <p class="text-gray-600 mb-4">This supplier doesn't have any products linked yet.</p>
+        <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
+           class="bg-noble-primary hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+            <i class="fas fa-link mr-2"></i>Link Products
+        </a>
+    </div>
+<?php else: ?>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <?php foreach ($linked_products as $product): ?>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden">
+                <!-- Product Image -->
+                <div class="aspect-square bg-gray-50 relative">
+                    <?php 
+                    $image_path = !empty($product['main_image']) ? '../../' . $product['main_image'] : '';
+                    $image_exists = !empty($image_path) && file_exists($image_path);
+                    
+                    if ($image_exists): ?>
+                        <img src="<?= htmlspecialchars($image_path) ?>" 
+                             alt="<?= htmlspecialchars($product['product_name']) ?>"
+                             class="w-full h-full object-cover">
+                    <?php else: ?>
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i class="fas fa-box text-gray-300 text-4xl"></i>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Status Badge -->
+                    <div class="absolute top-3 right-3">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            <?= $product['link_status'] == 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                            <span class="w-1.5 h-1.5 rounded-full mr-1 
+                                <?= $product['link_status'] == 'active' ? 'bg-green-400' : 'bg-red-400' ?>"></span>
+                            <?= $product['link_status'] == 'active' ? 'Active' : 'Inactive' ?>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="p-4">
+                    <div class="mb-3">
+                        <h3 class="font-semibold text-gray-900 text-sm line-clamp-2 mb-1" title="<?= htmlspecialchars($product['product_name']) ?>">
+                            <?= !empty($product['product_name']) ? htmlspecialchars($product['product_name']) : 'Unnamed Product' ?>
+                        </h3>
+                        <p class="text-xs text-gray-500">ID: <?= $product['id'] ?></p>
+                    </div>
+
+                    <div class="space-y-2 text-sm">
+                        <!-- Code -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Code:</span>
+                            <span class="font-medium text-gray-900 truncate ml-2" title="<?= htmlspecialchars($product['codename']) ?>">
+                                <?= !empty($product['codename']) ? htmlspecialchars($product['codename']) : 'No code' ?>
+                            </span>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Price:</span>
+                            <span class="font-medium text-gray-900">
+                                <?= !empty($product['price']) ? '₱' . number_format($product['price'], 2) : 'No price set' ?>
+                            </span>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Stock:</span>
+                            <span class="font-medium text-gray-900">
+                                <?= !empty($product['quantity']) ? number_format($product['quantity']) : '0' ?> 
+                                <?= !empty($product['unit']) ? htmlspecialchars($product['unit']) : 'units' ?>
+                            </span>
+                        </div>
+
+                        <!-- Linked Date -->
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                            <span class="text-gray-600">Linked:</span>
+                            <span class="text-gray-500 text-xs">
+                                <?= date('M j, Y', strtotime($product['linked_date'])) ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-4 flex space-x-2">
+                        <a href="product_details.php?id=<?= $product['id'] ?>" 
+                           class="flex-1 bg-noble-primary hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200 text-center"
+                           title="View Product Details">
+                            <i class="fas fa-eye mr-1"></i>View
+                        </a>
+                        <button onclick="toggleLinkStatus(<?= $supplier['id'] ?>, <?= $product['id'] ?>, '<?= $product['link_status'] ?>')"
+                                class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200" 
+                                title="<?= $product['link_status'] == 'active' ? 'Deactivate' : 'Activate' ?> Link">
+                            <i class="fas fa-<?= $product['link_status'] == 'active' ? 'pause' : 'play' ?> mr-1"></i>
+                            <?= $product['link_status'] == 'active' ? 'Deactivate' : 'Activate' ?>
+                        </button>
+                        <button onclick="unlinkProduct(<?= $supplier['id'] ?>, <?= $product['id'] ?>, '<?= htmlspecialchars($product['product_name'], ENT_QUOTES) ?>')"
+                                class="bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200" 
+                                title="Unlink Product">
+                            <i class="fas fa-unlink"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <div class="mt-6 text-center">
+        <p class="text-sm text-gray-600">
+            Showing <?= count($linked_products) ?> linked product<?= count($linked_products) != 1 ? 's' : '' ?>
+        </p>
+    </div>
+<?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleLinkStatus(supplierId, productId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            const action = newStatus === 'active' ? 'activate' : 'deactivate';
+            
+            if (confirm(`Are you sure you want to ${action} this product link?`)) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'toggle_product_link.php';
+                
+                const supplierInput = document.createElement('input');
+                supplierInput.type = 'hidden';
+                supplierInput.name = 'supplier_id';
+                supplierInput.value = supplierId;
+                
+                const productInput = document.createElement('input');
+                productInput.type = 'hidden';
+                productInput.name = 'product_id';
+                productInput.value = productId;
+                
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'new_status';
+                statusInput.value = newStatus;
+                
+                form.appendChild(supplierInput);
+                form.appendChild(productInput);
+                form.appendChild(statusInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function unlinkProduct(supplierId, productId, productName) {
+            if (confirm(`Are you sure you want to unlink "${productName}" from this supplier? This action cannot be undone.`)) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'unlink_product.php';
+                
+                const supplierInput = document.createElement('input');
+                supplierInput.type = 'hidden';
+                supplierInput.name = 'supplier_id';
+                supplierInput.value = supplierId;
+                
+                const productInput = document.createElement('input');
+                productInput.type = 'hidden';
+                productInput.name = 'product_id';
+                productInput.value = productId;
+                
+                form.appendChild(supplierInput);
+                form.appendChild(productInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Add smooth animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate table rows on hover
+            document.querySelectorAll('tbody tr').forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.01)';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

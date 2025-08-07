@@ -1,4 +1,5 @@
 <?php
+//upload_process.php
 include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -148,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($_POST['variant_size'][$type_index] as $variant_index => $size) {
                         $name_variant = $_POST['variant_namevariant'][$type_index][$variant_index] ?? '';
                         $color = $_POST['variant_color'][$type_index][$variant_index] ?? '';
+                        $original_price = (float)($_POST['variant_original_price'][$type_index][$variant_index] ?? 0);
                         $price = (float)($_POST['variant_price'][$type_index][$variant_index] ?? 0);
                         $percent = (float)($_POST['variant_percent'][$type_index][$variant_index] ?? 0);
                         $discount = (float)($_POST['variant_discount'][$type_index][$variant_index] ?? 0);
@@ -165,20 +167,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $variant_image = saveImageToFolder($file);
                             }
 
-                            $stmt = $conn->prepare("INSERT INTO product_variants (type_id, color, size, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                            if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
-                            $stmt->bind_param("issdddss",
-                                $type_id,
-                                $color,
-                                $size,
-                                $final_price,
-                                $percent,
-                                $discount,
-                                $name_variant,
-                                $variant_image
-                            );
-                            $stmt->execute();
-                            $stmt->close();
+                            $stmt = $conn->prepare("INSERT INTO product_variants (type_id, color, size, original_price, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
+            $stmt->bind_param("issddddss",
+                $type_id,
+                $color,
+                $size,
+                $original_price,  // ADD THIS
+                $final_price,
+                $percent,
+                $discount,
+                $name_variant,
+                $variant_image
+            );
+            $stmt->execute();
+            $stmt->close();
                         }
                     }
                 }

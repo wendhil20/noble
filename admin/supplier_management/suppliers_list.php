@@ -303,9 +303,9 @@ while ($row = $types_result->fetch_assoc()) {
                         <!-- Action Buttons -->
                         <div class="px-6 pb-6">
                             <div class="flex space-x-2">
-                                <button class="flex-1 bg-noble-primary hover:bg-blue-700 text-white text-sm py-2 px-3 rounded-lg transition-colors duration-200">
-                                    <i class="fas fa-eye mr-2"></i>View Details
-                                </button>
+                                <a href="view_supplier.php?id=<?= $supplier['id'] ?>" class="flex-1 bg-noble-primary hover:bg-blue-700 text-white text-sm py-2 px-3 rounded-lg transition-colors duration-200 text-center">
+    <i class="fas fa-eye mr-2"></i>View Details
+</a>
                                 <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200">
                                     <i class="fas fa-edit mr-2"></i>Edit
                                 </button>

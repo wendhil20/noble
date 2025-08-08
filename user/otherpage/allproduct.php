@@ -47,6 +47,7 @@ $material_querys = "
         p.product_name,
         p.codename,
         p.main_image,
+        p.sub_images,
         p.description,
         pc.id AS color_id,
         pc.color_name AS color,
@@ -59,7 +60,6 @@ $material_querys = "
     ORDER BY pv.discount DESC, pv.percent ASC, p.id, pc.id
 ";
 $material_results = mysqli_query($conn, $material_querys);
-
 
 ?>
 
@@ -83,8 +83,6 @@ $material_results = mysqli_query($conn, $material_querys);
             theme: {
                 extend: {
                     fontFamily: {
-                        poppins: ['Poppins', 'sans-serif'],
-                        inter: ['Inter', 'sans-serif'],
                         mont: ['Montserrat', 'sans-serif'],
                     },
                     animation: {
@@ -238,10 +236,86 @@ $material_results = mysqli_query($conn, $material_querys);
         .hidden {
             display: none;
         }
+
+        /* Image Gallery Styles */
+        .image-gallery {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gallery-container {
+            display: flex;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-image {
+            flex-shrink: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        .gallery-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .gallery-dot.active {
+            background: #f97316;
+            transform: scale(1.2);
+        }
+
+        .gallery-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+
+        .image-gallery:hover .gallery-arrow {
+            opacity: 1;
+        }
+
+        .gallery-arrow.prev {
+            left: 8px;
+        }
+
+        .gallery-arrow.next {
+            right: 8px;
+        }
+
+        .gallery-arrow:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
     </style>
 </head>
 
-<body class="bg-gray-50 font-poppins">
+<body class="bg-gray-50 font-mont">
     <?php include '../navbar/top.php'; ?>
     <!-- Top Sales Section -->
     <section class="px-4 py-16">
@@ -378,6 +452,39 @@ $material_results = mysqli_query($conn, $material_querys);
                     $discount = (float)($row['discount'] ?? 0);
                     $priceWithMarkup = $base + ($base * $percent / 100);
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                    
+                    // Process images - combine main_image, sub_images, and type_image
+                    $allImages = array();
+                    
+                    // Add main image first
+                    if (!empty($row['main_image'])) {
+                        $allImages[] = '../../' . $row['main_image'];
+                    }
+                    
+                    // Add sub images
+                    if (!empty($row['sub_images'])) {
+                        $subImages = json_decode($row['sub_images'], true);
+                        if (is_array($subImages)) {
+                            foreach ($subImages as $subImg) {
+                                if (!empty($subImg)) {
+                                    // Clean up the path - remove ../ and add proper path
+                                    $cleanPath = str_replace('../', '', $subImg);
+                                    $allImages[] = '../../' . $cleanPath;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Add type image as fallback
+                    if (!empty($row['type_image'])) {
+                        $allImages[] = '../../' . $row['type_image'];
+                    }
+                    
+                    // Remove duplicates and ensure we have at least one image
+                    $allImages = array_unique($allImages);
+                    if (empty($allImages)) {
+                        $allImages[] = '../img/placeholder.jpg'; // Add a placeholder if no images
+                    }
                 ?>
                     <div class="product-item product-card rounded-2xl shadow-lg p-6 group flex flex-col justify-between h-[520px] text-center relative overflow-hidden transition-all duration-300"
                          data-name="<?= strtolower(htmlspecialchars($row['namevariant'])) ?>"
@@ -402,16 +509,32 @@ $material_results = mysqli_query($conn, $material_querys);
                             </div>
                         </div>
 
-                        <!-- Product Image -->
+                        <!-- Product Image Gallery -->
                         <div class="aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl overflow-hidden mb-4 group-hover:shadow-inner transition-all duration-300">
-                            <?php if (!empty($row['type_image'])): ?>
-                                <img src="../../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                    class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                            <?php else: ?>
-                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm bg-gradient-to-br from-gray-50 to-gray-100">
-
+                            <div class="image-gallery w-full h-full relative">
+                                <div class="gallery-container h-full" data-current="0">
+                                    <?php foreach ($allImages as $index => $image): ?>
+                                        <img src="<?= htmlspecialchars($image) ?>" 
+                                             alt="<?= htmlspecialchars($row['namevariant']) ?>" 
+                                             class="gallery-image object-contain transition-transform duration-300 group-hover:scale-105"
+                                             style="<?= $index === 0 ? '' : 'display: none;' ?>" />
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php endif; ?>
+                                
+                                <?php if (count($allImages) > 1): ?>
+                                    <!-- Navigation Arrows -->
+                                    <button class="gallery-arrow prev" onclick="changeImage(this, -1)">‹</button>
+                                    <button class="gallery-arrow next" onclick="changeImage(this, 1)">›</button>
+                                    
+                                    <!-- Navigation Dots -->
+                                    <div class="gallery-nav">
+                                        <?php foreach ($allImages as $index => $image): ?>
+                                            <div class="gallery-dot <?= $index === 0 ? 'active' : '' ?>" 
+                                                 onclick="goToImage(this, <?= $index ?>)"></div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <!-- Product Info -->
@@ -428,11 +551,11 @@ $material_results = mysqli_query($conn, $material_querys);
                             <div class="mb-4">
                                 <?php if ($discount > 0): ?>
                                     <p class="text-sm text-gray-400 line-through mb-1">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <p class="text-xl price-gradient font-black mb-2">
+                                    <p class="text-xl price-gradient font-mont mb-2">
                                         ₱<?= number_format($finalPrice, 2) ?>
                                     </p>
                                 <?php else: ?>
-                                    <p class="text-xl price-gradient font-black mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                    <p class="text-xl price-gradient font-mont mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
                                 <?php endif; ?>
                                 
                                 <!-- Origin Badge -->
@@ -458,23 +581,45 @@ $material_results = mysqli_query($conn, $material_querys);
                                 </form>
 
                                 <!-- Pre-Order Button -->
-                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                    <input type="hidden" name="return_url" value="index">
+                             <!-- Fixed Pre-Order Button Form -->
+<form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+    
+    <!-- ✅ FIXED: Include size in the variant name to make it unique -->
+    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?> - <?= htmlspecialchars($row['size'] ?? '') ?>">
+    
+    <!-- ✅ FIXED: Use the actual variant ID from product_variants table -->
+    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+    
+    <!-- ✅ FIXED: Include size as separate field -->
+    <input type="hidden" name="selected_size" value="<?= htmlspecialchars($row['size'] ?? '') ?>">
+    
+    <!-- Color information -->
+    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
+    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+    
+    <!-- Price information -->
+    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+    <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
+    
+    <!-- Additional fields for proper cart identification -->
+    <input type="hidden" name="discount" value="<?= floatval($row['discount'] ?? 0) ?>">
+    <input type="hidden" name="percent" value="<?= floatval($row['percent'] ?? 0) ?>">
+    <input type="hidden" name="origin" value="<?= htmlspecialchars($row['origin'] ?? 'local') ?>">
+    
+    <!-- Return URL -->
+    <input type="hidden" name="return_url" value="index">
 
-                                    <button type="submit" class="btn-preorder text-white text-sm px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg font-semibold">
-                                        <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                        Pre-Order
-                                    </button>
-                                </form>
+   <button type="submit"
+    class="btn-preorder text-white text-sm px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg font-semibold
+    ring-2 ring-orange-500 ring-offset-1">
+    <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
+    Pre-Order
+</button>
+
+</form>
                             </div>
                         </div>
                     </div>
@@ -490,10 +635,54 @@ $material_results = mysqli_query($conn, $material_querys);
         </div>
     </section>
 
-    <!-- AOS Animation JS -->
+    <!-- AOS Animation Script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
     
     <script>
+        // Image Gallery Functions
+        function changeImage(button, direction) {
+            const gallery = button.closest('.image-gallery');
+            const container = gallery.querySelector('.gallery-container');
+            const images = gallery.querySelectorAll('.gallery-image');
+            const dots = gallery.querySelectorAll('.gallery-dot');
+            
+            let current = parseInt(container.dataset.current);
+            let newIndex = current + direction;
+            
+            if (newIndex < 0) newIndex = images.length - 1;
+            if (newIndex >= images.length) newIndex = 0;
+            
+            showImage(gallery, newIndex);
+        }
+
+        function goToImage(dot, index) {
+            const gallery = dot.closest('.image-gallery');
+            showImage(gallery, index);
+        }
+
+        function showImage(gallery, index) {
+            const container = gallery.querySelector('.gallery-container');
+            const images = gallery.querySelectorAll('.gallery-image');
+            const dots = gallery.querySelectorAll('.gallery-dot');
+            
+            // Hide all images
+            images.forEach(img => img.style.display = 'none');
+            
+            // Show selected image
+            if (images[index]) {
+                images[index].style.display = 'block';
+            }
+            
+            // Update dots
+            dots.forEach(dot => dot.classList.remove('active'));
+            if (dots[index]) {
+                dots[index].classList.add('active');
+            }
+            
+            // Update current index
+            container.dataset.current = index;
+        }
+
         // Initialize AOS
         AOS.init({
             duration: 1000,
@@ -809,74 +998,6 @@ $material_results = mysqli_query($conn, $material_querys);
                 
                 button.addEventListener('mouseup', function() {
                     this.style.transform = 'translateY(-2px) scale(1.02)';
-                });
-            });
-
-            // Add notification system for cart updates
-            function showNotification(message, type = 'success') {
-                const notification = document.createElement('div');
-                notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform translate-x-full transition-transform duration-300 ${
-                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                }`;
-                notification.textContent = message;
-                
-                document.body.appendChild(notification);
-                
-                // Animate in
-                setTimeout(() => {
-                    notification.style.transform = 'translateX(0)';
-                }, 100);
-                
-                // Animate out and remove
-                setTimeout(() => {
-                    notification.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (document.body.contains(notification)) {
-                            document.body.removeChild(notification);
-                        }
-                    }, 300);
-                }, 3000);
-            }
-
-            // Function to update cart count in header/navbar
-            function updateCartCount(count) {
-                const cartCountElements = document.querySelectorAll('.cart-count, #cart-count, [data-cart-count]');
-                cartCountElements.forEach(element => {
-                    if (element) {
-                        element.textContent = count;
-                        // Add bounce animation
-                        element.classList.add('animate-bounce');
-                        setTimeout(() => {
-                            element.classList.remove('animate-bounce');
-                        }, 1000);
-                    }
-                });
-            }
-
-            // Enhanced form submission with feedback
-            forms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const button = this.querySelector('button[type="submit"]');
-                    const originalText = button.innerHTML;
-                    
-                    // Show loading state
-                    button.innerHTML = `
-                        <svg class="w-4 h-4 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                    `;
-                    button.disabled = true;
-                    
-                    // Simulate form submission (replace with actual submission logic)
-                    setTimeout(() => {
-                        button.innerHTML = originalText;
-                        button.disabled = false;
-                        showNotification('Product added to pre-order successfully!');
-                    }, 1500);
                 });
             });
 

@@ -189,41 +189,8 @@ if ($user_id) {
                 extend: {
                     fontFamily: {
                         // Sans-serif fonts
-                        poppins: ['Poppins', 'sans-serif'],
-                        inter: ['Inter', 'sans-serif'],
-                        lato: ['Lato', 'sans-serif'],
-                        opensans: ['"Open Sans"', 'sans-serif'],
-                        source: ['"Source Sans Pro"', 'sans-serif'],
-                        raleway: ['Raleway', 'sans-serif'],
-                        nunito: ['Nunito', 'sans-serif'],
                         mont: ['Montserrat', 'sans-serif'],
-                        roboto: ['Roboto', 'sans-serif'],
-                        quicksand: ['Quicksand', 'sans-serif'],
-                        work: ['"Work Sans"', 'sans-serif'],
-                        rubik: ['Rubik', 'sans-serif'],
-                        fira: ['"Fira Sans"', 'sans-serif'],
-                        ubuntu: ['Ubuntu', 'sans-serif'],
-                        barlow: ['Barlow', 'sans-serif'],
-                        manrope: ['Manrope', 'sans-serif'],
-                        dmsans: ['"DM Sans"', 'sans-serif'],
-                        space: ['"Space Grotesk"', 'sans-serif'],
 
-                        // Serif fonts
-                        merri: ['Merriweather', 'serif'],
-                        playfair: ['"Playfair Display"', 'serif'],
-                        libre: ['"Libre Baskerville"', 'serif'],
-                        crimson: ['"Crimson Text"', 'serif'],
-                        garamond: ['"EB Garamond"', 'serif'],
-                        lora: ['Lora', 'serif'],
-
-                        // Display/Decorative fonts
-                        vibes: ['"Great Vibes"', 'cursive'],
-                        dancing: ['"Dancing Script"', 'cursive'],
-                        pacifico: ['Pacifico', 'cursive'],
-                        lobster: ['Lobster', 'cursive'],
-                        oswald: ['Oswald', 'sans-serif'],
-                        bebas: ['"Bebas Neue"', 'sans-serif'],
-                        anton: ['Anton', 'sans-serif'],
                     }
                 }
             }
@@ -512,15 +479,15 @@ if ($user_id) {
                                 </svg>
                             </div>
                         </div>
-                          <!-- View History Receipt Button -->
-    <div class="mt-4">
-        <a href="order_history.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 rounded-lg transition-all duration-200 shadow">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m1 0h-5m-6 4v2a2 2 0 002 2h6a2 2 0 002-2v-2a6 6 0 00-6-6h-4a2 2 0 00-2 2v2z" />
-            </svg>
-            View History Receipt
-        </a>
-    </div>
+                        <!-- View History Receipt Button -->
+                        <div class="mt-4">
+                            <a href="order_history.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 rounded-lg transition-all duration-200 shadow">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m1 0h-5m-6 4v2a2 2 0 002 2h6a2 2 0 002-2v-2a6 6 0 00-6-6h-4a2 2 0 00-2 2v2z" />
+                                </svg>
+                                View History Receipt
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Billing Address -->

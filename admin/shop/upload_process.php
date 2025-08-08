@@ -55,6 +55,40 @@ function saveImageToFolder($file, $targetDir = '../../uploads/') {
     return null;
 }
 
+function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/') {
+    if (!file_exists($targetDir)) {
+        mkdir($targetDir, 0777, true);
+    }
+
+    $subImagePaths = [];
+    
+    if (isset($subImagesFiles['name']) && is_array($subImagesFiles['name'])) {
+        $totalSubImages = count($subImagesFiles['name']);
+        
+        for ($i = 0; $i < $totalSubImages; $i++) {
+            // Skip empty files
+            if (empty($subImagesFiles['name'][$i]) || $subImagesFiles['error'][$i] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+            
+            // Create file array for saveImageToFolder function
+            $file = [
+                'name' => $subImagesFiles['name'][$i],
+                'tmp_name' => $subImagesFiles['tmp_name'][$i]
+            ];
+            
+            // Save the sub image
+            $savedPath = saveImageToFolder($file, $targetDir);
+            if ($savedPath) {
+                // Adjust path for sub_images folder
+                $subImagePaths[] = str_replace('uploads/', '../sub_images/', $savedPath);
+            }
+        }
+    }
+    
+    return $subImagePaths;
+}
+
 $tables = ['products', 'product_types', 'product_variants', 'product_colors'];
 
 foreach ($tables as $table) {
@@ -68,8 +102,6 @@ foreach ($tables as $table) {
     $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
 }
 
-
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $conn->begin_transaction();
@@ -80,22 +112,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $main_image = saveImageToFolder($_FILES['main_image']);
         }
 
+        // Handle sub images
+        $sub_images = [];
+        if (isset($_FILES['sub_images'])) {
+            $sub_images = saveSubImages($_FILES['sub_images']);
+        }
+        
+        // Convert sub images array to JSON for database storage
+        $sub_images_json = !empty($sub_images) ? json_encode($sub_images) : null;
+
         $_POST['quantity'] = (int)$_POST['quantity'];
 
-        // Insert product
-        $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, description) VALUES (?, ?, ?, ?, ?)");
+        // Check if products table has sub_images column, if not add it
+        $check_column = $conn->query("SHOW COLUMNS FROM products LIKE 'sub_images'");
+        if ($check_column->num_rows == 0) {
+            $conn->query("ALTER TABLE products ADD COLUMN sub_images TEXT NULL AFTER main_image");
+        }
+
+        // Insert product with sub images
+        $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, sub_images, description) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) throw new Exception("Prepare failed for product insert: " . $conn->error);
 
-        $stmt->bind_param("ssiss",
+        $stmt->bind_param("ssisss",
             $_POST['product_name'],
             $_POST['codename'],
             $_POST['quantity'],
             $main_image,
+            $sub_images_json,
             $_POST['description']
         );
         $stmt->execute();
         $product_id = $conn->insert_id;
         $stmt->close();
+
+        // Log sub images info for debugging
+        if (!empty($sub_images)) {
+            error_log("Sub images saved for product ID $product_id: " . implode(', ', $sub_images));
+        }
 
         // Product types
         if (isset($_POST['type_name']) && is_array($_POST['type_name'])) {
@@ -189,10 +242,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $conn->commit();
-        echo "<script>alert('Product uploaded successfully!'); window.location.href='adminshop.php';</script>";
+        
+        // Success message with sub images count
+        $sub_images_count = count($sub_images);
+        $success_message = "Product uploaded successfully!";
+        if ($sub_images_count > 0) {
+            $success_message .= " ($sub_images_count sub images included)";
+        }
+        
+        echo "<script>
+            alert('$success_message'); 
+            window.location.href='adminshop.php';
+        </script>";
+        
     } catch (Exception $e) {
         $conn->rollback();
-        echo "<script>alert('Error: " . addslashes($e->getMessage()) . "'); history.back();</script>";
+        
+        // Enhanced error message
+        $error_message = "Error uploading product: " . $e->getMessage();
+        error_log("Product upload error: " . $e->getMessage());
+        
+        echo "<script>
+            alert('" . addslashes($error_message) . "'); 
+            history.back();
+        </script>";
     }
 } else {
     header("Location: adminshop.php");

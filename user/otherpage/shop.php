@@ -145,12 +145,34 @@ foreach ($all_categories as $cat_key => $cat_name) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shop Products - Noble Home</title>
   <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
-
   <!-- Enhanced CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+    <script>
+        // Function to hide the notification after 5 seconds
+        setTimeout(function() {
+            const notification = document.getElementById('loginNotification');
+            if (notification) {
+                notification.style.display = 'none';
+            }
+        }, 5000); // 5000ms = 5 seconds
 
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        // Sans-serif fonts
+                      
+                        mont: ['Montserrat', 'sans-serif'],
+                    
+                    }
+                }
+            }
+        }
+    </script>
   <style>
            body {
       font-family: 'Poppins', sans-serif;
@@ -320,7 +342,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
   </style>
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-800">
+<body class="bg-gray-50 font-mont text-gray-800">
 
   <?php include '../navbar/top.php'; ?>
 
@@ -342,32 +364,41 @@ foreach ($all_categories as $cat_key => $cat_name) {
   </nav>
 
   <div class=" px-4 py-8">
-    <div class="relative">
-      <!-- Bubble Canvas -->
-      <canvas id="bubble-bg-canvas" class=" absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
-      <div class="relative z-10 text-center mb-12" data-aos="fade-up">
-      <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-        Our <span class="text-orange-500">Premium</span> Collections
-      </h1>
-      <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-        Discover exceptional furniture and materials crafted with precision and designed for modern living
-      </p>
-      <div class="mt-6 flex items-center justify-center space-x-4 text-sm text-gray-500">
-        <span class="flex items-center">
+   <div class="relative">
+  <!-- Bubble Canvas -->
+  <canvas id="bubble-bg-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+  <div class="relative z-10 text-center mb-12" data-aos="fade-up">
+    <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+      Our <span class="text-orange-500">Premium</span> Collections
+    </h1>
+    <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+      Discover exceptional furniture and materials crafted with precision and designed for modern living
+    </p>
+    <div class="mt-6 flex items-center justify-center space-x-4 text-sm text-gray-500">
+      <span class="flex items-center">
         <i class="fas fa-check-circle text-green-500 mr-1"></i>
         Quality Guaranteed
-        </span>
-        <span class="flex items-center">
+      </span>
+      <span class="flex items-center">
         <i class="fas fa-shipping-fast text-blue-500 mr-1"></i>
         Fast Delivery
-        </span>
-        <span class="flex items-center">
+      </span>
+      <span class="flex items-center">
         <i class="fas fa-award text-yellow-500 mr-1"></i>
         Premium Materials
-        </span>
-      </div>
-      </div>
+      </span>
     </div>
+
+    <!-- 👇 Button Added Below -->
+    <div class="mt-8">
+      <a href="allproduct" class="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-300">
+       All Products
+      </a>
+    </div>
+  </div>
+</div>
+
    
     <section class="flex flex-wrap justify-center gap-4 px-4 py-6">
 

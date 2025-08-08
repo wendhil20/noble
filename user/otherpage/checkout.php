@@ -212,8 +212,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // ✅ Save each item - FIXED to handle missing product_name column
             $stmt = $conn->prepare("INSERT INTO order_items (
-    order_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             foreach ($cart_items as $item) {
                 $subtotal = $item['price'] * $item['quantity'];
@@ -229,22 +229,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $desc6 = $item['descrip6'] ?? '';
                 $desc7 = $item['descrip7'] ?? '';
                 $origin = $item['origin'] ?? '';  // ADD THIS LINE
+                $product_id = $item['product_id'] ?? null;
 
                 $stmt->bind_param(
-                    "isssssiiisss",
-                    $order_id,
-                    $product_name,
-                    $codename,
-                    $type_name,
-                    $variant_color,
-                    $size,
-                    $price,
-                    $quantity,
-                    $subtotal,
-                    $desc6,
-                    $desc7,
-                    $origin  // Use the variable instead
-                );
+    "iisssssiiisss",
+    $order_id,
+    $product_id,        // Add this parameter
+    $product_name,
+    $codename,
+    $type_name,
+    $variant_color,
+    $size,
+    $price,
+    $quantity,
+    $subtotal,
+    $desc6,
+    $desc7,
+    $origin
+);
 
                 if (!$stmt->execute()) {
                     throw new Exception("Failed to save order item: " . $stmt->error);

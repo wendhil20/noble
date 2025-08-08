@@ -158,6 +158,8 @@ if ($user_id) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -440,13 +442,25 @@ if ($user_id) {
 
 
                     <!-- Name & Email -->
-                    <div class="font-mont">
-                        <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm "><?= htmlspecialchars($user_name); ?></h1>
-                        <p class="text-base md:text-lg text-black "><?= htmlspecialchars($user_email); ?></p>
-                        <span class="inline-block mt-3 px-4 py-1 bg-black border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
-                            <?= count($all_orders); ?> Orders
-                        </span>
-                    </div>
+<div class="font-mont">
+    <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm"><?= htmlspecialchars($user_name); ?></h1>
+    <p class="text-base md:text-lg text-black"><?= htmlspecialchars($user_email); ?></p>
+
+    <!-- Orders and Settings side-by-side -->
+    <div class="flex items-center gap-3 mt-3">
+        <!-- Orders Badge -->
+        <span class="px-4 py-1 bg-black border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
+            <?= count($all_orders); ?> Orders
+        </span>
+
+        <!-- Settings Icon -->
+        <a href="settings.php" class="text-black hover:text-gray-700 text-lg" title="Account Settings">
+           <i class="fa-solid fa-gear"></i>
+        </a>
+    </div>
+</div>
+
+
                 </div>
 
                 <!-- RIGHT: Stats Section -->

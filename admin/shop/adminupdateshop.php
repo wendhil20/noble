@@ -29,13 +29,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
 
     $imagesToDelete = [];
 
-    // Main image
-    $res = $conn->prepare("SELECT main_image FROM products WHERE id = ?");
+    // Main image and sub_images
+    $res = $conn->prepare("SELECT main_image, sub_images FROM products WHERE id = ?");
     $res->bind_param("i", $deleteId);
     $res->execute();
-    $res->bind_result($mainImage);
+    $res->bind_result($mainImage, $subImages);
     $res->fetch();
     if ($mainImage && file_exists("../../" . $mainImage)) $imagesToDelete[] = "../../" . $mainImage;
+    
+    if (!empty($subImages)) {
+  $subImagesArray = json_decode($subImages, true);
+  if (is_array($subImagesArray)) {
+    foreach ($subImagesArray as $subImage) {
+      if (!empty($subImage)) {
+        // Clean the path - remove leading ../ if present
+        $cleanPath = ltrim($subImage, './');
+        
+        // Try different path combinations
+        $possiblePaths = [
+          "../../" . $cleanPath,  // From current location
+          $subImage,              // Original path as stored
+          "./" . $cleanPath,      // Relative to current
+        ];
+        
+        foreach ($possiblePaths as $filePath) {
+          if (file_exists($filePath)) {
+            $imagesToDelete[] = $filePath;
+            break; // Found the correct path, no need to try others
+          }
+        }
+      }
+    }
+  }
+}
     $res->close();
 
     // Color images
@@ -71,8 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
       $res->close();
     }
 
+    // Delete all collected images
     foreach ($imagesToDelete as $filePath) @unlink($filePath);
 
+    // Delete database records
     foreach ($typeIds as $typeId) {
       $stmt = $conn->prepare("DELETE FROM product_variants WHERE type_id = ?");
       $stmt->bind_param("i", $typeId);
@@ -178,7 +206,7 @@ $canUpdate = $isFirstTime || ((time() - $updatedAt) >= (7 * 24 * 60 * 60));
          <?= $canUpdate ? '' : 'onclick="return false;" title=\'You can only update this product after 1 week from last update.\'' ?>>
         Update
       </a>
-      <form method="POST" onsubmit="return confirm('⚠️ This will permanently delete the product. Continue?');">
+      <form method="POST" onsubmit="return confirm('⚠️ This will permanently delete the product and all its images. Continue?');">
         <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
         <button type="submit"
                 class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">

@@ -106,41 +106,9 @@ if ($user_id) {
       extend: {
         fontFamily: {
           // Sans-serif fonts
-          poppins: ['Poppins', 'sans-serif'],
-          inter: ['Inter', 'sans-serif'],
-          lato: ['Lato', 'sans-serif'],
-          opensans: ['"Open Sans"', 'sans-serif'],
-          source: ['"Source Sans Pro"', 'sans-serif'],
-          raleway: ['Raleway', 'sans-serif'],
-          nunito: ['Nunito', 'sans-serif'],
+  
           mont: ['Montserrat', 'sans-serif'],
-          roboto: ['Roboto', 'sans-serif'],
-          quicksand: ['Quicksand', 'sans-serif'],
-          work: ['"Work Sans"', 'sans-serif'],
-          rubik: ['Rubik', 'sans-serif'],
-          fira: ['"Fira Sans"', 'sans-serif'],
-          ubuntu: ['Ubuntu', 'sans-serif'],
-          barlow: ['Barlow', 'sans-serif'],
-          manrope: ['Manrope', 'sans-serif'],
-          dmsans: ['"DM Sans"', 'sans-serif'],
-          space: ['"Space Grotesk"', 'sans-serif'],
-
-          // Serif fonts
-          merri: ['Merriweather', 'serif'],
-          playfair: ['"Playfair Display"', 'serif'],
-          libre: ['"Libre Baskerville"', 'serif'],
-          crimson: ['"Crimson Text"', 'serif'],
-          garamond: ['"EB Garamond"', 'serif'],
-          lora: ['Lora', 'serif'],
-
-          // Display/Decorative fonts
-          vibes: ['"Great Vibes"', 'cursive'],
-          dancing: ['"Dancing Script"', 'cursive'],
-          pacifico: ['Pacifico', 'cursive'],
-          lobster: ['Lobster', 'cursive'],
-          oswald: ['Oswald', 'sans-serif'],
-          bebas: ['"Bebas Neue"', 'sans-serif'],
-          anton: ['Anton', 'sans-serif'],
+       
         }
       }
     }

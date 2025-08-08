@@ -204,23 +204,20 @@ $slideresult = $conn->query($sql);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noble Home - Modern Furnishing Supplies</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../css/promotionslide.css" rel="stylesheet">
+    <link href="../css/bannerPromo.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet" />
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="../css/promotionslide.css" rel="stylesheet">
-    <link href="../css/bannerPromo.css" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <script>
         // Function to hide the notification after 5 seconds
         setTimeout(function() {
@@ -235,85 +232,49 @@ $slideresult = $conn->query($sql);
                 extend: {
                     fontFamily: {
                         // Sans-serif fonts
-                        poppins: ['Poppins', 'sans-serif'],
-                        inter: ['Inter', 'sans-serif'],
-                        lato: ['Lato', 'sans-serif'],
-                        opensans: ['"Open Sans"', 'sans-serif'],
-                        source: ['"Source Sans Pro"', 'sans-serif'],
-                        raleway: ['Raleway', 'sans-serif'],
-                        nunito: ['Nunito', 'sans-serif'],
                         mont: ['Montserrat', 'sans-serif'],
-                        roboto: ['Roboto', 'sans-serif'],
-                        quicksand: ['Quicksand', 'sans-serif'],
-                        work: ['"Work Sans"', 'sans-serif'],
-                        rubik: ['Rubik', 'sans-serif'],
-                        fira: ['"Fira Sans"', 'sans-serif'],
-                        ubuntu: ['Ubuntu', 'sans-serif'],
-                        barlow: ['Barlow', 'sans-serif'],
-                        manrope: ['Manrope', 'sans-serif'],
-                        dmsans: ['"DM Sans"', 'sans-serif'],
-                        space: ['"Space Grotesk"', 'sans-serif'],
 
-                        // Serif fonts
-                        merri: ['Merriweather', 'serif'],
-                        playfair: ['"Playfair Display"', 'serif'],
-                        libre: ['"Libre Baskerville"', 'serif'],
-                        crimson: ['"Crimson Text"', 'serif'],
-                        garamond: ['"EB Garamond"', 'serif'],
-                        lora: ['Lora', 'serif'],
-
-                        // Display/Decorative fonts
-                        vibes: ['"Great Vibes"', 'cursive'],
-                        dancing: ['"Dancing Script"', 'cursive'],
-                        pacifico: ['Pacifico', 'cursive'],
-                        lobster: ['Lobster', 'cursive'],
-                        oswald: ['Oswald', 'sans-serif'],
-                        bebas: ['"Bebas Neue"', 'sans-serif'],
-                        anton: ['Anton', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-
-        .font-poppins {
-            font-family: 'Poppins', sans-serif;
+        .swiper-slide,
+        .swiper-slide-active {
+            opacity: 1 !important
         }
 
         .font-opensans {
-            font-family: 'Open Sans', sans-serif;
+            font-family: 'Open Sans', sans-serif
         }
 
         .font-roboto {
-            font-family: 'Roboto', sans-serif;
+            font-family: Roboto, sans-serif
         }
 
         .hero-bg {
-            background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 100%),
-                url('img/bodyimg/a.png');
+            background-image: linear-gradient(135deg, rgba(0, 0, 0, .7) 0, rgba(0, 0, 0, .4) 100%), url('img/bodyimg/a.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-attachment: fixed
         }
 
         .floating-elements {
             position: absolute;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden
         }
 
-        .floating-elements::before,
-        .floating-elements::after {
+        .floating-elements::after,
+        .floating-elements::before {
             content: '';
             position: absolute;
             border-radius: 50%;
-            background: linear-gradient(45deg, rgba(251, 146, 60, 0.1), rgba(251, 146, 60, 0.05));
-            animation: float 6s ease-in-out infinite;
+            background: linear-gradient(45deg, rgba(251, 146, 60, .1), rgba(251, 146, 60, .05));
+            animation: 6s ease-in-out infinite float
         }
 
         .floating-elements::before {
@@ -321,7 +282,7 @@ $slideresult = $conn->query($sql);
             height: 300px;
             top: 10%;
             left: 10%;
-            animation-delay: 0s;
+            animation-delay: 0s
         }
 
         .floating-elements::after {
@@ -329,131 +290,113 @@ $slideresult = $conn->query($sql);
             height: 200px;
             bottom: 10%;
             right: 10%;
-            animation-delay: 3s;
+            animation-delay: 3s
         }
 
         @keyframes float {
 
             0%,
             100% {
-                transform: translateY(0px) rotate(0deg);
+                transform: translateY(0) rotate(0)
             }
 
             50% {
-                transform: translateY(-20px) rotate(180deg);
+                transform: translateY(-20px) rotate(180deg)
             }
         }
 
         .gradient-text {
-            background: linear-gradient(135deg, #ffffff 0%, #f97316 100%);
+            background: linear-gradient(135deg, #fff 0, #f97316 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
+            background-clip: text
         }
 
         .btn-glow {
-            box-shadow: 0 0 30px rgba(251, 146, 60, 0.3);
-            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(251, 146, 60, .3);
+            transition: .3s
         }
 
         .btn-glow:hover {
-            box-shadow: 0 0 40px rgba(251, 146, 60, 0.5);
-            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(251, 146, 60, .5);
+            transform: translateY(-2px)
         }
 
         .text-shadow {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, .5)
         }
 
         .backdrop-blur-sm {
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px)
         }
 
         [x-cloak] {
-            display: none !important;
+            display: none !important
         }
 
-        /* No @apply: use classes directly in HTML */
         .swiper-slide {
-            opacity: 1 !important;
-            transition: opacity 0.5s ease-in-out;
-        }
-
-        .swiper-slide-active {
-            opacity: 1 !important;
+            transition: opacity .5s ease-in-out
         }
 
         .swiper-slide:not(.swiper-slide-active) {
-            opacity: 0.3;
+            opacity: .3
         }
 
-        /* Ensure proper height for vertical swiper */
-        .swiper {
-            height: 100%;
-        }
-
+        .swiper,
         .swiper-wrapper {
-            height: 100%;
+            height: 100%
         }
 
         .swiper-button-next,
         .swiper-button-prev {
             width: 2rem;
-            /* 8 = 2rem */
             height: 2rem;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, .8);
             border-radius: 9999px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .2)
         }
 
         .swiper-button-next::after,
         .swiper-button-prev::after {
             font-size: 12px !important;
-            /* smaller arrow */
-            color: #111;
-            /* optional */
+            color: #111
         }
 
         .carousel-item {
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: .6s cubic-bezier(.4, 0, .2, 1)
         }
 
-        .swiper-pagination-bullet {
-            background: #ea580c;
-            opacity: 0.5;
-        }
-        
-        .swiper-pagination-bullet-active {
-            background: #ea580c;
-            opacity: 1;
-        }
-        
+        .category-swiper .swiper-pagination,
         .contact-swiper .swiper-pagination {
             position: relative !important;
             bottom: auto !important;
-            margin-top: 2rem !important;
+            margin-top: 2rem !important
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(.95)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1)
+            }
         }
-        .modal-enter { animation: fadeIn 0.2s ease-out; }
-        
+
+        .modal-enter {
+            animation: .2s ease-out fadeIn
+        }
+
         .swiper-pagination-bullet {
             background: #fb923c;
-            opacity: 0.5;
+            opacity: .5
         }
-        
+
         .swiper-pagination-bullet-active {
             background: #fb923c;
-            opacity: 1;
-        }
-        
-        .category-swiper .swiper-pagination {
-            position: relative !important;
-            bottom: auto !important;
-            margin-top: 2rem !important;
+            opacity: 1
         }
     </style>
 </head>
@@ -560,7 +503,7 @@ $slideresult = $conn->query($sql);
     </section>
 
 
-    <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">         
+    <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
         <div class="max-w-7xl mx-auto">
             <!-- Mobile View (lg and below) - Swiper -->
             <div class="block lg:hidden">
@@ -586,44 +529,44 @@ $slideresult = $conn->query($sql);
                     <div class="swiper-wrapper">
                         <!-- Slide 1 -->
                         <div class="swiper-slide">
-                            <button @click="currentModal = 1" 
-                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                            <button @click="currentModal = 1"
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
                                 <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
                             </button>
                         </div>
-                        
+
                         <!-- Slide 2 -->
                         <div class="swiper-slide">
-                            <button @click="currentModal = 2" 
-                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                            <button @click="currentModal = 2"
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
                                 <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
                             </button>
                         </div>
-                        
+
                         <!-- Slide 3 -->
                         <div class="swiper-slide">
-                            <button @click="currentModal = 3" 
-                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                            <button @click="currentModal = 3"
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
                                 <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
                             </button>
                         </div>
-                        
+
                         <!-- Slide 4 -->
                         <div class="swiper-slide">
-                            <button @click="currentModal = 4" 
-                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                            <button @click="currentModal = 4"
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
                                 <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
                             </button>
                         </div>
-                        
+
                         <!-- Slide 5 -->
                         <div class="swiper-slide">
-                            <button @click="currentModal = 5" 
-                                    class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                            <button @click="currentModal = 5"
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Support</h3>
                                 <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
                             </button>
@@ -631,41 +574,41 @@ $slideresult = $conn->query($sql);
                     </div>
                 </div>
             </div>
-            
+
             <!-- Desktop View (lg and above) - Grid -->
-            <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">              
+            <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <!-- Box 1 -->
                 <button @click="currentModal = 1" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
                     <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
                     <p class="text-sm text-gray-700">Send us a question or message.</p>
                 </button>
-                
+
                 <!-- Box 2 -->
                 <button @click="currentModal = 2" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
                     <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
                     <p class="text-sm text-gray-700">Book a consultation now.</p>
                 </button>
-                
+
                 <!-- Box 3 -->
                 <button @click="currentModal = 3" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
                     <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
                     <p class="text-sm text-gray-700">Check your order status.</p>
                 </button>
-                
+
                 <!-- Box 4 -->
                 <button @click="currentModal = 4" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
                     <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
                     <p class="text-sm text-gray-700">Get pricing for your project.</p>
                 </button>
-                
+
                 <!-- Box 5 -->
                 <button @click="currentModal = 5" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
                     <h3 class="text-lg font-semibold text-orange-700">Support</h3>
                     <p class="text-sm text-gray-700">We're here to help you.</p>
                 </button>
             </div>
-        </div>          
-        
+        </div>
+
         <!-- Modals -->
         <template x-if="currentModal">
             <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4">
@@ -678,7 +621,7 @@ $slideresult = $conn->query($sql);
                         4: 'Request Quote',
                         5: 'Support'
                     }[currentModal]"></h2>
-                    
+
                     <!-- Modal Description -->
                     <p class="text-sm text-gray-700 mb-4" x-text="{
                         1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
@@ -687,7 +630,7 @@ $slideresult = $conn->query($sql);
                         4: 'Get a detailed quote based on your construction needs and preferences.',
                         5: 'Need help? Our support team is always ready to guide you through any issues.'
                     }[currentModal]"></p>
-                    
+
                     <!-- Close Button -->
                     <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
                     <button @click="currentModal = null" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md transition duration-200">
@@ -700,18 +643,18 @@ $slideresult = $conn->query($sql);
 
 
 
-   <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
-    <!-- Heading and description -->
-    <div class="text-center mb-6">
-        <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
-        <p class="text-black text-sm sm:text-base">
-            Browse products by category to quickly find what you need.
-        </p>
-    </div>
+    <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
+        <!-- Heading and description -->
+        <div class="text-center mb-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">Categories</h2>
+            <p class="text-black text-sm sm:text-base">
+                Browse products by category to quickly find what you need.
+            </p>
+        </div>
 
-    <!-- Mobile View (lg and below) - Swiper -->
-    <div class="block lg:hidden">
-        <div class="swiper category-swiper" x-init="
+        <!-- Mobile View (lg and below) - Swiper -->
+        <div class="block lg:hidden">
+            <div class="swiper category-swiper" x-init="
             setTimeout(() => {
                 new Swiper($el, {
                     slidesPerView: 2,
@@ -731,198 +674,198 @@ $slideresult = $conn->query($sql);
                 lucide.createIcons();
             }, 100);
         ">
-            <div class="swiper-wrapper">
-                <!-- Furniture -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=furniture"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="sofa" class="w-6 h-6 mb-1"></i>
-                        Furniture
-                    </a>
-                </div>
-                
-                <!-- Materials -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=materials"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="layers" class="w-6 h-6 mb-1"></i>
-                        Materials
-                    </a>
-                </div>
-                
-                <!-- Bedroom Furniture -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=bedfurniture"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="bed-double" class="w-6 h-6 mb-1"></i>
-                        Bedroom Furniture
-                    </a>
-                </div>
-                
-                <!-- Lighting -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=lighting"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
-                        Lighting fixture
-                    </a>
-                </div>
-                
-                <!-- Aircon -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=aircon"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="snowflake" class="w-6 h-6 mb-1"></i>
-                        Aircon
-                    </a>
-                </div>
-                
-                <!-- Doors -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=doors"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="door-closed" class="w-6 h-6 mb-1"></i>
-                        Doors
-                    </a>
-                </div>
-                
-                <!-- Tiles -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=tiles"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
-                        Tiles
-                    </a>
-                </div>
-                
-                <!-- Windows -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=windows"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="square" class="w-6 h-6 mb-1"></i>
-                        Windows
-                    </a>
-                </div>
-                
-                <!-- Bathroom -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=bathroom"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="shower-head" class="w-6 h-6 mb-1"></i>
-                        Bathroom Fixtures
-                    </a>
-                </div>
-                
-                <!-- Kitchen -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=kitchen"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="utensils-crossed" class="w-6 h-6 mb-1"></i>
-                        Kitchen Fixtures
-                    </a>
-                </div>
-                
-                <!-- Pipes -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=pipes"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="pipe" class="w-6 h-6 mb-1"></i>
-                        Pipes
-                    </a>
-                </div>
-                
-                <!-- AAC Blocks -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=aacblock"
-                       class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
-                        <i data-lucide="box" class="w-6 h-6 mb-1"></i>
-                        AAC BLOCKS
-                    </a>
+                <div class="swiper-wrapper">
+                    <!-- Furniture -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=furniture"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="sofa" class="w-6 h-6 mb-1"></i>
+                            Furniture
+                        </a>
+                    </div>
+
+                    <!-- Materials -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=materials"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="layers" class="w-6 h-6 mb-1"></i>
+                            Materials
+                        </a>
+                    </div>
+
+                    <!-- Bedroom Furniture -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=bedfurniture"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="bed-double" class="w-6 h-6 mb-1"></i>
+                            Bedroom Furniture
+                        </a>
+                    </div>
+
+                    <!-- Lighting -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=lighting"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
+                            Lighting fixture
+                        </a>
+                    </div>
+
+                    <!-- Aircon -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=aircon"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="snowflake" class="w-6 h-6 mb-1"></i>
+                            Aircon
+                        </a>
+                    </div>
+
+                    <!-- Doors -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=doors"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="door-closed" class="w-6 h-6 mb-1"></i>
+                            Doors
+                        </a>
+                    </div>
+
+                    <!-- Tiles -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=tiles"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
+                            Tiles
+                        </a>
+                    </div>
+
+                    <!-- Windows -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=windows"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="square" class="w-6 h-6 mb-1"></i>
+                            Windows
+                        </a>
+                    </div>
+
+                    <!-- Bathroom -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=bathroom"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="shower-head" class="w-6 h-6 mb-1"></i>
+                            Bathroom Fixtures
+                        </a>
+                    </div>
+
+                    <!-- Kitchen -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=kitchen"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="utensils-crossed" class="w-6 h-6 mb-1"></i>
+                            Kitchen Fixtures
+                        </a>
+                    </div>
+
+                    <!-- Pipes -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=pipes"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="pipe" class="w-6 h-6 mb-1"></i>
+                            Pipes
+                        </a>
+                    </div>
+
+                    <!-- AAC Blocks -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=aacblock"
+                            class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm mx-auto">
+                            <i data-lucide="box" class="w-6 h-6 mb-1"></i>
+                            AAC BLOCKS
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Desktop View (lg and above) - Flex Wrap -->
-    <div class="hidden lg:flex flex-wrap justify-center gap-4">
-        <a href="shop?category[]=furniture"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="sofa" class="w-6 h-6 mb-1"></i>
-            Furniture
-        </a>
-        
-        <a href="shop?category[]=materials"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="layers" class="w-6 h-6 mb-1"></i>
-            Materials
-        </a>
-        
-        <a href="shop?category[]=bedfurniture"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="bed-double" class="w-6 h-6 mb-1"></i>
-            Bedroom Furniture
-        </a>
-        
-        <a href="shop?category[]=lighting"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
-            Lighting fixture
-        </a>
-        
-        <a href="shop?category[]=aircon"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="snowflake" class="w-6 h-6 mb-1"></i>
-            Aircon
-        </a>
-        
-        <a href="shop?category[]=doors"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="door-closed" class="w-6 h-6 mb-1"></i>
-            Doors
-        </a>
-        
-        <a href="shop?category[]=tiles"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
-            Tiles
-        </a>
-        
-        <a href="shop?category[]=windows"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="square" class="w-6 h-6 mb-1"></i>
-            Windows
-        </a>
-        
-        <a href="shop?category[]=bathroom"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="shower-head" class="w-6 h-6 mb-1"></i>
-            Bathroom Fixtures
-        </a>
-        
-        <a href="shop?category[]=kitchen"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="utensils-crossed" class="w-6 h-6 mb-1"></i>
-            Kitchen Fixtures
-        </a>
-        
-        <a href="shop?category[]=pipes"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="pipe" class="w-6 h-6 mb-1"></i>
-            Pipes
-        </a>
-        
-        <a href="shop?category[]=aacblock"
-           class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
-            <i data-lucide="box" class="w-6 h-6 mb-1"></i>
-            AAC BLOCKS
-        </a>
-    </div>
+        <!-- Desktop View (lg and above) - Flex Wrap -->
+        <div class="hidden lg:flex flex-wrap justify-center gap-4">
+            <a href="shop?category[]=furniture"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="sofa" class="w-6 h-6 mb-1"></i>
+                Furniture
+            </a>
 
-    <!-- Init Lucide icons -->
-    <script>
-        lucide.createIcons();
-    </script>
-</section>
+            <a href="shop?category[]=materials"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="layers" class="w-6 h-6 mb-1"></i>
+                Materials
+            </a>
+
+            <a href="shop?category[]=bedfurniture"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="bed-double" class="w-6 h-6 mb-1"></i>
+                Bedroom Furniture
+            </a>
+
+            <a href="shop?category[]=lighting"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
+                Lighting fixture
+            </a>
+
+            <a href="shop?category[]=aircon"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="snowflake" class="w-6 h-6 mb-1"></i>
+                Aircon
+            </a>
+
+            <a href="shop?category[]=doors"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="door-closed" class="w-6 h-6 mb-1"></i>
+                Doors
+            </a>
+
+            <a href="shop?category[]=tiles"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
+                Tiles
+            </a>
+
+            <a href="shop?category[]=windows"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="square" class="w-6 h-6 mb-1"></i>
+                Windows
+            </a>
+
+            <a href="shop?category[]=bathroom"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="shower-head" class="w-6 h-6 mb-1"></i>
+                Bathroom Fixtures
+            </a>
+
+            <a href="shop?category[]=kitchen"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="utensils-crossed" class="w-6 h-6 mb-1"></i>
+                Kitchen Fixtures
+            </a>
+
+            <a href="shop?category[]=pipes"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="pipe" class="w-6 h-6 mb-1"></i>
+                Pipes
+            </a>
+
+            <a href="shop?category[]=aacblock"
+                class="p-5 w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-400 hover:bg-orange-600 text-white font-semibold shadow-lg transition text-center text-sm">
+                <i data-lucide="box" class="w-6 h-6 mb-1"></i>
+                AAC BLOCKS
+            </a>
+        </div>
+
+        <!-- Init Lucide icons -->
+        <script>
+            lucide.createIcons();
+        </script>
+    </section>
 
 
 
@@ -1016,7 +959,7 @@ $slideresult = $conn->query($sql);
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3 relative">
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy"
                                         class="absolute top-0 left-0 w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                 <?php else: ?>
@@ -1146,7 +1089,7 @@ $slideresult = $conn->query($sql);
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy"
                                         class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                 <?php else: ?>
@@ -1275,7 +1218,7 @@ $slideresult = $conn->query($sql);
                             <!-- Image -->
                             <div class="w-full aspect-square mb-3">
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                                    <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy"
                                         class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>" />
                                 <?php else: ?>
@@ -1415,7 +1358,7 @@ $slideresult = $conn->query($sql);
                             <!-- Product Image -->
                             <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                    <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
@@ -1558,7 +1501,7 @@ $slideresult = $conn->query($sql);
                             <!-- Product Image -->
                             <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= $row['type_image'] ?>" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                    <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
@@ -1673,7 +1616,7 @@ $slideresult = $conn->query($sql);
                             <!-- Image -->
                             <div class="w-full aspect-square overflow-hidden rounded-lg bg-gray-50 border border-gray-200 mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= htmlspecialchars($row['type_image']) ?>" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt="Material Variant" />
+                                    <img src="../../<?= htmlspecialchars($row['type_image']) ?>" loading="lazy" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt="Material Variant" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                 <?php endif; ?>
@@ -1802,10 +1745,6 @@ $slideresult = $conn->query($sql);
             </div>
         </div>
     </section>
-
-
-    <!-- Include Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
@@ -1951,6 +1890,8 @@ $slideresult = $conn->query($sql);
     <script>
         AOS.init();
     </script>
+    <!-- Include Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="../src/index-obf.js"></script>
 
 </body>

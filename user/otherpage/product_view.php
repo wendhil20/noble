@@ -54,8 +54,8 @@ if (!$product_id || !is_numeric($product_id) || $product_id <= 0) {
   exit;
 }
 
-// Fetch product
-$stmt = $conn->prepare("SELECT id, product_name, codename, quantity, price, main_image, description FROM products WHERE id = ? LIMIT 1");
+// Fetch product with sub_images
+$stmt = $conn->prepare("SELECT id, product_name, codename, quantity, price, main_image, sub_images, description FROM products WHERE id = ? LIMIT 1");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $product = $stmt->get_result()->fetch_assoc();
@@ -63,6 +63,15 @@ $product = $stmt->get_result()->fetch_assoc();
 if (!$product) {
   echo "Product not found.";
   exit;
+}
+
+// Process sub images
+$sub_images = [];
+if (!empty($product['sub_images'])) {
+  $decoded_sub_images = json_decode($product['sub_images'], true);
+  if (is_array($decoded_sub_images)) {
+    $sub_images = $decoded_sub_images;
+  }
 }
 
 // Fetch product colors
@@ -128,8 +137,8 @@ $avg_rating = $avg_data['avg_rating'] ?? 0;
 $total_raters = $avg_data['total_raters'] ?? 0;
 $avg_stmt->close();
 
-
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -387,12 +396,206 @@ $avg_stmt->close();
         <!-- Product Image & Info Section -->
         <div class="p-4 lg:p-8">
           <!-- Product Image -->
-          <div class="aspect-square mb-4 lg:mb-6 relative bg-gray-50 rounded-lg overflow-hidden">
-            <img id="main-product-image"
-              src="../../<?= htmlspecialchars($product['main_image']) ?>"
-              class="w-full h-full object-contain"
-              alt="<?= htmlspecialchars($product['product_name']) ?>">
-          </div>
+            <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden shadow-lg">
+    <img id="main-product-image"
+         src="../../<?= htmlspecialchars($product['main_image']) ?>"
+         class="w-full h-full object-contain transition-all duration-300 hover:scale-105"
+         alt="<?= htmlspecialchars($product['product_name']) ?>">
+    
+    <!-- Image Navigation Arrows (if sub images exist) -->
+    <?php if (!empty($sub_images)): ?>
+    <button id="prev-image" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+    <button id="next-image" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+    
+    <!-- Image Counter -->
+    <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+      <span id="current-image-index">1</span> / <span id="total-images"><?= count($sub_images) + 1 ?></span>
+    </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Thumbnail Gallery (if sub images exist) -->
+  <?php if (!empty($sub_images)): ?>
+  <div class="thumbnail-gallery">
+    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
+      <!-- Main Image Thumbnail -->
+      <div class="thumbnail-item flex-shrink-0 cursor-pointer" data-index="0">
+        <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
+             class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
+             alt="Main Image">
+      </div>
+      
+      <!-- Sub Images Thumbnails -->
+      <?php foreach ($sub_images as $index => $sub_image): ?>
+      <div class="thumbnail-item flex-shrink-0 cursor-pointer" data-index="<?= $index + 1 ?>">
+        <img src="../<?= htmlspecialchars($sub_image) ?>"
+             class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+             alt="Sub Image <?= $index + 1 ?>">
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Image gallery functionality
+  const mainImage = document.getElementById('main-product-image');
+  const thumbnails = document.querySelectorAll('.thumbnail-item');
+  const prevBtn = document.getElementById('prev-image');
+  const nextBtn = document.getElementById('next-image');
+  const currentIndexSpan = document.getElementById('current-image-index');
+  
+  // All image sources (main + sub images)
+  const allImages = [
+    '../../<?= htmlspecialchars($product['main_image']) ?>',
+    <?php foreach ($sub_images as $sub_image): ?>
+    '../<?= htmlspecialchars($sub_image) ?>',
+    <?php endforeach; ?>
+  ];
+  
+  let currentImageIndex = 0;
+  
+  // Function to update main image and active thumbnail
+  function updateMainImage(index) {
+    if (index >= 0 && index < allImages.length) {
+      currentImageIndex = index;
+      mainImage.src = allImages[index];
+      
+      // Update current image counter
+      if (currentIndexSpan) {
+        currentIndexSpan.textContent = index + 1;
+      }
+      
+      // Update active thumbnail
+      thumbnails.forEach((thumb, i) => {
+        thumb.querySelector('img').classList.toggle('thumbnail-active', i === index);
+      });
+    }
+  }
+  
+  // Thumbnail click handlers
+  thumbnails.forEach((thumbnail, index) => {
+    thumbnail.addEventListener('click', function() {
+      updateMainImage(index);
+    });
+  });
+  
+  // Navigation button handlers
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function() {
+      const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
+      updateMainImage(newIndex);
+    });
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function() {
+      const newIndex = currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
+      updateMainImage(newIndex);
+    });
+  }
+  
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (allImages.length > 1) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevBtn.click();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextBtn.click();
+      }
+    }
+  });
+  
+  // Show navigation arrows on hover (if sub images exist)
+  <?php if (!empty($sub_images)): ?>
+  const imageGallery = document.querySelector('.product-image-gallery');
+  if (imageGallery) {
+    imageGallery.addEventListener('mouseenter', function() {
+      if (prevBtn) prevBtn.style.opacity = '1';
+      if (nextBtn) nextBtn.style.opacity = '1';
+    });
+    
+    imageGallery.addEventListener('mouseleave', function() {
+      if (prevBtn) prevBtn.style.opacity = '0';
+      if (nextBtn) nextBtn.style.opacity = '0';
+    });
+  }
+  <?php endif; ?>
+  
+  // Image zoom functionality (optional enhancement)
+  mainImage.addEventListener('click', function() {
+    // Create modal for full-size image view
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer';
+    modal.innerHTML = `
+      <div class="relative max-w-4xl max-h-full p-4">
+        <img src="${this.src}" class="max-w-full max-h-full object-contain" alt="Full size image">
+        <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close modal on click
+    modal.addEventListener('click', function() {
+      document.body.removeChild(modal);
+    });
+  });
+});
+</script>
+
+<style>
+.thumbnail-active {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.product-image-gallery .aspect-square {
+  position: relative;
+}
+
+.product-image-gallery .aspect-square:hover #prev-image,
+.product-image-gallery .aspect-square:hover #next-image {
+  opacity: 1 !important;
+}
+</style>
 
           <!-- Product Basic Info -->
           <div class="space-y-4 lg:space-y-6">

@@ -337,9 +337,9 @@ $linked_count_stmt->close();
                                     <?php endif; ?>
                                 </div>
                                 <div>
-                                    <span class="text-gray-600">Stock:</span>
+                                    <span class="text-gray-600">Quantity:</span>
                                     <?php if (isset($product['quantity']) && $product['quantity'] !== null): ?>
-                                        <span class="font-semibold"><?= number_format($product['quantity']) ?> <?= htmlspecialchars($product['unit'] ?? 'pcs') ?></span>
+                                        <span class="font-semibold"><?= number_format($product['quantity']) ?> <?= htmlspecialchars($product['unit'] ?? '') ?></span>
                                     <?php else: ?>
                                         <span class="font-semibold text-gray-400 italic">Not set</span>
                                     <?php endif; ?>

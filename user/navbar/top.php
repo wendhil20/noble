@@ -106,9 +106,9 @@ if ($user_id) {
       extend: {
         fontFamily: {
           // Sans-serif fonts
-  
+
           mont: ['Montserrat', 'sans-serif'],
-       
+
         }
       }
     }
@@ -162,7 +162,7 @@ if ($user_id) {
     <div class="flex flex-col gap-3 sm:hidden">
       <!-- Contact Info - Mobile -->
       <div class="flex flex-col items-center gap-1 text-center">
-       
+
         <a href="mailto:noblehome.constph@gmail.com" class="hover:text-orange-300 transition">
           noblehome.constph@gmail.com
         </a>
@@ -390,19 +390,225 @@ if ($user_id) {
                 class="block w-full text-left hover:text-orange-500 text-sm">Materials</button>
               <button @mouseenter="selectedCategory = 'furniture'"
                 class="block w-full text-left hover:text-orange-500 text-sm">Furniture</button>
+              <button @mouseenter="selectedCategory = 'Tiles'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Tiles</button>
+              <button @mouseenter="selectedCategory = 'Bedfurniture'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Bed Furniture</button>
+              <button @mouseenter="selectedCategory = 'BathroomFixtures'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Bathroom Fixtures</button>
+              <button @mouseenter="selectedCategory = 'AccBlock'"
+                class="block w-full text-left hover:text-orange-500 text-sm">AAC Block</button>
+              <button @mouseenter="selectedCategory = 'aircon'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Aircon</button>
+              <button @mouseenter="selectedCategory = 'KitchenFixtures'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Kitchen Fixtures</button>
+              <button @mouseenter="selectedCategory = 'Lightingfixture'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Lighting Fixtures</button>
+              <button @mouseenter="selectedCategory = 'Doors'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Doors</button>
+              <button @mouseenter="selectedCategory = 'windows'"
+                class="block w-full text-left hover:text-orange-500 text-sm">Windows</button>
             </div>
 
             <div class="w-1/2 p-4 font-mont">
-              <template x-if="selectedCategory === 'materials'">
+              <!-- Materials -->
+<template x-if="selectedCategory === 'materials'">
+  <div class="space-y-1">
+    <!-- Panels -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('wpc-panels')"
+      class="block hover:text-orange-500 text-sm">WPC Panels</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('pvc-panels')"
+      class="block hover:text-orange-500 text-sm">PVC Panels</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('mdf-panels')"
+      class="block hover:text-orange-500 text-sm">MDF Panels</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('acoustic-panels')"
+      class="block hover:text-orange-500 text-sm">Acoustic Panels</a>
+
+    <!-- Flooring -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('laminate-flooring')"
+      class="block hover:text-orange-500 text-sm">Laminate Flooring</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('vinyl-flooring')"
+      class="block hover:text-orange-500 text-sm">Vinyl Flooring</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('hardwood-flooring')"
+      class="block hover:text-orange-500 text-sm">Hardwood Flooring</a>
+
+  </div>
+</template>
+
+<!-- Furniture -->
+<template x-if="selectedCategory === 'furniture'">
+  <div class="space-y-1">
+    <!-- Living Room -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('sofas')"
+      class="block hover:text-orange-500 text-sm">Sofas</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('armchairs')"
+      class="block hover:text-orange-500 text-sm">Armchairs</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('coffee-tables')"
+      class="block hover:text-orange-500 text-sm">Coffee Tables</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('tv-stands')"
+      class="block hover:text-orange-500 text-sm">TV Stands</a>
+
+    <!-- Dining -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('dining-tables')"
+      class="block hover:text-orange-500 text-sm">Dining Tables</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('dining-chairs')"
+      class="block hover:text-orange-500 text-sm">Dining Chairs</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bar-stools')"
+      class="block hover:text-orange-500 text-sm">Bar Stools</a>
+
+    <!-- Bedroom -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('beds')"
+      class="block hover:text-orange-500 text-sm">Beds</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
+      class="block hover:text-orange-500 text-sm">Wardrobes</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
+      class="block hover:text-orange-500 text-sm">Bedside Tables</a>
+
+    <!-- Office -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('office-chairs')"
+      class="block hover:text-orange-500 text-sm">Office Chairs</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('desks')"
+      class="block hover:text-orange-500 text-sm">Desks</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bookshelves')"
+      class="block hover:text-orange-500 text-sm">Bookshelves</a>
+  </div>
+</template>
+
+
+              <template x-if="selectedCategory === 'Tiles'">
                 <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">WPC Panels</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">PVC Panels</a>
+                  <!-- Material -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('ceramic-tiles')"
+                    class="block hover:text-orange-500 text-sm">Ceramic Tiles</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('porcelain-tiles')"
+                    class="block hover:text-orange-500 text-sm">Porcelain Tiles</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('mosaic-tiles')"
+                    class="block hover:text-orange-500 text-sm">Mosaic Tiles</a>
+
+                  <!-- Design / Finish -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('glossy-tiles')"
+                    class="block hover:text-orange-500 text-sm">Glossy Finish</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('matte-tiles')"
+                    class="block hover:text-orange-500 text-sm">Matte Finish</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('wood-look-tiles')"
+                    class="block hover:text-orange-500 text-sm">Wood Look</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('marble-look-tiles')"
+                    class="block hover:text-orange-500 text-sm">Marble Look</a>
+
+                  <!-- Purpose / Location -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('floor-tiles')"
+                    class="block hover:text-orange-500 text-sm">Floor Tiles</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('wall-tiles')"
+                    class="block hover:text-orange-500 text-sm">Wall Tiles</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-tiles')"
+                    class="block hover:text-orange-500 text-sm">Bathroom Tiles</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('kitchen-tiles')"
+                    class="block hover:text-orange-500 text-sm">Kitchen Tiles</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('outdoor-tiles')"
+                    class="block hover:text-orange-500 text-sm">Outdoor Tiles</a>
                 </div>
               </template>
 
-              <template x-if="selectedCategory === 'furniture'">
+
+              <!-- Bed Furniture -->
+<template x-if="selectedCategory === 'Bedfurniture'">
+  <div class="space-y-1">
+    <!-- Beds -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('single-beds')"
+      class="block hover:text-orange-500 text-sm">Single Beds</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('double-beds')"
+      class="block hover:text-orange-500 text-sm">Double Beds</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('queen-beds')"
+      class="block hover:text-orange-500 text-sm">Queen Beds</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('king-beds')"
+      class="block hover:text-orange-500 text-sm">King Beds</a>
+    
+    <!-- Bed Accessories -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('headboards')"
+      class="block hover:text-orange-500 text-sm">Headboards</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
+      class="block hover:text-orange-500 text-sm">Bedside Tables</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('mattresses')"
+      class="block hover:text-orange-500 text-sm">Mattresses</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bed-frames')"
+      class="block hover:text-orange-500 text-sm">Bed Frames</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
+      class="block hover:text-orange-500 text-sm">Wardrobes</a>
+  </div>
+</template>
+
+<!-- Bathroom Fixtures -->
+<template x-if="selectedCategory === 'BathroomFixtures'">
+  <div class="space-y-1">
+    <!-- Fixtures -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('toilets')"
+      class="block hover:text-orange-500 text-sm">Toilets</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('wash-basins')"
+      class="block hover:text-orange-500 text-sm">Wash Basins</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bathtubs')"
+      class="block hover:text-orange-500 text-sm">Bathtubs</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('showers')"
+      class="block hover:text-orange-500 text-sm">Showers</a>
+    
+    <!-- Storage & Accessories -->
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-cabinets')"
+      class="block hover:text-orange-500 text-sm">Bathroom Cabinets</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('mirrors')"
+      class="block hover:text-orange-500 text-sm">Mirrors</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('towel-racks')"
+      class="block hover:text-orange-500 text-sm">Towel Racks</a>
+    <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-shelves')"
+      class="block hover:text-orange-500 text-sm">Bathroom Shelves</a>
+  </div>
+</template>
+
+
+              <template x-if="selectedCategory === 'AccBlock'">
+                <div class="space-y-1">
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Tables</a>
+                </div>
+              </template>
+
+              <template x-if="selectedCategory === 'aircon'">
+                <div class="space-y-1">
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Tables</a>
+                </div>
+              </template>
+
+              <template x-if="selectedCategory === 'KitchenFixtures'">
+                <div class="space-y-1">
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Tables</a>
+                </div>
+              </template>
+
+              <template x-if="selectedCategory === 'Lightingfixture'">
+                <div class="space-y-1">
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Tables</a>
+                </div>
+              </template>
+
+              <template x-if="selectedCategory === 'Doors'">
+                <div class="space-y-1">
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
+                    class="block hover:text-orange-500 text-sm">Tables</a>
+                </div>
+              </template>
+
+              <template x-if="selectedCategory === 'windows'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
                     class="block hover:text-orange-500 text-sm">Chairs</a>
@@ -1261,216 +1467,4 @@ if ($user_id) {
     </div>
   </div>
 </nav>
-<!-- Second Navbar - Categories & Quick Links -->
-<div x-data="{ 
-    mobileMenuOpen: false, 
-    activeDropdown: null,
-    quickLinks: [
-        { name: 'New Arrivals', icon: 'fas fa-star', href: '../otherpage/new-arrivals' },
-        { name: 'Best Sellers', icon: 'fas fa-fire', href: '../otherpage/best-sellers' },
-        { name: 'Sale Items', icon: 'fas fa-tag', href: '../otherpage/sale' },
-        { name: 'Bulk Orders', icon: 'fas fa-boxes', href: '../otherpage/bulk-orders' }
-    ],
-    categories: [
-        {
-            name: 'Building Materials',
-            icon: 'fas fa-hammer',
-            items: ['WPC Panels', 'PVC Panels', 'MARINE BOARD', 'Cement', 'AAC Block']
-        },
-        {
-            name: 'Home Furniture',
-            icon: 'fas fa-couch',
-            items: ['Living Room', 'Bedroom', 'Dining Room', 'Office', 'Storage']
-        },
-        {
-            name: 'maintinance',
-            icon: 'fas fa-wrench',
-            items: ['Power Tools', 'Hand Tools', 'Measuring Tools', 'Safety Gear']
-        },
-        {
-            name: 'Lighting Fixture',
-            icon: 'fas fa-bolt',
-            items: ['Wiring', 'Switches', 'Outlets', 'Lighting', 'Circuit Breakers']
-        },
-        {
-            name: 'Plumbing',
-            icon: 'fas fa-faucet',
-            items: ['Pipes', 'Fittings', 'Fixtures', 'Valves', 'Water Heaters']
-        }
-    ]
-}" class="bg-white border-b border-gray-200 shadow-sm sticky top-20 z-40">
-
-    <!-- Desktop Second Navbar -->
-    <div class="hidden lg:block">
-        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-3">
-                
-                <!-- Left Side - Categories -->
-                <div class="flex items-center space-x-8">
-                    <div class="flex items-center space-x-1">
-                        <i class="fas fa-th-large text-orange-500"></i>
-                        <span class="font-semibold text-gray-800 font-mont">Categories</span>
-                    </div>
-                    
-                    <!-- Category Dropdowns -->
-                    <div class="flex items-center space-x-6">
-                        <template x-for="category in categories" :key="category.name">
-                            <div class="relative group">
-                                <button 
-                                    @mouseenter="activeDropdown = category.name"
-                                    @mouseleave="activeDropdown = null"
-                                    class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 font-mont text-sm">
-                                    <i :class="category.icon" class="text-sm"></i>
-                                    <span x-text="category.name"></span>
-                                    <i class="fas fa-chevron-down text-xs"></i>
-                                </button>
-                                
-                                <!-- Dropdown Menu -->
-                                <div 
-                                    x-show="activeDropdown === category.name"
-                                    x-cloak
-                                    @mouseenter="activeDropdown = category.name"
-                                    @mouseleave="activeDropdown = null"
-                                    x-transition
-                                    class="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                                    <template x-for="item in category.items" :key="item">
-                                        <a :href="'../otherpage/shop?category=' + encodeURIComponent(item)" 
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors font-mont"
-                                           x-text="item"></a>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-                
-                <!-- Right Side - Quick Links -->
-                <div class="flex items-center space-x-6">
-                    <template x-for="link in quickLinks" :key="link.name">
-                        <a :href="link.href" 
-                           class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 text-sm font-mont">
-                            <i :class="link.icon" class="text-sm"></i>
-                            <span x-text="link.name"></span>
-                        </a>
-                    </template>
-                    
-                    <!-- Services Dropdown -->
-                    <div class="relative">
-                        <button @click="activeDropdown = activeDropdown === 'services' ? null : 'services'"
-                                class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 text-sm font-mont">
-                            <i class="fas fa-cog"></i>
-                            <span>Services</span>
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </button>
-                        
-                        <div x-show="activeDropdown === 'services'" 
-                             x-cloak 
-                             @click.away="activeDropdown = null"
-                             x-transition
-                             class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                            <a href="../otherpage/installation" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors font-mont">Installation</a>
-                            <a href="../otherpage/consultation" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors font-mont">Consultation</a>
-                            <a href="../otherpage/delivery" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors font-mont">Delivery</a>
-                            <a href="../otherpage/warranty" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors font-mont">Warranty</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Mobile Second Navbar -->
-    <div class="lg:hidden">
-        <div class="px-4 py-3">
-            <div class="flex items-center justify-between">
-                <button @click="mobileMenuOpen = !mobileMenuOpen"
-                        class="flex items-center space-x-2 px-3 py-2 bg-orange-500 text-white rounded-lg font-mont text-sm">
-                    <i class="fas fa-th-large"></i>
-                    <span>Browse Categories</span>
-                    <i class="fas fa-chevron-down text-xs transform transition-transform" :class="{'rotate-180': mobileMenuOpen}"></i>
-                </button>
-                
-                <!-- Mobile Quick Actions -->
-                <div class="flex items-center space-x-3">
-                    <a href="../otherpage/new-arrivals" class="p-2 text-orange-600 hover:bg-orange-50 rounded-lg">
-                        <i class="fas fa-star"></i>
-                    </a>
-                    <a href="../otherpage/sale" class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                        <i class="fas fa-tag"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Mobile Dropdown Menu -->
-            <div x-show="mobileMenuOpen" 
-                 x-cloak 
-                 x-transition
-                 class="mt-4 bg-gray-50 rounded-lg p-4 space-y-3">
-                
-                <!-- Categories in Mobile -->
-                <template x-for="category in categories" :key="category.name">
-                    <div>
-                        <button @click="activeDropdown = activeDropdown === category.name ? null : category.name"
-                                class="flex items-center justify-between w-full px-3 py-2 text-left text-gray-800 hover:bg-white rounded-lg transition font-mont">
-                            <div class="flex items-center space-x-3">
-                                <i :class="category.icon" class="text-orange-600"></i>
-                                <span x-text="category.name"></span>
-                            </div>
-                            <i class="fas fa-chevron-down text-xs transform transition-transform" 
-                               :class="{'rotate-180': activeDropdown === category.name}"></i>
-                        </button>
-                        
-                        <div x-show="activeDropdown === category.name" 
-                             x-cloak 
-                             x-transition
-                             class="mt-2 ml-6 space-y-1">
-                            <template x-for="item in category.items" :key="item">
-                                <a :href="'../otherpage/shop?category=' + encodeURIComponent(item)"
-                                   class="block px-3 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-white rounded transition font-mont"
-                                   x-text="item"></a>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-                
-                <!-- Mobile Quick Links -->
-                <div class="border-t pt-3 mt-3">
-                    <h4 class="text-sm font-semibold text-gray-800 mb-2 font-mont">Quick Links</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        <template x-for="link in quickLinks" :key="link.name">
-                            <a :href="link.href"
-                               class="flex items-center space-x-2 px-3 py-2 bg-white rounded-lg hover:bg-orange-50 hover:text-orange-600 transition text-sm font-mont">
-                                <i :class="link.icon" class="text-xs"></i>
-                                <span x-text="link.name"></span>
-                            </a>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-/* Hide scrollbar for trending categories */
-.scroll-smooth::-webkit-scrollbar {
-    display: none;
-}
-
-/* Smooth hover transitions */
-.transition-all {
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 640px) {
-    .scroll-smooth {
-        -webkit-overflow-scrolling: touch;
-    }
-}
-</style>
-
-
 <script src="../navbar/top-obf.js"></script>

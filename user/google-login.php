@@ -23,3 +23,4 @@ $client->addScope("profile");
 header('Location: ' . $client->createAuthUrl());
 exit;
 
+// https://noblehomedepot.com/user/google-callback.php

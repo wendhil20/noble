@@ -423,34 +423,32 @@ $avg_stmt->close();
           </div>
 
           <!-- Thumbnail Gallery (if sub images exist) -->
-<?php if (!empty($sub_images)): ?>
-  <div class="thumbnail-gallery mt-4">
-    <!-- Swiper Container -->
-    <div class="swiper thumbSwiper">
-      <div class="swiper-wrapper">
-        <!-- Main Image Thumbnail -->
-        <div class="swiper-slide thumbnail-item cursor-pointer" data-index="0">
-          <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
-            class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
-            alt="Main Image">
-        </div>
+          <?php if (!empty($sub_images)): ?>
+            <div class="thumbnail-gallery mt-4">
+              <!-- Swiper Container -->
+              <div class="swiper thumbSwiper">
+                <div class="swiper-wrapper">
+                  <!-- Main Image Thumbnail -->
+                  <div class="swiper-slide thumbnail-item cursor-pointer" data-index="0">
+                    <img src="../../<?= htmlspecialchars($product['main_image']) ?>" loading="lazy"
+                      class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
+                      alt="Main Image">
+                  </div>
 
-        <!-- Sub Images Thumbnails -->
-        <?php foreach ($sub_images as $index => $sub_image): ?>
-          <div class="swiper-slide thumbnail-item cursor-pointer" data-index="<?= $index + 1 ?>">
-            <img src="../<?= htmlspecialchars($sub_image) ?>"
-              class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
-              alt="Sub Image <?= $index + 1 ?>">
-          </div>
-        <?php endforeach; ?>
-      </div>
-    </div>
-  </div>
-<?php endif; ?>
-
+                  <!-- Sub Images Thumbnails -->
+                  <?php foreach ($sub_images as $index => $sub_image): ?>
+                    <div class="swiper-slide thumbnail-item cursor-pointer" data-index="<?= $index + 1 ?>">
+                      <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
+                        class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+                        alt="Sub Image <?= $index + 1 ?>">
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </div>
+          <?php endif; ?>
 
           <script>
-
             document.addEventListener('DOMContentLoaded', function() {
               // Image gallery functionality
               const mainImage = document.getElementById('main-product-image');
@@ -544,7 +542,7 @@ $avg_stmt->close();
                 modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer';
                 modal.innerHTML = `
       <div class="relative max-w-4xl max-h-full p-4">
-        <img src="${this.src}" class="max-w-full max-h-full object-contain" alt="Full size image">
+        <img src="${this.src}" loading="lazy" class="max-w-full max-h-full object-contain" alt="Full size image">
         <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -906,7 +904,7 @@ $avg_stmt->close();
                     <!-- Product Image -->
                     <div class="relative aspect-square overflow-hidden bg-gray-50">
                       <?php if ($row['main_image']): ?>
-                        <img src="../../<?= ($row['main_image']) ?>"
+                        <img src="../../<?= ($row['main_image']) ?>" loading="lazy"
                           class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                           alt="<?= htmlspecialchars($row['product_name']) ?>">
                       <?php else: ?>
@@ -1096,25 +1094,25 @@ $avg_stmt->close();
   </footer>
 
   <script>
-     document.addEventListener('DOMContentLoaded', function () {
-    const thumbSwiper = new Swiper('.thumbSwiper', {
-      slidesPerView: 'auto',
-      spaceBetween: 8,
-      freeMode: true,
-      grabCursor: true,
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+      const thumbSwiper = new Swiper('.thumbSwiper', {
+        slidesPerView: 'auto',
+        spaceBetween: 8,
+        freeMode: true,
+        grabCursor: true,
+      });
 
-    // Optional: Highlight active thumbnail (on click)
-    document.querySelectorAll('.thumbnail-item').forEach((item) => {
-      item.addEventListener('click', () => {
-        document.querySelectorAll('.thumbnail-item img').forEach(img => {
-          img.classList.remove('border-blue-500');
-          img.classList.add('border-transparent');
+      // Optional: Highlight active thumbnail (on click)
+      document.querySelectorAll('.thumbnail-item').forEach((item) => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.thumbnail-item img').forEach(img => {
+            img.classList.remove('border-blue-500');
+            img.classList.add('border-transparent');
+          });
+          item.querySelector('img').classList.add('border-blue-500');
         });
-        item.querySelector('img').classList.add('border-blue-500');
       });
     });
-  });
 
     // Re-initialize Swiper for colorSwiper with navigation
     if (window.colorSwiper) window.colorSwiper.destroy(true, true);

@@ -302,6 +302,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       return `
         <div class="variant-row grid grid-cols-2 md:grid-cols-6 gap-2 items-center bg-blue-50 p-3 rounded border">
           <input type="text" name="variant_size[${index}][]" placeholder="Size/Type" class="border p-2 rounded" />
+          <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 rounded" required oninput="copyToBasePrice(this)" />
           <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 rounded" />
           <input type="number" name="variant_percent[${index}][]" placeholder="%" class="border p-2 rounded" oninput="updatePriceFromPercent(this)" />
           <input type="text" name="variant_namevariant[${index}][]" placeholder="Variant Name" class="border p-2 rounded" />
@@ -362,26 +363,44 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     }
 
     // Function to update price from percent
-    function updatePriceFromPercent(percentInput) {
-      const parent = percentInput.closest('.variant-row');
-      const priceInput = parent.querySelector('input[name^="variant_price"]');
+function updatePriceFromPercent(percentInput) {
+  const parent = percentInput.closest('.variant-row');
+  const originalPriceInput = parent.querySelector('input[name^="variant_original_price"]');
+  const priceInput = parent.querySelector('input[name^="variant_price"]');
 
   // Use original price as base, fall back to current price if original is empty
   const basePrice = parseFloat(originalPriceInput.value) || parseFloat(priceInput.value) || 0;
   const percent = parseFloat(percentInput.value) || 0;
 
-      if (basePrice > 0) {
-        const finalPrice = basePrice + (basePrice * percent / 100);
-        // Create a visual indicator of the calculated price
-        let indicator = parent.querySelector('.price-indicator');
-        if (!indicator) {
-          indicator = document.createElement('small');
-          indicator.classList.add('price-indicator', 'text-gray-600', 'ml-1');
-          percentInput.parentNode.appendChild(indicator);
-        }
-        indicator.textContent = `Final: ₱${finalPrice.toFixed(2)}`;
-      }
+  if (basePrice > 0) {
+    const finalPrice = basePrice + (basePrice * percent / 100);
+    priceInput.value = finalPrice.toFixed(2);
+    
+    // Create a visual indicator of the calculated price
+    let indicator = parent.querySelector('.price-indicator');
+    if (!indicator) {
+      indicator = document.createElement('small');
+      indicator.classList.add('price-indicator', 'text-gray-600', 'ml-1');
+      percentInput.parentNode.appendChild(indicator);
     }
+    indicator.textContent = `Final: ₱${finalPrice.toFixed(2)}`;
+  }
+}
+
+// Function to copy original price to base price
+function copyToBasePrice(originalPriceInput) {
+  const parent = originalPriceInput.closest('.variant-row');
+  const basePriceInput = parent.querySelector('input[name^="variant_price"]');
+  
+  // Copy the original price value to base price
+  basePriceInput.value = originalPriceInput.value;
+  
+  // Also trigger the percent calculation if there's a percent value
+  const percentInput = parent.querySelector('input[name^="variant_percent"]');
+  if (percentInput && percentInput.value) {
+    updatePriceFromPercent(percentInput);
+  }
+}
 
     // Function to reset form
     function resetForm() {

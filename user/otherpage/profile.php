@@ -442,23 +442,23 @@ if ($user_id) {
 
 
                     <!-- Name & Email -->
-<div class="font-mont">
-    <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm"><?= htmlspecialchars($user_name); ?></h1>
-    <p class="text-base md:text-lg text-black"><?= htmlspecialchars($user_email); ?></p>
+                    <div class="font-mont">
+                        <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm"><?= htmlspecialchars($user_name); ?></h1>
+                        <p class="text-base md:text-lg text-black"><?= htmlspecialchars($user_email); ?></p>
 
-    <!-- Orders and Settings side-by-side -->
-    <div class="flex items-center gap-3 mt-3">
-        <!-- Orders Badge -->
-        <span class="px-4 py-1 bg-black border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
-            <?= count($all_orders); ?> Orders
-        </span>
+                        <!-- Orders and Settings side-by-side -->
+                        <div class="flex items-center gap-3 mt-3">
+                            <!-- Orders Badge -->
+                            <span class="px-4 py-1 bg-black border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
+                                <?= count($all_orders); ?> Orders
+                            </span>
 
-        <!-- Settings Icon -->
-        <a href="settings.php" class="text-black hover:text-gray-700 text-lg" title="Account Settings">
-           <i class="fa-solid fa-gear"></i>
-        </a>
-    </div>
-</div>
+                            <!-- Settings Icon -->
+                            <a href="settings.php" class="text-black hover:text-gray-700 text-lg" title="Account Settings">
+                                <i class="fa-solid fa-gear"></i>
+                            </a>
+                        </div>
+                    </div>
 
 
                 </div>

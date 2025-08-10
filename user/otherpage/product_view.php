@@ -422,24 +422,24 @@ $avg_stmt->close();
             <?php endif; ?>
           </div>
 
-          <!-- Thumbnail Gallery (if sub images exist) -->
+
           <?php if (!empty($sub_images)): ?>
-            <div class="thumbnail-gallery mt-4">
-              <!-- Swiper Container -->
-              <div class="swiper thumbSwiper">
-                <div class="swiper-wrapper">
+            <div class="thumbnail-gallery mt-3">
+              <!-- Scrollable Container -->
+              <div class="thumbnail-container overflow-x-auto scrollbar-hide">
+                <div class="flex gap-1 sm:gap-2 pb-2">
                   <!-- Main Image Thumbnail -->
-                  <div class="swiper-slide thumbnail-item cursor-pointer" data-index="0">
+                  <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
                     <img src="../../<?= htmlspecialchars($product['main_image']) ?>" loading="lazy"
-                      class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
+                      class="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
                       alt="Main Image">
                   </div>
 
                   <!-- Sub Images Thumbnails -->
                   <?php foreach ($sub_images as $index => $sub_image): ?>
-                    <div class="swiper-slide thumbnail-item cursor-pointer" data-index="<?= $index + 1 ?>">
+                    <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
                       <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
-                        class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+                        class="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
                         alt="Sub Image <?= $index + 1 ?>">
                     </div>
                   <?php endforeach; ?>
@@ -448,154 +448,44 @@ $avg_stmt->close();
             </div>
           <?php endif; ?>
 
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              // Image gallery functionality
-              const mainImage = document.getElementById('main-product-image');
-              const thumbnails = document.querySelectorAll('.thumbnail-item');
-              const prevBtn = document.getElementById('prev-image');
-              const nextBtn = document.getElementById('next-image');
-              const currentIndexSpan = document.getElementById('current-image-index');
-
-              // All image sources (main + sub images)
-              const allImages = [
-                '../../<?= htmlspecialchars($product['main_image']) ?>',
-                <?php foreach ($sub_images as $sub_image): ?> '../<?= htmlspecialchars($sub_image) ?>',
-                <?php endforeach; ?>
-              ];
-
-              let currentImageIndex = 0;
-
-              // Function to update main image and active thumbnail
-              function updateMainImage(index) {
-                if (index >= 0 && index < allImages.length) {
-                  currentImageIndex = index;
-                  mainImage.src = allImages[index];
-
-                  // Update current image counter
-                  if (currentIndexSpan) {
-                    currentIndexSpan.textContent = index + 1;
-                  }
-
-                  // Update active thumbnail
-                  thumbnails.forEach((thumb, i) => {
-                    thumb.querySelector('img').classList.toggle('thumbnail-active', i === index);
-                  });
-                }
-              }
-
-              // Thumbnail click handlers
-              thumbnails.forEach((thumbnail, index) => {
-                thumbnail.addEventListener('click', function() {
-                  updateMainImage(index);
-                });
-              });
-
-              // Navigation button handlers
-              if (prevBtn) {
-                prevBtn.addEventListener('click', function() {
-                  const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
-                  updateMainImage(newIndex);
-                });
-              }
-
-              if (nextBtn) {
-                nextBtn.addEventListener('click', function() {
-                  const newIndex = currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
-                  updateMainImage(newIndex);
-                });
-              }
-
-              // Keyboard navigation
-              document.addEventListener('keydown', function(e) {
-                if (allImages.length > 1) {
-                  if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    prevBtn.click();
-                  } else if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    nextBtn.click();
-                  }
-                }
-              });
-
-              // Show navigation arrows on hover (if sub images exist)
-              <?php if (!empty($sub_images)): ?>
-                const imageGallery = document.querySelector('.product-image-gallery');
-                if (imageGallery) {
-                  imageGallery.addEventListener('mouseenter', function() {
-                    if (prevBtn) prevBtn.style.opacity = '1';
-                    if (nextBtn) nextBtn.style.opacity = '1';
-                  });
-
-                  imageGallery.addEventListener('mouseleave', function() {
-                    if (prevBtn) prevBtn.style.opacity = '0';
-                    if (nextBtn) nextBtn.style.opacity = '0';
-                  });
-                }
-              <?php endif; ?>
-
-              // Image zoom functionality (optional enhancement)
-              mainImage.addEventListener('click', function() {
-                // Create modal for full-size image view
-                const modal = document.createElement('div');
-                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer';
-                modal.innerHTML = `
-      <div class="relative max-w-4xl max-h-full p-4">
-        <img src="${this.src}" loading="lazy" class="max-w-full max-h-full object-contain" alt="Full size image">
-        <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-    `;
-
-                document.body.appendChild(modal);
-
-                // Close modal on click
-                modal.addEventListener('click', function() {
-                  document.body.removeChild(modal);
-                });
-              });
-            });
-          </script>
-
           <style>
-            .thumbnail-active {
-              border-color: #3b82f6 !important;
-              box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            * Hide scrollbar but keep functionality */ .scrollbar-hide {
+              -ms-overflow-style: none;
+              /* IE and Edge */
+              scrollbar-width: none;
+              /* Firefox */
             }
 
-            .scrollbar-thin {
-              scrollbar-width: thin;
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+              /* Chrome, Safari and Opera */
             }
 
-            .scrollbar-thumb-gray-300::-webkit-scrollbar {
-              height: 6px;
+            /* Smooth scrolling */
+            .thumbnail-container {
+              scroll-behavior: smooth;
             }
 
-            .scrollbar-thumb-gray-300::-webkit-scrollbar-track {
-              background: #f1f5f9;
-              border-radius: 3px;
+            /* Optional: Add fade effect on edges to indicate scrollability */
+            .thumbnail-container::before,
+            .thumbnail-container::after {
+              content: '';
+              position: absolute;
+              top: 0;
+              bottom: 0;
+              width: 20px;
+              pointer-events: none;
+              z-index: 1;
             }
 
-            .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
-              background: #cbd5e1;
-              border-radius: 3px;
+            .thumbnail-container::before {
+              left: 0;
+              background: linear-gradient(to right, rgba(255, 255, 255, 0.8), transparent);
             }
 
-            .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
-              background: #94a3b8;
-            }
-
-            .product-image-gallery .aspect-square {
-              position: relative;
-            }
-
-            .product-image-gallery .aspect-square:hover #prev-image,
-            .product-image-gallery .aspect-square:hover #next-image {
-              opacity: 1 !important;
+            .thumbnail-container::after {
+              right: 0;
+              background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
             }
           </style>
 
@@ -1095,21 +985,171 @@ $avg_stmt->close();
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const thumbSwiper = new Swiper('.thumbSwiper', {
-        slidesPerView: 'auto',
-        spaceBetween: 8,
-        freeMode: true,
-        grabCursor: true,
-      });
-
-      // Optional: Highlight active thumbnail (on click)
+      // Highlight active thumbnail on click
       document.querySelectorAll('.thumbnail-item').forEach((item) => {
         item.addEventListener('click', () => {
+          // Remove active class from all thumbnails
           document.querySelectorAll('.thumbnail-item img').forEach(img => {
-            img.classList.remove('border-blue-500');
+            img.classList.remove('border-blue-500', 'thumbnail-active');
             img.classList.add('border-transparent');
           });
-          item.querySelector('img').classList.add('border-blue-500');
+
+          // Add active class to clicked thumbnail
+          const clickedImg = item.querySelector('img');
+          clickedImg.classList.add('border-blue-500', 'thumbnail-active');
+          clickedImg.classList.remove('border-transparent');
+
+          // Scroll clicked thumbnail into view
+          item.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          });
+        });
+      });
+
+      // Optional: Add touch/swipe support for mobile
+      let isDown = false;
+      let startX;
+      let scrollLeft;
+
+      const container = document.querySelector('.thumbnail-container');
+
+      if (container) {
+        container.addEventListener('mousedown', (e) => {
+          isDown = true;
+          startX = e.pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
+          container.style.cursor = 'grabbing';
+        });
+
+        container.addEventListener('mouseleave', () => {
+          isDown = false;
+          container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mouseup', () => {
+          isDown = false;
+          container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mousemove', (e) => {
+          if (!isDown) return;
+          e.preventDefault();
+          const x = e.pageX - container.offsetLeft;
+          const walk = (x - startX) * 2;
+          container.scrollLeft = scrollLeft - walk;
+        });
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Image gallery functionality
+      const mainImage = document.getElementById('main-product-image');
+      const thumbnails = document.querySelectorAll('.thumbnail-item');
+      const prevBtn = document.getElementById('prev-image');
+      const nextBtn = document.getElementById('next-image');
+      const currentIndexSpan = document.getElementById('current-image-index');
+
+      // All image sources (main + sub images)
+      const allImages = [
+        '../../<?= htmlspecialchars($product['main_image']) ?>',
+        <?php foreach ($sub_images as $sub_image): ?> '../<?= htmlspecialchars($sub_image) ?>',
+        <?php endforeach; ?>
+      ];
+
+      let currentImageIndex = 0;
+
+      // Function to update main image and active thumbnail
+      function updateMainImage(index) {
+        if (index >= 0 && index < allImages.length) {
+          currentImageIndex = index;
+          mainImage.src = allImages[index];
+
+          // Update current image counter
+          if (currentIndexSpan) {
+            currentIndexSpan.textContent = index + 1;
+          }
+
+          // Update active thumbnail
+          thumbnails.forEach((thumb, i) => {
+            thumb.querySelector('img').classList.toggle('thumbnail-active', i === index);
+          });
+        }
+      }
+
+      // Thumbnail click handlers
+      thumbnails.forEach((thumbnail, index) => {
+        thumbnail.addEventListener('click', function() {
+          updateMainImage(index);
+        });
+      });
+
+      // Navigation button handlers
+      if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+          const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
+          updateMainImage(newIndex);
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+          const newIndex = currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
+          updateMainImage(newIndex);
+        });
+      }
+
+      // Keyboard navigation
+      document.addEventListener('keydown', function(e) {
+        if (allImages.length > 1) {
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            prevBtn.click();
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            nextBtn.click();
+          }
+        }
+      });
+
+      // Show navigation arrows on hover (if sub images exist)
+      <?php if (!empty($sub_images)): ?>
+        const imageGallery = document.querySelector('.product-image-gallery');
+        if (imageGallery) {
+          imageGallery.addEventListener('mouseenter', function() {
+            if (prevBtn) prevBtn.style.opacity = '1';
+            if (nextBtn) nextBtn.style.opacity = '1';
+          });
+
+          imageGallery.addEventListener('mouseleave', function() {
+            if (prevBtn) prevBtn.style.opacity = '0';
+            if (nextBtn) nextBtn.style.opacity = '0';
+          });
+        }
+      <?php endif; ?>
+
+      // Image zoom functionality (optional enhancement)
+      mainImage.addEventListener('click', function() {
+        // Create modal for full-size image view
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer';
+        modal.innerHTML = `
+      <div class="relative max-w-4xl max-h-full p-4">
+        <img src="${this.src}" loading="lazy" class="max-w-full max-h-full object-contain" alt="Full size image">
+        <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+
+        document.body.appendChild(modal);
+
+        // Close modal on click
+        modal.addEventListener('click', function() {
+          document.body.removeChild(modal);
         });
       });
     });

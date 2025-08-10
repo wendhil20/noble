@@ -14,7 +14,7 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 // Optional: Auto-logout after inactivity (e.g. 30 mins)
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 3600) {
     // Destroy session and redirect to login
     session_unset();
     session_destroy();

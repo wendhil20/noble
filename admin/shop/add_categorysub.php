@@ -30,7 +30,7 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 1800) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 3600) {
     session_unset();
     session_destroy();
     header("Location: ../../loginpage/index.php?timeout=true");
@@ -46,13 +46,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt = $conn->prepare("INSERT INTO categorysub (name) VALUES (?)");
         $stmt->bind_param("s", $name);
         if ($stmt->execute()) {
-            $message = "✅ Subcategory added successfully.";
+            $message = " Subcategory added successfully.";
         } else {
-            $message = "❌ Error: " . $stmt->error;
+            $message = " Error: " . $stmt->error;
         }
         $stmt->close();
     } else {
-        $message = "⚠️ Please fill in the subcategory name.";
+        $message = " Please fill in the subcategory name.";
     }
 }
 ?>
@@ -71,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <?php if (!empty($message)): ?>
             <div class="mb-4 text-sm text-center font-medium p-2 rounded 
-                        <?= str_contains($message, '✅') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' ?>">
+                        <?= str_contains($message, '') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' ?>">
                 <?= $message ?>
             </div>
         <?php endif; ?>

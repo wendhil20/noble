@@ -412,67 +412,67 @@ if ($user_id) {
 
             <div class="w-1/2 p-4 font-mont">
               <!-- Materials -->
-<template x-if="selectedCategory === 'materials'">
-  <div class="space-y-1">
-    <!-- Panels -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('wpc-panels')"
-      class="block hover:text-orange-500 text-sm">WPC Panels</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('pvc-panels')"
-      class="block hover:text-orange-500 text-sm">PVC Panels</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('mdf-panels')"
-      class="block hover:text-orange-500 text-sm">MDF Panels</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('acoustic-panels')"
-      class="block hover:text-orange-500 text-sm">Acoustic Panels</a>
+              <template x-if="selectedCategory === 'materials'">
+                <div class="space-y-1">
+                  <!-- Panels -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('wpc-panels')"
+                    class="block hover:text-orange-500 text-sm">WPC Panels</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('pvc-panels')"
+                    class="block hover:text-orange-500 text-sm">PVC Panels</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('mdf-panels')"
+                    class="block hover:text-orange-500 text-sm">MDF Panels</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('acoustic-panels')"
+                    class="block hover:text-orange-500 text-sm">Acoustic Panels</a>
 
-    <!-- Flooring -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('laminate-flooring')"
-      class="block hover:text-orange-500 text-sm">Laminate Flooring</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('vinyl-flooring')"
-      class="block hover:text-orange-500 text-sm">Vinyl Flooring</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('hardwood-flooring')"
-      class="block hover:text-orange-500 text-sm">Hardwood Flooring</a>
+                  <!-- Flooring -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('laminate-flooring')"
+                    class="block hover:text-orange-500 text-sm">Laminate Flooring</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('vinyl-flooring')"
+                    class="block hover:text-orange-500 text-sm">Vinyl Flooring</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('hardwood-flooring')"
+                    class="block hover:text-orange-500 text-sm">Hardwood Flooring</a>
 
-  </div>
-</template>
+                </div>
+              </template>
 
-<!-- Furniture -->
-<template x-if="selectedCategory === 'furniture'">
-  <div class="space-y-1">
-    <!-- Living Room -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('sofas')"
-      class="block hover:text-orange-500 text-sm">Sofas</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('armchairs')"
-      class="block hover:text-orange-500 text-sm">Armchairs</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('coffee-tables')"
-      class="block hover:text-orange-500 text-sm">Coffee Tables</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('tv-stands')"
-      class="block hover:text-orange-500 text-sm">TV Stands</a>
+              <!-- Furniture -->
+              <template x-if="selectedCategory === 'furniture'">
+                <div class="space-y-1">
+                  <!-- Living Room -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('sofas')"
+                    class="block hover:text-orange-500 text-sm">Sofas</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('armchairs')"
+                    class="block hover:text-orange-500 text-sm">Armchairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('coffee-tables')"
+                    class="block hover:text-orange-500 text-sm">Coffee Tables</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('tv-stands')"
+                    class="block hover:text-orange-500 text-sm">TV Stands</a>
 
-    <!-- Dining -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('dining-tables')"
-      class="block hover:text-orange-500 text-sm">Dining Tables</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('dining-chairs')"
-      class="block hover:text-orange-500 text-sm">Dining Chairs</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bar-stools')"
-      class="block hover:text-orange-500 text-sm">Bar Stools</a>
+                  <!-- Dining -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('dining-tables')"
+                    class="block hover:text-orange-500 text-sm">Dining Tables</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('dining-chairs')"
+                    class="block hover:text-orange-500 text-sm">Dining Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bar-stools')"
+                    class="block hover:text-orange-500 text-sm">Bar Stools</a>
 
-    <!-- Bedroom -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('beds')"
-      class="block hover:text-orange-500 text-sm">Beds</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
-      class="block hover:text-orange-500 text-sm">Wardrobes</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
-      class="block hover:text-orange-500 text-sm">Bedside Tables</a>
+                  <!-- Bedroom -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('beds')"
+                    class="block hover:text-orange-500 text-sm">Beds</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
+                    class="block hover:text-orange-500 text-sm">Wardrobes</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
+                    class="block hover:text-orange-500 text-sm">Bedside Tables</a>
 
-    <!-- Office -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('office-chairs')"
-      class="block hover:text-orange-500 text-sm">Office Chairs</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('desks')"
-      class="block hover:text-orange-500 text-sm">Desks</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bookshelves')"
-      class="block hover:text-orange-500 text-sm">Bookshelves</a>
-  </div>
-</template>
+                  <!-- Office -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('office-chairs')"
+                    class="block hover:text-orange-500 text-sm">Office Chairs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('desks')"
+                    class="block hover:text-orange-500 text-sm">Desks</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bookshelves')"
+                    class="block hover:text-orange-500 text-sm">Bookshelves</a>
+                </div>
+              </template>
 
 
               <template x-if="selectedCategory === 'Tiles'">
@@ -511,56 +511,56 @@ if ($user_id) {
 
 
               <!-- Bed Furniture -->
-<template x-if="selectedCategory === 'Bedfurniture'">
-  <div class="space-y-1">
-    <!-- Beds -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('single-beds')"
-      class="block hover:text-orange-500 text-sm">Single Beds</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('double-beds')"
-      class="block hover:text-orange-500 text-sm">Double Beds</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('queen-beds')"
-      class="block hover:text-orange-500 text-sm">Queen Beds</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('king-beds')"
-      class="block hover:text-orange-500 text-sm">King Beds</a>
-    
-    <!-- Bed Accessories -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('headboards')"
-      class="block hover:text-orange-500 text-sm">Headboards</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
-      class="block hover:text-orange-500 text-sm">Bedside Tables</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('mattresses')"
-      class="block hover:text-orange-500 text-sm">Mattresses</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bed-frames')"
-      class="block hover:text-orange-500 text-sm">Bed Frames</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
-      class="block hover:text-orange-500 text-sm">Wardrobes</a>
-  </div>
-</template>
+              <template x-if="selectedCategory === 'Bedfurniture'">
+                <div class="space-y-1">
+                  <!-- Beds -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('single-beds')"
+                    class="block hover:text-orange-500 text-sm">Single Beds</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('double-beds')"
+                    class="block hover:text-orange-500 text-sm">Double Beds</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('queen-beds')"
+                    class="block hover:text-orange-500 text-sm">Queen Beds</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('king-beds')"
+                    class="block hover:text-orange-500 text-sm">King Beds</a>
 
-<!-- Bathroom Fixtures -->
-<template x-if="selectedCategory === 'BathroomFixtures'">
-  <div class="space-y-1">
-    <!-- Fixtures -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('toilets')"
-      class="block hover:text-orange-500 text-sm">Toilets</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('wash-basins')"
-      class="block hover:text-orange-500 text-sm">Wash Basins</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bathtubs')"
-      class="block hover:text-orange-500 text-sm">Bathtubs</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('showers')"
-      class="block hover:text-orange-500 text-sm">Showers</a>
-    
-    <!-- Storage & Accessories -->
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-cabinets')"
-      class="block hover:text-orange-500 text-sm">Bathroom Cabinets</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('mirrors')"
-      class="block hover:text-orange-500 text-sm">Mirrors</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('towel-racks')"
-      class="block hover:text-orange-500 text-sm">Towel Racks</a>
-    <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-shelves')"
-      class="block hover:text-orange-500 text-sm">Bathroom Shelves</a>
-  </div>
-</template>
+                  <!-- Bed Accessories -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('headboards')"
+                    class="block hover:text-orange-500 text-sm">Headboards</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
+                    class="block hover:text-orange-500 text-sm">Bedside Tables</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('mattresses')"
+                    class="block hover:text-orange-500 text-sm">Mattresses</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bed-frames')"
+                    class="block hover:text-orange-500 text-sm">Bed Frames</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
+                    class="block hover:text-orange-500 text-sm">Wardrobes</a>
+                </div>
+              </template>
+
+              <!-- Bathroom Fixtures -->
+              <template x-if="selectedCategory === 'BathroomFixtures'">
+                <div class="space-y-1">
+                  <!-- Fixtures -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('toilets')"
+                    class="block hover:text-orange-500 text-sm">Toilets</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('wash-basins')"
+                    class="block hover:text-orange-500 text-sm">Wash Basins</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathtubs')"
+                    class="block hover:text-orange-500 text-sm">Bathtubs</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('showers')"
+                    class="block hover:text-orange-500 text-sm">Showers</a>
+
+                  <!-- Storage & Accessories -->
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-cabinets')"
+                    class="block hover:text-orange-500 text-sm">Bathroom Cabinets</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('mirrors')"
+                    class="block hover:text-orange-500 text-sm">Mirrors</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('towel-racks')"
+                    class="block hover:text-orange-500 text-sm">Towel Racks</a>
+                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-shelves')"
+                    class="block hover:text-orange-500 text-sm">Bathroom Shelves</a>
+                </div>
+              </template>
 
 
               <template x-if="selectedCategory === 'AccBlock'">
@@ -1220,10 +1220,12 @@ if ($user_id) {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </button>
+
               <div x-show="selectedCategory === 'materials'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
                 <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">WPC Panels</a>
                 <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">PVC Panels</a>
               </div>
+
             </div>
 
             <div>
@@ -1234,11 +1236,161 @@ if ($user_id) {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </button>
+
               <div x-show="selectedCategory === 'furniture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
                 <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
                 <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
               </div>
+
             </div>
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'Tiles' ? null : 'Tiles'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Tiles</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'Tiles' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'Tiles'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'Bedfurniture' ? null : 'Bedfurniture'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Bed Furniture</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'Bedfurniture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'Bedfurniture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'BathroomFixture' ? null : 'BathroomFixture'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Bathroom Fixture</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'BathroomFixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'BathroomFixture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'AccBlock' ? null : 'AccBlock'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>AAC Block</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'AccBlock' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'AccBlock'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'aircon' ? null : 'aircon'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Aircon</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'aircon' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'aircon'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'KitchenFixture' ? null : 'KitchenFixture'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Kitchen Fixtures</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'KitchenFixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'KitchenFixture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'lightingfixture' ? null : 'lightingfixture'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Lighting Fixture</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'lightingfixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'lightingfixture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'Doors' ? null : 'Doors'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Doors</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'Doors' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'Doors'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+
+            </div>
+
+            <div>
+              <button @click="selectedCategory = selectedCategory === 'windows' ? null : 'windows'"
+                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
+                <span>Windows</span>
+                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'windows' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <div x-show="selectedCategory === 'windows'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
+                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

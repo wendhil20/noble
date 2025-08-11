@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         echo json_encode([
             'success' => true,
-            'message' => 'Added to cart successfully!',
+            'message' => 'Added to cart',
             'cart_count' => getCartCount($conn, $user_id),
             'item_added' => [
                 'name' => $product['product_name'],

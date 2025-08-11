@@ -144,16 +144,17 @@ if ($user_id) {
   class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
 
   <div class="rounded-2xl p-8 flex flex-col items-center space-y-5  relative">
-
     <!-- Spinner wrapper -->
     <div class="relative w-28 h-28 flex items-center justify-center">
       <!-- Rotating spinner around image -->
       <div class="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
 
       <!-- Center image -->
-      <img src="../img/logo.png" alt="Loading" class="bg-white w-20 h-20 object-contain rounded-full shadow-md z-10 p-2" />
+      <img src="../img/logo.png" alt="Loading" loading="lazy" class="bg-white w-20 h-20 object-contain rounded-full shadow-md z-10 p-2" />
     </div>
   </div>
+
+
 </div>
 
 <div class="bg-black text-white py-3 text-xs sm:text-sm">
@@ -1619,4 +1620,93 @@ if ($user_id) {
     </div>
   </div>
 </nav>
+
 <script src="../navbar/top-obf.js"></script>
+
+
+<div class="bg-white border-b shadow-sm px-4 py-2 flex items-center justify-between font-mont">
+  <div class="flex items-center gap-2">
+    <span class="text-lg font-semibold text-gray-700"></span>
+  </div>
+
+  <div class="flex items-center gap-5" x-data="notificationSystem">
+    <!-- Notifications -->
+    <div class="relative">
+      <button 
+        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()" 
+        class="relative text-gray-600 hover:text-orange-500"
+      >
+        <i class="fas fa-bell text-xl"></i>
+        <template x-if="unreadCount > 0">
+          <span 
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+            x-text="unreadCount">
+          </span>
+        </template>
+      </button>
+
+      <!-- Notification Dropdown -->
+      <div 
+        x-show="notifOpen" 
+        x-cloak 
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 translate-y-1"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-1"
+        @click.outside="notifOpen = false"
+        class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50"
+      >
+        <div class="p-3 border-b font-semibold text-gray-700">Notifications</div>
+        <ul class="max-h-60 overflow-y-auto">
+          <template x-for="notif in notifications" :key="notif.id">
+            <li class="p-3 hover:bg-gray-50 cursor-pointer">
+              <p class="text-sm text-gray-700" x-text="notif.message"></p>
+              <span class="text-xs text-gray-400" x-text="notif.created_at"></span>
+            </li>
+          </template>
+          <template x-if="notifications.length === 0">
+            <li class="p-3 text-sm text-gray-500">
+              No new notifications.
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("alpine:init", () => {
+  Alpine.data("notificationSystem", () => ({
+    notifOpen: false,
+    notifications: [],
+    unreadCount: 0,
+
+    fetchNotifications() {
+      fetch("../navbar/topcheck_getnotif.php")
+        .then(res => res.json())
+        .then(data => {
+          this.notifications = data.notifications;
+          this.unreadCount = data.unread_count;
+        });
+    },
+
+    markAsRead() {
+      fetch("../navbar/topcheck_getmarked.php", { method: "POST" })
+        .then(() => {
+          this.unreadCount = 0; // update UI agad
+        });
+    },
+
+    init() {
+      this.notifOpen = false; // siguradong sarado sa load
+      this.fetchNotifications();
+      setInterval(() => {
+        this.fetchNotifications();
+      }, 5000); // refresh every 5 sec
+    }
+  }));
+});
+</script>

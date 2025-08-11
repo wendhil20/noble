@@ -68,6 +68,7 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,9 +76,17 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; }
-            .print-shadow { box-shadow: none !important; }
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+            }
+
+            .print-shadow {
+                box-shadow: none !important;
+            }
         }
     </style>
 </head>
@@ -86,34 +95,33 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
     <?php include '../navbar/top.php'; ?>
 
     <!-- Enhanced Breadcrumb -->
-  <nav class="bg-white border-b border-gray-200 px-4 py-3">
-    <div class="">
-      <div class="flex items-center space-x-2 text-sm">
-        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
-          <i class="fas fa-home mr-1"></i>Home
-        </a>
-        
-        <i class="fas fa-chevron-right text-gray-400"></i>
-          <a href="order_history" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
-          Recent History
-        </a>
-        <i class="fas fa-chevron-right text-gray-400"></i>
-        <span class="text-gray-600 font-medium">receipt</span>
-        <?php if (!empty($search_keyword)): ?>
-          <i class="fas fa-chevron-right text-gray-400"></i>
-          <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
-        <?php endif; ?>
-      </div>
-    </div>
-  </nav>
+    <nav class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="">
+            <div class="flex items-center space-x-2 text-sm">
+                <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+                    <i class="fas fa-home mr-1"></i>Home
+                </a>
+
+                <i class="fas fa-chevron-right text-gray-400"></i>
+                <a href="order_history" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+                    Recent History
+                </a>
+                <i class="fas fa-chevron-right text-gray-400"></i>
+                <span class="text-gray-600 font-medium">receipt</span>
+                <?php if (!empty($search_keyword)): ?>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    </nav>
 
 
     <div class="max-w-4xl mx-auto px-4">
         <!-- Header with Actions -->
-      
-       
+
         <!-- Receipt Container -->
-        <div class="bg-white shadow-lg print-shadow rounded-lg overflow-hidden" id="receipt">
+        <div class="bg-white shadow-lg print-shadow rounded-lg overflow-hidden mt-4" id="receipt">
             <!-- Receipt Header -->
             <div class="bg-orange-600 text-white p-6">
                 <div class="flex justify-between items-start">
@@ -183,51 +191,51 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             <?php foreach ($order_items as $item): ?>
-                            <tr class="hover:bg-gray-50">
-                                <td class="p-3">
-                                    <div class="font-medium text-gray-900"><?= htmlspecialchars($item['product_name']) ?></div>
-                                    <?php if (!empty($item['codename'])): ?>
-                                        <div class="text-xs text-gray-500">Code: <?= htmlspecialchars($item['codename']) ?></div>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="p-3 text-gray-600">
-                                    <div class="space-y-1">
-                                        <?php if (!empty($item['type_name'])): ?>
-                                            <div>Type: <?= htmlspecialchars($item['type_name']) ?></div>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3">
+                                        <div class="font-medium text-gray-900"><?= htmlspecialchars($item['product_name']) ?></div>
+                                        <?php if (!empty($item['codename'])): ?>
+                                            <div class="text-xs text-gray-500">Code: <?= htmlspecialchars($item['codename']) ?></div>
                                         <?php endif; ?>
-                                        
-                                        <?php if (!empty($item['variant_color'])): ?>
-                                            <div>Color: <?= htmlspecialchars($item['variant_color']) ?></div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
-                                            <div>Size: <?= htmlspecialchars($item['size']) ?></div>
-                                        <?php endif; ?>
+                                    </td>
+                                    <td class="p-3 text-gray-600">
+                                        <div class="space-y-1">
+                                            <?php if (!empty($item['type_name'])): ?>
+                                                <div>Type: <?= htmlspecialchars($item['type_name']) ?></div>
+                                            <?php endif; ?>
 
-                                        <?php if (!empty($item['origin'])): ?>
-                                            <?php 
-                                            $is_local = stripos($item['origin'], 'local') !== false;
-                                            $origin_class = $is_local ? 'text-blue-600' : 'text-red-600';
-                                            ?>
-                                            <div class="<?= $origin_class ?> font-medium">Origin: <?= htmlspecialchars($item['origin']) ?></div>
-                                        <?php endif; ?>
+                                            <?php if (!empty($item['variant_color'])): ?>
+                                                <div>Color: <?= htmlspecialchars($item['variant_color']) ?></div>
+                                            <?php endif; ?>
 
-                                        <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                                            <div class="text-xs text-gray-500 italic">
-                                                <?php if (!empty($item['descrip6'])): ?>
-                                                    <div><?= htmlspecialchars($item['descrip6']) ?></div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($item['descrip7'])): ?>
-                                                    <div><?= htmlspecialchars($item['descrip7']) ?></div>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td class="p-3 text-center font-medium"><?= $item['quantity'] ?></td>
-                                <td class="p-3 text-right">₱<?= number_format($item['price'], 2) ?></td>
-                                <td class="p-3 text-right font-medium">₱<?= number_format($item['subtotal'], 2) ?></td>
-                            </tr>
+                                            <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
+                                                <div>Size: <?= htmlspecialchars($item['size']) ?></div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($item['origin'])): ?>
+                                                <?php
+                                                $is_local = stripos($item['origin'], 'local') !== false;
+                                                $origin_class = $is_local ? 'text-blue-600' : 'text-red-600';
+                                                ?>
+                                                <div class="<?= $origin_class ?> font-medium">Origin: <?= htmlspecialchars($item['origin']) ?></div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                                                <div class="text-xs text-gray-500 italic">
+                                                    <?php if (!empty($item['descrip6'])): ?>
+                                                        <div><?= htmlspecialchars($item['descrip6']) ?></div>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($item['descrip7'])): ?>
+                                                        <div><?= htmlspecialchars($item['descrip7']) ?></div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td class="p-3 text-center font-medium"><?= $item['quantity'] ?></td>
+                                    <td class="p-3 text-right">₱<?= number_format($item['price'], 2) ?></td>
+                                    <td class="p-3 text-right font-medium">₱<?= number_format($item['subtotal'], 2) ?></td>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -241,19 +249,19 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                         <span class="text-gray-700">Subtotal:</span>
                         <span class="font-medium">₱<?= number_format($subtotal, 2) ?></span>
                     </div>
-                    
+
                     <div class="flex justify-between items-center">
                         <span class="text-gray-700">VAT (12%):</span>
                         <span class="font-medium">₱<?= number_format($vat_amount, 2) ?></span>
                     </div>
-                    
+
                     <div class="flex justify-between items-center text-sm text-gray-600">
                         <span>Shipping:</span>
                         <span>To be calculated</span>
                     </div>
-                    
+
                     <hr class="border-gray-300">
-                    
+
                     <div class="flex justify-between items-center text-lg font-bold">
                         <span>Total (excl. shipping):</span>
                         <span class="text-green-700">₱<?= number_format($total_with_vat, 2) ?></span>
@@ -303,8 +311,7 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
             // Simple implementation - you can enhance this with a proper PDF library
             window.print();
         }
-        
-   
     </script>
 </body>
+
 </html>

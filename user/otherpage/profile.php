@@ -147,6 +147,12 @@ if ($user_id) {
     }
     $stmt->close();
 }
+
+
+$query = mysqli_query($conn, "SELECT is_verified FROM user_details WHERE user_id = '$user_id'");
+$row = mysqli_fetch_assoc($query);
+$is_verified = $row['is_verified'];
+
 ?>
 
 
@@ -420,25 +426,35 @@ if ($user_id) {
                 <!-- LEFT: Profile Section -->
                 <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
                     <!-- Profile Picture Section -->
-                    <div class="relative group">
-                        <!-- Profile Image Container -->
-                        <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
-                            <?php if ($user_picture): ?>
-                                <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
-                            <?php else: ?>
-                                <span class="text-3xl md:text-4xl font-bold text-black font-serif">
-                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
+<div class="relative group">
+    <!-- Profile Image Container -->
+    <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
+        <?php if ($user_picture): ?>
+            <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+        <?php else: ?>
+            <span class="text-3xl md:text-4xl font-bold text-black font-serif">
+                <?= strtoupper(substr($user_name, 0, 1)); ?>
+            </span>
+        <?php endif; ?>
+    </div>
 
-                        <!-- Verified Badge -->
-                        <div class="absolute -bottom-2 right-2 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center" title="Verified Account">
-                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
+    <?php if (!empty($is_verified) && $is_verified == 1): ?>
+        <!-- Verified Badge -->
+        <div class="absolute -bottom-1 right-2 md:-bottom-3 md:right-12 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-1 border-white shadow-lg flex items-center justify-center" title="Verified Account">
+            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+        </div>
+    <?php else: ?>
+        <!-- Not Verified Badge -->
+        <div class="absolute -bottom-2 right-2 md:-bottom-2 md:right-5 px-2 py-1 bg-red-500 text-white text-[10px] md:text-xs font-semibold rounded-full border-1 border-white shadow-lg">
+            Not Verified
+        </div>
+    <?php endif; ?>
+</div>
+
+
+
 
 
                     <!-- Name & Email -->

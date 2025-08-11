@@ -1,6 +1,6 @@
 <?php
 $host = "localhost:3306";
- $username = "root"; // Default sa XAMPP
+$username = "root"; // Default sa XAMPP
 $password = ""; // Default sa XAMPP (walang password)
 $database = "noblehomedata"; // Palitan ng tamang database name
 

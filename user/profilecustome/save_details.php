@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt2->execute();
         $stmt2->close();
         $notification = "<div class='mb-4 p-3 bg-blue-100 border-l-4 border-blue-500 text-blue-700 rounded'>
-                            ✅ Profile updated. Waiting for verification.
+                             Profile updated. Waiting for verification.
                          </div>";
     } else {
         // Insert

@@ -54,7 +54,8 @@ while ($row = $orders_result->fetch_assoc()) {
 $stmt->close();
 
 // Function to get order status badge
-function getStatusBadge($status) {
+function getStatusBadge($status)
+{
     $status = strtolower($status ?? 'pending');
     $badges = [
         'pending' => 'bg-yellow-100 text-yellow-800',
@@ -64,7 +65,7 @@ function getStatusBadge($status) {
         'delivered' => 'bg-green-100 text-green-800',
         'cancelled' => 'bg-red-100 text-red-800'
     ];
-    
+
     $class = $badges[$status] ?? 'bg-gray-100 text-gray-800';
     return "<span class='px-2 py-1 rounded-full text-xs font-medium $class'>" . ucfirst($status) . "</span>";
 }
@@ -72,6 +73,7 @@ function getStatusBadge($status) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -82,22 +84,22 @@ function getStatusBadge($status) {
 <body class="bg-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
 
-<!-- Enhanced Breadcrumb -->
-  <nav class="bg-white border-b border-gray-200 px-4 py-3">
-    <div class="">
-      <div class="flex items-center space-x-2 text-sm">
-        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
-          <i class="fas fa-home mr-1"></i>Home
-        </a>
-        <i class="fas fa-chevron-right text-gray-400"></i>
-        <span class="text-gray-600 font-medium">History</span>
-        <?php if (!empty($search_keyword)): ?>
-          <i class="fas fa-chevron-right text-gray-400"></i>
-          <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
-        <?php endif; ?>
-      </div>
-    </div>
-  </nav>
+    <!-- Enhanced Breadcrumb -->
+    <nav class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="">
+            <div class="flex items-center space-x-2 text-sm">
+                <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+                    <i class="fas fa-home mr-1"></i>Home
+                </a>
+                <i class="fas fa-chevron-right text-gray-400"></i>
+                <span class="text-gray-600 font-medium">History</span>
+                <?php if (!empty($search_keyword)): ?>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
@@ -118,12 +120,11 @@ function getStatusBadge($status) {
         <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
-                    <input 
-                        type="text" 
-                        id="searchOrders" 
-                        placeholder="Search by reference number, product name..." 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
+                    <input
+                        type="text"
+                        id="searchOrders"
+                        placeholder="Search by reference number, product name..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
                 </div>
                 <div>
                     <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
@@ -157,9 +158,9 @@ function getStatusBadge($status) {
         <?php else: ?>
             <div class="space-y-4" id="ordersContainer">
                 <?php foreach ($orders as $order): ?>
-                    <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow order-item" 
-                         data-reference="<?= strtolower($order['reference_no']) ?>" 
-                         data-status="<?= strtolower($order['status'] ?? 'pending') ?>">
+                    <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow order-item"
+                        data-reference="<?= strtolower($order['reference_no']) ?>"
+                        data-status="<?= strtolower($order['status'] ?? 'pending') ?>">
                         <div class="p-6">
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                                 <!-- Order Info -->
@@ -168,7 +169,7 @@ function getStatusBadge($status) {
                                         <h3 class="text-lg font-bold text-gray-900"><?= htmlspecialchars($order['reference_no']) ?></h3>
                                         <?= getStatusBadge($order['status'] ?? 'pending') ?>
                                     </div>
-                                    
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                                         <div>
                                             <div class="flex items-center gap-2 mb-1">
@@ -179,7 +180,7 @@ function getStatusBadge($status) {
                                             </div>
                                             <div class="ml-6"><?= date('M j, Y - g:i A', strtotime($order['created_at'])) ?></div>
                                         </div>
-                                        
+
                                         <div>
                                             <div class="flex items-center gap-2 mb-1">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +191,7 @@ function getStatusBadge($status) {
                                             <div class="ml-6"><?= htmlspecialchars($order['mode_payment']) ?></div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-3 text-sm text-gray-600">
                                         <div class="flex items-center gap-2">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,10 +209,10 @@ function getStatusBadge($status) {
                                         <div class="text-2xl font-bold text-green-700">₱<?= number_format($order['total'], 2) ?></div>
                                         <div class="text-xs text-gray-500">Total Amount</div>
                                     </div>
-                                    
+
                                     <div class="flex flex-col gap-2">
-                                        <a href="order_receipt.php?order_id=<?= $order['id'] ?>" 
-                                           class="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm font-medium">
+                                        <a href="order_receipt.php?order_id=<?= $order['id'] ?>"
+                                            class="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm font-medium">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                             </svg>
@@ -286,10 +287,10 @@ function getStatusBadge($status) {
                 orderItems.forEach(item => {
                     const reference = item.dataset.reference;
                     const status = item.dataset.status;
-                    
+
                     const matchesSearch = !searchTerm || reference.includes(searchTerm);
                     const matchesStatus = !selectedStatus || status === selectedStatus;
-                    
+
                     if (matchesSearch && matchesStatus) {
                         item.style.display = 'block';
                     } else {
@@ -306,11 +307,11 @@ function getStatusBadge($status) {
         function quickView(orderId) {
             const modal = document.getElementById('quickViewModal');
             const content = document.getElementById('quickViewContent');
-            
+
             // Show modal
             modal.classList.remove('hidden');
             content.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div><p class="mt-2 text-gray-600">Loading...</p></div>';
-            
+
             // Fetch order details
             fetch(`getorder_receipt.php?order_id=${orderId}`)
                 .then(response => response.json())
@@ -338,4 +339,5 @@ function getStatusBadge($status) {
         });
     </script>
 </body>
+
 </html>

@@ -1,68 +1,126 @@
 <?php
-// approve_verification.php
 session_start();
 header('Content-Type: application/json');
 
-require_once '../../connection/connect.php'; // $conn (mysqli)
+// Add error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors in production
+ini_set('log_errors', 1);
 
-$tables = ['notification'];
+try {
+    require_once '../../connection/connect.php'; // $conn (mysqli)
 
-foreach ($tables as $table) {
-    // Get the current highest ID that exists
-    $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
-    $row = $result->fetch_assoc();
-    $max_id = (int)$row['max_id'];
-
-    // Reset AUTO_INCREMENT to max_id + 1
-    $next_id = $max_id > 0 ? $max_id + 1 : 1;
-    $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
-}
-
-// Read JSON body
-$input = json_decode(file_get_contents('php://input'), true);
-$detail_id = isset($input['detail_id']) ? (int)$input['detail_id'] : 0;
-
-if ($detail_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid detail_id']);
-    exit;
-}
-
-// 1 Kunin muna ang `user_id` mula sa `user_details`
-$sql_user = "SELECT user_id FROM user_details WHERE detail_id = $detail_id";
-$res_user = mysqli_query($conn, $sql_user);
-if (!$res_user || mysqli_num_rows($res_user) == 0) {
-    echo json_encode(['success' => false, 'message' => 'User not found for this detail_id']);
-    exit;
-}
-$user_row = mysqli_fetch_assoc($res_user);
-$user_id = (int)$user_row['user_id'];
-
-// 2 Update verification status
-$sql = "UPDATE user_details SET is_verified = 1 WHERE detail_id = $detail_id";
-if (mysqli_query($conn, $sql)) {
-    if (mysqli_affected_rows($conn) > 0) {
-
-        // 3 Insert notification sa notifications table
-        $admin_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null; // actor_id = admin na nag-approve
-        $type = "verification";
-        $message = "Your account has been verified successfully!";
-
-        $stmt_notif = $conn->prepare("
-            INSERT INTO notifications (user_id, actor_id, type, message)
-            VALUES (?, ?, ?, ?)
-        ");
-        $stmt_notif->bind_param("iiss", $user_id, $admin_id, $type, $message);
-        $stmt_notif->execute();
-        $stmt_notif->close();
-
-        echo json_encode(['success' => true, 'message' => 'User verification approved and notification sent']);
-
-    } else {
-        echo json_encode(['success' => false, 'message' => 'No record updated (maybe already verified)']);
+    // Check if connection exists
+    if (!isset($conn) || !$conn) {
+        throw new Exception('Database connection failed');
     }
-} else {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($conn)]);
-}
 
-mysqli_close($conn);
+    // Read and validate JSON input
+    $input_raw = file_get_contents('php://input');
+    if (empty($input_raw)) {
+        throw new Exception('Empty request body');
+    }
+
+    $input = json_decode($input_raw, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Invalid JSON: ' . json_last_error_msg());
+    }
+
+    $detail_id = isset($input['detail_id']) ? (int)$input['detail_id'] : 0;
+
+    if ($detail_id <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid detail_id']);
+        exit;
+    }
+
+    // Start transaction
+    mysqli_autocommit($conn, false);
+
+    // 1. Get user_id from user_details using prepared statement
+    $stmt_user = $conn->prepare("SELECT user_id FROM user_details WHERE detail_id = ?");
+    if (!$stmt_user) {
+        throw new Exception('Prepare failed: ' . $conn->error);
+    }
+    
+    $stmt_user->bind_param("i", $detail_id);
+    $stmt_user->execute();
+    $result_user = $stmt_user->get_result();
+    
+    if ($result_user->num_rows == 0) {
+        $stmt_user->close();
+        mysqli_rollback($conn);
+        echo json_encode(['success' => false, 'message' => 'User not found for this detail_id']);
+        exit;
+    }
+    
+    $user_row = $result_user->fetch_assoc();
+    $user_id = (int)$user_row['user_id'];
+    $stmt_user->close();
+
+    // 2. Update verification status using prepared statement
+    $stmt_update = $conn->prepare("UPDATE user_details SET is_verified = 1 WHERE detail_id = ? AND is_verified = 0");
+    if (!$stmt_update) {
+        throw new Exception('Prepare failed: ' . $conn->error);
+    }
+    
+    $stmt_update->bind_param("i", $detail_id);
+    $stmt_update->execute();
+    
+    if ($stmt_update->affected_rows == 0) {
+        $stmt_update->close();
+        mysqli_rollback($conn);
+        echo json_encode(['success' => false, 'message' => 'No record updated (maybe already verified)']);
+        exit;
+    }
+    $stmt_update->close();
+
+    // 3. Insert notification
+    $admin_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+    $type = "verification";
+    $message = "Your account has been verified successfully!";
+
+    $stmt_notif = $conn->prepare("
+        INSERT INTO notifications (user_id, actor_id, type, message, created_at) 
+        VALUES (?, ?, ?, ?, NOW())
+    ");
+    
+    if (!$stmt_notif) {
+        throw new Exception('Prepare notification failed: ' . $conn->error);
+    }
+    
+    $stmt_notif->bind_param("iiss", $user_id, $admin_id, $type, $message);
+    
+    if (!$stmt_notif->execute()) {
+        throw new Exception('Notification insert failed: ' . $stmt_notif->error);
+    }
+    
+    $stmt_notif->close();
+
+    // Commit transaction
+    mysqli_commit($conn);
+    
+    echo json_encode([
+        'success' => true, 
+        'message' => 'User verification approved and notification sent'
+    ]);
+
+} catch (Exception $e) {
+    // Rollback on any error
+    if (isset($conn)) {
+        mysqli_rollback($conn);
+    }
+    
+    // Log the error
+    error_log("Approval Error: " . $e->getMessage());
+    
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Server error occurred. Please try again.'
+    ]);
+} finally {
+    // Close connection
+    if (isset($conn)) {
+        mysqli_close($conn);
+    }
+}
 ?>

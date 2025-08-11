@@ -1626,15 +1626,16 @@ if ($user_id) {
 
 <div class="bg-white border-b shadow-sm px-4 py-2 flex items-center justify-between font-mont">
   <div class="flex items-center gap-2">
-    <span class="text-lg font-semibold text-gray-700"></span>
+    <span class="text-lg font-semibold text-gray-700">Notifications</span>
   </div>
 
-  <div class="flex items-center gap-5" x-data="notificationSystem">
+  <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
     <!-- Notifications -->
     <div class="relative">
       <button 
         @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()" 
         class="relative text-gray-600 hover:text-orange-500"
+        aria-label="Toggle notifications dropdown"
       >
         <i class="fas fa-bell text-xl"></i>
         <template x-if="unreadCount > 0">
@@ -1656,14 +1657,23 @@ if ($user_id) {
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-1"
         @click.outside="notifOpen = false"
-        class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50"
+        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50"
       >
-        <div class="p-3 border-b font-semibold text-gray-700">Notifications</div>
+        <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
+          <span>Notifications</span>
+          <button 
+            class="text-xs text-red-500 hover:text-red-700" 
+            @click.prevent="clearNotifications()"
+            aria-label="Clear all notifications"
+          >
+            Clear All
+          </button>
+        </div>
         <ul class="max-h-60 overflow-y-auto">
           <template x-for="notif in notifications" :key="notif.id">
             <li class="p-3 hover:bg-gray-50 cursor-pointer">
               <p class="text-sm text-gray-700" x-text="notif.message"></p>
-              <span class="text-xs text-gray-400" x-text="notif.created_at"></span>
+              <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
             </li>
           </template>
           <template x-if="notifications.length === 0">
@@ -1688,24 +1698,61 @@ document.addEventListener("alpine:init", () => {
       fetch("../navbar/topcheck_getnotif.php")
         .then(res => res.json())
         .then(data => {
-          this.notifications = data.notifications;
-          this.unreadCount = data.unread_count;
+          this.notifications = data.notifications || [];
+          this.unreadCount = data.unread_count || 0;
+        })
+        .catch(() => {
+          this.notifications = [];
+          this.unreadCount = 0;
         });
     },
 
     markAsRead() {
       fetch("../navbar/topcheck_getmarked.php", { method: "POST" })
         .then(() => {
-          this.unreadCount = 0; // update UI agad
+          this.unreadCount = 0;
         });
     },
 
+    clearNotifications() {
+      fetch("../navbar/topcheck_clearall.php", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            this.notifications = [];
+            this.unreadCount = 0;
+            this.notifOpen = false;
+          }
+        })
+        .catch(() => {
+          // silently fail
+        });
+    },
+
+    formatDateTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = Math.floor((now - date) / 1000);
+
+      if (diff < 60) return 'Just now';
+      if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
+      if (diff < 172800) return 'Yesterday';
+
+      const options = { 
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true 
+      };
+      return date.toLocaleString('en-US', options);
+    },
+
     init() {
-      this.notifOpen = false; // siguradong sarado sa load
+      this.notifOpen = false;
       this.fetchNotifications();
       setInterval(() => {
         this.fetchNotifications();
-      }, 5000); // refresh every 5 sec
+      }, 5000);
     }
   }));
 });

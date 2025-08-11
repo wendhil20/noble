@@ -70,6 +70,7 @@ $itemStmt = $conn->prepare("
         oi.quantity,
         oi.subtotal,
         oi.origin,
+        oi.product_id,
         oi.supplier_id,
         COALESCE(na.fullname, 'Not Assigned') AS supplier_name
     FROM order_items oi

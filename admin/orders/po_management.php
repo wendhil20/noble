@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin']);
+require_role(['productspecialist', 'superadmin', 'sales']);
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
@@ -80,10 +80,12 @@ foreach ($allItems as $item) {
     $itemsByOrder[$item['order_id']][] = $item;
 }
 
-// For each item, get available suppliers from supp_link_products
+// For each item, get available suppliers from supp_link_products AND all suppliers
 foreach ($allItems as &$item) {
+    // Get linked suppliers (existing logic)
+    $item['linked_suppliers'] = [];
     if ($item['product_id']) {
-        $suppStmt = $conn->prepare("
+        $linkedSuppStmt = $conn->prepare("
             SELECT 
                 slp.supplier_id,
                 slp.supplier_type,
@@ -96,13 +98,28 @@ foreach ($allItems as &$item) {
             WHERE slp.product_id = ? AND slp.status = 'active' AND sl.status = 'active'
             ORDER BY slp.supplier_type ASC, sl.business_name ASC
         ");
-        $suppStmt->bind_param("i", $item['product_id']);
-        $suppStmt->execute();
-        $item['available_suppliers'] = $suppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $suppStmt->close();
-    } else {
-        $item['available_suppliers'] = [];
+        $linkedSuppStmt->bind_param("i", $item['product_id']);
+        $linkedSuppStmt->execute();
+        $item['linked_suppliers'] = $linkedSuppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $linkedSuppStmt->close();
     }
+    
+    // Get ALL active suppliers for manual assignment option
+    $allSuppStmt = $conn->prepare("
+        SELECT 
+            id as supplier_id,
+            business_name,
+            primary_contact_name,
+            email_address,
+            phone_number,
+            'manual' as supplier_type
+        FROM supplier_list 
+        WHERE status = 'active'
+        ORDER BY business_name ASC
+    ");
+    $allSuppStmt->execute();
+    $item['all_suppliers'] = $allSuppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $allSuppStmt->close();
 }
 ?>
 
@@ -218,39 +235,130 @@ foreach ($allItems as &$item) {
                     $currentSupplierStmt->close();
                     ?>
                     <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                            <span class="font-medium text-green-800">
-                                Currently assigned to: <?php echo htmlspecialchars($currentSupplier['business_name'] ?? 'Unknown Supplier'); ?>
-                            </span>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                <span class="font-medium text-green-800">
+                                    Currently assigned to: <?php echo htmlspecialchars($currentSupplier['business_name'] ?? 'Unknown Supplier'); ?>
+                                </span>
+                            </div>
+                            <button onclick="unassignSupplier(<?php echo $item['item_id']; ?>)" 
+                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors duration-200">
+                                <i class="fas fa-times mr-1"></i>Remove
+                            </button>
                         </div>
                     </div>
                     <?php endif; ?>
 
-                    <!-- Available Suppliers -->
+                    <!-- Supplier Assignment Tabs -->
                     <div class="border-t pt-4">
-                        <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
-                            <i class="fas fa-users text-primary-600 mr-2"></i>
-                            Available Suppliers
-                        </h4>
-                        
-                        <?php if (empty($item['available_suppliers'])): ?>
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <div class="flex items-center">
-                                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
-                                    <span class="text-yellow-700">No suppliers linked to this product</span>
+                        <div class="mb-4">
+                            <div class="flex space-x-2">
+                                <button onclick="showTab('linked-<?php echo $item['item_id']; ?>', 'linked')" 
+                                        class="tab-button px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-primary-600 text-white"
+                                        id="tab-linked-<?php echo $item['item_id']; ?>">
+                                    <i class="fas fa-link mr-2"></i>Linked Suppliers 
+                                    <span class="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs ml-1">
+                                        <?php echo count($item['linked_suppliers'] ?? []); ?>
+                                    </span>
+                                </button>
+                                <button onclick="showTab('all-<?php echo $item['item_id']; ?>', 'all')" 
+                                        class="tab-button px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                        id="tab-all-<?php echo $item['item_id']; ?>">
+                                    <i class="fas fa-users mr-2"></i>All Suppliers 
+                                    <span class="bg-gray-400 text-white px-2 py-1 rounded-full text-xs ml-1">
+                                        <?php echo count($item['all_suppliers'] ?? []); ?>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Linked Suppliers Tab -->
+                        <div id="linked-<?php echo $item['item_id']; ?>" class="supplier-tab">
+                            <?php if (empty($item['linked_suppliers'] ?? [])): ?>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                                            <span class="text-yellow-700">No suppliers are specifically linked to this product</span>
+                                        </div>
+                                        <button onclick="showTab('all-<?php echo $item['item_id']; ?>', 'all')" 
+                                                class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded text-sm">
+                                            View All Suppliers
+                                        </button>
+                                    </div>
+                                    <div class="mt-2 text-sm text-yellow-600">
+                                        You can still assign suppliers from the "All Suppliers" tab or contact an admin to link suppliers to this product.
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                    <i class="fas fa-link text-primary-600 mr-2"></i>
+                                    Linked Suppliers for this Product
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <?php foreach (($item['linked_suppliers'] ?? []) as $supplier): ?>
+                                    <div class="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 
+                                        <?php echo $supplier['supplier_type'] === 'primary' ? 'border-green-300 bg-green-50' : 'border-blue-300 bg-blue-50'; ?>">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h5 class="font-semibold text-gray-900"><?php echo htmlspecialchars($supplier['business_name']); ?></h5>
+                                            <span class="px-2 py-1 text-xs rounded-full 
+                                                <?php echo $supplier['supplier_type'] === 'primary' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'; ?>">
+                                                <?php echo ucfirst($supplier['supplier_type']); ?>
+                                            </span>
+                                        </div>
+                                        <div class="text-sm text-gray-600 space-y-1">
+                                            <div><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($supplier['primary_contact_name']); ?></div>
+                                            <div><i class="fas fa-envelope mr-1"></i><?php echo htmlspecialchars($supplier['email_address']); ?></div>
+                                            <div><i class="fas fa-phone mr-1"></i><?php echo htmlspecialchars($supplier['phone_number']); ?></div>
+                                        </div>
+                                        <div class="mt-3 flex space-x-2">
+                                            <button onclick="assignSupplier(<?php echo $item['item_id']; ?>, <?php echo $supplier['supplier_id']; ?>)" 
+                                                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 
+                                                        <?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'opacity-50 cursor-not-allowed' : ''; ?>"
+                                                    <?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'disabled' : ''; ?>>
+                                                <i class="fas fa-<?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'check' : 'plus'; ?> mr-1"></i>
+                                                <?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'Assigned' : 'Assign'; ?>
+                                            </button>
+                                            <button onclick="contactSupplier('<?php echo $supplier['email_address']; ?>', <?php echo $order['id']; ?>)" 
+                                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200">
+                                                <i class="fas fa-envelope mr-1"></i>Contact
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- All Suppliers Tab -->
+                        <div id="all-<?php echo $item['item_id']; ?>" class="supplier-tab hidden">
+                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                <i class="fas fa-users text-primary-600 mr-2"></i>
+                                All Available Suppliers
+                                <span class="ml-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                    Manual Assignment
+                                </span>
+                            </h4>
+                            
+                            <!-- Search box -->
+                            <div class="mb-4">
+                                <div class="relative">
+                                    <input type="text" 
+                                           placeholder="Search suppliers..." 
+                                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                           onkeyup="filterSuppliers(this.value, <?php echo $item['item_id']; ?>)">
+                                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                                 </div>
                             </div>
-                        <?php else: ?>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <?php foreach ($item['available_suppliers'] as $supplier): ?>
-                                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 
-                                    <?php echo $supplier['supplier_type'] === 'primary' ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'; ?>">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="suppliers-grid-<?php echo $item['item_id']; ?>">
+                                <?php foreach (($item['all_suppliers'] ?? []) as $supplier): ?>
+                                <div class="supplier-card border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 border-gray-300 bg-white">
                                     <div class="flex justify-between items-start mb-2">
                                         <h5 class="font-semibold text-gray-900"><?php echo htmlspecialchars($supplier['business_name']); ?></h5>
-                                        <span class="px-2 py-1 text-xs rounded-full 
-                                            <?php echo $supplier['supplier_type'] === 'primary' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'; ?>">
-                                            <?php echo ucfirst($supplier['supplier_type']); ?>
+                                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+                                            Manual
                                         </span>
                                     </div>
                                     <div class="text-sm text-gray-600 space-y-1">
@@ -260,7 +368,7 @@ foreach ($allItems as &$item) {
                                     </div>
                                     <div class="mt-3 flex space-x-2">
                                         <button onclick="assignSupplier(<?php echo $item['item_id']; ?>, <?php echo $supplier['supplier_id']; ?>)" 
-                                                class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 
+                                                class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded text-sm transition-colors duration-200 
                                                     <?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'opacity-50 cursor-not-allowed' : ''; ?>"
                                                 <?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'disabled' : ''; ?>>
                                             <i class="fas fa-<?php echo $item['supplier_id'] == $supplier['supplier_id'] ? 'check' : 'plus'; ?> mr-1"></i>
@@ -274,7 +382,7 @@ foreach ($allItems as &$item) {
                                 </div>
                                 <?php endforeach; ?>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -301,6 +409,40 @@ foreach ($allItems as &$item) {
             setTimeout(() => alertContainer.innerHTML = '', 5000);
         }
 
+        function showTab(tabId, tabType) {
+            // Get item ID from tabId
+            const itemId = tabId.split('-')[1];
+            
+            // Hide all tabs for this item
+            document.querySelectorAll(`[id^="linked-${itemId}"], [id^="all-${itemId}"]`).forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            // Update button styles
+            document.querySelectorAll(`[id^="tab-"][id$="-${itemId}"]`).forEach(btn => {
+                btn.className = 'tab-button px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300';
+            });
+            
+            document.getElementById(`tab-${tabType}-${itemId}`).className = 'tab-button px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-primary-600 text-white';
+        }
+
+        function filterSuppliers(searchTerm, itemId) {
+            const cards = document.querySelectorAll(`#suppliers-grid-${itemId} .supplier-card`);
+            const term = searchTerm.toLowerCase();
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(term)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
         function assignSupplier(itemId, supplierId) {
             if (!confirm('Are you sure you want to assign this supplier to this item?')) {
                 return;
@@ -323,6 +465,35 @@ foreach ($allItems as &$item) {
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert(data.error || 'Failed to assign supplier', 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('An error occurred: ' + error.message, 'error');
+            });
+        }
+
+        function unassignSupplier(itemId) {
+            if (!confirm('Are you sure you want to remove the assigned supplier from this item?')) {
+                return;
+            }
+
+            fetch('assign_supplier.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    supplier_id: null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Supplier removed successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.error || 'Failed to remove supplier', 'error');
                 }
             })
             .catch(error => {

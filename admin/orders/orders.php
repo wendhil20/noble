@@ -496,11 +496,18 @@ if (status === 'pending') {
                 </div>
 
                 <!-- Order Items -->
-                <div class="mb-4">
-                  <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
-                    <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
-                    Order Items
-                  </h4>
+<div class="mb-4">
+  <div class="flex justify-between items-center mb-3">
+    <h4 class="font-semibold text-gray-900 flex items-center">
+      <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
+      Order Items
+    </h4>
+    <a href="po_management.php?customer_email=${encodeURIComponent(order.email)}" 
+   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
+  <i class="fas fa-clipboard-list"></i>
+  <span>P.O Management</span>
+</a>
+  </div>
                   <div class="max-h-60 overflow-y-auto scrollbar-hide space-y-1 pr-1 bg-gray-50 rounded-lg p-3">
                     ${itemsHtml}
                   </div>

@@ -332,53 +332,65 @@ if ($user_id) {
       <!-- Desktop Navigation -->
       <div class="hidden lg:flex space-x-6 items-center uppercase">
 
-        <!-- Search -->
-        <div x-data="{
-            search: '',
-            results: [],
-            fetchResults() {
-                if (this.search.trim() === '') return;
-                fetch(`../otherpage/search_ajax.php?search=${encodeURIComponent(this.search)}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        this.results = data;
-                    });
-            }
-        }" class="relative">
+       <!-- Search component -->
+<div x-data="{
+    search: '',
+    results: [],
+    fetchResults() {
+        if (this.search.trim().length < 1) {
+            this.results = [];
+            return;
+        }
+        fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
+            .then(res => res.json())
+            .then(data => {
+                this.results = data;
+            })
+            .catch(() => {
+                this.results = [];
+            });
+    }
+}" class="relative w-64 md:w-96 font-mont">
 
-          <div class="flex items-center space-x-2 font-mont">
-            <input
-              type="text"
-              x-model="search"
-              @keydown.enter="fetchResults"
-              placeholder="Search products..."
-              class="border border-gray-300 px-3 py-1.5 rounded w-48 md:w-64 text-sm outline-orange-500">
-            <button
-              @click="fetchResults"
-              class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition">
-              Search
-            </button>
-          </div>
+  <div class="flex items-center space-x-2">
+    <input
+      type="text"
+      x-model="search"
+      @input.debounce.300ms="fetchResults"
+      placeholder="Search products..."
+      class="border border-gray-300 px-3 py-1.5 rounded w-full text-sm outline-orange-500"
+      autocomplete="off"
+    >
+    <button
+      @click="fetchResults"
+      class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition"
+    >
+      Search
+    </button>
+  </div>
 
-          <div
-            x-show="results.length > 0"
-            x-cloak
-            @click.away="results = []"
-            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-64 md:w-96 max-h-80 overflow-y-auto border border-gray-200">
-            <ul>
-              <template x-for="item in results" :key="item.id">
-                <li class="border-b last:border-0">
-                  <a
-                    class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
-                    :href="'../otherpage/shop.php?search=' + encodeURIComponent(item.product_name)">
-                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
-                    <span x-text="item.product_name"></span>
-                  </a>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </div>
+  <div
+    x-show="results.length > 0"
+    x-cloak
+    @click.away="results = []"
+    class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200"
+  >
+    <ul>
+      <template x-for="item in results" :key="item.id">
+        <li class="border-b last:border-0">
+          <a
+            :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
+            class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
+          >
+            <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+            <span x-text="item.product_name"></span>
+          </a>
+        </li>
+      </template>
+    </ul>
+  </div>
+
+</div>
 
         <!-- Products Dropdown -->
         <div class="relative">
@@ -660,10 +672,7 @@ if ($user_id) {
                   <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
                     <?= $total_cart_items ?> items
                   </span>
-                  <!-- Refresh Button -->
-                  <button onclick="refreshCart()" id="refresh-cart-btn" class="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-all duration-200" title="Refresh Cart">
-                    <i class="fas fa-sync-alt text-sm"></i>
-                  </button>
+             
                 </div>
               </div>
             </div>

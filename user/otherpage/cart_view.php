@@ -3,7 +3,6 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
-
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $token = $_COOKIE['remember_token'];

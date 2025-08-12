@@ -7,8 +7,12 @@ if (isset($_SESSION['noble_user'])) {
 
     $redirect = match ($role) {
         'superadmin', 'admin' => "../admin/client/dashboard.php",
-        'sales' => "../sales/dashboard.php",
-        'accountant' => "../accountant/dashboard.php",
+        'sales' => "../admin/orders/ordering",
+        'accountant' => "../admin/accountant/dashboard",
+        'productspecialist' => "../admin/shop/adminshop",
+        'accountant' => "../admin/accountant/dashboard",
+        'logistic' => "../admin/client/monitortracking",
+        'warehouse' => "../admin/warehouse/warehouses",
         default => "../admin/client/dashboard.php"
     };
 

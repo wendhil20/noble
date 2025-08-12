@@ -232,21 +232,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $product_id = $item['product_id'] ?? null;
 
                 $stmt->bind_param(
-    "iisssssiiisss",
-    $order_id,
-    $product_id,        // Add this parameter
-    $product_name,
-    $codename,
-    $type_name,
-    $variant_color,
-    $size,
-    $price,
-    $quantity,
-    $subtotal,
-    $desc6,
-    $desc7,
-    $origin
-);
+                    "iisssssiiisss",
+                    $order_id,
+                    $product_id,        // Add this parameter
+                    $product_name,
+                    $codename,
+                    $type_name,
+                    $variant_color,
+                    $size,
+                    $price,
+                    $quantity,
+                    $subtotal,
+                    $desc6,
+                    $desc7,
+                    $origin
+                );
 
                 if (!$stmt->execute()) {
                     throw new Exception("Failed to save order item: " . $stmt->error);
@@ -495,22 +495,6 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <label class="block font-medium mb-3">Payment Method</label>
                 <div class="space-y-3">
 
-
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="payment_method" value="GCash" required class="mr-3" />
-                        <div class="flex items-center">
-                            <div class="text-blue-600 mr-2">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="font-medium">GCash</div>
-                                <div class="text-sm text-gray-600">Pay via GCash mobile wallet</div>
-                            </div>
-                        </div>
-                    </label>
-
                     <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="Bank Transfer" required class="mr-3" />
                         <div class="flex items-center">
@@ -526,20 +510,6 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         </div>
                     </label>
 
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="payment_method" value="PayPal" required class="mr-3" />
-                        <div class="flex items-center">
-                            <div class="text-blue-800 mr-2">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10.4 6c.8 0 1.6.4 1.6 1.6 0 1.2-.8 2-2 2H8.8l-.064-.021zM7.2 11.2c0-.64.16-1.2.64-1.6.48-.4 1.12-.6 1.76-.6.96 0 1.6.48 1.6 1.44 0 .8-.48 1.44-1.28 1.44H8.4c-.64 0-1.2-.32-1.2-.68z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="font-medium">PayPal</div>
-                                <div class="text-sm text-gray-600">Pay securely with PayPal</div>
-                            </div>
-                        </div>
-                    </label>
                 </div>
             </div>
 

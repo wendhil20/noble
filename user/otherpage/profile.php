@@ -151,7 +151,12 @@ if ($user_id) {
 
 $query = mysqli_query($conn, "SELECT is_verified FROM user_details WHERE user_id = '$user_id'");
 $row = mysqli_fetch_assoc($query);
-$is_verified = $row['is_verified'];
+
+$is_verified = null; // default value
+if ($row && isset($row['is_verified'])) {
+    $is_verified = $row['is_verified'];
+}
+
 
 ?>
 

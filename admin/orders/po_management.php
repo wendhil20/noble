@@ -15,7 +15,7 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 if (!isset($_GET['customer_email'])) {
-    header("Location: orders.php");
+    header("Location: ordering.php");
     exit();
 }
 
@@ -34,7 +34,7 @@ $orders = $ordersStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $ordersStmt->close();
 
 if (empty($orders)) {
-    header("Location: orders.php");
+    header("Location: ordering.php");
     exit();
 }
 
@@ -81,10 +81,30 @@ foreach ($allItems as $item) {
 }
 
 // For each item, get available suppliers from supp_link_products AND all suppliers
-foreach ($allItems as &$item) {
-    // Get linked suppliers (existing logic)
-    $item['linked_suppliers'] = [];
-    if ($item['product_id']) {
+for ($i = 0; $i < count($allItems); $i++) {
+    // Initialize arrays to prevent undefined key errors
+    $allItems[$i]['linked_suppliers'] = [];
+    $allItems[$i]['all_suppliers'] = [];
+    
+    // Debug: Check if product_id exists
+    echo "<!-- DEBUG: Item ID {$allItems[$i]['item_id']}, Product ID: {$allItems[$i]['product_id']}, Product Name: {$allItems[$i]['product_name']} -->";
+    
+    // Get linked suppliers (FIXED QUERY)
+    if ($allItems[$i]['product_id']) {
+        // First, let's check if there are any links for this product
+        $debugStmt = $conn->prepare("
+            SELECT COUNT(*) as link_count 
+            FROM supp_link_products 
+            WHERE product_id = ? AND status = 'active'
+        ");
+        $debugStmt->bind_param("i", $allItems[$i]['product_id']);
+        $debugStmt->execute();
+        $debugResult = $debugStmt->get_result()->fetch_assoc();
+        $debugStmt->close();
+        
+        echo "<!-- DEBUG: Product {$allItems[$i]['product_id']} has {$debugResult['link_count']} active links -->";
+        
+        // Get linked suppliers with proper JOIN
         $linkedSuppStmt = $conn->prepare("
             SELECT 
                 slp.supplier_id,
@@ -92,16 +112,36 @@ foreach ($allItems as &$item) {
                 sl.business_name,
                 sl.primary_contact_name,
                 sl.email_address,
-                sl.phone_number
+                sl.phone_number,
+                slp.status as link_status,
+                sl.status as supplier_status
             FROM supp_link_products slp
-            JOIN supplier_list sl ON slp.supplier_id = sl.id
-            WHERE slp.product_id = ? AND slp.status = 'active' AND sl.status = 'active'
-            ORDER BY slp.supplier_type ASC, sl.business_name ASC
+            INNER JOIN supplier_list sl ON slp.supplier_id = sl.id
+            WHERE slp.product_id = ? 
+                AND slp.status = 'active' 
+                AND sl.status = 'active'
+            ORDER BY 
+                CASE slp.supplier_type 
+                    WHEN 'primary' THEN 1 
+                    WHEN 'secondary' THEN 2 
+                    ELSE 3 
+                END ASC, 
+                sl.business_name ASC
         ");
-        $linkedSuppStmt->bind_param("i", $item['product_id']);
+        $linkedSuppStmt->bind_param("i", $allItems[$i]['product_id']);
         $linkedSuppStmt->execute();
-        $item['linked_suppliers'] = $linkedSuppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $linkedResult = $linkedSuppStmt->get_result();
+        $allItems[$i]['linked_suppliers'] = $linkedResult->fetch_all(MYSQLI_ASSOC);
         $linkedSuppStmt->close();
+        
+        echo "<!-- DEBUG: Found " . count($allItems[$i]['linked_suppliers']) . " linked suppliers for product {$allItems[$i]['product_id']} -->";
+        
+        // Debug each linked supplier
+        foreach ($allItems[$i]['linked_suppliers'] as $supplier) {
+            echo "<!-- DEBUG: Linked Supplier - ID: {$supplier['supplier_id']}, Name: {$supplier['business_name']}, Type: {$supplier['supplier_type']} -->";
+        }
+    } else {
+        echo "<!-- DEBUG: No product_id for item {$allItems[$i]['item_id']} -->";
     }
     
     // Get ALL active suppliers for manual assignment option
@@ -118,8 +158,20 @@ foreach ($allItems as &$item) {
         ORDER BY business_name ASC
     ");
     $allSuppStmt->execute();
-    $item['all_suppliers'] = $allSuppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $allItems[$i]['all_suppliers'] = $allSuppStmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $allSuppStmt->close();
+}
+
+// Update itemsByOrder with the modified items
+$itemsByOrder = [];
+foreach ($allItems as $item) {
+    $itemsByOrder[$item['order_id']][] = $item;
+}
+
+// Debug: Show final structure
+echo "<!-- DEBUG: Final structure -->";
+foreach ($allItems as $item) {
+    echo "<!-- Item {$item['item_id']}: " . count($item['linked_suppliers']) . " linked, " . count($item['all_suppliers']) . " total suppliers -->";
 }
 ?>
 
@@ -153,7 +205,7 @@ foreach ($allItems as &$item) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
-                    <a href="orders.php" class="text-primary-600 hover:text-primary-700">
+                    <a href="ordering.php" class="text-primary-600 hover:text-primary-700">
                         <i class="fas fa-arrow-left text-xl"></i>
                     </a>
                     <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-3 rounded-xl shadow-lg">
@@ -167,6 +219,30 @@ foreach ($allItems as &$item) {
                 <div class="bg-primary-50 px-4 py-2 rounded-lg">
                     <span class="text-primary-700 font-medium"><?php echo count($allItems); ?> Total Items</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Info (Remove this in production) -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <h3 class="font-bold text-yellow-800">Debug Information (Remove in Production)</h3>
+            <div class="text-sm text-yellow-700 mt-2">
+                <?php foreach ($allItems as $item): ?>
+                    <div class="mb-2">
+                        <strong>Item <?php echo $item['item_id']; ?>:</strong>
+                        Product ID: <?php echo $item['product_id'] ?: 'NULL'; ?>,
+                        Product Name: <?php echo htmlspecialchars($item['product_name']); ?>,
+                        Linked Suppliers: <?php echo count($item['linked_suppliers'] ?? []); ?>,
+                        Total Suppliers: <?php echo count($item['all_suppliers'] ?? []); ?>
+                        <?php if (!empty($item['linked_suppliers'])): ?>
+                            <br>&nbsp;&nbsp;Linked: 
+                            <?php foreach ($item['linked_suppliers'] as $supplier): ?>
+                                <?php echo htmlspecialchars($supplier['business_name']) . ' (' . $supplier['supplier_type'] . '), '; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
@@ -222,6 +298,12 @@ foreach ($allItems as &$item) {
                                     | <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
                                 <?php endif; ?>
                             </div>
+                            <!-- Debug info for each item -->
+                            <div class="mt-2 text-xs text-blue-600">
+                                <strong>Debug:</strong> Product ID: <?php echo $item['product_id'] ?: 'NULL'; ?>, 
+                                Linked: <?php echo count($item['linked_suppliers'] ?? []); ?>, 
+                                All: <?php echo count($item['all_suppliers'] ?? []); ?>
+                            </div>
                         </div>
                     </div>
 
@@ -275,7 +357,7 @@ foreach ($allItems as &$item) {
 
                         <!-- Linked Suppliers Tab -->
                         <div id="linked-<?php echo $item['item_id']; ?>" class="supplier-tab">
-                            <?php if (empty($item['linked_suppliers'] ?? [])): ?>
+                            <?php if (empty($item['linked_suppliers'])): ?>
                                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
@@ -288,7 +370,7 @@ foreach ($allItems as &$item) {
                                         </button>
                                     </div>
                                     <div class="mt-2 text-sm text-yellow-600">
-                                        You can still assign suppliers from the "All Suppliers" tab or contact an admin to link suppliers to this product.
+                                        Product ID: <?php echo $item['product_id'] ?: 'Not Set'; ?> - You can still assign suppliers from the "All Suppliers" tab or contact an admin to link suppliers to this product.
                                     </div>
                                 </div>
                             <?php else: ?>
@@ -297,7 +379,7 @@ foreach ($allItems as &$item) {
                                     Linked Suppliers for this Product
                                 </h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <?php foreach (($item['linked_suppliers'] ?? []) as $supplier): ?>
+                                    <?php foreach ($item['linked_suppliers'] as $supplier): ?>
                                     <div class="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 
                                         <?php echo $supplier['supplier_type'] === 'primary' ? 'border-green-300 bg-green-50' : 'border-blue-300 bg-blue-50'; ?>">
                                         <div class="flex justify-between items-start mb-2">

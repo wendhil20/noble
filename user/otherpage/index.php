@@ -220,7 +220,8 @@ $slideresult = $conn->query($sql);
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest" defer></script>
+   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
     <script>
         // Function to hide the notification after 5 seconds
         setTimeout(function() {
@@ -1704,9 +1705,6 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
-
-
-    <!-- Contact Section -->
     <section id="contact" class="p-3 bg-gray-100">
         <div class="max-w-7xl mx-auto px-4">
             <div class="text-center mb-12">
@@ -1893,6 +1891,7 @@ $slideresult = $conn->query($sql);
     <script>
         AOS.init();
     </script>
+
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="../src/index-obf.js"></script>

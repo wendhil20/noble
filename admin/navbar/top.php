@@ -573,6 +573,17 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         </svg>
                                         <span>Monitor Tracking</span>
                                     </a>
+                                    <a href="../client/delivery_data_input"
+                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 2H14L20 8V20C20 20.552 19.552 21 19 21H5C4.448 21 4 20.552 4 20V4C4 3.448 4.448 3 5 3H7ZM14 2V8H20M12 12H12.01M12 16H12.01" />
+                                        </svg>
+                                        <span>Delivery Info Management</span>
+                                    </a>
+
+
+
                                 </div>
                                 <hr class="my-2 border-gray-200">
                             <?php endif; ?>
@@ -693,4 +704,5 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     </script>
 
 </body>
+
 </html>

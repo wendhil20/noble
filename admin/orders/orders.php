@@ -502,7 +502,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
       <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
       Order Items
     </h4>
-    <a href="po_management.php?customer_email=${encodeURIComponent(order.email)}" 
+    <a href="po_management.php?order_id=${order.id}" 
    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
   <i class="fas fa-clipboard-list"></i>
   <span>P.O Management</span>

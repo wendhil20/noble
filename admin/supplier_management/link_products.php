@@ -43,49 +43,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'link_product' && isset($_POST['product_id'])) {
             $product_id = intval($_POST['product_id']);
+            $supplier_type = isset($_POST['supplier_type']) ? $_POST['supplier_type'] : 'secondary'; // Default to secondary
             
-            // Check if link already exists
-            $check_sql = "SELECT id FROM supp_link_products WHERE supplier_id = ? AND product_id = ?";
-            $check_stmt = $conn->prepare($check_sql);
-            $check_stmt->bind_param("ii", $supplier_id, $product_id);
-            $check_stmt->execute();
-            $existing = $check_stmt->get_result()->fetch_assoc();
-            $check_stmt->close();
-            
-            if ($existing) {
-                // Update status to active if link exists but inactive
-                $update_sql = "UPDATE supp_link_products SET status = 'active', updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ii", $supplier_id, $product_id);
-                $success = $update_stmt->execute();
-                $update_stmt->close();
-            } else {
-                // Create new link
-                $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, status) VALUES (?, ?, 'active')";
-                $insert_stmt = $conn->prepare($insert_sql);
-                $insert_stmt->bind_param("ii", $supplier_id, $product_id);
-                $success = $insert_stmt->execute();
-                $insert_stmt->close();
+            try {
+                // Check if link already exists for this supplier and product
+                $check_sql = "SELECT id, status, supplier_type FROM supp_link_products WHERE supplier_id = ? AND product_id = ?";
+                $check_stmt = $conn->prepare($check_sql);
+                $check_stmt->bind_param("ii", $supplier_id, $product_id);
+                $check_stmt->execute();
+                $existing = $check_stmt->get_result()->fetch_assoc();
+                $check_stmt->close();
+                
+                if ($existing) {
+                    if ($existing['status'] === 'active') {
+                        // Already linked and active
+                        echo json_encode(['success' => true, 'message' => 'Product is already linked to this supplier']);
+                        exit();
+                    } else {
+                        // Update status to active if link exists but inactive
+                        $update_sql = "UPDATE supp_link_products SET status = 'active', supplier_type = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("sii", $supplier_type, $supplier_id, $product_id);
+                        $success = $update_stmt->execute();
+                        $update_stmt->close();
+                        
+                        if ($success) {
+                            echo json_encode(['success' => true, 'message' => 'Product linked successfully']);
+                        } else {
+                            echo json_encode(['success' => false, 'message' => 'Failed to update product link: ' . $conn->error]);
+                        }
+                        exit();
+                    }
+                } else {
+                    // Check if trying to set as primary and there's already a primary supplier for this product
+                    if ($supplier_type === 'primary') {
+                        $primary_check_sql = "SELECT sp.id, sl.business_name FROM supp_link_products sp 
+                                            LEFT JOIN supplier_list sl ON sp.supplier_id = sl.id 
+                                            WHERE sp.product_id = ? AND sp.supplier_type = 'primary' AND sp.status = 'active'";
+                        $primary_check_stmt = $conn->prepare($primary_check_sql);
+                        $primary_check_stmt->bind_param("i", $product_id);
+                        $primary_check_stmt->execute();
+                        $existing_primary = $primary_check_stmt->get_result()->fetch_assoc();
+                        $primary_check_stmt->close();
+                        
+                        if ($existing_primary) {
+                            $supplier_name = $existing_primary['business_name'] ? $existing_primary['business_name'] : 'Another supplier';
+                            echo json_encode(['success' => false, 'message' => "This product already has a primary supplier ({$supplier_name}). Only one primary supplier is allowed per product."]);
+                            exit();
+                        }
+                    }
+                    
+                    // For secondary suppliers, we allow multiple, so no additional checks needed
+                    
+                    // Create new link
+                    $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, supplier_type, status, created_at, updated_at) VALUES (?, ?, ?, 'active', NOW(), NOW())";
+                    $insert_stmt = $conn->prepare($insert_sql);
+                    $insert_stmt->bind_param("iis", $supplier_id, $product_id, $supplier_type);
+                    $success = $insert_stmt->execute();
+                    
+                    if ($success) {
+                        $insert_stmt->close();
+                        echo json_encode(['success' => true, 'message' => 'Product linked successfully as ' . $supplier_type . ' supplier']);
+                    } else {
+                        $error_msg = $conn->error;
+                        $insert_stmt->close();
+                        echo json_encode(['success' => false, 'message' => 'Failed to create product link: ' . $error_msg]);
+                    }
+                    exit();
+                }
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+                exit();
             }
-            
-            echo json_encode(['success' => $success]);
-            exit();
         }
         
         if ($_POST['action'] === 'unlink_product' && isset($_POST['product_id'])) {
             $product_id = intval($_POST['product_id']);
             
-            // Set status to inactive instead of deleting
-            $update_sql = "UPDATE supp_link_products SET status = 'inactive', updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("ii", $supplier_id, $product_id);
-            $success = $update_stmt->execute();
-            $update_stmt->close();
-            
-            echo json_encode(['success' => $success]);
-            exit();
+            try {
+                // Set status to inactive instead of deleting
+                $update_sql = "UPDATE supp_link_products SET status = 'inactive', updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
+                $update_stmt = $conn->prepare($update_sql);
+                $update_stmt->bind_param("ii", $supplier_id, $product_id);
+                $success = $update_stmt->execute();
+                $update_stmt->close();
+                
+                if ($success) {
+                    echo json_encode(['success' => true, 'message' => 'Product unlinked successfully']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to unlink product: ' . $conn->error]);
+                }
+                exit();
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+                exit();
+            }
         }
     }
+    
+    // If we get here, invalid action
+    echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    exit();
 }
 
 // Handle search functionality
@@ -109,18 +167,9 @@ $where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_c
 $products_sql = "
     SELECT p.*, 
            CASE WHEN sp.status = 'active' THEN 1 ELSE 0 END as is_linked,
-           sp.linked_at
-    FROM products p
-    LEFT JOIN supplier_products sp ON p.id = sp.product_id AND sp.supplier_id = ? AND sp.status = 'active'
-    $where_clause
-    ORDER BY is_linked DESC, p.product_name ASC
-";
-
-# Get all products with their link status for this supplier
-$products_sql = "
-    SELECT p.*, 
-           CASE WHEN sp.status = 'active' THEN 1 ELSE 0 END as is_linked,
-           sp.created_at as linked_at
+           sp.supplier_type,
+           sp.created_at as linked_at,
+           (SELECT COUNT(*) FROM supp_link_products sp2 WHERE sp2.product_id = p.id AND sp2.supplier_type = 'primary' AND sp2.status = 'active') as has_primary
     FROM products p
     LEFT JOIN supp_link_products sp ON p.id = sp.product_id AND sp.supplier_id = ? AND sp.status = 'active'
     $where_clause
@@ -150,13 +199,13 @@ try {
     die("Database error: " . $e->getMessage());
 }
 
-# Check if products table has any data
+// Check if products table has any data
 $products_count_sql = "SELECT COUNT(*) as total FROM products";
 $products_count_result = $conn->query($products_count_sql);
 $total_products = $products_count_result->fetch_assoc()['total'];
 
-// Get linked products count
-$linked_count_sql = "SELECT COUNT(*) as count FROM supplier_products WHERE supplier_id = ? AND status = 'active'";
+// Get linked products count for this supplier
+$linked_count_sql = "SELECT COUNT(*) as count FROM supp_link_products WHERE supplier_id = ? AND status = 'active'";
 $linked_count_stmt = $conn->prepare($linked_count_sql);
 $linked_count_stmt->bind_param("i", $supplier_id);
 $linked_count_stmt->execute();
@@ -312,8 +361,9 @@ $linked_count_stmt->close();
                                     
                                     <!-- Link Status -->
                                     <?php if ($product['is_linked']): ?>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <i class="fas fa-link mr-1"></i>Linked
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $product['supplier_type'] === 'primary' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' ?>">
+                                            <i class="fas fa-link mr-1"></i>
+                                            Linked (<?= ucfirst($product['supplier_type']) ?>)
                                         </span>
                                     <?php else: ?>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
@@ -382,14 +432,34 @@ $linked_count_stmt->close();
                         <div class="px-6 pb-6">
                             <?php if ($product['is_linked']): ?>
                                 <button onclick="unlinkProduct(<?= $product['id'] ?>)" 
-                                        class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                                        class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                        id="btn-<?= $product['id'] ?>">
                                     <i class="fas fa-unlink mr-2"></i>Unlink Product
                                 </button>
                             <?php else: ?>
-                                <button onclick="linkProduct(<?= $product['id'] ?>)" 
-                                        class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                                    <i class="fas fa-link mr-2"></i>Link Product
-                                </button>
+                                <div class="space-y-2">
+                                    <!-- Primary Supplier Button -->
+                                    <?php if ($product['has_primary'] == 0): ?>
+                                        <button onclick="linkProduct(<?= $product['id'] ?>, 'primary')" 
+                                                class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                                id="btn-primary-<?= $product['id'] ?>">
+                                            <i class="fas fa-star mr-2"></i>Link as Primary Supplier
+                                        </button>
+                                    <?php else: ?>
+                                        <button disabled 
+                                                class="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg flex items-center justify-center cursor-not-allowed"
+                                                title="This product already has a primary supplier">
+                                            <i class="fas fa-star mr-2"></i>Primary Slot Taken
+                                        </button>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Secondary Supplier Button -->
+                                    <button onclick="linkProduct(<?= $product['id'] ?>, 'secondary')" 
+                                            class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                                            id="btn-secondary-<?= $product['id'] ?>">
+                                        <i class="fas fa-link mr-2"></i>Link as Secondary Supplier
+                                    </button>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -406,6 +476,21 @@ $linked_count_stmt->close();
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+        <div class="flex items-center">
+            <div id="toast-icon" class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                <i id="toast-icon-i" class="text-white"></i>
+            </div>
+            <div class="flex-1">
+                <p id="toast-message" class="text-sm font-medium text-gray-900"></p>
+            </div>
+            <button onclick="hideToast()" class="ml-3 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
     <script>
         function showLoading() {
             document.getElementById('loading-overlay').classList.remove('hidden');
@@ -415,35 +500,84 @@ $linked_count_stmt->close();
             document.getElementById('loading-overlay').classList.add('hidden');
         }
 
-        function linkProduct(productId) {
-            showLoading();
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const iconI = document.getElementById('toast-icon-i');
+            const messageEl = document.getElementById('toast-message');
+            
+            messageEl.textContent = message;
+            
+            if (type === 'success') {
+                icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-500';
+                iconI.className = 'fas fa-check text-white';
+            } else {
+                icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-500';
+                iconI.className = 'fas fa-times text-white';
+            }
+            
+            toast.classList.remove('hidden');
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                hideToast();
+            }, 3000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('hidden');
+        }
+
+        function linkProduct(productId, supplierType = 'secondary') {
+            const buttonId = supplierType === 'primary' ? `btn-primary-${productId}` : `btn-secondary-${productId}`;
+            const button = document.getElementById(buttonId);
+            
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Linking...';
+            }
             
             fetch('', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=link_product&product_id=${productId}`
+                body: `action=link_product&product_id=${productId}&supplier_type=${supplierType}`
             })
             .then(response => response.json())
             .then(data => {
-                hideLoading();
                 if (data.success) {
-                    location.reload(); // Reload to update the UI
+                    showToast(data.message || 'Product linked successfully!', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                 } else {
-                    alert('Error linking product. Please try again.');
+                    showToast(data.message || 'Error linking product. Please try again.', 'error');
+                    if (button) {
+                        button.disabled = false;
+                        const iconClass = supplierType === 'primary' ? 'fas fa-star' : 'fas fa-link';
+                        const text = supplierType === 'primary' ? 'Link as Primary Supplier' : 'Link as Secondary Supplier';
+                        button.innerHTML = `<i class="${iconClass} mr-2"></i>${text}`;
+                    }
                 }
             })
             .catch(error => {
-                hideLoading();
                 console.error('Error:', error);
-                alert('Error linking product. Please try again.');
+                showToast('Network error. Please try again.', 'error');
+                if (button) {
+                    button.disabled = false;
+                    const iconClass = supplierType === 'primary' ? 'fas fa-star' : 'fas fa-link';
+                    const text = supplierType === 'primary' ? 'Link as Primary Supplier' : 'Link as Secondary Supplier';
+                    button.innerHTML = `<i class="${iconClass} mr-2"></i>${text}`;
+                }
             });
         }
 
         function unlinkProduct(productId) {
-            if (confirm('Are you sure you want to unlink this product?')) {
-                showLoading();
+            if (confirm('Are you sure you want to unlink this product from this supplier?')) {
+                const button = document.getElementById(`btn-${productId}`);
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Unlinking...';
                 
                 fetch('', {
                     method: 'POST',
@@ -454,17 +588,22 @@ $linked_count_stmt->close();
                 })
                 .then(response => response.json())
                 .then(data => {
-                    hideLoading();
                     if (data.success) {
-                        location.reload(); // Reload to update the UI
+                        showToast(data.message || 'Product unlinked successfully!', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
                     } else {
-                        alert('Error unlinking product. Please try again.');
+                        showToast(data.message || 'Error unlinking product. Please try again.', 'error');
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
                     }
                 })
                 .catch(error => {
-                    hideLoading();
                     console.error('Error:', error);
-                    alert('Error unlinking product. Please try again.');
+                    showToast('Network error. Please try again.', 'error');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
                 });
             }
         }

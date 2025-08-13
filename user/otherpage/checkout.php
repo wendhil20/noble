@@ -73,6 +73,16 @@ $total_price = 0;
 $error = null;
 $order_success = false;
 
+// ✅ Fetch delivery settings
+$delivery_settings = null;
+$stmt = $conn->prepare("SELECT * FROM delivery_settings ORDER BY created_at DESC LIMIT 1");
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows > 0) {
+    $delivery_settings = $result->fetch_assoc();
+}
+$stmt->close();
+
 // ✅ Fetch billing addresses for the user
 $billing_addresses = [];
 $has_billing_addresses = false;
@@ -111,6 +121,38 @@ function generateReferenceNumber()
     return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
 }
 
+// ✅ Function to calculate delivery fee per item based on distance (same as sample code)
+function calculateDeliveryFeePerItem($distance_km, $delivery_settings) {
+    if (!$delivery_settings) {
+        return 0; // No delivery settings found
+    }
+    
+    $base_fee = (float) $delivery_settings['base_fee'];
+    $per_km_rate = (float) $delivery_settings['per_km_rate'];
+    $total_km_for_base = (float) $delivery_settings['total_km_base_fee'];
+    
+    if ($distance_km <= $total_km_for_base) {
+        return $base_fee;
+    } else {
+        $extra_km = $distance_km - $total_km_for_base;
+        return $base_fee + ($extra_km * $per_km_rate);
+    }
+}
+
+// ✅ Function to calculate total delivery cost for all items
+function calculateTotalDeliveryForOrder($cart_items, $distance_km, $delivery_settings) {
+    $delivery_fee_per_item = calculateDeliveryFeePerItem($distance_km, $delivery_settings);
+    $total_delivery_cost = 0;
+    
+    foreach ($cart_items as $item) {
+        $quantity = (int) $item['quantity'];
+        $item_total_delivery = $delivery_fee_per_item * $quantity;
+        $total_delivery_cost += $item_total_delivery;
+    }
+    
+    return $total_delivery_cost;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['customer_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -121,6 +163,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $billing_address_id = trim($_POST['billing_address_id'] ?? ''); // New billing address ID
     $latitude = null;
     $longitude = null;
+    $delivery_distance = (float) ($_POST['delivery_distance'] ?? 0);
+    $delivery_fee = (float) ($_POST['delivery_fee'] ?? 0);
 
     $reference_no = generateReferenceNumber();
 
@@ -175,6 +219,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $validation_errors[] = "Your cart is empty";
     }
 
+    if ($delivery_distance <= 0) {
+        $validation_errors[] = "Please calculate delivery distance first";
+    }
+
     // ✅ If billing address is selected, fetch coordinates
     if (!empty($billing_address_id) && is_numeric($billing_address_id)) {
         $stmt = $conn->prepare("SELECT latitude, longitude FROM billing_addresses WHERE id = ? AND user_id = ?");
@@ -199,9 +247,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE orders AUTO_INCREMENT = 1");
             $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
 
-            // ✅ Save order (UPDATED to include billing_address_id, latitude, longitude)
-            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssdsiddi", $name, $email, $mobile, $address, $zipcode, $payment_method, $total_price, $reference_no, $billing_address_id, $latitude, $longitude, $user_id);
+            // ✅ Calculate total with delivery fee
+            $subtotal = $total_price;
+            $grand_total = $subtotal + $delivery_fee;
+
+            // ✅ Save order (UPDATED to include delivery info)
+            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssdsiddidd", $name, $email, $mobile, $address, $zipcode, $payment_method, $grand_total, $reference_no, $billing_address_id, $latitude, $longitude, $user_id, $delivery_distance, $delivery_fee, $subtotal);
 
             if (!$stmt->execute()) {
                 throw new Exception("Failed to create order: " . $stmt->error);
@@ -210,13 +262,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $order_id = $stmt->insert_id;
             $stmt->close();
 
-            // ✅ Save each item - FIXED to handle missing product_name column
+            // ✅ Calculate delivery fee per item (same logic as sample code)
+            $delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
+
+            // ✅ Save each item with individual delivery calculations
             $stmt = $conn->prepare("INSERT INTO order_items (
-    order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             foreach ($cart_items as $item) {
-                $subtotal = $item['price'] * $item['quantity'];
+                $subtotal_item = $item['price'] * $item['quantity'];
                 $product_name = $item['product_name'] ?? $item['variant_name'];
                 $codename = $item['codename'] ?? '';
                 $type_name = $item['type_name'] ?? '';
@@ -224,17 +279,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $size = $item['size'] ?? '';
                 $price = $item['price'];
                 $quantity = $item['quantity'];
+                
+                // ✅ Calculate delivery fee per item and total delivery for this item (exactly like sample code)
+                $item_total_delivery = $delivery_fee_per_item * $quantity;
 
                 // ✅ SIMPLIFIED: Get descrip6 and descrip7 directly from cart item
                 $desc6 = $item['descrip6'] ?? '';
                 $desc7 = $item['descrip7'] ?? '';
-                $origin = $item['origin'] ?? '';  // ADD THIS LINE
+                $origin = $item['origin'] ?? '';
                 $product_id = $item['product_id'] ?? null;
 
                 $stmt->bind_param(
-                    "iisssssiiisss",
+                    "iisssssiiisissdd",
                     $order_id,
-                    $product_id,        // Add this parameter
+                    $product_id,
                     $product_name,
                     $codename,
                     $type_name,
@@ -242,10 +300,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $size,
                     $price,
                     $quantity,
-                    $subtotal,
+                    $subtotal_item,
                     $desc6,
                     $desc7,
-                    $origin
+                    $origin,
+                    $delivery_fee_per_item,
+                    $item_total_delivery
                 );
 
                 if (!$stmt->execute()) {
@@ -343,6 +403,10 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <meta charset="UTF-8">
     <title>Checkout</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -357,7 +421,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             </div>
         <?php endif; ?>
 
-        <form method="POST" class="space-y-4">
+        <form method="POST" class="space-y-4" id="checkoutForm">
 
             <!-- Customer Details -->
             <div><label class="block font-medium">Full Name</label>
@@ -417,7 +481,9 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                         data-full-name="<?= htmlspecialchars($addr['full_name']) ?>"
                                         data-phone="<?= htmlspecialchars($addr['phone']) ?>"
                                         data-address="<?= htmlspecialchars($addr['address'] . ', ' . $addr['city'] . ', ' . $addr['state'] . ', ' . $addr['country']) ?>"
-                                        data-postal-code="<?= htmlspecialchars($addr['postal_code']) ?>" />
+                                        data-postal-code="<?= htmlspecialchars($addr['postal_code']) ?>"
+                                        data-latitude="<?= $addr['latitude'] ?>"
+                                        data-longitude="<?= $addr['longitude'] ?>" />
                                     <div class="flex-1">
                                         <div class="font-medium"><?= htmlspecialchars($addr['full_name']) ?></div>
                                         <div class="text-sm text-gray-600"><?= htmlspecialchars($addr['phone']) ?></div>
@@ -490,6 +556,33 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     disabled readonly />
             </div>
 
+            <!-- ✅ NEW: Delivery Distance Calculator -->
+            <?php if ($delivery_settings && $has_billing_addresses): ?>
+            <div class="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
+                <h3 class="font-bold text-yellow-900 mb-3">Delivery Distance Calculator</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-yellow-700 mb-2">Store Location: <?= htmlspecialchars($delivery_settings['location_name']) ?></p>
+                        <button type="button" id="calculateDistance" class="bg-yellow-600 text-white px-4 py-2 rounded text-sm hover:bg-yellow-700 disabled:bg-gray-400" disabled>
+                            Calculate Distance
+                        </button>
+                        <div id="distanceResult" class="mt-3 text-sm text-gray-700"></div>
+                    </div>
+                    <div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>Base Fee:</strong> ₱<?= number_format($delivery_settings['base_fee'], 2) ?></div>
+                            <div><strong>Per KM Rate:</strong> ₱<?= number_format($delivery_settings['per_km_rate'], 2) ?></div>
+                            <div><strong>Base KM:</strong> <?= $delivery_settings['total_km_base_fee'] ?> km</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hidden inputs to store calculated values -->
+                <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
+                <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
+            </div>
+            <?php endif; ?>
+
             <!-- Payment Method Section -->
             <div class="mt-6">
                 <label class="block font-medium mb-3">Payment Method</label>
@@ -513,12 +606,13 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 </div>
             </div>
 
+            <!-- ✅ UPDATED: Order Summary with Per-Item Delivery Fee (Like Sample Code) -->
             <div class="border rounded-lg overflow-hidden bg-white max-h-[500px] flex flex-col">
 
                 <!-- Scrollable cart items -->
                 <div class="overflow-y-auto divide-y divide-gray-200 flex-1">
                     <?php foreach ($cart_items as $index => $item): ?>
-                        <div class="p-4">
+                        <div class="p-4" id="cartItem<?= $index ?>">
                             <div class="flex justify-between items-start gap-4">
                                 <!-- Left side: Product details -->
                                 <div class="flex-1 min-w-0">
@@ -543,8 +637,6 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                         <?php if (!empty($item['codename'])): ?>
                                             <div><span class="font-medium">Code:</span> <?= htmlspecialchars($item['codename']) ?></div>
                                         <?php endif; ?>
-
-
 
                                         <?php if (!empty($item['origin'])): ?>
                                             <?php
@@ -571,6 +663,14 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
+
+                                    <!-- ✅ NEW: Delivery Fee Details (Like Sample Code) -->
+                                    <div class="mt-3 p-2 bg-blue-50 rounded text-xs">
+                                        <div class="grid grid-cols-2 gap-2 text-blue-700">
+                                            <div><span class="font-medium">Delivery per item:</span> <span class="deliveryPerItem">₱0.00</span></div>
+                                            <div><span class="font-medium">Total delivery:</span> <span class="totalDeliveryForItem">₱0.00</span></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Right side: Pricing -->
@@ -581,21 +681,34 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     <div class="text-lg font-bold text-green-600">
                                         ₱<?= number_format($item['price'] * $item['quantity'], 2) ?>
                                     </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        Qty: <span class="itemQuantity"><?= $item['quantity'] ?></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Fixed Total section -->
+                <!-- Fixed Total section with detailed breakdown (Like Sample Code) -->
                 <div class="border-t bg-gray-50 p-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-lg font-semibold text-gray-900">Total:</span>
-                        <span class="text-2xl font-bold text-green-700">₱<?= number_format($total_price, 2) ?></span>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Items Subtotal:</span>
+                            <span class="font-medium">₱<?= number_format($total_price, 2) ?></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Total Delivery Cost:</span>
+                            <span class="font-medium" id="totalDeliveryCostDisplay">₱0.00</span>
+                        </div>
+                        <hr class="border-gray-300">
+                        <div class="flex justify-between items-center text-lg font-bold">
+                            <span class="text-gray-900">Grand Total (Items + Delivery):</span>
+                            <span class="text-green-700" id="grandTotalDisplay">₱<?= number_format($total_price, 2) ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
-
 
             <div class="text-sm text-gray-600 text-center mt-4">
                 By placing your order, you agree to our
@@ -605,7 +718,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             </div>
 
             <button type="submit" class="<?= !$has_billing_addresses ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700' ?> text-white px-6 py-2 rounded mt-6" <?= !$has_billing_addresses ? 'disabled' : '' ?> id="placeOrderBtn">
-                <?= !$has_billing_addresses ? 'Set up address to continue' : 'Place Order' ?>
+                <?= !$has_billing_addresses ? 'Set up address to continue' : 'Calculate delivery fee to continue' ?>
             </button>
 
             <div class="mt-4">
@@ -616,9 +729,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         </form>
     </div>
 
-
-
     <script>
+        // Global variables
+        let deliverySettings = <?= $delivery_settings ? json_encode($delivery_settings) : 'null' ?>;
+        let subtotal = <?= $total_price ?>;
+        let selectedAddress = null;
+
         // AJAX Checkout with Receipt Display
         document.addEventListener('DOMContentLoaded', function() {
             const checkoutForm = document.querySelector('form');
@@ -626,6 +742,13 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             checkoutForm.addEventListener('submit', function(e) {
                 e.preventDefault(); // Prevent normal form submission
+
+                // Check if delivery fee is calculated
+                const deliveryDistance = parseFloat(document.getElementById('deliveryDistance').value);
+                if (deliveryDistance <= 0) {
+                    alert('Please calculate delivery distance first before placing your order.');
+                    return;
+                }
 
                 // Show loading state
                 const originalText = placeOrderBtn.textContent;
@@ -709,8 +832,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             </div>
                         </div>
                         <div>
-                            <h3 class="font-bold text-gray-900 mb-3">Payment Method</h3>
-                            <div class="text-sm">${orderData.payment_method}</div>
+                            <h3 class="font-bold text-gray-900 mb-3">Payment & Delivery</h3>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-medium">Payment:</span> ${orderData.payment_method}</div>
+                                <div><span class="font-medium">Distance:</span> ${orderData.delivery_distance} km</div>
+                                <div><span class="font-medium">Delivery Fee:</span> ₱${parseFloat(orderData.delivery_fee).toFixed(2)}</div>
+                            </div>
                         </div>
                     </div>
                     
@@ -739,9 +866,20 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     
                     <!-- Total -->
                     <div class="border-t pt-4">
-                        <div class="flex justify-between items-center text-lg font-bold">
-                            <span>Total:</span>
-                            <span class="text-green-700">₱${parseFloat(orderData.total).toFixed(2)}</span>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-700">Subtotal:</span>
+                                <span class="font-medium">₱${parseFloat(orderData.subtotal).toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-700">Delivery Fee:</span>
+                                <span class="font-medium">₱${parseFloat(orderData.delivery_fee).toFixed(2)}</span>
+                            </div>
+                            <hr class="border-gray-300">
+                            <div class="flex justify-between items-center text-lg font-bold">
+                                <span>Grand Total:</span>
+                                <span class="text-green-700">₱${parseFloat(orderData.total).toFixed(2)}</span>
+                            </div>
                         </div>
                         <p class="text-sm text-gray-600 mt-2">*Final total includes 12% VAT and applicable shipping fees</p>
                     </div>
@@ -770,12 +908,14 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 modal.remove();
             }
         }
+
         // ✅ Updated Billing Address Selector JavaScript
         document.addEventListener('DOMContentLoaded', function() {
             const toggleBtn = document.getElementById('toggleBillingSelector');
             const selector = document.getElementById('billingAddressSelector');
             const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
             const placeOrderBtn = document.getElementById('placeOrderBtn');
+            const calculateDistanceBtn = document.getElementById('calculateDistance');
 
             const mobileInput = document.getElementById('mobileInput');
             const addressInput = document.getElementById('addressInput');
@@ -809,6 +949,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             billingRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
                     if (this.checked) {
+                        selectedAddress = {
+                            latitude: parseFloat(this.dataset.latitude),
+                            longitude: parseFloat(this.dataset.longitude),
+                            address: this.dataset.address
+                        };
+
                         // Clean and format mobile number
                         let phone = this.dataset.phone;
                         // Remove spaces, dashes, parentheses, plus signs
@@ -833,32 +979,122 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         addressInput.readOnly = true;
                         zipcodeInput.readOnly = true;
 
-                        // Enable the place order button when an address is selected
+                        // Enable calculate distance button
+                        if (calculateDistanceBtn) {
+                            calculateDistanceBtn.disabled = false;
+                        }
+
+                        // Update place order button text
                         if (placeOrderBtn) {
-                            placeOrderBtn.disabled = false;
-                            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                            placeOrderBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-                            placeOrderBtn.textContent = 'Place Order';
+                            placeOrderBtn.textContent = 'Calculate delivery fee to continue';
                         }
                     }
                 });
             });
 
-            // Form submission handler - no longer needed since fields are enabled
-            const checkoutForm = document.querySelector('form');
-            if (checkoutForm) {
-                checkoutForm.addEventListener('submit', function(e) {
-                    // Double-check that required fields have values before submission
-                    if (hasAddresses) {
-                        if (!mobileInput.value.trim() || !addressInput.value.trim() || !zipcodeInput.value.trim()) {
-                            e.preventDefault();
-                            alert('Please select an address before placing your order.');
-                            return false;
-                        }
+            // Calculate Distance functionality
+            if (calculateDistanceBtn) {
+                calculateDistanceBtn.addEventListener('click', function() {
+                    if (!selectedAddress || !deliverySettings) {
+                        alert('Please select an address and ensure delivery settings are available.');
+                        return;
                     }
+
+                    // Show loading
+                    calculateDistanceBtn.textContent = 'Calculating...';
+                    calculateDistanceBtn.disabled = true;
+
+                    // Calculate distance using Haversine formula
+                    const storeLatitude = parseFloat(deliverySettings.latitude);
+                    const storeLongitude = parseFloat(deliverySettings.longitude);
+                    const customerLatitude = selectedAddress.latitude;
+                    const customerLongitude = selectedAddress.longitude;
+
+                    const distance = calculateHaversineDistance(
+                        storeLatitude, storeLongitude,
+                        customerLatitude, customerLongitude
+                    );
+
+                    // ✅ Calculate delivery fee per item (exactly like sample code)
+                    const baseFee = parseFloat(deliverySettings.base_fee);
+                    const perKmRate = parseFloat(deliverySettings.per_km_rate);
+                    const baseKm = parseFloat(deliverySettings.total_km_base_fee);
+
+                    let deliveryFeePerItem;
+                    if (distance <= baseKm) {
+                        deliveryFeePerItem = baseFee;
+                    } else {
+                        const extraKm = distance - baseKm;
+                        deliveryFeePerItem = baseFee + (extraKm * perKmRate);
+                    }
+
+                    // ✅ Calculate total delivery cost for all items (exactly like sample code)
+                    let totalDeliveryCost = 0;
+                    const cartItems = document.querySelectorAll('[id^="cartItem"]');
+                    
+                    cartItems.forEach((cartItem, index) => {
+                        const quantityElement = cartItem.querySelector('.itemQuantity');
+                        const quantity = parseInt(quantityElement.textContent);
+                        
+                        // Calculate item total delivery (delivery fee per item × quantity)
+                        const itemTotalDelivery = deliveryFeePerItem * quantity;
+                        totalDeliveryCost += itemTotalDelivery;
+                        
+                        // Update UI for each item
+                        cartItem.querySelector('.deliveryPerItem').textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
+                        cartItem.querySelector('.totalDeliveryForItem').textContent = `₱${itemTotalDelivery.toFixed(2)}`;
+                    });
+
+                    // Update distance result
+                    document.getElementById('distanceResult').innerHTML = `
+                        <div class="bg-green-100 border border-green-300 rounded p-3">
+                            <div class="font-medium text-green-800">Distance: ${distance.toFixed(2)} km</div>
+                            <div class="font-medium text-green-800">Delivery Fee per Item: ₱${deliveryFeePerItem.toFixed(2)}</div>
+                            <div class="font-medium text-green-800">Total Delivery Cost: ₱${totalDeliveryCost.toFixed(2)}</div>
+                        </div>
+                    `;
+
+                    // Update hidden fields
+                    document.getElementById('deliveryDistance').value = distance.toFixed(2);
+                    document.getElementById('deliveryFee').value = totalDeliveryCost.toFixed(2);
+
+                    // ✅ Update totals display (exactly like sample code)
+                    const grandTotal = subtotal + totalDeliveryCost;
+                    document.getElementById('totalDeliveryCostDisplay').textContent = `₱${totalDeliveryCost.toFixed(2)}`;
+                    document.getElementById('grandTotalDisplay').textContent = `₱${grandTotal.toFixed(2)}`;
+
+                    // Enable place order button
+                    if (placeOrderBtn) {
+                        placeOrderBtn.disabled = false;
+                        placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        placeOrderBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                        placeOrderBtn.textContent = 'Place Order';
+                    }
+
+                    // Reset button
+                    calculateDistanceBtn.textContent = 'Recalculate Distance';
+                    calculateDistanceBtn.disabled = false;
                 });
             }
         });
+
+        // Haversine formula to calculate distance between two coordinates
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            const distance = R * c; // Distance in kilometers
+            return distance;
+        }
     </script>
 
 </body>

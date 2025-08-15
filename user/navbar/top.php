@@ -574,6 +574,76 @@ if ($user_id) {
           Shop
         </a>
 
+         <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+
+    <div x-data="chatNotif" x-init="init()" class="relative">
+      <a href="../otherpage/Chat_main.php"
+        class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
+        <i class="fas fa-envelope"></i>
+
+        <!-- Badge -->
+        <template x-if="unreadCount > 0">
+          <span
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+            x-text="unreadCount">
+          </span>
+        </template>
+      </a>
+    </div>
+
+    <!-- Notifications -->
+    <div class="relative">
+      <button
+        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
+        class="relative text-gray-600 hover:text-orange-500"
+        aria-label="Toggle notifications dropdown">
+        <i class="fas fa-bell text-xl"></i>
+        <template x-if="unreadCount > 0">
+          <span
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+            x-text="unreadCount">
+          </span>
+        </template>
+      </button>
+
+      <!-- Notification Dropdown -->
+      <div
+        x-show="notifOpen"
+        x-cloak
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 translate-y-1"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-1"
+        @click.outside="notifOpen = false"
+        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
+        <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
+          <span>Notifications</span>
+          <button
+            class="text-xs text-red-500 hover:text-red-700"
+            @click.prevent="clearNotifications()"
+            aria-label="Clear all notifications">
+            Clear All
+          </button>
+        </div>
+        <ul class="max-h-60 overflow-y-auto">
+          <template x-for="notif in notifications" :key="notif.id">
+            <li class="p-3 hover:bg-gray-50 cursor-pointer">
+              <p class="text-sm text-gray-700" x-text="notif.message"></p>
+              <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
+            </li>
+          </template>
+          <template x-if="notifications.length === 0">
+            <li class="p-3 text-sm text-gray-500">
+              No new notifications.
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
           <a href="javascript:void(0)"
@@ -1139,6 +1209,76 @@ if ($user_id) {
           Shop
         </a>
 
+                 <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+
+    <div x-data="chatNotif" x-init="init()" class="relative">
+      <a href="../otherpage/Chat_main.php"
+        class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
+        <i class="fas fa-envelope"></i>
+
+        <!-- Badge -->
+        <template x-if="unreadCount > 0">
+          <span
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+            x-text="unreadCount">
+          </span>
+        </template>
+      </a>
+    </div>
+
+    <!-- Notifications -->
+    <div class="relative">
+      <button
+        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
+        class="relative text-gray-600 hover:text-orange-500"
+        aria-label="Toggle notifications dropdown">
+        <i class="fas fa-bell text-xl"></i>
+        <template x-if="unreadCount > 0">
+          <span
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+            x-text="unreadCount">
+          </span>
+        </template>
+      </button>
+
+      <!-- Notification Dropdown -->
+      <div
+        x-show="notifOpen"
+        x-cloak
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 translate-y-1"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-1"
+        @click.outside="notifOpen = false"
+        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
+        <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
+          <span>Notifications</span>
+          <button
+            class="text-xs text-red-500 hover:text-red-700"
+            @click.prevent="clearNotifications()"
+            aria-label="Clear all notifications">
+            Clear All
+          </button>
+        </div>
+        <ul class="max-h-60 overflow-y-auto">
+          <template x-for="notif in notifications" :key="notif.id">
+            <li class="p-3 hover:bg-gray-50 cursor-pointer">
+              <p class="text-sm text-gray-700" x-text="notif.message"></p>
+              <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
+            </li>
+          </template>
+          <template x-if="notifications.length === 0">
+            <li class="p-3 text-sm text-gray-500">
+              No new notifications.
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+
         <!-- Mobile Products -->
         <div class="py-2">
           <button @click="productsOpen = !productsOpen"
@@ -1560,229 +1700,150 @@ if ($user_id) {
 
 <script src="../navbar/top-obf.js"></script>
 
+<script>
+  document.addEventListener("alpine:init", () => {
+    Alpine.data("notificationSystem", () => ({
+      notifOpen: false,
+      notifications: [],
+      unreadCount: 0,
 
-<div class="bg-white border-b shadow-sm px-4 py-2 flex items-center justify-between font-mont">
-  <div class="flex items-center gap-2">
-    <span class="text-lg font-semibold text-gray-700">Notifications</span>
-  </div>
+      fetchNotifications() {
+        fetch("../navbar/topcheck_getnotif.php", {
+            credentials: 'include' // Added credentials
+          })
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            this.notifications = data.notifications || [];
+            this.unreadCount = data.unread_count || 0;
+          })
+          .catch(error => {
+            console.error('Fetch notifications error:', error);
+            this.notifications = [];
+            this.unreadCount = 0;
+          });
+      },
 
-  <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+      markAsRead() {
+        fetch("../navbar/topcheck_getmarked.php", {
+            method: "POST",
+            credentials: 'include' // Added credentials           
+          })
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            this.unreadCount = 0;
+          })
+          .catch(error => {
+            console.error('Mark as read error:', error);
+          });
+      },
 
-<div x-data="chatNotif" x-init="init()" class="relative">
-  <a href="../otherpage/chat_main.php" 
-     class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
-    <i class="fas fa-envelope"></i>
+      clearNotifications() {
+        fetch("../navbar/topcheck_clearall.php", {
+            method: "POST",
+            credentials: 'include' // Added credentials           
+          })
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            if (data.success) {
+              this.notifications = [];
+              this.unreadCount = 0;
+              this.notifOpen = false;
+            }
+          })
+          .catch(error => {
+            console.error('Clear notifications error:', error);
+          });
+      },
 
-    <!-- Badge -->
-    <template x-if="unreadCount > 0">
-      <span 
-        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-        x-text="unreadCount">
-      </span>
-    </template>
-  </a>
-</div>
+      fetchUnread() {
+        fetch('../otherpage/chat_get_unread.php', {
+            credentials: 'include' // Added credentials
+          })
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            this.unreadCount = data.unread_count || 0;
+          })
+          .catch(error => {
+            console.error('Fetch unread error:', error);
+            this.unreadCount = 0;
+          });
+      },
 
-    <!-- Notifications -->
-    <div class="relative">
-      <button
-        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
-        class="relative text-gray-600 hover:text-orange-500"
-        aria-label="Toggle notifications dropdown">
-        <i class="fas fa-bell text-xl"></i>
-        <template x-if="unreadCount > 0">
-          <span
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-            x-text="unreadCount">
-          </span>
-        </template>
-      </button>
+      formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
 
-      <!-- Notification Dropdown -->
-      <div
-        x-show="notifOpen"
-        x-cloak
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-1"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-1"
-        @click.outside="notifOpen = false"
-        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-        <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
-          <span>Notifications</span>
-          <button
-            class="text-xs text-red-500 hover:text-red-700"
-            @click.prevent="clearNotifications()"
-            aria-label="Clear all notifications">
-            Clear All
-          </button>
-        </div>
-        <ul class="max-h-60 overflow-y-auto">
-          <template x-for="notif in notifications" :key="notif.id">
-            <li class="p-3 hover:bg-gray-50 cursor-pointer">
-              <p class="text-sm text-gray-700" x-text="notif.message"></p>
-              <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
-            </li>
-          </template>
-          <template x-if="notifications.length === 0">
-            <li class="p-3 text-sm text-gray-500">
-              No new notifications.
-            </li>
-          </template>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
+        if (diff < 172800) return 'Yesterday';
 
-<script>   
-document.addEventListener("alpine:init", () => {     
-    Alpine.data("notificationSystem", () => ({       
-        notifOpen: false,       
-        notifications: [],       
-        unreadCount: 0,        
-        
-        fetchNotifications() {         
-            fetch("../navbar/topcheck_getnotif.php", {
-                credentials: 'include'  // Added credentials
-            })           
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })           
-            .then(data => {             
-                this.notifications = data.notifications || [];             
-                this.unreadCount = data.unread_count || 0;           
-            })           
-            .catch(error => {
-                console.error('Fetch notifications error:', error);             
-                this.notifications = [];             
-                this.unreadCount = 0;           
-            });       
-        },        
-        
-        markAsRead() {         
-            fetch("../navbar/topcheck_getmarked.php", {             
-                method: "POST",
-                credentials: 'include'  // Added credentials           
-            })           
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }             
-                this.unreadCount = 0;           
-            })
-            .catch(error => {
-                console.error('Mark as read error:', error);
-            });       
-        },        
-        
-        clearNotifications() {         
-            fetch("../navbar/topcheck_clearall.php", {             
-                method: "POST",
-                credentials: 'include'  // Added credentials           
-            })           
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })           
-            .then(data => {             
-                if (data.success) {               
-                    this.notifications = [];               
-                    this.unreadCount = 0;               
-                    this.notifOpen = false;             
-                }           
-            })           
-            .catch(error => {
-                console.error('Clear notifications error:', error);           
-            });       
-        },             
-        
-        fetchUnread() {             
-            fetch('../otherpage/chat_get_unread.php', {
-                credentials: 'include'  // Added credentials
-            })               
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })               
-            .then(data => {                   
-                this.unreadCount = data.unread_count || 0;               
-            })               
-            .catch(error => {
-                console.error('Fetch unread error:', error);                   
-                this.unreadCount = 0;               
-            });         
-        },        
-        
-        formatDateTime(dateString) {         
-            if (!dateString) return '';         
-            const date = new Date(dateString);         
-            const now = new Date();         
-            const diff = Math.floor((now - date) / 1000);          
-            
-            if (diff < 60) return 'Just now';         
-            if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;         
-            if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;         
-            if (diff < 172800) return 'Yesterday';          
-            
-            const options = {           
-                year: 'numeric',           
-                month: 'short',           
-                day: 'numeric',           
-                hour: 'numeric',           
-                minute: '2-digit',           
-                hour12: true         
-            };         
-            return date.toLocaleString('en-US', options);       
-        },        
-        
-        init() {         
-            this.notifOpen = false;         
-            this.fetchNotifications();         
-            setInterval(() => {           
-                this.fetchNotifications();         
-            }, 5000);       
-        }     
-    }));   
-    
+        const options = {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        };
+        return date.toLocaleString('en-US', options);
+      },
+
+      init() {
+        this.notifOpen = false;
+        this.fetchNotifications();
+        setInterval(() => {
+          this.fetchNotifications();
+        }, 5000);
+      }
+    }));
+
     // Chat notification system
     Alpine.data('chatNotif', () => ({
-        unreadCount: 0,
-        
-        init() {
-            this.fetchUnread();
-            setInterval(() => this.fetchUnread(), 5000); // refresh every 5s
-        },
-        
-        fetchUnread() {
-            fetch('../otherpage/chat_get_unread.php', {
-                credentials: 'include'  // Added credentials
-            })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })
-            .then(data => {
-                this.unreadCount = data.unread_count || 0;
-            })
-            .catch(error => {
-                console.error('Chat fetch unread error:', error);
-                this.unreadCount = 0;
-            });
-        },
+      unreadCount: 0,
 
-       
+      init() {
+        this.fetchUnread();
+        setInterval(() => this.fetchUnread(), 5000); // refresh every 5s
+      },
+
+      fetchUnread() {
+        fetch('../otherpage/chat_get_unread.php', {
+            credentials: 'include' // Added credentials
+          })
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            this.unreadCount = data.unread_count || 0;
+          })
+          .catch(error => {
+            console.error('Chat fetch unread error:', error);
+            this.unreadCount = 0;
+          });
+      },
     }));
-});    
+  });
 </script>

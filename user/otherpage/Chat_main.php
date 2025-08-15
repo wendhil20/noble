@@ -31,6 +31,12 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
+// ✅ Session check
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../google-callback.php');
+    exit;
+}
+
 // ✅ Check if user is logged in - ADD THIS PART
 $isLoggedIn = isset($_SESSION['user_id']);
 

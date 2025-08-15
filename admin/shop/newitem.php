@@ -101,11 +101,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
 
+        // UPDATED: Handle subcategory by name instead of ID
         if (!empty($_POST['bulk_subcategory'])) {
-            $subcatId = intval($_POST['bulk_subcategory']);
-            $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ? WHERE id IN (" . implode(',', $ids) . ")");
-            $stmt->bind_param("i", $subcatId);
-            $stmt->execute();
+            $subcatName = $_POST['bulk_subcategory'];
+            // First get the ID of the subcategory by name
+            $subcatQuery = $conn->prepare("SELECT id FROM categorysub WHERE name = ?");
+            $subcatQuery->bind_param("s", $subcatName);
+            $subcatQuery->execute();
+            $subcatResult = $subcatQuery->get_result();
+            
+            if ($subcatResult->num_rows > 0) {
+                $subcatData = $subcatResult->fetch_assoc();
+                $subcatId = $subcatData['id'];
+                
+                $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ? WHERE id IN (" . implode(',', $ids) . ")");
+                $stmt->bind_param("i", $subcatId);
+                $stmt->execute();
+            }
         }
 
         // NEW: Auto-sync categories based on product codename
@@ -149,7 +161,6 @@ if (isset($_GET['sync_complete']) && isset($_GET['message'])) {
     $sync_message = urldecode($_GET['message']);
 }
 
-
 $status_filter = $_GET['status'] ?? '';
 $origin_filter = $_GET['origin'] ?? '';
 $category_filter = $_GET['category'] ?? '';
@@ -186,8 +197,19 @@ if ($origin_filter === 'local' || $origin_filter === 'international') {
 if (is_numeric($category_filter)) {
     $query .= " AND pv.category_id = " . intval($category_filter);
 }
-if (is_numeric($subcategory_filter)) {
-    $query .= " AND pv.subcategory_id = " . intval($subcategory_filter);
+
+// UPDATED: Update the subcategory filter to work with names
+if (!empty($subcategory_filter)) {
+    // Convert name to ID for the query
+    $subcatQuery = $conn->prepare("SELECT id FROM categorysub WHERE name = ?");
+    $subcatQuery->bind_param("s", $subcategory_filter);
+    $subcatQuery->execute();
+    $subcatResult = $subcatQuery->get_result();
+    
+    if ($subcatResult->num_rows > 0) {
+        $subcatData = $subcatResult->fetch_assoc();
+        $query .= " AND pv.subcategory_id = " . intval($subcatData['id']);
+    }
 }
 
 // Add filter for category sync status
@@ -226,7 +248,19 @@ $counts = $count_result->fetch_assoc();
   <script>
     function toggleSelectAll(source) {
       const checkboxes = document.querySelectorAll('.variant-checkbox');
-      checkboxes.forEach(cb => cb.checked = source.checked);
+      checkboxes.forEach(cb => {
+        cb.checked = source.checked;
+        
+        // Update visual feedback for each card
+        const cardId = 'card-' + cb.value;
+        const card = document.getElementById(cardId);
+        
+        if (cb.checked) {
+          card.classList.add('ring-2', 'ring-orange-500', 'bg-orange-50');
+        } else {
+          card.classList.remove('ring-2', 'ring-orange-500', 'bg-orange-50');
+        }
+      });
     }
 
     // Function to handle card clicks
@@ -235,10 +269,36 @@ $counts = $count_result->fetch_assoc();
       checkbox.checked = !checkbox.checked;
       
       // Update visual feedback
-      if (checkbox.checked) {
+      updateCardVisualState(cardElement, checkbox.checked);
+      
+      // Update "Select All" checkbox state
+      updateSelectAllState();
+    }
+
+    // Function to update card visual state
+    function updateCardVisualState(cardElement, isChecked) {
+      if (isChecked) {
         cardElement.classList.add('ring-2', 'ring-orange-500', 'bg-orange-50');
       } else {
         cardElement.classList.remove('ring-2', 'ring-orange-500', 'bg-orange-50');
+      }
+    }
+
+    // Function to update "Select All" checkbox state
+    function updateSelectAllState() {
+      const selectAllCheckbox = document.querySelector('input[onclick*="toggleSelectAll"]');
+      const checkboxes = document.querySelectorAll('.variant-checkbox');
+      const checkedBoxes = document.querySelectorAll('.variant-checkbox:checked');
+      
+      if (checkedBoxes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+      } else if (checkedBoxes.length === checkboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+      } else {
+        selectAllCheckbox.indeterminate = true;
+        selectAllCheckbox.checked = false;
       }
     }
 
@@ -249,19 +309,18 @@ $counts = $count_result->fetch_assoc();
         const cardId = 'card-' + checkbox.value;
         const card = document.getElementById(cardId);
         
-        if (checkbox.checked) {
-          card.classList.add('ring-2', 'ring-orange-500', 'bg-orange-50');
-        }
+        // Set initial visual state
+        updateCardVisualState(card, checkbox.checked);
         
         // Add click event listener to checkbox to update visual state
         checkbox.addEventListener('change', function() {
-          if (this.checked) {
-            card.classList.add('ring-2', 'ring-orange-500', 'bg-orange-50');
-          } else {
-            card.classList.remove('ring-2', 'ring-orange-500', 'bg-orange-50');
-          }
+          updateCardVisualState(card, this.checked);
+          updateSelectAllState();
         });
       });
+      
+      // Initialize "Select All" state
+      updateSelectAllState();
     });
   </script>
 </head>
@@ -338,6 +397,7 @@ $counts = $count_result->fetch_assoc();
       </select>
     </div>
 
+    <!-- UPDATED: Subcategory dropdown now uses names as values -->
     <div>
       <label class="text-sm font-medium text-gray-700">Subcategory:</label>
       <select name="subcategory" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
@@ -345,7 +405,7 @@ $counts = $count_result->fetch_assoc();
         <?php
         $subcategory_result->data_seek(0);
         while ($sub = $subcategory_result->fetch_assoc()): ?>
-          <option value="<?= $sub['id'] ?>" <?= $subcategory_filter == $sub['id'] ? 'selected' : '' ?>>
+          <option value="<?= htmlspecialchars($sub['name']) ?>" <?= $subcategory_filter === $sub['name'] ? 'selected' : '' ?>>
             <?= htmlspecialchars($sub['name']) ?>
           </option>
         <?php endwhile; ?>
@@ -394,12 +454,13 @@ $counts = $count_result->fetch_assoc();
           <?php endwhile; ?>
         </select>
 
+        <!-- UPDATED: Subcategory dropdown now uses names as values -->
         <select name="bulk_subcategory" class="border rounded px-2 py-1 text-sm">
           <option value="">Change Subcategory</option>
           <?php
           $subcategory_result->data_seek(0);
           while ($sub = $subcategory_result->fetch_assoc()): ?>
-            <option value="<?= $sub['id'] ?>"><?= htmlspecialchars($sub['name']) ?></option>
+            <option value="<?= htmlspecialchars($sub['name']) ?>"><?= htmlspecialchars($sub['name']) ?></option>
           <?php endwhile; ?>
         </select>
 
@@ -523,7 +584,5 @@ $counts = $count_result->fetch_assoc();
 }
 </style>
 
-
 </body>
-
 </html>

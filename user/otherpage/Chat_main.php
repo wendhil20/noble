@@ -31,11 +31,15 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
-// ✅ Final session check
-if (!isset($_SESSION['user_id'])) {
-  // Not logged in — redirect to login or Google auth
-  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
-  exit;
+// ✅ Check if user is logged in - ADD THIS PART
+$isLoggedIn = isset($_SESSION['user_id']);
+
+// ❌ If not logged in, show login message instead of redirecting
+if (!$isLoggedIn) {
+  // Don't redirect, just set a flag to show login message
+  $showLoginMessage = true;
+} else {
+  $showLoginMessage = false;
 }
 
 ?>
@@ -367,7 +371,8 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 
 
-<body class="bg-orange-400">
+<body class="bg-orange-400"> 
+
   <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
@@ -375,6 +380,73 @@ if (!isset($_SESSION['user_id'])) {
         <h1 class="text-2xl sm:text-4xl font-bold text-white mb-2">Customer Support</h1>
         <p class="text-white/80 text-sm sm:text-lg px-4">Connect with our sales representatives for assistance</p>
       </div>
+
+<?php if (!$isLoggedIn): ?>
+  <!-- Login Required Message -->
+  <div class="text-center py-20">
+    <h2 class="text-3xl font-bold text-white mb-4">Please Sign In First</h2>
+    <p class="text-white/80 mb-8">You need to be logged in to access customer support chat.</p>
+    
+    <!-- Sign In Button na mag-close ng modal at mag-redirect -->
+    <button 
+      onclick="closeModalAndRedirect()" 
+      class="bg-white text-orange-500 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+      Return 
+    </button>
+  </div>
+
+  <script>
+    function closeModalAndRedirect() {
+      // Method 1: Try to close modal via parent window
+      if (window.parent && window.parent !== window) {
+        // Inform parent to close modal
+        window.parent.postMessage({
+          action: 'closeModal',
+          redirect: 'index.php'
+        }, '*');
+        
+        // Backup: Close modal directly if accessible
+        try {
+          // Common modal close methods
+          if (window.parent.closeModal) {
+            window.parent.closeModal();
+          } else if (window.parent.jQuery && window.parent.jQuery('.modal').modal) {
+            window.parent.jQuery('.modal').modal('hide');
+          } else if (window.parent.bootstrap && window.parent.bootstrap.Modal) {
+            const modals = window.parent.document.querySelectorAll('.modal.show');
+            modals.forEach(modal => {
+              const modalInstance = window.parent.bootstrap.Modal.getInstance(modal);
+              if (modalInstance) modalInstance.hide();
+            });
+          }
+        } catch (e) {
+          console.log('Could not access parent modal directly');
+        }
+        
+        // Then redirect parent page
+        setTimeout(() => {
+          window.parent.location.href = 'index.php';
+        }, 500);
+        
+      } else {
+        // Fallback: Direct redirect if not in iframe
+        window.location.href = 'index.php';
+      }
+    }
+
+    // Alternative: Auto-detect and close modal on page load
+    window.addEventListener('load', function() {
+      // Send message to parent that login is required
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          action: 'loginRequired',
+          message: 'User needs to sign in to access chat support'
+        }, '*');
+      }
+    });
+  </script>
+
+<?php else: ?>
 
       <!-- Main Chat Container -->
       <div x-data="chatSupport()" x-init="init()" class="main-container rounded-2xl overflow-hidden shadow-2xl">
@@ -680,6 +752,7 @@ if (!isset($_SESSION['user_id'])) {
           </div>
         </div>
       </div>
+      <?php endif; ?>
     </div>
   </div>
 

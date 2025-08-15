@@ -2,7 +2,6 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 include '../../connection/connect.php';
 
 $cart = $_SESSION['cart'] ?? [];
@@ -32,6 +31,7 @@ if ($user_id) {
 ?>
 
 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
+
 
 <!-- Tailwind + Alpine CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -153,8 +153,6 @@ if ($user_id) {
       <img src="../img/logo.png" alt="Loading" loading="lazy" class="bg-white w-20 h-20 object-contain rounded-full shadow-md z-10 p-2" />
     </div>
   </div>
-
-
 </div>
 
 <div class="bg-black text-white py-3 text-xs sm:text-sm">
@@ -332,8 +330,8 @@ if ($user_id) {
       <!-- Desktop Navigation -->
       <div class="hidden lg:flex space-x-6 items-center uppercase">
 
-       <!-- Search component -->
-<div x-data="{
+        <!-- Search component -->
+        <div x-data="{
     search: '',
     results: [],
     fetchResults() {
@@ -352,45 +350,41 @@ if ($user_id) {
     }
 }" class="relative w-64 md:w-96 font-mont">
 
-  <div class="flex items-center space-x-2">
-    <input
-      type="text"
-      x-model="search"
-      @input.debounce.300ms="fetchResults"
-      placeholder="Search products..."
-      class="border border-gray-300 px-3 py-1.5 rounded w-full text-sm outline-orange-500"
-      autocomplete="off"
-    >
-    <button
-      @click="fetchResults"
-      class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition"
-    >
-      Search
-    </button>
-  </div>
+          <div class="flex items-center space-x-2">
+            <input
+              type="text"
+              x-model="search"
+              @input.debounce.300ms="fetchResults"
+              placeholder="Search products..."
+              class="border border-gray-300 px-3 py-1.5 rounded w-full text-sm outline-orange-500"
+              autocomplete="off">
+            <button
+              @click="fetchResults"
+              class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition">
+              Search
+            </button>
+          </div>
 
-  <div
-    x-show="results.length > 0"
-    x-cloak
-    @click.away="results = []"
-    class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200"
-  >
-    <ul>
-      <template x-for="item in results" :key="item.id">
-        <li class="border-b last:border-0">
-          <a
-            :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
-            class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700"
-          >
-            <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
-            <span x-text="item.product_name"></span>
-          </a>
-        </li>
-      </template>
-    </ul>
-  </div>
+          <div
+            x-show="results.length > 0"
+            x-cloak
+            @click.away="results = []"
+            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200">
+            <ul>
+              <template x-for="item in results" :key="item.id">
+                <li class="border-b last:border-0">
+                  <a
+                    :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
+                    class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
+                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+                    <span x-text="item.product_name"></span>
+                  </a>
+                </li>
+              </template>
+            </ul>
+          </div>
 
-</div>
+        </div>
 
         <!-- Products Dropdown -->
         <div class="relative">
@@ -400,7 +394,7 @@ if ($user_id) {
             class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
             <div class="w-1/2 border-r p-4 space-y-2 font-mont">
               <button @mouseenter="selectedCategory = 'materials'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Materials</button>
+                class="block w-full text-left hover:text-orange-500 text-sm">Materials Boards</button>
               <button @mouseenter="selectedCategory = 'furniture'"
                 class="block w-full text-left hover:text-orange-500 text-sm">Furniture</button>
               <button @mouseenter="selectedCategory = 'Tiles'"
@@ -428,62 +422,22 @@ if ($user_id) {
               <template x-if="selectedCategory === 'materials'">
                 <div class="space-y-1">
                   <!-- Panels -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('wpc-panels')"
-                    class="block hover:text-orange-500 text-sm">WPC Panels</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('pvc-panels')"
-                    class="block hover:text-orange-500 text-sm">PVC Panels</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('mdf-panels')"
-                    class="block hover:text-orange-500 text-sm">MDF Panels</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('acoustic-panels')"
-                    class="block hover:text-orange-500 text-sm">Acoustic Panels</a>
-
-                  <!-- Flooring -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('laminate-flooring')"
-                    class="block hover:text-orange-500 text-sm">Laminate Flooring</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('vinyl-flooring')"
-                    class="block hover:text-orange-500 text-sm">Vinyl Flooring</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('hardwood-flooring')"
-                    class="block hover:text-orange-500 text-sm">Hardwood Flooring</a>
-
+                  <a href="allproduct.php?category=materials&sub=wpcpanels" class="block hover:text-orange-500 text-sm">WPC Panels</a>
+                  <a href="allproduct.php?category=materials&sub=pvcpanels" class="block hover:text-orange-500 text-sm">PVC Panels</a>
                 </div>
               </template>
+
+
 
               <!-- Furniture -->
               <template x-if="selectedCategory === 'furniture'">
                 <div class="space-y-1">
                   <!-- Living Room -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('sofas')"
-                    class="block hover:text-orange-500 text-sm">Sofas</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('armchairs')"
-                    class="block hover:text-orange-500 text-sm">Armchairs</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('coffee-tables')"
-                    class="block hover:text-orange-500 text-sm">Coffee Tables</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('tv-stands')"
-                    class="block hover:text-orange-500 text-sm">TV Stands</a>
-
+                  <a href="allproduct.php?category=furniture&sub=sofas" class="block hover:text-orange-500 text-sm">Sofas</a>
+                  <a href="allproduct.php?category=furniture&sub=table" class="block hover:text-orange-500 text-sm">Coffee Tables</a>
                   <!-- Dining -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('dining-tables')"
-                    class="block hover:text-orange-500 text-sm">Dining Tables</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('dining-chairs')"
-                    class="block hover:text-orange-500 text-sm">Dining Chairs</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bar-stools')"
-                    class="block hover:text-orange-500 text-sm">Bar Stools</a>
-
-                  <!-- Bedroom -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('beds')"
-                    class="block hover:text-orange-500 text-sm">Beds</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
-                    class="block hover:text-orange-500 text-sm">Wardrobes</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
-                    class="block hover:text-orange-500 text-sm">Bedside Tables</a>
-
-                  <!-- Office -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('office-chairs')"
-                    class="block hover:text-orange-500 text-sm">Office Chairs</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('desks')"
-                    class="block hover:text-orange-500 text-sm">Desks</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bookshelves')"
-                    class="block hover:text-orange-500 text-sm">Bookshelves</a>
+                  <a href="allproduct.php?category=furniture&sub=dining-tables" class="block hover:text-orange-500 text-sm">Dining Tables</a>
+                  <a href="allproduct.php?category=furniture&sub=dining-chairs" class="block hover:text-orange-500 text-sm">Dining Chairs</a>
                 </div>
               </template>
 
@@ -491,34 +445,8 @@ if ($user_id) {
               <template x-if="selectedCategory === 'Tiles'">
                 <div class="space-y-1">
                   <!-- Material -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('ceramic-tiles')"
-                    class="block hover:text-orange-500 text-sm">Ceramic Tiles</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('porcelain-tiles')"
-                    class="block hover:text-orange-500 text-sm">Porcelain Tiles</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('mosaic-tiles')"
-                    class="block hover:text-orange-500 text-sm">Mosaic Tiles</a>
-
-                  <!-- Design / Finish -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('glossy-tiles')"
-                    class="block hover:text-orange-500 text-sm">Glossy Finish</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('matte-tiles')"
-                    class="block hover:text-orange-500 text-sm">Matte Finish</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('wood-look-tiles')"
-                    class="block hover:text-orange-500 text-sm">Wood Look</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('marble-look-tiles')"
-                    class="block hover:text-orange-500 text-sm">Marble Look</a>
-
-                  <!-- Purpose / Location -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('floor-tiles')"
-                    class="block hover:text-orange-500 text-sm">Floor Tiles</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('wall-tiles')"
-                    class="block hover:text-orange-500 text-sm">Wall Tiles</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-tiles')"
-                    class="block hover:text-orange-500 text-sm">Bathroom Tiles</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('kitchen-tiles')"
-                    class="block hover:text-orange-500 text-sm">Kitchen Tiles</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('outdoor-tiles')"
-                    class="block hover:text-orange-500 text-sm">Outdoor Tiles</a>
+                  <a href="allproduct.php?category=Tiles&sub=polishtiles" class="block hover:text-orange-500 text-sm">Polish Tiles</a>
+                  <a href="allproduct.php?category=Tiles&sub=mattetiles" class="block hover:text-orange-500 text-sm">Matte Tiles</a>
                 </div>
               </template>
 
@@ -672,7 +600,7 @@ if ($user_id) {
                   <span class="bg-white/20 px-2 py-1 rounded-full text-sm font-medium" id="modal-cart-count">
                     <?= $total_cart_items ?> items
                   </span>
-             
+
                 </div>
               </div>
             </div>
@@ -1641,14 +1569,13 @@ if ($user_id) {
   <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
     <!-- Notifications -->
     <div class="relative">
-      <button 
-        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()" 
+      <button
+        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
         class="relative text-gray-600 hover:text-orange-500"
-        aria-label="Toggle notifications dropdown"
-      >
+        aria-label="Toggle notifications dropdown">
         <i class="fas fa-bell text-xl"></i>
         <template x-if="unreadCount > 0">
-          <span 
+          <span
             class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
             x-text="unreadCount">
           </span>
@@ -1656,9 +1583,9 @@ if ($user_id) {
       </button>
 
       <!-- Notification Dropdown -->
-      <div 
-        x-show="notifOpen" 
-        x-cloak 
+      <div
+        x-show="notifOpen"
+        x-cloak
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 translate-y-1"
         x-transition:enter-end="opacity-100 translate-y-0"
@@ -1666,15 +1593,13 @@ if ($user_id) {
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-1"
         @click.outside="notifOpen = false"
-        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50"
-      >
+        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
         <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
           <span>Notifications</span>
-          <button 
-            class="text-xs text-red-500 hover:text-red-700" 
+          <button
+            class="text-xs text-red-500 hover:text-red-700"
             @click.prevent="clearNotifications()"
-            aria-label="Clear all notifications"
-          >
+            aria-label="Clear all notifications">
             Clear All
           </button>
         </div>
@@ -1697,72 +1622,80 @@ if ($user_id) {
 </div>
 
 <script>
-document.addEventListener("alpine:init", () => {
-  Alpine.data("notificationSystem", () => ({
-    notifOpen: false,
-    notifications: [],
-    unreadCount: 0,
+  document.addEventListener("alpine:init", () => {
+    Alpine.data("notificationSystem", () => ({
+      notifOpen: false,
+      notifications: [],
+      unreadCount: 0,
 
-    fetchNotifications() {
-      fetch("../navbar/topcheck_getnotif.php")
-        .then(res => res.json())
-        .then(data => {
-          this.notifications = data.notifications || [];
-          this.unreadCount = data.unread_count || 0;
-        })
-        .catch(() => {
-          this.notifications = [];
-          this.unreadCount = 0;
-        });
-    },
-
-    markAsRead() {
-      fetch("../navbar/topcheck_getmarked.php", { method: "POST" })
-        .then(() => {
-          this.unreadCount = 0;
-        });
-    },
-
-    clearNotifications() {
-      fetch("../navbar/topcheck_clearall.php", { method: "POST" })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
+      fetchNotifications() {
+        fetch("../navbar/topcheck_getnotif.php")
+          .then(res => res.json())
+          .then(data => {
+            this.notifications = data.notifications || [];
+            this.unreadCount = data.unread_count || 0;
+          })
+          .catch(() => {
             this.notifications = [];
             this.unreadCount = 0;
-            this.notifOpen = false;
-          }
-        })
-        .catch(() => {
-          // silently fail
-        });
-    },
+          });
+      },
 
-    formatDateTime(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      const now = new Date();
-      const diff = Math.floor((now - date) / 1000);
+      markAsRead() {
+        fetch("../navbar/topcheck_getmarked.php", {
+            method: "POST"
+          })
+          .then(() => {
+            this.unreadCount = 0;
+          });
+      },
 
-      if (diff < 60) return 'Just now';
-      if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
-      if (diff < 172800) return 'Yesterday';
+      clearNotifications() {
+        fetch("../navbar/topcheck_clearall.php", {
+            method: "POST"
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              this.notifications = [];
+              this.unreadCount = 0;
+              this.notifOpen = false;
+            }
+          })
+          .catch(() => {
+            // silently fail
+          });
+      },
 
-      const options = { 
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: 'numeric', minute: '2-digit', hour12: true 
-      };
-      return date.toLocaleString('en-US', options);
-    },
+      formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
 
-    init() {
-      this.notifOpen = false;
-      this.fetchNotifications();
-      setInterval(() => {
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
+        if (diff < 172800) return 'Yesterday';
+
+        const options = {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        };
+        return date.toLocaleString('en-US', options);
+      },
+
+      init() {
+        this.notifOpen = false;
         this.fetchNotifications();
-      }, 5000);
-    }
-  }));
-});
-</script>
+        setInterval(() => {
+          this.fetchNotifications();
+        }, 5000);
+      }
+    }));
+  }); 
+  </script>

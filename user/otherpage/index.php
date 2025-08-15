@@ -216,11 +216,12 @@ $slideresult = $conn->query($sql);
     <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet" />
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Alpine.js CDN -->
     <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <script>
         // Function to hide the notification after 5 seconds
@@ -1172,6 +1173,133 @@ $slideresult = $conn->query($sql);
     </section>
 
 
+
+    <section class="w-full mx-auto p-4 space-y-6">
+        <!-- Section Title -->
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-bold text-black mb-2 relative">
+                Noble Home Depot Background
+                <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-orange-400 rounded-full"></div>
+            </h2>
+            <p class="text-orange-400 text-base max-w-xl mx-auto mt-3">
+                Discover our premium collection through immersive video experiences
+            </p>
+        </div>
+
+        <!-- Video Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
+
+            <!-- Video Item 1 -->
+            <div class="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div class="relative group mb-3">
+                    <div class="overflow-hidden rounded-lg mx-auto" style="aspect-ratio: 9/16; max-height: 350px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/a.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-black mb-1">WPC Wall Panel</h3>
+                    <p class="text-gray-600 text-sm mb-2">
+                        Durable, waterproof panels perfect for modern interior designs.
+                    </p>
+                    <span class="bg-orange-400 text-white px-3 py-1 rounded-full text-xs font-medium">
+                        Premium Quality
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Item 2 -->
+            <div class="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div class="relative group mb-3">
+                    <div class="overflow-hidden rounded-lg mx-auto" style="aspect-ratio: 9/16; max-height: 350px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/b.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-black mb-1">Interior Inspirations</h3>
+                    <p class="text-gray-600 text-sm mb-2">
+                        Curated interior styling ideas and design concepts for your space.
+                    </p>
+                    <span class="bg-orange-400 text-white px-3 py-1 rounded-full text-xs font-medium">
+                        Design Ideas
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Item 3 -->
+            <div class="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div class="relative group mb-3">
+                    <div class="overflow-hidden rounded-lg" style="aspect-ratio: 16/9; max-height: 350px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/c.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-black mb-1">Product Highlights</h3>
+                    <p class="text-gray-600 text-sm mb-2">
+                        Featured items and their real-world applications in stunning detail.
+                    </p>
+                    <span class="bg-orange-400 text-white px-3 py-1 rounded-full text-xs font-medium">
+                        Featured Products
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Item 4 -->
+            <div class="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div class="relative group mb-3">
+                    <div class="overflow-hidden rounded-lg" style="aspect-ratio: 16/9; max-height: 350px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/d.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-black mb-1">Behind the Scenes</h3>
+                    <p class="text-gray-600 text-sm mb-2">
+                        Our team and process behind exceptional work and quality standards.
+                    </p>
+                    <span class="bg-orange-400 text-white px-3 py-1 rounded-full text-xs font-medium">
+                        Our Process
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .aspect-9\/16 {
+            aspect-ratio: 9/16;
+        }
+    </style>
+
+
     <section class="p-3 w-full">
         <div class="text-center mb-10 relative">
             <!-- Multiple Bouncing Bubbles Background -->
@@ -1441,6 +1569,38 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
+    <section class="p-6"> <!-- Section Title -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold">Featured Categories</h1>
+            <p class="text-gray-600">Discover our top product categories just for you.</p>
+        </div> <!-- Boxes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> <!-- Top Left -->
+            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat1.png" alt="Box 1 Image" class="w-full h-32 object-contain bg-white">
+                <div class="p-3 text-center">
+                    <h2 class="text-lg font-semibold mb-1">Doors</h2>
+                    <p class="text-gray-600 text-sm">Stylish and durable doors to match every home design.</p>
+                </div>
+            </div> <!-- Top Right -->
+            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat2.webp" alt="Box 2 Image" class="w-full h-32 object-contain bg-white">
+                <div class="p-3 text-center">
+                    <h2 class="text-lg font-semibold mb-1">Aircon</h2>
+                    <p class="text-gray-600 text-sm">Energy-efficient air conditioners to keep your space cool.</p>
+                </div>
+            </div> <!-- Bottom Left -->
+            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat3.png" alt="Box 3 Image" class="w-full h-32 object-contain bg-white">
+                <div class="p-3 text-center">
+                    <h2 class="text-lg font-semibold mb-1">Bathroom Fixtures</h2>
+                    <p class="text-gray-600 text-sm">Modern fixtures for a stylish and functional bathroom.</p>
+                </div>
+            </div> <!-- Bottom Right -->
+            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat4.png" alt="Box 4 Image" class="w-full h-32 object-contain bg-white">
+                <div class="p-3 text-center">
+                    <h2 class="text-lg font-semibold mb-1">Tiles</h2>
+                    <p class="text-gray-600 text-sm">Premium tiles in various designs and textures for any space.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
         <!-- Header -->
@@ -1705,47 +1865,40 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
-    <section id="contact" class="p-3 bg-gray-100">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">Contact Us</h2>
-                <p class="text-gray-600">Get in touch with us for your construction and furniture needs</p>
+<section x-data="{ showModal: false }">
+    <!-- Trigger Button -->
+    <button 
+        @click="showModal = true" 
+        class="fixed bottom-6 right-6 px-4 py-3 bg-orange-400 text-white rounded-full shadow-lg hover:bg-orange-500 transition z-50">
+        Chat Support
+    </button>
+
+    <!-- Modal Overlay -->
+    <div 
+        x-show="showModal" 
+        x-cloak
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
+    >
+        <!-- Modal Box -->
+        <div class="bg-white w-11/12 md:w-3/4 lg:w-1/2 rounded-xl overflow-hidden shadow-lg relative z-[10000]">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-4 py-2 bg-gray-100 border-b">
+                <h2 class="text-lg font-semibold">Chat Support</h2>
+                <button @click="showModal = false" class="text-gray-500 hover:text-red-500 text-xl font-bold">
+                    ✕
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="font-semibold text-gray-800 mb-2">Address</h3>
-                    <p class="text-gray-600 text-sm">MC Premier - 1181 EDSA Balintawak, Quezon City 1008 Quezon City,</p>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="font-semibold text-gray-800 mb-2">Phone</h3>
-                    <p class="text-gray-600 text-sm">0968 591 6536</p>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="font-semibold text-gray-800 mb-2">Email</h3>
-                    <p class="text-gray-600 text-sm">noblehomeconst.ph@gmail.com</p>
-                </div>
-            </div>
+            <!-- Iframe -->
+            <iframe 
+                src="chat_main.php" 
+                class="w-full h-[500px]" 
+                frameborder="0">
+            </iframe>
         </div>
-    </section>
+    </div>
+</section>
+
 
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">

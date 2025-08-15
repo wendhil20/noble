@@ -1567,6 +1567,22 @@ if ($user_id) {
   </div>
 
   <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+
+<div x-data="chatNotif" x-init="init()" class="relative">
+  <a href="../otherpage/chat_main.php" 
+     class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
+    <i class="fas fa-envelope"></i>
+
+    <!-- Badge -->
+    <template x-if="unreadCount > 0">
+      <span 
+        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+        x-text="unreadCount">
+      </span>
+    </template>
+  </a>
+</div>
+
     <!-- Notifications -->
     <div class="relative">
       <button
@@ -1621,81 +1637,152 @@ if ($user_id) {
   </div>
 </div>
 
-<script>
-  document.addEventListener("alpine:init", () => {
-    Alpine.data("notificationSystem", () => ({
-      notifOpen: false,
-      notifications: [],
-      unreadCount: 0,
+<script>   
+document.addEventListener("alpine:init", () => {     
+    Alpine.data("notificationSystem", () => ({       
+        notifOpen: false,       
+        notifications: [],       
+        unreadCount: 0,        
+        
+        fetchNotifications() {         
+            fetch("../navbar/topcheck_getnotif.php", {
+                credentials: 'include'  // Added credentials
+            })           
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })           
+            .then(data => {             
+                this.notifications = data.notifications || [];             
+                this.unreadCount = data.unread_count || 0;           
+            })           
+            .catch(error => {
+                console.error('Fetch notifications error:', error);             
+                this.notifications = [];             
+                this.unreadCount = 0;           
+            });       
+        },        
+        
+        markAsRead() {         
+            fetch("../navbar/topcheck_getmarked.php", {             
+                method: "POST",
+                credentials: 'include'  // Added credentials           
+            })           
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }             
+                this.unreadCount = 0;           
+            })
+            .catch(error => {
+                console.error('Mark as read error:', error);
+            });       
+        },        
+        
+        clearNotifications() {         
+            fetch("../navbar/topcheck_clearall.php", {             
+                method: "POST",
+                credentials: 'include'  // Added credentials           
+            })           
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })           
+            .then(data => {             
+                if (data.success) {               
+                    this.notifications = [];               
+                    this.unreadCount = 0;               
+                    this.notifOpen = false;             
+                }           
+            })           
+            .catch(error => {
+                console.error('Clear notifications error:', error);           
+            });       
+        },             
+        
+        fetchUnread() {             
+            fetch('../otherpage/chat_get_unread.php', {
+                credentials: 'include'  // Added credentials
+            })               
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })               
+            .then(data => {                   
+                this.unreadCount = data.unread_count || 0;               
+            })               
+            .catch(error => {
+                console.error('Fetch unread error:', error);                   
+                this.unreadCount = 0;               
+            });         
+        },        
+        
+        formatDateTime(dateString) {         
+            if (!dateString) return '';         
+            const date = new Date(dateString);         
+            const now = new Date();         
+            const diff = Math.floor((now - date) / 1000);          
+            
+            if (diff < 60) return 'Just now';         
+            if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;         
+            if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;         
+            if (diff < 172800) return 'Yesterday';          
+            
+            const options = {           
+                year: 'numeric',           
+                month: 'short',           
+                day: 'numeric',           
+                hour: 'numeric',           
+                minute: '2-digit',           
+                hour12: true         
+            };         
+            return date.toLocaleString('en-US', options);       
+        },        
+        
+        init() {         
+            this.notifOpen = false;         
+            this.fetchNotifications();         
+            setInterval(() => {           
+                this.fetchNotifications();         
+            }, 5000);       
+        }     
+    }));   
+    
+    // Chat notification system
+    Alpine.data('chatNotif', () => ({
+        unreadCount: 0,
+        
+        init() {
+            this.fetchUnread();
+            setInterval(() => this.fetchUnread(), 5000); // refresh every 5s
+        },
+        
+        fetchUnread() {
+            fetch('../otherpage/chat_get_unread.php', {
+                credentials: 'include'  // Added credentials
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                this.unreadCount = data.unread_count || 0;
+            })
+            .catch(error => {
+                console.error('Chat fetch unread error:', error);
+                this.unreadCount = 0;
+            });
+        },
 
-      fetchNotifications() {
-        fetch("../navbar/topcheck_getnotif.php")
-          .then(res => res.json())
-          .then(data => {
-            this.notifications = data.notifications || [];
-            this.unreadCount = data.unread_count || 0;
-          })
-          .catch(() => {
-            this.notifications = [];
-            this.unreadCount = 0;
-          });
-      },
-
-      markAsRead() {
-        fetch("../navbar/topcheck_getmarked.php", {
-            method: "POST"
-          })
-          .then(() => {
-            this.unreadCount = 0;
-          });
-      },
-
-      clearNotifications() {
-        fetch("../navbar/topcheck_clearall.php", {
-            method: "POST"
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              this.notifications = [];
-              this.unreadCount = 0;
-              this.notifOpen = false;
-            }
-          })
-          .catch(() => {
-            // silently fail
-          });
-      },
-
-      formatDateTime(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const now = new Date();
-        const diff = Math.floor((now - date) / 1000);
-
-        if (diff < 60) return 'Just now';
-        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
-        if (diff < 172800) return 'Yesterday';
-
-        const options = {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        };
-        return date.toLocaleString('en-US', options);
-      },
-
-      init() {
-        this.notifOpen = false;
-        this.fetchNotifications();
-        setInterval(() => {
-          this.fetchNotifications();
-        }, 5000);
-      }
+       
     }));
-  }); 
-  </script>
+});    
+</script>

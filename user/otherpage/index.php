@@ -1865,41 +1865,6 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
-<section x-data="{ showModal: false }">
-    <!-- Trigger Button -->
-    <button 
-        @click="showModal = true" 
-        class="fixed bottom-6 right-6 px-4 py-3 bg-orange-400 text-white rounded-full shadow-lg hover:bg-orange-500 transition z-50">
-        Chat Support
-    </button>
-
-    <!-- Modal Overlay -->
-    <div 
-        x-show="showModal" 
-        x-cloak
-        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
-    >
-        <!-- Modal Box -->
-        <div class="bg-white w-11/12 md:w-3/4 lg:w-1/2 rounded-xl overflow-hidden shadow-lg relative z-[10000]">
-            <!-- Header -->
-            <div class="flex justify-between items-center px-4 py-2 bg-gray-100 border-b">
-                <h2 class="text-lg font-semibold">Chat Support</h2>
-                <button @click="showModal = false" class="text-gray-500 hover:text-red-500 text-xl font-bold">
-                    ✕
-                </button>
-            </div>
-
-            <!-- Iframe -->
-            <iframe 
-                src="chat_main.php" 
-                class="w-full h-[500px]" 
-                frameborder="0">
-            </iframe>
-        </div>
-    </div>
-</section>
-
-
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->

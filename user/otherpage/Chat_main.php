@@ -371,7 +371,9 @@ if (!$isLoggedIn) {
 </head>
 
 
-<body class="bg-orange-400"> 
+<body class="bg-orange-400">
+
+  <?php include '../navbar/top.php'; ?>
 
   <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
     <div class="max-w-6xl mx-auto">
@@ -381,377 +383,442 @@ if (!$isLoggedIn) {
         <p class="text-white/80 text-sm sm:text-lg px-4">Connect with our sales representatives for assistance</p>
       </div>
 
-<?php if (!$isLoggedIn): ?>
-  <!-- Login Required Message -->
-  <div class="text-center py-20">
-    <h2 class="text-3xl font-bold text-white mb-4">Please Sign In First</h2>
-    <p class="text-white/80 mb-8">You need to be logged in to access customer support chat.</p>
-    
-    <!-- Sign In Button na mag-close ng modal at mag-redirect -->
-    <button 
-      onclick="closeModalAndRedirect()" 
-      class="bg-white text-orange-500 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-      Return 
-    </button>
-  </div>
+      <?php if (!$isLoggedIn): ?>
+        <!-- Login Required Message -->
+        <div class="text-center py-20">
+          <h2 class="text-3xl font-bold text-white mb-4">Please Sign In First</h2>
+          <p class="text-white/80 mb-8">You need to be logged in to access customer support chat.</p>
 
-  <script>
-    function closeModalAndRedirect() {
-      // Method 1: Try to close modal via parent window
-      if (window.parent && window.parent !== window) {
-        // Inform parent to close modal
-        window.parent.postMessage({
-          action: 'closeModal',
-          redirect: 'index.php'
-        }, '*');
-        
-        // Backup: Close modal directly if accessible
-        try {
-          // Common modal close methods
-          if (window.parent.closeModal) {
-            window.parent.closeModal();
-          } else if (window.parent.jQuery && window.parent.jQuery('.modal').modal) {
-            window.parent.jQuery('.modal').modal('hide');
-          } else if (window.parent.bootstrap && window.parent.bootstrap.Modal) {
-            const modals = window.parent.document.querySelectorAll('.modal.show');
-            modals.forEach(modal => {
-              const modalInstance = window.parent.bootstrap.Modal.getInstance(modal);
-              if (modalInstance) modalInstance.hide();
-            });
-          }
-        } catch (e) {
-          console.log('Could not access parent modal directly');
-        }
-        
-        // Then redirect parent page
-        setTimeout(() => {
-          window.parent.location.href = 'index.php';
-        }, 500);
-        
-      } else {
-        // Fallback: Direct redirect if not in iframe
-        window.location.href = 'index.php';
-      }
-    }
-
-    // Alternative: Auto-detect and close modal on page load
-    window.addEventListener('load', function() {
-      // Send message to parent that login is required
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          action: 'loginRequired',
-          message: 'User needs to sign in to access chat support'
-        }, '*');
-      }
-    });
-  </script>
-
-<?php else: ?>
-
-      <!-- Main Chat Container -->
-      <div x-data="chatSupport()" x-init="init()" class="main-container rounded-2xl overflow-hidden shadow-2xl">
-
-        <!-- Mobile Menu Button (visible only on mobile) -->
-        <div class="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-800">Customer Support</h2>
+          <!-- Sign In Button na mag-close ng modal at mag-redirect -->
           <button
-            @click="showMobileSidebar = true"
-            class="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-            </svg>
-            <span class="text-sm font-medium">Select Rep</span>
+            onclick="closeModalAndRedirect()"
+            class="bg-white text-orange-500 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            Return
           </button>
         </div>
 
-        <!-- Mobile Sidebar Overlay -->
-        <div
-          x-show="showMobileSidebar"
-          @click="showMobileSidebar = false"
-          class="mobile-sidebar-overlay lg:hidden"
-          :class="showMobileSidebar ? 'show' : ''"
-          x-transition:enter="transition ease-out duration-300"
-          x-transition:enter-start="opacity-0"
-          x-transition:enter-end="opacity-100"
-          x-transition:leave="transition ease-in duration-200"
-          x-transition:leave-start="opacity-100"
-          x-transition:leave-end="opacity-0"></div>
+        <script>
+          function closeModalAndRedirect() {
+            // Method 1: Try to close modal via parent window
+            if (window.parent && window.parent !== window) {
+              // Inform parent to close modal
+              window.parent.postMessage({
+                action: 'closeModal',
+                redirect: 'index.php'
+              }, '*');
 
-        <!-- Mobile Sidebar -->
-        <div
-          x-show="showMobileSidebar"
-          class="mobile-sidebar lg:hidden"
-          :class="showMobileSidebar ? 'show' : ''"
-          @click.stop
-          x-transition:enter="transition ease-out duration-300"
-          x-transition:enter-start="transform -translate-x-full"
-          x-transition:enter-end="transform translate-x-0"
-          x-transition:leave="transition ease-in duration-300"
-          x-transition:leave-start="transform translate-x-0"
-          x-transition:leave-end="transform -translate-x-full">
-          <!-- Mobile Sidebar Header -->
-          <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 flex items-center justify-between">
-            <h2 class="text-lg font-semibold flex items-center gap-2">
+              // Backup: Close modal directly if accessible
+              try {
+                // Common modal close methods
+                if (window.parent.closeModal) {
+                  window.parent.closeModal();
+                } else if (window.parent.jQuery && window.parent.jQuery('.modal').modal) {
+                  window.parent.jQuery('.modal').modal('hide');
+                } else if (window.parent.bootstrap && window.parent.bootstrap.Modal) {
+                  const modals = window.parent.document.querySelectorAll('.modal.show');
+                  modals.forEach(modal => {
+                    const modalInstance = window.parent.bootstrap.Modal.getInstance(modal);
+                    if (modalInstance) modalInstance.hide();
+                  });
+                }
+              } catch (e) {
+                console.log('Could not access parent modal directly');
+              }
+
+              // Then redirect parent page
+              setTimeout(() => {
+                window.parent.location.href = 'index.php';
+              }, 500);
+
+            } else {
+              // Fallback: Direct redirect if not in iframe
+              window.location.href = 'index.php';
+            }
+          }
+
+          // Alternative: Auto-detect and close modal on page load
+          window.addEventListener('load', function() {
+            // Send message to parent that login is required
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({
+                action: 'loginRequired',
+                message: 'User needs to sign in to access chat support'
+              }, '*');
+            }
+          });
+        </script>
+
+      <?php else: ?>
+
+        <!-- Main Chat Container -->
+        <div x-data="chatSupport()" x-init="init()" class="main-container rounded-2xl overflow-hidden shadow-2xl">
+
+          <!-- Mobile Menu Button (visible only on mobile) -->
+          <div class="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800">Customer Support</h2>
+            <button
+              @click="showMobileSidebar = true"
+              class="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
-              Sales Reps
-            </h2>
-            <button
-              @click="showMobileSidebar = false"
-              class="p-1 hover:bg-white/10 rounded-full transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+              <span class="text-sm font-medium">Select Rep</span>
             </button>
           </div>
 
-          <!-- Mobile Sales List -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-            <template x-for="sales in salesList" :key="sales.id">
-              <div
-                @click="selectSales(sales); showMobileSidebar = false"
-                :class="selectedSales && selectedSales.id === sales.id ? 'bg-orange-50 border-orange-300 shadow-lg' : ''"
-                class="sales-item group border flex items-center gap-3 animate-fade-in">
-                <div class="w-10 h-10 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg flex-shrink-0">
-                  <span x-text="sales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-300 truncate text-sm" x-text="sales.fullname"></span>
-                    <span class="sales-badge user-badge text-xs">SALES</span>
-                  </div>
-                  <div class="text-xs text-gray-600 truncate flex items-center gap-1 mt-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    <span x-text="sales.email"></span>
-                  </div>
-                  <div class="online-status status-indicator mt-2 text-xs">
-                    <div class="online-dot w-2 h-2"></div>
-                    Online
-                  </div>
-                </div>
-              </div>
-            </template>
+          <!-- Mobile Sidebar Overlay -->
+          <div
+            x-show="showMobileSidebar"
+            @click="showMobileSidebar = false"
+            class="mobile-sidebar-overlay lg:hidden"
+            :class="showMobileSidebar ? 'show' : ''"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"></div>
 
-            <template x-if="salesList.length === 0">
-              <div class="text-center py-8">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Mobile Sidebar -->
+          <div
+            x-show="showMobileSidebar"
+            class="mobile-sidebar lg:hidden"
+            :class="showMobileSidebar ? 'show' : ''"
+            @click.stop
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="transform -translate-x-full"
+            x-transition:enter-end="transform translate-x-0"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="transform translate-x-0"
+            x-transition:leave-end="transform -translate-x-full">
+            <!-- Mobile Sidebar Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 flex items-center justify-between">
+              <h2 class="text-lg font-semibold flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
-                <p class="text-gray-500 font-semibold text-sm">No representatives available</p>
-                <p class="text-gray-400 text-xs mt-1">Please try again later</p>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <!-- Chat Interface -->
-        <div class="flex h-[500px] sm:h-[600px]">
-
-          <!-- Desktop Sales Representatives Sidebar -->
-          <div class="hidden lg:flex w-1/3 bg-white border-r border-gray-200 flex-col">
-            <!-- Sidebar Header -->
-            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4">
-              <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold flex items-center gap-2">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                  </svg>
-                  Sales Representatives
-                </h2>
-                <span class="sales-badge user-badge">SALES TEAM</span>
-              </div>
+                Sales Reps
+              </h2>
+              <button
+                @click="showMobileSidebar = false"
+                class="p-1 hover:bg-white/10 rounded-full transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
             </div>
 
-            <!-- Desktop Sales List -->
+            <!-- Mobile Sales List -->
             <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               <template x-for="sales in salesList" :key="sales.id">
                 <div
-                  @click="selectSales(sales)"
+                  @click="selectSales(sales); showMobileSidebar = false"
                   :class="selectedSales && selectedSales.id === sales.id ? 'bg-orange-50 border-orange-300 shadow-lg' : ''"
-                  class="sales-item group border flex items-center gap-4 animate-fade-in">
-                  <div class="w-12 h-12 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  class="sales-item group border flex items-center gap-3 animate-fade-in">
+                  <div class="w-10 h-10 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg flex-shrink-0">
                     <span x-text="sales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span class="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-300 truncate" x-text="sales.fullname"></span>
-                      <span class="sales-badge user-badge">SALES REP</span>
+                      <span class="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-300 truncate text-sm" x-text="sales.fullname"></span>
+                      <span class="sales-badge user-badge text-xs">SALES</span>
                     </div>
-                    <div class="text-sm text-gray-600 truncate flex items-center gap-1 mt-1">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="text-xs text-gray-600 truncate flex items-center gap-1 mt-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                       </svg>
                       <span x-text="sales.email"></span>
                     </div>
-                    <div class="online-status status-indicator mt-2">
-                      <div class="online-dot"></div>
-                      Online now
-                    </div>
-                  </div>
-                  <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </div>
-              </template>
-
-              <template x-if="salesList.length === 0">
-                <div class="text-center py-12">
-                  <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                  </svg>
-                  <p class="text-gray-500 font-semibold">No representatives available</p>
-                  <p class="text-gray-400 text-sm mt-1">Please try again later</p>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Chat Area -->
-          <div class="flex-1 flex flex-col bg-gray-50">
-
-            <!-- Chat Header -->
-            <div class="bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center gap-3">
-              <template x-if="selectedSales">
-                <div class="flex items-center gap-3 animate-slide-in">
-                  <div class="w-8 h-8 sm:w-10 sm:h-10 sales-avatar rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs sm:text-sm">
-                    <span x-text="selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
-                  </div>
-                  <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span class="font-semibold text-gray-900 text-sm sm:text-base" x-text="selectedSales.fullname"></span>
-                      <span class="sales-badge user-badge hidden sm:inline">SALES REP</span>
-                      <span class="sales-badge user-badge text-xs sm:hidden">SALES</span>
-                    </div>
-                    <div class="online-status status-indicator text-xs">
-                      <div class="online-dot w-2 h-2 sm:w-3 sm:h-3"></div>
+                    <div class="online-status status-indicator mt-2 text-xs">
+                      <div class="online-dot w-2 h-2"></div>
                       Online
                     </div>
                   </div>
                 </div>
               </template>
 
-              <template x-if="!selectedSales">
-                <div class="flex items-center gap-3 text-gray-500">
-                  <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              <template x-if="salesList.length === 0">
+                <div class="text-center py-8">
+                  <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                   </svg>
-                  <span class="text-sm sm:text-lg font-medium">Select a representative to start chatting</span>
+                  <p class="text-gray-500 font-semibold text-sm">No representatives available</p>
+                  <p class="text-gray-400 text-xs mt-1">Please try again later</p>
                 </div>
               </template>
             </div>
+          </div>
 
-            <!-- Messages Area -->
-            <div id="supportChatBox" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 custom-scrollbar">
-              <template x-if="selectedSales && messages.length > 0">
-                <div class="space-y-3 sm:space-y-4">
-                  <template x-for="msg in messages" :key="msg.id">
-                    <div :class="msg.is_me ? 'flex justify-end' : 'flex justify-start'" class="animate-fade-in w-full">
-                      <div class="flex items-end gap-2 sm:gap-3 max-w-[85%] w-auto">
-                        <!-- Sales Representative Avatar and Badge -->
-                        <div x-show="!msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
-                          <div class="w-6 h-6 sm:w-8 sm:h-8 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
-                            <span x-text="selectedSales ? selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2) : ''"></span>
-                          </div>
-                          <span class="sales-badge user-badge text-xs hidden sm:inline whitespace-nowrap">SALES</span>
-                        </div>
+          <!-- Chat Interface -->
+          <div class="flex h-[500px] sm:h-[600px]">
 
-                        <!-- Message Content -->
-                        <div
-                          :class="msg.is_me ? 'message me' : 'message other'"
-                          class="px-3 py-2 sm:px-4 sm:py-3 break-words leading-relaxed shadow-lg text-sm sm:text-base rounded-lg min-w-0 flex-1"
-                          style="word-wrap: break-word; overflow-wrap: anywhere; hyphens: auto;">
-                          <span x-text="msg.message" class="inline-block w-full"></span>
-                        </div>
+            <!-- Desktop Sales Representatives Sidebar -->
+            <div class="hidden lg:flex w-1/3 bg-white border-r border-gray-200 flex-col">
+              <!-- Sidebar Header -->
+              <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4">
+                <div class="flex items-center justify-between">
+                  <h2 class="text-xl font-semibold flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Sales Representatives
+                  </h2>
+                  <span class="sales-badge user-badge">SALES TEAM</span>
+                </div>
+              </div>
 
-                        <!-- Client Avatar and Badge -->
-                        <div x-show="msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
-                          <div class="w-6 h-6 sm:w-8 sm:h-8 client-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
-                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                            </svg>
-                          </div>
-                          <span class="client-badge user-badge text-xs hidden sm:inline whitespace-nowrap">CLIENT</span>
+              <!-- Desktop Sales List -->
+              <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                <!-- Updated Sales List Template -->
+                <template x-for="sales in salesList" :key="sales.id">
+                  <div
+                    @click="selectSales(sales)"
+                    :class="selectedSales && selectedSales.id === sales.id ? 'bg-orange-50 border-orange-300 shadow-lg' : ''"
+                    class="sales-item group border flex items-center gap-4 animate-fade-in relative">
+
+                    <!-- Avatar with notification badge -->
+                    <div class="relative">
+                      <div class="w-12 h-12 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                        <span x-text="sales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
+                      </div>
+
+                      <!-- Unread message badge on avatar -->
+                      <template x-if="sales.unread_count && sales.unread_count > 0">
+                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-lg animate-pulse">
+                          <span x-text="sales.unread_count > 9 ? '9+' : sales.unread_count"></span>
                         </div>
+                      </template>
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span
+                          class="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors duration-300 truncate"
+                          :class="sales.unread_count && sales.unread_count > 0 ? 'text-orange-600 font-bold' : ''"
+                          x-text="sales.fullname">
+                        </span>
+                        <span class="sales-badge user-badge">SALES REP</span>
+
+                        <!-- New message indicator -->
+                        <template x-if="sales.unread_count && sales.unread_count > 0">
+                          <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-semibold animate-bounce">
+                            New message
+                          </span>
+                        </template>
+                      </div>
+
+                      <div class="text-sm text-gray-600 truncate flex items-center gap-1 mt-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <span x-text="sales.email"></span>
+                      </div>
+
+                      <!-- Last message preview -->
+                      <template x-if="sales.last_message">
+                        <div class="text-xs mt-1 flex items-center gap-1">
+                          <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-2.285-.313l-3.58 1.194a.5.5 0 01-.643-.643l1.194-3.58A8.955 8.955 0 014 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"></path>
+                          </svg>
+                          <span
+                            class="text-gray-500 truncate max-w-[200px]"
+                            :class="sales.unread_count && sales.unread_count > 0 ? 'text-gray-700 font-medium' : ''"
+                            x-text="sales.last_message">
+                          </span>
+                          <span class="text-gray-400 text-xs ml-auto" x-text="formatMessageTime(sales.last_message_time)"></span>
+                        </div>
+                      </template>
+
+                      <div class="online-status status-indicator mt-2">
+                        <div class="online-dot"></div>
+                        Online now
                       </div>
                     </div>
-                  </template>
-                </div>
-              </template>
-              <template x-if="selectedSales && messages.length === 0">
-                <div class="text-center py-8 sm:py-16">
-                  <svg class="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                  </svg>
-                  <p class="text-gray-500 font-semibold text-base sm:text-lg">Start the conversation!</p>
-                  <p class="text-gray-400 mt-1 text-sm">Send a message to get started</p>
-                </div>
-              </template>
 
-              <template x-if="!selectedSales">
-                <div class="text-center py-12 sm:py-20 px-4">
-                  <svg class="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4 sm:mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                  </svg>
-                  <h3 class="text-lg sm:text-xl font-semibold text-gray-500 mb-2">Welcome to Customer Support</h3>
-                  <p class="text-gray-400 text-sm sm:text-base">Choose a sales representative to start your conversation</p>
-                  <div class="lg:hidden mt-4">
-                    <button
-                      @click="showMobileSidebar = true"
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-colors">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    <!-- Arrow with notification indicator -->
+                    <div class="flex items-center">
+                      <template x-if="sales.unread_count && sales.unread_count > 0">
+                        <div class="mr-2 flex flex-col items-center">
+                          <div class="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                        </div>
+                      </template>
+
+                      <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                       </svg>
-                      Select Sales Representative
+                    </div>
+                  </div>
+                </template>
+
+                <template x-if="salesList.length === 0">
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p class="text-gray-500 font-semibold">No representatives available</p>
+                    <p class="text-gray-400 text-sm mt-1">Please try again later</p>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col bg-gray-50">
+
+              <!-- Chat Header -->
+              <div class="bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center gap-3">
+                <template x-if="selectedSales">
+                  <div class="flex items-center gap-3 animate-slide-in">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 sales-avatar rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs sm:text-sm">
+                      <span x-text="selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2)"></span>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-semibold text-gray-900 text-sm sm:text-base" x-text="selectedSales.fullname"></span>
+                        <span class="sales-badge user-badge hidden sm:inline">SALES REP</span>
+                        <span class="sales-badge user-badge text-xs sm:hidden">SALES</span>
+                      </div>
+                      <div class="online-status status-indicator text-xs">
+                        <div class="online-dot w-2 h-2 sm:w-3 sm:h-3"></div>
+                        Online
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <template x-if="!selectedSales">
+                  <div class="flex items-center gap-3 text-gray-500">
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <span class="text-sm sm:text-lg font-medium">Select a representative to start chatting</span>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Messages Area -->
+              <div id="supportChatBox" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 custom-scrollbar">
+                <template x-if="selectedSales && messages.length > 0">
+                  <div class="space-y-3 sm:space-y-4">
+                    <template x-for="msg in messages" :key="msg.id">
+                      <div :class="msg.is_me ? 'flex justify-end' : 'flex justify-start'" class="animate-fade-in w-full">
+                        <div class="flex items-end gap-2 sm:gap-3 max-w-[85%] w-auto">
+                          <!-- Sales Representative Avatar and Badge -->
+                          <div x-show="!msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 sales-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
+                              <span x-text="selectedSales ? selectedSales.fullname.split(' ').map(n => n[0]).join('').slice(0,2) : ''"></span>
+                            </div>
+                            <span class="sales-badge user-badge text-xs hidden sm:inline whitespace-nowrap">SALES</span>
+                          </div>
+
+                          <!-- Message Content -->
+                          <div
+                            :class="msg.is_me ? 'message me' : 'message other'"
+                            class="px-3 py-2 sm:px-4 sm:py-3 break-words leading-relaxed shadow-lg text-sm sm:text-base rounded-lg min-w-0 flex-1"
+                            style="word-wrap: break-word; overflow-wrap: anywhere; hyphens: auto;">
+                            <span x-text="msg.message" class="inline-block w-full"></span>
+                          </div>
+
+<!-- Client Avatar and Badge -->
+<div x-show="msg.is_me" class="flex flex-col items-center gap-1 flex-shrink-0">
+  <div class="w-6 h-6 sm:w-8 sm:h-8 client-avatar rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md overflow-hidden">
+    <?php if ($isLoggedIn && isset($_SESSION['user_picture']) && !empty($_SESSION['user_picture'])): ?>
+      <!-- Show profile picture -->
+      <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" 
+           alt="User Avatar" 
+           class="w-full h-full object-cover">
+    <?php elseif ($isLoggedIn && isset($_SESSION['user_name'])): ?>
+      <!-- Show first letter of user's name -->
+      <span class="text-white font-bold">
+        <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+      </span>
+    <?php else: ?>
+      <!-- Default user icon if not logged in -->
+      <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+      </svg>
+    <?php endif; ?>
+  </div>
+  <span class="client-badge user-badge text-xs hidden sm:inline whitespace-nowrap">CLIENT</span>
+</div>
+
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="selectedSales && messages.length === 0">
+                  <div class="text-center py-8 sm:py-16">
+                    <svg class="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <p class="text-gray-500 font-semibold text-base sm:text-lg">Start the conversation!</p>
+                    <p class="text-gray-400 mt-1 text-sm">Send a message to get started</p>
+                  </div>
+                </template>
+
+                <template x-if="!selectedSales">
+                  <div class="text-center py-12 sm:py-20 px-4">
+                    <svg class="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4 sm:mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-500 mb-2">Welcome to Customer Support</h3>
+                    <p class="text-gray-400 text-sm sm:text-base">Choose a sales representative to start your conversation</p>
+                    <div class="lg:hidden mt-4">
+                      <button
+                        @click="showMobileSidebar = true"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Select Sales Representative
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Message Input -->
+              <template x-if="selectedSales">
+                <div class="bg-white border-t border-gray-200 p-3 sm:p-4">
+                  <!-- Current User Info -->
+                  <div class="hidden sm:flex items-center gap-2 mb-3 text-sm text-gray-600">
+                    <div class="w-6 h-6 client-avatar rounded-full flex items-center justify-center text-white">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                      </svg>
+                    </div>
+                    <span class="font-medium">You are chatting as:</span>
+                    <span class="client-badge user-badge">CLIENT</span>
+
+
+                  </div>
+
+                  <div class="flex items-end gap-2 sm:gap-3">
+                    <div class="flex-1 relative">
+                      <input
+                        x-model="newMessage"
+                        @keydown.enter="sendMessage()"
+                        type="text"
+                        placeholder="Type your message..."
+                        class="message-input w-full text-sm sm:text-base"
+                        autocomplete="off" />
+                    </div>
+                    <button
+                      @click="sendMessage()"
+                      :disabled="!newMessage.trim()"
+                      :class="newMessage.trim() ? 'send-btn enabled' : 'send-btn'"
+                      class="flex-shrink-0">
+                      <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                      </svg>
                     </button>
                   </div>
                 </div>
               </template>
             </div>
-
-            <!-- Message Input -->
-            <template x-if="selectedSales">
-              <div class="bg-white border-t border-gray-200 p-3 sm:p-4">
-                <!-- Current User Info -->
-                <div class="hidden sm:flex items-center gap-2 mb-3 text-sm text-gray-600">
-                  <div class="w-6 h-6 client-avatar rounded-full flex items-center justify-center text-white">
-                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                    </svg>
-                  </div>
-                  <span class="font-medium">You are chatting as:</span>
-                  <span class="client-badge user-badge">CLIENT</span>
-
-
-                </div>
-
-                <div class="flex items-end gap-2 sm:gap-3">
-                  <div class="flex-1 relative">
-                    <input
-                      x-model="newMessage"
-                      @keydown.enter="sendMessage()"
-                      type="text"
-                      placeholder="Type your message..."
-                      class="message-input w-full text-sm sm:text-base"
-                      autocomplete="off" />
-                  </div>
-                  <button
-                    @click="sendMessage()"
-                    :disabled="!newMessage.trim()"
-                    :class="newMessage.trim() ? 'send-btn enabled' : 'send-btn'"
-                    class="flex-shrink-0">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </template>
           </div>
         </div>
-      </div>
       <?php endif; ?>
     </div>
   </div>
@@ -760,7 +827,7 @@ if (!$isLoggedIn) {
     document.addEventListener('alpine:init', () => {
       Alpine.data('chatSupport', () => ({
         // UI state
-        showMobileSidebar: false, // <-- Added here
+        showMobileSidebar: false,
 
         // Chat data
         salesList: [],
@@ -774,13 +841,20 @@ if (!$isLoggedIn) {
         init() {
           console.log('Initializing chat support...');
           this.loadSalesReps();
+
+          // Set up periodic refresh for sales list to get unread counts
+          setInterval(() => {
+            this.loadSalesReps();
+          }, 10000); // Refresh every 10 seconds
         },
 
         loadSalesReps() {
           console.log('Loading sales representatives...');
-          fetch('chat_fetch_sales.php')
+          fetch('chat_fetch_sales.php', {
+              credentials: 'include'
+            })
             .then(res => {
-              console.log('');
+              console.log('Sales fetch response status:', res.status);
               return res.json();
             })
             .then(data => {
@@ -793,7 +867,16 @@ if (!$isLoggedIn) {
                 console.error('Unexpected sales data format:', data);
                 this.salesList = [];
               }
-              console.log('');
+
+              // Sort sales list to show those with unread messages first
+              this.salesList.sort((a, b) => {
+                const aUnread = a.unread_count || 0;
+                const bUnread = b.unread_count || 0;
+                if (aUnread !== bUnread) return bUnread - aUnread; // Higher unread count first
+                return (a.fullname || '').localeCompare(b.fullname || '');
+              });
+
+              console.log('Sales list loaded and sorted:', this.salesList);
             })
             .catch(err => {
               console.error('Error loading sales reps:', err);
@@ -805,9 +888,45 @@ if (!$isLoggedIn) {
           console.log('Selected sales rep:', sales);
           this.selectedSales = sales;
           this.messages = [];
+
+          // Mark messages as read when selecting
+          if (sales.unread_count && sales.unread_count > 0) {
+            this.markMessagesAsRead(sales.id);
+          }
+
           this.fetchMessages();
           if (this.refreshInterval) clearInterval(this.refreshInterval);
           this.refreshInterval = setInterval(() => this.fetchMessages(), 3000);
+        },
+
+        markMessagesAsRead(salesId) {
+          fetch('chat_mark_read.php', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                sales_id: salesId
+              })
+            })
+            .then(res => {
+              if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              console.log('Messages marked as read:', data);
+              // Update local unread count
+              const salesIndex = this.salesList.findIndex(s => s.id === salesId);
+              if (salesIndex !== -1) {
+                this.salesList[salesIndex].unread_count = 0;
+              }
+            })
+            .catch(error => {
+              console.error('Error marking messages as read:', error);
+            });
         },
 
         fetchMessages() {
@@ -817,7 +936,9 @@ if (!$isLoggedIn) {
           }
           const url = `chat_getmessage.php?receiver_noble_id=${encodeURIComponent(this.selectedSales.id)}`;
           console.log('Fetching messages from:', url);
-          fetch(url)
+          fetch(url, {
+              credentials: 'include'
+            })
             .then(res => {
               console.log('Messages fetch response status:', res.status);
               return res.text();
@@ -877,6 +998,7 @@ if (!$isLoggedIn) {
           console.log('Sending message:', messageData);
           fetch('chat_sendmessage.php', {
               method: 'POST',
+              credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -911,6 +1033,49 @@ if (!$isLoggedIn) {
             });
         },
 
+        // Helper methods for UI
+        formatDateTime(dateString) {
+          if (!dateString) return '';
+          const date = new Date(dateString);
+          const now = new Date();
+          const diff = Math.floor((now - date) / 1000);
+
+          if (diff < 60) return 'Just now';
+          if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+          if (diff < 86400) return `${Math.floor(diff / 3600)} hrs ago`;
+          if (diff < 172800) return 'Yesterday';
+
+          const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          };
+          return date.toLocaleString('en-US', options);
+        },
+
+        formatMessageTime(timestamp) {
+          if (!timestamp) return '';
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diff = Math.floor((now - date) / 1000);
+
+          if (diff < 60) return 'now';
+          if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+          if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+          if (diff < 172800) return 'yesterday';
+
+          return date.toLocaleDateString();
+        },
+
+        getTotalUnreadCount() {
+          return this.salesList.reduce((total, sales) => {
+            return total + (sales.unread_count || 0);
+          }, 0);
+        },
+
         destroy() {
           if (this.refreshInterval) clearInterval(this.refreshInterval);
         }
@@ -919,4 +1084,5 @@ if (!$isLoggedIn) {
   </script>
 
 </body>
+
 </html>

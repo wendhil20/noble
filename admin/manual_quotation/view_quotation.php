@@ -6,9 +6,6 @@ require_once '../role/roleaccount.php';
 require_role(['sales', 'superadmin']);
 
 
-
-
-
 // Simple authentication check (you can integrate with your existing auth system)
 if (!isset($_SESSION['noble_user'])) {
     header("Location: login.php");

@@ -30,7 +30,7 @@ try {
         throw new Exception("Please fill in all required fields.");
     }
 
-    $stmt = $conn->prepare("SELECT id, email, password, lvl, status, last_login, failed_attempts, locked_until FROM nobleaccount WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, email, password, lvl, status, last_login, failed_attempts, locked_until, is_online FROM nobleaccount WHERE email = ? LIMIT 1");
 
     if (!$stmt) {
         throw new Exception("Database error.");
@@ -49,6 +49,11 @@ try {
     // Status check
     if ($user['status'] !== 'active') {
         throw new Exception("Your account has been deactivated.");
+    }
+
+    // Check if user is already online (prevent multiple sessions)
+    if ($user['is_online'] == 1) {
+        throw new Exception("This account is already logged in from another device.");
     }
 
     // Lockout check
@@ -73,8 +78,8 @@ try {
         throw new Exception("Invalid email or password.");
     }
 
-    // Reset attempts on success
-    $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW() WHERE email = ?");
+    // Reset attempts on success and SET USER AS ONLINE
+    $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW(), is_online = 1 WHERE email = ?");
     $reset->bind_param("s", $email);
     $reset->execute();
     $reset->close();
@@ -88,6 +93,7 @@ try {
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
     $_SESSION['session_expires'] = time() + 86400; // 24 hours from now
+    $_SESSION['is_online'] = true; // Track online status in session
 
     // Determine redirect
     $redirect = match (strtolower($user['lvl'])) {
@@ -108,7 +114,8 @@ try {
         $response = [
             'success' => true,
             'message' => 'Login successful',
-            'redirect' => $redirect
+            'redirect' => $redirect,
+            'user_status' => 'online'
         ];
         header('Content-Type: application/json');
         echo json_encode($response);

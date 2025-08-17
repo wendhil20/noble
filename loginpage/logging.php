@@ -2,11 +2,11 @@
 session_name("nobleadmin");
 // Secure session settings - 24 hours
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1); // Only works if site uses HTTPS
+ini_set('session.cookie_secure', 1);
 ini_set('session.use_strict_mode', 1);
 session_start([
-    'cookie_lifetime' => 86400, // 24 hours (24 * 60 * 60 = 86400 seconds)
-    'gc_maxlifetime' => 86400   // Session data lifetime - 24 hours
+    'cookie_lifetime' => 86400,
+    'gc_maxlifetime' => 86400
 ]);
 
 include '../connection/connect.php';
@@ -30,6 +30,11 @@ try {
         throw new Exception("Please fill in all required fields.");
     }
 
+    // First, clean up any stale online status (users online for more than 30 minutes without activity)
+    $cleanup_stmt = $conn->prepare("UPDATE nobleaccount SET is_online = 0 WHERE is_online = 1 AND last_activity < DATE_SUB(NOW(), INTERVAL 30 MINUTE)");
+    $cleanup_stmt->execute();
+    $cleanup_stmt->close();
+
     $stmt = $conn->prepare("SELECT id, email, password, lvl, status, last_login, failed_attempts, locked_until, is_online FROM nobleaccount WHERE email = ? LIMIT 1");
 
     if (!$stmt) {
@@ -52,8 +57,9 @@ try {
     }
 
     // Check if user is already online (prevent multiple sessions)
-    if ($user['is_online'] == 1) {
-        throw new Exception("This account is already logged in from another device.");
+    // Convert to int for proper comparison
+    if ((int)$user['is_online'] === 1) {
+        throw new Exception("This account is already logged in from another device. Please logout from the other device first.");
     }
 
     // Lockout check
@@ -78,10 +84,19 @@ try {
         throw new Exception("Invalid email or password.");
     }
 
-    // Reset attempts on success and SET USER AS ONLINE
-    $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW(), is_online = 1 WHERE email = ?");
+    // CRITICAL FIX: Reset attempts on success and SET USER AS ONLINE with last_activity
+    $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW(), last_activity = NOW(), is_online = 1 WHERE email = ?");
     $reset->bind_param("s", $email);
-    $reset->execute();
+    
+    if (!$reset->execute()) {
+        throw new Exception("Failed to update user status. Please try again.");
+    }
+    
+    // Verify the update worked
+    if ($reset->affected_rows === 0) {
+        error_log("Warning: No rows affected when setting user online for email: " . $email);
+    }
+    
     $reset->close();
 
     // Regenerate session ID
@@ -92,8 +107,8 @@ try {
     $_SESSION['noble_id'] = $user['id'];
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
-    $_SESSION['session_expires'] = time() + 86400; // 24 hours from now
-    $_SESSION['is_online'] = true; // Track online status in session
+    $_SESSION['session_expires'] = time() + 86400;
+    $_SESSION['is_online'] = true;
 
     // Determine redirect
     $redirect = match (strtolower($user['lvl'])) {

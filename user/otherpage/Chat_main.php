@@ -1,34 +1,34 @@
-<?php
-session_name("nobleuser");
-session_start();
+<?php 
+session_name("nobleuser"); 
+session_start(); 
 include '../../connection/connect.php';
 
-// ✅ Restore session from remember_token (email or mobile-based or Google)
+// ✅ Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-  $token = $_COOKIE['remember_token'];
-
-  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-  $stmt->bind_param("s", $token);
-  $stmt->execute();
-  $res = $stmt->get_result();
-
-  if ($res->num_rows > 0) {
-    $user = $res->fetch_assoc();
-
-    // 🔐 Store essential user session info
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
-    $_SESSION['user_email'] = $user['email'] ?? '';
-    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-
-    // 👤 Check if it's a Google account (optional)
-    if (!empty($user['google_id'])) {
-      $_SESSION['google_logged_in'] = true;
-      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+    $token = $_COOKIE['remember_token'];
+    
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        
+        // 🔐 Store essential user session info
+        $_SESSION['user_id']     = $user['id'];
+        $_SESSION['user_name']   = $user['name'];
+        $_SESSION['user_email']  = $user['email'] ?? '';
+        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+        
+        // 👤 Check if it's a Google account (optional)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
     }
-  }
-
-  $stmt->close();
+    
+    $stmt->close();
 }
 
 // ✅ Session check
@@ -37,19 +37,92 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// ✅ Check if user is logged in - ADD THIS PART
+// ✅ Check if user is logged in
 $isLoggedIn = isset($_SESSION['user_id']);
 
-// ❌ If not logged in, show login message instead of redirecting
 if (!$isLoggedIn) {
-  // Don't redirect, just set a flag to show login message
-  $showLoginMessage = true;
+    $showLoginMessage = true;
 } else {
-  $showLoginMessage = false;
+    $showLoginMessage = false;
+    
+    // SAFE UPDATE: Only update columns that exist
+    try {
+        // Try to update with all columns first
+        $update = $conn->prepare("UPDATE users SET last_login = NOW(), is_online = 1, last_activity = NOW() WHERE id = ?");
+        $update->bind_param("i", $_SESSION['user_id']);
+        $update->execute();
+        $update->close();
+    } catch (Exception $e) {
+        // If that fails, try without last_login
+        try {
+            $update = $conn->prepare("UPDATE users SET is_online = 1, last_activity = NOW() WHERE id = ?");
+            $update->bind_param("i", $_SESSION['user_id']);
+            $update->execute();
+            $update->close();
+        } catch (Exception $e2) {
+            // If that also fails, try with just basic update
+            try {
+                $update = $conn->prepare("UPDATE users SET is_online = 1 WHERE id = ?");
+                $update->bind_param("i", $_SESSION['user_id']);
+                $update->execute();
+                $update->close();
+            } catch (Exception $e3) {
+                // If even that fails, just log the error but continue
+                error_log("Could not update user status: " . $e3->getMessage());
+            }
+        }
+    }
 }
 
-?>
+// ✅ Get current user's online status for display
+$currentUserOnlineStatus = 1; // Default to online if logged in
+$currentUserLastActivity = null;
 
+if (isset($_SESSION['user_id'])) {
+    try {
+        // Try to get online status
+        $statusStmt = $conn->prepare("SELECT is_online, last_activity FROM users WHERE id = ?");
+        $statusStmt->bind_param("i", $_SESSION['user_id']);
+        $statusStmt->execute();
+        $statusResult = $statusStmt->get_result();
+        
+        if ($statusResult->num_rows > 0) {
+            $statusData = $statusResult->fetch_assoc();
+            $currentUserOnlineStatus = $statusData['is_online'] ?? 1;
+            $currentUserLastActivity = $statusData['last_activity'] ?? null;
+        }
+        $statusStmt->close();
+    } catch (Exception $e) {
+        // If columns don't exist, assume online if session exists
+        $currentUserOnlineStatus = $isLoggedIn ? 1 : 0;
+        error_log("Could not get user status: " . $e->getMessage());
+    }
+}
+
+// Function to safely get user online status by ID
+function getUserOnlineStatus($conn, $userId) {
+    try {
+        $stmt = $conn->prepare("SELECT is_online, last_activity FROM users WHERE id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $data = $result->fetch_assoc();
+            $stmt->close();
+            return [
+                'is_online' => $data['is_online'] ?? 1,
+                'last_activity' => $data['last_activity'] ?? null
+            ];
+        }
+        $stmt->close();
+        return ['is_online' => 0, 'last_activity' => null];
+    } catch (Exception $e) {
+        // Return default if columns don't exist
+        return ['is_online' => 1, 'last_activity' => null];
+    }
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -684,10 +757,19 @@ if (!$isLoggedIn) {
                         <span class="sales-badge user-badge hidden sm:inline">SALES REP</span>
                         <span class="sales-badge user-badge text-xs sm:hidden">SALES</span>
                       </div>
-                      <div class="online-status status-indicator text-xs">
-                        <div class="online-dot w-2 h-2 sm:w-3 sm:h-3"></div>
-                        Online
-                      </div>
+<?php
+// Kunin online status ng kasalukuyang user
+$userStatus = getUserOnlineStatus($conn, $_SESSION['user_id']);
+
+$statusClass = ($userStatus['is_online'] == 1) ? 'bg-green-500' : 'bg-gray-400';
+$statusText  = ($userStatus['is_online'] == 1) ? 'Online' : 'Offline';
+?>
+<div class="flex items-center gap-1 text-xs">
+  <div class="w-2 h-2 rounded-full <?php echo $statusClass; ?>"></div>
+  <?php echo $statusText; ?>
+</div>
+
+
                     </div>
                   </div>
                 </template>

@@ -123,15 +123,16 @@ function generateReferenceNumber()
 }
 
 // ✅ Function to calculate delivery fee per item based on distance (same as sample code)
-function calculateDeliveryFeePerItem($distance_km, $delivery_settings) {
+function calculateDeliveryFeePerItem($distance_km, $delivery_settings)
+{
     if (!$delivery_settings) {
         return 0; // No delivery settings found
     }
-    
+
     $base_fee = (float) $delivery_settings['base_fee'];
     $per_km_rate = (float) $delivery_settings['per_km_rate'];
     $total_km_for_base = (float) $delivery_settings['total_km_base_fee'];
-    
+
     if ($distance_km <= $total_km_for_base) {
         return $base_fee;
     } else {
@@ -141,16 +142,17 @@ function calculateDeliveryFeePerItem($distance_km, $delivery_settings) {
 }
 
 // ✅ Function to calculate total delivery cost for all items
-function calculateTotalDeliveryForOrder($cart_items, $distance_km, $delivery_settings) {
+function calculateTotalDeliveryForOrder($cart_items, $distance_km, $delivery_settings)
+{
     $delivery_fee_per_item = calculateDeliveryFeePerItem($distance_km, $delivery_settings);
     $total_delivery_cost = 0;
-    
+
     foreach ($cart_items as $item) {
         $quantity = (int) $item['quantity'];
         $item_total_delivery = $delivery_fee_per_item * $quantity;
         $total_delivery_cost += $item_total_delivery;
     }
-    
+
     return $total_delivery_cost;
 }
 
@@ -173,28 +175,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bank_type = null;
     $reference_number = null;
     $screenshot_filename = null;
-    
+
     // Handle Bank Transfer specific data
     if ($payment_method === 'Bank Transfer') {
         $bank_type = trim($_POST['bank_type'] ?? '');
         $reference_number = trim($_POST['reference_number'] ?? '');
-        
+
         // Handle screenshot upload
         if (isset($_FILES['payment_screenshot']) && $_FILES['payment_screenshot']['error'] === UPLOAD_ERR_OK) {
             $upload_dir = '../../uploads/payment_screenshots/';
-            
+
             // Create directory if it doesn't exist
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             // Generate unique filename
             $file_extension = strtolower(pathinfo($_FILES['payment_screenshot']['name'], PATHINFO_EXTENSION));
             $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
-            
+
             if (in_array($file_extension, $allowed_extensions)) {
                 $screenshot_filename = 'payment_' . time() . '_' . mt_rand(1000, 9999) . '.' . $file_extension;
-                
+
                 if (!move_uploaded_file($_FILES['payment_screenshot']['tmp_name'], $upload_dir . $screenshot_filename)) {
                     $validation_errors[] = "Failed to upload screenshot";
                 }
@@ -204,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($payment_method === 'Bank Transfer') {
             $validation_errors[] = "Payment screenshot is required for bank transfer";
         }
-        
+
         // Validate bank type
         if (empty($bank_type) || !in_array($bank_type, ['bdo', 'aub'])) {
             $validation_errors[] = "Please select a valid bank";
@@ -291,15 +293,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
 
             // ✅ Calculate total with delivery fee and VAT
-$subtotal = $total_price;
-$subtotal_with_delivery = $subtotal + $delivery_fee;
-$vat_amount = $subtotal_with_delivery * 0.12; // 12% VAT
-$grand_total = $subtotal_with_delivery + $vat_amount;
+            $subtotal = $total_price;
+            $subtotal_with_delivery = $subtotal + $delivery_fee;
+            $vat_amount = $subtotal_with_delivery * 0.12; // 12% VAT
+            $grand_total = $subtotal_with_delivery + $vat_amount;
 
             // ✅ Save order (UPDATED to include delivery info and bank transfer data)
-$payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
-$stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssssdsiddidddssss", $name, $email, $mobile, $address, $zipcode, $payment_method, $grand_total, $reference_no, $billing_address_id, $latitude, $longitude, $user_id, $delivery_distance, $delivery_fee, $subtotal, $bank_type, $screenshot_filename, $reference_number, $payment_status);
+            $payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
+            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssdsiddidddssss", $name, $email, $mobile, $address, $zipcode, $payment_method, $grand_total, $reference_no, $billing_address_id, $latitude, $longitude, $user_id, $delivery_distance, $delivery_fee, $subtotal, $bank_type, $screenshot_filename, $reference_number, $payment_status);
 
             if (!$stmt->execute()) {
                 throw new Exception("Failed to create order: " . $stmt->error);
@@ -308,64 +310,64 @@ $stmt->bind_param("ssssssdsiddidddssss", $name, $email, $mobile, $address, $zipc
             $order_id = $stmt->insert_id;
             $stmt->close();
 
-            
-// ✅ Calculate delivery fee per item (same logic as sample code)
-$delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
 
-// ✅ Save each item with individual delivery calculations
-$stmt = $conn->prepare("INSERT INTO order_items (
+            // ✅ Calculate delivery fee per item (same logic as sample code)
+            $delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
+
+            // ✅ Save each item with individual delivery calculations
+            $stmt = $conn->prepare("INSERT INTO order_items (
     order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-foreach ($cart_items as $item) {
-    $subtotal_item = $item['price'] * $item['quantity'];
-    $product_name = $item['product_name'] ?? $item['variant_name'];
-    $codename = $item['codename'] ?? '';
-    $type_name = $item['type_name'] ?? '';
-    $variant_color = $item['color_name'] ?: ($item['variant_name'] ?? '');
-    $size = $item['size'] ?? '';
-    $price = $item['price'];
-    $quantity = $item['quantity'];
-    
-    // ✅ Make sure delivery fee per item is available in this scope
-    // Re-calculate or ensure it's properly set
-    if (!isset($delivery_fee_per_item) || $delivery_fee_per_item <= 0) {
-        $delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
-    }
-    
-    // ✅ Calculate delivery fee per item and total delivery for this item (exactly like sample code)
-    $item_total_delivery = $delivery_fee_per_item * $quantity;
+            foreach ($cart_items as $item) {
+                $subtotal_item = $item['price'] * $item['quantity'];
+                $product_name = $item['product_name'] ?? $item['variant_name'];
+                $codename = $item['codename'] ?? '';
+                $type_name = $item['type_name'] ?? '';
+                $variant_color = $item['color_name'] ?: ($item['variant_name'] ?? '');
+                $size = $item['size'] ?? '';
+                $price = $item['price'];
+                $quantity = $item['quantity'];
 
-    // ✅ SIMPLIFIED: Get descrip6 and descrip7 directly from cart item
-    $desc6 = $item['descrip6'] ?? '';
-    $desc7 = $item['descrip7'] ?? '';
-    $origin = $item['origin'] ?? '';
-    $product_id = $item['product_id'] ?? null;
+                // ✅ Make sure delivery fee per item is available in this scope
+                // Re-calculate or ensure it's properly set
+                if (!isset($delivery_fee_per_item) || $delivery_fee_per_item <= 0) {
+                    $delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
+                }
 
-    $stmt->bind_param(
-        "iisssssiiisssdd",
-        $order_id,
-        $product_id,
-        $product_name,
-        $codename,
-        $type_name,
-        $variant_color,
-        $size,
-        $price,
-        $quantity,
-        $subtotal_item,
-        $desc6,
-        $desc7,
-        $origin,
-        $delivery_fee_per_item,
-        $item_total_delivery
-    );
+                // ✅ Calculate delivery fee per item and total delivery for this item (exactly like sample code)
+                $item_total_delivery = $delivery_fee_per_item * $quantity;
 
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to save order item: " . $stmt->error);
-    }
-}
-$stmt->close();
+                // ✅ SIMPLIFIED: Get descrip6 and descrip7 directly from cart item
+                $desc6 = $item['descrip6'] ?? '';
+                $desc7 = $item['descrip7'] ?? '';
+                $origin = $item['origin'] ?? '';
+                $product_id = $item['product_id'] ?? null;
+
+                $stmt->bind_param(
+                    "iisssssiiisssdd",
+                    $order_id,
+                    $product_id,
+                    $product_name,
+                    $codename,
+                    $type_name,
+                    $variant_color,
+                    $size,
+                    $price,
+                    $quantity,
+                    $subtotal_item,
+                    $desc6,
+                    $desc7,
+                    $origin,
+                    $delivery_fee_per_item,
+                    $item_total_delivery
+                );
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Failed to save order item: " . $stmt->error);
+                }
+            }
+            $stmt->close();
 
 
             // ✅ Clear cart
@@ -378,24 +380,24 @@ $stmt->close();
             $stmt->close();
 
             // Set success flag to show modal
-$order_success = true;
-$_SESSION['checkout_notice'] = 'Order placed successfully!';
+            $order_success = true;
+            $_SESSION['checkout_notice'] = 'Order placed successfully!';
 
-// Check if it's an AJAX request
-if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-    // Return JSON response for AJAX
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => true,
-        'message' => 'Order placed successfully!',
-        'redirect_url' => 'order_receipt.php?order_id=' . $order_id
-    ]);
-    exit;
-} else {
-    // Regular form submission - redirect normally
-    header('Location: order_receipt.php?order_id=' . $order_id);
-    exit;
-}
+            // Check if it's an AJAX request
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                // Return JSON response for AJAX
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Order placed successfully!',
+                    'redirect_url' => 'order_receipt.php?order_id=' . $order_id
+                ]);
+                exit;
+            } else {
+                // Regular form submission - redirect normally
+                header('Location: order_receipt.php?order_id=' . $order_id);
+                exit;
+            }
         } catch (Exception $e) {
             $error = "An error occurred while processing your order. Please try again.";
             // Log the actual error for debugging
@@ -627,37 +629,37 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <!-- ✅ NEW: Delivery Distance Calculator -->
             <?php if ($delivery_settings && $has_billing_addresses): ?>
-            <div class="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
-                <h3 class="font-bold text-yellow-900 mb-3">Delivery Distance Calculator</h3>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <p class="text-sm text-yellow-700 mb-2">Store Location: <?= htmlspecialchars($delivery_settings['location_name']) ?></p>
-                        <div class="flex gap-2">
-    <button type="button" id="calculateDistance" class="bg-yellow-600 text-white px-4 py-2 rounded text-sm hover:bg-yellow-700 disabled:bg-gray-400" disabled>
-        Calculate Distance
-    </button>
-    <button type="button" id="showMapModal" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" disabled>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
-        </svg>
-        View Map
-    </button>
-</div>
-                        <div id="distanceResult" class="mt-3 text-sm text-gray-700"></div>
-                    </div>
-                    <div>
-                        <div class="text-sm space-y-1">
-                            <div><strong>Base Fee:</strong> ₱<?= number_format($delivery_settings['base_fee'], 2) ?></div>
-                            <div><strong>Per KM Rate:</strong> ₱<?= number_format($delivery_settings['per_km_rate'], 2) ?></div>
-                            <div><strong>Base KM:</strong> <?= $delivery_settings['total_km_base_fee'] ?> km</div>
+                <div class="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
+                    <h3 class="font-bold text-yellow-900 mb-3">Delivery Distance Calculator</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-yellow-700 mb-2">Store Location: <?= htmlspecialchars($delivery_settings['location_name']) ?></p>
+                            <div class="flex gap-2">
+                                <button type="button" id="calculateDistance" class="bg-yellow-600 text-white px-4 py-2 rounded text-sm hover:bg-yellow-700 disabled:bg-gray-400" disabled>
+                                    Calculate Distance
+                                </button>
+                                <button type="button" id="showMapModal" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" disabled>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+                                    </svg>
+                                    View Map
+                                </button>
+                            </div>
+                            <div id="distanceResult" class="mt-3 text-sm text-gray-700"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm space-y-1">
+                                <div><strong>Base Fee:</strong> ₱<?= number_format($delivery_settings['base_fee'], 2) ?></div>
+                                <div><strong>Per KM Rate:</strong> ₱<?= number_format($delivery_settings['per_km_rate'], 2) ?></div>
+                                <div><strong>Base KM:</strong> <?= $delivery_settings['total_km_base_fee'] ?> km</div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Hidden inputs to store calculated values -->
+                    <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
+                    <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
                 </div>
-                
-                <!-- Hidden inputs to store calculated values -->
-                <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
-                <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
-            </div>
             <?php endif; ?>
 
             <!-- Payment Method Section -->
@@ -666,28 +668,28 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <div class="space-y-3">
 
                     <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-    <input type="radio" name="payment_method" value="Bank Transfer" required class="mr-3" onclick="showBankSelection()" />
-    <div class="flex items-center">
-        <div class="text-purple-600 mr-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 104 0 2 2 0 00-4 0zm8 0a2 2 0 104 0 2 2 0 00-4 0z"></path>
-            </svg>
-        </div>
-        <div>
-            <div class="font-medium">Bank Transfer</div>
-            <div class="text-sm text-gray-600">Transfer to our bank account</div>
-        </div>
-    </div>
-</label>
+                        <input type="radio" name="payment_method" value="Bank Transfer" required class="mr-3" onclick="showBankSelection()" />
+                        <div class="flex items-center">
+                            <div class="text-purple-600 mr-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 104 0 2 2 0 00-4 0zm8 0a2 2 0 104 0 2 2 0 00-4 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium">Bank Transfer</div>
+                                <div class="text-sm text-gray-600">Transfer to our bank account</div>
+                            </div>
+                        </div>
+                    </label>
 
-<!-- Add hidden fields for bank transfer data -->
-<div id="bankTransferFields" class="hidden mt-4 p-4 bg-blue-50 rounded-lg">
-    <input type="hidden" name="bank_type" id="selectedBank">
-    <input type="hidden" name="reference_number" id="referenceNumber">
-    <div id="bankSelectionArea">
-        <!-- Bank selection will be populated by JavaScript -->
-    </div>
-</div>
+                    <!-- Add hidden fields for bank transfer data -->
+                    <div id="bankTransferFields" class="hidden mt-4 p-4 bg-blue-50 rounded-lg">
+                        <input type="hidden" name="bank_type" id="selectedBank">
+                        <input type="hidden" name="reference_number" id="referenceNumber">
+                        <div id="bankSelectionArea">
+                            <!-- Bank selection will be populated by JavaScript -->
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -777,32 +779,32 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 </div>
 
                 <!-- Fixed Total section with detailed breakdown (Like Sample Code) -->
-<div class="border-t bg-gray-50 p-4">
-    <div class="space-y-2 text-sm">
-        <div class="flex justify-between items-center">
-            <span class="text-gray-700">Items Subtotal:</span>
-            <span class="font-medium">₱<?= number_format($total_price, 2) ?></span>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-gray-700">Total Delivery Cost:</span>
-            <span class="font-medium" id="totalDeliveryCostDisplay">₱0.00</span>
-        </div>
-        <hr class="border-gray-300">
-        <div class="flex justify-between items-center">
-            <span class="text-gray-700">Subtotal (Items + Delivery):</span>
-            <span class="font-medium" id="subtotalBeforeVAT">₱<?= number_format($total_price, 2) ?></span>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-gray-700">VAT (12%):</span>
-            <span class="font-medium text-orange-600" id="vatAmount">₱0.00</span>
-        </div>
-        <hr class="border-gray-300">
-        <div class="flex justify-between items-center text-lg font-bold">
-            <span class="text-gray-900">Grand Total (with VAT):</span>
-            <span class="text-green-700" id="grandTotalDisplay">₱<?= number_format($total_price, 2) ?></span>
-        </div>
-    </div>
-</div>
+                <div class="border-t bg-gray-50 p-4">
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Items Subtotal:</span>
+                            <span class="font-medium">₱<?= number_format($total_price, 2) ?></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Total Delivery Cost:</span>
+                            <span class="font-medium" id="totalDeliveryCostDisplay">₱0.00</span>
+                        </div>
+                        <hr class="border-gray-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Subtotal (Items + Delivery):</span>
+                            <span class="font-medium" id="subtotalBeforeVAT">₱<?= number_format($total_price, 2) ?></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">VAT (12%):</span>
+                            <span class="font-medium text-orange-600" id="vatAmount">₱0.00</span>
+                        </div>
+                        <hr class="border-gray-300">
+                        <div class="flex justify-between items-center text-lg font-bold">
+                            <span class="text-gray-900">Grand Total (with VAT):</span>
+                            <span class="text-green-700" id="grandTotalDisplay">₱<?= number_format($total_price, 2) ?></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="text-sm text-gray-600 text-center mt-4">
@@ -825,237 +827,237 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     </div>
 
     <script>
-    // Global variables
-    let deliverySettings = <?= $delivery_settings ? json_encode($delivery_settings) : 'null' ?>;
-    let subtotal = <?= $total_price ?>;
+        // Global variables
+        let deliverySettings = <?= $delivery_settings ? json_encode($delivery_settings) : 'null' ?>;
+        let subtotal = <?= $total_price ?>;
 
         // Function to calculate VAT and totals
-function calculateTotalsWithVAT(itemsSubtotal, deliveryCost) {
-    const subtotalWithDelivery = itemsSubtotal + deliveryCost;
-    const vatAmount = subtotalWithDelivery * 0.12;
-    const grandTotal = subtotalWithDelivery + vatAmount;
-    
-    return {
-        subtotalWithDelivery: subtotalWithDelivery,
-        vatAmount: vatAmount,
-        grandTotal: grandTotal
-    };
-}
+        function calculateTotalsWithVAT(itemsSubtotal, deliveryCost) {
+            const subtotalWithDelivery = itemsSubtotal + deliveryCost;
+            const vatAmount = subtotalWithDelivery * 0.12;
+            const grandTotal = subtotalWithDelivery + vatAmount;
 
-    let selectedAddress = null;
-
-    // Global variables for the map modal
-    let deliveryMap = null;
-    let routingControl = null;
-    let storeMarker = null;
-    let customerMarker = null;
-    let currentRouteData = null;
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize all event listeners
-        initializeAddressSelection();
-        initializeDistanceCalculation();
-        initializeMapModal();
-        initializeCheckoutForm();
-    });
-
-    function initializeAddressSelection() {
-        const toggleBtn = document.getElementById('toggleBillingSelector');
-        const selector = document.getElementById('billingAddressSelector');
-        const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-        const calculateDistanceBtn = document.getElementById('calculateDistance');
-        const showMapBtn = document.getElementById('showMapModal');
-
-        const mobileInput = document.getElementById('mobileInput');
-        const addressInput = document.getElementById('addressInput');
-        const zipcodeInput = document.getElementById('zipcodeInput');
-
-        // Check if user has addresses
-        const hasAddresses = <?= $has_billing_addresses ? 'true' : 'false' ?>;
-
-        // For users with addresses, show selector by default and require selection
-        if (hasAddresses) {
-            // Initially disable the place order button until an address is selected
-            if (placeOrderBtn) {
-                placeOrderBtn.disabled = true;
-                placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-                placeOrderBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
-                placeOrderBtn.textContent = 'Please select an address';
-            }
-
-            // Toggle functionality for the selector button (optional collapse/expand)
-            if (toggleBtn && selector) {
-                toggleBtn.addEventListener('click', function() {
-                    selector.classList.toggle('hidden');
-                    toggleBtn.textContent = selector.classList.contains('hidden') ?
-                        'Show Address Selector' :
-                        'Hide Address Selector';
-                });
-            }
-        }
-
-        // Handle billing address selection
-        billingRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.checked) {
-                    selectedAddress = {
-                        latitude: parseFloat(this.dataset.latitude),
-                        longitude: parseFloat(this.dataset.longitude),
-                        address: this.dataset.address
-                    };
-
-                    // Clean and format mobile number
-                    let phone = this.dataset.phone;
-                    // Remove spaces, dashes, parentheses, plus signs
-                    phone = phone.replace(/[\s\-\(\)\+]/g, '');
-                    // Convert +63 format to 09 format
-                    if (phone.match(/^63([0-9]{10})$/)) {
-                        phone = '0' + phone.substring(2);
-                    }
-
-                    // Populate the fields and enable them
-                    if (mobileInput) mobileInput.value = phone;
-                    if (addressInput) addressInput.value = this.dataset.address;
-                    if (zipcodeInput) zipcodeInput.value = this.dataset.postalCode;
-
-                    // Enable fields for form submission but keep them visually disabled
-                    if (mobileInput) {
-                        mobileInput.disabled = false;
-                        mobileInput.readOnly = true;
-                    }
-                    if (addressInput) {
-                        addressInput.disabled = false;
-                        addressInput.readOnly = true;
-                    }
-                    if (zipcodeInput) {
-                        zipcodeInput.disabled = false;
-                        zipcodeInput.readOnly = true;
-                    }
-
-                    // Enable calculate distance and map buttons
-                    if (calculateDistanceBtn) {
-                        calculateDistanceBtn.disabled = false;
-                    }
-                    if (showMapBtn) {
-                        showMapBtn.disabled = false;
-                    }
-
-                    // Update place order button text
-                    if (placeOrderBtn) {
-                        placeOrderBtn.textContent = 'Calculate delivery fee to continue';
-                    }
-                }
-            });
-        });
-    }
-
-    // Function to calculate distance using OSRM (same as map routing)
-    async function calculateRoutingDistance(storeLatLng, customerLatLng) {
-        try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${storeLatLng.lng},${storeLatLng.lat};${customerLatLng.lng},${customerLatLng.lat}?overview=false&geometries=geojson`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.routes && data.routes.length > 0) {
-                const route = data.routes[0];
-                const distanceKm = route.distance / 1000; // Convert to kilometers
-                const timeMinutes = Math.round(route.duration / 60); // Convert to minutes
-                
-                return {
-                    distance: distanceKm,
-                    time: timeMinutes,
-                    success: true
-                };
-            } else {
-                throw new Error('No routes found');
-            }
-        } catch (error) {
-            console.error('Routing API error:', error);
-            // Fallback to Haversine distance
-            const distance = calculateHaversineDistance(
-                storeLatLng.lat, storeLatLng.lng,
-                customerLatLng.lat, customerLatLng.lng
-            );
             return {
-                distance: distance,
-                time: Math.round(distance * 2), // Rough estimate: 2 minutes per km
-                success: false,
-                fallback: true
+                subtotalWithDelivery: subtotalWithDelivery,
+                vatAmount: vatAmount,
+                grandTotal: grandTotal
             };
         }
-    }
 
-    function initializeDistanceCalculation() {
-        const calculateDistanceBtn = document.getElementById('calculateDistance');
-        
-        if (calculateDistanceBtn) {
-            calculateDistanceBtn.addEventListener('click', async function() {
-                if (!selectedAddress || !deliverySettings) {
-                    alert('Please select an address and ensure delivery settings are available.');
-                    return;
+        let selectedAddress = null;
+
+        // Global variables for the map modal
+        let deliveryMap = null;
+        let routingControl = null;
+        let storeMarker = null;
+        let customerMarker = null;
+        let currentRouteData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all event listeners
+            initializeAddressSelection();
+            initializeDistanceCalculation();
+            initializeMapModal();
+            initializeCheckoutForm();
+        });
+
+        function initializeAddressSelection() {
+            const toggleBtn = document.getElementById('toggleBillingSelector');
+            const selector = document.getElementById('billingAddressSelector');
+            const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
+            const calculateDistanceBtn = document.getElementById('calculateDistance');
+            const showMapBtn = document.getElementById('showMapModal');
+
+            const mobileInput = document.getElementById('mobileInput');
+            const addressInput = document.getElementById('addressInput');
+            const zipcodeInput = document.getElementById('zipcodeInput');
+
+            // Check if user has addresses
+            const hasAddresses = <?= $has_billing_addresses ? 'true' : 'false' ?>;
+
+            // For users with addresses, show selector by default and require selection
+            if (hasAddresses) {
+                // Initially disable the place order button until an address is selected
+                if (placeOrderBtn) {
+                    placeOrderBtn.disabled = true;
+                    placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    placeOrderBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                    placeOrderBtn.textContent = 'Please select an address';
                 }
 
-                // Show loading
-                calculateDistanceBtn.textContent = 'Calculating...';
-                calculateDistanceBtn.disabled = true;
-
-                // Calculate distance using routing API (same as map)
-                const storeLatLng = {
-                    lat: parseFloat(deliverySettings.latitude),
-                    lng: parseFloat(deliverySettings.longitude)
-                };
-                const customerLatLng = {
-                    lat: selectedAddress.latitude,
-                    lng: selectedAddress.longitude
-                };
-
-                const routeData = await calculateRoutingDistance(storeLatLng, customerLatLng);
-                const distance = routeData.distance;
-
-                // Calculate delivery fee per item
-                const baseFee = parseFloat(deliverySettings.base_fee);
-                const perKmRate = parseFloat(deliverySettings.per_km_rate);
-                const baseKm = parseFloat(deliverySettings.total_km_base_fee);
-
-                let deliveryFeePerItem;
-                if (distance <= baseKm) {
-                    deliveryFeePerItem = baseFee;
-                } else {
-                    const extraKm = distance - baseKm;
-                    deliveryFeePerItem = baseFee + (extraKm * perKmRate);
+                // Toggle functionality for the selector button (optional collapse/expand)
+                if (toggleBtn && selector) {
+                    toggleBtn.addEventListener('click', function() {
+                        selector.classList.toggle('hidden');
+                        toggleBtn.textContent = selector.classList.contains('hidden') ?
+                            'Show Address Selector' :
+                            'Hide Address Selector';
+                    });
                 }
+            }
 
-                // Calculate total delivery cost for all items
-                let totalDeliveryCost = 0;
-                const cartItems = document.querySelectorAll('[id^="cartItem"]');
-                
-                cartItems.forEach((cartItem, index) => {
-                    const quantityElement = cartItem.querySelector('.itemQuantity');
-                    const quantity = parseInt(quantityElement.textContent);
-                    
-                    // Calculate item total delivery (delivery fee per item × quantity)
-                    const itemTotalDelivery = deliveryFeePerItem * quantity;
-                    totalDeliveryCost += itemTotalDelivery;
-                    
-                    // Update UI for each item
-                    const deliveryPerItemElement = cartItem.querySelector('.deliveryPerItem');
-                    const totalDeliveryForItemElement = cartItem.querySelector('.totalDeliveryForItem');
-                    
-                    if (deliveryPerItemElement) {
-                        deliveryPerItemElement.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
-                    }
-                    if (totalDeliveryForItemElement) {
-                        totalDeliveryForItemElement.textContent = `₱${itemTotalDelivery.toFixed(2)}`;
+            // Handle billing address selection
+            billingRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedAddress = {
+                            latitude: parseFloat(this.dataset.latitude),
+                            longitude: parseFloat(this.dataset.longitude),
+                            address: this.dataset.address
+                        };
+
+                        // Clean and format mobile number
+                        let phone = this.dataset.phone;
+                        // Remove spaces, dashes, parentheses, plus signs
+                        phone = phone.replace(/[\s\-\(\)\+]/g, '');
+                        // Convert +63 format to 09 format
+                        if (phone.match(/^63([0-9]{10})$/)) {
+                            phone = '0' + phone.substring(2);
+                        }
+
+                        // Populate the fields and enable them
+                        if (mobileInput) mobileInput.value = phone;
+                        if (addressInput) addressInput.value = this.dataset.address;
+                        if (zipcodeInput) zipcodeInput.value = this.dataset.postalCode;
+
+                        // Enable fields for form submission but keep them visually disabled
+                        if (mobileInput) {
+                            mobileInput.disabled = false;
+                            mobileInput.readOnly = true;
+                        }
+                        if (addressInput) {
+                            addressInput.disabled = false;
+                            addressInput.readOnly = true;
+                        }
+                        if (zipcodeInput) {
+                            zipcodeInput.disabled = false;
+                            zipcodeInput.readOnly = true;
+                        }
+
+                        // Enable calculate distance and map buttons
+                        if (calculateDistanceBtn) {
+                            calculateDistanceBtn.disabled = false;
+                        }
+                        if (showMapBtn) {
+                            showMapBtn.disabled = false;
+                        }
+
+                        // Update place order button text
+                        if (placeOrderBtn) {
+                            placeOrderBtn.textContent = 'Calculate delivery fee to continue';
+                        }
                     }
                 });
+            });
+        }
 
-                // Update distance result
-                const distanceResultElement = document.getElementById('distanceResult');
-                if (distanceResultElement) {
-                    const fallbackNote = routeData.fallback ? '<div class="text-xs text-orange-600 mt-1">* Distance calculated using straight-line method</div>' : '';
-                    distanceResultElement.innerHTML = `
+        // Function to calculate distance using OSRM (same as map routing)
+        async function calculateRoutingDistance(storeLatLng, customerLatLng) {
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${storeLatLng.lng},${storeLatLng.lat};${customerLatLng.lng},${customerLatLng.lat}?overview=false&geometries=geojson`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const distanceKm = route.distance / 1000; // Convert to kilometers
+                    const timeMinutes = Math.round(route.duration / 60); // Convert to minutes
+
+                    return {
+                        distance: distanceKm,
+                        time: timeMinutes,
+                        success: true
+                    };
+                } else {
+                    throw new Error('No routes found');
+                }
+            } catch (error) {
+                console.error('Routing API error:', error);
+                // Fallback to Haversine distance
+                const distance = calculateHaversineDistance(
+                    storeLatLng.lat, storeLatLng.lng,
+                    customerLatLng.lat, customerLatLng.lng
+                );
+                return {
+                    distance: distance,
+                    time: Math.round(distance * 2), // Rough estimate: 2 minutes per km
+                    success: false,
+                    fallback: true
+                };
+            }
+        }
+
+        function initializeDistanceCalculation() {
+            const calculateDistanceBtn = document.getElementById('calculateDistance');
+
+            if (calculateDistanceBtn) {
+                calculateDistanceBtn.addEventListener('click', async function() {
+                    if (!selectedAddress || !deliverySettings) {
+                        alert('Please select an address and ensure delivery settings are available.');
+                        return;
+                    }
+
+                    // Show loading
+                    calculateDistanceBtn.textContent = 'Calculating...';
+                    calculateDistanceBtn.disabled = true;
+
+                    // Calculate distance using routing API (same as map)
+                    const storeLatLng = {
+                        lat: parseFloat(deliverySettings.latitude),
+                        lng: parseFloat(deliverySettings.longitude)
+                    };
+                    const customerLatLng = {
+                        lat: selectedAddress.latitude,
+                        lng: selectedAddress.longitude
+                    };
+
+                    const routeData = await calculateRoutingDistance(storeLatLng, customerLatLng);
+                    const distance = routeData.distance;
+
+                    // Calculate delivery fee per item
+                    const baseFee = parseFloat(deliverySettings.base_fee);
+                    const perKmRate = parseFloat(deliverySettings.per_km_rate);
+                    const baseKm = parseFloat(deliverySettings.total_km_base_fee);
+
+                    let deliveryFeePerItem;
+                    if (distance <= baseKm) {
+                        deliveryFeePerItem = baseFee;
+                    } else {
+                        const extraKm = distance - baseKm;
+                        deliveryFeePerItem = baseFee + (extraKm * perKmRate);
+                    }
+
+                    // Calculate total delivery cost for all items
+                    let totalDeliveryCost = 0;
+                    const cartItems = document.querySelectorAll('[id^="cartItem"]');
+
+                    cartItems.forEach((cartItem, index) => {
+                        const quantityElement = cartItem.querySelector('.itemQuantity');
+                        const quantity = parseInt(quantityElement.textContent);
+
+                        // Calculate item total delivery (delivery fee per item × quantity)
+                        const itemTotalDelivery = deliveryFeePerItem * quantity;
+                        totalDeliveryCost += itemTotalDelivery;
+
+                        // Update UI for each item
+                        const deliveryPerItemElement = cartItem.querySelector('.deliveryPerItem');
+                        const totalDeliveryForItemElement = cartItem.querySelector('.totalDeliveryForItem');
+
+                        if (deliveryPerItemElement) {
+                            deliveryPerItemElement.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
+                        }
+                        if (totalDeliveryForItemElement) {
+                            totalDeliveryForItemElement.textContent = `₱${itemTotalDelivery.toFixed(2)}`;
+                        }
+                    });
+
+                    // Update distance result
+                    const distanceResultElement = document.getElementById('distanceResult');
+                    if (distanceResultElement) {
+                        const fallbackNote = routeData.fallback ? '<div class="text-xs text-orange-600 mt-1">* Distance calculated using straight-line method</div>' : '';
+                        distanceResultElement.innerHTML = `
                         <div class="bg-green-100 border border-green-300 rounded p-3">
                             <div class="font-medium text-green-800">Distance: ${distance.toFixed(2)} km</div>
                             <div class="font-medium text-green-800">Est. Time: ${routeData.time} minutes</div>
@@ -1064,196 +1066,196 @@ function calculateTotalsWithVAT(itemsSubtotal, deliveryCost) {
                             ${fallbackNote}
                         </div>
                     `;
-                }
+                    }
 
-                // Update hidden fields
-                const deliveryDistanceInput = document.getElementById('deliveryDistance');
-                const deliveryFeeInput = document.getElementById('deliveryFee');
-                
-                if (deliveryDistanceInput) deliveryDistanceInput.value = distance.toFixed(2);
-                if (deliveryFeeInput) deliveryFeeInput.value = totalDeliveryCost.toFixed(2);
+                    // Update hidden fields
+                    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+                    const deliveryFeeInput = document.getElementById('deliveryFee');
 
-                // Update totals display with VAT calculation
-const subtotalWithDelivery = subtotal + totalDeliveryCost;
-const vatAmount = subtotalWithDelivery * 0.12; // 12% VAT
-const grandTotal = subtotalWithDelivery + vatAmount;
+                    if (deliveryDistanceInput) deliveryDistanceInput.value = distance.toFixed(2);
+                    if (deliveryFeeInput) deliveryFeeInput.value = totalDeliveryCost.toFixed(2);
 
-const totalDeliveryCostDisplay = document.getElementById('totalDeliveryCostDisplay');
-const subtotalBeforeVATDisplay = document.getElementById('subtotalBeforeVAT');
-const vatAmountDisplay = document.getElementById('vatAmount');
-const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+                    // Update totals display with VAT calculation
+                    const subtotalWithDelivery = subtotal + totalDeliveryCost;
+                    const vatAmount = subtotalWithDelivery * 0.12; // 12% VAT
+                    const grandTotal = subtotalWithDelivery + vatAmount;
 
-if (totalDeliveryCostDisplay) {
-    totalDeliveryCostDisplay.textContent = `₱${totalDeliveryCost.toFixed(2)}`;
-}
-if (subtotalBeforeVATDisplay) {
-    subtotalBeforeVATDisplay.textContent = `₱${subtotalWithDelivery.toFixed(2)}`;
-}
-if (vatAmountDisplay) {
-    vatAmountDisplay.textContent = `₱${vatAmount.toFixed(2)}`;
-}
-if (grandTotalDisplay) {
-    grandTotalDisplay.textContent = `₱${grandTotal.toFixed(2)}`;
-}
+                    const totalDeliveryCostDisplay = document.getElementById('totalDeliveryCostDisplay');
+                    const subtotalBeforeVATDisplay = document.getElementById('subtotalBeforeVAT');
+                    const vatAmountDisplay = document.getElementById('vatAmount');
+                    const grandTotalDisplay = document.getElementById('grandTotalDisplay');
 
-                // Reset button
-                calculateDistanceBtn.textContent = 'Recalculate Distance';
-                calculateDistanceBtn.disabled = false;
+                    if (totalDeliveryCostDisplay) {
+                        totalDeliveryCostDisplay.textContent = `₱${totalDeliveryCost.toFixed(2)}`;
+                    }
+                    if (subtotalBeforeVATDisplay) {
+                        subtotalBeforeVATDisplay.textContent = `₱${subtotalWithDelivery.toFixed(2)}`;
+                    }
+                    if (vatAmountDisplay) {
+                        vatAmountDisplay.textContent = `₱${vatAmount.toFixed(2)}`;
+                    }
+                    if (grandTotalDisplay) {
+                        grandTotalDisplay.textContent = `₱${grandTotal.toFixed(2)}`;
+                    }
 
-            // ✅ ENABLE PLACE ORDER BUTTON AFTER DELIVERY CALCULATION
-const placeOrderBtn = document.getElementById('placeOrderBtn');
-if (placeOrderBtn) {
-    placeOrderBtn.disabled = false;
-    placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-    placeOrderBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-    placeOrderBtn.textContent = 'Place Order';
-}
+                    // Reset button
+                    calculateDistanceBtn.textContent = 'Recalculate Distance';
+                    calculateDistanceBtn.disabled = false;
 
-// Also update the updateBankPaymentAmount function to be called after delivery calculation
-if (typeof updateBankPaymentAmount === 'function') {
-    updateBankPaymentAmount();
-}    
-            });
-        }
-    }
+                    // ✅ ENABLE PLACE ORDER BUTTON AFTER DELIVERY CALCULATION
+                    const placeOrderBtn = document.getElementById('placeOrderBtn');
+                    if (placeOrderBtn) {
+                        placeOrderBtn.disabled = false;
+                        placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        placeOrderBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                        placeOrderBtn.textContent = 'Place Order';
+                    }
 
-    function initializeMapModal() {
-        const showMapBtn = document.getElementById('showMapModal');
-        
-        if (showMapBtn) {
-            showMapBtn.addEventListener('click', function() {
-                if (!selectedAddress || !deliverySettings) {
-                    alert('Please select an address first.');
-                    return;
-                }
-
-                // Prepare store data
-                const storeData = {
-                    name: deliverySettings.location_name,
-                    latitude: parseFloat(deliverySettings.latitude),
-                    longitude: parseFloat(deliverySettings.longitude)
-                };
-
-                // Prepare customer data
-                const customerData = {
-                    address: selectedAddress.address,
-                    latitude: selectedAddress.latitude,
-                    longitude: selectedAddress.longitude
-                };
-
-                // Create and show the map modal
-                createMapModal(storeData, customerData, deliverySettings);
-            });
-        }
-    }
-
-    function initializeCheckoutForm() {
-        const checkoutForm = document.querySelector('#checkoutForm');
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-
-        if (checkoutForm && placeOrderBtn) {
-            checkoutForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // Prevent normal form submission
-
-                // Check if delivery fee is calculated
-                const deliveryDistanceInput = document.getElementById('deliveryDistance');
-                const deliveryDistance = deliveryDistanceInput ? parseFloat(deliveryDistanceInput.value) : 0;
-                
-                if (deliveryDistance <= 0) {
-                    alert('Please calculate delivery distance first before placing your order.');
-                    return;
-                }
-
-                // Show loading state
-                const originalText = placeOrderBtn.textContent;
-                placeOrderBtn.textContent = 'Processing...';
-                placeOrderBtn.disabled = true;
-
-                // Create FormData object
-                const formData = new FormData(checkoutForm);
-
-                // Send AJAX request with proper headers
-fetch('', {  // Empty string means current page
-    method: 'POST',
-    headers: {
-        'X-Requested-With': 'XMLHttpRequest'  // This identifies it as an AJAX request
-    },
-    body: formData
-})
-.then(response => {
-    // Check if response is JSON or HTML
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-        return response.json();
-    } else {
-        return response.text();
-    }
-})
-.then(data => {
-    if (typeof data === 'object' && data.success) {
-        // JSON response - success
-        alert('Order placed successfully! You will be redirected to the order receipt.');
-        window.location.href = data.redirect_url;
-    } else if (typeof data === 'string') {
-        // HTML response - check for errors
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data, 'text/html');
-        const errorDiv = doc.querySelector('.bg-red-100');
-        
-        if (errorDiv) {
-            const errorText = errorDiv.textContent.replace('Error:', '').trim();
-            alert('Error: ' + errorText);
-        } else {
-            alert('An unexpected error occurred. Please try again.');
-        }
-        
-        placeOrderBtn.textContent = originalText;
-        placeOrderBtn.disabled = false;
-    } else {
-        // Unexpected response format
-        alert('An unexpected error occurred. Please try again.');
-        placeOrderBtn.textContent = originalText;
-        placeOrderBtn.disabled = false;
-    }
-})
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                    placeOrderBtn.textContent = originalText;
-                    placeOrderBtn.disabled = false;
+                    // Also update the updateBankPaymentAmount function to be called after delivery calculation
+                    if (typeof updateBankPaymentAmount === 'function') {
+                        updateBankPaymentAmount();
+                    }
                 });
-            });
-        }
-    }
-
-    // Haversine formula to calculate distance between two coordinates
-    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Earth's radius in kilometers
-
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-        const distance = R * c; // Distance in kilometers
-        return distance;
-    }
-
-    // Function to create and display the map modal with fixed layout
-    function createMapModal(storeData, customerData, deliverySettings) {
-        // Remove existing modal if any
-        const existingModal = document.getElementById('deliveryMapModal');
-        if (existingModal) {
-            existingModal.remove();
+            }
         }
 
-        // Create modal HTML with improved layout
-        const modalHTML = `
+        function initializeMapModal() {
+            const showMapBtn = document.getElementById('showMapModal');
+
+            if (showMapBtn) {
+                showMapBtn.addEventListener('click', function() {
+                    if (!selectedAddress || !deliverySettings) {
+                        alert('Please select an address first.');
+                        return;
+                    }
+
+                    // Prepare store data
+                    const storeData = {
+                        name: deliverySettings.location_name,
+                        latitude: parseFloat(deliverySettings.latitude),
+                        longitude: parseFloat(deliverySettings.longitude)
+                    };
+
+                    // Prepare customer data
+                    const customerData = {
+                        address: selectedAddress.address,
+                        latitude: selectedAddress.latitude,
+                        longitude: selectedAddress.longitude
+                    };
+
+                    // Create and show the map modal
+                    createMapModal(storeData, customerData, deliverySettings);
+                });
+            }
+        }
+
+        function initializeCheckoutForm() {
+            const checkoutForm = document.querySelector('#checkoutForm');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+            if (checkoutForm && placeOrderBtn) {
+                checkoutForm.addEventListener('submit', function(e) {
+                    e.preventDefault(); // Prevent normal form submission
+
+                    // Check if delivery fee is calculated
+                    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+                    const deliveryDistance = deliveryDistanceInput ? parseFloat(deliveryDistanceInput.value) : 0;
+
+                    if (deliveryDistance <= 0) {
+                        alert('Please calculate delivery distance first before placing your order.');
+                        return;
+                    }
+
+                    // Show loading state
+                    const originalText = placeOrderBtn.textContent;
+                    placeOrderBtn.textContent = 'Processing...';
+                    placeOrderBtn.disabled = true;
+
+                    // Create FormData object
+                    const formData = new FormData(checkoutForm);
+
+                    // Send AJAX request with proper headers
+                    fetch('', { // Empty string means current page
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest' // This identifies it as an AJAX request
+                            },
+                            body: formData
+                        })
+                        .then(response => {
+                            // Check if response is JSON or HTML
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                return response.json();
+                            } else {
+                                return response.text();
+                            }
+                        })
+                        .then(data => {
+                            if (typeof data === 'object' && data.success) {
+                                // JSON response - success
+                                alert('Order placed successfully! You will be redirected to the order receipt.');
+                                window.location.href = data.redirect_url;
+                            } else if (typeof data === 'string') {
+                                // HTML response - check for errors
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(data, 'text/html');
+                                const errorDiv = doc.querySelector('.bg-red-100');
+
+                                if (errorDiv) {
+                                    const errorText = errorDiv.textContent.replace('Error:', '').trim();
+                                    alert('Error: ' + errorText);
+                                } else {
+                                    alert('An unexpected error occurred. Please try again.');
+                                }
+
+                                placeOrderBtn.textContent = originalText;
+                                placeOrderBtn.disabled = false;
+                            } else {
+                                // Unexpected response format
+                                alert('An unexpected error occurred. Please try again.');
+                                placeOrderBtn.textContent = originalText;
+                                placeOrderBtn.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred. Please try again.');
+                            placeOrderBtn.textContent = originalText;
+                            placeOrderBtn.disabled = false;
+                        });
+                });
+            }
+        }
+
+        // Haversine formula to calculate distance between two coordinates
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            const distance = R * c; // Distance in kilometers
+            return distance;
+        }
+
+        // Function to create and display the map modal with fixed layout
+        function createMapModal(storeData, customerData, deliverySettings) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('deliveryMapModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Create modal HTML with improved layout
+            const modalHTML = `
             <div id="deliveryMapModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="backdrop-filter: blur(4px);">
                 <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
                     <!-- Modal Header -->
@@ -1434,269 +1436,283 @@ fetch('', {  // Empty string means current page
             </div>
         `;
 
-        // Add modal to the page
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Prevent body scrolling
-        document.body.style.overflow = 'hidden';
-        
-        // Initialize the map after modal is added
-        setTimeout(() => {
-            initializeDeliveryMap(storeData, customerData, deliverySettings);
-        }, 100);
-    }
+            // Add modal to the page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Function to close the delivery map modal
-    function closeDeliveryMapModal() {
-        const modal = document.getElementById('deliveryMapModal');
-        if (modal) {
-            modal.remove();
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+
+            // Initialize the map after modal is added
+            setTimeout(() => {
+                initializeDeliveryMap(storeData, customerData, deliverySettings);
+            }, 100);
         }
-        
-        // Restore body scrolling
-        document.body.style.overflow = '';
-        
-        // Clean up map
-        if (deliveryMap) {
-            deliveryMap.remove();
-            deliveryMap = null;
-            routingControl = null;
-            storeMarker = null;
-            customerMarker = null;
+
+        // Function to close the delivery map modal
+        function closeDeliveryMapModal() {
+            const modal = document.getElementById('deliveryMapModal');
+            if (modal) {
+                modal.remove();
+            }
+
+            // Restore body scrolling
+            document.body.style.overflow = '';
+
+            // Clean up map
+            if (deliveryMap) {
+                deliveryMap.remove();
+                deliveryMap = null;
+                routingControl = null;
+                storeMarker = null;
+                customerMarker = null;
+            }
         }
-    }
 
-    // Function to initialize the delivery map with proper routing
-    function initializeDeliveryMap(storeData, customerData, deliverySettings) {
-        // Initialize map
-        const centerLat = (parseFloat(storeData.latitude) + parseFloat(customerData.latitude)) / 2;
-        const centerLng = (parseFloat(storeData.longitude) + parseFloat(customerData.longitude)) / 2;
+        // Function to initialize the delivery map with proper routing
+        function initializeDeliveryMap(storeData, customerData, deliverySettings) {
+            // Initialize map
+            const centerLat = (parseFloat(storeData.latitude) + parseFloat(customerData.latitude)) / 2;
+            const centerLng = (parseFloat(storeData.longitude) + parseFloat(customerData.longitude)) / 2;
 
-        deliveryMap = L.map('deliveryMap').setView([centerLat, centerLng], 13);
+            deliveryMap = L.map('deliveryMap').setView([centerLat, centerLng], 13);
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(deliveryMap);
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(deliveryMap);
 
-        // Custom markers
-        const storeIcon = L.divIcon({
-            html: `<div class="bg-green-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+            // Custom markers
+            const storeIcon = L.divIcon({
+                html: `<div class="bg-green-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-6m-2-13v6h0m-8-6v6h0M5 21h14"/>
                      </svg>
                    </div>`,
-            className: '',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        });
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
 
-        const customerIcon = L.divIcon({
-            html: `<div class="bg-red-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+            const customerIcon = L.divIcon({
+                html: `<div class="bg-red-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                        <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                      </svg>
                    </div>`,
-            className: '',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        });
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
 
-        // Add markers
-        storeMarker = L.marker([storeData.latitude, storeData.longitude], { icon: storeIcon })
-            .addTo(deliveryMap)
-            .bindPopup(`<b>Store Location</b><br>${storeData.name}`);
+            // Add markers
+            storeMarker = L.marker([storeData.latitude, storeData.longitude], {
+                    icon: storeIcon
+                })
+                .addTo(deliveryMap)
+                .bindPopup(`<b>Store Location</b><br>${storeData.name}`);
 
-        customerMarker = L.marker([customerData.latitude, customerData.longitude], { icon: customerIcon })
-            .addTo(deliveryMap)
-            .bindPopup(`<b>Delivery Address</b><br>${customerData.address}`);
+            customerMarker = L.marker([customerData.latitude, customerData.longitude], {
+                    icon: customerIcon
+                })
+                .addTo(deliveryMap)
+                .bindPopup(`<b>Delivery Address</b><br>${customerData.address}`);
 
-        // Load routing and calculate route
-        loadRoutingAndCalculate();
+            // Load routing and calculate route
+            loadRoutingAndCalculate();
 
-        function loadRoutingAndCalculate() {
-            // Check if Leaflet Routing Machine is already loaded
-            if (typeof L.Routing !== 'undefined') {
-                addRoutingControl();
-            } else {
-                // Load the routing library
-                const script = document.createElement('script');
-                script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js';
-                script.onload = function() {
+            function loadRoutingAndCalculate() {
+                // Check if Leaflet Routing Machine is already loaded
+                if (typeof L.Routing !== 'undefined') {
                     addRoutingControl();
-                };
-                script.onerror = function() {
-                    console.error('Failed to load routing library, using fallback calculation');
-                    calculateFallbackRoute();
-                };
-                document.head.appendChild(script);
-            }
-        }
-
-        function addRoutingControl() {
-            try {
-                // Add routing control
-                routingControl = L.Routing.control({
-                    waypoints: [
-                        L.latLng(storeData.latitude, storeData.longitude),
-                        L.latLng(customerData.latitude, customerData.longitude)
-                    ],
-                    routeWhileDragging: false,
-                    addWaypoints: false,
-                    createMarker: function() { return null; }, // Don't create default markers
-                    lineOptions: {
-                        styles: [{ color: '#3B82F6', weight: 4, opacity: 0.8 }]
-                    },
-                    show: false, // Hide the routing instructions panel
-                    router: L.Routing.osrmv1({
-                        serviceUrl: 'https://router.project-osrm.org/route/v1',
-                        profile: 'driving'
-                    })
-                }).on('routesfound', function(e) {
-                    const route = e.routes[0];
-                    const distanceKm = (route.summary.totalDistance / 1000);
-                    const timeMinutes = Math.round(route.summary.totalTime / 60);
-
-                    // Store current route data
-                    currentRouteData = {
-                        distance: distanceKm,
-                        time: timeMinutes,
-                        success: true
+                } else {
+                    // Load the routing library
+                    const script = document.createElement('script');
+                    script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js';
+                    script.onload = function() {
+                        addRoutingControl();
                     };
+                    script.onerror = function() {
+                        console.error('Failed to load routing library, using fallback calculation');
+                        calculateFallbackRoute();
+                    };
+                    document.head.appendChild(script);
+                }
+            }
 
-                    updateRouteDisplay(currentRouteData, deliverySettings);
+            function addRoutingControl() {
+                try {
+                    // Add routing control
+                    routingControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(storeData.latitude, storeData.longitude),
+                            L.latLng(customerData.latitude, customerData.longitude)
+                        ],
+                        routeWhileDragging: false,
+                        addWaypoints: false,
+                        createMarker: function() {
+                            return null;
+                        }, // Don't create default markers
+                        lineOptions: {
+                            styles: [{
+                                color: '#3B82F6',
+                                weight: 4,
+                                opacity: 0.8
+                            }]
+                        },
+                        show: false, // Hide the routing instructions panel
+                        router: L.Routing.osrmv1({
+                            serviceUrl: 'https://router.project-osrm.org/route/v1',
+                            profile: 'driving'
+                        })
+                    }).on('routesfound', function(e) {
+                        const route = e.routes[0];
+                        const distanceKm = (route.summary.totalDistance / 1000);
+                        const timeMinutes = Math.round(route.summary.totalTime / 60);
 
-                    // Fit map to show the full route with padding
-                    const bounds = L.latLngBounds([
-                        [storeData.latitude, storeData.longitude],
-                        [customerData.latitude, customerData.longitude]
-                    ]);
-                    deliveryMap.fitBounds(bounds, { padding: [50, 50] });
+                        // Store current route data
+                        currentRouteData = {
+                            distance: distanceKm,
+                            time: timeMinutes,
+                            success: true
+                        };
 
-                }).on('routingerror', function(e) {
-                    console.error('Routing error:', e);
+                        updateRouteDisplay(currentRouteData, deliverySettings);
+
+                        // Fit map to show the full route with padding
+                        const bounds = L.latLngBounds([
+                            [storeData.latitude, storeData.longitude],
+                            [customerData.latitude, customerData.longitude]
+                        ]);
+                        deliveryMap.fitBounds(bounds, {
+                            padding: [50, 50]
+                        });
+
+                    }).on('routingerror', function(e) {
+                        console.error('Routing error:', e);
+                        calculateFallbackRoute();
+                    }).addTo(deliveryMap);
+
+                } catch (error) {
+                    console.error('Error creating routing control:', error);
                     calculateFallbackRoute();
+                }
+            }
+
+            function calculateFallbackRoute() {
+                // Use Haversine distance as fallback
+                const distance = calculateHaversineDistance(
+                    storeData.latitude, storeData.longitude,
+                    customerData.latitude, customerData.longitude
+                );
+
+                currentRouteData = {
+                    distance: distance,
+                    time: Math.round(distance * 2), // Rough estimate: 2 minutes per km
+                    success: false,
+                    fallback: true
+                };
+
+                updateRouteDisplay(currentRouteData, deliverySettings);
+
+                // Draw a simple straight line
+                const straightLine = L.polyline([
+                    [storeData.latitude, storeData.longitude],
+                    [customerData.latitude, customerData.longitude]
+                ], {
+                    color: '#EF4444',
+                    weight: 3,
+                    opacity: 0.7,
+                    dashArray: '10, 10'
                 }).addTo(deliveryMap);
 
-            } catch (error) {
-                console.error('Error creating routing control:', error);
-                calculateFallbackRoute();
+                // Fit map to show both points
+                const bounds = L.latLngBounds([
+                    [storeData.latitude, storeData.longitude],
+                    [customerData.latitude, customerData.longitude]
+                ]);
+                deliveryMap.fitBounds(bounds, {
+                    padding: [50, 50]
+                });
             }
+
+            // Ensure map renders properly
+            setTimeout(() => {
+                deliveryMap.invalidateSize();
+            }, 200);
         }
 
-        function calculateFallbackRoute() {
-            // Use Haversine distance as fallback
-            const distance = calculateHaversineDistance(
-                storeData.latitude, storeData.longitude,
-                customerData.latitude, customerData.longitude
-            );
+        // Function to update route display in modal
+        function updateRouteDisplay(routeData, deliverySettings) {
+            // Update route statistics
+            const routeDistanceElement = document.getElementById('routeDistance');
+            const routeTimeElement = document.getElementById('routeTime');
 
-            currentRouteData = {
-                distance: distance,
-                time: Math.round(distance * 2), // Rough estimate: 2 minutes per km
-                success: false,
-                fallback: true
-            };
+            if (routeDistanceElement) {
+                const distanceText = `${routeData.distance.toFixed(2)} km`;
+                const fallbackNote = routeData.fallback ? ' (straight-line)' : '';
+                routeDistanceElement.textContent = distanceText + fallbackNote;
+            }
+            if (routeTimeElement) routeTimeElement.textContent = `${routeData.time} minutes`;
 
-            updateRouteDisplay(currentRouteData, deliverySettings);
+            // Calculate delivery fee
+            const baseFee = parseFloat(deliverySettings.base_fee);
+            const perKmRate = parseFloat(deliverySettings.per_km_rate);
+            const baseKm = parseFloat(deliverySettings.total_km_base_fee);
 
-            // Draw a simple straight line
-            const straightLine = L.polyline([
-                [storeData.latitude, storeData.longitude],
-                [customerData.latitude, customerData.longitude]
-            ], {
-                color: '#EF4444',
-                weight: 3,
-                opacity: 0.7,
-                dashArray: '10, 10'
-            }).addTo(deliveryMap);
+            let deliveryFeePerItem;
+            let additionalDistance = 0;
+            let additionalFee = 0;
 
-            // Fit map to show both points
-            const bounds = L.latLngBounds([
-                [storeData.latitude, storeData.longitude],
-                [customerData.latitude, customerData.longitude]
-            ]);
-            deliveryMap.fitBounds(bounds, { padding: [50, 50] });
+            if (routeData.distance <= baseKm) {
+                deliveryFeePerItem = baseFee;
+            } else {
+                additionalDistance = routeData.distance - baseKm;
+                additionalFee = additionalDistance * perKmRate;
+                deliveryFeePerItem = baseFee + additionalFee;
+            }
+
+            // Update fee breakdown display
+            const additionalDistanceDisplay = document.getElementById('additionalDistanceDisplay');
+            const additionalFeeDisplay = document.getElementById('additionalFeeDisplay');
+            const totalPerItemDisplay = document.getElementById('totalPerItemDisplay');
+            const routeDeliveryFee = document.getElementById('routeDeliveryFee');
+
+            if (additionalDistanceDisplay) additionalDistanceDisplay.textContent = `${additionalDistance.toFixed(2)} km`;
+            if (additionalFeeDisplay) additionalFeeDisplay.textContent = `₱${additionalFee.toFixed(2)}`;
+            if (totalPerItemDisplay) totalPerItemDisplay.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
+            if (routeDeliveryFee) routeDeliveryFee.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
+
+            // Store the calculated fee
+            currentRouteData.deliveryFeePerItem = deliveryFeePerItem;
         }
 
-        // Ensure map renders properly
-        setTimeout(() => {
-            deliveryMap.invalidateSize();
-        }, 200);
-    }
-
-    // Function to update route display in modal
-    function updateRouteDisplay(routeData, deliverySettings) {
-        // Update route statistics
-        const routeDistanceElement = document.getElementById('routeDistance');
-        const routeTimeElement = document.getElementById('routeTime');
-        
-        if (routeDistanceElement) {
-            const distanceText = `${routeData.distance.toFixed(2)} km`;
-            const fallbackNote = routeData.fallback ? ' (straight-line)' : '';
-            routeDistanceElement.textContent = distanceText + fallbackNote;
-        }
-        if (routeTimeElement) routeTimeElement.textContent = `${routeData.time} minutes`;
-
-        // Calculate delivery fee
-        const baseFee = parseFloat(deliverySettings.base_fee);
-        const perKmRate = parseFloat(deliverySettings.per_km_rate);
-        const baseKm = parseFloat(deliverySettings.total_km_base_fee);
-
-        let deliveryFeePerItem;
-        let additionalDistance = 0;
-        let additionalFee = 0;
-
-        if (routeData.distance <= baseKm) {
-            deliveryFeePerItem = baseFee;
-        } else {
-            additionalDistance = routeData.distance - baseKm;
-            additionalFee = additionalDistance * perKmRate;
-            deliveryFeePerItem = baseFee + additionalFee;
-        }
-
-        // Update fee breakdown display
-        const additionalDistanceDisplay = document.getElementById('additionalDistanceDisplay');
-        const additionalFeeDisplay = document.getElementById('additionalFeeDisplay');
-        const totalPerItemDisplay = document.getElementById('totalPerItemDisplay');
-        const routeDeliveryFee = document.getElementById('routeDeliveryFee');
-        
-        if (additionalDistanceDisplay) additionalDistanceDisplay.textContent = `${additionalDistance.toFixed(2)} km`;
-        if (additionalFeeDisplay) additionalFeeDisplay.textContent = `₱${additionalFee.toFixed(2)}`;
-        if (totalPerItemDisplay) totalPerItemDisplay.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
-        if (routeDeliveryFee) routeDeliveryFee.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
-
-        // Store the calculated fee
-        currentRouteData.deliveryFeePerItem = deliveryFeePerItem;
-    }
-
-    // Close modal when clicking outside
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'deliveryMapModal') {
-            closeDeliveryMapModal();
-        }
-    });
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('deliveryMapModal');
-            if (modal) {
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'deliveryMapModal') {
                 closeDeliveryMapModal();
             }
-        }
-    });
+        });
 
-    // Make closeDeliveryMapModal globally available for onclick handlers
-    window.closeDeliveryMapModal = closeDeliveryMapModal;
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('deliveryMapModal');
+                if (modal) {
+                    closeDeliveryMapModal();
+                }
+            }
+        });
+
+        // Make closeDeliveryMapModal globally available for onclick handlers
+        window.closeDeliveryMapModal = closeDeliveryMapModal;
     </script>
 
- <script>
-// New Bank Selection Functions for Checkout Form
-function showBankSelection() {
-    document.getElementById('bankTransferFields').classList.remove('hidden');
-    document.getElementById('bankSelectionArea').innerHTML = `
+    <script>
+        // New Bank Selection Functions for Checkout Form
+        function showBankSelection() {
+            document.getElementById('bankTransferFields').classList.remove('hidden');
+            document.getElementById('bankSelectionArea').innerHTML = `
         <h4 class="font-semibold mb-3">Choose Your Bank</h4>
         <div class="grid grid-cols-2 gap-3 mb-4">
             <button type="button" onclick="selectBankOption('bdo')" 
@@ -1712,27 +1728,27 @@ function showBankSelection() {
         </div>
         <div id="selectedBankInfo" class="hidden"></div>
     `;
-}
-
-function selectBankOption(bankType) {
-    const bankInfo = {
-        bdo: {
-            name: 'BDO',
-            accountName: 'Noblehome Construction Corp.',
-            accountNumber: '013-238-001-657'
-        },
-        aub: {
-            name: 'AUB', 
-            accountName: 'Noblehome Construction Corp.',
-            accountNumber: '151-010-002-868'
         }
-    };
-    
-    document.getElementById('selectedBank').value = bankType;
-    const bank = bankInfo[bankType];
-    
-    document.getElementById('selectedBankInfo').classList.remove('hidden');
-    document.getElementById('selectedBankInfo').innerHTML = `
+
+        function selectBankOption(bankType) {
+            const bankInfo = {
+                bdo: {
+                    name: 'BDO',
+                    accountName: 'Noblehome Construction Corp.',
+                    accountNumber: '013-238-001-657'
+                },
+                aub: {
+                    name: 'AUB',
+                    accountName: 'Noblehome Construction Corp.',
+                    accountNumber: '151-010-002-868'
+                }
+            };
+
+            document.getElementById('selectedBank').value = bankType;
+            const bank = bankInfo[bankType];
+
+            document.getElementById('selectedBankInfo').classList.remove('hidden');
+            document.getElementById('selectedBankInfo').innerHTML = `
         <div class="p-4 bg-white rounded-lg border">
             <h5 class="font-semibold mb-2">Selected Bank: ${bank.name}</h5>
             <div class="space-y-2 text-sm mb-4">
@@ -1776,45 +1792,45 @@ function selectBankOption(bankType) {
             </div>
         </div>
     `;
-    setTimeout(updateBankPaymentAmount, 100);
-}
+            setTimeout(updateBankPaymentAmount, 100);
+        }
 
-function previewPaymentScreenshot(input) {
-    const preview = document.getElementById('paymentScreenshotPreview');
-    preview.innerHTML = '';
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.innerHTML = `
+        function previewPaymentScreenshot(input) {
+            const preview = document.getElementById('paymentScreenshotPreview');
+            preview.innerHTML = '';
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
                 <div class="mt-2">
                     <img src="${e.target.result}" class="max-w-full h-32 object-cover rounded border">
                     <p class="text-xs text-gray-600 mt-1">Screenshot Preview</p>
                 </div>
             `;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
-// ✅ ADD THIS BLOCK RIGHT HERE
-function updateBankPaymentAmount() {
-    // Get current totals from the main display
-    const grandTotalText = document.getElementById('grandTotalDisplay')?.textContent || '₱0.00';
-    const vatAmountText = document.getElementById('vatAmount')?.textContent || '₱0.00';
-    const subtotalText = document.getElementById('subtotalBeforeVAT')?.textContent || '₱0.00';
-    
-    // Update bank payment display
-    const bankSubtotal = document.getElementById('bankSubtotal');
-    const bankVAT = document.getElementById('bankVAT');
-    const bankTotal = document.getElementById('bankTotal');
-    
-    if (bankSubtotal) bankSubtotal.textContent = subtotalText;
-    if (bankVAT) bankVAT.textContent = vatAmountText;
-    if (bankTotal) bankTotal.textContent = grandTotalText;
-}
-// ✅ END OF ADDED BLOCK
-</script>   
+        // ✅ ADD THIS BLOCK RIGHT HERE
+        function updateBankPaymentAmount() {
+            // Get current totals from the main display
+            const grandTotalText = document.getElementById('grandTotalDisplay')?.textContent || '₱0.00';
+            const vatAmountText = document.getElementById('vatAmount')?.textContent || '₱0.00';
+            const subtotalText = document.getElementById('subtotalBeforeVAT')?.textContent || '₱0.00';
+
+            // Update bank payment display
+            const bankSubtotal = document.getElementById('bankSubtotal');
+            const bankVAT = document.getElementById('bankVAT');
+            const bankTotal = document.getElementById('bankTotal');
+
+            if (bankSubtotal) bankSubtotal.textContent = subtotalText;
+            if (bankVAT) bankVAT.textContent = vatAmountText;
+            if (bankTotal) bankTotal.textContent = grandTotalText;
+        }
+        // ✅ END OF ADDED BLOCK
+    </script>
 </body>
 
 </html>

@@ -47,8 +47,6 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -329,6 +327,10 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                             x-cloak
                             class="absolute right-0 mt-2 w-48 dropdown-menu shadow-xl rounded-xl overflow-hidden">
                             <div class="p-2">
+                                <a href="../../loginpage/profile" class="block px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200">
+                                    Profile
+                                </a>
+
                                 <a href="../../loginpage/logout" class="block px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200">
                                     Logout
                                 </a>

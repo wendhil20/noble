@@ -618,7 +618,7 @@ if ($user_id) {
         x-transition:leave-end="opacity-0 translate-y-1"
         @click.outside="notifOpen = false"
         class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-        <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
+        <div class="flex justify-between items-center p-3 border-b font-bold text-black">
           <span>Notifications</span>
           <button
             class="text-xs text-red-500 hover:text-red-700"
@@ -630,7 +630,7 @@ if ($user_id) {
         <ul class="max-h-60 overflow-y-auto">
           <template x-for="notif in notifications" :key="notif.id">
             <li class="p-3 hover:bg-gray-50 cursor-pointer">
-              <p class="text-sm text-gray-700" x-text="notif.message"></p>
+              <p class="text-sm text-black text-light font-semibold" x-text="notif.message"></p>
               <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
             </li>
           </template>

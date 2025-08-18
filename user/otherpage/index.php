@@ -1263,7 +1263,7 @@ $slideresult = $conn->query($sql);
                     </div>
                 </div>
                 <div class="text-center">
-                    <h3 class="text-lg font-bold text-black mb-1">Behind the Scenes</h3>
+                    <h3 class="text-lg font-bold text-black mb-1">World Bex</h3>
                     <p class="text-gray-600 text-sm mb-2">
                         Our team and process behind exceptional work and quality standards.
                     </p>

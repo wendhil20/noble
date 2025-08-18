@@ -642,7 +642,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
                                     </svg>
-                                    View Map
+                                    View Maps
                                 </button>
                             </div>
                             <div id="distanceResult" class="mt-3 text-sm text-gray-700"></div>
@@ -756,7 +756,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     <div class="mt-3 p-2 bg-blue-50 rounded text-xs">
                                         <div class="grid grid-cols-2 gap-2 text-blue-700">
                                             <div><span class="font-medium">Delivery per item:</span> <span class="deliveryPerItem">₱0.00</span></div>
-                                            <div><span class="font-medium">Total delivery:</span> <span class="totalDeliveryForItem">₱0.00</span></div>
+                                            <div><span class="font-medium">Totals delivery:</span> <span class="totalDeliveryForItem">₱0.00</span></div>
                                         </div>
                                     </div>
                                 </div>

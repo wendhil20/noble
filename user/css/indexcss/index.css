@@ -1,0 +1,230 @@
+  /* Advanced Glass Effect */
+        .glass-effect {
+            backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(12, 22, 46, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Enhanced Logo Animation */
+        .logo-animation {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.3));
+        }
+
+        .logo-animation:hover {
+            transform: scale(1.1) rotate(2deg);
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.6));
+        }
+
+        /* Advanced Navigation Links */
+        .nav-link {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, transparent 30%, rgba(245, 158, 11, 0.1) 50%, transparent 70%);
+            background-size: 200% 100%;
+            background-position: 100% 0;
+        }
+
+        .nav-link:hover {
+            background-position: 0% 0;
+            transform: translateY(-2px);
+            color: #f59e0b;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #f59e0b, #fbbf24, #06b6d4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Gradient Text Effect */
+        .gradient-text {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s ease-in-out infinite;
+            background-size: 400% 400%;
+        }
+
+        /* Enhanced CTA Button */
+        .cta-button {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #06b6d4);
+            background-size: 200% 200%;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -10px;
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .cta-button:hover {
+            background-position: 100% 0;
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+        }
+
+        .cta-button:hover::before {
+            left: 80px;
+        }
+
+        /* Advanced Mobile Menu */
+        .mobile-menu-enter {
+            animation: slideDownFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideDownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Enhanced Hamburger Menu */
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .hamburger:hover {
+            background: rgba(245, 158, 11, 0.2);
+            transform: scale(1.1);
+        }
+
+        .hamburger span {
+            width: 28px;
+            height: 3px;
+            background: linear-gradient(45deg, #f59e0b, #fbbf24);
+            margin: 3px 0;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 2px;
+            box-shadow: 0 2px 5px rgba(245, 158, 11, 0.3);
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+            background: linear-gradient(45deg, #06b6d4, #f59e0b);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
+            background: linear-gradient(45deg, #06b6d4, #f59e0b);
+        }
+
+        /* Floating Elements */
+        .floating-element {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(2) {
+            animation-delay: -1s;
+        }
+
+        .floating-element:nth-child(3) {
+            animation-delay: -2s;
+        }
+
+        /* Micro Interactions */
+        .micro-interaction {
+            transition: all 0.2s ease;
+        }
+
+        .micro-interaction:hover {
+            transform: scale(1.02);
+        }
+
+        /* Mobile Link Enhancements */
+        .mobile-link {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            background: linear-gradient(45deg, transparent 30%, rgba(245, 158, 11, 0.05) 50%, transparent 70%);
+            background-size: 200% 100%;
+            background-position: 100% 0;
+        }
+
+        .mobile-link:hover {
+            background-position: 0% 0;
+            transform: translateX(8px);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #f59e0b, #fbbf24, #06b6d4);
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        /* Background Particles */
+        .particle {
+            position: absolute;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) {
+            width: 20px;
+            height: 20px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .particle:nth-child(2) {
+            width: 15px;
+            height: 15px;
+            top: 60%;
+            left: 80%;
+            animation-delay: -1s;
+        }
+
+        .particle:nth-child(3) {
+            width: 25px;
+            height: 25px;
+            top: 80%;
+            left: 20%;
+            animation-delay: -2s;
+        }

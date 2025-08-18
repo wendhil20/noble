@@ -1,0 +1,2 @@
+javascript-obfuscator myscript.js --output myscript-obf.js --compact true --control-flow-flattening true
+npx terser main.js -o main.min.js -c -m

@@ -554,7 +554,7 @@ $avg_stmt->close();
           <!-- Type Selection -->
           <?php if (!empty($types_data)): ?>
             <div class="mb-6 lg:mb-8">
-              <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Select Type</h3>
+              <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Select</h3>
 
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
                 <?php foreach ($types_data as $index => $type): ?>

@@ -740,7 +740,7 @@ $id_types = [
                                 <p class="text-sm text-orange-700">
                                     <?= $fields_completed ?> of <?= $total_fields ?> fields completed
                                 </p>
-                            </div>
+                            </div>  
                             <div class="text-2xl font-bold text-orange-600">
                                 <?= round($completion_percentage) ?>%
                             </div>

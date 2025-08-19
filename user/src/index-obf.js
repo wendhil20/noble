@@ -151,28 +151,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initSwiper('.mySwiper-products', {
         slidesPerView: 2,
-        spaceBetween: 30,
+        spaceBetween: 10,
         loop: true,
         autoplay: { delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true },
         pagination: { el: ".swiper-pagination", clickable: true },
         navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
         breakpoints: {
-            768: { slidesPerView: 3 },
-            1024: { slidesPerView: 4 },
-            1280: { slidesPerView: 5 },
-            1536: { slidesPerView: 6 }
+            768: { slidesPerView: 4, spaceBetween: 15 },  // ✅ 4 products sa tablet up
+            1024: { slidesPerView: 4, spaceBetween: 20 }, // ✅ 4 products sa desktop
+            1280: { slidesPerView: 4, spaceBetween: 25 }, // ✅ 4 products sa large desktop
+            1536: { slidesPerView: 4, spaceBetween: 30 }  // ✅ 4 products sa xl desktop
         }
     });
 
+    // 🛏️ FIXED: Para sa BED FURNITURE - 4 products display
     initSwiper('.mySwiper-indoor', {
         slidesPerView: 2,
-        spaceBetween: 20,
+        spaceBetween: 10,
         loop: true,
         autoplay: { delay: 3000, disableOnInteraction: false },
         breakpoints: {
-            1024: { slidesPerView: 3 },
-            1440: { slidesPerView: 5 },
-            1920: { slidesPerView: 6 }
+            480: { slidesPerView: 2, spaceBetween: 10 },  // mobile landscape
+            640: { slidesPerView: 3, spaceBetween: 15 },  // small tablet
+            768: { slidesPerView: 4, spaceBetween: 15 },  // ✅ FIXED: 4 products sa tablet
+            1024: { slidesPerView: 4, spaceBetween: 20 }, // ✅ FIXED: 4 products sa desktop
+            1440: { slidesPerView: 4, spaceBetween: 25 }, // ✅ FIXED: 4 products sa large desktop
+            1920: { slidesPerView: 4, spaceBetween: 30 }  // ✅ FIXED: 4 products sa xl desktop
         }
     });
 
@@ -182,10 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loop: true,
         autoplay: { delay: 2500, disableOnInteraction: false },
         breakpoints: {
-            768: { slidesPerView: 3, spaceBetween: 15 },
-            1024: { slidesPerView: 4, spaceBetween: 20 },
-            1280: { slidesPerView: 5, spaceBetween: 25 },
-            1536: { slidesPerView: 6, spaceBetween: 30 }
+            768: { slidesPerView: 4, spaceBetween: 15 },  // ✅ 4 products sa tablet up
+            1024: { slidesPerView: 4, spaceBetween: 20 }, // ✅ 4 products sa desktop
+            1280: { slidesPerView: 4, spaceBetween: 25 }, // ✅ 4 products sa large desktop
+            1536: { slidesPerView: 4, spaceBetween: 30 }  // ✅ 4 products sa xl desktop
         }
     });
 

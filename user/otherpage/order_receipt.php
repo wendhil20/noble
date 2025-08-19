@@ -60,7 +60,8 @@ foreach ($order_items as $item) {
 }
 $vat_rate = 0.12; // 12% VAT
 $vat_amount = $subtotal * $vat_rate;
-$total_with_vat = $subtotal + $vat_amount;
+$delivery_fee = $order['delivery_fee'] ?? 0; // Get delivery fee from orders table
+$total_with_vat_and_delivery = $subtotal + $vat_amount + $delivery_fee;
 
 // Format date
 $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
@@ -255,16 +256,16 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                         <span class="font-medium">₱<?= number_format($vat_amount, 2) ?></span>
                     </div>
 
-                    <div class="flex justify-between items-center text-sm text-gray-600">
-                        <span>Shipping:</span>
-                        <span>To be calculated</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700">Delivery Fee:</span>
+                        <span class="font-medium">₱<?= number_format($delivery_fee, 2) ?></span>
                     </div>
 
                     <hr class="border-gray-300">
 
                     <div class="flex justify-between items-center text-lg font-bold">
-                        <span>Total (excl. shipping):</span>
-                        <span class="text-green-700">₱<?= number_format($total_with_vat, 2) ?></span>
+                        <span>Total:</span>
+                        <span class="text-green-700">₱<?= number_format($total_with_vat_and_delivery, 2) ?></span>
                     </div>
                 </div>
             </div>
@@ -290,7 +291,7 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                         <h4 class="font-semibold text-yellow-800 mb-2">Important Notes:</h4>
                         <ul class="text-sm text-yellow-700 space-y-1">
                             <li>• We will review your order and contact you within 24 hours</li>
-                            <li>• Final total includes 12% VAT and applicable shipping fees</li>
+                            <li>• Final total includes 12% VAT and delivery fees</li>
                             <li>• Please keep this receipt for your records</li>
                             <li>• For questions, please contact us with your reference number: <strong><?= htmlspecialchars($order['reference_no']) ?></strong></li>
                         </ul>

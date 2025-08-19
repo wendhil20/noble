@@ -292,11 +292,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE orders AUTO_INCREMENT = 1");
             $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
 
-            // ✅ Calculate total with delivery fee and VAT
-            $subtotal = $total_price;
-            $subtotal_with_delivery = $subtotal + $delivery_fee;
-            $vat_amount = $subtotal_with_delivery * 0.12; // 12% VAT
-            $grand_total = $subtotal_with_delivery + $vat_amount;
+            // ✅ Calculate total with delivery fee and VAT (VAT only on items)
+$subtotal = $total_price; // Items subtotal only
+$vat_amount = $subtotal * 0.12; // 12% VAT only on items (not on delivery)
+$grand_total = $subtotal + $vat_amount + $delivery_fee; // Items + VAT + Delivery
 
             // ✅ Save order (UPDATED to include delivery info and bank transfer data)
             $payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
@@ -831,14 +830,13 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         let deliverySettings = <?= $delivery_settings ? json_encode($delivery_settings) : 'null' ?>;
         let subtotal = <?= $total_price ?>;
 
-        // Function to calculate VAT and totals
+        // Function to calculate VAT and totals (UPDATED - VAT only on items, not delivery)
         function calculateTotalsWithVAT(itemsSubtotal, deliveryCost) {
-            const subtotalWithDelivery = itemsSubtotal + deliveryCost;
-            const vatAmount = subtotalWithDelivery * 0.12;
-            const grandTotal = subtotalWithDelivery + vatAmount;
+            const vatAmount = itemsSubtotal * 0.12; // VAT only on items, not delivery
+            const grandTotal = itemsSubtotal + vatAmount + deliveryCost; // Add delivery after VAT calculation
 
             return {
-                subtotalWithDelivery: subtotalWithDelivery,
+                subtotalWithDelivery: itemsSubtotal + deliveryCost,
                 vatAmount: vatAmount,
                 grandTotal: grandTotal
             };
@@ -1029,7 +1027,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         deliveryFeePerItem = baseFee + (extraKm * perKmRate);
                     }
 
-                    // Calculate total delivery cost for all items
+                    // Calculate total delivery cost for all items (delivery fee per item × quantity for each item)
                     let totalDeliveryCost = 0;
                     const cartItems = document.querySelectorAll('[id^="cartItem"]');
 
@@ -1075,10 +1073,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     if (deliveryDistanceInput) deliveryDistanceInput.value = distance.toFixed(2);
                     if (deliveryFeeInput) deliveryFeeInput.value = totalDeliveryCost.toFixed(2);
 
-                    // Update totals display with VAT calculation
-                    const subtotalWithDelivery = subtotal + totalDeliveryCost;
-                    const vatAmount = subtotalWithDelivery * 0.12; // 12% VAT
-                    const grandTotal = subtotalWithDelivery + vatAmount;
+                    // Update totals display with corrected VAT calculation
+                    const totals = calculateTotalsWithVAT(subtotal, totalDeliveryCost);
 
                     const totalDeliveryCostDisplay = document.getElementById('totalDeliveryCostDisplay');
                     const subtotalBeforeVATDisplay = document.getElementById('subtotalBeforeVAT');
@@ -1089,13 +1085,14 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         totalDeliveryCostDisplay.textContent = `₱${totalDeliveryCost.toFixed(2)}`;
                     }
                     if (subtotalBeforeVATDisplay) {
-                        subtotalBeforeVATDisplay.textContent = `₱${subtotalWithDelivery.toFixed(2)}`;
+                        // Show items subtotal only (before VAT, before delivery)
+                        subtotalBeforeVATDisplay.textContent = `₱${subtotal.toFixed(2)}`;
                     }
                     if (vatAmountDisplay) {
-                        vatAmountDisplay.textContent = `₱${vatAmount.toFixed(2)}`;
+                        vatAmountDisplay.textContent = `₱${totals.vatAmount.toFixed(2)}`;
                     }
                     if (grandTotalDisplay) {
-                        grandTotalDisplay.textContent = `₱${grandTotal.toFixed(2)}`;
+                        grandTotalDisplay.textContent = `₱${totals.grandTotal.toFixed(2)}`;
                     }
 
                     // Reset button
@@ -1305,7 +1302,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     <div class="flex items-center gap-3 mb-3">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1v4a1 1 0 001 1m-6 0h6"></path>
                                             </svg>
                                         </div>
                                         <h3 class="font-bold text-gray-900">Your Address</h3>
@@ -1336,7 +1333,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                             <span class="font-medium text-gray-800" id="routeTime">Calculating...</span>
                                         </div>
                                         <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                                            <span class="text-sm font-medium text-gray-700">Delivery Fee:</span>
+                                            <span class="text-sm font-medium text-gray-700">Total Delivery Fee:</span>
                                             <span class="font-bold text-green-600" id="routeDeliveryFee">₱0.00</span>
                                         </div>
                                     </div>
@@ -1417,7 +1414,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                         </div>
                                         <hr class="border-orange-300">
                                         <div class="flex justify-between items-center text-lg font-bold">
-                                            <span class="text-orange-900">Total per Item:</span>
+                                            <span class="text-orange-900">Total Delivery Fee:</span>
                                             <span class="text-orange-700" id="totalPerItemDisplay">₱0.00</span>
                                         </div>
                                     </div>
@@ -1642,7 +1639,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             }, 200);
         }
 
-        // Function to update route display in modal
+        // Updated function to update route display in modal
         function updateRouteDisplay(routeData, deliverySettings) {
             // Update route statistics
             const routeDistanceElement = document.getElementById('routeDistance');
@@ -1655,7 +1652,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             }
             if (routeTimeElement) routeTimeElement.textContent = `${routeData.time} minutes`;
 
-            // Calculate delivery fee
+            // Calculate delivery fee per item
             const baseFee = parseFloat(deliverySettings.base_fee);
             const perKmRate = parseFloat(deliverySettings.per_km_rate);
             const baseKm = parseFloat(deliverySettings.total_km_base_fee);
@@ -1672,6 +1669,17 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 deliveryFeePerItem = baseFee + additionalFee;
             }
 
+            // Get total quantity for total delivery calculation
+            let totalQuantity = 0;
+            const cartItems = document.querySelectorAll('[id^="cartItem"]');
+            cartItems.forEach((cartItem) => {
+                const quantityElement = cartItem.querySelector('.itemQuantity');
+                const quantity = parseInt(quantityElement.textContent);
+                totalQuantity += quantity;
+            });
+
+            const totalDeliveryFee = deliveryFeePerItem * totalQuantity;
+
             // Update fee breakdown display
             const additionalDistanceDisplay = document.getElementById('additionalDistanceDisplay');
             const additionalFeeDisplay = document.getElementById('additionalFeeDisplay');
@@ -1680,11 +1688,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             if (additionalDistanceDisplay) additionalDistanceDisplay.textContent = `${additionalDistance.toFixed(2)} km`;
             if (additionalFeeDisplay) additionalFeeDisplay.textContent = `₱${additionalFee.toFixed(2)}`;
-            if (totalPerItemDisplay) totalPerItemDisplay.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
-            if (routeDeliveryFee) routeDeliveryFee.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
+            if (totalPerItemDisplay) totalPerItemDisplay.textContent = `₱${totalDeliveryFee.toFixed(2)}`;
+            if (routeDeliveryFee) routeDeliveryFee.textContent = `₱${totalDeliveryFee.toFixed(2)}`;
 
             // Store the calculated fee
             currentRouteData.deliveryFeePerItem = deliveryFeePerItem;
+            currentRouteData.totalDeliveryFee = totalDeliveryFee;
         }
 
         // Close modal when clicking outside
@@ -1760,12 +1769,16 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <div class="text-sm font-medium text-yellow-800 mb-2">Payment Amount (with VAT):</div>
     <div class="space-y-1 text-sm text-yellow-700">
         <div class="flex justify-between">
-            <span>Subtotal:</span>
+            <span>Items Subtotal:</span>
             <span id="bankSubtotal">₱0.00</span>
         </div>
         <div class="flex justify-between">
-            <span>VAT (12%):</span>
+            <span>VAT (12% on items):</span>
             <span id="bankVAT">₱0.00</span>
+        </div>
+        <div class="flex justify-between">
+            <span>Delivery Fee:</span>
+            <span id="bankDelivery">₱0.00</span>
         </div>
         <div class="flex justify-between font-bold text-yellow-900">
             <span>Total to Transfer:</span>
@@ -1813,23 +1826,27 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             }
         }
 
-        // ✅ ADD THIS BLOCK RIGHT HERE
+        // Updated function to show correct VAT calculation in bank payment
         function updateBankPaymentAmount() {
             // Get current totals from the main display
             const grandTotalText = document.getElementById('grandTotalDisplay')?.textContent || '₱0.00';
             const vatAmountText = document.getElementById('vatAmount')?.textContent || '₱0.00';
-            const subtotalText = document.getElementById('subtotalBeforeVAT')?.textContent || '₱0.00';
+            const deliveryText = document.getElementById('totalDeliveryCostDisplay')?.textContent || '₱0.00';
+            
+            // Items subtotal (without delivery, without VAT)
+            const itemsSubtotal = subtotal.toFixed(2);
 
             // Update bank payment display
             const bankSubtotal = document.getElementById('bankSubtotal');
             const bankVAT = document.getElementById('bankVAT');
+            const bankDelivery = document.getElementById('bankDelivery');
             const bankTotal = document.getElementById('bankTotal');
 
-            if (bankSubtotal) bankSubtotal.textContent = subtotalText;
+            if (bankSubtotal) bankSubtotal.textContent = `₱${itemsSubtotal}`;
             if (bankVAT) bankVAT.textContent = vatAmountText;
+            if (bankDelivery) bankDelivery.textContent = deliveryText;
             if (bankTotal) bankTotal.textContent = grandTotalText;
         }
-        // ✅ END OF ADDED BLOCK
     </script>
 </body>
 

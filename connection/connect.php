@@ -12,6 +12,7 @@ if ($conn->connect_error) {
 }
 
 
+
 // $host = "localhost";
 // $username = "smar_bpasmart"; // Default sa XAMPP
 // $password = "DbOKjutmNG1c073D"; // Default sa XAMPP (walang password)

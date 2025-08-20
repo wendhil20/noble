@@ -13,51 +13,201 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
+// Helper: resolve and return current user id (tries session, then users, then nobleaccount)
+function resolve_current_user_id($conn) {
+    if (!empty($_SESSION['user_id'])) {
+        return (int) $_SESSION['user_id'];
+    }
+
+    if (empty($_SESSION['noble_user'])) {
+        return null;
+    }
+
+    $loginValue = $_SESSION['noble_user'];
+
+    // Try users table by email
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param('s', $loginValue);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $_SESSION['user_id'] = (int)$row['id'];
+            $stmt->close();
+            return (int)$row['id'];
+        }
+        $stmt->close();
+    }
+
+    // Try users table by fullname
+    $stmt = $conn->prepare("SELECT id FROM users WHERE name = ? LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param('s', $loginValue);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $_SESSION['user_id'] = (int)$row['id'];
+            $stmt->close();
+            return (int)$row['id'];
+        }
+        $stmt->close();
+    }
+
+    // As a fallback try nobleaccount table (if your system uses this)
+    $stmt = $conn->prepare("SELECT id FROM nobleaccount WHERE email = ? OR fullname = ? LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param('ss', $loginValue, $loginValue);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $_SESSION['user_id'] = (int)$row['id'];
+            $stmt->close();
+            return (int)$row['id'];
+        }
+        $stmt->close();
+    }
+
+    return null;
+}
+
+// Get current user's ID (resolve if not present)
+$current_user_id = resolve_current_user_id($conn);
+
 // Handle AJAX requests for order verification
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
-    
+
+    // Ensure we have a valid user id for auditing
+    $current_user_id = resolve_current_user_id($conn);
+    if (!$current_user_id) {
+        echo json_encode(['success' => false, 'message' => 'Current user ID not found in session. Please re-login.']);
+        exit();
+    }
+
     if ($_POST['action'] === 'verify_payment') {
         $order_id = intval($_POST['order_id']);
-        
-        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'verified', confirmed_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->bind_param("i", $order_id);
-        
+
+        // Get order details for notification and the total amount
+        $order_query = $conn->prepare("SELECT user_id, customer_name, total FROM orders WHERE id = ? LIMIT 1");
+        $order_query->bind_param("i", $order_id);
+        $order_query->execute();
+        $order_result = $order_query->get_result();
+        $order_data = $order_result->fetch_assoc();
+        $order_query->close();
+
+        $total_amount = isset($order_data['total']) ? (float)$order_data['total'] : 0.00;
+
+        // Update order with verification details and set final_total to the order's total
+        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'verified', confirmed_at = CURRENT_TIMESTAMP, verified_by = ?, final_total = ? WHERE id = ?");
+        if (!$stmt) {
+            echo json_encode(['success' => false, 'message' => 'Prepare failed: ' . $conn->error]);
+            exit();
+        }
+        $stmt->bind_param("idi", $current_user_id, $total_amount, $order_id);
+
         if ($stmt->execute()) {
+            // Send notification to customer (use the final total amount)
+            if (!empty($order_data) && !empty($order_data['user_id'])) {
+                $notification_message = "Your payment for Order #" . $order_id . " has been verified and confirmed. Amount: ₱" . number_format($total_amount, 2);
+                $notification_stmt = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message) VALUES (?, ?, 'payment_verified', ?)");
+                if ($notification_stmt) {
+                    $notification_stmt->bind_param("iis", $order_data['user_id'], $current_user_id, $notification_message);
+                    $notification_stmt->execute();
+                    $notification_stmt->close();
+                }
+            }
+
+            $stmt->close();
             echo json_encode(['success' => true, 'message' => 'Payment verified successfully']);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Error verifying payment: ' . $conn->error]);
+            $err = $stmt->error;
+            $stmt->close();
+            echo json_encode(['success' => false, 'message' => 'Error verifying payment: ' . $err]);
         }
         exit();
     }
-    
+
     if ($_POST['action'] === 'reject_payment') {
         $order_id = intval($_POST['order_id']);
-        $rejection_reason = $_POST['rejection_reason'];
-        
-        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'rejected', rejection_reason = ?, rejection_date = CURRENT_TIMESTAMP, rejected_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->bind_param("si", $rejection_reason, $order_id);
-        
+        $rejection_reason = trim($_POST['rejection_reason'] ?? '');
+
+        if ($rejection_reason === '') {
+            echo json_encode(['success' => false, 'message' => 'Rejection reason is required.']);
+            exit();
+        }
+
+        // Get order details for notification
+        $order_query = $conn->prepare("SELECT user_id, customer_name, total FROM orders WHERE id = ? LIMIT 1");
+        $order_query->bind_param("i", $order_id);
+        $order_query->execute();
+        $order_result = $order_query->get_result();
+        $order_data = $order_result->fetch_assoc();
+        $order_query->close();
+
+        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'rejected', rejection_reason = ?, rejection_date = CURRENT_TIMESTAMP, rejected_at = CURRENT_TIMESTAMP, rejected_by = ? WHERE id = ?");
+        if (!$stmt) {
+            echo json_encode(['success' => false, 'message' => 'Prepare failed: ' . $conn->error]);
+            exit();
+        }
+        $stmt->bind_param("sii", $rejection_reason, $current_user_id, $order_id);
+
         if ($stmt->execute()) {
+            // Send notification to customer
+            if (!empty($order_data) && !empty($order_data['user_id'])) {
+                $notification_message = "Your payment for Order #" . $order_id . " has been rejected. Reason: " . $rejection_reason . ". Please submit a new payment screenshot.";
+                $notification_stmt = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message) VALUES (?, ?, 'payment_rejected', ?)");
+                if ($notification_stmt) {
+                    $notification_stmt->bind_param("iis", $order_data['user_id'], $current_user_id, $notification_message);
+                    $notification_stmt->execute();
+                    $notification_stmt->close();
+                }
+            }
+
+            $stmt->close();
             echo json_encode(['success' => true, 'message' => 'Payment rejected successfully']);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Error rejecting payment: ' . $conn->error]);
+            $err = $stmt->error;
+            $stmt->close();
+            echo json_encode(['success' => false, 'message' => 'Error rejecting payment: ' . $err]);
         }
         exit();
     }
 }
 
-// Get summary statistics
-$pending_payments = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending'")->fetch_assoc()['count'];
-$verified_today = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'verified' AND DATE(confirmed_at) = CURDATE()")->fetch_assoc()['count'];
-$total_revenue_today = $conn->query("SELECT COALESCE(SUM(final_total), 0) as total FROM orders WHERE payment_status = 'verified' AND DATE(confirmed_at) = CURDATE()")->fetch_assoc()['total'];
-$rejected_payments = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'rejected'")->fetch_assoc()['count'];
+// Get filter parameter
+$filter = $_GET['filter'] ?? 'pending';
 
-// Get orders for verification (pending payments with screenshots)
+// Get summary statistics
+$pending_payments = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending'")->fetch_assoc()['count'] ?? 0;
+$verified_today = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'verified' AND DATE(confirmed_at) = CURDATE()")->fetch_assoc()['count'] ?? 0;
+$total_revenue_today = $conn->query("SELECT COALESCE(SUM(final_total), 0) as total FROM orders WHERE payment_status = 'verified' AND DATE(confirmed_at) = CURDATE()")->fetch_assoc()['total'] ?? 0;
+$rejected_payments = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'rejected'")->fetch_assoc()['count'] ?? 0;
+
+// Get orders based on filter
+$where_condition = "";
+switch ($filter) {
+    case 'pending':
+        $where_condition = "WHERE o.payment_status = 'pending' AND o.payment_screenshot IS NOT NULL";
+        break;
+    case 'verified':
+        $where_condition = "WHERE o.payment_status = 'verified'";
+        break;
+    case 'rejected':
+        $where_condition = "WHERE o.payment_status = 'rejected'";
+        break;
+    default:
+        $where_condition = "WHERE o.payment_screenshot IS NOT NULL";
+        break;
+}
+
 $orders_query = "
-    SELECT o.*
+    SELECT o.*, 
+           vb.name as verified_by_name,
+           rb.name as rejected_by_name
     FROM orders o 
-    WHERE o.payment_screenshot IS NOT NULL 
+    LEFT JOIN users vb ON o.verified_by = vb.id
+    LEFT JOIN users rb ON o.rejected_by = rb.id
+    $where_condition
     ORDER BY 
         CASE o.payment_status 
             WHEN 'pending' THEN 1 
@@ -65,7 +215,7 @@ $orders_query = "
             WHEN 'rejected' THEN 3 
         END,
         o.created_at DESC 
-    LIMIT 50
+    LIMIT 100
 ";
 $orders_result = $conn->query($orders_query);
 ?>
@@ -166,6 +316,26 @@ $orders_result = $conn->query($orders_query);
             </div>
         </div>
 
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-xl shadow-sm mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                    <a href="?filter=pending" class="<?php echo $filter === 'pending' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Pending (<?php echo $pending_payments; ?>)
+                    </a>
+                    <a href="?filter=verified" class="<?php echo $filter === 'verified' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Verified
+                    </a>
+                    <a href="?filter=rejected" class="<?php echo $filter === 'rejected' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Rejected (<?php echo $rejected_payments; ?>)
+                    </a>
+                    <a href="?filter=all" class="<?php echo $filter === 'all' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        All
+                    </a>
+                </nav>
+            </div>
+        </div>
+
         <!-- Orders Table -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -183,12 +353,13 @@ $orders_result = $conn->query($orders_query);
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <?php if ($orders_result->num_rows > 0): ?>
+                        <?php if ($orders_result && $orders_result->num_rows > 0): ?>
                             <?php while ($order = $orders_result->fetch_assoc()): ?>
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -201,7 +372,13 @@ $orders_result = $conn->query($orders_query);
                                         <div class="text-sm text-gray-500"><?php echo htmlspecialchars($order['email']); ?></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        ₱<?php echo number_format($order['final_total'], 2); ?>
+                                        <?php
+                                        $display_amount = $order['total'];
+                                        if ($order['payment_status'] === 'verified' && isset($order['final_total']) && $order['final_total'] !== null && $order['final_total'] !== '') {
+                                            $display_amount = $order['final_total'];
+                                        }
+                                        ?>
+                                        ₱<?php echo number_format((float)$display_amount, 2); ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900"><?php echo htmlspecialchars($order['mode_payment'] ?: 'N/A'); ?></div>
@@ -221,35 +398,59 @@ $orders_result = $conn->query($orders_query);
                                         ];
                                         $status = $order['payment_status'];
                                         ?>
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full <?php echo $status_colors[$status]; ?>">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full <?php echo $status_colors[$status] ?? 'bg-gray-100 text-gray-800'; ?>">
                                             <?php echo ucfirst($status); ?>
                                         </span>
+                                        <?php if ($order['payment_status'] === 'rejected' && $order['rejection_reason']): ?>
+                                            <div class="text-xs text-red-600 mt-1" title="<?php echo htmlspecialchars($order['rejection_reason']); ?>">
+                                                Reason: <?php echo htmlspecialchars(substr($order['rejection_reason'], 0, 30)) . (strlen($order['rejection_reason']) > 30 ? '...' : ''); ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <?php echo date('M d, Y', strtotime($order['created_at'])); ?>
+                                        <?php 
+                                        if ($order['payment_status'] === 'verified' && $order['verified_by_name']) {
+                                            echo '<span class="text-green-600">Verified by: ' . htmlspecialchars($order['verified_by_name']) . '</span>';
+                                        } elseif ($order['payment_status'] === 'rejected' && $order['rejected_by_name']) {
+                                            echo '<span class="text-red-600">Rejected by: ' . htmlspecialchars($order['rejected_by_name']) . '</span>';
+                                        } else {
+                                            echo 'N/A';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?php 
+                                        $date_to_show = $order['created_at'];
+                                        if ($order['payment_status'] === 'verified' && $order['confirmed_at']) {
+                                            $date_to_show = $order['confirmed_at'];
+                                        } elseif ($order['payment_status'] === 'rejected' && $order['rejected_at']) {
+                                            $date_to_show = $order['rejected_at'];
+                                        }
+                                        echo date('M d, Y H:i', strtotime($date_to_show)); 
+                                        ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-2">
                                             <?php if ($order['payment_screenshot']): ?>
                                                 <button onclick="viewScreenshot('../../uploads/payment_screenshots/<?php echo htmlspecialchars($order['payment_screenshot']); ?>')" 
-                                                        class="text-blue-600 hover:text-blue-900">
+                                                        class="text-blue-600 hover:text-blue-900" title="View Screenshot">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                             <?php endif; ?>
                                             
                                             <?php if ($order['payment_status'] === 'pending'): ?>
                                                 <button onclick="verifyPayment(<?php echo $order['id']; ?>)" 
-                                                        class="text-green-600 hover:text-green-900">
+                                                        class="text-green-600 hover:text-green-900" title="Verify Payment">
                                                     <i class="fas fa-check"></i>
                                                 </button>
                                                 <button onclick="rejectPayment(<?php echo $order['id']; ?>)" 
-                                                        class="text-red-600 hover:text-red-900">
+                                                        class="text-red-600 hover:text-red-900" title="Reject Payment">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             <?php endif; ?>
                                             
                                             <button onclick="viewOrderDetails(<?php echo $order['id']; ?>)" 
-                                                    class="text-noble-orange hover:text-noble-orange-dark">
+                                                    class="text-noble-orange hover:text-noble-orange-dark" title="View Details">
                                                 <i class="fas fa-info-circle"></i>
                                             </button>
                                         </div>
@@ -258,7 +459,7 @@ $orders_result = $conn->query($orders_query);
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">No orders found</td>
+                                <td colspan="9" class="px-6 py-4 text-center text-gray-500">No orders found</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

@@ -108,6 +108,11 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
     .order-item.expanded .order-header {
       border-bottom: 1px solid #e5e7eb;
     }
+
+    .vat-breakdown {
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+      border: 2px solid #fb923c;
+    }
   </style>
 </head>
 
@@ -122,7 +127,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
           </div>
           <div>
             <h1 class="text-3xl font-bold text-gray-900">Order Management</h1>
-            <p class="text-gray-600 mt-1">Manage and track all customer orders</p>
+            <p class="text-gray-600 mt-1">Manage and track all customer orders with VAT computation</p>
           </div>
         </div>
         <div class="flex items-center space-x-4">
@@ -164,6 +169,8 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
           <button onclick="filterOrders('all')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 active" data-filter="all">All</button>
           <button onclick="filterOrders('pending')" class="filter-btn bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 transition-colors duration-200" data-filter="pending">Pending</button>
           <button onclick="filterOrders('ongoing')" class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors duration-200" data-filter="ongoing">Ongoing</button>
+          <button onclick="filterOrders('verified')" class="filter-btn bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors duration-200" data-filter="verified">Verified</button>
+          <button onclick="filterOrders('rejected')" class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors duration-200" data-filter="rejected">Rejected</button>
         </div>
       </div>
     </div>
@@ -199,6 +206,9 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
     let allOrders = [];
     let currentFilter = 'all';
 
+    // VAT rate constant (12% for Philippines)
+    const VAT_RATE = 0.12;
+
     // Toggle order details
     function toggleOrderDetails(orderId) {
       const orderItem = document.getElementById(`order-${orderId}`);
@@ -218,27 +228,140 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
       });
     });
 
-    // Calculate order total with proper precision
+    // Calculate order total without discount
     function calculateOrderTotal(order) {
-      const baseTotal = parseFloat(order.total) || 0;
-      const discountPercent = parseFloat(order.discount) || 0;
-      const shippingFee = parseFloat(order.shipping_fee) || 0;
-      const deliveryFee = parseFloat(order.delivery_fee) || 0;
-
-      const discountAmount = (baseTotal * discountPercent) / 100;
-      const subtotalAfterDiscount = baseTotal - discountAmount;
-      const vatAmount = subtotalAfterDiscount * 0.12;
-      const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee + deliveryFee;
+      let itemsNetTotal = 0;  // Sum of (price × quantity) - this is net amount
+      let itemsSubtotal = 0;  // From database subtotal (VAT-inclusive)
+      let totalDeliveryFees = 0;
+      
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach(item => {
+          const price = parseFloat(item.price) || 0;
+          const quantity = parseInt(item.quantity) || 0;
+          
+          // Calculate net amount from price column (assuming price is net/before VAT)
+          itemsNetTotal += price * quantity;
+          
+          // Keep track of database subtotal for comparison
+          itemsSubtotal += parseFloat(item.subtotal) || 0;
+          
+          // Add delivery fees separately (VAT-exempt)
+          if (item.delivery_fee_per_item && item.quantity) {
+            totalDeliveryFees += parseFloat(item.delivery_fee_per_item) * parseInt(item.quantity);
+          } else if (item.item_total_delivery) {
+            totalDeliveryFees += parseFloat(item.item_total_delivery) || 0;
+          }
+        });
+      }
+      
+      // Calculate VAT on the net amounts (from price column)
+      const vatAmount = itemsNetTotal * VAT_RATE;
+      const itemsWithVAT = itemsNetTotal + vatAmount;
+      
+      // Total = items (net + VAT) + delivery (no VAT) - NO DISCOUNT
+      const finalTotal = itemsWithVAT + totalDeliveryFees;
 
       return {
-        baseTotal: baseTotal.toFixed(2),
-        discountAmount: discountAmount.toFixed(2),
-        subtotalAfterDiscount: subtotalAfterDiscount.toFixed(2),
+        itemsNetTotal: itemsNetTotal.toFixed(2),
+        itemsWithVAT: itemsWithVAT.toFixed(2),
+        itemsSubtotal: itemsSubtotal.toFixed(2),
+        totalDeliveryFees: totalDeliveryFees.toFixed(2),
         vatAmount: vatAmount.toFixed(2),
-        shippingFee: shippingFee.toFixed(2),
-        deliveryFee: deliveryFee.toFixed(2),
-        finalTotal: finalTotal.toFixed(2)
+        finalTotal: finalTotal.toFixed(2),
+        finalItemsWithVAT: itemsWithVAT.toFixed(2),
+        finalItemsNetTotal: itemsNetTotal.toFixed(2),
+        finalDeliveryTotal: totalDeliveryFees.toFixed(2),
+        finalVATAmount: vatAmount.toFixed(2),
+        finalTotalWithoutVAT: (itemsNetTotal + totalDeliveryFees).toFixed(2)
       };
+    }
+
+    // Updated HTML for VAT breakdown display without discount
+    function getVATBreakdownHTML(totals) {
+      return `
+      <!-- Enhanced VAT Calculation Breakdown -->
+      <div class="vat-breakdown rounded-lg p-4 text-sm bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200">
+        <h5 class="font-semibold text-orange-900 mb-4 flex items-center">
+          <i class="fas fa-calculator text-orange-600 mr-2"></i>
+          VAT Calculation Breakdown (12% VAT Rate) - Using Price Column
+        </h5>
+        
+        <div class="bg-white rounded-lg p-4 border-2 border-orange-300 shadow-sm">
+          <div class="space-y-2 text-gray-700">
+            <!-- Items Net Calculation -->
+            <div class="flex justify-between items-center py-1 border-b border-orange-100">
+              <span class="flex items-center">
+                <i class="fas fa-box text-orange-600 mr-2 w-4"></i>
+                <span class="font-medium">Items Net (Price × Qty):</span>
+              </span>
+              <span class="font-semibold text-orange-800">₱${totals.itemsNetTotal}</span>
+            </div>
+            
+            <!-- VAT Calculation -->
+            <div class="flex justify-between items-center py-1 border-b border-orange-100">
+              <span class="flex items-center">
+                <i class="fas fa-percent text-orange-600 mr-2 w-4"></i>
+                <span class="font-medium text-orange-700">VAT on Items (12%):</span>
+              </span>
+              <span class="font-semibold text-orange-700">+₱${totals.finalVATAmount}</span>
+            </div>
+            
+            <!-- Items Total with VAT -->
+            <div class="flex justify-between items-center py-1 border-b border-orange-100">
+              <span class="flex items-center">
+                <i class="fas fa-shopping-bag text-orange-600 mr-2 w-4"></i>
+                <span class="font-medium">Items Total (Net + VAT):</span>
+              </span>
+              <span class="font-semibold text-orange-800">₱${totals.finalItemsWithVAT}</span>
+            </div>
+            
+            <!-- Database Reference -->
+            <div class="flex justify-between items-center py-1 border-b border-orange-100">
+              <span class="flex items-center">
+                <i class="fas fa-database text-gray-400 mr-2 w-4"></i>
+                <span class="text-sm text-gray-500">DB Subtotal (reference):</span>
+              </span>
+              <span class="text-sm text-gray-500">₱${totals.itemsSubtotal}</span>
+            </div>
+            
+            <!-- Delivery Fees -->
+            <div class="flex justify-between items-center py-1 border-b border-orange-100">
+              <span class="flex items-center">
+                <i class="fas fa-truck text-orange-600 mr-2 w-4"></i>
+                <span class="font-medium">Delivery (VAT-exempt):</span>
+              </span>
+              <span class="font-semibold text-orange-800">+₱${totals.finalDeliveryTotal}</span>
+            </div>
+            
+            <!-- Final Total -->
+            <div class="flex justify-between items-center py-2 border-t-2 border-orange-300 mt-2">
+              <span class="flex items-center">
+                <i class="fas fa-receipt text-orange-700 mr-2 w-4"></i>
+                <span class="font-bold text-lg text-orange-900">Final Total:</span>
+              </span>
+              <span class="font-bold text-xl text-orange-900">₱${totals.finalTotal}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VAT Summary -->
+        <div class="mt-4 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg p-3 border border-orange-300">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-orange-900 flex items-center">
+              <i class="fas fa-info-circle mr-2"></i>
+              VAT Summary:
+            </span>
+            <div class="text-right">
+              <div class="text-orange-800 font-bold">
+                Total VAT Collected: <span class="text-lg">₱${totals.finalVATAmount}</span>
+              </div>
+              <div class="text-xs text-orange-600">
+                (Items only, delivery is VAT-exempt)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
     }
 
     // Show alert message
@@ -271,7 +394,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
       }, 5000);
     }
 
-    // Filter orders - only show pending and ongoing
+    // Filter orders - now includes all statuses including rejected
     function filterOrders(status) {
       currentFilter = status;
 
@@ -285,7 +408,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
       renderOrders();
     }
 
-    // Load orders - filter out rejected orders
+    // Load orders - now includes all orders
     function loadOrders() {
       const loadingState = document.getElementById('loadingState');
       const ordersContainer = document.getElementById('ordersContainer');
@@ -299,12 +422,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
           return res.json();
         })
         .then(orders => {
-          // Filter out rejected orders - only show pending and ongoing
-          allOrders = orders.filter(order => {
-            const status = (order.status || 'pending').toLowerCase();
-            return status === 'pending' || status === 'ongoing';
-          });
-
+          allOrders = orders; // Include all orders now
           updateOrderCount();
           renderOrders();
         })
@@ -317,26 +435,44 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
         });
     }
 
-    // Update order count - only pending and ongoing
+    // Update order count - includes all statuses
     function updateOrderCount() {
       const orderCount = document.getElementById('orderCount');
       const total = allOrders.length;
       const pending = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'pending').length;
       const ongoing = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'ongoing').length;
+      const verified = allOrders.filter(o => (o.payment_status || '').toLowerCase() === 'verified').length;
+      // Count both order status rejected AND payment status rejected
+      const rejected = allOrders.filter(o => 
+        (o.status || '').toLowerCase() === 'rejected' || 
+        (o.payment_status || '').toLowerCase() === 'rejected'
+      ).length;
 
-      orderCount.innerHTML = `${total} Total Orders • ${pending} Pending • ${ongoing} Ongoing`;
+      orderCount.innerHTML = `${total} Total • ${pending} Pending • ${ongoing} Ongoing • ${verified} Verified • ${rejected} Rejected`;
     }
 
-    // Render orders in collapsible list style
+    // Render orders with payment status logic
     function renderOrders() {
       const container = document.getElementById('ordersContainer');
       const emptyState = document.getElementById('emptyState');
 
       let filteredOrders = allOrders;
       if (currentFilter !== 'all') {
-        filteredOrders = allOrders.filter(order =>
-          (order.status || 'pending').toLowerCase() === currentFilter
-        );
+        if (currentFilter === 'verified') {
+          filteredOrders = allOrders.filter(order =>
+            (order.payment_status || '').toLowerCase() === 'verified'
+          );
+        } else if (currentFilter === 'rejected') {
+          // Show both order status rejected AND payment status rejected
+          filteredOrders = allOrders.filter(order =>
+            (order.status || '').toLowerCase() === 'rejected' || 
+            (order.payment_status || '').toLowerCase() === 'rejected'
+          );
+        } else {
+          filteredOrders = allOrders.filter(order =>
+            (order.status || 'pending').toLowerCase() === currentFilter
+          );
+        }
       }
 
       if (filteredOrders.length === 0) {
@@ -351,6 +487,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
       filteredOrders.forEach(order => {
         const totals = calculateOrderTotal(order);
         const status = (order.status || 'pending').toLowerCase();
+        const paymentStatus = (order.payment_status || '').toLowerCase();
 
         // Status configuration
         const statusConfig = {
@@ -363,14 +500,44 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
             class: 'bg-yellow-100 text-yellow-800 border-yellow-200',
             icon: 'fas fa-clock',
             text: 'Pending'
+          },
+          rejected: {
+            class: 'bg-red-100 text-red-800 border-red-200',
+            icon: 'fas fa-times-circle',
+            text: 'Rejected'
           }
         };
 
-        const statusBadge = `
+        // Payment status configuration
+        const paymentStatusConfig = {
+          verified: {
+            class: 'bg-blue-100 text-blue-800 border-blue-200',
+            icon: 'fas fa-check-circle',
+            text: 'Payment Verified'
+          },
+          pending: {
+            class: 'bg-orange-100 text-orange-800 border-orange-200',
+            icon: 'fas fa-hourglass-half',
+            text: 'Payment Pending'
+          },
+          rejected: {
+            class: 'bg-red-100 text-red-800 border-red-200',
+            icon: 'fas fa-ban',
+            text: 'Payment Rejected'
+          }
+        };
+
+        const statusBadge = statusConfig[status] ? `
           <div class="flex items-center space-x-2 ${statusConfig[status].class} px-3 py-1 rounded-full border text-sm font-medium">
             <i class="${statusConfig[status].icon}"></i>
             <span>${statusConfig[status].text}</span>
-          </div>`;
+          </div>` : '';
+
+        const paymentBadge = paymentStatusConfig[paymentStatus] ? `
+          <div class="flex items-center space-x-2 ${paymentStatusConfig[paymentStatus].class} px-3 py-1 rounded-full border text-sm font-medium">
+            <i class="${paymentStatusConfig[paymentStatus].icon}"></i>
+            <span>${paymentStatusConfig[paymentStatus].text}</span>
+          </div>` : '';
 
         // Generate items HTML for expanded view
         const itemsHtml = order.items.map((item, itemIndex) => `
@@ -390,16 +557,21 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
             <span class="font-medium">Code:</span> ${item.codename} • 
             <span class="font-medium">Details:</span> ${item.descrip6 || ''} ${item.descrip7 || ''}
           </p>
-          <!-- ORIGIN DISPLAY -->
           <p class="text-xs text-blue-600 font-medium">
             <i class="fas fa-map-marker-alt mr-1"></i>
             <span class="font-medium">Origin:</span> ${item.origin || 'Not specified'}
           </p>
-          <!-- CURRENT SUPPLIER DISPLAY -->
-          <p class="text-xs text-green-600 font-medium">
-            <i class="fas fa-user-tie mr-1"></i>
+          <p class="text-xs ${item.is_manual_supplier ? 'text-purple-600' : 'text-green-600'} font-medium">
+            <i class="fas ${item.is_manual_supplier ? 'fa-edit' : 'fa-user-tie'} mr-1"></i>
             <span class="font-medium">Current Supplier:</span> ${item.supplier_name || 'Not Assigned'}
+            ${item.is_manual_supplier ? ' (Manual)' : item.is_database_supplier ? ' (Database)' : ''}
           </p>
+          ${item.delivery_fee_per_item > 0 ? `
+          <p class="text-xs text-orange-600 font-medium">
+            <i class="fas fa-truck mr-1"></i>
+            <span class="font-medium">Item Delivery:</span> ₱${item.delivery_fee_per_item} × ${item.quantity} = ₱${item.item_total_delivery}
+            <span class="text-gray-500">(VAT-exempt)</span>
+          </p>` : ''}
         </div>
       </div>
     </div>
@@ -410,8 +582,8 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
       </div>
       <div class="font-semibold text-gray-900 mb-3">
         <span class="text-sm font-medium text-gray-600">Subtotal:</span> ₱${item.subtotal}
+        <br><span class="text-xs text-blue-600">(VAT inclusive)</span>
       </div>
-      <!-- SET SUPPLIER BUTTON FOR EACH ITEM -->
       <a href="set_supplier.php?order_id=${order.id}&item_index=${itemIndex}" 
          class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition-colors duration-200 flex items-center space-x-1 shadow-sm text-xs">
         <i class="fas fa-truck-loading"></i>
@@ -420,17 +592,9 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
     </div>
   </div>`).join('');
 
-        const discountPercent = parseFloat(order.discount) || 0;
-        const shipping_fee = parseFloat(order.shipping_fee) || 0;
-        const delivery_fee = parseFloat(order.delivery_fee) || 0;
-
-        const isDisabled = status === 'ongoing';
-        const disabledAttr = isDisabled ? 'disabled' : '';
-        const disabledClass = isDisabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white hover:bg-gray-50';
-
-        // Action buttons only for pending orders
+        // Only show confirm/reject buttons if payment status is verified
         let actionButtons = '';
-        if (status === 'pending') {
+        if (paymentStatus === 'verified' && status === 'pending') {
           actionButtons = `
     <button onclick="confirmOrder(${order.id})" 
             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
@@ -464,6 +628,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
                 </div>
                 <div class="flex items-center space-x-3">
                   ${statusBadge}
+                  ${paymentBadge}
                   <i class="fas fa-chevron-down expand-icon text-gray-400"></i>
                 </div>
               </div>
@@ -496,96 +661,36 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
                 </div>
 
                 <!-- Order Items -->
-<div class="mb-4">
-  <div class="flex justify-between items-center mb-3">
-    <h4 class="font-semibold text-gray-900 flex items-center">
-      <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
-      Order Items
-    </h4>
-    <a href="po_management.php?order_id=${order.id}" 
-   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
-  <i class="fas fa-clipboard-list"></i>
-  <span>P.O Management</span>
-</a>
-  </div>
+                <div class="mb-4">
+                  <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-semibold text-gray-900 flex items-center">
+                      <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
+                      Order Items
+                    </h4>
+                    <a href="po_management.php?order_id=${order.id}" 
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
+                      <i class="fas fa-clipboard-list"></i>
+                      <span>P.O Management</span>
+                    </a>
+                  </div>
                   <div class="max-h-60 overflow-y-auto scrollbar-hide space-y-1 pr-1 bg-gray-50 rounded-lg p-3">
                     ${itemsHtml}
                   </div>
                 </div>
 
-                <!-- Fees and Totals -->
+                <!-- Enhanced VAT & Totals Section (No Discount) -->
                 <div class="mb-4">
-                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-percent text-primary-600 mr-1"></i>
-                        Discount (%)
-                      </label>
-                      <input type="number" value="${discountPercent}" 
-                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${disabledClass}" 
-                             onchange="saveFee(${order.id}, 'discount', this.value)" ${disabledAttr}>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-truck text-primary-600 mr-1"></i>
-                        Shipping Fee (₱)
-                      </label>
-                      <input type="number" value="${shipping_fee}" 
-                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${disabledClass}" 
-                             onchange="saveFee(${order.id}, 'shipping_fee', this.value)" ${disabledAttr}>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-shipping-fast text-primary-600 mr-1"></i>
-                        Delivery Fee (₱)
-                      </label>
-                      <input type="number" value="${delivery_fee}" 
-                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${disabledClass}" 
-                             onchange="saveFee(${order.id}, 'delivery_fee', this.value)" ${disabledAttr}>
-                    </div>
+                  <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
                     <div class="bg-primary-50 p-4 rounded-lg">
                       <div class="text-center">
                         <div class="text-sm text-primary-600 mb-1">Final Total</div>
                         <div class="text-xl font-bold text-primary-700">₱${totals.finalTotal}</div>
-                        <div class="text-xs text-gray-500">(incl. VAT ₱${totals.vatAmount})</div>
+                        <div class="text-xs text-gray-500">(VAT Inclusive)</div>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- Calculation Breakdown -->
-                  <div class="bg-gray-50 rounded-lg p-4 text-sm">
-                    <h5 class="font-semibold text-gray-900 mb-2">Calculation Breakdown:</h5>
-                    <div class="space-y-1 text-gray-600">
-                      <div class="flex justify-between">
-                        <span>Base Total:</span>
-                        <span>₱${totals.baseTotal}</span>
-                      </div>
-                      <div class="flex justify-between text-red-600">
-                        <span>Discount (${discountPercent}%):</span>
-                        <span>-₱${totals.discountAmount}</span>
-                      </div>
-                      <div class="flex justify-between border-t pt-1">
-                        <span>Subtotal after discount:</span>
-                        <span>₱${totals.subtotalAfterDiscount}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>VAT (12%):</span>
-                        <span>₱${totals.vatAmount}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Shipping Fee:</span>
-                        <span>₱${totals.shippingFee}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Delivery Fee:</span>
-                        <span>₱${totals.deliveryFee}</span>
-                      </div>
-                      <div class="flex justify-between font-semibold text-gray-900 border-t pt-1">
-                        <span>Final Total:</span>
-                        <span>₱${totals.finalTotal}</span>
-                      </div>
-                    </div>
-                  </div>
+                  ${getVATBreakdownHTML(totals)}
                 </div>
 
                 <!-- Action Buttons -->
@@ -604,51 +709,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
             </div>
           </div>`;
       });
-    }
-
-    // Save fee function
-    function saveFee(orderId, field, value) {
-      const inputElement = document.querySelector(`input[onchange*="saveFee(${orderId}, '${field}'"]`);
-      if (inputElement) {
-        inputElement.disabled = true;
-        inputElement.classList.add('opacity-50');
-      }
-
-      const requestData = {
-        order_id: parseInt(orderId),
-        field: field,
-        value: parseFloat(value) || 0
-      };
-
-      fetch('update_order_fees.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(requestData)
-        })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to update');
-          return res.json();
-        })
-        .then(data => {
-          if (data.success) {
-            showAlert('Fee updated successfully!', 'success');
-            loadOrders();
-          } else {
-            throw new Error(data.error || 'Unknown error');
-          }
-        })
-        .catch(error => {
-          showAlert(`Failed to update: ${error.message}`, 'error');
-        })
-        .finally(() => {
-          if (inputElement) {
-            inputElement.disabled = false;
-            inputElement.classList.remove('opacity-50');
-          }
-        });
     }
 
     // Confirm order function

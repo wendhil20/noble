@@ -44,9 +44,9 @@ $pending_orders = [];
 $all_orders = [];
 
 if ($user_id) {
-    // Get orders only (no tracking data in main query)
+    // Get orders with payment status included
     $stmt = $conn->prepare("
-        SELECT * FROM orders 
+        SELECT *, payment_status FROM orders 
         WHERE email = ?
         ORDER BY created_at DESC
     ");
@@ -388,7 +388,11 @@ if ($row && isset($row['is_verified'])) {
             animation: bounceFloat 2s ease-in-out infinite;
         }
 
-        /* From Uiverse.io by cssbuttons-io */
+        /* Payment filter active state */
+        .payment-filter.active {
+            background-color: #3B82F6 !important;
+            color: white !important;
+        }
     </style>
 </head>
 
@@ -461,10 +465,6 @@ if ($row && isset($row['is_verified'])) {
                             </div>
                         <?php endif; ?>
                     </div>
-
-
-
-
 
                     <!-- Name & Email -->
                     <div class="font-mont">
@@ -582,9 +582,9 @@ if ($row && isset($row['is_verified'])) {
             </div>
         </div>
 
-        <!-- Main Content Grid - SWAPPED LAYOUT -->
+        <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-1">
-            <!-- Orders History - NOW ON LEFT (2 columns) -->
+            <!-- Orders History - LEFT (2 columns) -->
             <div class="lg:col-span-2">
                 <div class="bg-white p-6 shadow-lg animate-fade-in">
                     <div class="flex items-center justify-between mb-6">
@@ -601,15 +601,35 @@ if ($row && isset($row['is_verified'])) {
                         <?php endif; ?>
                     </div>
 
-                    <!-- 🔍 Search input -->
+                    <!-- Search input -->
                     <?php if (!empty($all_orders)): ?>
                         <div class="mb-4">
-                            <input type="text" id="orderSearch" placeholder="Search order ID or date..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300" oninput="filterOrders()">
+                            <input type="text" id="orderSearch" placeholder="Search order ID, date, or payment status..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300" oninput="filterOrders()">
+                        </div>
+
+                        <!-- Payment Status Filter -->
+                        <div class="mb-4 flex flex-wrap gap-2">
+                            <button onclick="filterByPaymentStatus('all')" 
+                                    class="px-3 py-1 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors payment-filter active">
+                                All
+                            </button>
+                            <button onclick="filterByPaymentStatus('pending')" 
+                                    class="px-3 py-1 text-sm rounded-lg bg-yellow-100 hover:bg-yellow-200 transition-colors payment-filter">
+                                Pending Payment
+                            </button>
+                            <button onclick="filterByPaymentStatus('verified')" 
+                                    class="px-3 py-1 text-sm rounded-lg bg-green-100 hover:bg-green-200 transition-colors payment-filter">
+                                Verified
+                            </button>
+                            <button onclick="filterByPaymentStatus('rejected')" 
+                                    class="px-3 py-1 text-sm rounded-lg bg-red-100 hover:bg-red-200 transition-colors payment-filter">
+                                Rejected
+                            </button>
                         </div>
                     <?php endif; ?>
 
                     <?php if (empty($all_orders)): ?>
-                        <!-- NO ORDERS UI... (unchanged) -->
+                        <!-- NO ORDERS UI -->
                         <div class="text-center py-12">
                             <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -632,6 +652,7 @@ if ($row && isset($row['is_verified'])) {
                                     class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer order-item"
                                     data-id="<?php echo $order['id']; ?>"
                                     data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
+                                    data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>"
                                     onclick="viewOrder(<?php echo $order['id']; ?>)">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-4">
@@ -645,38 +666,77 @@ if ($row && isset($row['is_verified'])) {
                                         </div>
                                         <div class="text-right">
                                             <p class="font-bold text-lg text-gray-900">₱<?php echo number_format($order['final_total'], 2); ?></p>
-                                            <span class="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full
-                                 <?php
-                                    switch ($order['status']) {
-                                        case 'Pending':
-                                            echo 'bg-orange-100 text-orange-800';
-                                            break;
-                                        case 'Ongoing':
-                                            echo 'bg-blue-100 text-blue-800';
-                                            break;
-                                        case 'Arrival':
-                                            echo 'bg-purple-100 text-purple-800';
-                                            break;
-                                        case 'Departure':
-                                            echo 'bg-yellow-100 text-yellow-800';
-                                            break;
-                                        case 'Complete':
-                                            echo 'bg-green-100 text-green-800';
-                                            break;
-                                        default:
-                                            echo 'bg-gray-100 text-gray-800';
-                                            break;
-                                    }
-                                    ?>">
-                                                <?php if ($order['status'] === 'Pending'): ?>
-                                                    <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
-                                                <?php elseif ($order['status'] === 'Complete'): ?>
-                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                                    </svg>
-                                                <?php endif; ?>
-                                                <?php echo $order['status']; ?>
-                                            </span>
+                                            
+                                            <!-- Order Status and Payment Status -->
+                                            <div class="flex flex-col gap-1 items-end">
+                                                <!-- Order Status -->
+                                                <span class="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full
+                                                 <?php
+                                                    switch ($order['status']) {
+                                                        case 'Pending':
+                                                            echo 'bg-orange-100 text-orange-800';
+                                                            break;
+                                                        case 'Ongoing':
+                                                            echo 'bg-blue-100 text-blue-800';
+                                                            break;
+                                                        case 'Arrival':
+                                                            echo 'bg-purple-100 text-purple-800';
+                                                            break;
+                                                        case 'Departure':
+                                                            echo 'bg-yellow-100 text-yellow-800';
+                                                            break;
+                                                        case 'Complete':
+                                                            echo 'bg-green-100 text-green-800';
+                                                            break;
+                                                        default:
+                                                            echo 'bg-gray-100 text-gray-800';
+                                                            break;
+                                                    }
+                                                    ?>">
+                                                    <?php if ($order['status'] === 'Pending'): ?>
+                                                        <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                                                    <?php elseif ($order['status'] === 'Complete'): ?>
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                    <?php endif; ?>
+                                                    <?php echo $order['status']; ?>
+                                                </span>
+
+                                                <!-- Payment Status -->
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full
+                                                 <?php
+                                                    $payment_status = $order['payment_status'] ?? 'pending';
+                                                    switch (strtolower($payment_status)) {
+                                                        case 'verified':
+                                                        case 'approved':
+                                                            echo 'bg-green-100 text-green-800';
+                                                            break;
+                                                        case 'rejected':
+                                                        case 'declined':
+                                                            echo 'bg-red-100 text-red-800';
+                                                            break;
+                                                        case 'pending':
+                                                        default:
+                                                            echo 'bg-yellow-100 text-yellow-800';
+                                                            break;
+                                                    }
+                                                    ?>">
+                                                    <?php if (strtolower($payment_status) === 'verified' || strtolower($payment_status) === 'approved'): ?>
+                                                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                    <?php elseif (strtolower($payment_status) === 'rejected' || strtolower($payment_status) === 'declined'): ?>
+                                                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                    <?php else: ?>
+                                                        <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span>
+                                                    <?php endif; ?>
+                                                    
+                                                    Pay: <?php echo ucfirst($payment_status); ?>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -686,8 +746,7 @@ if ($row && isset($row['is_verified'])) {
                 </div>
             </div>
 
-
-            <!-- Pending Orders Sidebar - NOW ON RIGHT (1 column) -->
+            <!-- Pending Orders Sidebar - RIGHT (1 column) -->
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 shadow-lg animate-fade-in">
                     <div class="flex items-center gap-3 mb-6">
@@ -712,20 +771,68 @@ if ($row && isset($row['is_verified'])) {
                             </div>
                         <?php else: ?>
                             <?php foreach ($pending_orders as $order): ?>
-                                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="viewOrder(<?php echo $order['id']; ?>)">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
-                                            <p class="text-sm text-gray-600">₱<?php echo number_format($order['final_total'], 2); ?></p>
-                                            <p class="text-xs text-gray-500"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                                            <span class="text-xs text-orange-600 font-medium">Pending</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
+    <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="viewOrder(<?php echo $order['id']; ?>)">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
+                <p class="text-sm text-gray-600">₱<?php echo number_format($order['final_total'], 2); ?></p>
+                <p class="text-xs text-gray-500"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+                <!-- Order Status -->
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                    <span class="text-xs text-orange-600 font-medium">Pending</span>
+                </div>
+                
+                <!-- Payment Status -->
+                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full
+                 <?php
+                    $payment_status = $order['payment_status'] ?? 'pending';
+                    switch (strtolower($payment_status)) {
+                        case 'verified':
+                        case 'approved':
+                            echo 'bg-green-100 text-green-700';
+                            break;
+                        case 'rejected':
+                        case 'declined':
+                            echo 'bg-red-100 text-red-700';
+                            break;
+                        case 'pending':
+                        default:
+                            echo 'bg-yellow-100 text-yellow-700';
+                            break;
+                    }
+                    ?>">
+                    <?php if (strtolower($payment_status) === 'verified'): ?>
+                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    <?php elseif (strtolower($payment_status) === 'rejected'): ?>
+                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    <?php else: ?>
+                        <span class="w-1.5 h-1.5 bg-yellow-600 rounded-full animate-pulse"></span>
+                    <?php endif; ?>
+                    
+                    Pay: <?php echo ucfirst($payment_status); ?>
+                </span>
+
+                <!-- Update Payment Button (only show if payment is rejected) -->
+                <?php if (strtolower($payment_status) === 'rejected'): ?>
+                    <button onclick="updatePayment(<?php echo $order['id']; ?>); event.stopPropagation();" 
+                            class="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 shadow-sm">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Update Payment
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+<?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -885,8 +992,6 @@ if ($row && isset($row['is_verified'])) {
         </div>
     </div>
 
-
-
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
@@ -912,7 +1017,6 @@ if ($row && isset($row['is_verified'])) {
 
                         </div>
                     </div>
-
 
                     <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
                         Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
@@ -1035,9 +1139,30 @@ if ($row && isset($row['is_verified'])) {
             items.forEach(item => {
                 const id = item.getAttribute('data-id');
                 const date = item.getAttribute('data-date');
+                const paymentStatus = item.getAttribute('data-payment-status') || '';
 
-                const match = id.includes(input) || date.includes(input);
+                const match = id.includes(input) || 
+                             date.includes(input) || 
+                             paymentStatus.includes(input);
                 item.style.display = match ? '' : 'none';
+            });
+        }
+
+        function filterByPaymentStatus(status) {
+            const items = document.querySelectorAll('.order-item');
+            const buttons = document.querySelectorAll('.payment-filter');
+            
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            items.forEach(item => {
+                if (status === 'all') {
+                    item.style.display = '';
+                } else {
+                    const paymentStatus = item.getAttribute('data-payment-status') || 'pending';
+                    item.style.display = paymentStatus === status ? '' : 'none';
+                }
             });
         }
 
@@ -1092,7 +1217,6 @@ if ($row && isset($row['is_verified'])) {
                 }, index * 100);
             });
         });
-
 
         // Billing Address Functions
         function toggleBillingDropdown() {
@@ -1228,6 +1352,11 @@ if ($row && isset($row['is_verified'])) {
                 closeBillingModal();
             }
         });
+
+        function updatePayment(orderId) {
+    // Redirect to update payment page with order ID
+    window.location.href = `update_payment.php?order_id=${orderId}`;
+}
     </script>
 
 </body>

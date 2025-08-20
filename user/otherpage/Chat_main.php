@@ -560,10 +560,12 @@ function getUserOnlineStatus($conn, $userId)
                       </svg>
                       <span x-text="sales.email"></span>
                     </div>
-                    <div class="online-status status-indicator mt-2 text-xs">
-                      <div class="online-dot w-2 h-2"></div>
-                      Online
-                    </div>
+                   <div class="flex items-center gap-2 text-xs">
+                        <div class="w-2 h-2 rounded-full" :class="sales.status_class"></div>
+                        <span x-text="sales.status_text"></span>
+                        <span class="text-gray-600"></span>
+                      </div>
+
                   </div>
                 </div>
               </template>

@@ -485,6 +485,8 @@ $slideresult = $conn->query($sql);
         </div>
     </section>
 
+
+
     <section class="bg-orange-400 text-white py-1 px-2 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 
@@ -648,18 +650,18 @@ $slideresult = $conn->query($sql);
 
 
 
-  <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
-    <!-- Heading and description -->
-    <div class="text-center mb-8">
-        <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">Shop by Categories</h2>
-        <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-            Discover our wide range of home improvement products organized by category
-        </p>
-    </div>
+    <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
+        <!-- Heading and description -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">Shop by Categories</h2>
+            <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+                Discover our wide range of home improvement products organized by category
+            </p>
+        </div>
 
-    <!-- Mobile View (lg and below) - Swiper -->
-    <div class="block lg:hidden">
-        <div class="swiper category-swiper" x-init="
+        <!-- Mobile View (lg and below) - Swiper -->
+        <div class="block lg:hidden">
+            <div class="swiper category-swiper" x-init="
         setTimeout(() => {
             new Swiper($el, {
                 slidesPerView: 2.2,
@@ -679,620 +681,620 @@ $slideresult = $conn->query($sql);
             lucide.createIcons();
         }, 100);
     ">
-            <div class="swiper-wrapper pb-4">
-                <!-- Furniture -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=furniture" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <img src="../img/furnibg/1.png" alt="Furniture" class="w-8 h-8 object-contain">
+                <div class="swiper-wrapper pb-4">
+                    <!-- Furniture -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=furniture" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <img src="../img/furnibg/1.png" alt="Furniture" class="w-8 h-8 object-contain">
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Furniture</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Furniture</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Materials -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=materials" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="layers" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Materials -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=materials" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="layers" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Materials</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Materials</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Bedroom Furniture -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=bedfurniture" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="bed-double" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Bedroom Furniture -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=bedfurniture" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="bed-double" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Bedroom</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Bedroom</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Lighting -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=lighting" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="lightbulb" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Lighting -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=lighting" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="lightbulb" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Lighting</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Lighting</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Aircon -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=aircon" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="snowflake" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Aircon -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=aircon" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="snowflake" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Aircon</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Aircon</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Doors -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=doors" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="door-closed" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Doors -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=doors" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="door-closed" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Doors</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Doors</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Tiles -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=tiles" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="grid" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Tiles -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=tiles" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="grid" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Tiles</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Tiles</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Windows -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=windows" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="square" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Windows -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=windows" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="square" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Windows</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Windows</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Bathroom -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=bathroom" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="shower-head" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Bathroom -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=bathroom" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="shower-head" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Bathroom</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Bathroom</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Kitchen -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=kitchen" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="utensils-crossed" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Kitchen -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=kitchen" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="utensils-crossed" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Kitchen</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Kitchen</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- Pipes -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=pipes" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="pipe" class="w-6 h-6 text-orange-600"></i>
+                    <!-- Pipes -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=pipes" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="pipe" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Pipes</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">Pipes</span>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
 
-                <!-- AAC Blocks -->
-                <div class="swiper-slide">
-                    <a href="shop?category[]=aacblock" class="group block">
-                        <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                <i data-lucide="box" class="w-6 h-6 text-orange-600"></i>
+                    <!-- AAC Blocks -->
+                    <div class="swiper-slide">
+                        <a href="shop?category[]=aacblock" class="group block">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <i data-lucide="box" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-700 text-center">AAC Blocks</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-700 text-center">AAC Blocks</span>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Desktop View (lg and above) - Grid Layout -->
-    <div class="hidden lg:block max-w-6xl mx-auto">
-        <div class="grid grid-cols-6 gap-6">
-            <!-- Row 1 -->
-            <a href="shop?category[]=furniture" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <img src="../img/furnibg/1.png" alt="Furniture" class="w-10 h-10 object-contain">
+        <!-- Desktop View (lg and above) - Grid Layout -->
+        <div class="hidden lg:block max-w-6xl mx-auto">
+            <div class="grid grid-cols-6 gap-6">
+                <!-- Row 1 -->
+                <a href="shop?category[]=furniture" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <img src="../img/furnibg/1.png" alt="Furniture" class="w-10 h-10 object-contain">
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Furniture</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Furniture</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=materials" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="layers" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=materials" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="layers" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Material Boards</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Material Boards</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=bedfurniture" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="bed-double" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=bedfurniture" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="bed-double" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Bedroom Furniture</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Bedroom Furniture</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=lighting" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="lightbulb" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=lighting" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="lightbulb" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Lighting fixture</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Lighting fixture</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=aircon" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="snowflake" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=aircon" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="snowflake" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Aircon</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Aircon</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=doors" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="door-closed" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=doors" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="door-closed" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Doors</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Doors</span>
-                </div>
-            </a>
+                </a>
 
-            <!-- Row 2 -->
-            <a href="shop?category[]=tiles" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="grid" class="w-7 h-7 text-orange-600"></i>
+                <!-- Row 2 -->
+                <a href="shop?category[]=tiles" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="grid" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Tiles</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Tiles</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=windows" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="square" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=windows" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="square" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Windows</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Windows</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=bathroom" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="shower-head" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=bathroom" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="shower-head" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Bathroom Fixtures</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Bathroom Fixtures</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=kitchen" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="utensils-crossed" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=kitchen" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="utensils-crossed" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Kitchen Fixtures</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Kitchen Fixtures</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=pipes" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="pipe" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=pipes" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="pipe" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Pipes</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">Pipes</span>
-                </div>
-            </a>
+                </a>
 
-            <a href="shop?category[]=aacblock" class="group">
-                <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                        <i data-lucide="box" class="w-7 h-7 text-orange-600"></i>
+                <a href="shop?category[]=aacblock" class="group">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <i data-lucide="box" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 text-center">AAC BLOCKS</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 text-center">AAC BLOCKS</span>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Init Lucide icons -->
-    <script>
-        lucide.createIcons();
-    </script>
-</section>
-
-
-<section class="px-4 py-12">
-    <div class="max-w-6xl mx-auto">
-        <!-- Section Header -->
-        <div class="text-center mb-10">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Current Promotions</h2>
-            <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
+                </a>
+            </div>
         </div>
 
-        <!-- Carousel Container -->
-        <div class="relative">
-            <!-- Navigation Arrows - Hidden on mobile -->
-            <button id="prevBtn" class="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-            </button>
-            <button id="nextBtn" class="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </button>
+        <!-- Init Lucide icons -->
+        <script>
+            lucide.createIcons();
+        </script>
+    </section>
 
-            <!-- Scrollable Container -->
-            <div id="carousel" class="flex overflow-x-auto md:overflow-x-hidden scroll-smooth gap-4 md:gap-6 md:px-12 snap-x snap-mandatory">
-                
-                <!-- Featured Promotion -->
-                <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                    <div class="flex flex-col md:flex-row h-auto md:h-80">
-                        <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                            <div class="mb-3 md:mb-4">
-                                <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                    🔥 Featured Deal
-                                </span>
-                            </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                Home Renovation Sale
-                            </h3>
-                            <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
-                            </p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                <button class="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                    Shop Sale Items
-                                </button>
-                                <span class="text-lg md:text-2xl font-bold text-red-600">Up to 50% OFF</span>
-                            </div>
-                        </div>
-                        <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                            <img src="../img/promo/a.png" alt="Featured Sale" 
-                                 class="w-full h-full object-contain">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Weekly Sale -->
-                <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                    <div class="flex flex-col md:flex-row h-auto md:h-80">
-                        <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                            <div class="mb-3 md:mb-4">
-                                <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                    🏷️ SALE
-                                </span>
-                            </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                Weekly Sale
-                            </h3>
-                            <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
-                            </p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                <button class="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                    View Sale Items
-                                </button>
-                                <span class="text-lg md:text-xl font-bold text-red-600">Weekly Deals</span>
-                            </div>
-                        </div>
-                        <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                            <img src="../img/promo/2.png" alt="Sale Items" 
-                                 class="w-full h-full object-contain">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- New Arrivals -->
-                <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                    <div class="flex flex-col md:flex-row h-auto md:h-80">
-                        <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                            <div class="mb-3 md:mb-4">
-                                <span class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                    ✨ NEW
-                                </span>
-                            </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                New Arrivals
-                            </h3>
-                            <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                Fresh inventory just arrived. Be the first to get the latest products and trending items.
-                            </p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                <button class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                    See What's New
-                                </button>
-                                <span class="text-lg md:text-xl font-bold text-blue-600">Fresh Stock</span>
-                            </div>
-                        </div>
-                        <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                            <img src="../img/promo/3.png" alt="New Arrivals" 
-                                 class="w-full h-full object-contain">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hot Deals -->
-                <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                    <div class="flex flex-col md:flex-row h-auto md:h-80">
-                        <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                            <div class="mb-3 md:mb-4">
-                                <span class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md animate-pulse">
-                                    🔥 HOT DEAL
-                                </span>
-                            </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                Hot Deals
-                            </h3>
-                            <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                Limited quantity deals that won't last long. Grab them while supplies last - act fast!
-                            </p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                <button class="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                    Shop Hot Deals
-                                </button>
-                                <span class="text-lg md:text-xl font-bold text-orange-600">Limited Time</span>
-                            </div>
-                        </div>
-                        <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                            <img src="../img/promo/4.png" alt="Hot Deals" 
-                                 class="w-full h-full object-contain">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bundle Deals -->
-                <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                    <div class="flex flex-col md:flex-row h-auto md:h-80">
-                        <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                            <div class="mb-3 md:mb-4">
-                                <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                    💎 SPECIAL OFFER
-                                </span>
-                            </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                Bundle Deals
-                            </h3>
-                            <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                Save more when you buy multiple items together. Perfect for complete room makeovers.
-                            </p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                <button class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                    View Bundles
-                                </button>
-                                <span class="text-lg md:text-xl font-bold text-purple-600">Save More</span>
-                            </div>
-                        </div>
-                        <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                            <img src="../img/promo/1.png" alt="Bundle Deals" 
-                                 class="w-full h-full object-contain">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Clearance Sale -->
-                <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                    <div class="flex flex-col md:flex-row h-auto md:h-80">
-                        <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                            <div class="mb-3 md:mb-4">
-                                <span class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md animate-bounce">
-                                    🎯 70% OFF
-                                </span>
-                            </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                Clearance Sale
-                            </h3>
-                            <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                Final markdowns on discontinued items. Huge savings on quality products - limited stock.
-                            </p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                <button class="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                    Shop Clearance
-                                </button>
-                                <span class="text-lg md:text-xl font-bold text-green-600">Final Sale</span>
-                            </div>
-                        </div>
-                        <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                            <img src="../img/promo/5.png" alt="Clearance Sale" 
-                                 class="w-full h-full object-contain">
-                        </div>
-                    </div>
-                </div>
-
+    <section class="px-4 py-12">
+        <div class="max-w-6xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-10">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3"> Promotions</h2>
+                <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
             </div>
 
-            <!-- Dots Indicator -->
-            <div class="flex justify-center mt-6 md:mt-8 space-x-2">
-                <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-red-600 transition-all duration-300 cursor-pointer"></div>
-                <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-            </div>
-
-            <!-- Mobile Navigation -->
-            <div class="flex justify-center mt-4 space-x-4 md:hidden">
-                <button id="prevBtnMobile" class="bg-white hover:bg-gray-50 shadow-lg rounded-full p-2 transition-all duration-300">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Carousel Container -->
+            <div class="relative">
+                <!-- Navigation Arrows - Hidden on mobile -->
+                <button id="prevBtn" class="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
-                <button id="nextBtnMobile" class="bg-white hover:bg-gray-50 shadow-lg rounded-full p-2 transition-all duration-300">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="nextBtn" class="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
                 </button>
+
+                <!-- Scrollable Container -->
+                <div id="carousel" class="flex overflow-x-auto md:overflow-x-hidden scroll-smooth gap-4 md:gap-6 md:px-12 snap-x snap-mandatory">
+
+                    <!-- Featured Promotion -->
+                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                        <div class="flex flex-col md:flex-row h-auto md:h-80">
+                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
+                                <div class="mb-3 md:mb-4">
+                                    <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
+                                        🔥 Featured Deal
+                                    </span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                                    Home Renovation Sale
+                                </h3>
+                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
+                                    Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                                    <button class="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
+                                        Shop Sale Items
+                                    </button>
+                                    <span class="text-lg md:text-2xl font-bold text-red-600">Up to 50% OFF</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+                                <img src="../img/promo/a.png" alt="Featured Sale"
+                                    class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Sale -->
+                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                        <div class="flex flex-col md:flex-row h-auto md:h-80">
+                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
+                                <div class="mb-3 md:mb-4">
+                                    <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
+                                        🏷️ SALE
+                                    </span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                                    Weekly Sale
+                                </h3>
+                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
+                                    Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                                    <button class="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
+                                        View Sale Items
+                                    </button>
+                                    <span class="text-lg md:text-xl font-bold text-red-600">Weekly Deals</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+                                <img src="../img/promo/2.png" alt="Sale Items"
+                                    class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Arrivals -->
+                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                        <div class="flex flex-col md:flex-row h-auto md:h-80">
+                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
+                                <div class="mb-3 md:mb-4">
+                                    <span class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
+                                        ✨ NEW
+                                    </span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                                    New Arrivals
+                                </h3>
+                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
+                                    Fresh inventory just arrived. Be the first to get the latest products and trending items.
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                                    <button class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
+                                        See What's New
+                                    </button>
+                                    <span class="text-lg md:text-xl font-bold text-blue-600">Fresh Stock</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+                                <img src="../img/promo/3.png" alt="New Arrivals"
+                                    class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hot Deals -->
+                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                        <div class="flex flex-col md:flex-row h-auto md:h-80">
+                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
+                                <div class="mb-3 md:mb-4">
+                                    <span class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md animate-pulse">
+                                        🔥 HOT DEAL
+                                    </span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                                    Hot Deals
+                                </h3>
+                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
+                                    Limited quantity deals that won't last long. Grab them while supplies last - act fast!
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                                    <button class="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
+                                        Shop Hot Deals
+                                    </button>
+                                    <span class="text-lg md:text-xl font-bold text-orange-600">Limited Time</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+                                <img src="../img/promo/4.png" alt="Hot Deals"
+                                    class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bundle Deals -->
+                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                        <div class="flex flex-col md:flex-row h-auto md:h-80">
+                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
+                                <div class="mb-3 md:mb-4">
+                                    <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
+                                        💎 SPECIAL OFFER
+                                    </span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                                    Bundle Deals
+                                </h3>
+                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
+                                    Save more when you buy multiple items together. Perfect for complete room makeovers.
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                                    <button class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
+                                        View Bundles
+                                    </button>
+                                    <span class="text-lg md:text-xl font-bold text-purple-600">Save More</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+                                <img src="../img/promo/1.png" alt="Bundle Deals"
+                                    class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clearance Sale -->
+                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                        <div class="flex flex-col md:flex-row h-auto md:h-80">
+                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
+                                <div class="mb-3 md:mb-4">
+                                    <span class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md animate-bounce">
+                                        🎯 70% OFF
+                                    </span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                                    Clearance Sale
+                                </h3>
+                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
+                                    Final markdowns on discontinued items. Huge savings on quality products - limited stock.
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                                    <button class="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
+                                        Shop Clearance
+                                    </button>
+                                    <span class="text-lg md:text-xl font-bold text-green-600">Final Sale</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+                                <img src="../img/promo/5.png" alt="Clearance Sale"
+                                    class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Dots Indicator -->
+                <div class="flex justify-center mt-6 md:mt-8 space-x-2">
+                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-red-600 transition-all duration-300 cursor-pointer"></div>
+                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
+                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
+                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
+                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
+                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
+                </div>
+
+                <!-- Mobile Navigation -->
+                <div class="flex justify-center mt-4 space-x-4 md:hidden">
+                    <button id="prevBtnMobile" class="bg-white hover:bg-gray-50 shadow-lg rounded-full p-2 transition-all duration-300">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <button id="nextBtnMobile" class="bg-white hover:bg-gray-50 shadow-lg rounded-full p-2 transition-all duration-300">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<script>
-const carousel = document.getElementById('carousel');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const prevBtnMobile = document.getElementById('prevBtnMobile');
-const nextBtnMobile = document.getElementById('nextBtnMobile');
-const dots = document.querySelectorAll('.dot');
+    <script>
+        const carousel = document.getElementById('carousel');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtnMobile = document.getElementById('prevBtnMobile');
+        const nextBtnMobile = document.getElementById('nextBtnMobile');
+        const dots = document.querySelectorAll('.dot');
 
-let currentSlide = 0;
-const totalSlides = 6;
+        let currentSlide = 0;
+        const totalSlides = 6;
 
-function updateCarousel() {
-    const slideWidth = carousel.children[0].offsetWidth + (window.innerWidth >= 768 ? 24 : 16); // width + gap
-    carousel.scrollTo({
-        left: currentSlide * slideWidth,
-        behavior: 'smooth'
-    });
-    
-    // Update dots
-    dots.forEach((dot, index) => {
-        if (index === currentSlide) {
-            dot.classList.remove('bg-gray-300');
-            dot.classList.add('bg-red-600');
-        } else {
-            dot.classList.remove('bg-red-600');
-            dot.classList.add('bg-gray-300');
+        function updateCarousel() {
+            const slideWidth = carousel.children[0].offsetWidth + (window.innerWidth >= 768 ? 24 : 16); // width + gap
+            carousel.scrollTo({
+                left: currentSlide * slideWidth,
+                behavior: 'smooth'
+            });
+
+            // Update dots
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) {
+                    dot.classList.remove('bg-gray-300');
+                    dot.classList.add('bg-red-600');
+                } else {
+                    dot.classList.remove('bg-red-600');
+                    dot.classList.add('bg-gray-300');
+                }
+            });
         }
-    });
-}
 
-function nextSlide() {
-    currentSlide = (currentSlide + 1) % totalSlides;
-    updateCarousel();
-}
-
-function prevSlide() {
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-    updateCarousel();
-}
-
-// Desktop navigation
-if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-if (prevBtn) prevBtn.addEventListener('click', prevSlide);
-
-// Mobile navigation
-if (nextBtnMobile) nextBtnMobile.addEventListener('click', nextSlide);
-if (prevBtnMobile) prevBtnMobile.addEventListener('click', prevSlide);
-
-// Dot click functionality
-dots.forEach((dot, index) => {
-    dot.addEventListener('click', () => {
-        currentSlide = index;
-        updateCarousel();
-    });
-});
-
-// Auto-play (optional - disabled on mobile for better UX)
-let autoPlay;
-if (window.innerWidth >= 768) {
-    autoPlay = setInterval(nextSlide, 5000);
-    
-    // Pause auto-play on hover
-    carousel.addEventListener('mouseenter', () => {
-        clearInterval(autoPlay);
-    });
-
-    carousel.addEventListener('mouseleave', () => {
-        autoPlay = setInterval(nextSlide, 5000);
-    });
-}
-
-// Handle window resize
-window.addEventListener('resize', () => {
-    updateCarousel();
-});
-
-// Touch/swipe support for mobile
-let startX = 0;
-let startY = 0;
-let isScrolling = false;
-
-carousel.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    isScrolling = false;
-});
-
-carousel.addEventListener('touchmove', (e) => {
-    if (!startX || !startY) return;
-    
-    const diffX = startX - e.touches[0].clientX;
-    const diffY = startY - e.touches[0].clientY;
-    
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-        isScrolling = true;
-    }
-});
-
-carousel.addEventListener('touchend', (e) => {
-    if (!startX || !isScrolling) return;
-    
-    const diffX = startX - e.changedTouches[0].clientX;
-    
-    if (Math.abs(diffX) > 50) { // Minimum swipe distance
-        if (diffX > 0) {
-            nextSlide();
-        } else {
-            prevSlide();
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
         }
-    }
-    
-    startX = 0;
-    startY = 0;
-    isScrolling = false;
-});
-</script>
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        }
+
+        // Desktop navigation
+        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+        // Mobile navigation
+        if (nextBtnMobile) nextBtnMobile.addEventListener('click', nextSlide);
+        if (prevBtnMobile) prevBtnMobile.addEventListener('click', prevSlide);
+
+        // Dot click functionality
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentSlide = index;
+                updateCarousel();
+            });
+        });
+
+        // Auto-play (optional - disabled on mobile for better UX)
+        let autoPlay;
+        if (window.innerWidth >= 768) {
+            autoPlay = setInterval(nextSlide, 5000);
+
+            // Pause auto-play on hover
+            carousel.addEventListener('mouseenter', () => {
+                clearInterval(autoPlay);
+            });
+
+            carousel.addEventListener('mouseleave', () => {
+                autoPlay = setInterval(nextSlide, 5000);
+            });
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            updateCarousel();
+        });
+
+        // Touch/swipe support for mobile
+        let startX = 0;
+        let startY = 0;
+        let isScrolling = false;
+
+        carousel.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isScrolling = false;
+        });
+
+        carousel.addEventListener('touchmove', (e) => {
+            if (!startX || !startY) return;
+
+            const diffX = startX - e.touches[0].clientX;
+            const diffY = startY - e.touches[0].clientY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                isScrolling = true;
+            }
+        });
+
+        carousel.addEventListener('touchend', (e) => {
+            if (!startX || !isScrolling) return;
+
+            const diffX = startX - e.changedTouches[0].clientX;
+
+            if (Math.abs(diffX) > 50) { // Minimum swipe distance
+                if (diffX > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+
+            startX = 0;
+            startY = 0;
+            isScrolling = false;
+        });
+    </script>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
         <!-- Header first -->
@@ -1303,11 +1305,11 @@ carousel.addEventListener('touchend', (e) => {
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black  bg-clip-text text-black mb-4 tracking-tight" data-aos="fade-up">
                 Bed Furniture
             </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
-          
+            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+
         </div>
         <style>
             .bubble-bounce {
@@ -1335,14 +1337,14 @@ carousel.addEventListener('touchend', (e) => {
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-               <?php while ($row = mysqli_fetch_assoc($resultss)) : ?>
+                <?php while ($row = mysqli_fetch_assoc($resultss)) : ?>
                     <?php
                     $base = (float)$row['price'];
                     $percent = (float)($row['percent'] ?? 0);
                     $discount = (float)($row['discount'] ?? 0);
                     $priceWithMarkup = $base + ($base * $percent / 100);
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                    
+
                     // Variables from Code 2
                     $product_id = (int)$row['id'];
                     $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
@@ -1381,7 +1383,7 @@ carousel.addEventListener('touchend', (e) => {
                                 <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
                                     <?= htmlspecialchars($row['product_name']) ?>
                                 </h3>
-                                
+
 
                                 <!-- Ratings Section (from Code 2) -->
                                 <?php if ($total_raters > 0): ?>
@@ -1397,7 +1399,7 @@ carousel.addEventListener('touchend', (e) => {
                                     <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
                                 <?php endif; ?>
 
-                                   <!-- Description -->
+                                <!-- Description -->
                                 <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
                                     <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
                                         <?= htmlspecialchars($row['descrip6'] ?? '') ?>
@@ -1416,155 +1418,7 @@ carousel.addEventListener('touchend', (e) => {
                                     <p class="text-xs text-gray-400 italic h-10">No description.</p>
                                 <?php endif; ?>
 
-                            
-                                <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
-                                    <form action="product_view" method="GET">
-                                        <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
-                                            view
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-        </div>
-    </section>
 
-      
-
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
-        <!-- Header first -->
-        <div class="text-center mb-8 sm:mb-12 relative">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
-                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
-                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
-                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
-            </div>
-             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
-               Furniture
-            </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
-          
-        </div>
-        <style>
-            .bubble-bounce {
-                position: absolute;
-                display: inline-block;
-                opacity: 0.18;
-                border-radius: 50%;
-                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
-                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
-            }
-
-            @keyframes bubble-bounce {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1);
-                }
-
-                50% {
-                    transform: translateY(-30px) scale(1.08);
-                }
-            }
-        </style>
-
-        <!-- Swiper Container -->
-        <div class="swiper mySwiper-products w-full">
-            <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-               <?php while ($row = mysqli_fetch_assoc($result)) : ?>
-                    <?php
-                    $base = (float)$row['price'];
-                    $percent = (float)($row['percent'] ?? 0);
-                    $discount = (float)($row['discount'] ?? 0);
-                    $priceWithMarkup = $base + ($base * $percent / 100);
-                    $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                    
-                    // Variables from Code 2
-                    $product_id = (int)$row['id'];
-                    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-                    $rating_q->bind_param("i", $product_id);
-                    $rating_q->execute();
-                    $rating_result = $rating_q->get_result()->fetch_assoc();
-                    $avg_rating = $rating_result['avg_rating'] ?? 0;
-                    $total_raters = $rating_result['total_raters'] ?? 0;
-                    $rating_q->close();
-                    $full = floor($avg_rating);
-                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                    $empty = 5 - $full - $half;
-                    ?>
-                    <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
-                            <!-- Triangle Badge -->
-                            <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
-                                </div>
-                            </div>
-
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
-                                <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                <?php endif; ?>
-
-                            </div>
-
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['product_name']) ?>
-                                </h3>
-                                
-
-                                <!-- Ratings Section (from Code 2) -->
-                                <?php if ($total_raters > 0): ?>
-                                    <div class="flex items-center justify-center gap-1 text-orange-400 text-xs mb-2">
-                                        <?php
-                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                                        ?>
-                                        <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
-                                    </div>
-                                <?php else: ?>
-                                    <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
-                                <?php endif; ?>
-
-                                   <!-- Description -->
-                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                    <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                        <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                        <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
-                                        <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-
-                                    </p>
-                                    <!-- Display Origin (Local / International) -->
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                                <?php endif; ?>
-
-                            
                                 <!-- Buttons -->
                                 <div class="flex justify-center gap-2 mt-2 flex-wrap">
                                     <!-- Buy Button -->
@@ -1590,122 +1444,6 @@ carousel.addEventListener('touchend', (e) => {
 
 
 
-<section class="w-full bg-gray-50 py-12 px-4">
-    <div class="max-w-7xl mx-auto">
-        <!-- Section Header -->
-        <div class="text-center mb-10">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-               Browse
-            </h2>
-            <p class="text-gray-600">
-                Watch our products in action and see the quality difference
-            </p>
-        </div>
-
-        <!-- Video Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            <!-- Video Item 1 -->
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                <div class="relative" style="aspect-ratio: 9/16; max-height: 300px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                        <source src="../../video/a.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 mb-1">WPC Wall Panel</h3>
-                    <p class="text-gray-600 text-sm mb-3">Waterproof panels for modern interiors</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-medium">
-                            Premium
-                        </span>
-                        <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                            View Details →
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Item 2 -->
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                <div class="relative" style="aspect-ratio: 9/16; max-height: 300px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                        <source src="../../video/b.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 mb-1">Interior Design</h3>
-                    <p class="text-gray-600 text-sm mb-3">Styling ideas and design concepts</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-medium">
-                            Inspiration
-                        </span>
-                        <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                            Get Ideas →
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Item 3 -->
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                <div class="relative" style="aspect-ratio: 16/9; max-height: 200px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                        <source src="../../video/c.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 mb-1">Product Highlights</h3>
-                    <p class="text-gray-600 text-sm mb-3">Featured items in real applications</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">
-                            Featured
-                        </span>
-                        <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                            Shop Now →
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Item 4 -->
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                <div class="relative" style="aspect-ratio: 16/9; max-height: 200px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                        <source src="../../video/d.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-800 mb-1">About Our Process</h3>
-                    <p class="text-gray-600 text-sm mb-3">Quality standards and craftsmanship</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-medium">
-                            Process
-                        </span>
-                        <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                            Learn More →
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Bottom CTA -->
-        <div class="text-center mt-10">
-            <p class="text-gray-600 mb-4">Want to see more of our products?</p>
-            <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300">
-                Browse All Products
-            </button>
-        </div>
-    </div>
-</section>
-
-
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
         <!-- Header first -->
         <div class="text-center mb-8 sm:mb-12 relative">
@@ -1715,11 +1453,11 @@ carousel.addEventListener('touchend', (e) => {
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
-              Materials Boards
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text  to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
+                Furniture
             </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
-          
+            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+
         </div>
         <style>
             .bubble-bounce {
@@ -1747,14 +1485,14 @@ carousel.addEventListener('touchend', (e) => {
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-               <?php while ($row = mysqli_fetch_assoc($results)) : ?>
+                <?php while ($row = mysqli_fetch_assoc($result)) : ?>
                     <?php
                     $base = (float)$row['price'];
                     $percent = (float)($row['percent'] ?? 0);
                     $discount = (float)($row['discount'] ?? 0);
                     $priceWithMarkup = $base + ($base * $percent / 100);
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                    
+
                     // Variables from Code 2
                     $product_id = (int)$row['id'];
                     $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
@@ -1793,7 +1531,7 @@ carousel.addEventListener('touchend', (e) => {
                                 <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
                                     <?= htmlspecialchars($row['product_name']) ?>
                                 </h3>
-                                
+
 
                                 <!-- Ratings Section (from Code 2) -->
                                 <?php if ($total_raters > 0): ?>
@@ -1809,7 +1547,7 @@ carousel.addEventListener('touchend', (e) => {
                                     <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
                                 <?php endif; ?>
 
-                                   <!-- Description -->
+                                <!-- Description -->
                                 <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
                                     <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
                                         <?= htmlspecialchars($row['descrip6'] ?? '') ?>
@@ -1828,7 +1566,271 @@ carousel.addEventListener('touchend', (e) => {
                                     <p class="text-xs text-gray-400 italic h-10">No description.</p>
                                 <?php endif; ?>
 
-                            
+
+                                <!-- Buttons -->
+                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
+                                    <!-- Buy Button -->
+                                    <form action="product_view" method="GET">
+                                        <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
+                                        <button type="submit"
+                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
+                                            </svg>
+                                            view
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        </div>
+    </section>
+
+
+
+    <section class="w-full bg-gray-50 py-12 px-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-10">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    Browse
+                </h2>
+                <p class="text-gray-600">
+                    Watch our products in action and see the quality difference
+                </p>
+            </div>
+
+            <!-- Video Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <!-- Video Item 1 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
+                    <div class="relative" style="aspect-ratio: 9/16; max-height: 300px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/a.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-800 mb-1">WPC Wall Panel</h3>
+                        <p class="text-gray-600 text-sm mb-3">Waterproof panels for modern interiors</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-medium">
+                                Premium
+                            </span>
+                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                View Details →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Item 2 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
+                    <div class="relative" style="aspect-ratio: 9/16; max-height: 300px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/b.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-800 mb-1">Interior Design</h3>
+                        <p class="text-gray-600 text-sm mb-3">Styling ideas and design concepts</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-medium">
+                                Inspiration
+                            </span>
+                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Get Ideas →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Item 3 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
+                    <div class="relative" style="aspect-ratio: 16/9; max-height: 200px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/c.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-800 mb-1">Product Highlights</h3>
+                        <p class="text-gray-600 text-sm mb-3">Featured items in real applications</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">
+                                Featured
+                            </span>
+                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Shop Now →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Item 4 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
+                    <div class="relative" style="aspect-ratio: 16/9; max-height: 200px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                            <source src="../../video/d.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-800 mb-1">About Our Process</h3>
+                        <p class="text-gray-600 text-sm mb-3">Quality standards and craftsmanship</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-medium">
+                                Process
+                            </span>
+                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                                Learn More →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom CTA -->
+            <div class="text-center mt-10">
+                <p class="text-gray-600 mb-4">Want to see more of our products?</p>
+                <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300">
+                    Browse All Products
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
+        <!-- Header first -->
+        <div class="text-center mb-8 sm:mb-12 relative">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
+                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
+                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
+                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text mb-4 tracking-tight" data-aos="fade-up">
+                Materials Boards
+            </h2>
+            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+
+        </div>
+        <style>
+            .bubble-bounce {
+                position: absolute;
+                display: inline-block;
+                opacity: 0.18;
+                border-radius: 50%;
+                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
+                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
+            }
+
+            @keyframes bubble-bounce {
+
+                0%,
+                100% {
+                    transform: translateY(0) scale(1);
+                }
+
+                50% {
+                    transform: translateY(-30px) scale(1.08);
+                }
+            }
+        </style>
+
+        <!-- Swiper Container -->
+        <div class="swiper mySwiper-products w-full">
+            <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                <?php while ($row = mysqli_fetch_assoc($results)) : ?>
+                    <?php
+                    $base = (float)$row['price'];
+                    $percent = (float)($row['percent'] ?? 0);
+                    $discount = (float)($row['discount'] ?? 0);
+                    $priceWithMarkup = $base + ($base * $percent / 100);
+                    $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+
+                    // Variables from Code 2
+                    $product_id = (int)$row['id'];
+                    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                    $rating_q->bind_param("i", $product_id);
+                    $rating_q->execute();
+                    $rating_result = $rating_q->get_result()->fetch_assoc();
+                    $avg_rating = $rating_result['avg_rating'] ?? 0;
+                    $total_raters = $rating_result['total_raters'] ?? 0;
+                    $rating_q->close();
+                    $full = floor($avg_rating);
+                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                    $empty = 5 - $full - $half;
+                    ?>
+                    <div class="swiper-slide p-2">
+                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                            <!-- Triangle Badge -->
+                            <div class="absolute top-0 left-0 z-10">
+                                <div class="w-12 h-12 relative">
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                </div>
+                            </div>
+
+                            <!-- Product Image -->
+                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                                <?php if (!empty($row['main_image'])): ?>
+                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                <?php else: ?>
+                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                <?php endif; ?>
+
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="mt-auto">
+                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
+                                    <?= htmlspecialchars($row['product_name']) ?>
+                                </h3>
+
+
+                                <!-- Ratings Section (from Code 2) -->
+                                <?php if ($total_raters > 0): ?>
+                                    <div class="flex items-center justify-center gap-1 text-orange-400 text-xs mb-2">
+                                        <?php
+                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                                        ?>
+                                        <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
+                                <?php endif; ?>
+
+                                <!-- Description -->
+                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                    <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
+                                        <?= htmlspecialchars($row['descrip6'] ?? '') ?>
+                                        <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
+                                        <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+
+                                    </p>
+                                    <!-- Display Origin (Local / International) -->
+                                    <p class="text-sm text-gray-600">
+                                        Origin:
+                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
+                                            <?= ucfirst($row['origin']) ?>
+                                        </span>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="text-xs text-gray-400 italic h-10">No description.</p>
+                                <?php endif; ?>
+
+
                                 <!-- Buttons -->
                                 <div class="flex justify-center gap-2 mt-2 flex-wrap">
                                     <!-- Buy Button -->
@@ -2291,6 +2293,8 @@ carousel.addEventListener('touchend', (e) => {
     </section>
 
 
+
+
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
@@ -2437,7 +2441,312 @@ carousel.addEventListener('touchend', (e) => {
 
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="../src/index-obf.js"></script>
+    <script>
+        // 🔁 Universal Swiper initializer
+        function initSwiper(selector, options) {
+            if (document.querySelector(selector)) {
+                return new Swiper(selector, options);
+            }
+        }
+
+        // 🛒 Product form submit handler
+        async function handleProductFormSubmit(e) {
+            e.preventDefault();
+
+            const form = this;
+            const formData = new FormData(form);
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Adding...';
+
+            try {
+                // Defaults
+                formData.set('selected_color_id', formData.get('selected_color_id') || '1');
+                formData.set('selected_color_name', formData.get('selected_color_name') || 'Default');
+                formData.set('color_price', formData.get('color_price') || '0');
+
+                const response = await fetch('../cart/add_to_cart', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(data.message || 'Added to cart', 'success');
+                    updateCartCount(data.cart_count);
+
+                    button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added!';
+                    button.className = button.className.replace('bg-orange-500 hover:bg-orange-600', 'bg-green-500');
+
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = button.className.replace('bg-green-500', 'bg-orange-500 hover:bg-orange-600');
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Add to cart failed.');
+                }
+            } catch (error) {
+                showNotification(' ' + error.message, 'error');
+                console.error('Add to cart error:', error);
+
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // 🔔 Notification utility
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const bgColor = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            } [type] || 'bg-blue-500';
+
+            notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // 🛒 Cart count updater
+        function updateCartCount(count) {
+            document.querySelectorAll('.cart-count, #cart-count, [data-cart-count]').forEach(el => {
+                el.textContent = count;
+                el.style.display = count > 0 ? 'inline' : 'none';
+            });
+
+            const bubble = document.getElementById('cart-count-bubble');
+            if (bubble) {
+                bubble.classList.toggle('hidden', count <= 0);
+                bubble.style.display = count > 0 ? 'inline' : 'none';
+            }
+        }
+
+        // 💬 Chat toggle
+        function openChat() {
+            document.getElementById('chat-box').style.display = 'block';
+            document.getElementById('chat-toggle').style.display = 'none';
+        }
+
+        function closeChat() {
+            document.getElementById('chat-box').style.display = 'none';
+            document.getElementById('chat-toggle').style.display = 'inline-block';
+        }
+
+        // 🔃 Auto vertical swiper loader
+        function initAutoVerticalSwipers() {
+            const containers = document.querySelectorAll('[class*="swiper-auto-"]');
+            containers.forEach((container, index) => {
+                const slides = container.querySelectorAll('.swiper-slide');
+                if (slides.length > 0) {
+                    new Swiper(container, {
+                        direction: 'vertical',
+                        loop: slides.length > 1,
+                        slidesPerView: 1,
+                        spaceBetween: 0,
+                        autoplay: slides.length > 1 ? {
+                            delay: 3000 + (index * 500),
+                            disableOnInteraction: false,
+                            pauseOnMouseEnter: false,
+                            waitForTransition: true,
+                        } : false,
+                        speed: 1000,
+                        effect: 'slide',
+                        on: {
+                            init: () => console.log(`Swiper ${index} initialized with ${slides.length} slides`),
+                            slideChange: () => console.log(`Swiper ${index} slide changed`)
+                        }
+                    });
+                }
+            });
+        }
+
+        // 🚀 DOM Ready - PROGRESSIVE SCALING (2 → 4 → 5)
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Swiper === 'undefined') {
+                console.error('Swiper library is not loaded.');
+                return;
+            }
+
+            // ✅ MAIN HERO SWIPER - Para sa banner/slides mo
+            initSwiper('.mySwiper', {
+                slidesPerView: 1,
+                spaceBetween: 0,
+                loop: true,
+                autoplay: {
+                    delay: 4000,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true
+                },
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true
+                },
+                navigation: {
+                    nextEl: ".swiper-button-next",
+                    prevEl: ".swiper-button-prev"
+                },
+                speed: 1000,
+                effect: 'slide'
+            });
+
+            // 🛒 PROGRESSIVE PRODUCTS DISPLAY: 2 → 4 → 5
+            initSwiper('.mySwiper-products', {
+                slidesPerView: 2, // ✅ Default: 2 products (small screens)
+                spaceBetween: 10,
+                loop: true,
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true
+                },
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true
+                },
+                navigation: {
+                    nextEl: ".swiper-button-next",
+                    prevEl: ".swiper-button-prev"
+                },
+                breakpoints: {
+                    // Small screens (320px - 767px): 2 products - MALAKI
+                    480: {
+                        slidesPerView: 2,
+                        spaceBetween: 12
+                    },
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 15
+                    },
+
+                    // Medium screens (768px - 1023px): 4 products - MEDIUM
+                    768: {
+                        slidesPerView: 4,
+                        spaceBetween: 15
+                    },
+
+                    // Large screens (1024px+): 5 products - SMALLER BUT MORE
+                    1024: {
+                        slidesPerView: 5,
+                        spaceBetween: 18
+                    },
+                    1280: {
+                        slidesPerView: 5,
+                        spaceBetween: 20
+                    },
+                    1536: {
+                        slidesPerView: 5,
+                        spaceBetween: 25
+                    }
+                }
+            });
+
+            // 💎 MATERIALS - Baka pwedeng mas marami since smaller items
+            initSwiper('.mySwiper-material', {
+                slidesPerView: 2,
+                spaceBetween: 8,
+                loop: true,
+                autoplay: {
+                    delay: 2500,
+                    disableOnInteraction: false
+                },
+                breakpoints: {
+                    480: {
+                        slidesPerView: 2,
+                        spaceBetween: 10
+                    }, // Small: 2 malaki
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 12
+                    },
+                    768: {
+                        slidesPerView: 4,
+                        spaceBetween: 12
+                    }, // Medium: 4
+                    1024: {
+                        slidesPerView: 5,
+                        spaceBetween: 15
+                    }, // Large: 5
+                    1280: {
+                        slidesPerView: 5,
+                        spaceBetween: 18
+                    }, // Extra large: 6 (optional)
+                    1536: {
+                        slidesPerView: 5,
+                        spaceBetween: 20
+                    }
+                }
+            });
+
+            // 🎯 ALTERNATIVE: Kung gusto mo ng 3 products sa transition
+            initSwiper('.mySwiper-products-alternative', {
+                slidesPerView: 2,
+                spaceBetween: 10,
+                loop: true,
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false
+                },
+                breakpoints: {
+                    // Small: 2 products - MALAKI
+                    480: {
+                        slidesPerView: 2,
+                        spaceBetween: 12
+                    },
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 15
+                    },
+
+                    // Small-Medium transition: 3 products
+                    768: {
+                        slidesPerView: 3,
+                        spaceBetween: 12
+                    },
+
+                    // Medium: 4 products  
+                    900: {
+                        slidesPerView: 4,
+                        spaceBetween: 15
+                    },
+
+                    // Large: 5 products
+                    1200: {
+                        slidesPerView: 5,
+                        spaceBetween: 18
+                    },
+                    1400: {
+                        slidesPerView: 5,
+                        spaceBetween: 20
+                    }
+                }
+            });
+
+            // Rest of your code...
+            initAutoVerticalSwipers();
+
+            document.querySelectorAll('.productForm').forEach(form => {
+                form.addEventListener('submit', handleProductFormSubmit);
+            });
+        });
+    </script>
 
 </body>
 

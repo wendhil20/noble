@@ -387,6 +387,8 @@ if ($row && isset($row['is_verified'])) {
         .animate-bounce-fast {
             animation: bounceFloat 2s ease-in-out infinite;
         }
+
+        /* From Uiverse.io by cssbuttons-io */
     </style>
 </head>
 
@@ -431,32 +433,34 @@ if ($row && isset($row['is_verified'])) {
                 <!-- LEFT: Profile Section -->
                 <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
                     <!-- Profile Picture Section -->
-<div class="relative group">
-    <!-- Profile Image Container -->
-    <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
-        <?php if ($user_picture): ?>
-            <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
-        <?php else: ?>
-            <span class="text-3xl md:text-4xl font-bold text-black font-serif">
-                <?= strtoupper(substr($user_name, 0, 1)); ?>
-            </span>
-        <?php endif; ?>
-    </div>
+                    <div class="relative group">
+                        <!-- Profile Image Container -->
+                        <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
+                            <?php if ($user_picture): ?>
+                                <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+                            <?php else: ?>
+                                <span class="text-3xl md:text-4xl font-bold text-black font-serif">
+                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
 
-    <?php if (!empty($is_verified) && $is_verified == 1): ?>
-        <!-- Verified Badge -->
-        <div class="absolute -bottom-1 right-2 md:-bottom-3 md:right-12 w-7 h-7 md:w-8 md:h-8 bg-green-500 rounded-full border-1 border-white shadow-lg flex items-center justify-center" title="Verified Account">
-            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-        </div>
-    <?php else: ?>
-        <!-- Not Verified Badge -->
-        <div class="absolute -bottom-2 right-2 md:-bottom-2 md:right-5 px-2 py-1 bg-red-500 text-white text-[10px] md:text-xs font-semibold rounded-full border-1 border-white shadow-lg">
-            Not Verified
-        </div>
-    <?php endif; ?>
-</div>
+                        <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                            <!-- Verified Badge -->
+                            <div class="inline-flex items-center justify-center w-6 h-6 me-2 -top-3 text-sm font-semibold text-blue-800 bg-blue-100 rounded-full dark:bg-gray-700 dark:text-blue-400" title="Verified Account">
+                                <svg class="w-7 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill="currentColor" d="m18.774 8.245-.892-.893a1.5 1.5 0 0 1-.437-1.052V5.036a2.484 2.484 0 0 0-2.48-2.48H13.7a1.5 1.5 0 0 1-1.052-.438l-.893-.892a2.484 2.484 0 0 0-3.51 0l-.893.892a1.5 1.5 0 0 1-1.052.437H5.036a2.484 2.484 0 0 0-2.48 2.481V6.3a1.5 1.5 0 0 1-.438 1.052l-.892.893a2.484 2.484 0 0 0 0 3.51l.892.893a1.5 1.5 0 0 1 .437 1.052v1.264a2.484 2.484 0 0 0 2.481 2.481H6.3a1.5 1.5 0 0 1 1.052.437l.893.892a2.484 2.484 0 0 0 3.51 0l.893-.892a1.5 1.5 0 0 1 1.052-.437h1.264a2.484 2.484 0 0 0 2.481-2.48V13.7a1.5 1.5 0 0 1 .437-1.052l.892-.893a2.484 2.484 0 0 0 0-3.51Z" />
+                                    <path fill="#fff" d="M8 13a1 1 0 0 1-.707-.293l-2-2a1 1 0 1 1 1.414-1.414l1.42 1.42 5.318-3.545a1 1 0 0 1 1.11 1.664l-6 4A1 1 0 0 1 8 13Z" />
+                                </svg>
+                            </div>
+
+                        <?php else: ?>
+                            <!-- Not Verified Badge -->
+                            <div class="absolute -bottom-2 right-2 md:-bottom-2 md:right-5 px-2 py-1 bg-red-500 text-white text-[10px] md:text-xs font-semibold rounded-full border-1 border-white shadow-lg">
+                                Not Verified
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
 
 
@@ -469,15 +473,31 @@ if ($row && isset($row['is_verified'])) {
 
                         <!-- Orders and Settings side-by-side -->
                         <div class="flex items-center gap-3 mt-3">
-                            <!-- Orders Badge -->
-                            <span class="px-4 py-1 bg-black border border-white/20 rounded-full text-sm text-white/90 backdrop-blur-sm shadow">
-                                <?= count($all_orders); ?> Orders
-                            </span>
 
-                            <!-- Settings Icon -->
-                            <a href="settings.php" class="text-black hover:text-gray-700 text-lg" title="Account Settings">
-                                <i class="fa-solid fa-gear"></i>
+                            <!-- From Uiverse.io by cssbuttons-io -->
+                            <a href="settings.php"
+                                title="Account Settings"
+                                class="group relative inline-flex items-center justify-start w-48 h-12 bg-transparent border-0 cursor-pointer">
+
+                                <!-- Circle that expands -->
+                                <span class="relative flex items-center justify-center w-12 h-12 bg-black rounded-full transition-all duration-500 ease-[cubic-bezier(0.65,0,0.076,1)] group-hover:w-full">
+
+                                    <!-- Arrow - positioned absolutely to stay in place -->
+                                    <span class="absolute left-5 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 transition-all duration-500 ease-[cubic-bezier(0.65,0,0.076,1)] group-hover:translate-x-1">
+                                        <!-- Arrow line -->
+
+                                        <!-- Arrow head -->
+                                        <span class="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 border-t-2 border-r-2 border-white rotate-45"></span>
+                                    </span>
+
+                                </span>
+
+                                <!-- Text -->
+                                <span class="absolute inset-0 flex items-center justify-center ml-3 text-[#2e3628] font-bold uppercase transition-all duration-500 ease-[cubic-bezier(0.65,0,0.076,1)] group-hover:text-white group-hover:ml-0">
+                                    Verified
+                                </span>
                             </a>
+
                         </div>
                     </div>
 

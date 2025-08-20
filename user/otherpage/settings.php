@@ -1,4 +1,3 @@
-
 <?php
 session_name("nobleuser");
 session_start();
@@ -11,14 +10,15 @@ $form_submitted = false; // Track if form was submitted
 $recaptcha_secret = '6LeYkKkrAAAAAMZEkXSwOW1fryAOATmycKvAaNxq';
 
 // Function to verify reCAPTCHA
-function verifyRecaptcha($recaptcha_response, $secret_key) {
+function verifyRecaptcha($recaptcha_response, $secret_key)
+{
     $url = 'https://www.google.com/recaptcha/api/siteverify';
     $data = [
         'secret' => $secret_key,
         'response' => $recaptcha_response,
         'remoteip' => $_SERVER['REMOTE_ADDR']
     ];
-    
+
     $options = [
         'http' => [
             'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
@@ -26,11 +26,11 @@ function verifyRecaptcha($recaptcha_response, $secret_key) {
             'content' => http_build_query($data)
         ]
     ];
-    
+
     $context = stream_context_create($options);
     $result = file_get_contents($url, false, $context);
     $response = json_decode($result, true);
-    
+
     return isset($response['success']) && $response['success'] === true;
 }
 
@@ -61,13 +61,33 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Get current user details first to check if government ID exists
+$detail = [
+    'sex' => '',
+    'birthplace' => '',
+    'birthdate' => '',
+    'occupation' => '',
+    'id_type' => '',
+    'government_id_path' => '',
+    'is_verified' => 0
+];
+
+$stmt = $conn->prepare("SELECT * FROM user_details WHERE user_id = ?");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($res->num_rows > 0) {
+    $detail = $res->fetch_assoc();
+}
+$stmt->close();
+
 // ✅ Handle file upload and form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_submitted = true; // Mark that form was submitted
-    
+
     // FIRST: Verify reCAPTCHA
     $recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
-    
+
     if (empty($recaptcha_response) || !verifyRecaptcha($recaptcha_response, $recaptcha_secret)) {
         $notification = "<div class='mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded'>
                              Please complete the reCAPTCHA verification to continue.
@@ -84,23 +104,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handle file upload
         $government_id_path = null;
         $upload_error = false;
+        $file_uploaded_now = false;
 
+        // Check if user is uploading a new file
         if (isset($_FILES['government_id']) && $_FILES['government_id']['error'] === UPLOAD_ERR_OK) {
+            $file_uploaded_now = true;
             $upload_dir = '../../uploads/government_ids/';
-            
+
             // Create directory if it doesn't exist
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
 
             $file_info = pathinfo($_FILES['government_id']['name']);
-            $allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf'];
+            $allowed_extensions = ['jpg', 'jpeg', 'png'];
             $file_extension = strtolower($file_info['extension']);
 
-            // Validate file type
+            // Validate file type (only allow JPG, JPEG, PNG - exclude PDF and GIF)
             if (!in_array($file_extension, $allowed_extensions)) {
                 $notification = "<div class='mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded'>
-                                     Invalid file type. Please upload JPG, JPEG, PNG, or PDF files only.
+                                     Invalid file type. Please upload JPG, JPEG, or PNG files only. PDF and GIF files are not allowed.
                                  </div>";
                 $upload_error = true;
             }
@@ -127,6 +150,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $upload_error = true;
                 }
             }
+        }
+
+        // ✅ CRITICAL CHECK: Ensure government ID exists (either uploaded now or previously)
+        if (!$file_uploaded_now && empty($detail['government_id_path'])) {
+            $notification = "<div class='mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded'>
+                                 <div class='flex items-center gap-2'>
+                                     <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                         <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/>
+                                     </svg>
+                                     <strong>Government ID Required:</strong> Please upload your government ID before submitting the form.
+                                 </div>
+                             </div>";
+            $upload_error = true;
         }
 
         // Only proceed with database operations if no upload error occurred
@@ -158,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($res->num_rows > 0) {
                         // Update user_details
-                        if ($government_id_path) {
+                        if ($file_uploaded_now && $government_id_path) {
                             // Delete old government ID file if exists
                             $stmt_old = $conn->prepare("SELECT government_id_path FROM user_details WHERE user_id = ?");
                             $stmt_old->bind_param("i", $_SESSION['user_id']);
@@ -178,6 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $stmt2 = $conn->prepare($sql);
                             $stmt2->bind_param("ssssssi", $sex, $birthplace, $birthdate, $occupation, $id_type, $government_id_path, $_SESSION['user_id']);
                         } else {
+                            // No new file uploaded, keep existing government_id_path
                             $sql = "UPDATE user_details 
                                     SET sex=?, birthplace=?, birthdate=?, occupation=?, id_type=?, is_verified=0 
                                     WHERE user_id=?";
@@ -189,28 +226,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $notification = "<div class='mb-4 p-3 bg-blue-100 border-l-4 border-blue-500 text-blue-700 rounded'>
                                              ✅ Profile updated successfully! Waiting for admin verification.
                                          </div>";
-                        
+
                         // SUCCESS: Redirect to prevent resubmission and reset reCAPTCHA
                         $_SESSION['success_message'] = $notification;
                         header('Location: ' . $_SERVER['PHP_SELF']);
                         exit;
-                        
                     } else {
-                        // Insert user_details
-                        $sql = "INSERT INTO user_details (user_id, sex, birthplace, birthdate, occupation, id_type, government_id_path, is_verified) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
-                        $stmt2 = $conn->prepare($sql);
-                        $stmt2->bind_param("issssss", $_SESSION['user_id'], $sex, $birthplace, $birthdate, $occupation, $id_type, $government_id_path);
-                        $stmt2->execute();
-                        $stmt2->close();
-                        $notification = "<div class='mb-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-700 rounded'>
-                                             Profile created successfully! Waiting for admin verification.
-                                         </div>";
-                        
-                        // SUCCESS: Redirect to prevent resubmission and reset reCAPTCHA
-                        $_SESSION['success_message'] = $notification;
-                        header('Location: ' . $_SERVER['PHP_SELF']);
-                        exit;
+                        // Insert user_details - government_id_path is required for new records
+                        if (!$government_id_path) {
+                            $notification = "<div class='mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded'>
+                                                 Government ID upload is required for new profile creation.
+                                             </div>";
+                        } else {
+                            $sql = "INSERT INTO user_details (user_id, sex, birthplace, birthdate, occupation, id_type, government_id_path, is_verified) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
+                            $stmt2 = $conn->prepare($sql);
+                            $stmt2->bind_param("issssss", $_SESSION['user_id'], $sex, $birthplace, $birthdate, $occupation, $id_type, $government_id_path);
+                            $stmt2->execute();
+                            $stmt2->close();
+                            $notification = "<div class='mb-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-700 rounded'>
+                                                 Profile created successfully! Waiting for admin verification.
+                                             </div>";
+
+                            // SUCCESS: Redirect to prevent resubmission and reset reCAPTCHA
+                            $_SESSION['success_message'] = $notification;
+                            header('Location: ' . $_SERVER['PHP_SELF']);
+                            exit;
+                        }
                     }
                     $stmt->close();
                 } catch (mysqli_sql_exception $e) {
@@ -325,15 +367,18 @@ $id_types = [
         .progress-bar {
             transition: width 0.3s ease-in-out;
         }
+
         .file-drop-area {
             border: 2px dashed #d1d5db;
             border-radius: 0.5rem;
             transition: all 0.3s ease;
         }
+
         .file-drop-area.dragover {
             border-color: #f59e0b;
             background-color: #fffbeb;
         }
+
         .preview-image {
             max-width: 200px;
             max-height: 200px;
@@ -530,37 +575,56 @@ $id_types = [
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Upload Government ID *
-                            <span class="text-xs text-gray-500 font-normal">(JPG, JPEG, PNG, PDF - Max 5MB)</span>
+                            <span class="text-xs text-gray-500 font-normal">(JPG, JPEG, PNG only - Max 5MB)</span>
                         </label>
-                        
+
                         <div class="file-drop-area p-6 text-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-300"
-                             onclick="document.getElementById('government_id').click()">
+                            onclick="document.getElementById('government_id').click()">
                             <div class="flex flex-col items-center">
                                 <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                 </svg>
                                 <p class="text-sm text-gray-600 mb-2">
                                     <span class="font-semibold text-orange-600">Click to upload</span> or drag and drop
                                 </p>
-                                <p class="text-xs text-gray-500">JPG, JPEG, PNG or PDF up to 5MB</p>
+                                <p class="text-xs text-gray-500">JPG, JPEG, PNG only - up to 5MB</p>
+                                <p class="text-xs text-red-500 mt-1">⚠️ PDF and GIF files are not allowed</p>
                             </div>
                         </div>
-                        
-                        <input type="file" id="government_id" name="government_id" accept=".jpg,.jpeg,.png,.pdf" 
-                               class="hidden" onchange="previewFile(this)">
-                        
+
+                        <input type="file" id="government_id" name="government_id" accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                            class="hidden" onchange="previewFile(this)" required>
+
                         <!-- File Preview -->
                         <div id="file-preview" class="mt-3 hidden">
                             <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                                 <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span id="file-name" class="text-sm font-medium text-green-800"></span>
                                 <button type="button" onclick="removeFile()" class="ml-auto text-red-500 hover:text-red-700">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- File Type Warning -->
+                        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-yellow-800">Allowed File Types</h4>
+                                    <ul class="text-xs text-yellow-700 mt-1 list-disc list-inside">
+                                        <li>✅ JPG/JPEG images</li>
+                                        <li>✅ PNG images</li>
+                                        <li>all documents (not allowed)</li>
+                                        <li>GIF images (not allowed)</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
 
@@ -570,13 +634,13 @@ $id_types = [
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
                                         <span class="text-sm font-medium text-blue-800">Current ID uploaded</span>
                                     </div>
-                                    <a href="../../uploads/government_ids/<?= htmlspecialchars($detail['government_id_path']) ?>" 
-                                       target="_blank" 
-                                       class="text-blue-600 hover:text-blue-800 text-sm underline">
+                                    <a href="../../uploads/government_ids/<?= htmlspecialchars($detail['government_id_path']) ?>"
+                                        target="_blank"
+                                        class="text-blue-600 hover:text-blue-800 text-sm underline">
                                         View
                                     </a>
                                 </div>
@@ -592,7 +656,7 @@ $id_types = [
                             <div id="recaptcha-error" class="text-red-600 text-sm mt-2 hidden">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     Please complete the reCAPTCHA verification to continue.
                                 </div>
@@ -604,7 +668,7 @@ $id_types = [
                     <div class="pt-4">
                         <button type="submit" id="submitButton"
                             class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transform transition duration-200 hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" require>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                             <span id="submitText">Update Profile Information</span>
@@ -701,28 +765,28 @@ $id_types = [
                                 </div>
                                 <?php if (!empty($detail['government_id_path'])): ?>
                                     <div class="mt-2">
-                                        <?php 
+                                        <?php
                                         $file_extension = pathinfo($detail['government_id_path'], PATHINFO_EXTENSION);
                                         $is_image = in_array(strtolower($file_extension), ['jpg', 'jpeg', 'png']);
                                         ?>
                                         <?php if ($is_image): ?>
-                                            <img src="../../uploads/government_ids/<?= htmlspecialchars($detail['government_id_path']) ?>" 
-                                                 alt="Government ID" 
-                                                 class="preview-image border shadow-sm">
+                                            <img src="../../uploads/government_ids/<?= htmlspecialchars($detail['government_id_path']) ?>"
+                                                alt="Government ID"
+                                                class="preview-image border shadow-sm">
                                         <?php else: ?>
                                             <div class="flex items-center gap-2 p-2 bg-white rounded border">
                                                 <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                                 <span class="text-sm font-medium">PDF Document</span>
                                             </div>
                                         <?php endif; ?>
-                                        <a href="../../uploads/government_ids/<?= htmlspecialchars($detail['government_id_path']) ?>" 
-                                           target="_blank" 
-                                           class="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-800">
+                                        <a href="../../uploads/government_ids/<?= htmlspecialchars($detail['government_id_path']) ?>"
+                                            target="_blank"
+                                            class="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-800">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                             View Full Size
                                         </a>
@@ -740,7 +804,7 @@ $id_types = [
                                 <p class="text-sm text-orange-700">
                                     <?= $fields_completed ?> of <?= $total_fields ?> fields completed
                                 </p>
-                            </div>  
+                            </div>
                             <div class="text-2xl font-bold text-orange-600">
                                 <?= round($completion_percentage) ?>%
                             </div>
@@ -752,7 +816,7 @@ $id_types = [
                         <div class="flex items-start gap-3">
                             <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.5-1.5a8.97 8.97 0 00-4.5-1.2c-5 0-9 4-9 9s4 9 9 9 9-4 9-9c0-1.6-.4-3.1-1.1-4.4"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.5-1.5a8.97 8.97 0 00-4.5-1.2c-5 0-9 4-9 9s4 9 9 9 9-4 9-9c0-1.6-.4-3.1-1.1-4.4" />
                                 </svg>
                             </div>
                             <div>
@@ -770,24 +834,24 @@ $id_types = [
     </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-    if (typeof grecaptcha !== 'undefined') {
-        setTimeout(function() {
-            try {
-                grecaptcha.reset();
-            } catch (e) {
-                console.log('reCAPTCHA reset failed:', e);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof grecaptcha !== 'undefined') {
+                setTimeout(function() {
+                    try {
+                        grecaptcha.reset();
+                    } catch (e) {
+                        console.log('reCAPTCHA reset failed:', e);
+                    }
+                }, 100);
             }
-        }, 100);
-    }
-});
+        });
 
 
         // reCAPTCHA validation function
         function validateRecaptcha() {
             const recaptchaResponse = grecaptcha.getResponse();
             const errorDiv = document.getElementById('recaptcha-error');
-            
+
             if (recaptchaResponse.length === 0) {
                 errorDiv.classList.remove('hidden');
                 return false;
@@ -801,7 +865,7 @@ $id_types = [
         document.getElementById('profileForm').addEventListener('submit', function(e) {
             const submitButton = document.getElementById('submitButton');
             const submitText = document.getElementById('submitText');
-            
+
             if (!validateRecaptcha()) {
                 e.preventDefault();
                 // Scroll to reCAPTCHA for user attention
@@ -811,11 +875,11 @@ $id_types = [
                 });
                 return false;
             }
-            
+
             // Show loading state
             submitButton.disabled = true;
             submitText.textContent = 'Updating Profile...';
-            
+
             // Let form submit naturally after validation passes
             return true;
         });
@@ -830,11 +894,11 @@ $id_types = [
             const file = input.files[0];
             const preview = document.getElementById('file-preview');
             const fileName = document.getElementById('file-name');
-            
+
             if (file) {
                 fileName.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
                 preview.classList.remove('hidden');
-                
+
                 // Update drop area appearance
                 const dropArea = document.querySelector('.file-drop-area');
                 dropArea.classList.add('border-green-400', 'bg-green-50');
@@ -846,10 +910,10 @@ $id_types = [
             const input = document.getElementById('government_id');
             const preview = document.getElementById('file-preview');
             const dropArea = document.querySelector('.file-drop-area');
-            
+
             input.value = '';
             preview.classList.add('hidden');
-            
+
             // Reset drop area appearance
             dropArea.classList.remove('border-green-400', 'bg-green-50');
             dropArea.classList.add('border-gray-300', 'bg-gray-50');

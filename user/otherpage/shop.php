@@ -490,7 +490,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
         <!-- Products Header -->
         <div class="flex items-center justify-between mb-6">
           <div class="text-sm text-gray-600">
-            <span class="font-medium"><?= number_format($total_products) ?></span> products found
+            <span class="font-medium"><?= number_format($total_products) ?></span> products
           </div>
           
           <!-- Quick Sort (Mobile) -->

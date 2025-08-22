@@ -195,95 +195,113 @@ if ($user_id) {
 
 <!-- Loader CSS -->
 <style>
-.loader {
-  width: fit-content;
-  height: fit-content;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .loader {
+    width: fit-content;
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.truckWrapper {
-  width: 200px;
-  height: 100px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  align-items: center;
-  justify-content: flex-end;
-  overflow-x: hidden;
-}
+  .truckWrapper {
+    width: 200px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    align-items: center;
+    justify-content: flex-end;
+    overflow-x: hidden;
+  }
 
-/* truck body bounce */
-.truckBody {
-  width: 130px;
-  height: fit-content;
-  margin-bottom: 6px;
-  animation: motion 1s linear infinite;
-}
+  /* truck body bounce */
+  .truckBody {
+    width: 130px;
+    height: fit-content;
+    margin-bottom: 6px;
+    animation: motion 1s linear infinite;
+  }
 
-@keyframes motion {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(3px); }
-  100% { transform: translateY(0px); }
-}
+  @keyframes motion {
+    0% {
+      transform: translateY(0px);
+    }
 
-/* truck tires */
-.truckTires {
-  width: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px 0 15px;
-  position: absolute;
-  bottom: 0;
-}
-.truckTires svg { width: 24px; }
+    50% {
+      transform: translateY(3px);
+    }
 
-.road {
-  width: 100%;
-  height: 1.5px;
-  background-color: #282828;
-  position: relative;
-  bottom: 0;
-  align-self: flex-end;
-  border-radius: 3px;
-}
-.road::before {
-  content: "";
-  position: absolute;
-  width: 20px;
-  height: 100%;
-  background-color: #282828;
-  right: -50%;
-  border-radius: 3px;
-  animation: roadAnimation 1.4s linear infinite;
-  border-left: 10px solid white;
-}
-.road::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 100%;
-  background-color: #282828;
-  right: -65%;
-  border-radius: 3px;
-  animation: roadAnimation 1.4s linear infinite;
-  border-left: 4px solid white;
-}
+    100% {
+      transform: translateY(0px);
+    }
+  }
 
-.lampPost {
-  position: absolute;
-  bottom: 0;
-  right: -90%;
-  height: 90px;
-  animation: roadAnimation 1.4s linear infinite;
-}
+  /* truck tires */
+  .truckTires {
+    width: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 0 15px;
+    position: absolute;
+    bottom: 0;
+  }
 
-@keyframes roadAnimation {
-  0% { transform: translateX(0px); }
-  100% { transform: translateX(-350px); }
-}
+  .truckTires svg {
+    width: 24px;
+  }
+
+  .road {
+    width: 100%;
+    height: 1.5px;
+    background-color: #282828;
+    position: relative;
+    bottom: 0;
+    align-self: flex-end;
+    border-radius: 3px;
+  }
+
+  .road::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 100%;
+    background-color: #282828;
+    right: -50%;
+    border-radius: 3px;
+    animation: roadAnimation 1.4s linear infinite;
+    border-left: 10px solid white;
+  }
+
+  .road::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 100%;
+    background-color: #282828;
+    right: -65%;
+    border-radius: 3px;
+    animation: roadAnimation 1.4s linear infinite;
+    border-left: 4px solid white;
+  }
+
+  .lampPost {
+    position: absolute;
+    bottom: 0;
+    right: -90%;
+    height: 90px;
+    animation: roadAnimation 1.4s linear infinite;
+  }
+
+  @keyframes roadAnimation {
+    0% {
+      transform: translateX(0px);
+    }
+
+    100% {
+      transform: translateX(-350px);
+    }
+  }
 </style>
 
 <div class="bg-black text-white py-3 text-xs sm:text-sm">
@@ -705,75 +723,75 @@ if ($user_id) {
           Shop
         </a>
 
-         <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+        <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
 
-    <div x-data="chatNotif" x-init="init()" class="relative">
-      <a href="../otherpage/Chat_main.php"
-        class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
-        <i class="fas fa-envelope"></i>
+          <div x-data="chatNotif" x-init="init()" class="relative">
+            <a href="../otherpage/Chat_main.php"
+              class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
+              <i class="fas fa-envelope"></i>
 
-        <!-- Badge -->
-        <template x-if="unreadCount > 0">
-          <span
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-            x-text="unreadCount">
-          </span>
-        </template>
-      </a>
-    </div>
+              <!-- Badge -->
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </a>
+          </div>
 
-    <!-- Notifications -->
-    <div class="relative">
-      <button
-        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
-        class="relative text-gray-600 hover:text-orange-500"
-        aria-label="Toggle notifications dropdown">
-        <i class="fas fa-bell text-xl"></i>
-        <template x-if="unreadCount > 0">
-          <span
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-            x-text="unreadCount">
-          </span>
-        </template>
-      </button>
+          <!-- Notifications -->
+          <div class="relative">
+            <button
+              @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
+              class="relative text-gray-600 hover:text-orange-500"
+              aria-label="Toggle notifications dropdown">
+              <i class="fas fa-bell text-xl"></i>
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </button>
 
-      <!-- Notification Dropdown -->
-      <div
-        x-show="notifOpen"
-        x-cloak
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-1"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-1"
-        @click.outside="notifOpen = false"
-        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-        <div class="flex justify-between items-center p-3 border-b font-bold text-black">
-          <span>Notifications</span>
-          <button
-            class="text-xs text-red-500 hover:text-red-700"
-            @click.prevent="clearNotifications()"
-            aria-label="Clear all notifications">
-            Clear All
-          </button>
+            <!-- Notification Dropdown -->
+            <div
+              x-show="notifOpen"
+              x-cloak
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 translate-y-1"
+              @click.outside="notifOpen = false"
+              class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
+              <div class="flex justify-between items-center p-3 border-b font-bold text-black">
+                <span>Notifications</span>
+                <button
+                  class="text-xs text-red-500 hover:text-red-700"
+                  @click.prevent="clearNotifications()"
+                  aria-label="Clear all notifications">
+                  Clear All
+                </button>
+              </div>
+              <ul class="max-h-60 overflow-y-auto">
+                <template x-for="notif in notifications" :key="notif.id">
+                  <li class="p-3 hover:bg-gray-50 cursor-pointer">
+                    <p class="text-sm text-black text-light font-semibold" x-text="notif.message"></p>
+                    <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
+                  </li>
+                </template>
+                <template x-if="notifications.length === 0">
+                  <li class="p-3 text-sm text-gray-500">
+                    No new notifications.
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
         </div>
-        <ul class="max-h-60 overflow-y-auto">
-          <template x-for="notif in notifications" :key="notif.id">
-            <li class="p-3 hover:bg-gray-50 cursor-pointer">
-              <p class="text-sm text-black text-light font-semibold" x-text="notif.message"></p>
-              <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
-            </li>
-          </template>
-          <template x-if="notifications.length === 0">
-            <li class="p-3 text-sm text-gray-500">
-              No new notifications.
-            </li>
-          </template>
-        </ul>
-      </div>
-    </div>
-  </div>
 
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
@@ -813,12 +831,12 @@ if ($user_id) {
             </div>
 
             <!-- Cart Items -->
-<div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">               
-  <?php if ($total_cart_items > 0): ?>                 
-    <div class="space-y-3">                   
-      <?php
-      // Fetch cart items for modal display - FIXED: descrip6, descrip7 from products table
-      $modal_stmt = $conn->prepare("
+            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+              <?php if ($total_cart_items > 0): ?>
+                <div class="space-y-3">
+                  <?php
+                  // Fetch cart items for modal display - FIXED: descrip6, descrip7 from products table
+                  $modal_stmt = $conn->prepare("
         SELECT 
           c.*, 
           t.type_image, 
@@ -831,72 +849,72 @@ if ($user_id) {
         LEFT JOIN product_variants v ON c.variant_id = v.id
         LEFT JOIN products p ON c.product_id = p.id
         WHERE c.user_id = ?
-      ");                   
-      $modal_stmt->bind_param("i", $user_id);                   
-      $modal_stmt->execute();                   
-      $modal_result = $modal_stmt->get_result();                    
-      
-      while ($item = $modal_result->fetch_assoc()):                     
-        $unit_price = floatval($item['price']);                     
-        $quantity = intval($item['quantity']);                   
-      ?>                     
-        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">                       
-          <?php if (!empty($item['type_image'])): ?>                         
-            <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">                       
-          <?php elseif (!empty($item['main_image'])): ?>
-            <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
-          <?php else: ?>                         
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">                           
-              <i class="fas fa-image text-gray-400 text-xs"></i>                         
-            </div>                       
-          <?php endif; ?>                        
-          
-          <div class="flex-1 min-w-0">                         
-            <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
-              <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
-            </h4>                         
-            <p class="text-[10px] sm:text-xs text-gray-500 truncate">                           
-              <?= htmlspecialchars($item['variant_name'] ?: '') ?>                           
-              <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>                           
-              <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>                         
-            </p>
-            
-            <!-- Display descrip6 and descrip7 if available -->
-            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-              <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
-                <?= htmlspecialchars($item['descrip6'] ?: '') ?>
-                <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
-                <?= htmlspecialchars($item['descrip7'] ?: '') ?>
-              </p>
-            <?php endif; ?>
-            
-            <div class="flex items-center justify-between mt-1">                           
-              <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>                           
-              <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>                         
-            </div>                       
-          </div>                        
-          
-          <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">                         
-            <i class="fas fa-times text-xs"></i>                       
-          </a>                     
-        </div>                   
-      <?php 
-      endwhile;                   
-      $modal_stmt->close();                   
-      ?>                 
-    </div>                  
-    <!-- Show all items, no limit indicator needed -->               
-  <?php else: ?>                 
-    <!-- Empty Cart -->                 
-    <div class="text-center py-8">                   
-      <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>                   
-      <p class="text-gray-500 text-sm">Your cart is empty</p>                   
-      <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">                     
-        Start Shopping                   
-      </a>                 
-    </div>               
-  <?php endif; ?>             
-</div>
+      ");
+                  $modal_stmt->bind_param("i", $user_id);
+                  $modal_stmt->execute();
+                  $modal_result = $modal_stmt->get_result();
+
+                  while ($item = $modal_result->fetch_assoc()):
+                    $unit_price = floatval($item['price']);
+                    $quantity = intval($item['quantity']);
+                  ?>
+                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+                      <?php if (!empty($item['type_image'])): ?>
+                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                      <?php elseif (!empty($item['main_image'])): ?>
+                        <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                      <?php else: ?>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i class="fas fa-image text-gray-400 text-xs"></i>
+                        </div>
+                      <?php endif; ?>
+
+                      <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
+                          <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
+                        </h4>
+                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+                        </p>
+
+                        <!-- Display descrip6 and descrip7 if available -->
+                        <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                          <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
+                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
+                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
+                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
+                          </p>
+                        <?php endif; ?>
+
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+                        </div>
+                      </div>
+
+                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+                        <i class="fas fa-times text-xs"></i>
+                      </a>
+                    </div>
+                  <?php
+                  endwhile;
+                  $modal_stmt->close();
+                  ?>
+                </div>
+                <!-- Show all items, no limit indicator needed -->
+              <?php else: ?>
+                <!-- Empty Cart -->
+                <div class="text-center py-8">
+                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+                  <p class="text-gray-500 text-sm">Your cart is empty</p>
+                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+                    Start Shopping
+                  </a>
+                </div>
+              <?php endif; ?>
+            </div>
 
             <!-- Modal Footer -->
             <?php if ($total_cart_items > 0): ?>
@@ -1361,75 +1379,75 @@ if ($user_id) {
           Shop
         </a>
 
-                 <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+        <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
 
-    <div x-data="chatNotif" x-init="init()" class="relative">
-      <a href="../otherpage/Chat_main.php"
-        class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
-        <i class="fas fa-envelope"></i>
+          <div x-data="chatNotif" x-init="init()" class="relative">
+            <a href="../otherpage/Chat_main.php"
+              class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
+              <i class="fas fa-envelope"></i>
 
-        <!-- Badge -->
-        <template x-if="unreadCount > 0">
-          <span
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-            x-text="unreadCount">
-          </span>
-        </template>
-      </a>
-    </div>
+              <!-- Badge -->
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </a>
+          </div>
 
-    <!-- Notifications -->
-    <div class="relative">
-      <button
-        @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
-        class="relative text-gray-600 hover:text-orange-500"
-        aria-label="Toggle notifications dropdown">
-        <i class="fas fa-bell text-xl"></i>
-        <template x-if="unreadCount > 0">
-          <span
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-            x-text="unreadCount">
-          </span>
-        </template>
-      </button>
+          <!-- Notifications -->
+          <div class="relative">
+            <button
+              @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
+              class="relative text-gray-600 hover:text-orange-500"
+              aria-label="Toggle notifications dropdown">
+              <i class="fas fa-bell text-xl"></i>
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </button>
 
-      <!-- Notification Dropdown -->
-      <div
-        x-show="notifOpen"
-        x-cloak
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-1"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-1"
-        @click.outside="notifOpen = false"
-        class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-        <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
-          <span>Notifications</span>
-          <button
-            class="text-xs text-red-500 hover:text-red-700"
-            @click.prevent="clearNotifications()"
-            aria-label="Clear all notifications">
-            Clear All
-          </button>
+            <!-- Notification Dropdown -->
+            <div
+              x-show="notifOpen"
+              x-cloak
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 translate-y-1"
+              @click.outside="notifOpen = false"
+              class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
+              <div class="flex justify-between items-center p-3 border-b font-semibold text-gray-700">
+                <span>Notifications</span>
+                <button
+                  class="text-xs text-red-500 hover:text-red-700"
+                  @click.prevent="clearNotifications()"
+                  aria-label="Clear all notifications">
+                  Clear All
+                </button>
+              </div>
+              <ul class="max-h-60 overflow-y-auto">
+                <template x-for="notif in notifications" :key="notif.id">
+                  <li class="p-3 hover:bg-gray-50 cursor-pointer">
+                    <p class="text-sm text-gray-700" x-text="notif.message"></p>
+                    <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
+                  </li>
+                </template>
+                <template x-if="notifications.length === 0">
+                  <li class="p-3 text-sm text-gray-500">
+                    No new notifications.
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
         </div>
-        <ul class="max-h-60 overflow-y-auto">
-          <template x-for="notif in notifications" :key="notif.id">
-            <li class="p-3 hover:bg-gray-50 cursor-pointer">
-              <p class="text-sm text-gray-700" x-text="notif.message"></p>
-              <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
-            </li>
-          </template>
-          <template x-if="notifications.length === 0">
-            <li class="p-3 text-sm text-gray-500">
-              No new notifications.
-            </li>
-          </template>
-        </ul>
-      </div>
-    </div>
-  </div>
 
         <!-- Mobile Products -->
         <div class="py-2">
@@ -1849,6 +1867,272 @@ if ($user_id) {
     </div>
   </div>
 </nav>
+
+
+<!-- Enhanced Second Navbar (Subcategories) -->
+<nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg border-b border-orange-300/20">
+  <div class="max-w-screen-xl mx-auto px-2 relative">
+    <!-- Gradient Overlays for Scroll Indication -->
+    <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
+    
+    <ul id="categoryNav" class="flex justify-between md:justify-center gap-8 overflow-x-auto no-scrollbar py-4 text-white font-medium scroll-smooth">
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+       
+          <span class="relative">
+            Table
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+     
+          <span class="relative">
+            Chair
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+        
+          <span class="relative">
+            Sofa
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+       
+          <span class="relative">
+            Cabinet
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+      
+          <span class="relative">
+            Bed
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+        
+          <span class="relative">
+            AAC Block
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+      
+          <span class="relative">
+            WPC Panels
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+      
+      <li class="nav-item">
+        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+     
+          <span class="relative">
+            PVC Panels
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+          </span>
+        </a>
+      </li>
+    </ul>
+    
+    <!-- Navigation Arrows for Mobile -->
+    <button id="scrollLeftBtn" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    
+    <button id="scrollRightBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<style>
+/* Enhanced scrollbar hiding */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth scroll behavior */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Simple hover effects without boxes */
+.nav-item:hover .nav-link {
+  transform: translateY(-1px);
+}
+
+/* Active category styling */
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+}
+
+.nav-link.active span span {
+  width: 100%;
+}
+
+/* Fade animation for nav items */
+.nav-item {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.nav-item:nth-child(1) { animation-delay: 0.1s; }
+.nav-item:nth-child(2) { animation-delay: 0.15s; }
+.nav-item:nth-child(3) { animation-delay: 0.2s; }
+.nav-item:nth-child(4) { animation-delay: 0.25s; }
+.nav-item:nth-child(5) { animation-delay: 0.3s; }
+.nav-item:nth-child(6) { animation-delay: 0.35s; }
+.nav-item:nth-child(7) { animation-delay: 0.4s; }
+.nav-item:nth-child(8) { animation-delay: 0.45s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+</style>
+
+<script>
+// Enhanced scroll functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const categoryNav = document.getElementById('categoryNav');
+  const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+  const scrollRightBtn = document.getElementById('scrollRightBtn');
+  
+  // Scroll navigation
+  scrollLeftBtn.addEventListener('click', () => {
+    categoryNav.scrollBy({ left: -200, behavior: 'smooth' });
+  });
+  
+  scrollRightBtn.addEventListener('click', () => {
+    categoryNav.scrollBy({ left: 200, behavior: 'smooth' });
+  });
+  
+  // Active state management
+  const navLinks = document.querySelectorAll('.nav-link');
+  
+  navLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Remove active class from all links
+      navLinks.forEach(l => l.classList.remove('active'));
+      
+      // Add active class to clicked link
+      this.classList.add('active');
+      
+      // Add ripple effect
+      createRipple(e, this);
+    });
+  });
+  
+  // Ripple effect function
+  function createRipple(event, element) {
+    const ripple = document.createElement('span');
+    const rect = element.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+    
+    ripple.style.cssText = `
+      position: absolute;
+      width: ${size}px;
+      height: ${size}px;
+      left: ${x}px;
+      top: ${y}px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: scale(0);
+      animation: ripple 0.6s ease-out;
+      pointer-events: none;
+      z-index: 1;
+    `;
+    
+    element.style.position = 'relative';
+    element.style.overflow = 'hidden';
+    element.appendChild(ripple);
+    
+    setTimeout(() => {
+      ripple.remove();
+    }, 600);
+  }
+  
+  // Add ripple animation CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes ripple {
+      to {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Update scroll button visibility
+  function updateScrollButtons() {
+    const isScrollable = categoryNav.scrollWidth > categoryNav.clientWidth;
+    const isAtStart = categoryNav.scrollLeft <= 0;
+    const isAtEnd = categoryNav.scrollLeft >= categoryNav.scrollWidth - categoryNav.clientWidth;
+    
+    scrollLeftBtn.style.opacity = isAtStart ? '0.5' : '1';
+    scrollRightBtn.style.opacity = isAtEnd ? '0.5' : '1';
+    scrollLeftBtn.disabled = isAtStart;
+    scrollRightBtn.disabled = isAtEnd;
+  }
+  
+  categoryNav.addEventListener('scroll', updateScrollButtons);
+  window.addEventListener('resize', updateScrollButtons);
+  updateScrollButtons();
+});
+</script>
 
 <script src="../navbar/top-obf.js"></script>
 

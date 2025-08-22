@@ -3,15 +3,17 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
+// Kung walang session, wag mag error – return empty data lang
 if (!isset($_SESSION['user_id'])) {
-    http_response_code(403);
-    echo json_encode(["error" => "Unauthorized"]);
+    echo json_encode([
+        "notifications" => [],
+        "unread_count" => 0
+    ]);
     exit;
 }
 
 $userId = $_SESSION['user_id'];
 
-// Fetch latest 10 notifications
 $query = "SELECT id, message, created_at, is_read
           FROM notifications
           WHERE user_id = ?

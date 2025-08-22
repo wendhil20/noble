@@ -522,27 +522,133 @@ handleQueryError($conn, "New Status Query");
 
 
 
-    <section class="bg-orange-400 text-white py-1 px-2 shadow-md">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+<section class="bg-orange-400 text-white py-1 px-2 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 
-            <!-- Discount Text -->
-            <div class="flex items-center gap-3">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
-                </svg>
-                <p class="text-lg font-semibold">
-                    Not Available For Now <span class="underline font-bold"> Discount Banner</span>
-                </p>
-            </div>
-
-            <!-- Action Button -->
-            <a href="shop#discounts" class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
-                Shop Now
-            </a>
+        <!-- Discount Text -->
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
+            </svg>
+            <p class="text-lg font-semibold">
+                🎉 Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
+            </p>
         </div>
-    </section>
+
+        <!-- Action Button -->
+        <a href="allproduct.php?discount=all"
+            class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
+            Shop Now
+        </a>
+    </div>
+</section>
+
+
+<!-- Scrolling Text -->
+<div class="overflow-hidden bg-orange-500 text-white">
+  <div class="flex animate-marquee whitespace-nowrap">
+    <!-- Unang set -->
+    <span class="mx-10">🔥 Big Sale Coming Soon!</span>
+    <span class="mx-10">🎉 Exclusive Discounts Await!</span>
+    <span class="mx-10">🛒 Shop Now & Save More!</span>
+    <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
+
+    <!-- Duplicate set para tuloy-tuloy -->
+    <span class="mx-10">🔥 Big Sale Coming Soon!</span>
+    <span class="mx-10">🎉 Exclusive Discounts Await!</span>
+    <span class="mx-10">🛒 Shop Now & Save More!</span>
+    <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
+  </div>
+</div>
+
+<style>
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  display: inline-flex;
+  min-width: 200%; /* para may continuous na kopya */
+  animation: marquee 20s linear infinite;
+}
+</style>
+
+<!-- POPUP MODAL -->
+<div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-gradient-to-b from-orange-500 to-orange-600 rounded-2xl shadow-2xl max-w-sm w-full p-6 relative text-center text-white">
+    <!-- Close Button -->
+    <button onclick="closePopup()" class="absolute top-2 right-2 text-white hover:text-black bg-black/20 rounded-full px-2">✕</button>
+    
+    <!-- Offer Content -->
+    <h2 class="text-3xl font-extrabold mb-4 animate-bounce"> Discount Offers!</h2>
+    <p class="text-lg mb-6">Choose your deal and start saving!</p>
+    
+    <!-- 20% OFF -->
+    <div class="mb-4">
+      <p class="text-xl font-bold mb-2">🔥 Get <span class="text-yellow-300 text-2xl">20% OFF!</span></p>
+      <a href="allproduct.php?discount=20" 
+        class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
+        Shop 20% OFF!
+      </a>
+    </div>
+
+    <!-- Divider -->
+    <div class="my-4 border-t border-white/30"></div>
+
+    <!-- 30% OFF -->
+    <div>
+      <p class="text-xl font-bold mb-2">🚀 Get <span class="text-yellow-300 text-2xl">30% OFF</span></p>
+      <a href="allproduct.php?discount=30" 
+        class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
+        Shop 30% OFF
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+function openPopup() {
+  document.getElementById('promoPopup').classList.remove('hidden');
+  localStorage.setItem("lastPopupTime", Date.now()); // save time opened
+}
+
+function closePopup() {
+  document.getElementById('promoPopup').classList.add('hidden');
+}
+
+// check timing sequence
+function checkPopupSchedule() {
+  const lastTime = localStorage.getItem("lastPopupTime");
+  const now = Date.now();
+
+  if (!lastTime) {
+    // First time visitor → show after 5s
+    setTimeout(openPopup, 5000);
+  } else {
+    const elapsed = (now - lastTime) / 1000; // seconds passed
+    
+    if (elapsed >= 1200) { 
+      // 20 mins later
+      openPopup();
+    } else if (elapsed >= 300) { 
+      // 5 mins later
+      openPopup();
+    } else {
+      // else wala pa
+      console.log("Popup will wait, elapsed: " + elapsed + "s");
+    }
+  }
+}
+
+// Run check on page load
+checkPopupSchedule();
+</script>
 
 
     <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
@@ -1632,9 +1738,9 @@ handleQueryError($conn, "New Status Query");
         <!-- Section Header -->
         <div class="text-center mb-16">
             <div class="inline-block mb-6">
-                <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our Products</span>
+                <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                    Product Gallery
+                    Browse Background
                 </h2>
                 <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
             </div>
@@ -1688,12 +1794,13 @@ handleQueryError($conn, "New Status Query");
                         <span class="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
                             Inspiration
                         </span>
-                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
-                            Explore Ideas
-                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
+                      <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+    Explore Ideas
+    <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+</a>
+
                     </div>
                 </div>
             </div>
@@ -1734,11 +1841,12 @@ handleQueryError($conn, "New Status Query");
                     <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                 </div>
                 <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Manufacturing Process</h3>
-                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Excellence in quality control and precision craftsmanship</p>
+                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">World Bex</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Thank You for Visiting Us at WORLDBEX 2025! 🎉🏡
+We truly appreciate your time, support, and interest in Noblehome Depot at WORLDBEX 2025! Your presence made this event even more special, and we’re excited to help bring your home and construction projects to life.</p>
                     <div class="flex items-center justify-between">
                         <span class="bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-                            Process
+                            Event
                         </span>
                         <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
                             Learn More
@@ -2351,7 +2459,171 @@ handleQueryError($conn, "New Status Query");
         </div>
     </section>
 
+<section class="fixed bottom-0 right-4 z-50">
+  <!-- Enhanced Toggle Button (Right Side) -->
+  <button id="togglePromoPanel" class="toggle-btn relative bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-t-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform hover:-translate-y-1 group">
+    <span id="toggleIcon" class="text-lg transition-transform duration-300 group-hover:scale-110">◀</span>
+    <span class="font-semibold text-sm tracking-wide">Products details</span>
+    <div class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+      <span class="text-xs font-bold">!</span>
+    </div>
+  </button>
 
+  <!-- Enhanced Promo Panel -->
+  <div id="promoPanel" class="promo-panel hidden absolute bottom-16 right-0 bg-white/95 backdrop-blur-xl w-[400px] max-w-[90vw] rounded-t-3xl shadow-2xl border border-gray-200/20 overflow-hidden transition-all duration-500 transform">
+    <!-- Panel Header -->
+    <div class="gradient-overlay text-white p-4 relative bg-gradient-to-r from-orange-500 to-orange-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold mb-1">Featured Products</h2>
+          <p class="text-orange-100 text-xs opacity-90">Latest collection</p>
+        </div>
+        <button id="closePanel" class="text-white/80 hover:text-white transition-colors duration-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Products Container -->
+    <div class="relative">
+      <!-- Products Scroll Container -->
+      <div id="productsContainer" class="overflow-y-auto max-h-80 p-4 space-y-3" style="scrollbar-width: thin;">
+        
+        <?php
+        $promoSql = "SELECT product_name, description, main_image FROM products";
+        $promoResult = $conn->query($promoSql);
+        
+        if ($promoResult && $promoResult->num_rows > 0) {
+            while ($promoRow = $promoResult->fetch_assoc()) {
+                echo '
+                <div class="bg-white rounded-lg shadow-sm hover:shadow-md overflow-hidden group cursor-pointer transition-all duration-300 border border-gray-100 expandable-card">
+                    <div class="flex">
+                        <div class="w-20 h-20 flex-shrink-0 overflow-hidden">
+                            <img src="../../' . htmlspecialchars($promoRow['main_image']) . '"
+                                 alt="' . htmlspecialchars($promoRow['product_name']) . '"
+                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
+                        </div>
+                        <div class="flex-1 p-3">
+                            <div class="flex items-start justify-between">
+                                <h3 class="font-medium text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors flex-1">
+                                    ' . htmlspecialchars($promoRow['product_name']) . '
+                                </h3>
+                                <button class="expand-btn ml-2 text-gray-400 hover:text-orange-600 transition-colors">
+                                    <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="description text-xs text-gray-600 leading-relaxed line-clamp-2 transition-all duration-300">
+                                ' . htmlspecialchars($promoRow['description']) . '
+                            </p>
+                        </div>
+                    </div>
+                </div>';
+            }
+        } else {
+            echo '
+            <div class="flex items-center justify-center py-8">
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-900 mb-1">No Products</h3>
+                    <p class="text-xs text-gray-500">Check back later</p>
+                </div>
+            </div>';
+        }
+        ?>
+        
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const btnPromoToggle = document.getElementById("togglePromoPanel");
+  const divPromoPanel = document.getElementById("promoPanel");
+  const toggleIcon = document.getElementById("toggleIcon");
+  const closePanel = document.getElementById("closePanel");
+  const scrollLeft = document.getElementById("scrollLeft");
+  const scrollRight = document.getElementById("scrollRight");
+  const productsContainer = document.getElementById("productsContainer");
+
+  // Toggle panel function
+  function togglePanel() {
+    divPromoPanel.classList.toggle("hidden");
+    toggleIcon.textContent = divPromoPanel.classList.contains("hidden") ? "◀" : "▶";
+  }
+
+  // Event listeners
+  btnPromoToggle.addEventListener("click", togglePanel);
+  closePanel.addEventListener("click", togglePanel);
+
+  // Expand/Collapse functionality
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.expand-btn')) {
+      const card = e.target.closest('.expandable-card');
+      const description = card.querySelector('.description');
+      const expandBtn = card.querySelector('.expand-btn svg');
+      
+      if (description.classList.contains('line-clamp-2')) {
+        // Expand
+        description.classList.remove('line-clamp-2');
+        description.style.maxHeight = 'none';
+        expandBtn.style.transform = 'rotate(180deg)';
+      } else {
+        // Collapse
+        description.classList.add('line-clamp-2');
+        description.style.maxHeight = '';
+        expandBtn.style.transform = 'rotate(0deg)';
+      }
+    }
+  });
+
+  // Hide scrollbar
+  productsContainer.style.scrollbarWidth = 'none';
+  productsContainer.style.msOverflowStyle = 'none';
+
+  // Close panel when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!divPromoPanel.contains(e.target) && !btnPromoToggle.contains(e.target)) {
+      if (!divPromoPanel.classList.contains("hidden")) {
+        togglePanel();
+      }
+    }
+  });
+
+  // Add CSS for line-clamp if not available
+  const style = document.createElement('style');
+  style.textContent = `
+    .line-clamp-1 {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .promo-panel {
+      backdrop-filter: blur(16px);
+    }
+    #productsContainer::-webkit-scrollbar {
+      display: none;
+    }
+  `;
+  document.head.appendChild(style);
+</script>
 
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">

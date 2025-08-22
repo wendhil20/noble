@@ -22,13 +22,12 @@ if (!$user_id) {
 }
 
 try {
-    // Get cart items using the exact same query structure as your original modal
-    // Based on your table structure: id, user_id, product_id, color_id, variant_id, quantity, price, type_name, variant_name, color_name, size, codename, descrip6, descrip7, added_at
+    // Get cart items with product information including descrip6 and descrip7 from products table
     $stmt = $conn->prepare("
-        SELECT c.*, t.type_image, v.descrip6 as variant_descrip6, v.descrip7 as variant_descrip7
+        SELECT c.*, t.type_image, p.descrip6, p.descrip7, p.product_name
         FROM user_cart_items c
         LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-        LEFT JOIN product_variants v ON c.variant_id = v.id
+        LEFT JOIN products p ON c.product_id = p.id
         WHERE c.user_id = ?
         ORDER BY c.added_at DESC
     ");
@@ -56,7 +55,7 @@ try {
             $unit_price = floatval($item['price']);
             $quantity = intval($item['quantity']);
             // Use codename from user_cart_items table (this column exists based on your screenshot)
-            $display_name = htmlspecialchars($item['codename'] ?? 'Product');
+            $display_name = htmlspecialchars($item['codename'] ?? $item['product_name'] ?? 'Product');
             ?>
             <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
                 <?php if (!empty($item['type_image'])): ?>
@@ -73,6 +72,8 @@ try {
                         <?= htmlspecialchars($item['variant_name'] ?? '') ?>
                         <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
                         <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+                        <?= !empty($item['descrip6']) ? ', ' . htmlspecialchars($item['descrip6']) : '' ?>
+                        <?= !empty($item['descrip7']) ? ', ' . htmlspecialchars($item['descrip7']) : '' ?>
                     </p>
                     <div class="flex items-center justify-between mt-1">
                         <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>

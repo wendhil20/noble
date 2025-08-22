@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$product_id) throw new Exception('Product ID is required.');
 
-        // Get basic product data
-        $stmt = $conn->prepare("SELECT product_name, codename FROM products WHERE id = ?");
+        // Get basic product data including descrip6 and descrip7
+        $stmt = $conn->prepare("SELECT product_name, codename, descrip6, descrip7 FROM products WHERE id = ?");
         $stmt->bind_param("i", $product_id);
         $stmt->execute();
         $product = $stmt->get_result()->fetch_assoc();
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$product) throw new Exception('Product not found.');
 
-        $type_name = $variant_name = $color_name = $size = $unit = $specification = '';
+        $type_name = $variant_name = $color_name = $size = '';
         $color_price = 0;
         $variant_price = 0;
         $discount_percent = 0;
@@ -63,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $variant_id_db = null;
         $color_id = null;
         $codename = $product['codename'];
+        $unit = $product['descrip6'] ?? '';
+        $specification = $product['descrip7'] ?? '';
 
         // Get color info
         if ($selected_color_id > 0) {
@@ -91,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $type_id = $type_data['id'];
                 $type_name = $selected_type;
 
-                $variant_stmt = $conn->prepare("SELECT id, namevariant, size, price, percent, discount, descrip6, descrip7 FROM product_variants WHERE type_id = ? AND namevariant = ?");
+                $variant_stmt = $conn->prepare("SELECT id, namevariant, size, price, percent, discount FROM product_variants WHERE type_id = ? AND namevariant = ?");
                 $variant_stmt->bind_param("is", $type_id, $selected_variant);
                 $variant_stmt->execute();
                 $variant_data = $variant_stmt->get_result()->fetch_assoc();
@@ -101,8 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $variant_id_db = $variant_data['id'];
                     $variant_name = $variant_data['namevariant'];
                     $size = $variant_data['size'];
-                    $unit = $variant_data['descrip6'] ?? '';
-                    $specification = $variant_data['descrip7'] ?? '';
                     $variant_price = floatval($variant_data['price']);
                     $discount_percent = floatval($variant_data['percent']);
                     $discount_fixed = floatval($variant_data['discount']);
@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Fallback by variant_id if previous method fails
         if (!$variant_id_db && $variant_id > 0) {
-            $variant_stmt = $conn->prepare("SELECT v.id, v.namevariant, v.size, v.price, v.percent, v.discount, v.descrip6, v.descrip7, t.type_name FROM product_variants v JOIN product_types t ON v.type_id = t.id WHERE v.id = ?");
+            $variant_stmt = $conn->prepare("SELECT v.id, v.namevariant, v.size, v.price, v.percent, v.discount, t.type_name FROM product_variants v JOIN product_types t ON v.type_id = t.id WHERE v.id = ?");
             $variant_stmt->bind_param("i", $variant_id);
             $variant_stmt->execute();
             $variant_data = $variant_stmt->get_result()->fetch_assoc();
@@ -123,8 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $variant_name = $variant_data['namevariant'];
                 $size = $variant_data['size'];
                 $type_name = $variant_data['type_name'];
-                $unit = $variant_data['descrip6'] ?? '';
-                $specification = $variant_data['descrip7'] ?? '';
                 $variant_price = floatval($variant_data['price']);
                 $discount_percent = floatval($variant_data['percent']);
                 $discount_fixed = floatval($variant_data['discount']);

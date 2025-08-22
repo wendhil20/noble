@@ -12,7 +12,7 @@ if (isset($_SESSION['noble_user'])) {
         'productspecialist' => "../admin/shop/adminshop",
         'accountant' => "../admin/accountant/dashboard",
         'logistic' => "../admin/client/monitortracking",
-        'warehouse' => "../admin/warehouse/warehouses",
+        'warehouse' => "../admin/warehouse_management/order_list",
         default => "../admin/client/dashboard.php"
     };
 

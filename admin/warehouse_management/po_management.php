@@ -16,7 +16,7 @@ if (!isset($_SESSION['noble_user'])) {
 
 // Check if order_id is provided instead of customer_email
 if (!isset($_GET['order_id'])) {
-    header("Location: ordering.php");
+    header("Location: order_list.php");
     exit();
 }
 
@@ -34,7 +34,7 @@ $orderStmt->execute();
 $orderResult = $orderStmt->get_result();
 
 if ($orderResult->num_rows === 0) {
-    header("Location: ordering.php");
+    header("Location: order_list.php");
     exit();
 }
 
@@ -161,7 +161,7 @@ for ($i = 0; $i < count($allItems); $i++) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
-                    <a href="ordering.php" class="text-primary-600 hover:text-primary-700">
+                    <a href="order_list.php" class="text-primary-600 hover:text-primary-700">
                         <i class="fas fa-arrow-left text-xl"></i>
                     </a>
                     <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-3 rounded-xl shadow-lg">

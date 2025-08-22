@@ -118,7 +118,7 @@ try {
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/adminshop",
         'logistic' => "../admin/client/monitortracking",
-        'warehouse' => "../admin/warehouse/warehouses",
+        'warehouse' => "../admin/warehouse_management/order_list",
         default => "../admin/client/dashboard"
     };
 

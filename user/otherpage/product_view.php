@@ -112,19 +112,13 @@ $stmt->execute();
 $related_products = $stmt->get_result();
 
 
-$variants = [];
-$stmt = $conn->prepare("
-  SELECT v.*
-  FROM product_variants v
-  INNER JOIN product_types t ON v.type_id = t.id
-  WHERE t.product_id = ?
-");
+// Fetch product specifications directly from products table
+$product_specs = null;
+$stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-  $variants[] = $row;
-}
+$product_specs = $result->fetch_assoc();
 $stmt->close();
 
 // Get average rating and count of raters
@@ -741,35 +735,32 @@ $avg_stmt->close();
       </div>
     </div>
 
-    <!-- Specifications Section -->
-    <?php if (!empty($variants)): ?>
-      <section class="mt-6 lg:mt-8">
-        <div class="bg-white rounded-xl shadow-lg p-4 lg:p-8">
-          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
-            <i class="fas fa-list-alt"></i>
-            Product Specifications
-          </h2>
+   <?php if (!empty($product_specs)): ?>
+  <section class="mt-6 lg:mt-8">
+    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-8">
+      <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
+        <i class="fas fa-list-alt"></i>
+        Product Specifications
+      </h2>
 
-          <?php foreach ($variants as $variant): ?>
-            <div class="mb-4 lg:mb-6">
-              <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
-                <dl class="space-y-3">
-                  <?php for ($i = 1; $i <= 10; $i++):
-                    $key = "descrip$i";
-                    if (!empty($variant[$key])):
-                  ?>
-                      <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
-                        <dd class="text-gray-700 text-sm lg:text-base"><?= htmlspecialchars($variant[$key]) ?></dd>
-                      </div>
-                  <?php endif;
-                  endfor; ?>
-                </dl>
-              </div>
-            </div>
-          <?php endforeach; ?>
+      <div class="mb-4 lg:mb-6">
+        <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
+          <dl class="space-y-3">
+            <?php for ($i = 1; $i <= 10; $i++):
+              $key = "descrip$i";
+              if (!empty($product_specs[$key])):
+            ?>
+                <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
+                  <dd class="text-gray-700 text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
+                </div>
+            <?php endif;
+            endfor; ?>
+          </dl>
         </div>
-      </section>
-    <?php endif; ?>
+      </div>
+    </div>
+  </section>
+<?php endif; ?>
 
     <!-- Related Products -->
     <?php if ($related_products->num_rows > 0): ?>

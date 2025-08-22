@@ -813,69 +813,90 @@ if ($user_id) {
             </div>
 
             <!-- Cart Items -->
-            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-              <?php if ($total_cart_items > 0): ?>
-                <div class="space-y-3">
-                  <?php
-                  // Fetch cart items for modal display
-                  $modal_stmt = $conn->prepare("
-                SELECT c.*, t.type_image, v.descrip6, v.descrip7
-                FROM user_cart_items c
-                LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-                LEFT JOIN product_variants v ON c.variant_id = v.id
-                WHERE c.user_id = ?
-            ");
-                  $modal_stmt->bind_param("i", $user_id);
-                  $modal_stmt->execute();
-                  $modal_result = $modal_stmt->get_result();
-
-                  while ($item = $modal_result->fetch_assoc()):
-                    $unit_price = floatval($item['price']);
-                    $quantity = intval($item['quantity']);
-                  ?>
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                      <?php if (!empty($item['type_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
-                      <?php else: ?>
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i class="fas fa-image text-gray-400 text-xs"></i>
-                        </div>
-                      <?php endif; ?>
-
-                      <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate"><?= htmlspecialchars($item['codename']) ?></h4>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        </p>
-                        <div class="flex items-center justify-between mt-1">
-                          <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                        </div>
-                      </div>
-
-                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                        <i class="fas fa-times text-xs"></i>
-                      </a>
-                    </div>
-                  <?php endwhile;
-                  $modal_stmt->close();
-                  ?>
-                </div>
-
-                <!-- Show all items, no limit indicator needed -->
-              <?php else: ?>
-                <!-- Empty Cart -->
-                <div class="text-center py-8">
-                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-                  <p class="text-gray-500 text-sm">Your cart is empty</p>
-                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
-                    Start Shopping
-                  </a>
-                </div>
-              <?php endif; ?>
-            </div>
+<div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">               
+  <?php if ($total_cart_items > 0): ?>                 
+    <div class="space-y-3">                   
+      <?php
+      // Fetch cart items for modal display - FIXED: descrip6, descrip7 from products table
+      $modal_stmt = $conn->prepare("
+        SELECT 
+          c.*, 
+          t.type_image, 
+          p.descrip6, 
+          p.descrip7,
+          p.product_name,
+          p.main_image
+        FROM user_cart_items c
+        LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
+        LEFT JOIN product_variants v ON c.variant_id = v.id
+        LEFT JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ?
+      ");                   
+      $modal_stmt->bind_param("i", $user_id);                   
+      $modal_stmt->execute();                   
+      $modal_result = $modal_stmt->get_result();                    
+      
+      while ($item = $modal_result->fetch_assoc()):                     
+        $unit_price = floatval($item['price']);                     
+        $quantity = intval($item['quantity']);                   
+      ?>                     
+        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">                       
+          <?php if (!empty($item['type_image'])): ?>                         
+            <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">                       
+          <?php elseif (!empty($item['main_image'])): ?>
+            <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+          <?php else: ?>                         
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">                           
+              <i class="fas fa-image text-gray-400 text-xs"></i>                         
+            </div>                       
+          <?php endif; ?>                        
+          
+          <div class="flex-1 min-w-0">                         
+            <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
+              <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
+            </h4>                         
+            <p class="text-[10px] sm:text-xs text-gray-500 truncate">                           
+              <?= htmlspecialchars($item['variant_name'] ?: '') ?>                           
+              <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>                           
+              <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>                         
+            </p>
+            
+            <!-- Display descrip6 and descrip7 if available -->
+            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+              <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
+                <?= htmlspecialchars($item['descrip6'] ?: '') ?>
+                <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
+                <?= htmlspecialchars($item['descrip7'] ?: '') ?>
+              </p>
+            <?php endif; ?>
+            
+            <div class="flex items-center justify-between mt-1">                           
+              <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>                           
+              <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>                         
+            </div>                       
+          </div>                        
+          
+          <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">                         
+            <i class="fas fa-times text-xs"></i>                       
+          </a>                     
+        </div>                   
+      <?php 
+      endwhile;                   
+      $modal_stmt->close();                   
+      ?>                 
+    </div>                  
+    <!-- Show all items, no limit indicator needed -->               
+  <?php else: ?>                 
+    <!-- Empty Cart -->                 
+    <div class="text-center py-8">                   
+      <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>                   
+      <p class="text-gray-500 text-sm">Your cart is empty</p>                   
+      <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">                     
+        Start Shopping                   
+      </a>                 
+    </div>               
+  <?php endif; ?>             
+</div>
 
             <!-- Modal Footer -->
             <?php if ($total_cart_items > 0): ?>

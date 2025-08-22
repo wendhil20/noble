@@ -1,41 +1,41 @@
-<?php
-session_name("nobleuser");
-session_start();
+<?php 
+session_name("nobleuser"); 
+session_start(); 
 include '../../connection/connect.php';
 
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-  $token = $_COOKIE['remember_token'];
-
-  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-  $stmt->bind_param("s", $token);
-  $stmt->execute();
-  $res = $stmt->get_result();
-
-  if ($res->num_rows > 0) {
-    $user = $res->fetch_assoc();
-
-    // 🔐 Store essential user session info
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
-    $_SESSION['user_email'] = $user['email'] ?? '';
-    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-
-    // 👤 Check if it's a Google account (optional)
-    if (!empty($user['google_id'])) {
-      $_SESSION['google_logged_in'] = true;
-      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+    $token = $_COOKIE['remember_token'];
+    
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        
+        // 🔐 Store essential user session info
+        $_SESSION['user_id']    = $user['id'];
+        $_SESSION['user_name']  = $user['name'];
+        $_SESSION['user_email'] = $user['email'] ?? '';
+        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+        
+        // 👤 Check if it's a Google account (optional)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
     }
-  }
-
-  $stmt->close();
+    
+    $stmt->close();
 }
 
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-  // Not logged in — redirect to login or Google auth
-  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
-  exit;
+    // Not logged in — redirect to login or Google auth
+    header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+    exit;
 }
 
 // ✅ Retrieve user info
@@ -44,35 +44,50 @@ $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? 'example@example.com';
 $user_picture = $_SESSION['user_picture'] ?? null;
 
-
-$user_id = $_SESSION['user_id'] ?? 0;
 $cart_items = [];
 $total_price = 0;
 $notice = $_SESSION['checkout_notice'] ?? null;
 unset($_SESSION['checkout_notice']);
 
-// ✅ Fetch cart items from database
+// ✅ Fetch cart items from database - FIXED: descrip6, descrip7 from products table
 if ($user_id) {
-
-  $stmt = $conn->prepare("
-  SELECT c.*, t.type_image, v.descrip6, v.descrip7, v.origin
-  FROM user_cart_items c
-  LEFT JOIN product_types t 
-      ON t.product_id = c.product_id AND t.type_name = c.type_name
-  LEFT JOIN product_variants v
-      ON c.variant_id = v.id
-  WHERE c.user_id = ?
-");
-
-
-  $stmt->bind_param("i", $user_id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  while ($row = $result->fetch_assoc()) {
-    $cart_items[] = $row;
-  }
-  $stmt->close();
+    $stmt = $conn->prepare("
+        SELECT 
+            c.*, 
+            t.type_image, 
+            p.descrip6, 
+            p.descrip7, 
+            p.product_name,
+            p.main_image,
+            v.origin,
+            v.discount,
+            v.percent,
+            v.status
+        FROM user_cart_items c
+        LEFT JOIN product_types t 
+            ON t.product_id = c.product_id AND t.type_name = c.type_name
+        LEFT JOIN product_variants v 
+            ON c.variant_id = v.id
+        LEFT JOIN products p 
+            ON c.product_id = p.id
+        WHERE c.user_id = ?
+        ORDER BY c.id DESC
+    ");
+    
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $total_price += floatval($row['price']) * intval($row['quantity']);
+    }
+    
+    $stmt->close();
 }
+
+// Calculate total cart items count
+$total_cart_items = count($cart_items);
 ?>
 
 

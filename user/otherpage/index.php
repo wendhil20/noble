@@ -10,18 +10,19 @@ if (isset($_SESSION['login_needed'])) {
     unset($_SESSION['login_needed']);
 }
 
-// 1. Fetch all variants (basic list)
+// 1. Fetch all variants (basic list) - UNCHANGED
 $query_variants1 = "SELECT id, type_id, color, size, price, percent, image, origin FROM product_variants ORDER BY id DESC";
 $result_variants = mysqli_query($conn, $query_variants1);
 
-// 2. Furniture product list
+// 2. Furniture product list - UNCHANGED
 $SYCJ_query = "SELECT * FROM products WHERE codename = 'furniture' ORDER BY id DESC";
 $SYCJ_result = mysqli_query($conn, $SYCJ_query);
 
-// 3. Discount 30% materials
+// 3. Discount 30% materials - FIXED: descrip6, descrip7 from products table
 $material_querys = "
     SELECT 
-        pv.*, pv.origin,
+        pv.*,
+        pv.origin,
         pt.type_name,
         pt.type_image,
         pt.product_id,
@@ -29,23 +30,26 @@ $material_querys = "
         p.codename,
         p.main_image,
         p.description,
+        p.descrip6,
+        p.descrip7,
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
         pc.price AS color_price
     FROM product_variants pv
-    JOIN product_types pt ON pv.type_id = pt.id
-    JOIN products p ON pt.product_id = p.id
+    INNER JOIN product_types pt ON pv.type_id = pt.id
+    INNER JOIN products p ON pt.product_id = p.id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE pv.discount = 30
-    ORDER BY pv.percent ASC, p.id, pc.id
+    ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
 ";
 $material_results = mysqli_query($conn, $material_querys);
 
-// 4. Discount between 1-15%
+// 4. Discount between 1-15% - FIXED: descrip6, descrip7 from products table
 $material_querysone = "
     SELECT 
-        pv.*, pv.origin,
+        pv.*,
+        pv.origin,
         pt.type_name,
         pt.type_image,
         pt.product_id,
@@ -53,35 +57,39 @@ $material_querysone = "
         p.codename,
         p.main_image,
         p.description,
+        p.descrip6,
+        p.descrip7,
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
         pc.price AS color_price
     FROM product_variants pv
-    JOIN product_types pt ON pv.type_id = pt.id
-    JOIN products p ON pt.product_id = p.id
+    INNER JOIN product_types pt ON pv.type_id = pt.id
+    INNER JOIN products p ON pt.product_id = p.id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE pv.discount BETWEEN 1 AND 15
-    ORDER BY pv.percent ASC, p.id, pc.id
+    ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
 ";
 $material_resultsone = mysqli_query($conn, $material_querysone);
 
-// 5. Fetch "new" status product variants with type, product, and optional color info
+// 5. Fetch "new" status product variants - FIXED: corrected comments
 $material_querystwo = "
     SELECT 
-        pv.*,                       -- Product Variant fields
-        pv.origin,                  -- Origin (local/international)
-        pt.type_name,               -- Product Type name
-        pt.type_image,              -- Product Type image
-        pt.product_id,              -- FK to products
-        p.product_name,             -- Product name
-        p.codename,                 -- Internal product code
-        p.main_image,               -- Main product image
-        p.description,              -- Product description
-        pc.id AS color_id,          -- Color ID (nullable)
-        pc.color_name AS color,     -- Color name (nullable)
-        pc.color_code,              -- Color hex code (nullable)
-        pc.price AS color_price     -- Optional color-specific price
+        pv.*,
+        pv.origin,
+        pt.type_name,
+        pt.type_image,
+        pt.product_id,
+        p.product_name,
+        p.codename,
+        p.main_image,
+        p.description,
+        p.descrip6,                 -- Description 6 from products table
+        p.descrip7,                 -- Description 7 from products table
+        pc.id AS color_id,
+        pc.color_name AS color,
+        pc.color_code,
+        pc.price AS color_price
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
@@ -89,16 +97,14 @@ $material_querystwo = "
     WHERE pv.status = 'new'
     ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
 ";
-
 $material_resultstwo = mysqli_query($conn, $material_querystwo);
 
-
-
-// 6. Products without discount
+// 6. Products without discount - OPTIMIZED with consistent field selection
 $discount_result = mysqli_query(
     $conn,
     "SELECT 
-        pv.*, pv.origin,
+        pv.*,
+        pv.origin,
         pt.type_image,
         pt.type_name,
         pt.product_id,
@@ -106,26 +112,31 @@ $discount_result = mysqli_query(
         p.main_image,
         p.codename,
         p.description,
+        p.descrip6,
+        p.descrip7,
         pc.color_name AS color,
         pc.color_code,
         pc.price AS color_price,
         pc.image
      FROM product_variants pv
-     JOIN product_types pt ON pv.type_id = pt.id
-     JOIN products p ON pt.product_id = p.id
+     INNER JOIN product_types pt ON pv.type_id = pt.id
+     INNER JOIN products p ON pt.product_id = p.id
      LEFT JOIN product_colors pc ON p.id = pc.product_id
      WHERE pv.discount IS NULL OR pv.discount = 0
-     ORDER BY pv.percent ASC"
+     ORDER BY pv.percent ASC, p.id ASC, pc.id ASC"
 );
 
-// 7. Filter by furniture codename (variant join)
+// 7. Filter by furniture codename - OPTIMIZED with consistent joins
 $filter = 'furniture';
 $query = "
     SELECT 
         p.*, 
-        v.descrip6, 
-        v.descrip7,
-        v.origin 
+        p.descrip6, 
+        p.descrip7,
+        v.origin,
+        v.discount,
+        v.percent,
+        v.status
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
     WHERE p.codename = ?
@@ -137,18 +148,23 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// 8. Filter by material codename (with rating)
+// 8. Filter by material codename with rating - OPTIMIZED
 $filter = 'material';
 $query = "
     SELECT 
         p.*, 
-        v.descrip6, 
-        v.descrip7,
-         v.origin,
-        AVG(r.rating) AS avg_rating
+        p.descrip6, 
+        p.descrip7,
+        v.origin,
+        v.discount,
+        v.percent,
+        v.status,
+        AVG(r.rating) AS avg_rating,
+        COUNT(r.rating) AS rating_count
     FROM products p
     LEFT JOIN (
-        SELECT * FROM product_variants GROUP BY product_id
+        SELECT * FROM product_variants 
+        GROUP BY product_id
     ) v ON v.product_id = p.id
     LEFT JOIN product_ratings r ON r.product_id = p.id
     WHERE p.codename = ?
@@ -160,14 +176,17 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $results = $stmt->get_result();
 
-// 9. Filter by bedfurniture codename (variant join)
+// 9. Filter by bedfurniture codename - OPTIMIZED with consistent joins
 $filters = 'bedfurniture';
 $query = "
     SELECT 
         p.*, 
-        v.descrip6, 
-        v.descrip7,
-        v.origin 
+        p.descrip6, 
+        p.descrip7,
+        v.origin,
+        v.discount,
+        v.percent,
+        v.status
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
     WHERE p.codename = ?
@@ -179,21 +198,37 @@ $stmt->bind_param("s", $filters);
 $stmt->execute();
 $resultss = $stmt->get_result();
 
-
-// 10. Organize discount products into columns
+// 10. Organize discount products into columns - ENHANCED error handling
 $products = [];
-while ($row = mysqli_fetch_assoc($discount_result)) {
-    $products[] = $row;
+if ($discount_result) {
+    while ($row = mysqli_fetch_assoc($discount_result)) {
+        $products[] = $row;
+    }
 }
+
 if (!empty($products)) {
     $columns = array_chunk($products, ceil(count($products) / 3));
 } else {
     $columns = [[], [], []];
 }
 
-// 11. Slider images
+// 11. Slider images - ENHANCED with error handling
 $sql = "SELECT filename FROM discount_images ORDER BY uploaded_at DESC";
 $slideresult = $conn->query($sql);
+
+// Optional: Error handling function for debugging
+function handleQueryError($conn, $query_name) {
+    if (mysqli_error($conn)) {
+        error_log("Database Error in $query_name: " . mysqli_error($conn));
+        return false;
+    }
+    return true;
+}
+
+// Check for errors in critical queries
+handleQueryError($conn, "Discount 30% Query");
+handleQueryError($conn, "Discount 1-15% Query");
+handleQueryError($conn, "New Status Query");
 
 ?>
 

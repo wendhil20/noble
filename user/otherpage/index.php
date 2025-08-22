@@ -1592,120 +1592,144 @@ $slideresult = $conn->query($sql);
 
 
 
-    <section class="w-full bg-gray-50 py-12 px-4">
-        <div class="max-w-7xl mx-auto">
-            <!-- Section Header -->
-            <div class="text-center mb-10">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-                    Browse
+<section class="w-full bg-white py-20 px-6 border-t border-gray-200">
+    <div class="max-w-7xl mx-auto">
+        <!-- Section Header -->
+        <div class="text-center mb-16">
+            <div class="inline-block mb-6">
+                <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our Products</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+                    Product Gallery
                 </h2>
-                <p class="text-gray-600">
-                    Watch our products in action and see the quality difference
+                <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
+            </div>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Discover our premium collection through detailed product demonstrations and professional showcases
+            </p>
+        </div>
+
+        <!-- Video Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+            <!-- Video Item 1 -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <source src="../../video/a.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Premium waterproof panels designed for contemporary interior applications</p>
+                    <div class="flex items-center justify-between">
+                        <span class="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            Premium
+                        </span>
+                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            View Details 
+                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Item 2 -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <source src="../../video/b.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Professional styling concepts and innovative design solutions</p>
+                    <div class="flex items-center justify-between">
+                        <span class="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            Inspiration
+                        </span>
+                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            Explore Ideas
+                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Item 3 -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <source src="../../video/c.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Featured products showcased in real-world applications</p>
+                    <div class="flex items-center justify-between">
+                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            Featured
+                        </span>
+                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            Shop Collection
+                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Item 4 -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <source src="../../video/d.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Manufacturing Process</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Excellence in quality control and precision craftsmanship</p>
+                    <div class="flex items-center justify-between">
+                        <span class="bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            Process
+                        </span>
+                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            Learn More
+                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom CTA -->
+        <div class="text-center mt-16">
+            <div class="max-w-lg mx-auto mb-8">
+                <p class="text-lg text-gray-600 leading-relaxed mb-6">
+                    Ready to explore our complete product portfolio?
                 </p>
-            </div>
-
-            <!-- Video Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                <!-- Video Item 1 -->
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                    <div class="relative" style="aspect-ratio: 9/16; max-height: 300px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                            <source src="../../video/a.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-1">WPC Wall Panel</h3>
-                        <p class="text-gray-600 text-sm mb-3">Waterproof panels for modern interiors</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-medium">
-                                Premium
-                            </span>
-                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                                View Details →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Item 2 -->
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                    <div class="relative" style="aspect-ratio: 9/16; max-height: 300px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                            <source src="../../video/b.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-1">Interior Design</h3>
-                        <p class="text-gray-600 text-sm mb-3">Styling ideas and design concepts</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-medium">
-                                Inspiration
-                            </span>
-                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                                Get Ideas →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Item 3 -->
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                    <div class="relative" style="aspect-ratio: 16/9; max-height: 200px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                            <source src="../../video/c.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-1">Product Highlights</h3>
-                        <p class="text-gray-600 text-sm mb-3">Featured items in real applications</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">
-                                Featured
-                            </span>
-                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                                Shop Now →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Video Item 4 -->
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
-                    <div class="relative" style="aspect-ratio: 16/9; max-height: 200px;">
-                        <video autoplay muted loop playsinline class="w-full h-full object-cover">
-                            <source src="../../video/d.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-1">About Our Process</h3>
-                        <p class="text-gray-600 text-sm mb-3">Quality standards and craftsmanship</p>
-                        <div class="flex items-center justify-between">
-                            <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-medium">
-                                Process
-                            </span>
-                            <button class="text-orange-500 hover:text-orange-600 text-sm font-medium">
-                                Learn More →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Bottom CTA -->
-            <div class="text-center mt-10">
-                <p class="text-gray-600 mb-4">Want to see more of our products?</p>
-                <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300">
-                    Browse All Products
+                <button class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[200px]">
+                    View All Products
                 </button>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">

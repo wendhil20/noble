@@ -20,33 +20,70 @@ if (empty($userQuestion)) {
 }
 
 try {
-    // Get enhanced product data with images and variants
+    // Check if user is asking for specific product by name or ID
+    $specificProductCondition = "";
+    $isSpecificSearch = false;
+    
+    // Look for product names or IDs in the user question
+    if (preg_match('/\b(product|item)\s*(\d+)\b/i', $userQuestion, $matches)) {
+        $specificProductCondition = "WHERE p.id = " . intval($matches[2]);
+        $isSpecificSearch = true;
+    } elseif (preg_match('/"([^"]+)"/', $userQuestion, $matches)) {
+        $specificProductCondition = "WHERE p.product_name LIKE '%" . $conn->real_escape_string($matches[1]) . "%'";
+        $isSpecificSearch = true;
+    } elseif (strlen($userQuestion) > 10) {
+        // Try to find product names that might be mentioned
+        $words = explode(' ', $userQuestion);
+        $searchTerms = array_filter($words, function($word) {
+            return strlen($word) > 3; // Only consider words longer than 3 characters
+        });
+        
+        if (!empty($searchTerms)) {
+            $searchConditions = [];
+            foreach ($searchTerms as $term) {
+                $searchConditions[] = "p.product_name LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "p.description LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "p.codename LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "p.descrip6 LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "p.descrip7 LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pc.color_name LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pt.type_name LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pv.color LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pv.size LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pv.status LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pv.origin LIKE '%" . $conn->real_escape_string($term) . "%'";
+                $searchConditions[] = "pv.subcategory_name LIKE '%" . $conn->real_escape_string($term) . "%'";
+                
+                // Special handling for discount searches
+                if (stripos($term, 'discount') !== false || stripos($term, 'sale') !== false) {
+                    $searchConditions[] = "pv.discount > 0";
+                }
+            }
+            if (!empty($searchConditions)) {
+                $specificProductCondition = "WHERE (" . implode(' OR ', $searchConditions) . ")";
+                $isSpecificSearch = true;
+            }
+        }
+    }
+    
+    // Get essential product data based on actual database structure
     $sql = "SELECT 
                 p.id, 
                 p.product_name, 
+                p.codename,
                 p.description, 
-                p.price,
-                p.quantity,
-                p.main_image,
-                p.sub_images,
-                p.descrip1,
-                p.descrip2,
-                p.descrip3,
-                p.descrip4,
-                p.descrip5,
                 p.descrip6,
                 p.descrip7,
-                p.descrip8,
-                p.descrip9,
-                p.descrip10,
-                p.category_id,
-                GROUP_CONCAT(DISTINCT CONCAT(pc.color_name, ':', pc.color_code, ':', pc.price) SEPARATOR '|') as colors,
-                GROUP_CONCAT(DISTINCT CONCAT(pv.color, ':', pv.size, ':', pv.price, ':', pv.image) SEPARATOR '|') as variants
+                GROUP_CONCAT(DISTINCT pc.color_name SEPARATOR '|') as colors,
+                GROUP_CONCAT(DISTINCT CONCAT(pv.color, ':', pv.size, ':', pv.original_price, ':', pv.price, ':', pv.discount, ':', pv.status, ':', pv.origin, ':', pv.subcategory_name) SEPARATOR '|') as variants,
+                GROUP_CONCAT(DISTINCT CONCAT(pt.type_name, ':', pt.rating) SEPARATOR '|') as product_types
             FROM products p
             LEFT JOIN product_colors pc ON p.id = pc.product_id
             LEFT JOIN product_variants pv ON p.id = pv.product_id
+            LEFT JOIN product_types pt ON p.id = pt.product_id
+            $specificProductCondition
             GROUP BY p.id
-            LIMIT 30";
+            LIMIT " . ($isSpecificSearch ? "10" : "5");
     
     $result = $conn->query($sql);
     
@@ -59,85 +96,91 @@ try {
         $products[] = $row;
     }
     
-    // Build comprehensive context with images
-    $productContext = "Available Products with Details:\n\n";
+    // Build compact context using actual database structure
+    $productContext = "Available Products:\n\n";
     foreach ($products as $p) {
         $productContext .= "=== PRODUCT ID: {$p['id']} ===\n";
         $productContext .= "Name: {$p['product_name']}\n";
-        $productContext .= "Price: ₱{$p['price']}\n";
-        $productContext .= "Stock: {$p['quantity']}\n";
-        $productContext .= "Description: {$p['description']}\n";
         
-        // Add main image if available
-        if (!empty($p['main_image'])) {
-            $productContext .= "Main Image: {$p['main_image']}\n";
+        if (!empty($p['codename'])) {
+            $productContext .= "Category: {$p['codename']}\n";
         }
         
-        // Add sub images if available
-        if (!empty($p['sub_images'])) {
-            $productContext .= "Additional Images: {$p['sub_images']}\n";
+        if (!empty($p['description'])) {
+            $productContext .= "Description: {$p['description']}\n";
         }
         
-        // Add detailed descriptions
-        $descriptions = [];
-        for ($i = 1; $i <= 10; $i++) {
-            if (!empty($p["descrip$i"])) {
-                $descriptions[] = $p["descrip$i"];
-            }
-        }
-        if (!empty($descriptions)) {
-            $productContext .= "Features: " . implode(", ", $descriptions) . "\n";
+        if (!empty($p['descrip6'])) {
+            $productContext .= "Details: {$p['descrip6']}\n";
         }
         
-        // Add color variants
+        if (!empty($p['descrip7'])) {
+            $productContext .= "Additional Info: {$p['descrip7']}\n";
+        }
+        
+        if (!empty($p['subcategory_name'])) {
+            $productContext .= "Subcategory: {$p['subcategory_name']}\n";
+        }
+        
+        // Add available colors
         if (!empty($p['colors'])) {
-            $productContext .= "Available Colors: ";
-            $colors = explode('|', $p['colors']);
-            $colorInfo = [];
-            foreach ($colors as $color) {
-                $colorParts = explode(':', $color);
-                if (count($colorParts) >= 3) {
-                    $colorInfo[] = "{$colorParts[0]} (₱{$colorParts[2]})";
+            $productContext .= "Available Colors: {$p['colors']}\n";
+        }
+        
+        // Add product types with ratings
+        if (!empty($p['product_types'])) {
+            $productContext .= "Product Types: ";
+            $types = explode('|', $p['product_types']);
+            $typeInfo = [];
+            foreach ($types as $type) {
+                $typeParts = explode(':', $type);
+                if (count($typeParts) >= 2) {
+                    $typeInfo[] = "{$typeParts[0]} (Rating: {$typeParts[1]})";
+                } else {
+                    $typeInfo[] = $typeParts[0];
                 }
             }
-            $productContext .= implode(", ", $colorInfo) . "\n";
+            $productContext .= implode(", ", $typeInfo) . "\n";
         }
         
-        // Add size/variant info
+        // Add variants with complete information
         if (!empty($p['variants'])) {
             $productContext .= "Variants: ";
             $variants = explode('|', $p['variants']);
             $variantInfo = [];
             foreach ($variants as $variant) {
                 $variantParts = explode(':', $variant);
-                if (count($variantParts) >= 3) {
-                    $info = "{$variantParts[0]}";
-                    if (!empty($variantParts[1])) $info .= " Size: {$variantParts[1]}";
-                    $info .= " (₱{$variantParts[2]})";
-                    if (!empty($variantParts[3])) $info .= " [Image: {$variantParts[3]}]";
-                    $variantInfo[] = $info;
+                if (count($variantParts) >= 8) {
+                    $info = "";
+                    if (!empty($variantParts[0])) $info .= "Color: {$variantParts[0]}, ";
+                    if (!empty($variantParts[1])) $info .= "Size: {$variantParts[1]}, ";
+                    if (!empty($variantParts[2])) $info .= "Original: ₱{$variantParts[2]}, ";
+                    if (!empty($variantParts[3])) $info .= "Price: ₱{$variantParts[3]}, ";
+                    if (!empty($variantParts[4]) && $variantParts[4] > 0) $info .= "Discount: ₱{$variantParts[4]}, ";
+                    if (!empty($variantParts[5])) $info .= "Status: {$variantParts[5]}, ";
+                    if (!empty($variantParts[6])) $info .= "Origin: {$variantParts[6]}, ";
+                    if (!empty($variantParts[7])) $info .= "Subcategory: {$variantParts[7]}";
+                    $variantInfo[] = rtrim($info, ', ');
                 }
             }
-            $productContext .= implode(", ", $variantInfo) . "\n";
+            $productContext .= implode(" | ", $variantInfo) . "\n";
         }
         
         $productContext .= "\n";
     }
     
-    // Enhanced prompt with instructions for image handling
+    // Simplified prompt without image instructions
     $prompt = "You are a helpful product assistant for an e-commerce store. Answer the user's question using the product data below. 
 
-IMPORTANT INSTRUCTIONS:
-1. When mentioning products, include relevant details like price, availability, and features
-2. If a product has images, mention them and provide the image paths/URLs when relevant
-3. Be conversational and helpful
-4. If asked about specific colors or variants, mention the available options and their prices
-5. If no exact match is found, suggest similar products
-6. Always be polite and informative
-7. Format prices in Philippine Peso (₱)
-8. When showing product images, format them as: ![Product Name](image_path)
+INSTRUCTIONS:
+1. Include relevant details like price, availability, and features
+2. Be conversational and helpful
+3. If asked about colors or variants, mention available options and prices
+4. If no exact match found, suggest similar products
+5. Always be polite and informative
+6. Format prices in Philippine Peso (₱)
 
-Product Database:\n" . $productContext . "\n\nUser's question: $userQuestion\n\nPlease provide a helpful response:";
+Product Database:\n" . $productContext . "\n\nUser's question: $userQuestion\n\nResponse:";
     
     // Call Gemini API
     $ch = curl_init();
@@ -154,7 +197,7 @@ Product Database:\n" . $productContext . "\n\nUser's question: $userQuestion\n\n
             "temperature" => 0.7,
             "topP" => 0.8,
             "topK" => 40,
-            "maxOutputTokens" => 1024
+            "maxOutputTokens" => 800
         ]
     ]));
     

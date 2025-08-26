@@ -2608,8 +2608,8 @@ handleQueryError($conn, "New Status Query");
         <button onclick="sendQuickMessage('Best sellers')" class="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full text-xs transition-colors">
           Best sellers
         </button>
-        <button onclick="sendQuickMessage('Under ₱500')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-xs transition-colors">
-          Under ₱500
+        <button onclick="sendQuickMessage('Under ₱5000')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-xs transition-colors">
+          Under ₱5000
         </button>
       </div>
     </div>
@@ -2793,9 +2793,7 @@ function escapeHtml(text) {
 }
 
 function formatChatMessage(message) {
-  // Convert markdown images to HTML
-  message = message.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="../../$2" alt="$1" class="rounded shadow-sm">');
-  
+
   // Convert markdown links
   message = message.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
   

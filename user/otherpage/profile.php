@@ -158,14 +158,19 @@ if ($row && isset($row['is_verified'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+
 $sql = "SELECT is_verified FROM user_details WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$user = $result->fetch_assoc();
 
-$is_verified = $user['is_verified'];
+$user = $result->fetch_assoc();
+$stmt->close();
+
+// Safe access
+$is_verified = $user['is_verified'] ?? null;
+
 
 
 ?>

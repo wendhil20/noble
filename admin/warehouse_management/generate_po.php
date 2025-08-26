@@ -40,17 +40,12 @@ if ($orderResult->num_rows === 0) {
 $order = $orderResult->fetch_assoc();
 $orderStmt->close();
 
-// Get user info for "Prepared By"
-$user_id = $_SESSION['noble_user'];
-$userStmt = $conn->prepare("SELECT fullname FROM nobleaccount WHERE id = ?");
-$userStmt->bind_param("i", $user_id);
-$userStmt->execute();
-$userResult = $userStmt->get_result();
-$user = $userResult->fetch_assoc();
-$prepared_by = $user['fullname'] ?? 'Unknown User';
-$userStmt->close();
+// Get user info for "Prepared By" and display using session data
+$prepared_by = $_SESSION['noble_name'] ?? 'Unknown User';
+$user_role = $_SESSION['noble_lvl'] ?? 'Unknown Role';
+$user_id = $_SESSION['noble_id'] ?? null;
 
-// Get order items with assigned suppliers
+// Get order items with assigned suppliers and original price from product_variants
 $itemStmt = $conn->prepare("
     SELECT 
         oi.id as item_id,
@@ -68,12 +63,16 @@ $itemStmt = $conn->prepare("
         oi.origin,
         oi.supplier_id,
         oi.manual_supplier_name,
+        pv.original_price,
+        COALESCE(pv.original_price, oi.price) as computed_price,
+        (oi.quantity * COALESCE(pv.original_price, oi.price)) as computed_subtotal,
         sl.business_name,
         sl.primary_contact_name,
         sl.email_address,
         sl.phone_number,
         sl.business_address
     FROM order_items oi
+    LEFT JOIN product_variants pv ON oi.product_id = pv.id
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
     WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
     ORDER BY COALESCE(sl.business_name, oi.manual_supplier_name), oi.id
@@ -87,7 +86,7 @@ $itemStmt->close();
 $supplierGroups = [];
 foreach ($allItems as $item) {
     $supplierKey = $item['supplier_id'] ? 
-        $item['supplier_id'] : 
+        strval($item['supplier_id']) : 
         'manual_' . $item['manual_supplier_name'];
     
     if (!isset($supplierGroups[$supplierKey])) {
@@ -97,7 +96,7 @@ foreach ($allItems as $item) {
                 'contact' => $item['primary_contact_name'] ?? '',
                 'email' => $item['email_address'] ?? '',
                 'phone' => $item['phone_number'] ?? '',
-                'address' => $item['address'] ?? '',
+                'address' => $item['business_address'] ?? '',
                 'is_manual' => !$item['supplier_id']
             ],
             'items' => []
@@ -149,6 +148,24 @@ foreach ($allItems as $item) {
                         <p class="text-gray-600 mt-1">Order #<?php echo $order['id']; ?> - <?php echo htmlspecialchars($order['customer_name']); ?></p>
                     </div>
                 </div>
+                
+                <!-- User Info Display -->
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm font-medium text-gray-900">
+                            <i class="fas fa-user text-primary-600 mr-1"></i>
+                            <?php echo htmlspecialchars($prepared_by); ?>
+                        </div>
+                        <div class="text-xs text-gray-500 capitalize">
+                            <?php echo htmlspecialchars($user_role); ?>
+                        </div>
+                    </div>
+                    <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold text-sm">
+                            <?php echo strtoupper(substr($prepared_by, 0, 1)); ?>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -172,6 +189,19 @@ foreach ($allItems as $item) {
         </div>
         <?php else: ?>
 
+        <!-- User Welcome Message -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div class="flex items-center">
+                <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                    <i class="fas fa-user-check text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium text-blue-900">Welcome, <?php echo htmlspecialchars($prepared_by); ?>!</h3>
+                    <p class="text-blue-700 text-sm">You are logged in as <span class="font-medium capitalize"><?php echo htmlspecialchars($user_role); ?></span></p>
+                </div>
+            </div>
+        </div>
+
         <!-- Supplier Selection -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">
@@ -183,6 +213,10 @@ foreach ($allItems as $item) {
                 <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer supplier-card" 
                      data-supplier="<?php echo htmlspecialchars($supplierKey); ?>"
                      onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')">
+                    
+                    <!-- Debug info - remove after testing -->
+                    <div class="text-xs text-red-500 mb-2">Debug: Key = <?php echo htmlspecialchars($supplierKey); ?></div>
+                    
                     <div class="flex items-center justify-between mb-2">
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierData['supplier_info']['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
                             <?php echo $supplierData['supplier_info']['is_manual'] ? 'Manual' : 'Linked'; ?>
@@ -222,6 +256,17 @@ foreach ($allItems as $item) {
                 <i class="fas fa-edit text-primary-600 mr-2"></i>
                 Purchase Order Details
             </h2>
+            
+            <!-- Prepared By Info -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    <i class="fas fa-user-edit text-gray-600 mr-2"></i>
+                    <span class="text-sm font-medium text-gray-700">Prepared By: </span>
+                    <span class="text-sm text-gray-900 font-medium"><?php echo htmlspecialchars($prepared_by); ?></span>
+                    <span class="mx-2 text-gray-400">|</span>
+                    <span class="text-xs text-gray-500 capitalize"><?php echo htmlspecialchars($user_role); ?></span>
+                </div>
+            </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -273,6 +318,9 @@ foreach ($allItems as $item) {
         let selectedSupplier = null;
         const supplierData = <?php echo json_encode($supplierGroups); ?>;
 
+        // Debug: Log supplier data
+        console.log('Supplier data loaded:', supplierData);
+
         function showAlert(message, type = 'info') {
             const alertContainer = document.getElementById('alertContainer');
             const colors = {
@@ -290,6 +338,8 @@ foreach ($allItems as $item) {
         }
 
         function selectSupplier(supplierKey) {
+            console.log('Selecting supplier:', supplierKey);
+            
             // Update radio button
             document.querySelector(`input[value="${supplierKey}"]`).checked = true;
             
@@ -313,6 +363,8 @@ foreach ($allItems as $item) {
 
         function updateItemsPreview(supplierKey) {
             const supplier = supplierData[supplierKey];
+            console.log('Updating preview for supplier:', supplierKey, supplier);
+            
             const previewContent = document.getElementById('previewContent');
             
             let html = `
@@ -326,6 +378,7 @@ foreach ($allItems as $item) {
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specification</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
@@ -335,6 +388,10 @@ foreach ($allItems as $item) {
             `;
             
             supplier.items.forEach(item => {
+                // Use computed_price (which uses original_price if available, otherwise falls back to item.price)
+                const unitPrice = item.computed_price ? parseFloat(item.computed_price) : parseFloat(item.price);
+                const totalPrice = item.computed_subtotal ? parseFloat(item.computed_subtotal) : parseFloat(item.subtotal);
+                
                 html += `
                     <tr>
                         <td class="px-4 py-4">
@@ -344,9 +401,10 @@ foreach ($allItems as $item) {
                         <td class="px-4 py-4 text-sm text-gray-900">
                             ${item.size} | ${item.variant_color}
                         </td>
+                        <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
                         <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
-                        <td class="px-4 py-4 text-sm text-gray-900">₱${parseFloat(item.price).toLocaleString()}</td>
-                        <td class="px-4 py-4 text-sm text-gray-900">₱${parseFloat(item.subtotal).toLocaleString()}</td>
+                        <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString()}</td>
+                        <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString()}</td>
                     </tr>
                 `;
             });
@@ -366,7 +424,11 @@ foreach ($allItems as $item) {
             const conditions = document.getElementById('conditions').value;
             const additionalNotes = document.getElementById('additionalNotes').value;
 
-            // Create form and submit to P.O. generator
+            // Debug: Log the selected supplier
+            console.log('Selected supplier key:', selectedSupplier);
+            console.log('Supplier data:', supplierData[selectedSupplier]);
+
+            // Create form and submit to Excel P.O. generator
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'generate_po_pdf.php';
@@ -394,7 +456,7 @@ foreach ($allItems as $item) {
             form.submit();
             document.body.removeChild(form);
 
-            showAlert('Generating Purchase Order...', 'success');
+            showAlert('Generating Purchase Order Excel file...', 'success');
         }
     </script>
 </body>

@@ -114,7 +114,7 @@ try {
     $redirect = match (strtolower($user['lvl'])) {
         'superadmin', 'admin' => "../admin/client/dashboard",
         'sales' => "../admin/orders/ordering",
-        'accountant' => "../admin/accountant/dashboard",
+        'accountant' => "../admin/accountant/accountant",
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/adminshop",
         'logistic' => "../admin/client/monitortracking",

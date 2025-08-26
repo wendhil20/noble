@@ -243,6 +243,7 @@ $orders_result = $conn->query($orders_query);
     </script>
 </head>
 <body class="bg-gray-50">
+    <?php include '../navbar/top.php'; ?>
     <!-- Header -->
     <header class="bg-white shadow-sm border-b-2 border-noble-orange">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -252,12 +253,6 @@ $orders_result = $conn->query($orders_query);
                         <i class="fas fa-calculator text-white text-sm"></i>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900">Accountant Dashboard</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-600">Welcome, <?php echo htmlspecialchars($_SESSION['noble_user']); ?></span>
-                    <a href="../logout.php" class="bg-noble-orange hover:bg-noble-orange-dark text-white px-4 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                    </a>
                 </div>
             </div>
         </div>

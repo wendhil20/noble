@@ -44,7 +44,7 @@ $orderStmt->close();
 $customer_name = $order['customer_name'];
 $customer_email = $order['email'];
 
-// Get all order items for this specific order
+// Get all order items for this specific order with original_price from product_variants
 $itemStmt = $conn->prepare("
     SELECT 
         oi.id as item_id,
@@ -56,18 +56,23 @@ $itemStmt = $conn->prepare("
         oi.codename,
         oi.descrip6,
         oi.descrip7,
-        oi.price,
+        oi.price as order_price,
+        COALESCE(pv.original_price, oi.price) as current_price,
         oi.quantity,
-        oi.subtotal,
+        (COALESCE(pv.original_price, oi.price) * oi.quantity) as calculated_subtotal,
+        oi.subtotal as original_subtotal,
         oi.origin,
         oi.supplier_id,
         oi.manual_supplier_name,
         p.product_name as product_full_name,
         p.codename as product_code,
         o.created_at as order_date,
-        o.status as order_status
+        o.status as order_status,
+        pv.original_price,
+        pv.id as variant_id
     FROM order_items oi
     LEFT JOIN products p ON oi.product_id = p.id
+    LEFT JOIN product_variants pv ON oi.product_id = pv.id
     LEFT JOIN orders o ON oi.order_id = o.id
     WHERE oi.order_id = ?
     ORDER BY oi.id
@@ -76,6 +81,12 @@ $itemStmt->bind_param("i", $order_id);
 $itemStmt->execute();
 $allItems = $itemStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $itemStmt->close();
+
+// Calculate new order total based on original prices
+$newOrderTotal = 0;
+foreach ($allItems as $item) {
+    $newOrderTotal += $item['calculated_subtotal'];
+}
 
 // For each item, get available suppliers from supp_link_products
 for ($i = 0; $i < count($allItems); $i++) {
@@ -152,6 +163,12 @@ for ($i = 0; $i < count($allItems); $i++) {
         .rotate-180 {
             transform: rotate(180deg);
         }
+        .price-updated {
+            background-color: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 4px;
+            border: 1px solid #f59e0b;
+        }
     </style>
 </head>
 
@@ -206,12 +223,20 @@ for ($i = 0; $i < count($allItems); $i++) {
                         </div>
                     </div>
 
- <!-- ADD THIS SECTION - Replace the existing right side div -->
                     <div class="flex items-center space-x-4">
                         <div class="text-right">
-                            <div class="text-lg font-bold text-primary-700">₱<?php echo number_format($order['total'], 2); ?></div>
+                            <?php if ($newOrderTotal != $order['total']): ?>
+                                <div class="text-sm text-gray-500">
+                                    Original: <span class="line-through">₱<?php echo number_format($order['total'], 2); ?></span>
+                                </div>
+                                <div class="text-lg font-bold text-amber-600 price-updated">
+                                    Updated: ₱<?php echo number_format($newOrderTotal, 2); ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-lg font-bold text-primary-700">₱<?php echo number_format($order['total'], 2); ?></div>
+                            <?php endif; ?>
                         </div>
-                        <!-- NEW GENERATE P.O. BUTTON -->
+                        <!-- GENERATE P.O. BUTTON -->
                         <a href="generate_po.php?order_id=<?php echo $order['id']; ?>" 
                            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
                             <i class="fas fa-file-invoice text-white"></i>
@@ -221,7 +246,22 @@ for ($i = 0; $i < count($allItems); $i++) {
                 </div>
             </div>
                     
-                    
+            <!-- Price Update Notice -->
+            <?php if ($newOrderTotal != $order['total']): ?>
+            <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-amber-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-amber-700">
+                            <strong>Price Update Notice:</strong> Some items are now using updated prices from the product variants. 
+                            The total has been recalculated from ₱<?php echo number_format($order['total'], 2); ?> to ₱<?php echo number_format($newOrderTotal, 2); ?>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- Order Items -->
             <?php if (!empty($allItems)): ?>
@@ -237,11 +277,44 @@ for ($i = 0; $i < count($allItems); $i++) {
                                 <div><strong>Color:</strong> <?php echo htmlspecialchars($item['variant_color']); ?></div>
                                 <div><strong>Qty:</strong> <?php echo htmlspecialchars($item['quantity']); ?></div>
                             </div>
+                            
+                            <!-- Price Information with Update Indicator -->
                             <div class="mt-2 text-sm text-gray-600">
-                                <strong>Price:</strong> ₱<?php echo number_format($item['price'], 2); ?> | 
-                                <strong>Subtotal:</strong> ₱<?php echo number_format($item['subtotal'], 2); ?>
-                                <?php if ($item['origin']): ?>
-                                    | <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <div>
+                                        <strong>Price:</strong> 
+                                        <?php if ($item['current_price'] != $item['order_price']): ?>
+                                            <span class="line-through text-gray-400">₱<?php echo number_format($item['order_price'], 2); ?></span>
+                                            <span class="price-updated ml-1">₱<?php echo number_format($item['current_price'], 2); ?></span>
+                                            <i class="fas fa-arrow-up text-amber-500 ml-1" title="Price updated from product variant"></i>
+                                        <?php else: ?>
+                                            ₱<?php echo number_format($item['current_price'], 2); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <div>
+                                        <strong>Subtotal:</strong>
+                                        <?php if ($item['calculated_subtotal'] != $item['original_subtotal']): ?>
+                                            <span class="line-through text-gray-400">₱<?php echo number_format($item['original_subtotal'], 2); ?></span>
+                                            <span class="price-updated ml-1">₱<?php echo number_format($item['calculated_subtotal'], 2); ?></span>
+                                            <i class="fas fa-calculator text-amber-500 ml-1" title="Subtotal recalculated"></i>
+                                        <?php else: ?>
+                                            ₱<?php echo number_format($item['calculated_subtotal'], 2); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <?php if ($item['origin']): ?>
+                                    <div>
+                                        <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <?php if ($item['original_price'] && $item['current_price'] != $item['order_price']): ?>
+                                <div class="mt-1 text-xs text-amber-600">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Using current price from product variant (ID: <?php echo $item['variant_id']; ?>)
+                                </div>
                                 <?php endif; ?>
                             </div>
                         </div>

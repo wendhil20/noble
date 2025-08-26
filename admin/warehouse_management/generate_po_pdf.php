@@ -1,5 +1,5 @@
 <?php
-//generate_po_pdf.php
+// generate_po_excel.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -14,7 +14,16 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-if (!isset($_POST['order_id']) || !isset($_POST['supplier_key'])) {
+// Include PhpSpreadsheet
+require_once '../../vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: ordering.php");
     exit();
 }
@@ -25,41 +34,58 @@ $payment_terms = $_POST['payment_terms'] ?? '';
 $delivery_details = $_POST['delivery_details'] ?? '';
 $conditions = $_POST['conditions'] ?? '';
 $additional_notes = $_POST['additional_notes'] ?? '';
-$prepared_by = $_POST['prepared_by'] ?? 'Unknown User';
 
-// Get the specific order
-$orderStmt = $conn->prepare("
-    SELECT id, customer_name, email, created_at, status, total 
-    FROM orders 
-    WHERE id = ? 
-    LIMIT 1
-");
+// Get the prepared_by from POST data first, then fallback to session
+$prepared_by = $_POST['prepared_by'] ?? $_SESSION['noble_name'] ?? 'Unknown User';
+
+// Also get user role and ID for additional info if needed
+$user_role = $_SESSION['noble_lvl'] ?? 'Unknown Role';
+$user_id = $_SESSION['noble_id'] ?? null;
+
+// Debug information (remove in production)
+error_log("Prepared By from POST: " . ($_POST['prepared_by'] ?? 'Not set'));
+error_log("Prepared By from SESSION: " . ($_SESSION['noble_name'] ?? 'Not set'));
+error_log("Final Prepared By: " . $prepared_by);
+
+// Get order details
+$orderStmt = $conn->prepare("SELECT id, customer_name, email, created_at, status, total FROM orders WHERE id = ?");
 $orderStmt->bind_param("i", $order_id);
 $orderStmt->execute();
 $order = $orderStmt->get_result()->fetch_assoc();
 $orderStmt->close();
 
-// Get order items for the selected supplier
+if (!$order) {
+    die("Order not found");
+}
+
+// Get order items for the selected supplier with original_price from product_variants
 $itemStmt = $conn->prepare("
     SELECT 
         oi.id as item_id,
+        oi.order_id,
+        oi.product_id,
         oi.product_name,
         oi.size,
         oi.variant_color,
         oi.codename,
+        oi.descrip6,
+        oi.descrip7,
         oi.price,
         oi.quantity,
         oi.subtotal,
+        oi.origin,
         oi.supplier_id,
         oi.manual_supplier_name,
+        pv.original_price,
         sl.business_name,
         sl.primary_contact_name,
         sl.email_address,
         sl.phone_number,
         sl.business_address
     FROM order_items oi
+    LEFT JOIN product_variants pv ON oi.product_id = pv.id
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
-    WHERE oi.order_id = ?
+    WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
     ORDER BY oi.id
 ");
 $itemStmt->bind_param("i", $order_id);
@@ -73,10 +99,15 @@ $supplierInfo = null;
 
 foreach ($allItems as $item) {
     $itemSupplierKey = $item['supplier_id'] ? 
-        $item['supplier_id'] : 
+        strval($item['supplier_id']) : 
         'manual_' . $item['manual_supplier_name'];
     
-    if ($itemSupplierKey == $supplier_key) {
+    if ($itemSupplierKey === $supplier_key) {
+        // Use original_price if available, otherwise fall back to the existing price
+        $item['unit_price'] = $item['original_price'] ?? $item['price'];
+        // Recalculate subtotal using original_price
+        $item['calculated_subtotal'] = $item['unit_price'] * $item['quantity'];
+        
         $supplierItems[] = $item;
         if (!$supplierInfo) {
             $supplierInfo = [
@@ -84,7 +115,7 @@ foreach ($allItems as $item) {
                 'contact' => $item['primary_contact_name'] ?? '',
                 'email' => $item['email_address'] ?? '',
                 'phone' => $item['phone_number'] ?? '',
-                'address' => $item['address'] ?? '',
+                'address' => $item['business_address'] ?? '',
                 'is_manual' => !$item['supplier_id']
             ];
         }
@@ -92,444 +123,192 @@ foreach ($allItems as $item) {
 }
 
 if (empty($supplierItems)) {
-    header("Location: generate_po.php?order_id=" . $order_id);
-    exit();
+    die("No items found for selected supplier. Selected key: " . $supplier_key);
 }
 
-// Generate P.O. Number
-$po_number = 'NHCC-' . str_pad($order_id, 4, '0', STR_PAD_LEFT) . date('Y') . '-' . substr($supplier_key, -3);
-$po_date = date('n/j/Y');
+// Load the template
+$templatePath = '../template/p.o_template.xlsx';
+if (!file_exists($templatePath)) {
+    die("Template file not found: " . $templatePath);
+}
 
-// Calculate total
-$total = 0;
-foreach ($supplierItems as $item) {
-    $total += $item['subtotal'];
+try {
+    // Load the template
+    $spreadsheet = IOFactory::load($templatePath);
+    $worksheet = $spreadsheet->getActiveSheet();
+    
+    // Fill in the header information
+    $worksheet->setCellValue('B2', $supplierInfo['name']);
+    
+    if (!empty($supplierInfo['contact'])) {
+        $worksheet->setCellValue('C4', $supplierInfo['contact']);
+    }
+    if (!empty($supplierInfo['email'])) {
+        $worksheet->setCellValue('C5', $supplierInfo['email']);
+    }
+    if (!empty($supplierInfo['phone'])) {
+        $worksheet->setCellValue('C6', $supplierInfo['phone']);
+    }
+    
+    // Company info
+    $worksheet->setCellValue('E3', 'NHCC');
+    $worksheet->setCellValue('E4', 'Unit Floor MC Residence, Salcedo City Metro Manila');
+    $worksheet->setCellValue('E5', 'Mobile Number: +639974894523');
+    $worksheet->setCellValue('E6', 'Email: nhccbusinessmail@gmail.com');
+    
+    // P.O Details
+    $worksheet->setCellValue('A11', date('Y-m-d'));
+    $worksheet->setCellValue('B11', 'P.O# ' . str_pad($order_id, 6, '0', STR_PAD_LEFT));
+    $worksheet->setCellValue('D11', $payment_terms);
+    $worksheet->setCellValue('G11', $delivery_details);
+    
+    // DEFINE FIXED POSITIONS FOR DIFFERENT SECTIONS
+    $startRow = 15;
+    $itemCount = count($supplierItems);
+    
+    // Fixed positions based on your template structure
+    $conditionsStartRow = 16; // Fixed position where conditions should start
+    $notesStartRow = 22; // Fixed position where additional notes should start  
+    $signatureStartRow = 26; // Fixed position where signature section should start
+    
+    // Calculate how many additional rows we need beyond the template row
+    $additionalRowsNeeded = max(0, $itemCount - 1);
+    
+    // If we need more rows, we need to shift the fixed sections down
+    if ($additionalRowsNeeded > 0) {
+        // Calculate how much to shift down the fixed sections
+        $shiftAmount = $additionalRowsNeeded;
+        
+        // Adjust the fixed positions
+        $conditionsStartRow += $shiftAmount;
+        $notesStartRow += $shiftAmount;
+        $signatureStartRow += $shiftAmount;
+        
+        // Insert rows after the template row (A15)
+        $worksheet->insertNewRowBefore($startRow + 1, $additionalRowsNeeded);
+        
+        // Copy the formatting from the template row to new rows
+        for ($i = 1; $i <= $additionalRowsNeeded; $i++) {
+            $newRowIndex = $startRow + $i;
+            
+            // Copy row formatting from template row (A15)
+            $worksheet->duplicateStyle(
+                $worksheet->getStyle('A' . $startRow . ':H' . $startRow),
+                'A' . $newRowIndex . ':H' . $newRowIndex
+            );
+            
+            // Apply borders to the new row
+            $worksheet->getStyle('A' . $newRowIndex . ':H' . $newRowIndex)->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['argb' => '000000']
+                    ],
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+            
+            // Merge columns G and H for Total Price in the new row
+            $worksheet->mergeCells('G' . $newRowIndex . ':H' . $newRowIndex);
+        }
+    }
+    
+    // Fill in all items starting from row 15
+    foreach ($supplierItems as $index => $item) {
+        $rowIndex = $startRow + $index;
+        
+        // Item No. (Column A)
+        $worksheet->setCellValue('A' . $rowIndex, $index + 1);
+        
+        // Item Name (Column B)
+        $worksheet->setCellValue('B' . $rowIndex, $item['product_name']);
+        
+        // Specification (Column C) - combining size and color
+        $specification = $item['size'] . ' | ' . $item['variant_color'];
+        if (!empty($item['descrip7'])) {
+            $specification .= ' | ' . $item['descrip7'];
+        }
+        $worksheet->setCellValue('C' . $rowIndex, $specification);
+        
+        // Unit (Column D) - using descrip6 as the unit
+        $unit = !empty($item['descrip6']) ? $item['descrip6'] : 'pcs';
+        $worksheet->setCellValue('D' . $rowIndex, $unit);
+        
+        // Quantity (Column E)
+        $worksheet->setCellValue('E' . $rowIndex, $item['quantity']);
+        
+        // Unit Price (Column F) - using original_price or fallback to price
+        $worksheet->setCellValue('F' . $rowIndex, number_format(floatval($item['unit_price']), 2));
+        
+        // Total Price (Column G) - using calculated subtotal
+        $worksheet->setCellValue('G' . $rowIndex, number_format(floatval($item['calculated_subtotal']), 2));
+        
+        // Optional: Add any additional data to Column H if needed
+        // $worksheet->setCellValue('H' . $rowIndex, 'Additional Data');
+    }
+    
+    // Add conditions section at fixed position (now adjusted for additional rows)
+    if (!empty($conditions)) {
+        $worksheet->setCellValue('A' . $conditionsStartRow, 'Conditions and Other Special Instructions:');
+        $worksheet->mergeCells('A' . $conditionsStartRow . ':H' . $conditionsStartRow);
+        $worksheet->getStyle('A' . $conditionsStartRow)->getFont()->setBold(true);
+        
+        $worksheet->setCellValue('A' . ($conditionsStartRow + 1), $conditions);
+        $worksheet->mergeCells('A' . ($conditionsStartRow + 1) . ':H' . ($conditionsStartRow + 2));
+        $worksheet->getStyle('A' . ($conditionsStartRow + 1))->getAlignment()->setWrapText(true);
+    }
+    
+    // Add additional notes section at fixed position (now adjusted for additional rows)
+    if (!empty($additional_notes)) {
+        $worksheet->setCellValue('A' . $notesStartRow, 'Additional Notes:');
+        $worksheet->mergeCells('A' . $notesStartRow . ':H' . $notesStartRow);
+        $worksheet->getStyle('A' . $notesStartRow)->getFont()->setBold(true);
+        
+        $worksheet->setCellValue('A' . ($notesStartRow + 1), $additional_notes);
+        $worksheet->mergeCells('A' . ($notesStartRow + 1) . ':H' . ($notesStartRow + 2));
+        $worksheet->getStyle('A' . ($notesStartRow + 1))->getAlignment()->setWrapText(true);
+    }
+    
+    // Add signature section at fixed position (now adjusted for additional rows)
+    $worksheet->setCellValue('A' . $signatureStartRow, 'Prepared By:');
+    $worksheet->setCellValue('C' . $signatureStartRow, 'Approved By:');
+    $worksheet->setCellValue('E' . $signatureStartRow, 'Noted By:');
+    $worksheet->setCellValue('G' . $signatureStartRow, 'Received By:');
+    
+    // Use the logged-in user's name for "Prepared By"
+    $worksheet->setCellValue('A' . ($signatureStartRow + 2), $prepared_by);
+    $worksheet->setCellValue('C' . ($signatureStartRow + 2), 'Ken Yang');
+    $worksheet->setCellValue('E' . ($signatureStartRow + 2), 'Mary Grace Rivera');
+    
+    // Auto-adjust column widths for better appearance
+    foreach(range('A','H') as $columnID) {
+        $worksheet->getColumnDimension($columnID)->setAutoSize(true);
+    }
+    
+    // Generate filename with prepared by name for easier identification
+    $sanitizedPreparedBy = preg_replace('/[^A-Za-z0-9]/', '_', $prepared_by);
+    $filename = 'PO_' . str_pad($order_id, 6, '0', STR_PAD_LEFT) . '_' . 
+                preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
+                $sanitizedPreparedBy . '_' . 
+                date('Ymd_His') . '.xlsx';
+    
+    // Set headers for download
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    
+    // Save to output
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    
+    // Log the P.O generation for audit purposes
+    error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . ", Prepared By: $prepared_by, User Role: $user_role");
+    
+} catch (Exception $e) {
+    error_log("Error generating P.O.: " . $e->getMessage());
+    die('Error generating P.O.: ' . $e->getMessage());
 }
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Purchase Order - <?php echo $po_number; ?></title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        
-        .po-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        
-        .header {
-            background-color: #f97316;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .company-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 10px;
-        }
-        
-        .logo {
-            width: 40px;
-            height: 40px;
-            background-color: white;
-            color: #f97316;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 10px;
-            border-radius: 5px;
-        }
-        
-        .details-section {
-            padding: 20px;
-        }
-        
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .detail-box {
-            border: 2px solid #e5e7eb;
-        }
-        
-        .detail-header {
-            background-color: #f97316;
-            color: white;
-            padding: 8px 12px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .detail-content {
-            padding: 12px;
-            min-height: 60px;
-        }
-        
-        .po-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #fff7ed;
-            border: 1px solid #fed7aa;
-        }
-        
-        .po-info-item {
-            text-align: center;
-        }
-        
-        .po-info-label {
-            font-weight: bold;
-            color: #c2410c;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-        
-        .po-info-value {
-            font-size: 14px;
-            color: #1f2937;
-        }
-        
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        
-        .items-table th {
-            background-color: #f97316;
-            color: white;
-            padding: 12px 8px;
-            text-align: left;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .items-table td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 11px;
-            vertical-align: top;
-        }
-        
-        .items-table tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
-        
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        
-        .total-row {
-            background-color: #fff7ed !important;
-            font-weight: bold;
-        }
-        
-        .notes-section {
-            padding: 0 20px 20px;
-        }
-        
-        .notes-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        
-        .notes-box {
-            border: 1px solid #e5e7eb;
-        }
-        
-        .notes-header {
-            background-color: #f97316;
-            color: white;
-            padding: 8px 12px;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        
-        .notes-content {
-            padding: 12px;
-            min-height: 40px;
-            font-size: 11px;
-            line-height: 1.4;
-        }
-        
-        .signature-section {
-            padding: 20px;
-            border-top: 2px solid #e5e7eb;
-        }
-        
-        .signature-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 20px;
-            text-align: center;
-        }
-        
-        .signature-box {
-            border-top: 1px solid #374151;
-            padding-top: 8px;
-            margin-top: 40px;
-        }
-        
-        .signature-label {
-            font-size: 11px;
-            color: #6b7280;
-            font-weight: bold;
-        }
-        
-        .print-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #10b981;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .print-button:hover {
-            background-color: #059669;
-        }
-        
-        @media print {
-            body {
-                background-color: white;
-                padding: 0;
-            }
-            
-            .print-button {
-                display: none;
-            }
-            
-            .po-container {
-                box-shadow: none;
-                max-width: none;
-            }
-        }
-    </style>
-</head>
-<body>
-    <button class="print-button" onclick="window.print()">
-        🖨️ Print P.O.
-    </button>
-
-    <div class="po-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="company-info">
-                <div class="logo">NH</div>
-                <h1>Purchase Order</h1>
-            </div>
-        </div>
-
-        <!-- Details Section -->
-        <div class="details-section">
-            <!-- TO and Purchased By -->
-            <div class="details-grid">
-                <div class="detail-box">
-                    <div class="detail-header">TO:</div>
-                    <div class="detail-content">
-                        <strong><?php echo htmlspecialchars($supplierInfo['name']); ?></strong><br>
-                        <?php if ($supplierInfo['contact']): ?>
-                            <?php echo htmlspecialchars($supplierInfo['contact']); ?><br>
-                        <?php endif; ?>
-                        <?php if ($supplierInfo['address']): ?>
-                            <?php echo htmlspecialchars($supplierInfo['address']); ?><br>
-                        <?php endif; ?>
-                        <?php if ($supplierInfo['phone']): ?>
-                            Phone: <?php echo htmlspecialchars($supplierInfo['phone']); ?><br>
-                        <?php endif; ?>
-                        <?php if ($supplierInfo['email']): ?>
-                            Email: <?php echo htmlspecialchars($supplierInfo['email']); ?>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <div class="detail-box">
-                    <div class="detail-header">Purchased By:</div>
-                    <div class="detail-content">
-                        <strong>NHCC</strong><br>
-                        2nd Floor, MC Premiere, Quezon City Metro Manila<br>
-                        Mobile Number: +63971-3355665<br>
-                        E-mail: noblehomecoact@gmail.com
-                    </div>
-                </div>
-            </div>
-
-            <!-- P.O Info -->
-            <div class="po-info">
-                <div class="po-info-item">
-                    <div class="po-info-label">P.O Date</div>
-                    <div class="po-info-value"><?php echo $po_date; ?></div>
-                </div>
-                <div class="po-info-item">
-                    <div class="po-info-label">P.O Number</div>
-                    <div class="po-info-value"><?php echo $po_number; ?></div>
-                </div>
-                <div class="po-info-item">
-                    <div class="po-info-label">Payment Terms</div>
-                    <div class="po-info-value"><?php echo htmlspecialchars($payment_terms ?: 'As agreed'); ?></div>
-                </div>
-            </div>
-
-            <!-- Delivery Details -->
-            <?php if ($delivery_details): ?>
-            <div class="po-info">
-                <div class="po-info-item" style="grid-column: 1 / -1;">
-                    <div class="po-info-label">Delivery Details</div>
-                    <div class="po-info-value"><?php echo htmlspecialchars($delivery_details); ?></div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <!-- Items Table -->
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th style="width: 8%;">Item No.</th>
-                        <th style="width: 25%;">Item Name</th>
-                        <th style="width: 25%;">Specification</th>
-                        <th style="width: 8%;">Unit</th>
-                        <th style="width: 10%;">Quantity</th>
-                        <th style="width: 12%;">Unit Price</th>
-                        <th style="width: 12%;">Total Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($supplierItems as $index => $item): ?>
-                    <tr>
-                        <td class="text-center"><?php echo $index + 1; ?></td>
-                        <td>
-                            <strong><?php echo htmlspecialchars($item['product_name']); ?></strong><br>
-                            <small><?php echo htmlspecialchars($item['codename']); ?></small>
-                        </td>
-                        <td>
-                            <?php echo htmlspecialchars($item['size']); ?><br>
-                            <small><?php echo htmlspecialchars($item['variant_color']); ?></small>
-                        </td>
-                        <td class="text-center">pcs</td>
-                        <td class="text-center"><?php echo $item['quantity']; ?></td>
-                        <td class="text-right">₱<?php echo number_format($item['price'], 2); ?></td>
-                        <td class="text-right">₱<?php echo number_format($item['subtotal'], 2); ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                    
-                    <!-- Empty rows for spacing -->
-                    <?php for ($i = count($supplierItems); $i < 8; $i++): ?>
-                    <tr>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                    </tr>
-                    <?php endfor; ?>
-                    
-                    <!-- Total Row -->
-                    <tr class="total-row">
-                        <td colspan="6" class="text-right" style="font-weight: bold; font-size: 14px;">TOTAL:</td>
-                        <td class="text-right" style="font-weight: bold; font-size: 14px;">₱<?php echo number_format($total, 2); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Notes Section -->
-        <div class="notes-section">
-            <div class="notes-grid">
-                <?php if ($conditions): ?>
-                <div class="notes-box">
-                    <div class="notes-header">Condition and Other Special Instruction</div>
-                    <div class="notes-content"><?php echo nl2br(htmlspecialchars($conditions)); ?></div>
-                </div>
-                <?php else: ?>
-                <div class="notes-box">
-                    <div class="notes-header">Condition and Other Special Instruction</div>
-                    <div class="notes-content">&nbsp;</div>
-                </div>
-                <?php endif; ?>
-
-                <?php if ($additional_notes): ?>
-                <div class="notes-box">
-                    <div class="notes-header">Additional Notes:</div>
-                    <div class="notes-content"><?php echo nl2br(htmlspecialchars($additional_notes)); ?></div>
-                </div>
-                <?php else: ?>
-                <div class="notes-box">
-                    <div class="notes-header">Additional Notes:</div>
-                    <div class="notes-content">&nbsp;</div>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-            <div class="signature-grid">
-                <div>
-                    <div class="signature-box">
-                        <div class="signature-label">Prepared By:</div>
-                        <div style="font-weight: bold; margin-top: 5px;"><?php echo htmlspecialchars($prepared_by); ?></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="signature-box">
-                        <div class="signature-label">Approved By:</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="signature-box">
-                        <div class="signature-label">Noted By:</div>
-                        <div style="font-weight: bold; margin-top: 5px;">Mary Grace Rivera</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="signature-box">
-                        <div class="signature-label">Received By:</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Auto-print dialog when page loads (optional)
-        // window.onload = function() {
-        //     setTimeout(function() {
-        //         window.print();
-        //     }, 1000);
-        // };
-    </script>
-</body>
-</html>

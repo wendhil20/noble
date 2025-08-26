@@ -8,7 +8,7 @@ if (isset($_SESSION['noble_user'])) {
     $redirect = match ($role) {
         'superadmin', 'admin' => "../admin/client/dashboard.php",
         'sales' => "../admin/orders/ordering",
-        'accountant' => "../admin/accountant/dashboard",
+        'accountant' => "../admin/accountant/accountant",
         'productspecialist' => "../admin/shop/adminshop",
         'accountant' => "../admin/accountant/dashboard",
         'logistic' => "../admin/client/monitortracking",

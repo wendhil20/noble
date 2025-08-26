@@ -39,9 +39,15 @@ $material_querys = "
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    LEFT JOIN product_colors pc 
+        ON pc.product_id = p.id
+       AND pc.id = (
+           SELECT MIN(pc2.id) 
+           FROM product_colors pc2 
+           WHERE pc2.product_id = p.id
+       )
     WHERE pv.discount = 30
-    ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
+    ORDER BY pv.percent ASC, p.id ASC
 ";
 $material_results = mysqli_query($conn, $material_querys);
 
@@ -66,13 +72,20 @@ $material_querysone = "
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    LEFT JOIN product_colors pc 
+        ON pc.id = (
+            SELECT MIN(pc2.id) 
+            FROM product_colors pc2 
+            WHERE pc2.product_id = p.id
+        )
     WHERE pv.discount BETWEEN 1 AND 15
+    GROUP BY p.id
     ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
 ";
 $material_resultsone = mysqli_query($conn, $material_querysone);
 
-// 5. Fetch "new" status product variants - FIXED: corrected comments
+
+// 5. Fetch "new" status product variants - FIXED: added descrip6, descrip7 from products table
 $material_querystwo = "
     SELECT 
         pv.*,
@@ -84,8 +97,8 @@ $material_querystwo = "
         p.codename,
         p.main_image,
         p.description,
-        p.descrip6,                 -- Description 6 from products table
-        p.descrip7,                 -- Description 7 from products table
+        p.descrip6,   -- Extra description field 6 from products table
+        p.descrip7,   -- Extra description field 7 from products table
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
@@ -95,9 +108,12 @@ $material_querystwo = "
     INNER JOIN products p ON pt.product_id = p.id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE pv.status = 'new'
-    ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
+    GROUP BY pv.id   -- group by variant para isang kulay lang ma-fetch
+    ORDER BY pv.percent ASC, p.id ASC
 ";
 $material_resultstwo = mysqli_query($conn, $material_querystwo);
+
+
 
 // 6. Products without discount - OPTIMIZED with consistent field selection
 $discount_result = mysqli_query(
@@ -217,7 +233,8 @@ $sql = "SELECT filename FROM discount_images ORDER BY uploaded_at DESC";
 $slideresult = $conn->query($sql);
 
 // Optional: Error handling function for debugging
-function handleQueryError($conn, $query_name) {
+function handleQueryError($conn, $query_name)
+{
     if (mysqli_error($conn)) {
         error_log("Database Error in $query_name: " . mysqli_error($conn));
         return false;
@@ -522,133 +539,136 @@ handleQueryError($conn, "New Status Query");
 
 
 
-<section class="bg-orange-400 text-white py-1 px-2 shadow-md">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <section class="bg-orange-400 text-white py-1 px-2 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 
-        <!-- Discount Text -->
-        <div class="flex items-center gap-3">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
-            </svg>
-            <p class="text-lg font-semibold">
-                🎉 Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
-            </p>
+            <!-- Discount Text -->
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
+                </svg>
+                <p class="text-lg font-semibold">
+                    🎉 Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
+                </p>
+            </div>
+
+            <!-- Action Button -->
+            <a href="allproduct.php?discount=all"
+                class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
+                Shop Now
+            </a>
         </div>
-
-        <!-- Action Button -->
-        <a href="allproduct.php?discount=all"
-            class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
-            Shop Now
-        </a>
-    </div>
-</section>
+    </section>
 
 
-<!-- Scrolling Text -->
-<div class="overflow-hidden bg-orange-500 text-white">
-  <div class="flex animate-marquee whitespace-nowrap">
-    <!-- Unang set -->
-    <span class="mx-10">🔥 Big Sale Coming Soon!</span>
-    <span class="mx-10">🎉 Exclusive Discounts Await!</span>
-    <span class="mx-10">🛒 Shop Now & Save More!</span>
-    <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
+    <!-- Scrolling Text -->
+    <div class="overflow-hidden bg-orange-500 text-white">
+        <div class="flex animate-marquee whitespace-nowrap">
+            <!-- Unang set -->
+            <span class="mx-10">🔥 Big Sale Coming Soon!</span>
+            <span class="mx-10">🎉 Exclusive Discounts Await!</span>
+            <span class="mx-10">🛒 Shop Now & Save More!</span>
+            <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
 
-    <!-- Duplicate set para tuloy-tuloy -->
-    <span class="mx-10">🔥 Big Sale Coming Soon!</span>
-    <span class="mx-10">🎉 Exclusive Discounts Await!</span>
-    <span class="mx-10">🛒 Shop Now & Save More!</span>
-    <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
-  </div>
-</div>
-
-<style>
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-.animate-marquee {
-  display: inline-flex;
-  min-width: 200%; /* para may continuous na kopya */
-  animation: marquee 20s linear infinite;
-}
-</style>
-
-<!-- POPUP MODAL -->
-<div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-  <div class="bg-gradient-to-b from-orange-500 to-orange-600 rounded-2xl shadow-2xl max-w-sm w-full p-6 relative text-center text-white">
-    <!-- Close Button -->
-    <button onclick="closePopup()" class="absolute top-2 right-2 text-white hover:text-black bg-black/20 rounded-full px-2">✕</button>
-    
-    <!-- Offer Content -->
-    <h2 class="text-3xl font-extrabold mb-4 animate-bounce"> Discount Offers!</h2>
-    <p class="text-lg mb-6">Choose your deal and start saving!</p>
-    
-    <!-- 20% OFF -->
-    <div class="mb-4">
-      <p class="text-xl font-bold mb-2">🔥 Get <span class="text-yellow-300 text-2xl">20% OFF!</span></p>
-      <a href="allproduct.php?discount=20" 
-        class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
-        Shop 20% OFF!
-      </a>
+            <!-- Duplicate set para tuloy-tuloy -->
+            <span class="mx-10">🔥 Big Sale Coming Soon!</span>
+            <span class="mx-10">🎉 Exclusive Discounts Await!</span>
+            <span class="mx-10">🛒 Shop Now & Save More!</span>
+            <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
+        </div>
     </div>
 
-    <!-- Divider -->
-    <div class="my-4 border-t border-white/30"></div>
+    <style>
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
 
-    <!-- 30% OFF -->
-    <div>
-      <p class="text-xl font-bold mb-2">🚀 Get <span class="text-yellow-300 text-2xl">30% OFF</span></p>
-      <a href="allproduct.php?discount=30" 
-        class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
-        Shop 30% OFF
-      </a>
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .animate-marquee {
+            display: inline-flex;
+            min-width: 200%;
+            /* para may continuous na kopya */
+            animation: marquee 20s linear infinite;
+        }
+    </style>
+
+    <!-- POPUP MODAL -->
+    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-gradient-to-b from-orange-500 to-orange-600 rounded-2xl shadow-2xl max-w-sm w-full p-6 relative text-center text-white">
+            <!-- Close Button -->
+            <button onclick="closePopup()" class="absolute top-2 right-2 text-white hover:text-black bg-black/20 rounded-full px-2">✕</button>
+
+            <!-- Offer Content -->
+            <h2 class="text-3xl font-extrabold mb-4 animate-bounce"> Discount Offers!</h2>
+            <p class="text-lg mb-6">Choose your deal and start saving!</p>
+
+            <!-- 20% OFF -->
+            <div class="mb-4">
+                <p class="text-xl font-bold mb-2">🔥 Get <span class="text-yellow-300 text-2xl">20% OFF!</span></p>
+                <a href="allproduct.php?discount=20"
+                    class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
+                    Shop 20% OFF!
+                </a>
+            </div>
+
+            <!-- Divider -->
+            <div class="my-4 border-t border-white/30"></div>
+
+            <!-- 30% OFF -->
+            <div>
+                <p class="text-xl font-bold mb-2">🚀 Get <span class="text-yellow-300 text-2xl">30% OFF</span></p>
+                <a href="allproduct.php?discount=30"
+                    class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
+                    Shop 30% OFF
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<script>
-function openPopup() {
-  document.getElementById('promoPopup').classList.remove('hidden');
-  localStorage.setItem("lastPopupTime", Date.now()); // save time opened
-}
+    <script>
+        function openPopup() {
+            document.getElementById('promoPopup').classList.remove('hidden');
+            localStorage.setItem("lastPopupTime", Date.now()); // save time opened
+        }
 
-function closePopup() {
-  document.getElementById('promoPopup').classList.add('hidden');
-}
+        function closePopup() {
+            document.getElementById('promoPopup').classList.add('hidden');
+        }
 
-// check timing sequence
-function checkPopupSchedule() {
-  const lastTime = localStorage.getItem("lastPopupTime");
-  const now = Date.now();
+        // check timing sequence
+        function checkPopupSchedule() {
+            const lastTime = localStorage.getItem("lastPopupTime");
+            const now = Date.now();
 
-  if (!lastTime) {
-    // First time visitor → show after 5s
-    setTimeout(openPopup, 5000);
-  } else {
-    const elapsed = (now - lastTime) / 1000; // seconds passed
-    
-    if (elapsed >= 1200) { 
-      // 20 mins later
-      openPopup();
-    } else if (elapsed >= 300) { 
-      // 5 mins later
-      openPopup();
-    } else {
-      // else wala pa
-      console.log("Popup will wait, elapsed: " + elapsed + "s");
-    }
-  }
-}
+            if (!lastTime) {
+                // First time visitor → show after 5s
+                setTimeout(openPopup, 5000);
+            } else {
+                const elapsed = (now - lastTime) / 1000; // seconds passed
 
-// Run check on page load
-checkPopupSchedule();
-</script>
+                if (elapsed >= 1200) {
+                    // 20 mins later
+                    openPopup();
+                } else if (elapsed >= 300) {
+                    // 5 mins later
+                    openPopup();
+                } else {
+                    // else wala pa
+                    console.log("Popup will wait, elapsed: " + elapsed + "s");
+                }
+            }
+        }
+
+        // Run check on page load
+        checkPopupSchedule();
+    </script>
 
 
     <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
@@ -1500,7 +1520,7 @@ checkPopupSchedule();
                     $empty = 5 - $full - $half;
                     ?>
                     <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
@@ -1509,7 +1529,7 @@ checkPopupSchedule();
                             </div>
 
                             <!-- Product Image -->
-                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['main_image'])): ?>
                                     <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
@@ -1648,7 +1668,7 @@ checkPopupSchedule();
                     $empty = 5 - $full - $half;
                     ?>
                     <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
@@ -1657,14 +1677,13 @@ checkPopupSchedule();
                             </div>
 
                             <!-- Product Image -->
-                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-1">
                                 <?php if (!empty($row['main_image'])): ?>
                                     <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                 <?php endif; ?>
-
                             </div>
 
                             <!-- Product Info -->
@@ -1733,146 +1752,146 @@ checkPopupSchedule();
 
 
 
-<section class="w-full bg-white py-20 px-6 border-t border-gray-200">
-    <div class="max-w-7xl mx-auto">
-        <!-- Section Header -->
-        <div class="text-center mb-16">
-            <div class="inline-block mb-6">
-                <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                    Browse Background
-                </h2>
-                <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
-            </div>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                Discover our premium collection through detailed product demonstrations and professional showcases
-            </p>
-        </div>
-
-        <!-- Video Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-
-            <!-- Video Item 1 -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                        <source src="../../video/a.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+    <section class="w-full bg-white py-20 px-6 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <div class="inline-block mb-6">
+                    <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+                        Browse Background
+                    </h2>
+                    <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
                 </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
-                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Premium waterproof panels designed for contemporary interior applications</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-                            Premium
-                        </span>
-                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
-                            View Details 
-                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Item 2 -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                        <source src="../../video/b.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
-                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Professional styling concepts and innovative design solutions</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-                            Inspiration
-                        </span>
-                      <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
-    Explore Ideas
-    <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-    </svg>
-</a>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Item 3 -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                        <source src="../../video/c.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
-                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Featured products showcased in real-world applications</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-                            Featured
-                        </span>
-                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
-                            Shop Collection
-                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Item 4 -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
-                <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
-                    <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                        <source src="../../video/d.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                </div>
-                <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">World Bex</h3>
-                    <p class="text-gray-600 mb-4 leading-relaxed flex-1">Thank You for Visiting Us at WORLDBEX 2025! 🎉🏡
-We truly appreciate your time, support, and interest in Noblehome Depot at WORLDBEX 2025! Your presence made this event even more special, and we’re excited to help bring your home and construction projects to life.</p>
-                    <div class="flex items-center justify-between">
-                        <span class="bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-                            Event
-                        </span>
-                        <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
-                            Learn More
-                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Bottom CTA -->
-        <div class="text-center mt-16">
-            <div class="max-w-lg mx-auto mb-8">
-                <p class="text-lg text-gray-600 leading-relaxed mb-6">
-                    Ready to explore our complete product portfolio?
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                    Discover our premium collection through detailed product demonstrations and professional showcases
                 </p>
-                <button class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[200px]">
-                    View All Products
-                </button>
+            </div>
+
+            <!-- Video Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+                <!-- Video Item 1 -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <source src="../../video/a.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
+                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Premium waterproof panels designed for contemporary interior applications</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                                Premium
+                            </span>
+                            <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                                View Details
+                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Item 2 -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <source src="../../video/b.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
+                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Professional styling concepts and innovative design solutions</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                                Inspiration
+                            </span>
+                            <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                                Explore Ideas
+                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Item 3 -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <source src="../../video/c.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
+                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Featured products showcased in real-world applications</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                                Featured
+                            </span>
+                            <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                                Shop Collection
+                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Item 4 -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                    <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
+                        <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <source src="../../video/d.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">World Bex</h3>
+                        <p class="text-gray-600 mb-4 leading-relaxed flex-1">Thank You for Visiting Us at WORLDBEX 2025! 🎉🏡
+                            We truly appreciate your time, support, and interest in Noblehome Depot at WORLDBEX 2025! Your presence made this event even more special, and we’re excited to help bring your home and construction projects to life.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                                Event
+                            </span>
+                            <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                                Learn More
+                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom CTA -->
+            <div class="text-center mt-16">
+                <div class="max-w-lg mx-auto mb-8">
+                    <p class="text-lg text-gray-600 leading-relaxed mb-6">
+                        Ready to explore our complete product portfolio?
+                    </p>
+                    <button class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[200px]">
+                        View All Products
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
@@ -1947,7 +1966,7 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                             </div>
 
                             <!-- Product Image -->
-                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['main_image'])): ?>
                                     <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
@@ -2032,8 +2051,8 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
-            <h2 class="text-2xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="fade-up">
+            <h2 class="text-4xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
+            <h2 class="text-2xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">
                 Get Up to <span class="text-red-500">30% Discount</span> on Select Items!
             </h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
@@ -2063,17 +2082,18 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
         </style>
 
         <!-- Swiper Container -->
-        <div class="swiper mySwiper-material">
+        <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                <?php while ($row = mysqli_fetch_assoc($material_results)) :
+                <?php while ($row = mysqli_fetch_assoc($material_results)) : ?>
+                    <?php
                     $base = (float)$row['price'];
                     $percent = (float)($row['percent'] ?? 0);
                     $discount = (float)($row['discount'] ?? 0);
                     $priceWithMarkup = $base + ($base * $percent / 100);
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                ?>
+                    ?>
                     <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
@@ -2082,14 +2102,13 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                             </div>
 
                             <!-- Product Image -->
-                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
                                     <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                 <?php endif; ?>
-
                             </div>
 
                             <!-- Product Info -->
@@ -2097,10 +2116,13 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                                 <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
                                     <?= htmlspecialchars($row['namevariant']) ?>
                                 </h3>
-                                <ul class="text-sm text-gray-700 text-center space-y-1 mb-2 mt-2">
-                                    <li><span class="font-semibold">Color:</span> <?= htmlspecialchars($row['color']) ?></li>
-                                    <li><span class="font-semibold">Size:</span> <?= htmlspecialchars($row['size']) ?></li>
-                                </ul>
+
+                                <!-- View Size & Color -->
+                                <button type="button"
+                                    onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
+                                    class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
+                                    View Size & Color
+                                </button>
 
                                 <!-- Pricing -->
                                 <?php if ($discount > 0): ?>
@@ -2109,7 +2131,6 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                                         ₱<?= number_format($finalPrice, 2) ?>
                                         <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                     </p>
-                                    <!-- Display Origin (Local / International) -->
                                     <p class="text-sm text-gray-600">
                                         Origin:
                                         <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
@@ -2161,6 +2182,33 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                 <?php endwhile; ?>
             </div>
         </div>
+
+        <!-- Shared Modal -->
+        <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center relative">
+                <button onclick="closeModal()"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
+                <h2 class="text-lg font-semibold mb-4">Product Details</h2>
+                <p class="text-gray-700"><span class="font-semibold">Color:</span> <span id="modalColor"></span></p>
+                <p class="text-gray-700"><span class="font-semibold">Size:</span> <span id="modalSize"></span></p>
+            </div>
+        </div>
+
+        <script>
+            function openModal(color, size) {
+                document.getElementById("modalColor").innerText = color;
+                document.getElementById("modalSize").innerText = size;
+                document.getElementById("infoModal").classList.remove("hidden");
+            }
+
+            function closeModal() {
+                document.getElementById("infoModal").classList.add("hidden");
+            }
+            document.getElementById("infoModal").addEventListener("click", function(e) {
+                if (e.target === this) closeModal();
+            });
+        </script>
+
     </section>
 
     <section class="p-6"> <!-- Section Title -->
@@ -2205,8 +2253,8 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
-                Discount Minimal <span class="text-red-600 drop-shadow-sm">up to 15%</span>
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text mb-4 tracking-tight " data-aos="fade-up">
+                Discount Minimal <span class="text-red-700 drop-shadow-sm">up to 15%</span>
             </h2>
             <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
             <p class="text-gray-600 mt-4 text-sm sm:text-base max-w-md mx-auto" data-aos="fade-up" data-aos-delay="200">
@@ -2247,8 +2295,8 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                     $priceWithMarkup = $base + ($base * $percent / 100);
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                     ?>
-                    <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                        <div class="swiper-slide p-2">
+                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
@@ -2257,14 +2305,13 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                             </div>
 
                             <!-- Product Image -->
-                            <div class="aspect-square w-full bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
                                     <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
                                         class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                 <?php endif; ?>
-
                             </div>
 
                             <!-- Product Info -->
@@ -2272,10 +2319,13 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                                 <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
                                     <?= htmlspecialchars($row['namevariant']) ?>
                                 </h3>
-                                <ul class="text-sm text-gray-700 text-center space-y-1 mb-2 mt-2">
-                                    <li><span class="font-semibold">Color:</span> <?= htmlspecialchars($row['color']) ?></li>
-                                    <li><span class="font-semibold">Size:</span> <?= htmlspecialchars($row['size']) ?></li>
-                                </ul>
+
+                                <!-- View Size & Color -->
+                                <button type="button"
+                                    onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
+                                    class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
+                                    View Size & Color
+                                </button>
 
                                 <!-- Pricing -->
                                 <?php if ($discount > 0): ?>
@@ -2284,7 +2334,6 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                                         ₱<?= number_format($finalPrice, 2) ?>
                                         <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                     </p>
-                                    <!-- Display Origin (Local / International) -->
                                     <p class="text-sm text-gray-600">
                                         Origin:
                                         <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
@@ -2336,11 +2385,37 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                 <?php endwhile; ?>
             </div>
         </div>
+
+        <!-- Shared Modal -->
+        <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center relative">
+                <button onclick="closeModal()"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
+                <h2 class="text-lg font-semibold mb-4">Product Details</h2>
+                <p class="text-gray-700"><span class="font-semibold">Color:</span> <span id="modalColor"></span></p>
+                <p class="text-gray-700"><span class="font-semibold">Size:</span> <span id="modalSize"></span></p>
+            </div>
+        </div>
+
+        <script>
+            function openModal(color, size) {
+                document.getElementById("modalColor").innerText = color;
+                document.getElementById("modalSize").innerText = size;
+                document.getElementById("infoModal").classList.remove("hidden");
+            }
+
+            function closeModal() {
+                document.getElementById("infoModal").classList.add("hidden");
+            }
+            document.getElementById("infoModal").addEventListener("click", function(e) {
+                if (e.target === this) closeModal();
+            });
+        </script>
     </section>
 
     <section class="p-5">
         <div class="mb-10 mt-10 text-center">
-            <h2 class="text-4xl font-extrabold text-orange-500 mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
+            <h2 class="text-4xl font-extrabold text-black mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
         </div>
 
@@ -2357,7 +2432,7 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                     $finalPrice = $discount > 0 ? $base_price * (1 - $discount / 100) : $base_price;
                 ?>
                     <div class="swiper-slide h-full p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
+                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
 
                             <!-- NEW Badge -->
                             <div class="absolute top-2 right-2 z-10">
@@ -2370,49 +2445,49 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                                     <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
                                 </div>
                             </div>
-
-                            <!-- Image -->
-                            <div class="w-full aspect-square overflow-hidden rounded-lg bg-gray-50 border border-gray-200 mb-4">
+                            <!-- Product Image -->
+                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
                                 <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= htmlspecialchars($row['type_image']) ?>" loading="lazy" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt="Material Variant" />
+                                    <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                 <?php endif; ?>
                             </div>
 
-
-                            <!-- Info -->
+                            <!-- Product Info -->
                             <div class="mt-auto">
                                 <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
                                     <?= htmlspecialchars($row['namevariant']) ?>
                                 </h3>
-                                <ul class="text-sm text-gray-700 text-center space-y-1 mb-2 mt-2">
-                                    <li><span class="font-semibold">Color:</span> <?= htmlspecialchars($row['color']) ?></li>
-                                    <li><span class="font-semibold">Size:</span> <?= htmlspecialchars($row['size']) ?></li>
-                                </ul>
+
+                                <!-- View Size & Color -->
+                                <button type="button"
+                                    onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
+                                    class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
+                                    View Size & Color
+                                </button>
 
                                 <!-- Pricing -->
                                 <?php if ($discount > 0): ?>
-                                    <p class="text-sm text-gray-400 line-through">₱<?= number_format($base_price, 2) ?></p>
+                                    <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
                                     <p class="text-base text-green-600 font-bold">
                                         ₱<?= number_format($finalPrice, 2) ?>
                                         <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                     </p>
+                                    <p class="text-sm text-gray-600">
+                                        Origin:
+                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
+                                            <?= ucfirst($row['origin']) ?>
+                                        </span>
+                                    </p>
                                 <?php else: ?>
-                                    <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($base_price, 2) ?></p>
+                                    <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
                                 <?php endif; ?>
-
-                                <!-- Origin -->
-                                <p class="text-sm text-gray-600">
-                                    Origin:
-                                    <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                        <?= ucfirst($row['origin']) ?>
-                                    </span>
-                                </p>
 
                                 <!-- Buttons -->
                                 <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy -->
+                                    <!-- Buy Button -->
                                     <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
@@ -2425,16 +2500,17 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                                         </button>
                                     </form>
 
-                                    <!-- Pre-Order -->
+                                    <!-- Pre-Order Button -->
                                     <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
                                         <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name']) ?>">
-                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant']) ?>">
-                                        <input type="hidden" name="variant_id" value="<?= (int)$row['id'] ?>">
+                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
                                         <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
-                                        <input type="hidden" name="variant_price" value="<?= $base_price ?>">
-                                        <input type="hidden" name="total_price" value="<?= $finalPrice ?>">
+                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="return_url" value="index">
 
                                         <button type="submit"
@@ -2448,181 +2524,292 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                         </div>
                     </div>
                 <?php endwhile; ?>
-
-                <!-- Fallback -->
-                <?php if (!$has_new): ?>
-                    <div class="swiper-slide w-full text-center text-gray-500 py-10">
-                        <p class="text-sm italic">No new arrivals at the moment. Please check back later!</p>
-                    </div>
-                <?php endif; ?>
             </div>
         </div>
+
+        <!-- Shared Modal -->
+        <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center relative">
+                <button onclick="closeModal()"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
+                <h2 class="text-lg font-semibold mb-4">Product Details</h2>
+                <p class="text-gray-700"><span class="font-semibold">Color:</span> <span id="modalColor"></span></p>
+                <p class="text-gray-700"><span class="font-semibold">Size:</span> <span id="modalSize"></span></p>
+            </div>
+        </div>
+
+        <script>
+            function openModal(color, size) {
+                document.getElementById("modalColor").innerText = color;
+                document.getElementById("modalSize").innerText = size;
+                document.getElementById("infoModal").classList.remove("hidden");
+            }
+
+            function closeModal() {
+                document.getElementById("infoModal").classList.add("hidden");
+            }
+            document.getElementById("infoModal").addEventListener("click", function(e) {
+                if (e.target === this) closeModal();
+            });
+        </script>
     </section>
 
-<section class="fixed bottom-0 right-4 z-50">
-  <!-- Enhanced Toggle Button (Right Side) -->
-  <button id="togglePromoPanel" class="toggle-btn relative bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-t-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform hover:-translate-y-1 group">
-    <span id="toggleIcon" class="text-lg transition-transform duration-300 group-hover:scale-110">◀</span>
-    <span class="font-semibold text-sm tracking-wide">Products details</span>
-    <div class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-      <span class="text-xs font-bold">!</span>
-    </div>
+  
+
+<!-- Floating Chatbot Widget -->
+<div id="chatbot-widget" class="fixed bottom-5 right-5 z-50">
+  <!-- Toggle Button -->
+  <button 
+    id="chatbot-toggle" 
+    class="w-16 h-16 bg-orange-400 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
+  >
+    <svg id="chat-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+    </svg>
+    <svg id="close-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
   </button>
 
-  <!-- Enhanced Promo Panel -->
-  <div id="promoPanel" class="promo-panel hidden absolute bottom-16 right-0 bg-white/95 backdrop-blur-xl w-[400px] max-w-[90vw] rounded-t-3xl shadow-2xl border border-gray-200/20 overflow-hidden transition-all duration-500 transform">
-    <!-- Panel Header -->
-    <div class="gradient-overlay text-white p-4 relative bg-gradient-to-r from-orange-500 to-orange-600">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-1">Featured Products</h2>
-          <p class="text-orange-100 text-xs opacity-90">Latest collection</p>
+  <!-- Chat Container -->
+  <div 
+    id="chatbot-container" 
+    class="absolute bottom-20 right-0 w-96 h-[500px] bg-white rounded-2xl shadow-2xl transform scale-0 opacity-0 transition-all duration-300 ease-out origin-bottom-right overflow-hidden"
+  >
+    <!-- Header -->
+    <div class="bg-orange-400 text-white p-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+        <h3 class="font-semibold text-lg">Noblehome Assistant</h3>
+      </div>
+      <button id="minimize-chat" class="text-white hover:text-gray-200 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="chat-messages" class="h-80 overflow-y-auto p-4 bg-gray-50 space-y-3">
+      <!-- Welcome Message -->
+      <div class="flex">
+        <div class="bg-white rounded-2xl rounded-bl-sm p-3 max-w-xs shadow-sm">
+          <p class="text-gray-700 text-sm">👋 Hi! I'm your Noblehome product assistant. Ask me about our products, prices, or availability!</p>
         </div>
-        <button id="closePanel" class="text-white/80 hover:text-white transition-colors duration-200">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+      </div>
+    </div>
+
+    <!-- Quick Replies -->
+    <div class="px-4 py-2 bg-gray-50 border-t border-gray-100">
+      <div class="flex flex-wrap gap-2">
+        <button onclick="sendQuickMessage('Show me some products')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full text-xs transition-colors">
+          Show products
+        </button>
+        <button onclick="sendQuickMessage('Best sellers')" class="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full text-xs transition-colors">
+          Best sellers
+        </button>
+        <button onclick="sendQuickMessage('Under ₱500')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-xs transition-colors">
+          Under ₱500
         </button>
       </div>
     </div>
 
-    <!-- Products Container -->
-    <div class="relative">
-      <!-- Products Scroll Container -->
-      <div id="productsContainer" class="overflow-y-auto max-h-80 p-4 space-y-3" style="scrollbar-width: thin;">
-        
-        <?php
-        $promoSql = "SELECT product_name, description, main_image FROM products";
-        $promoResult = $conn->query($promoSql);
-        
-        if ($promoResult && $promoResult->num_rows > 0) {
-            while ($promoRow = $promoResult->fetch_assoc()) {
-                echo '
-                <div class="bg-white rounded-lg shadow-sm hover:shadow-md overflow-hidden group cursor-pointer transition-all duration-300 border border-gray-100 expandable-card">
-                    <div class="flex">
-                        <div class="w-20 h-20 flex-shrink-0 overflow-hidden">
-                            <img src="../../' . htmlspecialchars($promoRow['main_image']) . '"
-                                 alt="' . htmlspecialchars($promoRow['product_name']) . '"
-                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
-                        </div>
-                        <div class="flex-1 p-3">
-                            <div class="flex items-start justify-between">
-                                <h3 class="font-medium text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors flex-1">
-                                    ' . htmlspecialchars($promoRow['product_name']) . '
-                                </h3>
-                                <button class="expand-btn ml-2 text-gray-400 hover:text-orange-600 transition-colors">
-                                    <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <p class="description text-xs text-gray-600 leading-relaxed line-clamp-2 transition-all duration-300">
-                                ' . htmlspecialchars($promoRow['description']) . '
-                            </p>
-                        </div>
-                    </div>
-                </div>';
-            }
-        } else {
-            echo '
-            <div class="flex items-center justify-center py-8">
-                <div class="text-center">
-                    <div class="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-medium text-gray-900 mb-1">No Products</h3>
-                    <p class="text-xs text-gray-500">Check back later</p>
-                </div>
-            </div>';
-        }
-        ?>
-        
+    <!-- Input Area -->
+    <div class="p-4 bg-white border-t border-gray-100">
+      <div class="flex items-center space-x-2">
+        <input 
+          id="chat-input" 
+          type="text" 
+          placeholder="Ask about products..." 
+          class="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          onkeypress="handleChatKeyPress(event)"
+        />
+        <button 
+          id="send-btn"
+          onclick="sendMessage()" 
+          class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
-</section>
+</div>
+
+<style>
+.typing-indicator {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-radius: 50%;
+  border-top-color: #e79a25ff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.chat-message img {
+  max-width: 150px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+</style>
 
 <script>
-  const btnPromoToggle = document.getElementById("togglePromoPanel");
-  const divPromoPanel = document.getElementById("promoPanel");
-  const toggleIcon = document.getElementById("toggleIcon");
-  const closePanel = document.getElementById("closePanel");
-  const scrollLeft = document.getElementById("scrollLeft");
-  const scrollRight = document.getElementById("scrollRight");
-  const productsContainer = document.getElementById("productsContainer");
+let chatOpen = false;
 
-  // Toggle panel function
-  function togglePanel() {
-    divPromoPanel.classList.toggle("hidden");
-    toggleIcon.textContent = divPromoPanel.classList.contains("hidden") ? "◀" : "▶";
+// Toggle chat
+document.getElementById('chatbot-toggle').addEventListener('click', function() {
+  const container = document.getElementById('chatbot-container');
+  const chatIcon = document.getElementById('chat-icon');
+  const closeIcon = document.getElementById('close-icon');
+  
+  if (!chatOpen) {
+    container.classList.remove('scale-0', 'opacity-0');
+    container.classList.add('scale-100', 'opacity-100');
+    chatIcon.classList.add('hidden');
+    closeIcon.classList.remove('hidden');
+    chatOpen = true;
+  } else {
+    container.classList.add('scale-0', 'opacity-0');
+    container.classList.remove('scale-100', 'opacity-100');
+    chatIcon.classList.remove('hidden');
+    closeIcon.classList.add('hidden');
+    chatOpen = false;
   }
+});
 
-  // Event listeners
-  btnPromoToggle.addEventListener("click", togglePanel);
-  closePanel.addEventListener("click", togglePanel);
+// Minimize chat
+document.getElementById('minimize-chat').addEventListener('click', function() {
+  document.getElementById('chatbot-toggle').click();
+});
 
-  // Expand/Collapse functionality
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.expand-btn')) {
-      const card = e.target.closest('.expandable-card');
-      const description = card.querySelector('.description');
-      const expandBtn = card.querySelector('.expand-btn svg');
-      
-      if (description.classList.contains('line-clamp-2')) {
-        // Expand
-        description.classList.remove('line-clamp-2');
-        description.style.maxHeight = 'none';
-        expandBtn.style.transform = 'rotate(180deg)';
-      } else {
-        // Collapse
-        description.classList.add('line-clamp-2');
-        description.style.maxHeight = '';
-        expandBtn.style.transform = 'rotate(0deg)';
-      }
-    }
-  });
+function handleChatKeyPress(event) {
+  if (event.key === 'Enter') {
+    sendMessage();
+  }
+}
 
-  // Hide scrollbar
-  productsContainer.style.scrollbarWidth = 'none';
-  productsContainer.style.msOverflowStyle = 'none';
+function sendQuickMessage(message) {
+  document.getElementById('chat-input').value = message;
+  sendMessage();
+}
 
-  // Close panel when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!divPromoPanel.contains(e.target) && !btnPromoToggle.contains(e.target)) {
-      if (!divPromoPanel.classList.contains("hidden")) {
-        togglePanel();
-      }
-    }
-  });
-
-  // Add CSS for line-clamp if not available
-  const style = document.createElement('style');
-  style.textContent = `
-    .line-clamp-1 {
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .product-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .promo-panel {
-      backdrop-filter: blur(16px);
-    }
-    #productsContainer::-webkit-scrollbar {
-      display: none;
-    }
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const messagesContainer = document.getElementById('chat-messages');
+  const sendBtn = document.getElementById('send-btn');
+  
+  const message = input.value.trim();
+  if (!message) return;
+  
+  // Add user message
+  const userMessage = document.createElement('div');
+  userMessage.className = 'flex justify-end';
+  userMessage.innerHTML = `
+    <div class="bg-blue-600 text-white rounded-2xl rounded-br-sm p-3 max-w-xs">
+      <p class="text-sm">${escapeHtml(message)}</p>
+    </div>
   `;
-  document.head.appendChild(style);
+  messagesContainer.appendChild(userMessage);
+  
+  input.value = '';
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Show typing indicator
+  const typingMessage = document.createElement('div');
+  typingMessage.className = 'flex';
+  typingMessage.id = 'typing-message';
+  typingMessage.innerHTML = `
+    <div class="bg-white rounded-2xl rounded-bl-sm p-3 shadow-sm">
+      <div class="typing-indicator"></div>
+      <span class="ml-2 text-gray-500 text-sm">Thinking...</span>
+    </div>
+  `;
+  messagesContainer.appendChild(typingMessage);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Disable send button
+  sendBtn.disabled = true;
+  
+  try {
+    const response = await fetch('chatbot_api.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question: message})
+    });
+    
+    const data = await response.json();
+    
+    // Remove typing indicator
+    document.getElementById('typing-message')?.remove();
+    
+    // Add bot response
+    const botMessage = document.createElement('div');
+    botMessage.className = 'flex';
+    
+    let reply = '';
+    if (data.error) {
+      reply = `Sorry, there was an error: ${data.error}`;
+    } else {
+      reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't process your request.";
+    }
+    
+    botMessage.innerHTML = `
+      <div class="bg-white rounded-2xl rounded-bl-sm p-3 max-w-xs shadow-sm">
+        <div class="text-gray-700 text-sm">${formatChatMessage(reply)}</div>
+      </div>
+    `;
+    messagesContainer.appendChild(botMessage);
+    
+  } catch (error) {
+    document.getElementById('typing-message')?.remove();
+    
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'flex';
+    errorMessage.innerHTML = `
+      <div class="bg-red-100 text-red-700 rounded-2xl rounded-bl-sm p-3 max-w-xs">
+        <p class="text-sm">Sorry, couldn't connect to server.</p>
+      </div>
+    `;
+    messagesContainer.appendChild(errorMessage);
+  }
+  
+  sendBtn.disabled = false;
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatChatMessage(message) {
+  // Convert markdown images to HTML
+  message = message.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="../../$2" alt="$1" class="rounded shadow-sm">');
+  
+  // Convert markdown links
+  message = message.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+  
+  // Convert markdown bold
+  message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Convert line breaks
+  message = message.replace(/\n/g, '<br>');
+  
+  // Format prices
+  message = message.replace(/₱(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="font-semibold text-green-600">₱$1</span>');
+  
+  return message;
+}
 </script>
 
 
@@ -2969,7 +3156,7 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
 
                     // Medium screens (768px - 1023px): 4 products - MEDIUM
                     768: {
-                        slidesPerView: 4,
+                        slidesPerView: 3,
                         spaceBetween: 15
                     },
 
@@ -2979,11 +3166,11 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                         spaceBetween: 18
                     },
                     1280: {
-                        slidesPerView: 5,
+                        slidesPerView: 7,
                         spaceBetween: 20
                     },
                     1536: {
-                        slidesPerView: 5,
+                        slidesPerView: 7,
                         spaceBetween: 25
                     }
                 }
@@ -3008,19 +3195,19 @@ We truly appreciate your time, support, and interest in Noblehome Depot at WORLD
                         spaceBetween: 12
                     },
                     768: {
-                        slidesPerView: 4,
+                        slidesPerView: 3,
                         spaceBetween: 12
                     }, // Medium: 4
                     1024: {
-                        slidesPerView: 5,
+                        slidesPerView: 4,
                         spaceBetween: 15
                     }, // Large: 5
                     1280: {
-                        slidesPerView: 5,
+                        slidesPerView: 4,
                         spaceBetween: 18
                     }, // Extra large: 6 (optional)
                     1536: {
-                        slidesPerView: 5,
+                        slidesPerView: 8,
                         spaceBetween: 20
                     }
                 }

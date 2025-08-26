@@ -132,7 +132,7 @@ try {
                 // Convert and save as WebP (consistent with insertion)
                 if (saveImageAsWebP($tmp_name, $target_path)) {
                     // Store relative path for database (consistent with insertion)
-                    $final_sub_images[] = "../sub_images/" . $new_filename;
+                    $final_sub_images[] = "sub_images/" . $new_filename;
                     echo "Uploaded new sub-image: " . $new_filename . "<br>";
                 }
             }
@@ -174,7 +174,7 @@ try {
 
     // Update Product Basic Info
     $product_name = $conn->real_escape_string($_POST['product_name']);
-    $codename = $conn->real_escape_string($_POST['codename']);
+    $codename = $conn->real_escape_string($_POST['category']); // Form field is 'category' but DB column is 'codename'
     $quantity = intval($_POST['quantity']);
     $description = $conn->real_escape_string($_POST['description'] ?? '');
     $sub_images_json = $conn->real_escape_string(json_encode($final_sub_images));
@@ -378,14 +378,6 @@ try {
                 // Handle variant deletions first
                 if (isset($_POST['delete_variant'][$index])) {
                     foreach ($_POST['delete_variant'][$index] as $variant_id) {
-                        // Get variant image before deletion
-                        $variant_result = $conn->query("SELECT image FROM product_variants WHERE id = $variant_id");
-                        if ($variant_result && $variant_row = $variant_result->fetch_assoc()) {
-                            if (!empty($variant_row['image']) && file_exists("../../" . $variant_row['image'])) {
-                                unlink("../../" . $variant_row['image']);
-                            }
-                        }
-                        
                         $conn->query("DELETE FROM product_variants WHERE id = $variant_id");
                         echo "Deleted variant ID: $variant_id<br>";
                     }
@@ -399,55 +391,19 @@ try {
                     }
 
                     $size = $conn->real_escape_string($_POST['variant_size'][$index][$v_index] ?? '');
-                    $color = $conn->real_escape_string($_POST['variant_color'][$index][$v_index] ?? '');
-                    $original_price = floatval($_POST['variant_original_price'][$index][$v_index] ?? 0);
                     $price = floatval($_POST['variant_price'][$index][$v_index] ?? 0);
                     $percent = floatval($_POST['variant_percent'][$index][$v_index] ?? 0);
                     $discount = floatval($_POST['variant_discount'][$index][$v_index] ?? 0);
                     $namevariant = $conn->real_escape_string($_POST['variant_namevariant'][$index][$v_index] ?? '');
 
-                    // Calculate final price
-                    $final_price = $price + ($price * $percent / 100);
-
-                    // Handle variant image upload
-                    $variant_image_path = '';
-                    
-                    if ($variant_id !== 'new') {
-                        // Get existing image path
-                        $existing_variant = $conn->query("SELECT image FROM product_variants WHERE id = $variant_id")->fetch_assoc();
-                        $variant_image_path = $existing_variant['image'] ?? '';
-                    }
-
-                    if (isset($_FILES['variant_image']['tmp_name'][$index][$v_index]) && $_FILES['variant_image']['error'][$index][$v_index] == 0) {
-                        $upload_dir = "../../uploads/";
-                        
-                        if (!is_dir($upload_dir)) {
-                            mkdir($upload_dir, 0777, true);
-                        }
-                        
-                        $file_name = $_FILES['variant_image']['name'][$index][$v_index];
-                        $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-                        
-                        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                        if (in_array(strtolower($file_extension), $allowed_extensions)) {
-                            $new_filename = uniqid('img_', true) . '_variant.webp';
-                            $target_path = $upload_dir . $new_filename;
-                            
-                            if (saveImageAsWebP($_FILES['variant_image']['tmp_name'][$index][$v_index], $target_path)) {
-                                // Delete old variant image if updating
-                                if (!empty($variant_image_path) && file_exists("../../" . $variant_image_path)) {
-                                    unlink("../../" . $variant_image_path);
-                                }
-                                
-                                $variant_image_path = "uploads/" . $new_filename;
-                            }
-                        }
-                    }
+                    // Calculate final price with markup and discount
+                    $markup_price = $price + ($price * $percent / 100);
+                    $final_price = $markup_price - ($markup_price * $discount / 100);
 
                     if ($variant_id === 'new') {
                         // Insert new variant
-                        $insert_variant_sql = "INSERT INTO product_variants (type_id, color, size, original_price, price, percent, discount, namevariant, image) 
-                            VALUES ($current_type_id, '$color', '$size', $original_price, $final_price, $percent, $discount, '$namevariant', '$variant_image_path')";
+                        $insert_variant_sql = "INSERT INTO product_variants (type_id, size, price, percent, discount, namevariant) 
+                            VALUES ($current_type_id, '$size', $final_price, $percent, $discount, '$namevariant')";
                         
                         if (!$conn->query($insert_variant_sql)) {
                             throw new Exception("Failed to insert variant: " . $conn->error);
@@ -456,14 +412,11 @@ try {
                     } else {
                         // Update existing variant
                         $update_variant_sql = "UPDATE product_variants SET 
-                            color = '$color',
                             size = '$size',
-                            original_price = $original_price,
                             price = $final_price,
                             percent = $percent,
                             discount = $discount,
-                            namevariant = '$namevariant',
-                            image = '$variant_image_path'
+                            namevariant = '$namevariant'
                             WHERE id = $variant_id";
                         
                         if (!$conn->query($update_variant_sql)) {

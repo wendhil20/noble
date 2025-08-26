@@ -1459,7 +1459,9 @@ if ($user_id) {
             </svg>
           </button>
 
-          <div x-show="productsOpen" x-cloak x-transition class="mt-2 ml-4 space-y-2">
+         <div x-show="productsOpen" x-cloak x-transition 
+     class="mt-2 ml-4 space-y-2 max-h-64 overflow-y-auto pr-2">
+
             <div>
               <button @click="selectedCategory = selectedCategory === 'materials' ? null : 'materials'"
                 class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
@@ -1595,7 +1597,7 @@ if ($user_id) {
             <div>
               <button @click="selectedCategory = selectedCategory === 'lightingfixture' ? null : 'lightingfixture'"
                 class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Lighting Fixture</span>
+                <span>lighting fixture</span>
                 <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'lightingfixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>

@@ -6,20 +6,20 @@ include '../../connection/connect.php';
 // ✅ Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
-    
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $res = $stmt->get_result();
-    
+
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-        
+
         $_SESSION['user_id']    = $user['id'];
         $_SESSION['user_name']  = $user['name'];
         $_SESSION['user_email'] = $user['email'] ?? '';
         $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-        
+
         if (!empty($user['google_id'])) {
             $_SESSION['google_logged_in'] = true;
             $_SESSION['user_picture']     = $user['profile_picture'] ?? null;
@@ -116,19 +116,21 @@ try {
 }
 
 // ✅ Helper function for safe output
-function safe_output($value, $default = '') {
+function safe_output($value, $default = '')
+{
     return htmlspecialchars($value ?? $default, ENT_QUOTES, 'UTF-8');
 }
 
 // ✅ Helper function for price calculation
-function calculate_price($base_price, $percent = 0, $discount = 0) {
+function calculate_price($base_price, $percent = 0, $discount = 0)
+{
     $base = (float)$base_price;
     $markup_percent = (float)$percent;
     $discount_percent = (float)$discount;
-    
+
     $price_with_markup = $base + ($base * $markup_percent / 100);
     $final_price       = $price_with_markup - ($price_with_markup * $discount_percent / 100);
-    
+
     return [
         'original' => $price_with_markup,
         'final'    => $final_price,
@@ -137,13 +139,14 @@ function calculate_price($base_price, $percent = 0, $discount = 0) {
 }
 
 // ✅ Helper function for image processing
-function process_product_images($main_image, $sub_images, $type_image) {
+function process_product_images($main_image, $sub_images, $type_image)
+{
     $images = [];
-    
+
     if (!empty($main_image)) {
         $images[] = '../../' . $main_image;
     }
-    
+
     if (!empty($sub_images)) {
         $sub_images_array = json_decode($sub_images, true);
         if (is_array($sub_images_array)) {
@@ -155,16 +158,16 @@ function process_product_images($main_image, $sub_images, $type_image) {
             }
         }
     }
-    
+
     if (!empty($type_image)) {
         $images[] = '../../' . $type_image;
     }
-    
+
     $images = array_unique($images);
     if (empty($images)) {
         $images[] = '../img/placeholder.jpg';
     }
-    
+
     return $images;
 }
 ?>
@@ -172,18 +175,19 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Display - Noble Store</title>
     <meta name="description" content="Discover high-quality products curated for your lifestyle">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
+
     <!-- AOS Animation -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
 
@@ -222,8 +226,15 @@ function process_product_images($main_image, $sub_images, $type_image) {
         }
 
         @keyframes bubble-bounce {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-30px) scale(1.08); }
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-30px) scale(1.08);
+            }
         }
 
         @keyframes fadeInUp {
@@ -231,6 +242,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -418,9 +430,17 @@ function process_product_images($main_image, $sub_images, $type_image) {
             opacity: 1;
         }
 
-        .gallery-arrow.prev { left: 8px; }
-        .gallery-arrow.next { right: 8px; }
-        .gallery-arrow:hover { background: rgba(0, 0, 0, 0.7); }
+        .gallery-arrow.prev {
+            left: 8px;
+        }
+
+        .gallery-arrow.next {
+            right: 8px;
+        }
+
+        .gallery-arrow:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
 
         .loading-spinner {
             border: 3px solid #f3f3f3;
@@ -432,8 +452,13 @@ function process_product_images($main_image, $sub_images, $type_image) {
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .notification {
@@ -466,7 +491,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
 <body class="bg-gray-50 font-mont">
     <?php include '../navbar/top.php'; ?>
-    
+
     <!-- Main Content -->
     <main class="px-4 py-16">
         <!-- Header Section -->
@@ -478,7 +503,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 <span class="bubble-bounce" style="left: 35%; top: 65%; width: 50px; height: 50px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 75%; top: 15%; width: 80px; height: 80px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            
+
             <div class="relative z-10 text-center">
                 <h1 class="text-5xl md:text-6xl font-black text-transparent bg-gradient-to-r from-orange-400 to-orange-400 bg-clip-text mb-4 tracking-tight" data-aos="fade-up">
                     All Products
@@ -496,16 +521,16 @@ function process_product_images($main_image, $sub_images, $type_image) {
         <section class="max-w-full mx-auto mb-12" data-aos="fade-up" data-aos-delay="300">
             <div class="filter-card rounded-2xl shadow-lg p-6 mb-8">
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    
+
                     <!-- Search Filter -->
                     <div class="lg:col-span-1">
                         <label for="searchFilter" class="block text-sm font-semibold text-gray-700 mb-2">Search Products</label>
                         <div class="relative">
-                            <input type="text" 
-                                   id="searchFilter" 
-                                   placeholder="Search by name..." 
-                                   autocomplete="off"
-                                   class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+                            <input type="text"
+                                id="searchFilter"
+                                placeholder="Search by name..."
+                                autocomplete="off"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
                             <svg class="absolute right-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -534,25 +559,25 @@ function process_product_images($main_image, $sub_images, $type_image) {
                         <div class="space-y-3">
                             <div class="flex items-center gap-4">
                                 <div class="flex-1">
-                                    <input type="range" 
-                                           id="minPrice" 
-                                           class="range-slider w-full" 
-                                           min="0" 
-                                           max="10000" 
-                                           value="0" 
-                                           step="100"
-                                           aria-label="Minimum price">
+                                    <input type="range"
+                                        id="minPrice"
+                                        class="range-slider w-full"
+                                        min="0"
+                                        max="10000"
+                                        value="0"
+                                        step="100"
+                                        aria-label="Minimum price">
                                     <div class="text-xs text-gray-500 mt-1">Min: ₱<span id="minPriceValue">0</span></div>
                                 </div>
                                 <div class="flex-1">
-                                    <input type="range" 
-                                           id="maxPrice" 
-                                           class="range-slider w-full" 
-                                           min="0" 
-                                           max="10000" 
-                                           value="10000" 
-                                           step="100"
-                                           aria-label="Maximum price">
+                                    <input type="range"
+                                        id="maxPrice"
+                                        class="range-slider w-full"
+                                        min="0"
+                                        max="10000"
+                                        value="10000"
+                                        step="100"
+                                        aria-label="Maximum price">
                                     <div class="text-xs text-gray-500 mt-1">Max: ₱<span id="maxPriceValue">10,000</span></div>
                                 </div>
                             </div>
@@ -600,276 +625,284 @@ function process_product_images($main_image, $sub_images, $type_image) {
             </div>
         </section>
 
-    <!-- Products Grid -->
-<section class="max-w-full mx-auto px-4 py-8">
-    <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6" data-aos="fade-up" data-aos-delay="400">
-        
-        <?php if ($material_results && mysqli_num_rows($material_results) > 0): ?>
-            <?php while ($row = mysqli_fetch_assoc($material_results)): 
-                $pricing = calculate_price($row['price'], $row['percent'] ?? 0, $row['discount'] ?? 0);
-                $all_images = process_product_images($row['main_image'], $row['sub_images'], $row['type_image']);
-                $discount = (float)($row['discount'] ?? 0);
-            ?>
-                <article class="product-item product-card bg-white rounded-3xl shadow-sm hover:shadow-2xl border border-gray-100 p-5 group flex flex-col h-[560px] text-center relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02]"
-                         data-name="<?= safe_output(strtolower($row['namevariant'])) ?>"
-                         data-price="<?= $pricing['final'] ?>"
-                         data-original-price="<?= $pricing['original'] ?>"
-                         data-discount="<?= $discount ?>"
-                         data-origin="<?= safe_output(strtolower($row['origin'] ?? 'local')) ?>">
-                    
-                    <!-- Discount Badge -->
-                    <?php if ($discount > 0): ?>
-                        <div class="absolute top-4 left-4 z-20">
-                            <div class="discount-badge bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse">
-                                -<?= number_format($discount, 0) ?>%
-                            </div>
-                        </div>
-                    <?php endif; ?>
+        <!-- Products Grid -->
+        <section class="max-w-full mx-auto px-4 py-8">
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6" data-aos="fade-up" data-aos-delay="400">
 
-                    <!-- Triangle Badge/Icon -->
-                    <div class="absolute top-0 right-0 z-10">
-                        <div class="w-12 h-12 relative">
-                            <img src="../img/icon/d.png" 
-                                 alt="Product badge" 
-                                 class="absolute top-2 right-2 w-8 h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
-                                 loading="lazy" />
-                        </div>
-                    </div>
+                <?php if ($material_results && mysqli_num_rows($material_results) > 0): ?>
+                    <?php while ($row = mysqli_fetch_assoc($material_results)):
+                        $pricing = calculate_price($row['price'], $row['percent'] ?? 0, $row['discount'] ?? 0);
+                        $all_images = process_product_images($row['main_image'], $row['sub_images'], $row['type_image']);
+                        $discount = (float)($row['discount'] ?? 0);
+                    ?>
+                        <article class="product-item product-card bg-white rounded-3xl shadow-sm hover:shadow-2xl border border-gray-100 p-5 group flex flex-col h-[560px] text-center relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02]"
+                            data-name="<?= safe_output(strtolower($row['namevariant'])) ?>"
+                            data-price="<?= $pricing['final'] ?>"
+                            data-original-price="<?= $pricing['original'] ?>"
+                            data-discount="<?= $discount ?>"
+                            data-origin="<?= safe_output(strtolower($row['origin'] ?? 'local')) ?>">
 
-                    <!-- Product Image Gallery -->
-                    <div class="aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl overflow-hidden mb-4 group-hover:shadow-inner transition-all duration-300">
-                        <div class="image-gallery w-full h-full relative">
-                            <div class="gallery-container h-full" data-current="0">
-                                <?php foreach ($all_images as $index => $image): ?>
-                                    <img src="<?= safe_output($image) ?>" 
-                                         alt="<?= safe_output($row['namevariant']) ?> - Image <?= $index + 1 ?>" 
-                                         class="gallery-image w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                                         style="<?= $index === 0 ? '' : 'display: none;' ?>"
-                                         loading="<?= $index === 0 ? 'eager' : 'lazy' ?>"
-                                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBMMTMwIDEwMEgxMTBWMTMwSDkwVjEwMEg3MEwxMDAgNzBaIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUI5QjlCIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0iQXJpYWwiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K'" />
-                                <?php endforeach; ?>
-                            </div>
-                            
-                            <?php if (count($all_images) > 1): ?>
-                                <!-- Navigation Arrows -->
-                                <button class="gallery-arrow prev absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300" 
-                                        onclick="changeImage(this, -1)" 
-                                        type="button"
-                                        aria-label="Previous image">‹</button>
-                                <button class="gallery-arrow next absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300" 
-                                        onclick="changeImage(this, 1)" 
-                                        type="button"
-                                        aria-label="Next image">›</button>
-                                
-                                <!-- Navigation Dots -->
-                                <div class="gallery-nav absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300" role="tablist" aria-label="Image navigation">
-                                    <?php foreach ($all_images as $index => $image): ?>
-                                        <button class="gallery-dot w-2 h-2 rounded-full bg-white/50 hover:bg-white <?= $index === 0 ? 'bg-white' : '' ?>" 
-                                                onclick="goToImage(this, <?= $index ?>)"
-                                                type="button"
-                                                role="tab"
-                                                aria-label="Image <?= $index + 1 ?>"
-                                                tabindex="<?= $index === 0 ? '0' : '-1' ?>"></button>
-                                    <?php endforeach; ?>
+                            <!-- Discount Badge -->
+                            <?php if ($discount > 0): ?>
+                                <div class="absolute top-4 left-4 z-20">
+                                    <div class="discount-badge bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse">
+                                        -<?= number_format($discount, 0) ?>%
+                                    </div>
                                 </div>
                             <?php endif; ?>
-                        </div>
-                    </div>
 
-                    <!-- Product Info - Flex grow to fill remaining space -->
-                    <div class="flex-1 flex flex-col justify-between">
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-800 leading-tight mb-3 group-hover:text-orange-600 transition-colors duration-300 line-clamp-2">
-                                <?= safe_output($row['namevariant']) ?>
-                            </h2>
-                            
-                           <!-- Trigger -->
-<div x-data="{ open: false }" class="text-center">
-  <button @click="open = true" 
-          class="text-sm text-gray-600 underline hover:text-gray-800 transition">
-    View Color & Size
-  </button>
-
-  <!-- Modal -->
-  <div x-show="open" 
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-       x-transition
-       @click.away="open = false"
-       style="display: none;">
-    <div class="bg-white rounded shadow-lg max-w-sm w-full p-6 relative animate-fade-in">
-      <!-- Close Button -->
-      <button @click="open = false" 
-              class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
-        ✕
-      </button>
-
-      <!-- Modal Content -->
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">Product Details</h2>
-      <dl class="text-sm text-gray-600 space-y-3">
-        <div class="flex justify-between">
-          <dt class="font-semibold text-gray-700">Color:</dt>
-          <dd><?= safe_output($row['color'] ?? 'N/A') ?></dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="font-semibold text-gray-700">Size:</dt>
-          <dd><?= safe_output($row['size'] ?? 'N/A') ?></dd>
-        </div>
-      </dl>
-    </div>
-  </div>
-</div>
-
-<!-- Alpine.js CDN -->
-<script src="https://unpkg.com/alpinejs" defer></script>
-
-<!-- Animation (optional) -->
-<style>
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-</style>
-
-                            <!-- Pricing -->
-                            <div class="mb-4">
-                                <?php if ($discount > 0): ?>
-                                    <p class="text-sm text-gray-400 line-through mb-1">₱<?= number_format($pricing['original'], 2) ?></p>
-                                    <p class="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
-                                        ₱<?= number_format($pricing['final'], 2) ?>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
-                                        ₱<?= number_format($pricing['original'], 2) ?>
-                                    </p>
-                                <?php endif; ?>
-                                
-                                <!-- Origin Badge -->
-                                <?php if (!empty($row['origin'])): ?>
-                                <span class="inline-block px-3 py-1 text-xs font-medium rounded-full <?= $row['origin'] === 'international' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?>">
-                                    <?= safe_output(ucfirst($row['origin'])) ?>
-                                </span>
-                                <?php endif; ?>
+                            <!-- Triangle Badge/Icon -->
+                            <div class="absolute top-0 right-0 z-10">
+                                <div class="w-12 h-12 relative">
+                                    <img src="../img/icon/d.png"
+                                        alt="Product badge"
+                                        class="absolute top-2 right-2 w-8 h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                                        loading="lazy" />
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Action Buttons - Always at bottom -->
-                        <div class="flex flex-col gap-2 mt-auto">
-                            <!-- Buy Button -->
-                            <form action="product_view" method="GET" class="w-full">
-                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                <button type="submit" 
-                                        class="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white text-sm px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg font-semibold transition-all duration-300 transform hover:scale-105"
-                                        aria-label="View product details">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                    </svg>
-                                    View Details
-                                </button>
-                            </form>
+                            <!-- Product Image Gallery -->
+                            <div class="aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl overflow-hidden mb-4 group-hover:shadow-inner transition-all duration-300">
+                                <div class="image-gallery w-full h-full relative">
+                                    <div class="gallery-container h-full" data-current="0">
+                                        <?php foreach ($all_images as $index => $image): ?>
+                                            <img src="<?= safe_output($image) ?>"
+                                                alt="<?= safe_output($row['namevariant']) ?> - Image <?= $index + 1 ?>"
+                                                class="gallery-image w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                                                style="<?= $index === 0 ? '' : 'display: none;' ?>"
+                                                loading="<?= $index === 0 ? 'eager' : 'lazy' ?>"
+                                                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBMMTMwIDEwMEgxMTBWMTMwSDkwVjEwMEg3MEwxMDAgNzBaIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUI5QjlCIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0iQXJpYWwiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K'" />
+                                        <?php endforeach; ?>
+                                    </div>
 
-                            <!-- Pre-Order Button -->
-                            <form class="productForm w-full" data-product-id="<?= (int)$row['product_id'] ?>">
-                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                <input type="hidden" name="selected_type" value="<?= safe_output($row['type_name'] ?? '') ?>">
-                                <input type="hidden" name="selected_variant" value="<?= safe_output($row['namevariant'] ?? '') ?> - <?= safe_output($row['size'] ?? '') ?>">
-                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                <input type="hidden" name="selected_size" value="<?= safe_output($row['size'] ?? '') ?>">
-                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                <input type="hidden" name="selected_color_name" value="<?= safe_output($row['color'] ?? '') ?>">
-                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                <input type="hidden" name="total_price" value="<?= floatval($pricing['final']) ?>">
-                                <input type="hidden" name="discount" value="<?= floatval($row['discount'] ?? 0) ?>">
-                                <input type="hidden" name="percent" value="<?= floatval($row['percent'] ?? 0) ?>">
-                                <input type="hidden" name="origin" value="<?= safe_output($row['origin'] ?? 'local') ?>">
-                                <input type="hidden" name="return_url" value="index">
+                                    <?php if (count($all_images) > 1): ?>
+                                        <!-- Navigation Arrows -->
+                                        <button class="gallery-arrow prev absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                            onclick="changeImage(this, -1)"
+                                            type="button"
+                                            aria-label="Previous image">‹</button>
+                                        <button class="gallery-arrow next absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                            onclick="changeImage(this, 1)"
+                                            type="button"
+                                            aria-label="Next image">›</button>
 
-                                <button type="submit"
-                                        class="w-full bg-gradient-to-r from-orange-400 to-orange-400 hover:from-orange-600 hover:to-orange-600 text-white text-sm px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg font-semibold transition-all duration-300 transform hover:scale-105"
-                                        aria-label="Add to cart">
-                                    <img src="../img/ecommerce.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                    Add to Cart
-                                </button>
-                            </form>
+                                        <!-- Navigation Dots -->
+                                        <div class="gallery-nav absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300" role="tablist" aria-label="Image navigation">
+                                            <?php foreach ($all_images as $index => $image): ?>
+                                                <button class="gallery-dot w-2 h-2 rounded-full bg-white/50 hover:bg-white <?= $index === 0 ? 'bg-white' : '' ?>"
+                                                    onclick="goToImage(this, <?= $index ?>)"
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-label="Image <?= $index + 1 ?>"
+                                                    tabindex="<?= $index === 0 ? '0' : '-1' ?>"></button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <!-- Product Info - Flex grow to fill remaining space -->
+                            <div class="flex-1 flex flex-col justify-between">
+                                <div>
+                                    <h2 class="text-lg font-bold text-gray-800 leading-tight mb-3 group-hover:text-orange-600 transition-colors duration-300 line-clamp-2">
+                                        <?= safe_output($row['namevariant']) ?>
+                                    </h2>
+
+                                    <!-- Trigger -->
+                                    <div x-data="{ open: false }" class="text-center">
+                                        <button @click="open = true"
+                                            class="text-sm text-gray-600 underline hover:text-gray-800 transition">
+                                            View Color & Size
+                                        </button>
+
+                                        <!-- Modal -->
+                                        <div x-show="open"
+                                            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                                            x-transition
+                                            @click.away="open = false"
+                                            style="display: none;">
+                                            <div class="bg-white rounded shadow-lg max-w-sm w-full p-6 relative animate-fade-in">
+                                                <!-- Close Button -->
+                                                <button @click="open = false"
+                                                    class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+                                                    ✕
+                                                </button>
+
+                                                <!-- Modal Content -->
+                                                <h2 class="text-lg font-semibold text-gray-800 mb-4">Product Details</h2>
+                                                <dl class="text-sm text-gray-600 space-y-3">
+                                                    <div class="flex justify-between">
+                                                        <dt class="font-semibold text-gray-700">Color:</dt>
+                                                        <dd><?= safe_output($row['color'] ?? 'N/A') ?></dd>
+                                                    </div>
+                                                    <div class="flex justify-between">
+                                                        <dt class="font-semibold text-gray-700">Size:</dt>
+                                                        <dd><?= safe_output($row['size'] ?? 'N/A') ?></dd>
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Alpine.js CDN -->
+                                    <script src="https://unpkg.com/alpinejs" defer></script>
+
+                                    <!-- Animation (optional) -->
+                                    <style>
+                                        .animate-fade-in {
+                                            animation: fadeIn 0.3s ease-out;
+                                        }
+
+                                        @keyframes fadeIn {
+                                            from {
+                                                opacity: 0;
+                                                transform: scale(0.95);
+                                            }
+
+                                            to {
+                                                opacity: 1;
+                                                transform: scale(1);
+                                            }
+                                        }
+                                    </style>
+
+                                    <!-- Pricing -->
+                                    <div class="mb-4">
+                                        <?php if ($discount > 0): ?>
+                                            <p class="text-sm text-gray-400 line-through mb-1">₱<?= number_format($pricing['original'], 2) ?></p>
+                                            <p class="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
+                                                ₱<?= number_format($pricing['final'], 2) ?>
+                                            </p>
+                                        <?php else: ?>
+                                            <p class="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
+                                                ₱<?= number_format($pricing['original'], 2) ?>
+                                            </p>
+                                        <?php endif; ?>
+
+                                        <!-- Origin Badge -->
+                                        <?php if (!empty($row['origin'])): ?>
+                                            <span class="inline-block px-3 py-1 text-xs font-medium rounded-full <?= $row['origin'] === 'international' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?>">
+                                                <?= safe_output(ucfirst($row['origin'])) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons - Always at bottom -->
+                                <div class="flex flex-col gap-2 mt-auto">
+                                    <!-- Buy Button -->
+                                    <form action="product_view" method="GET" class="w-full">
+                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                        <button type="submit"
+                                            class="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white text-sm px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                                            aria-label="View product details">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
+                                            </svg>
+                                            View Details
+                                        </button>
+                                    </form>
+
+                                    <!-- Pre-Order Button -->
+                                    <form class="productForm w-full" data-product-id="<?= (int)$row['product_id'] ?>">
+                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                        <input type="hidden" name="selected_type" value="<?= safe_output($row['type_name'] ?? '') ?>">
+                                        <input type="hidden" name="selected_variant" value="<?= safe_output($row['namevariant'] ?? '') ?> - <?= safe_output($row['size'] ?? '') ?>">
+                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                        <input type="hidden" name="selected_size" value="<?= safe_output($row['size'] ?? '') ?>">
+                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                        <input type="hidden" name="selected_color_name" value="<?= safe_output($row['color'] ?? '') ?>">
+                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                        <input type="hidden" name="total_price" value="<?= floatval($pricing['final']) ?>">
+                                        <input type="hidden" name="discount" value="<?= floatval($row['discount'] ?? 0) ?>">
+                                        <input type="hidden" name="percent" value="<?= floatval($row['percent'] ?? 0) ?>">
+                                        <input type="hidden" name="origin" value="<?= safe_output($row['origin'] ?? 'local') ?>">
+                                        <input type="hidden" name="return_url" value="index">
+
+                                        <button type="submit"
+                                            class="w-full bg-gradient-to-r from-orange-400 to-orange-400 hover:from-orange-600 hover:to-orange-600 text-white text-sm px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                                            aria-label="Add to cart">
+                                            <img src="../img/ecommerce.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                            Add to Cart
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="col-span-full text-center py-20">
+                        <div class="max-w-md mx-auto">
+                            <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No products available</h3>
+                            <p class="text-gray-500 text-lg">Check back later for new products</p>
                         </div>
                     </div>
-                </article>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <div class="col-span-full text-center py-20">
+                <?php endif; ?>
+            </div>
+
+            <!-- No Results Message (Hidden by default) -->
+            <div id="noResults" class="hidden text-center py-20" role="status" aria-live="polite">
                 <div class="max-w-md mx-auto">
                     <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-3">No products available</h3>
-                    <p class="text-gray-500 text-lg">Check back later for new products</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">No products found</h3>
+                    <p class="text-gray-500 text-lg">Try adjusting your filters or search terms</p>
                 </div>
             </div>
-        <?php endif; ?>
-    </div>
+        </section>
 
-    <!-- No Results Message (Hidden by default) -->
-    <div id="noResults" class="hidden text-center py-20" role="status" aria-live="polite">
-        <div class="max-w-md mx-auto">
-            <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-3">No products found</h3>
-            <p class="text-gray-500 text-lg">Try adjusting your filters or search terms</p>
-        </div>
-    </div>
-</section>
+        <style>
+            /* Additional CSS for equal heights and smooth animations */
+            .line-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
 
-<style>
-/* Additional CSS for equal heights and smooth animations */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+            .gallery-arrow {
+                transition: all 0.3s ease;
+            }
 
-.gallery-arrow {
-    transition: all 0.3s ease;
-}
+            .gallery-arrow:hover {
+                transform: scale(1.1);
+            }
 
-.gallery-arrow:hover {
-    transform: scale(1.1);
-}
+            .gallery-dot {
+                transition: all 0.3s ease;
+            }
 
-.gallery-dot {
-    transition: all 0.3s ease;
-}
+            .gallery-dot:hover,
+            .gallery-dot.active {
+                transform: scale(1.2);
+            }
 
-.gallery-dot:hover,
-.gallery-dot.active {
-    transform: scale(1.2);
-}
+            /* Ensure all product cards have consistent spacing */
+            .product-card {
+                min-height: 560px;
+                max-height: 560px;
+            }
 
-/* Ensure all product cards have consistent spacing */
-.product-card {
-    min-height: 560px;
-    max-height: 560px;
-}
+            /* Smooth hover effects */
+            .product-card:hover {
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            }
 
-/* Smooth hover effects */
-.product-card:hover {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Button hover effects */
-.product-card button:hover {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-}
-</style>
+            /* Button hover effects */
+            .product-card button:hover {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+            }
+        </style>
     </main>
 
     <!-- Notification Container -->
@@ -877,7 +910,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    
+
     <script>
         'use strict';
 
@@ -924,14 +957,14 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 notification.className = `notification ${type}`;
                 notification.textContent = message;
                 notification.setAttribute('role', 'alert');
-                
+
                 this.container.appendChild(notification);
-                
+
                 // Show notification
                 requestAnimationFrame(() => {
                     notification.classList.add('show');
                 });
-                
+
                 // Auto remove
                 setTimeout(() => {
                     this.remove(notification);
@@ -959,13 +992,13 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 const container = gallery.querySelector('.gallery-container');
                 const images = gallery.querySelectorAll('.gallery-image');
                 const dots = gallery.querySelectorAll('.gallery-dot');
-                
+
                 let current = parseInt(container.dataset.current) || 0;
                 let newIndex = current + direction;
-                
+
                 if (newIndex < 0) newIndex = images.length - 1;
                 if (newIndex >= images.length) newIndex = 0;
-                
+
                 this.showImage(gallery, newIndex);
             }
 
@@ -978,18 +1011,18 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 const container = gallery.querySelector('.gallery-container');
                 const images = gallery.querySelectorAll('.gallery-image');
                 const dots = gallery.querySelectorAll('.gallery-dot');
-                
+
                 // Hide all images
                 images.forEach((img, i) => {
                     img.style.display = i === index ? 'block' : 'none';
                 });
-                
+
                 // Update dots
                 dots.forEach((dot, i) => {
                     dot.classList.toggle('active', i === index);
                     dot.setAttribute('tabindex', i === index ? '0' : '-1');
                 });
-                
+
                 // Update current index
                 container.dataset.current = index.toString();
             }
@@ -1008,7 +1041,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 this.resultCount = document.getElementById('resultCount');
                 this.noResults = document.getElementById('noResults');
                 this.productsGrid = document.getElementById('productsGrid');
-                
+
                 this.currentFilters = {
                     search: '',
                     origin: 'all',
@@ -1091,14 +1124,14 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 if (this.minPriceSlider) this.minPriceSlider.value = '0';
                 if (this.maxPriceSlider) this.maxPriceSlider.value = '10000';
                 if (this.sortSelect) this.sortSelect.value = 'default';
-                
+
                 // Reset filter buttons
                 document.querySelectorAll('.filter-button.active').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.querySelector('[data-origin="all"]')?.classList.add('active');
                 document.querySelector('[data-discount="all"]')?.classList.add('active');
-                
+
                 // Reset filter state
                 this.currentFilters = {
                     search: '',
@@ -1112,15 +1145,17 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 this.applyFilters();
             }
 
+            // Replace the existing applyFilters method in your ProductFilter class with this fixed version:
+
             applyFilters() {
                 let visibleProducts = Array.from(this.products).filter(product => {
-                    return this.matchesSearch(product) && 
-                           this.matchesOrigin(product) && 
-                           this.matchesDiscount(product) && 
-                           this.matchesPriceRange(product);
+                    return this.matchesSearch(product) &&
+                        this.matchesOrigin(product) &&
+                        this.matchesDiscount(product) &&
+                        this.matchesPriceRange(product);
                 });
 
-                // Sort products
+                // Sort products BEFORE showing them
                 if (this.currentFilters.sort !== 'default') {
                     visibleProducts = this.sortProducts(visibleProducts);
                 }
@@ -1133,12 +1168,17 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
                 // Show filtered products with stagger animation
                 if (visibleProducts.length > 0) {
+                    // ✅ FIX: Reorder DOM elements to match sorted array
+                    const grid = this.productsGrid;
                     visibleProducts.forEach((product, index) => {
+                        // Append each product in the correct order
+                        grid.appendChild(product);
+
                         product.classList.remove('hidden');
                         product.style.animationDelay = `${index * 0.05}s`;
                         product.classList.add('animate-fadeInUp');
                     });
-                    
+
                     if (this.noResults) this.noResults.classList.add('hidden');
                     if (this.productsGrid) this.productsGrid.classList.remove('hidden');
                 } else {
@@ -1151,7 +1191,6 @@ function process_product_images($main_image, $sub_images, $type_image) {
                     this.resultCount.textContent = visibleProducts.length.toString();
                 }
             }
-
             matchesSearch(product) {
                 if (!this.currentFilters.search) return true;
                 const name = product.dataset.name || '';
@@ -1166,12 +1205,16 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
             matchesDiscount(product) {
                 const discount = parseFloat(product.dataset.discount || '0');
-                
+
                 switch (this.currentFilters.discount) {
-                    case 'all': return true;
-                    case 'discounted': return discount > 0;
-                    case 'no-discount': return discount === 0;
-                    default: return true;
+                    case 'all':
+                        return true;
+                    case 'discounted':
+                        return discount > 0;
+                    case 'no-discount':
+                        return discount === 0;
+                    default:
+                        return true;
                 }
             }
 
@@ -1190,11 +1233,16 @@ function process_product_images($main_image, $sub_images, $type_image) {
                     const nameB = b.dataset.name || '';
 
                     switch (this.currentFilters.sort) {
-                        case 'price-low': return priceA - priceB;
-                        case 'price-high': return priceB - priceA;
-                        case 'discount-high': return discountB - discountA;
-                        case 'name': return nameA.localeCompare(nameB);
-                        default: return 0;
+                        case 'price-low':
+                            return priceA - priceB;
+                        case 'price-high':
+                            return priceB - priceA;
+                        case 'discount-high':
+                            return discountB - discountA;
+                        case 'name':
+                            return nameA.localeCompare(nameB);
+                        default:
+                            return 0;
                     }
                 });
             }
@@ -1215,15 +1263,15 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
             async handleAddToCart(event) {
                 event.preventDefault();
-                
+
                 const form = event.target;
                 const formData = new FormData(form);
                 const button = form.querySelector('button[type="submit"]');
-                
+
                 if (!button) return;
 
                 const originalContent = button.innerHTML;
-                
+
                 // Show loading state
                 button.disabled = true;
                 button.innerHTML = '<div class="loading-spinner"></div> Adding...';
@@ -1258,10 +1306,18 @@ function process_product_images($main_image, $sub_images, $type_image) {
             }
 
             ensureRequiredFields(formData) {
-                const requiredFields = [
-                    { name: 'selected_color_id', default: '1' },
-                    { name: 'selected_color_name', default: 'Default' },
-                    { name: 'color_price', default: '0' }
+                const requiredFields = [{
+                        name: 'selected_color_id',
+                        default: '1'
+                    },
+                    {
+                        name: 'selected_color_name',
+                        default: 'Default'
+                    },
+                    {
+                        name: 'color_price',
+                        default: '0'
+                    }
                 ];
 
                 requiredFields.forEach(field => {
@@ -1334,7 +1390,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 button.addEventListener('mouseenter', function() {
                     this.style.transform = 'translateY(-2px) scale(1.02)';
                 });
-                
+
                 button.addEventListener('mouseleave', function() {
                     this.style.transform = 'translateY(0) scale(1)';
                 });
@@ -1365,8 +1421,8 @@ function process_product_images($main_image, $sub_images, $type_image) {
                 const focusedElement = document.activeElement;
                 if (focusedElement && focusedElement.closest('.image-gallery')) {
                     const gallery = focusedElement.closest('.image-gallery');
-                    
-                    switch(e.key) {
+
+                    switch (e.key) {
                         case 'ArrowLeft':
                             e.preventDefault();
                             ImageGallery.changeImage(gallery.querySelector('.gallery-arrow.prev'), -1);
@@ -1412,4 +1468,5 @@ function process_product_images($main_image, $sub_images, $type_image) {
         });
     </script>
 </body>
+
 </html>

@@ -38,6 +38,9 @@ $product = $conn->query("SELECT * FROM products WHERE id = $product_id")->fetch_
 $types = $conn->query("SELECT * FROM product_types WHERE product_id = $product_id");
 $colors = $conn->query("SELECT * FROM product_colors WHERE product_id = $product_id");
 
+// Fetch all categories for dropdown
+$categories = $conn->query("SELECT * FROM categories ORDER BY name");
+
 // Process existing sub images
 $existing_sub_images = [];
 if (!empty($product['sub_images'])) {
@@ -202,9 +205,19 @@ if (!empty($product['sub_images'])) {
         </div>
       </div>
 
+      <!-- REPLACED CODENAME WITH CATEGORY DROPDOWN -->
       <div class="mb-4">
-        <label class="block font-semibold mb-1">Codename</label>
-        <input type="text" name="codename" value="<?php echo htmlspecialchars($product['codename']); ?>" required class="w-full border p-2 rounded" />
+        <label class="block font-semibold mb-1">Category</label>
+        <select name="category" required class="w-full border p-2 rounded bg-white">
+          <option value="">Select a Category</option>
+          <?php while ($category = $categories->fetch_assoc()): ?>
+            <option value="<?= htmlspecialchars($category['name']) ?>" 
+                    <?= (isset($product['category']) && $product['category'] == $category['name']) ? 'selected' : '' ?>>
+              <?= htmlspecialchars($category['name']) ?>
+            </option>
+          <?php endwhile; ?>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Choose the category this product belongs to</p>
       </div>
 
       <div class="mb-4">

@@ -1,22 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>BotMan Chat Test</title>
-</head>
-<body>
-  <h1>Welcome to Noble Chatbot Test</h1>
+<?php
+// products.php
+header('Content-Type: application/json');
+include 'connection/connect.php';
 
-  <!-- BotMan Widget Config -->
-  <script>
-    var botmanWidget = {
-      aboutText: "Noble ChatBot",
-      introMessage: "👋 Hello! Type 'hello' to start.",
-      chatServer: "http://localhost/noble/user/otherpage/botman.php"
-    };
-  </script>
+$sql = "SELECT id, product_name, description, descrip6, descrip7 FROM products";
+$result = $conn->query($sql);
 
-  <!-- BotMan Widget JS -->
-  <script src="https://cdn.jsdelivr.net/npm/botman-web-widget@0/build/js/widget.js"></script>
-</body>
-</html>
+$products = [];
+while ($row = $result->fetch_assoc()) {
+    $products[] = $row;
+}
+
+echo json_encode($products);
+
+?>

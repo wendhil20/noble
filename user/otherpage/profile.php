@@ -157,6 +157,16 @@ if ($row && isset($row['is_verified'])) {
     $is_verified = $row['is_verified'];
 }
 
+$user_id = $_SESSION['user_id'];
+$sql = "SELECT is_verified FROM user_details WHERE user_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+
+$is_verified = $user['is_verified'];
+
 
 ?>
 
@@ -435,74 +445,85 @@ if ($row && isset($row['is_verified'])) {
             <!-- Main content -->
             <div class="relative z-20 flex flex-col md:flex-row gap-8">
                 <!-- LEFT: Profile Section -->
-                <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
-                    <!-- Profile Picture Section -->
-                    <div class="relative group">
-                        <!-- Profile Image Container -->
-                        <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl transform transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
-                            <?php if ($user_picture): ?>
-                                <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
-                            <?php else: ?>
-                                <span class="text-3xl md:text-4xl font-bold text-black font-serif">
-                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
+               <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
+    <!-- Profile Picture Section -->
+    <div class="relative group">
+        <!-- Profile Image Container (without badge) -->
+        <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 
+               bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl 
+               transform transition-transform duration-300 group-hover:scale-105 
+               flex items-center justify-center relative">
 
-                        <?php if (!empty($is_verified) && $is_verified == 1): ?>
-                            <!-- Verified Badge -->
-                            <div class="inline-flex items-center justify-center w-6 h-6 me-2 -top-3 text-sm font-semibold text-blue-800 bg-blue-100 rounded-full dark:bg-gray-700 dark:text-blue-400" title="Verified Account">
-                                <svg class="w-7 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill="currentColor" d="m18.774 8.245-.892-.893a1.5 1.5 0 0 1-.437-1.052V5.036a2.484 2.484 0 0 0-2.48-2.48H13.7a1.5 1.5 0 0 1-1.052-.438l-.893-.892a2.484 2.484 0 0 0-3.51 0l-.893.892a1.5 1.5 0 0 1-1.052.437H5.036a2.484 2.484 0 0 0-2.48 2.481V6.3a1.5 1.5 0 0 1-.438 1.052l-.892.893a2.484 2.484 0 0 0 0 3.51l.892.893a1.5 1.5 0 0 1 .437 1.052v1.264a2.484 2.484 0 0 0 2.481 2.481H6.3a1.5 1.5 0 0 1 1.052.437l.893.892a2.484 2.484 0 0 0 3.51 0l.893-.892a1.5 1.5 0 0 1 1.052-.437h1.264a2.484 2.484 0 0 0 2.481-2.48V13.7a1.5 1.5 0 0 1 .437-1.052l.892-.893a2.484 2.484 0 0 0 0-3.51Z" />
-                                    <path fill="#fff" d="M8 13a1 1 0 0 1-.707-.293l-2-2a1 1 0 1 1 1.414-1.414l1.42 1.42 5.318-3.545a1 1 0 0 1 1.11 1.664l-6 4A1 1 0 0 1 8 13Z" />
-                                </svg>
-                            </div>
+            <?php if ($user_picture): ?>
+                <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture"
+                    class="w-full h-full object-cover">
+            <?php else: ?>
+                <span class="text-3xl md:text-4xl font-bold text-black font-serif">
+                    <?= strtoupper(substr($user_name, 0, 1)); ?>
+                </span>
+            <?php endif; ?>
+        </div>
+    </div>
 
-                        <?php else: ?>
-                            <!-- Not Verified Badge -->
-                            <div class="absolute -bottom-2 right-2 md:-bottom-2 md:right-5 px-2 py-1 bg-red-500 text-white text-[10px] md:text-xs font-semibold rounded-full border-1 border-white shadow-lg">
-                                Not Verified
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Name & Email -->
-                    <div class="font-mont">
-                        <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm"><?= htmlspecialchars($user_name); ?></h1>
-                        <p class="text-base md:text-lg text-black"><?= htmlspecialchars($user_email); ?></p>
-
-                        <!-- Orders and Settings side-by-side -->
-                        <div class="flex items-center gap-3 mt-3">
-
-                            <!-- From Uiverse.io by cssbuttons-io -->
-                            <a href="settings.php"
-                                title="Account Settings"
-                                class="group relative inline-flex items-center justify-start w-48 h-12 bg-transparent border-0 cursor-pointer">
-
-                                <!-- Circle that expands -->
-                                <span class="relative flex items-center justify-center w-12 h-12 bg-black rounded-full transition-all duration-500 ease-[cubic-bezier(0.65,0,0.076,1)] group-hover:w-full">
-
-                                    <!-- Arrow - positioned absolutely to stay in place -->
-                                    <span class="absolute left-5 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 transition-all duration-500 ease-[cubic-bezier(0.65,0,0.076,1)] group-hover:translate-x-1">
-                                        <!-- Arrow line -->
-
-                                        <!-- Arrow head -->
-                                        <span class="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 border-t-2 border-r-2 border-white rotate-45"></span>
-                                    </span>
-
-                                </span>
-
-                                <!-- Text -->
-                                <span class="absolute inset-0 flex items-center justify-center ml-3 text-[#2e3628] font-bold uppercase transition-all duration-500 ease-[cubic-bezier(0.65,0,0.076,1)] group-hover:text-white group-hover:ml-0">
-                                    Verified
-                                </span>
-                            </a>
-
-                        </div>
-                    </div>
-
-
+    <!-- Name & Email with Badge -->
+    <div class="font-mont">
+        <!-- Username with Badge -->
+        <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
+            <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm">
+                <?= htmlspecialchars($user_name); ?>
+            </h1>
+            
+            <!-- Verification Badge -->
+            <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                <!-- Verified Badge -->
+                <div class="flex items-center justify-center w-6 h-6 md:w-7 md:h-7 
+                        bg-blue-500 rounded-full shadow-md border-2 border-white"
+                     title="Verified Account">
+                    <svg class="w-3 h-3 md:w-4 md:h-4 text-white" xmlns="http://www.w3.org/2000/svg"
+                         fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 0 1 0 1.414L8.414 15l-4.121-4.121a1 1 0 0 1 1.414-1.414L8.414 12.586l7.293-7.293a1 1 0 0 1 1.414 0z"
+                              clip-rule="evenodd" />
+                    </svg>
                 </div>
+            <?php else: ?>
+                <!-- Not Verified Badge -->
+                <div class="px-2 py-0.5 bg-red-500 text-white text-[9px] md:text-[10px] 
+                        font-semibold rounded-full border border-white shadow-md">
+                    Not Verified
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Email -->
+        <p class="text-base md:text-lg text-black"><?= htmlspecialchars($user_email); ?></p>
+
+        <!-- Orders and Settings side-by-side -->
+        <div class="flex items-center gap-3 mt-3">
+            <?php if ($is_verified == 1): ?>
+                <!-- VERIFIED (disabled, GCash style) -->
+                <button disabled
+                    class="flex items-center gap-2 px-5 py-2 rounded-full bg-green-100 text-green-700 font-semibold cursor-not-allowed shadow-sm">
+                    <!-- check icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Verified
+                </button>
+            <?php else: ?>
+                <!-- NOT VERIFIED (clickable, GCash style) -->
+                <a href="settings.php"
+                    class="flex items-center justify-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-md hover:from-blue-600 hover:to-blue-700 transition">
+                    <!-- shield icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z" />
+                    </svg>
+                    Complete Verification
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>  
 
                 <!-- RIGHT: Stats Section -->
                 <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full font-mont">
@@ -609,20 +630,20 @@ if ($row && isset($row['is_verified'])) {
 
                         <!-- Payment Status Filter -->
                         <div class="mb-4 flex flex-wrap gap-2">
-                            <button onclick="filterByPaymentStatus('all')" 
-                                    class="px-3 py-1 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors payment-filter active">
+                            <button onclick="filterByPaymentStatus('all')"
+                                class="px-3 py-1 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors payment-filter active">
                                 All
                             </button>
-                            <button onclick="filterByPaymentStatus('pending')" 
-                                    class="px-3 py-1 text-sm rounded-lg bg-yellow-100 hover:bg-yellow-200 transition-colors payment-filter">
+                            <button onclick="filterByPaymentStatus('pending')"
+                                class="px-3 py-1 text-sm rounded-lg bg-yellow-100 hover:bg-yellow-200 transition-colors payment-filter">
                                 Pending Payment
                             </button>
-                            <button onclick="filterByPaymentStatus('verified')" 
-                                    class="px-3 py-1 text-sm rounded-lg bg-green-100 hover:bg-green-200 transition-colors payment-filter">
+                            <button onclick="filterByPaymentStatus('verified')"
+                                class="px-3 py-1 text-sm rounded-lg bg-green-100 hover:bg-green-200 transition-colors payment-filter">
                                 Verified
                             </button>
-                            <button onclick="filterByPaymentStatus('rejected')" 
-                                    class="px-3 py-1 text-sm rounded-lg bg-red-100 hover:bg-red-200 transition-colors payment-filter">
+                            <button onclick="filterByPaymentStatus('rejected')"
+                                class="px-3 py-1 text-sm rounded-lg bg-red-100 hover:bg-red-200 transition-colors payment-filter">
                                 Rejected
                             </button>
                         </div>
@@ -666,7 +687,7 @@ if ($row && isset($row['is_verified'])) {
                                         </div>
                                         <div class="text-right">
                                             <p class="font-bold text-lg text-gray-900">₱<?php echo number_format($order['final_total'], 2); ?></p>
-                                            
+
                                             <!-- Order Status and Payment Status -->
                                             <div class="flex flex-col gap-1 items-end">
                                                 <!-- Order Status -->
@@ -733,7 +754,7 @@ if ($row && isset($row['is_verified'])) {
                                                     <?php else: ?>
                                                         <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span>
                                                     <?php endif; ?>
-                                                    
+
                                                     Pay: <?php echo ucfirst($payment_status); ?>
                                                 </span>
                                             </div>
@@ -771,68 +792,68 @@ if ($row && isset($row['is_verified'])) {
                             </div>
                         <?php else: ?>
                             <?php foreach ($pending_orders as $order): ?>
-    <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="viewOrder(<?php echo $order['id']; ?>)">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
-                <p class="text-sm text-gray-600">₱<?php echo number_format($order['final_total'], 2); ?></p>
-                <p class="text-xs text-gray-500"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
-            </div>
-            <div class="flex flex-col items-end gap-2">
-                <!-- Order Status -->
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                    <span class="text-xs text-orange-600 font-medium">Pending</span>
-                </div>
-                
-                <!-- Payment Status -->
-                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full
-                 <?php
-                    $payment_status = $order['payment_status'] ?? 'pending';
-                    switch (strtolower($payment_status)) {
-                        case 'verified':
-                        case 'approved':
-                            echo 'bg-green-100 text-green-700';
-                            break;
-                        case 'rejected':
-                        case 'declined':
-                            echo 'bg-red-100 text-red-700';
-                            break;
-                        case 'pending':
-                        default:
-                            echo 'bg-yellow-100 text-yellow-700';
-                            break;
-                    }
-                    ?>">
-                    <?php if (strtolower($payment_status) === 'verified'): ?>
-                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    <?php elseif (strtolower($payment_status) === 'rejected'): ?>
-                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                        </svg>
-                    <?php else: ?>
-                        <span class="w-1.5 h-1.5 bg-yellow-600 rounded-full animate-pulse"></span>
-                    <?php endif; ?>
-                    
-                    Pay: <?php echo ucfirst($payment_status); ?>
-                </span>
+                                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="viewOrder(<?php echo $order['id']; ?>)">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
+                                            <p class="text-sm text-gray-600">₱<?php echo number_format($order['final_total'], 2); ?></p>
+                                            <p class="text-xs text-gray-500"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
+                                        </div>
+                                        <div class="flex flex-col items-end gap-2">
+                                            <!-- Order Status -->
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                                                <span class="text-xs text-orange-600 font-medium">Pending</span>
+                                            </div>
 
-                <!-- Update Payment Button (only show if payment is rejected) -->
-                <?php if (strtolower($payment_status) === 'rejected'): ?>
-                    <button onclick="updatePayment(<?php echo $order['id']; ?>); event.stopPropagation();" 
-                            class="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 shadow-sm">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        Update Payment
-                    </button>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-<?php endforeach; ?>
+                                            <!-- Payment Status -->
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full
+                 <?php
+                                $payment_status = $order['payment_status'] ?? 'pending';
+                                switch (strtolower($payment_status)) {
+                                    case 'verified':
+                                    case 'approved':
+                                        echo 'bg-green-100 text-green-700';
+                                        break;
+                                    case 'rejected':
+                                    case 'declined':
+                                        echo 'bg-red-100 text-red-700';
+                                        break;
+                                    case 'pending':
+                                    default:
+                                        echo 'bg-yellow-100 text-yellow-700';
+                                        break;
+                                }
+                    ?>">
+                                                <?php if (strtolower($payment_status) === 'verified'): ?>
+                                                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                <?php elseif (strtolower($payment_status) === 'rejected'): ?>
+                                                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                <?php else: ?>
+                                                    <span class="w-1.5 h-1.5 bg-yellow-600 rounded-full animate-pulse"></span>
+                                                <?php endif; ?>
+
+                                                Pay: <?php echo ucfirst($payment_status); ?>
+                                            </span>
+
+                                            <!-- Update Payment Button (only show if payment is rejected) -->
+                                            <?php if (strtolower($payment_status) === 'rejected'): ?>
+                                                <button onclick="updatePayment(<?php echo $order['id']; ?>); event.stopPropagation();"
+                                                    class="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 shadow-sm">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                    </svg>
+                                                    Update Payment
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1141,9 +1162,9 @@ if ($row && isset($row['is_verified'])) {
                 const date = item.getAttribute('data-date');
                 const paymentStatus = item.getAttribute('data-payment-status') || '';
 
-                const match = id.includes(input) || 
-                             date.includes(input) || 
-                             paymentStatus.includes(input);
+                const match = id.includes(input) ||
+                    date.includes(input) ||
+                    paymentStatus.includes(input);
                 item.style.display = match ? '' : 'none';
             });
         }
@@ -1151,11 +1172,11 @@ if ($row && isset($row['is_verified'])) {
         function filterByPaymentStatus(status) {
             const items = document.querySelectorAll('.order-item');
             const buttons = document.querySelectorAll('.payment-filter');
-            
+
             // Update active button
             buttons.forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            
+
             items.forEach(item => {
                 if (status === 'all') {
                     item.style.display = '';
@@ -1354,9 +1375,9 @@ if ($row && isset($row['is_verified'])) {
         });
 
         function updatePayment(orderId) {
-    // Redirect to update payment page with order ID
-    window.location.href = `update_payment.php?order_id=${orderId}`;
-}
+            // Redirect to update payment page with order ID
+            window.location.href = `update_payment.php?order_id=${orderId}`;
+        }
     </script>
 
 </body>

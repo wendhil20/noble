@@ -105,11 +105,17 @@ while ($row = $types_result->fetch_assoc()) {
   }
 }
 
-$codename = 'furniture';
-$stmt = $conn->prepare("SELECT id, product_name, codename, quantity, main_image FROM products WHERE codename = ? AND id != ?");
+
+$codename = $product['codename']; // current product codename
+$stmt = $conn->prepare("SELECT id, product_name, codename, quantity, price, main_image, description, descrip6, descrip7
+                        FROM products 
+                        WHERE codename = ? AND id != ? 
+                        ORDER BY RAND() LIMIT 10");
 $stmt->bind_param("si", $codename, $product_id);
 $stmt->execute();
 $related_products = $stmt->get_result();
+
+
 
 
 // Fetch product specifications directly from products table
@@ -735,100 +741,105 @@ $avg_stmt->close();
       </div>
     </div>
 
-   <?php if (!empty($product_specs)): ?>
-  <section class="mt-6 lg:mt-8">
-    <div class="bg-white rounded-xl shadow-lg p-4 lg:p-8">
-      <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
-        <i class="fas fa-list-alt"></i>
-        Product Specifications
-      </h2>
+    <?php if (!empty($product_specs)): ?>
+      <section class="mt-6 lg:mt-8">
+        <div class="bg-white rounded-xl shadow-lg p-4 lg:p-8">
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
+            <i class="fas fa-list-alt"></i>
+            Product Specifications
+          </h2>
 
-      <div class="mb-4 lg:mb-6">
-        <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
-          <dl class="space-y-3">
-            <?php for ($i = 1; $i <= 10; $i++):
-              $key = "descrip$i";
-              if (!empty($product_specs[$key])):
-            ?>
-                <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
-                  <dd class="text-gray-700 text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
-                </div>
-            <?php endif;
-            endfor; ?>
-          </dl>
-        </div>
-      </div>
-    </div>
-  </section>
-<?php endif; ?>
-
-    <!-- Related Products -->
-    <?php if ($related_products->num_rows > 0): ?>
-      <section class="mt-8 lg:mt-12 bg-gradient-to-br from-slate-50 to-gray-100 py-8 lg:py-12 px-4 rounded-2xl">
-        <div class="max-w-7xl mx-auto">
-          <!-- Header -->
-          <div class="text-center mb-8 lg:mb-10">
-            <h2 class="text-2xl lg:text-3xl font-bold text-orange-500 mb-2">Related Products</h2>
-            <p class="text-gray-600 text-sm lg:text-lg">Discover more amazing products you might like</p>
-            <div class="w-24 h-1 bg-gradient-to-r from-orange-500 to-orange-600 mx-auto mt-4 rounded-full"></div>
-          </div>
-
-          <!-- Swiper Container -->
-          <div class="swiper related-swiper overflow-hidden">
-            <div class="swiper-wrapper pb-4">
-              <?php while ($row = $related_products->fetch_assoc()): ?>
-                <div class="swiper-slide">
-                  <a href="product_view.php?id=<?= $row['id'] ?>"
-                    class="group block bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full border border-gray-100 overflow-hidden">
-
-                    <!-- Product Image -->
-                    <div class="relative aspect-square overflow-hidden bg-gray-50">
-                      <?php if ($row['main_image']): ?>
-                        <img src="../../<?= ($row['main_image']) ?>" loading="lazy"
-                          class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                          alt="<?= htmlspecialchars($row['product_name']) ?>">
-                      <?php else: ?>
-                        <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                          <div class="text-center">
-                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <p class="text-sm text-gray-500">No Image</p>
-                          </div>
-                        </div>
-                      <?php endif; ?>
-
-                      <!-- Overlay on hover -->
-                      <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+          <div class="mb-4 lg:mb-6">
+            <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
+              <dl class="space-y-3">
+                <?php for ($i = 1; $i <= 10; $i++):
+                  $key = "descrip$i";
+                  if (!empty($product_specs[$key])):
+                ?>
+                    <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
+                      <dd class="text-gray-700 text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
                     </div>
-
-                    <!-- Product Info -->
-                    <div class="p-4 lg:p-5">
-                      <h3 class="font-bold text-gray-800 mb-3 text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2">
-                        <?= htmlspecialchars($row['product_name']) ?>
-                      </h3>
-
-                      <div class="flex items-center justify-between">
-                        <span class="inline-flex items-center px-2 lg:px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300">
-                          <?= htmlspecialchars($row['codename']) ?>
-                        </span>
-
-                        <div class="flex items-center text-blue-600 group-hover:text-blue-700 transition-colors duration-200">
-                          <span class="text-sm font-medium">View</span>
-                          <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </a>
-                </div>
-              <?php endwhile; ?>
+                <?php endif;
+                endfor; ?>
+              </dl>
             </div>
           </div>
         </div>
       </section>
     <?php endif; ?>
+
+<!-- Related Products -->
+<?php if ($related_products->num_rows > 0): ?>
+<section class="mt-8 bg-gradient-to-br from-slate-50 to-gray-100 py-6 px-4 rounded-xl ">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Related Products</h2>
+            <p class="text-gray-600 text-sm">
+                Similar products you may like
+            </p>
+            <div class="w-16 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 mx-auto mt-2 rounded-full"></div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <?php while ($row = $related_products->fetch_assoc()): ?>
+            <div class="group">
+                <a href="product_view.php?id=<?= $row['id'] ?>" 
+                   class="block rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full">
+                    
+                    <!-- Product Image -->
+                    <div class="relative aspect-square  overflow-hidden">
+                        <?php if ($row['main_image']): ?>
+                            <img src="../../<?= $row['main_image'] ?>" 
+                                 loading="lazy"
+                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                 alt="<?= htmlspecialchars($row['product_name']) ?>">
+                        <?php else: ?>
+                            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                                <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="text-xs">No Image</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Product Information -->
+                    <div class="p-3 flex flex-col justify-between flex-grow">
+                        <!-- Product Name -->
+                        <h3 class="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 leading-tight">
+                            <?= htmlspecialchars($row['product_name']) ?>
+                        </h3>
+
+                        <!-- Product Description -->
+                        <div class="flex-grow mb-2">
+                            <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                                <?= htmlspecialchars($row['description']) ?>
+                            </p>
+                            
+                            <?php if (!empty($row['descrip6'])): ?>
+                                <p class="text-gray-500 text-xs line-clamp-1 mb-1">
+                                    • <?= htmlspecialchars($row['descrip6']) ?>
+                                </p>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Product Code -->
+                        <div class="flex items-center justify-between mt-auto">
+                            <span class="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                                <?= htmlspecialchars($row['codename']) ?>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <?php endwhile; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
   </div>
 

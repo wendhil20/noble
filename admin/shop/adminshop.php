@@ -59,31 +59,31 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
   <div class=" bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Add Product</h2>
     
-    <!-- CSV Import Section -->
+    <!-- CSV Import Section - NO VALIDATION -->
     <div class="bg-white p-6 rounded-lg shadow mt-5">
       <h2 class="text-2xl font-bold mb-4 text-orange-600">Import Products via CSV</h2>
-      <form action="import_csv.php" method="POST" enctype="multipart/form-data">
+      <form id="csv-import-form" action="import_csv.php" method="POST" enctype="multipart/form-data">
         <div class="mb-4">
           <label class="block font-semibold mb-1">CSV File</label>
-          <input type="file" name="csv_file" accept=".csv" required class="w-full border p-2 rounded">
+          <input type="file" name="csv_file" accept=".csv" class="w-full border p-2 rounded">
         </div>
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Import CSV</button>
       </form>
     </div>
 
     <!-- Product Upload Form -->
-    <form action="upload_process.php" method="POST" enctype="multipart/form-data" class="mt-5">
+    <form id="product-upload-form" action="upload_process.php" method="POST" enctype="multipart/form-data" class="mt-5">
       
       <!-- Product Name -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Product Name</label>
-        <input type="text" name="product_name" required class="w-full border p-2 rounded" />
+        <input type="text" name="product_name"  class="w-full border p-2 rounded" />
       </div>
 
       <!-- Main Image -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Main Image</label>
-        <input type="file" name="main_image" accept="image/*" required class="w-full border p-2 rounded" onchange="previewMainImage(this)" />
+        <input type="file" name="main_image" accept="image/*"  class="w-full border p-2 rounded" onchange="previewMainImage(this)" />
         <div id="main-image-preview" class="mt-2"></div>
       </div>
 
@@ -114,7 +114,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       <!-- Category -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Category</label>
-        <select name="codename" required class="w-full border p-2 rounded">
+        <select name="codename"  class="w-full border p-2 rounded">
           <option value="">-- Select Category --</option>
           <?php while ($row = mysqli_fetch_assoc($categoryResult)): ?>
             <option value="<?= htmlspecialchars($row['name']) ?>">
@@ -127,13 +127,13 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       <!-- Quantity -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Quantity</label>
-        <input type="number" name="quantity" required class="w-full border p-2 rounded" min="0" />
+        <input type="number" name="quantity"  class="w-full border p-2 rounded" min="0" />
       </div>
 
       <!-- Description -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Description</label>
-        <textarea name="description" rows="4" class="w-full border p-2 rounded resize-none" placeholder="Write product description here..." required></textarea>
+        <textarea name="description" rows="4" class="w-full border p-2 rounded resize-none" placeholder="Write product description here..." ></textarea>
       </div>
 
       <!-- Dynamic Types + Variants -->
@@ -252,11 +252,11 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label class="block font-medium mb-1">Type Name</label>
-              <input type="text" name="type_name[]" placeholder="e.g., Cotton, Leather, Premium" class="border p-2 w-full rounded" required />
+              <input type="text" name="type_name[]" placeholder="e.g., Cotton, Leather, Premium" class="border p-2 w-full rounded"  />
             </div>
             <div>
               <label class="block font-medium mb-1">Type Image</label>
-              <input type="file" name="type_image[]" accept="image/*" class="w-full border p-2 rounded" required />
+              <input type="file" name="type_image[]" accept="image/*" class="w-full border p-2 rounded"  />
             </div>
           </div>
         </div>
@@ -288,10 +288,10 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     function colorRowHTML(index) {
       return `
         <div class="color-row grid grid-cols-2 md:grid-cols-5 gap-2 items-center bg-green-50 p-3 rounded border">
-          <input type="text" name="color_name[${index}][]" placeholder="Color Name" class="border p-2 rounded" required />
+          <input type="text" name="color_name[${index}][]" placeholder="Color Name" class="border p-2 rounded"  />
           <input type="text" name="color_code[${index}][]" placeholder="#hex code" class="border p-2 rounded" />
           <input type="file" name="color_image[${index}][]" accept="image/*" class="border p-2 rounded" />
-          <input type="number" step="0.01" name="color_price[${index}][]" placeholder="Price" class="border p-2 rounded" required />
+          <input type="number" step="0.01" name="color_price[${index}][]" placeholder="Price" class="border p-2 rounded"  />
           <button type="button" onclick="removeColor(this)" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">Remove</button>
         </div>
       `;
@@ -302,7 +302,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       return `
         <div class="variant-row grid grid-cols-2 md:grid-cols-6 gap-2 items-center bg-blue-50 p-3 rounded border">
           <input type="text" name="variant_size[${index}][]" placeholder="Size/Type" class="border p-2 rounded" />
-          <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 rounded" required oninput="copyToBasePrice(this)" />
+          <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 rounded"  oninput="copyToBasePrice(this)" />
           <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 rounded" />
           <input type="number" name="variant_percent[${index}][]" placeholder="%" class="border p-2 rounded" oninput="updatePriceFromPercent(this)" />
           <input type="text" name="variant_namevariant[${index}][]" placeholder="Variant Name" class="border p-2 rounded" />
@@ -428,13 +428,13 @@ function copyToBasePrice(originalPriceInput) {
       }
     }
 
-    // Add form validation before submit
-    document.querySelector('form').addEventListener('submit', function(e) {
-      const productName = document.querySelector('input[name="product_name"]').value.trim();
-      const mainImage = document.querySelector('input[name="main_image"]').files.length;
-      const category = document.querySelector('select[name="codename"]').value;
-      const quantity = document.querySelector('input[name="quantity"]').value;
-      const description = document.querySelector('textarea[name="description"]').value.trim();
+    // FIXED: Add form validation ONLY to product upload form, NOT CSV import
+    document.getElementById('product-upload-form').addEventListener('submit', function(e) {
+      const productName = document.querySelector('#product-upload-form input[name="product_name"]').value.trim();
+      const mainImage = document.querySelector('#product-upload-form input[name="main_image"]').files.length;
+      const category = document.querySelector('#product-upload-form select[name="codename"]').value;
+      const quantity = document.querySelector('#product-upload-form input[name="quantity"]').value;
+      const description = document.querySelector('#product-upload-form textarea[name="description"]').value.trim();
 
       if (!productName || !mainImage || !category || !quantity || !description) {
         e.preventDefault();
@@ -449,7 +449,7 @@ function copyToBasePrice(originalPriceInput) {
       }
 
       // Show loading state
-      const submitBtn = document.querySelector('button[type="submit"]');
+      const submitBtn = this.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Uploading...';
       
@@ -460,9 +460,23 @@ function copyToBasePrice(originalPriceInput) {
       }, 30000);
     });
 
-    // Auto-save form data to prevent data loss (optional)
+    // CSV import form - NO VALIDATION
+    document.getElementById('csv-import-form').addEventListener('submit', function(e) {
+      // Allow CSV import without validation
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Importing...';
+      
+      // Re-enable button after 30 seconds (in case of errors)
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Import CSV';
+      }, 30000);
+    });
+
+    // Auto-save form data to prevent data loss (optional) - only for product form
     function saveFormData() {
-      const formData = new FormData(document.querySelector('form'));
+      const formData = new FormData(document.getElementById('product-upload-form'));
       const data = {};
       for (let [key, value] of formData.entries()) {
         if (key !== 'main_image' && !key.includes('image')) { // Don't save file data

@@ -351,6 +351,7 @@ $id_types = [
     'national_id' => 'National ID (PhilSys)',
     'other' => 'Other Valid Government ID'
 ];
+
 ?>
 
 <!DOCTYPE html>

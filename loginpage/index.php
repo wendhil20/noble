@@ -1,6 +1,8 @@
 <?php
 session_name("nobleadmin");
 session_start();
+include '../connection/connect.php';
+
 
 if (isset($_SESSION['noble_user'])) {
     $role = strtolower($_SESSION['noble_lvl'] ?? '');

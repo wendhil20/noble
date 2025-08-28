@@ -13,7 +13,6 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 
-
 $message = '';
 
 // Auto-update expired orders

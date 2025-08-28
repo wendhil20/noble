@@ -45,7 +45,7 @@ $user_email = $_SESSION['user_email'] ?? 'example@example.com';
 $user_picture = $_SESSION['user_picture'] ?? null;
 
 $cart_items = [];
-$total_price = 0;
+$total_price = 0; // Initialize here
 $notice = $_SESSION['checkout_notice'] ?? null;
 unset($_SESSION['checkout_notice']);
 
@@ -78,9 +78,12 @@ if ($user_id) {
     $stmt->execute();
     $result = $stmt->get_result();
     
+    // ✅ FIXED: Calculate total price properly while fetching data
     while ($row = $result->fetch_assoc()) {
         $cart_items[] = $row;
-        $total_price += floatval($row['price']) * intval($row['quantity']);
+        // Calculate total price correctly - only once here
+        $item_total = floatval($row['price']) * intval($row['quantity']);
+        $total_price += $item_total;
     }
     
     $stmt->close();
@@ -266,12 +269,12 @@ $total_cart_items = count($cart_items);
               </thead>
 
 
-              <tbody class="divide-y divide-gray-200">
+             <tbody class="divide-y divide-gray-200">
                 <?php foreach ($cart_items as $item):
                   $unit_price = floatval($item['price']);
                   $quantity = intval($item['quantity']);
                   $subtotal = $unit_price * $quantity;
-                  $total_price += $subtotal;
+                  // ✅ REMOVED: $total_price += $subtotal; (already calculated above)
                 ?>
                   <tr>
                     <td class="py-3 px-4 font-semibold text-gray-800 uppercase"><?= htmlspecialchars($item['codename']) ?></td>
@@ -305,7 +308,7 @@ $total_cart_items = count($cart_items);
                       <?php endif; ?>
                     </td>
 
-                    <!-- ADD THIS NEW CELL FOR ORIGIN -->
+                    <!-- Origin column -->
                     <td class="py-3 px-4">
                       <?php if (!empty($item['origin'])): ?>
                         <?php if ($item['origin'] === 'local'): ?>
@@ -319,7 +322,6 @@ $total_cart_items = count($cart_items);
                         <span class="text-gray-400 text-sm">—</span>
                       <?php endif; ?>
                     </td>
-
 
                     <td class="py-3 px-4 align-middle">
                       <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"

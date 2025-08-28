@@ -5,7 +5,7 @@ session_start();
 
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin', 'sales', 'warehouse']);
+require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");

@@ -35,18 +35,6 @@ if (isset($_POST['action'])) {
             echo json_encode($result);
             exit();
 
-<<<<<<< HEAD
-        case 'get_available_trucks':
-            $date = $_POST['date'];
-            $dayOfWeek = strtolower(date('l', strtotime($date)));
-
-            $sql = "SELECT * FROM vehicle_list 
-                    WHERE status = 'active' 
-                    AND (unavailable_days IS NULL 
-                         OR unavailable_days = '' 
-                         OR FIND_IN_SET(?, unavailable_days) = 0)
-                    ORDER BY plate_number";
-=======
         case 'get_truck_schedules':
             $date = $_POST['date'];
             try {
@@ -127,7 +115,6 @@ if (isset($_POST['action'])) {
                         WHERE scheduled_date = ?
                     )
                     ORDER BY vl.plate_number";
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ss", $dayOfWeek, $date);
             $stmt->execute();
@@ -135,17 +122,6 @@ if (isset($_POST['action'])) {
             echo json_encode($result);
             exit();
 
-<<<<<<< HEAD
-        case 'assign_truck':
-            $delivery_id = $_POST['delivery_id'];
-            $plate_number = $_POST['plate_number'];
-            $delivery_type = $_POST['delivery_type']; // 'company' or 'third_party'
-
-            try {
-                $conn->begin_transaction();
-
-                // Update delivery schedule with truck assignment
-=======
         case 'assign_to_truck':
             $delivery_id = $_POST['delivery_id'];
             $truck_schedule_id = $_POST['truck_schedule_id'];
@@ -165,7 +141,6 @@ if (isset($_POST['action'])) {
                 }
                 
                 // Update delivery schedule
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 $sql = "UPDATE delivery_schedules SET 
                         truck_schedule_id = ?,
                         assigned_truck = ?,
@@ -175,13 +150,8 @@ if (isset($_POST['action'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("isi", $truck_schedule_id, $truck_info['truck_id'], $delivery_id);
                 $stmt->execute();
-<<<<<<< HEAD
-
-                // Update order item status to out_for_delivery
-=======
                 
                 // Update order item status
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 $sql = "UPDATE order_items oi
                         JOIN delivery_schedules ds ON oi.id = ds.item_id
                         SET oi.tracking_status = 'out_for_delivery'
@@ -198,8 +168,6 @@ if (isset($_POST['action'])) {
             }
             exit();
 
-<<<<<<< HEAD
-=======
         case 'get_truck_deliveries':
             $truck_schedule_id = $_POST['truck_schedule_id'];
             $sql = "SELECT ds.*, oi.product_name, oi.quantity, oi.price, oi.tracking_status, 
@@ -216,7 +184,6 @@ if (isset($_POST['action'])) {
             echo json_encode($result);
             exit();
             
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
         case 'upload_proof':
             $delivery_id = $_POST['delivery_id'];
 
@@ -233,12 +200,7 @@ if (isset($_POST['action'])) {
                 if (move_uploaded_file($_FILES['proof_image']['tmp_name'], $file_path)) {
                     try {
                         $conn->begin_transaction();
-<<<<<<< HEAD
-
-                        // Update delivery schedule with proof
-=======
                         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                         $sql = "UPDATE delivery_schedules SET 
                                 delivery_proof = ?, 
                                 delivered_at = NOW(),
@@ -247,12 +209,7 @@ if (isset($_POST['action'])) {
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("si", $file_name, $delivery_id);
                         $stmt->execute();
-<<<<<<< HEAD
-
-                        // Update order item status to delivered
-=======
                         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                         $sql = "UPDATE order_items oi
                                 JOIN delivery_schedules ds ON oi.id = ds.item_id
                                 SET oi.tracking_status = 'delivered'
@@ -275,16 +232,6 @@ if (isset($_POST['action'])) {
             }
             exit();
 
-<<<<<<< HEAD
-        case 'move_to_next_day':
-            $delivery_id = $_POST['delivery_id'];
-            $new_date = $_POST['new_date'];
-
-            try {
-                $conn->begin_transaction();
-
-                // Update delivery schedule - clear truck assignment and set new date
-=======
         case 'remove_truck_schedule':
             $truck_schedule_id = $_POST['truck_schedule_id'];
             
@@ -292,7 +239,6 @@ if (isset($_POST['action'])) {
                 $conn->begin_transaction();
                 
                 // Reset delivery schedules back to unassigned
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 $sql = "UPDATE delivery_schedules SET 
                         truck_schedule_id = NULL,
                         assigned_truck = NULL,
@@ -315,7 +261,7 @@ if (isset($_POST['action'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $truck_schedule_id);
                 $stmt->execute();
-                
+
                 $conn->commit();
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
@@ -323,7 +269,7 @@ if (isset($_POST['action'])) {
                 echo json_encode(['success' => false, 'error' => $e->getMessage()]);
             }
             exit();
-            
+
         case 'get_delivery_counts':
             // Extended date range to include past dates for better visibility
             $sql = "SELECT DATE(ds.delivery_date) as date, COUNT(*) as count
@@ -339,7 +285,7 @@ if (isset($_POST['action'])) {
             foreach ($result as $data) {
                 $deliveryCountsByDate[$data['date']] = $data['count'];
             }
-            
+
             echo json_encode($deliveryCountsByDate);
             exit();
 
@@ -359,7 +305,7 @@ if (isset($_POST['action'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $delivery_id);
                 $stmt->execute();
-
+                
                 // Update order item status back to ready_for_pickup
                 $sql = "UPDATE order_items oi
                         JOIN delivery_schedules ds ON oi.id = ds.item_id
@@ -368,7 +314,7 @@ if (isset($_POST['action'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $delivery_id);
                 $stmt->execute();
-
+                
                 $conn->commit();
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
@@ -377,10 +323,6 @@ if (isset($_POST['action'])) {
             }
             exit();
 
-<<<<<<< HEAD
-        case 'get_delivery_counts':
-            // Get delivery counts for the next 60 days for calendar
-=======
         case 'reassign_delivery':
             $delivery_id = $_POST['delivery_id'];
             $new_truck_schedule_id = $_POST['new_truck_schedule_id'];
@@ -494,7 +436,6 @@ if (isset($_POST['action'])) {
 
         case 'get_overdue_deliveries':
             // Get undelivered items from past dates
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             $sql = "SELECT DATE(ds.delivery_date) as date, COUNT(*) as count
                     FROM delivery_schedules ds
                     JOIN order_items oi ON ds.item_id = oi.id
@@ -505,18 +446,7 @@ if (isset($_POST['action'])) {
             $stmt = $conn->prepare($sql);
             $stmt->execute();
             $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-<<<<<<< HEAD
-
-            // Convert to associative array for easier lookup
-            $deliveryCountsByDate = [];
-            foreach ($result as $data) {
-                $deliveryCountsByDate[$data['date']] = $data['count'];
-            }
-
-            echo json_encode($deliveryCountsByDate);
-=======
             echo json_encode($result);
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             exit();
     }
 }
@@ -605,7 +535,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             background-color: #fde68a;
             border-color: #d97706;
         }
-
         .calendar-day.today {
             background-color: #dcfce7;
             border-color: #16a34a;
@@ -643,7 +572,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         .calendar-day.overdue:hover {
             background-color: #fecaca;
         }
-
         .delivery-indicator {
             position: absolute;
             top: 4px;
@@ -763,35 +691,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     <p class="text-gray-600">Manage truck schedules and track delivery operations</p>
                 </div>
             </div>
-<<<<<<< HEAD
-
-            <!-- Statistics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="bg-blue-100 p-3 rounded-lg">
-                            <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Total Scheduled</p>
-                            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['total_scheduled']; ?></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center">
-                        <div class="bg-green-100 p-3 rounded-lg">
-                            <i class="fas fa-truck text-green-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Today's Deliveries</p>
-                            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['today_deliveries']; ?></p>
-                        </div>
-                    </div>
-                </div>
-
-=======
             
             <!-- Overdue Banner -->
             <?php if ($stats['overdue_deliveries'] > 0): ?>
@@ -810,7 +709,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center">
                         <div class="bg-yellow-100 p-3 rounded-lg">
@@ -852,51 +750,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- Calendar Section -->
             <div class="lg:col-span-1">
-<<<<<<< HEAD
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-calendar text-blue-600 mr-3"></i>
-                        Delivery Calendar
-                    </h3>
-
-                    <!-- Calendar Navigation -->
-                    <div class="flex items-center justify-between mb-4">
-                        <button type="button" id="prevMonth" class="p-2 hover:bg-gray-100 rounded-lg">
-                            <i class="fas fa-chevron-left text-gray-600"></i>
-                        </button>
-                        <h4 id="currentMonth" class="text-lg font-semibold text-gray-900"></h4>
-                        <button type="button" id="nextMonth" class="p-2 hover:bg-gray-100 rounded-lg">
-                            <i class="fas fa-chevron-right text-gray-600"></i>
-                        </button>
-                    </div>
-
-                    <!-- Calendar Grid -->
-                    <div class="grid grid-cols-7 gap-1 mb-2">
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Sun</div>
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Mon</div>
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Tue</div>
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Wed</div>
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Thu</div>
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Fri</div>
-                        <div class="text-center text-sm font-medium text-gray-500 p-2">Sat</div>
-                    </div>
-
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-
-                    <!-- Legend -->
-                    <div class="mt-4 space-y-2 text-sm">
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-green-100 border-2 border-green-500 rounded mr-2"></div>
-                            <span>Today</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-orange-100 border-2 border-orange-500 rounded mr-2"></div>
-                            <span>Has deliveries</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-blue-600 rounded mr-2"></div>
-                            <span>Selected date</span>
-=======
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="calendar-header">
                         <h3 class="text-xl font-bold mb-4 flex items-center">
@@ -980,7 +833,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                             </div>
                             <h4 class="text-lg font-medium text-gray-600 mb-2">Select a Date</h4>
                             <p class="text-gray-500">Click on a calendar date to view/schedule trucks</p>
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                         </div>
                     </div>
                 </div>
@@ -1032,34 +884,14 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-<<<<<<< HEAD
-
-                    <form id="assignTruckForm">
-                        <input type="hidden" id="assignDeliveryId" name="delivery_id">
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Type</label>
-                            <select id="deliveryType" name="delivery_type" class="w-full p-3 border border-gray-300 rounded-lg" required>
-                                <option value="">Select delivery type</option>
-                                <option value="company">Company Delivery</option>
-                                <option value="third_party">Third Party (Lalamove, etc.)</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-6" id="truckSelectDiv">
-=======
                     
                     <form id="scheduleTruckForm">
                         <div class="mb-4">
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                             <label class="block text-sm font-medium text-gray-700 mb-2">Select Truck</label>
                             <select id="truckScheduleSelect" name="truck_id" class="w-full p-3 border border-gray-300 rounded-lg" required>
                                 <option value="">Select a truck</option>
                             </select>
                         </div>
-<<<<<<< HEAD
-
-=======
                         
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Max Capacity (optional)</label>
@@ -1071,7 +903,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                             <textarea id="truckNotes" name="notes" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="Add any notes for this truck schedule"></textarea>
                         </div>
                         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                         <div class="flex justify-end space-x-3">
                             <button type="button" id="cancelSchedule" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
                             <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Schedule</button>
@@ -1188,25 +1019,12 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         let selectedDate = null;
         let selectedTruckScheduleId = null;
         let deliveryCounts = {};
-<<<<<<< HEAD
-
-=======
         let overdueCounts = {};
         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             initializeCalendar();
             loadDeliveryCounts();
-<<<<<<< HEAD
-
-            // Event listeners for modals
-            document.getElementById('closeTruckModal').addEventListener('click', closeTruckModal);
-            document.getElementById('cancelAssign').addEventListener('click', closeTruckModal);
-            document.getElementById('closeProofModal').addEventListener('click', closeProofModal);
-            document.getElementById('cancelProof').addEventListener('click', closeProofModal);
-
-=======
             loadOverdueDeliveries();
             initializeEventListeners();
         });
@@ -1224,42 +1042,15 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             document.getElementById('closeRescheduleModal').addEventListener('click', closeRescheduleModal);
             document.getElementById('cancelReschedule').addEventListener('click', closeRescheduleModal);
             
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             // Form submissions
             document.getElementById('scheduleTruckForm').addEventListener('submit', handleTruckScheduling);
             document.getElementById('uploadProofForm').addEventListener('submit', handleProofUpload);
-<<<<<<< HEAD
-
-            // Delivery type change handler
-            document.getElementById('deliveryType').addEventListener('change', function() {
-                const truckDiv = document.getElementById('truckSelectDiv');
-                const truckSelect = document.getElementById('truckSelect');
-
-                if (this.value === 'third_party') {
-                    truckDiv.style.display = 'none';
-                    truckSelect.required = false;
-                } else if (this.value === 'company') {
-                    truckDiv.style.display = 'block';
-                    truckSelect.required = true;
-                    // Load available trucks for selected date
-                    if (selectedDate) {
-                        loadAvailableTrucks(selectedDate);
-                    }
-                } else {
-                    truckDiv.style.display = 'block';
-                    truckSelect.required = false;
-                }
-            });
-
-            // Refresh button
-=======
             document.getElementById('reassignDeliveryForm').addEventListener('submit', handleReassignDelivery);
             document.getElementById('rescheduleDeliveryForm').addEventListener('submit', handleRescheduleDelivery);
             
             // Button listeners
             document.getElementById('add-truck-btn').addEventListener('click', openScheduleTruckModal);
             document.getElementById('view-all-items').addEventListener('click', viewAllItems);
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             document.getElementById('refresh-items').addEventListener('click', function() {
                 if (selectedTruckScheduleId) {
                     loadTruckDeliveries(selectedTruckScheduleId);
@@ -1267,10 +1058,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     loadDeliveryItems(selectedDate);
                 }
             });
-<<<<<<< HEAD
-        });
-
-=======
 
             // View overdue button
             const viewOverdueBtn = document.getElementById('view-overdue');
@@ -1279,7 +1066,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             }
         }
         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
         function loadDeliveryCounts() {
             fetch('logistics_dashboard.php', {
                     method: 'POST',
@@ -1295,32 +1081,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 })
                 .catch(error => console.error('Error:', error));
         }
-<<<<<<< HEAD
-
-        function loadAvailableTrucks(date) {
-            fetch('logistics_dashboard.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `action=get_available_trucks&date=${encodeURIComponent(date)}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const truckSelect = document.getElementById('truckSelect');
-                    truckSelect.innerHTML = '<option value="">Select a truck</option>';
-
-                    data.forEach(truck => {
-                        const option = document.createElement('option');
-                        option.value = truck.plate_number;
-                        option.textContent = `${truck.plate_number} - ${truck.truck_type}`;
-                        truckSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading trucks:', error);
-                    showAlert('Error loading available trucks', 'error');
-=======
         
         function loadOverdueDeliveries() {
             fetch('logistics_dashboard.php', {
@@ -1382,8 +1142,12 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     option.value = truck.plate_number;
                     option.textContent = `${truck.plate_number} - ${truck.truck_type}`;
                     truckSelect.appendChild(option);
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 });
+            })
+            .catch(error => {
+                console.error('Error loading trucks:', error);
+                showAlert('Error loading available trucks', 'error');
+            });
         }
 
         function initializeCalendar() {
@@ -1441,16 +1205,12 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 if (currentDateOnly.getTime() === today.getTime()) {
                     dayElement.classList.add('today');
                 }
-<<<<<<< HEAD
-
-=======
                 
                 // Check if past date
                 if (currentDateOnly < today) {
                     dayElement.classList.add('past-date');
                 }
                 
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 // Add delivery indicator if has deliveries
                 if (deliveryCounts[dateString]) {
                     dayElement.classList.add('has-deliveries');
@@ -1458,10 +1218,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     indicator.className = 'delivery-indicator';
                     dayElement.appendChild(indicator);
                 }
-<<<<<<< HEAD
-
-                // Add click event
-=======
                 
                 // Add overdue indicator if has overdue deliveries
                 if (overdueCounts[dateString]) {
@@ -1472,7 +1228,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 }
                 
                 // Add click event for all dates (including past dates)
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 dayElement.addEventListener('click', function() {
                     selectDate(dateString, dayElement);
                 });
@@ -1491,35 +1246,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             // Add selection to clicked element
             element.classList.add('selected');
             selectedDate = dateString;
-<<<<<<< HEAD
-
-            // Update display
-            document.getElementById('selected-date-display').textContent = `for ${formatDisplayDate(dateString)}`;
-
-            // Load delivery items for selected date
-            loadDeliveryItems(dateString);
-        }
-
-        function loadDeliveryItems(date) {
-            fetch('logistics_dashboard.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `action=get_scheduled_items&date=${encodeURIComponent(date)}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    displayDeliveryItems(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('Error loading delivery items', 'error');
-                });
-        }
-
-        function displayDeliveryItems(items) {
-=======
             selectedTruckScheduleId = null; // Clear truck selection
             
             // Update display
@@ -1695,7 +1421,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         }
         
         function displayDeliveryItems(items, viewType) {
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             const container = document.getElementById('delivery-items-container');
 
             if (items.length === 0) {
@@ -1716,14 +1441,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             }
 
             let html = '<div class="p-4 space-y-4">';
-<<<<<<< HEAD
-
-            items.forEach(item => {
-                const statusColor = getStatusColor(item.tracking_status);
-                const canAssign = !item.assigned_truck && item.tracking_status !== 'delivered';
-                const canUploadProof = item.assigned_truck && item.tracking_status === 'out_for_delivery';
-
-=======
             
             // Check if selected date is in the past for overdue styling
             const selectedDateObj = new Date(selectedDate);
@@ -1740,7 +1457,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 const canReschedule = item.tracking_status !== 'delivered';
                 const isOverdue = isOverdueDate && item.tracking_status !== 'delivered';
                 
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 html += `
                     <div class="delivery-item border border-gray-200 rounded-lg p-4 bg-gray-50 ${canAssignToTruck ? 'cursor-move' : ''} ${isOverdue ? 'overdue-item' : ''}"
                          ${canAssignToTruck ? `draggable="true" ondragstart="dragStart(event, ${item.id})" ondragend="dragEnd(event)"` : ''}
@@ -1873,17 +1589,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             };
             return colors[status] || 'bg-gray-100 text-gray-800';
         }
-<<<<<<< HEAD
-
-        function openAssignTruckModal(deliveryId) {
-            document.getElementById('assignDeliveryId').value = deliveryId;
-            document.getElementById('assignTruckModal').classList.remove('hidden');
-        }
-
-        function closeTruckModal() {
-            document.getElementById('assignTruckModal').classList.add('hidden');
-            document.getElementById('assignTruckForm').reset();
-=======
         
         // Drag and Drop Functions
         function dragStart(event, deliveryId) {
@@ -1981,7 +1686,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         function closeScheduleTruckModal() {
             document.getElementById('scheduleTruckModal').classList.add('hidden');
             document.getElementById('scheduleTruckForm').reset();
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
         }
 
         function openUploadProofModal(deliveryId) {
@@ -1993,10 +1697,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             document.getElementById('uploadProofModal').classList.add('hidden');
             document.getElementById('uploadProofForm').reset();
         }
-<<<<<<< HEAD
-
-        function handleTruckAssignment(e) {
-=======
         
         // Reassign modal functions
         function openReassignModal(deliveryId, currentDate) {
@@ -2053,17 +1753,9 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         }
         
         function handleTruckScheduling(e) {
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
             e.preventDefault();
 
             const formData = new FormData(e.target);
-<<<<<<< HEAD
-            formData.append('action', 'assign_truck');
-
-            fetch('logistics_dashboard.php', {
-                    method: 'POST',
-                    body: formData
-=======
             formData.append('action', 'schedule_truck');
             formData.append('date', selectedDate);
             
@@ -2088,13 +1780,13 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 showAlert('Error scheduling truck', 'error');
             });
         }
-        
+
         function handleProofUpload(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(e.target);
             formData.append('action', 'upload_proof');
-            
+
             fetch('logistics_dashboard.php', {
                 method: 'POST',
                 body: formData
@@ -2182,109 +1874,29 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `action=remove_truck_schedule&truck_schedule_id=${truckScheduleId}`
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-<<<<<<< HEAD
-                        showAlert('Truck assigned successfully!', 'success');
-                        closeTruckModal();
-=======
                         showAlert('Truck schedule removed successfully!', 'success');
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                         if (selectedDate) {
                             loadTruckSchedules(selectedDate);
                             loadDeliveryItems(selectedDate);
                         }
-<<<<<<< HEAD
-                    } else {
-                        showAlert('Error assigning truck: ' + (data.error || 'Unknown error'), 'error');
-=======
                         if (selectedTruckScheduleId === truckScheduleId) {
                             selectedTruckScheduleId = null;
                             document.getElementById('delivery-section-title').textContent = `Delivery Items for ${formatDisplayDate(selectedDate)}`;
                         }
                     } else {
                         showAlert('Error removing truck schedule: ' + (data.error || 'Unknown error'), 'error');
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-<<<<<<< HEAD
-                    showAlert('Error assigning truck', 'error');
-=======
                     showAlert('Error removing truck schedule', 'error');
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
                 });
-        }
-
-        function handleProofUpload(e) {
-            e.preventDefault();
-
-            const formData = new FormData(e.target);
-            formData.append('action', 'upload_proof');
-
-            fetch('logistics_dashboard.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Delivery proof uploaded successfully!', 'success');
-                        closeProofModal();
-                        if (selectedDate) {
-                            loadDeliveryItems(selectedDate);
-                        }
-                    } else {
-                        showAlert('Error uploading proof: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('Error uploading proof', 'error');
-                });
-        }
-
-        function moveToNextDay(deliveryId) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowString = tomorrow.getFullYear() + '-' +
-                String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' +
-                String(tomorrow.getDate()).padStart(2, '0');
-
-            if (confirm('Move this delivery to tomorrow? The truck assignment will be cleared and need to be reassigned.')) {
-                fetch('logistics_dashboard.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `action=move_to_next_day&delivery_id=${deliveryId}&new_date=${tomorrowString}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showAlert('Delivery moved to tomorrow! Truck assignment cleared.', 'success');
-                            if (selectedDate) {
-                                loadDeliveryItems(selectedDate);
-                            }
-                            // Refresh delivery counts to update calendar
-                            loadDeliveryCounts();
-                        } else {
-                            showAlert('Error moving delivery: ' + (data.error || 'Unknown error'), 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showAlert('Error moving delivery', 'error');
-                    });
             }
         }
-<<<<<<< HEAD
-
-=======
         
         function viewAllItems() {
             if (!selectedDate) {
@@ -2314,14 +1926,10 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             loadDeliveryItems(selectedDate);
         }
         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
         function viewProof(proofFileName) {
             const proofUrl = '../../uploads/delivery_proof/' + proofFileName;
             window.open(proofUrl, '_blank');
         }
-<<<<<<< HEAD
-
-=======
         
         // Helper function to refresh current view
         function refreshCurrentView() {
@@ -2337,7 +1945,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             }
         }
         
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473
         function updateCalendarHeader() {
             const monthNames = [
                 'January', 'February', 'March', 'April', 'May', 'June',
@@ -2400,10 +2007,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         }
     </script>
 </body>
-<<<<<<< HEAD
 
 </html>
-=======
-</html>
        
->>>>>>> 66a32197a9edd539ad2b2852d270719bdd9f4473

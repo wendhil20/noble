@@ -1,3 +1,44 @@
+<?php
+session_name("nobleuser");
+session_start();
+include '../../connection/connect.php';
+
+// ✅ Restore session from remember_token (email or mobile-based or Google)
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+  $token = $_COOKIE['remember_token'];
+
+  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+  $stmt->bind_param("s", $token);
+  $stmt->execute();
+  $res = $stmt->get_result();
+
+  if ($res->num_rows > 0) {
+    $user = $res->fetch_assoc();
+
+    // 🔐 Store essential user session info
+    $_SESSION['user_id']    = $user['id'];
+    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_email'] = $user['email'] ?? '';
+    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+
+    // 👤 Check if it's a Google account (optional)
+    if (!empty($user['google_id'])) {
+      $_SESSION['google_logged_in'] = true;
+      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+    }
+  }
+
+  $stmt->close();
+}
+
+// ✅ Final session check
+if (!isset($_SESSION['user_id'])) {
+  // Not logged in — redirect to login or Google auth
+  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+  exit;
+}
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,8 +47,17 @@
   <link rel="stylesheet" href="https://cdn.tailwindcss.com">
 </head>
 <body class="bg-gray-50 text-gray-800 leading-relaxed">
+  <?php include '../navbar/top.php'; ?>
   <div class="max-w-4xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-4">Privacy Policy</h1>
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-bold">Privacy Policy</h1>
+  <button onclick="window.history.back()" 
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+    Back
+  </button>
+</div>
+
+
     <p class="mb-6">At NobleHome Depot, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and how it is protected.</p>
 
     <h2 class="text-xl font-semibold mt-6 mb-2">1. Information We Collect</h2>

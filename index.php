@@ -311,7 +311,7 @@ include 'connection/connect.php';
       setTimeout(() => {
         document.getElementById("loader").classList.add("fade-out");
         setTimeout(() => {
-          window.location.href = "user/otherpage/index.php";
+          window.location.href = "indexAgreement";
         }, 1500);
       }, 500);
     }, 4500);

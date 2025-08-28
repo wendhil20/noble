@@ -1,3 +1,39 @@
+<?php
+session_name("nobleuser");
+session_start();
+include '../../connection/connect.php';
+
+// ✅ Restore session from remember_token (normal account or Google)
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['name'];
+        $_SESSION['user_email'] = $user['email'];
+
+        // Check if the account is Google-based (optional flag or logic)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
+    }
+    $stmt->close();
+}
+
+// ✅ Final check if logged in (either normal or Google)
+if (!isset($_SESSION['user_id'])) {
+    // Not logged in, redirect to login/Google callback
+    header('Location: ../google-callback.php');
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -51,11 +87,11 @@
 
 </head>
 
-<body class="bg-gray-50">
+<body class="">
     <?php include '../navbar/top.php'; ?>
     
 <!-- About Us with Many Bouncing Bubbles -->
-<div class="relative bg-white border-b-4 border-accent overflow-hidden">
+<div class="relative bg-white overflow-hidden">
   <!-- Bubble Background Container -->
   <div class="absolute inset-0 z-0 pointer-events-none">
     <!-- Generate multiple bubbles -->
@@ -103,7 +139,7 @@
 
     <div class=" px-6 py-12">
         <!-- Company Introduction -->
-        <div class="bg-white rounded-lg shadow-subtle p-8 mb-12">
+        <div class="bg-white rounded-lg  p-8 mb-12">
             <div class="flex flex-col md:flex-row items-center gap-8">
                 <div class="flex-shrink-0">
                     <img src="../img/logo.png" alt="Noble Home Corp Logo" class="w-32 h-32 object-contain">
@@ -127,7 +163,7 @@
             <!-- Right: Mission and Vision -->
             <div class="space-y-8">
                 <!-- Mission -->
-                <div class="bg-white rounded-lg shadow-subtle p-8 hover-lift">
+                <div class="bg-white rounded-lg  p-8 hover-lift">
                     <div class="flex items-center mb-6">
                         <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mr-4">
                             <i class="fas fa-bullseye text-white text-xl"></i>
@@ -142,7 +178,7 @@
                 </div>
 
                 <!-- Vision -->
-                <div class="bg-white rounded-lg shadow-subtle p-8 hover-lift">
+                <div class="bg-white rounded-lg  p-8 hover-lift">
                     <div class="flex items-center mb-6">
                         <div class="w-12 h-12 bg-accent rounded-lg flex items-center justify-center mr-4">
                             <i class="fas fa-eye text-white text-xl"></i>
@@ -159,7 +195,7 @@
         </div>
 
         <!-- Core Values Section -->
-        <div class="bg-white rounded-lg shadow-subtle p-8">
+        <div class="bg-white rounded-lg  p-8">
             <h2 class="text-3xl font-bold text-orange-500 text-center mb-12 font-poppins">
                 Our Core Values <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
             </h2>

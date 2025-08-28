@@ -679,7 +679,7 @@ $is_verified = $user['is_verified'] ?? null;
                                     data-id="<?php echo $order['id']; ?>"
                                     data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
                                     data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>"
-                                    onclick="viewOrder(<?php echo $order['id']; ?>)">
+                                    onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-4">
                                             <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -797,7 +797,7 @@ $is_verified = $user['is_verified'] ?? null;
                             </div>
                         <?php else: ?>
                             <?php foreach ($pending_orders as $order): ?>
-                                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="viewOrder(<?php echo $order['id']; ?>)">
+                                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
@@ -1193,56 +1193,10 @@ $is_verified = $user['is_verified'] ?? null;
         }
 
         function viewOrder(orderId) {
-            // Show modal with loading state
-            document.getElementById('orderModal').classList.remove('hidden');
-            document.getElementById('orderDetails').innerHTML = `
-        <div class="flex items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-    `;
+    window.location.href = 'order_tracking.php?order_id=' + orderId;
+}
 
-            // Load order details via AJAX
-            fetch('get_order_details.php?order_id=' + orderId)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('orderDetails').innerHTML = data;
-                })
-                .catch(error => {
-                    document.getElementById('orderDetails').innerHTML = `
-                <div class="text-center py-8">
-                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-red-600 font-medium">Error loading order details</p>
-                    <p class="text-sm text-gray-500 mt-1">Please try again later</p>
-                </div>
-            `;
-                });
-        }
-
-        function closeModal() {
-            document.getElementById('orderModal').classList.add('hidden');
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('orderModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Add smooth scrolling and fade-in animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const elements = document.querySelectorAll('.animate-fade-in');
-            elements.forEach((el, index) => {
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        });
+        
 
         // Billing Address Functions
         function toggleBillingDropdown() {

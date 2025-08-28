@@ -318,18 +318,8 @@ if ($user_id) {
 
       <!-- Links - Mobile -->
       <div class="flex justify-center items-center gap-4">
-        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-          class="hover:text-orange-300 transition inline-flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Help
-        </a>
 
-        <span class="text-gray-400">|</span>
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../rules/help')"
           class="hover:text-orange-300 transition inline-flex items-center gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -357,18 +347,10 @@ if ($user_id) {
 
       <!-- Right: Links -->
       <div class="flex items-center gap-4">
-        <a href="javascript:void(0)" onclick="navigateWithLoading('help')"
-          class="hover:text-orange-300 transition inline-flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Help
-        </a>
+      
+       
 
-        <span class="text-gray-400">|</span>
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('support')"
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../rules/help')"
           class="hover:text-orange-300 transition inline-flex items-center gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -402,7 +384,7 @@ if ($user_id) {
     <div class="flex justify-between items-center py-3 sm:py-4">
 
       <!-- Logo - Made more compact on mobile -->
-      <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index.php')"
+      <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index')"
         class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
 
         <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
@@ -792,19 +774,24 @@ if ($user_id) {
             </div>
           </div>
         </div>
+<?php
+  $hidden_pages = ['help.php', 'about.php']; 
 
+?>
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
-          <a href="javascript:void(0)"
-            onclick="navigateWithLoading('../otherpage/cart_view')"
-            class="<?= $current_page == 'cart/cart_view' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
-            id="cart-link">
-            <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-            Cart
-            <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-              <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-            </span>
-          </a>
+<?php if (!in_array($current_page, $hidden_pages)): ?>
+  <a href="javascript:void(0)"
+    onclick="navigateWithLoading('../otherpage/cart_view')"
+    class="<?= $current_page == 'cart_view.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+    id="cart-link">
+    <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+    Cart
+    <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+      <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+    </span>
+  </a>
+<?php endif; ?>
 
           <!-- Cart Hover Modal -->
           <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
@@ -942,7 +929,7 @@ if ($user_id) {
                     class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
                     View Cart
                   </a>
-                  <a href="checkout.php"
+                  <a href="../otherpage/checkout.php"
                     class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
                     Checkout
                   </a>
@@ -1870,7 +1857,7 @@ if ($user_id) {
   </div>
 </nav>
 
-
+<?php if (!in_array($current_page, $hidden_pages)): ?>
 <!-- Enhanced Second Navbar (Subcategories) -->
 <nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg border-b border-orange-300/20">
   <div class="max-w-screen-xl mx-auto px-2 relative">
@@ -1974,6 +1961,8 @@ if ($user_id) {
     </button>
   </div>
 </nav>
+<?php endif; ?>
+
 
 <style>
 /* Enhanced scrollbar hiding */

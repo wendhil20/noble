@@ -1,0 +1,403 @@
+<?php
+session_name("nobleadmin");
+session_start();
+require_once '../../connection/connect.php';
+require_once '../role/roleaccount.php';
+
+require_role(['superadmin']); // only superadmin can manage heads
+
+// departments to manage (supplier removed)
+$departments = ['sales','accountant','human resource','warehouse', 'logistic'];
+
+// Fetch all accounts
+$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head
+      FROM nobleaccount
+      ORDER BY lvl, fullname";
+$res = mysqli_query($conn, $q);
+
+// Group members by department and collect heads
+$groups = [];
+$heads = [];
+while ($r = mysqli_fetch_assoc($res)) {
+    $lvl = strtolower($r['lvl']);
+    if (!isset($groups[$lvl])) $groups[$lvl] = [];
+    $groups[$lvl][] = $r;
+    if ((int)$r['is_head'] === 1) {
+        $heads[] = $r;
+    }
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Assign Department Head — List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-orange-50 min-h-screen text-gray-800">
+    <?php include '../navbar/top.php'; ?>
+  <div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-orange-600">Assign Department Head</h1>
+        <p class="mt-1 text-sm text-gray-600">Click a department to filter. Superadmin is excluded from assignable heads.</p>
+      </div>
+
+      <div class="w-full md:w-96 relative">
+        <input id="searchInput" type="search" placeholder="Search members or heads..."
+               class="w-full pl-10 pr-4 py-2 rounded-lg border border-orange-200 bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300" />
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 111 0z"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filter Buttons -->
+    <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap gap-3 items-center">
+      <button type="button" class="dept-btn px-4 py-2 rounded-lg bg-orange-600 text-white font-medium" data-filter="">All</button>
+      <?php foreach ($departments as $d):
+          $c = isset($groups[$d]) ? count($groups[$d]) : 0;
+      ?>
+        <button type="button" class="dept-btn px-4 py-2 rounded-lg bg-blue border border-orange-100 text-orange-700 hover:bg-orange-50"
+                data-filter="<?= htmlspecialchars($d) ?>">
+          <?= ucwords($d) ?> <span class="ml-2 inline-block bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs"><?= $c ?></span>
+        </button>
+      <?php endforeach; ?>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- left/middle: departments lists (span 2 columns) -->
+      <div class="lg:col-span-2 space-y-4" id="departmentsContainer">
+        <?php foreach ($departments as $dept):
+          $members = $groups[$dept] ?? [];
+        ?>
+          <section class="bg-white rounded-2xl shadow p-4 dept-section" data-dept="<?= htmlspecialchars($dept) ?>">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="text-lg font-semibold text-orange-700 dept-title cursor-pointer"><?= ucwords($dept) ?></h2>
+                <p class="text-sm text-gray-500"><?= count($members) ?> member(s)</p>
+              </div>
+              <div class="text-sm text-gray-500">Dept</div>
+            </div>
+
+            <ul class="space-y-2 member-list">
+              <?php if (count($members) === 0): ?>
+                <li class="text-center text-sm text-gray-400 py-4">No members.</li>
+              <?php else: foreach ($members as $m):
+                  $id = (int)$m['id'];
+                  $is_head = (int)$m['is_head'];
+              ?>
+                <li data-id="<?= $id ?>" data-dept="<?= htmlspecialchars($dept) ?>" data-is-head="<?= $is_head ?>"
+                    class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
+                  <div>
+                    <div class="font-medium text-gray-900"><?= htmlspecialchars($m['fullname']) ?></div>
+                    <div class="text-xs text-gray-500"><?= htmlspecialchars($m['email']) ?></div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <?php if ($is_head === 1): ?>
+                      <span class="head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">Head</span>
+                      <button type="button" class="remove-head ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= $id ?>">Remove</button>
+                    <?php else: ?>
+                      <button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="<?= $id ?>">Set as Head</button>
+                    <?php endif; ?>
+                  </div>
+                </li>
+              <?php endforeach; endif; ?>
+            </ul>
+          </section>
+        <?php endforeach; ?>
+      </div>
+
+      <!-- right: all heads list -->
+      <aside class="space-y-4">
+        <div class="bg-white rounded-2xl shadow p-4">
+          <h3 class="text-lg font-semibold text-orange-700 mb-2">All Department Heads</h3>
+          <p class="text-sm text-gray-500 mb-3">Quick overview. Click View to jump to member.</p>
+
+          <ul id="headsList" class="space-y-2">
+            <?php
+            // show heads for departments (skip superadmin)
+            $visible_heads = array_filter($heads, function($h){ return strtolower($h['lvl']) !== 'superadmin'; });
+            // additionally skip any heads that belong to the removed 'supplier' dept (in case data exists)
+            $visible_heads = array_filter($visible_heads, function($h){ $lvl = strtolower($h['lvl']); return !in_array($lvl, ['supplier']); });
+            if (count($visible_heads) === 0): ?>
+              <li class="text-sm text-gray-400">No heads assigned yet.</li>
+            <?php else:
+              foreach ($visible_heads as $h): ?>
+              <li data-id="<?= (int)$h['id'] ?>" data-dept="<?= htmlspecialchars(strtolower($h['lvl'])) ?>"
+                  class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
+                <div>
+                  <div class="font-medium text-gray-900"><?= htmlspecialchars($h['fullname']) ?></div>
+                  <div class="text-xs text-gray-500"><?= ucwords(htmlspecialchars($h['lvl'])) ?></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" class="goto-member text-sm px-3 py-1 rounded-md bg-white border border-orange-100 text-orange-700" data-id="<?= (int)$h['id'] ?>">View</button>
+                  <button type="button" class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= (int)$h['id'] ?>">Remove</button>
+                </div>
+              </li>
+            <?php endforeach; endif; ?>
+          </ul>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow p-4 text-sm text-gray-600">
+          <strong>Note:</strong>
+          <p class="mt-2">Assigning a head will remove the previous head for that department. Superadmin cannot be assigned as a department head.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Confirm modal (centered & responsive) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto p-5">
+      <h4 id="confirmTitle" class="text-lg font-semibold text-gray-900">Confirm</h4>
+      <p id="confirmMessage" class="mt-2 text-sm text-gray-600">Are you sure?</p>
+      <div class="mt-5 flex justify-end gap-3">
+        <button id="confirmCancel" type="button" class="px-4 py-2 rounded-md border bg-white">Cancel</button>
+        <button id="confirmOk" type="button" class="px-4 py-2 rounded-md bg-orange-600 text-white">Yes, continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div id="toast" class="fixed top-6 right-6 z-50 hidden">
+    <div id="toastContent" class="px-4 py-2 rounded-lg shadow bg-green-600 text-white"></div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  const deptButtons = $$('.dept-btn');
+  const deptSections = $$('.dept-section');
+  const search = $('#searchInput');
+  const headsListEl = $('#headsList');
+  const confirmModal = $('#confirmModal');
+  const confirmTitle = $('#confirmTitle');
+  const confirmMessage = $('#confirmMessage');
+  const confirmOk = $('#confirmOk');
+  const confirmCancel = $('#confirmCancel');
+  const toast = $('#toast');
+  const toastContent = $('#toastContent');
+
+  // Helper: show toast
+  function showToast(msg, type='success') {
+    toastContent.textContent = msg;
+    toastContent.className = 'px-4 py-2 rounded-lg shadow ' + (type==='error' ? 'bg-red-600 text-white' : 'bg-green-600 text-white');
+    toast.classList.remove('hidden');
+    clearTimeout(window._t);
+    window._t = setTimeout(()=> toast.classList.add('hidden'), 3000);
+  }
+
+  // Show/hide sections by dept; persist in URL (dept query param)
+  function applyFilter(dept) {
+    deptSections.forEach(sec => {
+      const d = (sec.dataset.dept || '').toLowerCase();
+      sec.style.display = (!dept || d === dept) ? '' : 'none';
+    });
+    // update active button visuals
+    deptButtons.forEach(btn => {
+      const f = (btn.dataset.filter || '').toLowerCase();
+      if ((dept || '') === f) {
+        btn.classList.remove('bg-white','text-orange-700');
+        btn.classList.add('bg-orange-600','text-white');
+      } else {
+        btn.classList.remove('bg-orange-600','text-white');
+        btn.classList.add('bg-white','text-orange-700');
+      }
+    });
+    // update URL (replace)
+    const params = new URLSearchParams(window.location.search);
+    if (!dept) params.delete('dept'); else params.set('dept', dept);
+    history.replaceState(null, '', window.location.pathname + (params.toString() ? '?' + params.toString() : ''));
+    refreshHeadsList();
+  }
+
+  // Build heads list from current DOM department lists (excluding superadmin and supplier)
+  function refreshHeadsList() {
+    const memberRows = Array.from(document.querySelectorAll('li[data-id]'));
+    const headRows = memberRows.filter(r => r.dataset.isHead === '1' && (r.dataset.dept || '').toLowerCase() !== 'superadmin' && (r.dataset.dept || '').toLowerCase() !== 'supplier');
+    if (headRows.length === 0) {
+      headsListEl.innerHTML = '<li class="text-sm text-gray-400">No heads assigned yet.</li>';
+      return;
+    }
+    headsListEl.innerHTML = '';
+    headRows.forEach(r => {
+      const id = r.dataset.id;
+      const name = r.querySelector('.font-medium') ? r.querySelector('.font-medium').textContent.trim() : '';
+      const dept = (r.dataset.dept || '').toLowerCase();
+      const item = document.createElement('li');
+      item.dataset.id = id;
+      item.dataset.dept = dept;
+      item.className = 'flex items-center justify-between bg-orange-50 rounded-lg p-3';
+      item.innerHTML = `
+        <div>
+          <div class="font-medium text-gray-900">${name}</div>
+          <div class="text-xs text-gray-500">${dept.replace(/\b\w/g,c=>c.toUpperCase())}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" class="goto-member text-sm px-3 py-1 rounded-md bg-white border border-orange-100 text-orange-700" data-id="${id}">View</button>
+          <button type="button" class="remove-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="${id}">Remove</button>
+        </div>
+      `;
+      headsListEl.appendChild(item);
+    });
+  }
+
+  // Send action to backend
+  async function sendAction(accountId, action) {
+    const body = `account_id=${encodeURIComponent(accountId)}&action=${encodeURIComponent(action)}`;
+    const resp = await fetch('manage_head_account.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body
+    });
+    return resp.json();
+  }
+
+  // Confirm modal promise
+  function confirmDialog(title, message) {
+    confirmTitle.textContent = title;
+    confirmMessage.textContent = message;
+    confirmModal.classList.remove('hidden');
+    return new Promise(resolve => {
+      function cleanup() {
+        confirmModal.classList.add('hidden');
+        confirmOk.removeEventListener('click', ok);
+        confirmCancel.removeEventListener('click', cancel);
+      }
+      function ok() { cleanup(); resolve(true); }
+      function cancel() { cleanup(); resolve(false); }
+      confirmOk.addEventListener('click', ok);
+      confirmCancel.addEventListener('click', cancel);
+    });
+  }
+
+  // Click handlers (delegate)
+  document.addEventListener('click', async (e) => {
+    const setBtn = e.target.closest('.set-head');
+    const removeBtn = e.target.closest('.remove-head');
+    const gotoBtn = e.target.closest('.goto-member');
+    const deptBtn = e.target.closest('.dept-btn');
+
+    if (deptBtn) {
+      const filter = (deptBtn.dataset.filter || '').toLowerCase();
+      applyFilter(filter);
+      return;
+    }
+
+    if (gotoBtn) {
+      const id = gotoBtn.dataset.id;
+      const target = document.querySelector(`li[data-id="${id}"]`);
+      if (target) {
+        target.scrollIntoView({behavior:'smooth', block:'center'});
+        target.classList.add('ring','ring-orange-300');
+        setTimeout(()=> target.classList.remove('ring','ring-orange-300'), 1400);
+      }
+      return;
+    }
+
+    if (setBtn) {
+      const id = setBtn.dataset.id;
+      const row = setBtn.closest('li[data-id]');
+      if (!row) return;
+      const ok = await confirmDialog('Assign Head', 'Assign this member as department head? This will remove any existing head in this department.');
+      if (!ok) return;
+      setBtn.disabled = true;
+      setBtn.textContent = 'Processing...';
+      try {
+        const json = await sendAction(id, 'set_head');
+        if (json && json.success) {
+          showToast(json.message || 'Head assigned');
+          // clear old head in same department and mark this as head
+          const dept = row.dataset.dept;
+          document.querySelectorAll(`li[data-dept="${dept}"]`).forEach(it => {
+            if (it.dataset.id !== String(id) && it.dataset.isHead === '1') {
+              it.dataset.isHead = '0';
+              const remove = it.querySelector('.remove-head');
+              if (remove) remove.outerHTML = `<button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="${it.dataset.id}">Set as Head</button>`;
+              const badge = it.querySelector('.head-badge');
+              if (badge) badge.remove();
+            }
+          });
+          // update current row
+          row.dataset.isHead = '1';
+          const act = row.querySelector('.set-head');
+          if (act) act.outerHTML = `<button type="button" class="remove-head ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="${id}">Remove</button>`;
+          if (!row.querySelector('.head-badge')) {
+            const container = row.querySelector('.flex.items-center.gap-2');
+            const badge = document.createElement('span');
+            badge.className = 'head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold';
+            badge.textContent = 'Head';
+            container.insertBefore(badge, container.firstChild);
+          }
+          refreshHeadsList();
+        } else {
+          showToast((json && json.message) || 'Failed to assign', 'error');
+          setBtn.disabled = false;
+          setBtn.textContent = 'Set as Head';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Network error', 'error');
+        setBtn.disabled = false;
+        setBtn.textContent = 'Set as Head';
+      }
+      return;
+    }
+
+    if (removeBtn) {
+      const id = removeBtn.dataset.id;
+      const row = removeBtn.closest('li[data-id]');
+      if (!row) return;
+      const ok = await confirmDialog('Remove Head', 'Remove head role from this member?');
+      if (!ok) return;
+      removeBtn.disabled = true;
+      removeBtn.textContent = 'Processing...';
+      try {
+        const json = await sendAction(id, 'remove_head');
+        if (json && json.success) {
+          // reload so the right-side heads list is refreshed from server
+          location.reload();
+        } else {
+          showToast((json && json.message) || 'Failed to remove', 'error');
+          removeBtn.disabled = false;
+          removeBtn.textContent = 'Remove';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Network error', 'error');
+        removeBtn.disabled = false;
+        removeBtn.textContent = 'Remove';
+      }
+      return;
+    }
+  });
+
+  // Apply initial filter from URL
+  const params = new URLSearchParams(window.location.search);
+  const initialDept = params.get('dept') ? params.get('dept').toLowerCase() : '';
+  applyFilter(initialDept);
+
+  // Search: filter members and heads
+  search.addEventListener('input', function () {
+    const q = (search.value || '').trim().toLowerCase();
+    document.querySelectorAll('li[data-id]').forEach(li => {
+      const name = (li.querySelector('.font-medium')?.textContent || '').toLowerCase();
+      const email = (li.querySelector('.text-xs')?.textContent || '').toLowerCase();
+      li.style.display = (!q || name.includes(q) || email.includes(q)) ? '' : 'none';
+    });
+    refreshHeadsList();
+  });
+
+  // initial heads render
+  refreshHeadsList();
+
+}); // DOMContentLoaded
+</script>
+</body>
+</html>

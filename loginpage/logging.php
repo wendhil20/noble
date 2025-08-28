@@ -117,7 +117,7 @@ try {
         'accountant' => "../admin/accountant/accountant",
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/adminshop",
-        'logistic' => "../admin/client/monitortracking",
+        'logistic' => "../admin/logistic_management/logistics_dashboard",
         'warehouse' => "../admin/warehouse_management/order_list",
         default => "../admin/client/dashboard"
     };

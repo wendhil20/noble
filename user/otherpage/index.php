@@ -1467,7 +1467,7 @@ handleQueryError($conn, "New Status Query");
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
         <!-- Header first -->
-        <div class="text-center mb-8 sm:mb-12 relative">
+        <div class="text-start mb-8 sm:mb-12 relative">
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
                 <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
                 <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
@@ -1477,7 +1477,7 @@ handleQueryError($conn, "New Status Query");
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black  bg-clip-text text-black mb-4 tracking-tight" data-aos="fade-up">
                 Bed Furniture
             </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+            <div class="mx-start w-40 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
 
         </div>
         <style>
@@ -1615,7 +1615,7 @@ handleQueryError($conn, "New Status Query");
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
         <!-- Header first -->
-        <div class="text-center mb-8 sm:mb-12 relative">
+        <div class="text-end mb-8 sm:mb-12 relative">
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
                 <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
                 <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
@@ -1625,7 +1625,8 @@ handleQueryError($conn, "New Status Query");
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text  to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
                 Furniture
             </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+         <div class="ms-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-400 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+
 
         </div>
         <style>

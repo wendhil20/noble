@@ -7,13 +7,6 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Optional: Auto-logout after inactivity (e.g. 30 mins)
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 86400) {
-    session_unset();
-    session_destroy();
-    header("Location: ../../loginpage/index.php?timeout=true");
-    exit();
-}
 
 // Function to display all rejected orders
 function displayRejectedOrders($conn) {

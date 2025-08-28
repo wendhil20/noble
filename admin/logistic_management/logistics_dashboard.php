@@ -15,7 +15,7 @@ if (!isset($_SESSION['noble_user'])) {
 // Handle AJAX requests
 if (isset($_POST['action'])) {
     header('Content-Type: application/json');
-    
+
     switch ($_POST['action']) {
         case 'get_scheduled_items':
             $date = $_POST['date'];
@@ -159,7 +159,7 @@ if (isset($_POST['action'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $delivery_id);
                 $stmt->execute();
-                
+
                 $conn->commit();
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
@@ -186,17 +186,17 @@ if (isset($_POST['action'])) {
             
         case 'upload_proof':
             $delivery_id = $_POST['delivery_id'];
-            
+
             if (isset($_FILES['proof_image']) && $_FILES['proof_image']['error'] === UPLOAD_ERR_OK) {
                 $upload_dir = '../../uploads/delivery_proof/';
                 if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
-                
+
                 $file_extension = pathinfo($_FILES['proof_image']['name'], PATHINFO_EXTENSION);
                 $file_name = 'delivery_' . $delivery_id . '_' . time() . '.' . $file_extension;
                 $file_path = $upload_dir . $file_name;
-                
+
                 if (move_uploaded_file($_FILES['proof_image']['tmp_name'], $file_path)) {
                     try {
                         $conn->begin_transaction();
@@ -217,7 +217,7 @@ if (isset($_POST['action'])) {
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("i", $delivery_id);
                         $stmt->execute();
-                        
+
                         $conn->commit();
                         echo json_encode(['success' => true]);
                     } catch (Exception $e) {
@@ -261,7 +261,7 @@ if (isset($_POST['action'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $truck_schedule_id);
                 $stmt->execute();
-                
+
                 $conn->commit();
                 echo json_encode(['success' => true]);
             } catch (Exception $e) {
@@ -269,7 +269,7 @@ if (isset($_POST['action'])) {
                 echo json_encode(['success' => false, 'error' => $e->getMessage()]);
             }
             exit();
-            
+
         case 'get_delivery_counts':
             // Extended date range to include past dates for better visibility
             $sql = "SELECT DATE(ds.delivery_date) as date, COUNT(*) as count
@@ -285,7 +285,7 @@ if (isset($_POST['action'])) {
             foreach ($result as $data) {
                 $deliveryCountsByDate[$data['date']] = $data['count'];
             }
-            
+
             echo json_encode($deliveryCountsByDate);
             exit();
 
@@ -467,6 +467,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -479,9 +480,16 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 extend: {
                     colors: {
                         primary: {
-                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-                            800: '#9a3412', 900: '#7c2d12',
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
                         }
                     }
                 }
@@ -501,12 +509,14 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             border-radius: 8px;
             border: 1px solid #e5e7eb;
         }
+
         .calendar-day:hover {
             background-color: #dbeafe;
             border-color: #93c5fd;
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+
         .calendar-day.selected {
             background-color: #3b82f6 !important;
             color: white !important;
@@ -514,6 +524,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             font-weight: 600;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
+
         .calendar-day.has-deliveries {
             background-color: #fef3c7;
             border-color: #f59e0b;
@@ -664,9 +675,10 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
     <?php include '../navbar/top.php'; ?>
-    
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-8">
@@ -708,7 +720,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center">
                         <div class="bg-purple-100 p-3 rounded-lg">
@@ -845,7 +857,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                             </div>
                         </div>
                     </div>
-                    
+
                     <div id="delivery-items-container" class="max-h-[800px] overflow-y-auto">
                         <div class="p-8 text-center">
                             <div class="text-gray-400 mb-4">
@@ -913,16 +925,16 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    
+
                     <form id="uploadProofForm" enctype="multipart/form-data">
                         <input type="hidden" id="proofDeliveryId" name="delivery_id">
-                        
+
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Photo</label>
                             <input type="file" id="proofImage" name="proof_image" accept="image/*" class="w-full p-3 border border-gray-300 rounded-lg" required>
                             <p class="text-sm text-gray-500 mt-1">Upload a photo as proof of delivery</p>
                         </div>
-                        
+
                         <div class="flex justify-end space-x-3">
                             <button type="button" id="cancelProof" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
                             <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Upload</button>
@@ -1056,16 +1068,18 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         
         function loadDeliveryCounts() {
             fetch('logistics_dashboard.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=get_delivery_counts'
-            })
-            .then(response => response.json())
-            .then(data => {
-                deliveryCounts = data;
-                generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-            })
-            .catch(error => console.error('Error:', error));
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'action=get_delivery_counts'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    deliveryCounts = data;
+                    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+                })
+                .catch(error => console.error('Error:', error));
         }
         
         function loadOverdueDeliveries() {
@@ -1135,59 +1149,59 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 showAlert('Error loading available trucks', 'error');
             });
         }
-        
+
         function initializeCalendar() {
             updateCalendarHeader();
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-            
+
             document.getElementById('prevMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() - 1);
                 updateCalendarHeader();
                 generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             });
-            
+
             document.getElementById('nextMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() + 1);
                 updateCalendarHeader();
                 generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             });
         }
-        
+
         function generateCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
             const startingDayOfWeek = firstDay.getDay();
-            
+
             const calendarGrid = document.getElementById('calendar-grid');
             calendarGrid.innerHTML = '';
-            
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
+
             // Add empty cells for days before the first day of the month
             for (let i = 0; i < startingDayOfWeek; i++) {
                 const emptyDay = document.createElement('div');
                 emptyDay.className = 'h-12';
                 calendarGrid.appendChild(emptyDay);
             }
-            
+
             // Add days of the month
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const dateString = year + '-' + 
-                    String(month + 1).padStart(2, '0') + '-' + 
+                const dateString = year + '-' +
+                    String(month + 1).padStart(2, '0') + '-' +
                     String(day).padStart(2, '0');
-                    
+
                 const dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day bg-white';
                 dayElement.textContent = day;
                 dayElement.dataset.date = dateString;
-                
+
                 // Check if today
                 const currentDateOnly = new Date(year, month, day);
                 currentDateOnly.setHours(0, 0, 0, 0);
-                
+
                 if (currentDateOnly.getTime() === today.getTime()) {
                     dayElement.classList.add('today');
                 }
@@ -1217,18 +1231,18 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 dayElement.addEventListener('click', function() {
                     selectDate(dateString, dayElement);
                 });
-                
+
                 calendarGrid.appendChild(dayElement);
             }
         }
-        
+
         function selectDate(dateString, element) {
             // Remove previous selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
-            
+
             // Add selection to clicked element
             element.classList.add('selected');
             selectedDate = dateString;
@@ -1408,7 +1422,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         
         function displayDeliveryItems(items, viewType) {
             const container = document.getElementById('delivery-items-container');
-            
+
             if (items.length === 0) {
                 const emptyMessage = viewType === 'truck' 
                     ? 'No deliveries assigned to this truck' 
@@ -1425,7 +1439,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 `;
                 return;
             }
-            
+
             let html = '<div class="p-4 space-y-4">';
             
             // Check if selected date is in the past for overdue styling
@@ -1560,11 +1574,11 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     </div>
                 `;
             });
-            
+
             html += '</div>';
             container.innerHTML = html;
         }
-        
+
         function getStatusColor(status) {
             const colors = {
                 'ready_for_pickup': 'bg-blue-100 text-blue-800',
@@ -1673,12 +1687,12 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             document.getElementById('scheduleTruckModal').classList.add('hidden');
             document.getElementById('scheduleTruckForm').reset();
         }
-        
+
         function openUploadProofModal(deliveryId) {
             document.getElementById('proofDeliveryId').value = deliveryId;
             document.getElementById('uploadProofModal').classList.remove('hidden');
         }
-        
+
         function closeProofModal() {
             document.getElementById('uploadProofModal').classList.add('hidden');
             document.getElementById('uploadProofForm').reset();
@@ -1740,7 +1754,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         
         function handleTruckScheduling(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(e.target);
             formData.append('action', 'schedule_truck');
             formData.append('date', selectedDate);
@@ -1766,13 +1780,13 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 showAlert('Error scheduling truck', 'error');
             });
         }
-        
+
         function handleProofUpload(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(e.target);
             formData.append('action', 'upload_proof');
-            
+
             fetch('logistics_dashboard.php', {
                 method: 'POST',
                 body: formData
@@ -1936,42 +1950,42 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'
             ];
-            
-            document.getElementById('currentMonth').textContent = 
+
+            document.getElementById('currentMonth').textContent =
                 monthNames[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
         }
-        
+
         function formatDisplayDate(dateString) {
             const date = new Date(dateString + 'T00:00:00');
-            return date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
         }
-        
+
         function formatTime(timeString) {
             if (!timeString) return 'Not specified';
             const time = new Date('2000-01-01 ' + timeString);
-            return time.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
+            return time.toLocaleTimeString('en-US', {
+                hour: 'numeric',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             });
         }
-        
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text || '';
             return div.innerHTML;
         }
-        
+
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-green-50 border-green-400 text-green-800' : 'bg-red-50 border-red-400 text-red-800';
             const icon = type === 'success' ? 'fa-check-circle text-green-600' : 'fa-exclamation-triangle text-red-600';
-            
+
             alertDiv.className = `fixed top-4 right-4 z-50 border-l-4 rounded-lg p-4 shadow-lg ${bgColor}`;
             alertDiv.innerHTML = `
                 <div class="flex items-center">
@@ -1982,9 +1996,9 @@ $stats = $conn->query($statsSql)->fetch_assoc();
                     </button>
                 </div>
             `;
-            
+
             document.body.appendChild(alertDiv);
-            
+
             setTimeout(() => {
                 if (alertDiv.parentElement) {
                     alertDiv.remove();
@@ -1993,5 +2007,6 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         }
     </script>
 </body>
+
 </html>
        

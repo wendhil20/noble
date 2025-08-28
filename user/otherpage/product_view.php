@@ -643,63 +643,69 @@ $avg_stmt->close();
           <?php endif; ?>
 
 
-          <!-- Size/Variant Selection -->
-          <div class="mb-6 lg:mb-8">
-            <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Available Sizes</h3>
+<!-- Size/Variant Selection -->
+<div class="mb-6 lg:mb-8">
+  <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Available Sizes</h3>
 
-            <div id="variant-container" class="text-gray-500 p-4 bg-white rounded-lg text-center">
-              <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-              <p>Please select a product</p>
-            </div>
+  <div id="variant-container" class="text-gray-500 p-4 bg-white rounded-lg text-center">
+    <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+    <p>Please select a product</p>
+  </div>
 
-            <?php foreach ($types_data as $type): ?>
-              <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-                <?php if (!empty($type['variants'])): ?>
-                  <div class="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 lg:gap-4">
-                      <?php foreach ($type['variants'] as $variant): ?>
-                        <?php
-                        $price = floatval($variant['variant_price']);
-                        $percent = floatval($variant['percent']);
-                        $discount = floatval($variant['discount'] ?? 0);
-                        $priceWithMarkup = $price + ($price * $percent / 100);
-                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                        ?>
-                        <button type="button"
-                          onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
-                          class="variant-btn border-2 border-gray-200 p-3 lg:p-4 hover:border-orange-300 relative bg-white rounded-lg text-left"
-                          data-price="<?= $price ?>"
-                          data-percent="<?= $percent ?>"
-                          data-discount="<?= $discount ?>"
-                          data-variant-id="<?= $variant['variant_id'] ?>">
-                          <?php if ($discount > 0): ?>
-                            <span class="absolute 2-top- -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10">
-                              <?= number_format($discount, 0) ?>% OFF
-                            </span>
-                          <?php endif; ?>
+  <?php foreach ($types_data as $type): ?>
+    <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+      <?php if (!empty($type['variants'])): ?>
+        <div class="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-4">
+          <!-- ✅ Responsive uniform grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4">
+            <?php foreach ($type['variants'] as $variant): ?>
+              <?php
+              $price = floatval($variant['variant_price']);
+              $percent = floatval($variant['percent']);
+              $discount = floatval($variant['discount'] ?? 0);
+              $priceWithMarkup = $price + ($price * $percent / 100);
+              $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+              ?>
+              <button type="button"
+                onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
+                class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg 
+                       p-2 lg:p-3 text-center transition transform hover:scale-[1.02] 
+                       flex flex-col justify-between min-h-[120px] lg:min-h-[140px]"
+                data-price="<?= $price ?>"
+                data-percent="<?= $percent ?>"
+                data-discount="<?= $discount ?>"
+                data-variant-id="<?= $variant['variant_id'] ?>">
 
-                          <div class="text-center">
-                            <div class="font-semibold text-orange-600 mb-1 text-sm lg:text-base"><?= htmlspecialchars($variant['namevariant']) ?></div>
-                            <div class="text-gray-600 text-sm mb-2"><?= htmlspecialchars($variant['size']) ?></div>
-                            <div>
-                              <?php if ($discount > 0): ?>
-                                <div class="text-xs text-gray-400 line-through mb-1">₱<?= number_format($priceWithMarkup, 2) ?></div>
-                                <div class="text-red-600 font-bold text-sm lg:text-base">₱<?= number_format($finalPrice, 2) ?></div>
-                              <?php else: ?>
-                                <div class="font-bold text-green-600 text-sm lg:text-base">₱<?= number_format($finalPrice, 2) ?></div>
-                              <?php endif; ?>
-                            </div>
-                          </div>
-                        </button>
-                      <?php endforeach; ?>
-                    </div>
+                <div class="flex flex-col items-center justify-center h-full">
+                  
+                  <div class="text-gray-600 text-[11px] lg:text-xs mb-1">
+                    <?= htmlspecialchars($variant['size']) ?>
                   </div>
-                <?php else: ?>
-                  <p class="text-gray-500 text-center p-4">No variants available for this type.</p>
-                <?php endif; ?>
-              </div>
+
+                  <!-- ✅ Price + Discount below -->
+                  <div class="flex flex-col items-center">
+                    <?php if ($discount > 0): ?>
+                      <div class="text-[11px] text-gray-400 line-through mb-0.5">₱<?= number_format($priceWithMarkup, 2) ?></div>
+                      <div class="text-red-600 font-bold text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
+                      <div class="mt-1 text-[11px] font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
+                        <?= number_format($discount, 0) ?>% OFF
+                      </div>
+                    <?php else: ?>
+                      <div class="font-bold text-green-600 text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </button>
             <?php endforeach; ?>
           </div>
+        </div>
+      <?php else: ?>
+        <p class="text-gray-500 text-center p-4">No variants available for this type.</p>
+      <?php endif; ?>
+    </div>
+  <?php endforeach; ?>
+</div>
+
 
           <!-- Purchase Section -->
           <div class="mt-auto">

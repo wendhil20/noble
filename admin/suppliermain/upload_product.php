@@ -10,12 +10,6 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 86400) {
-    session_unset();
-    session_destroy();
-    header("Location: ../../loginpage/index.php?timeout=true");
-    exit();
-}
 $_SESSION['last_activity'] = time();
 
 define('MAX_FILE_SIZE', 15 * 1024 * 1024); // 15MB

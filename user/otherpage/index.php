@@ -9,7 +9,15 @@ if (isset($_SESSION['login_needed'])) {
     $notification_message = $_SESSION['login_needed'];
     unset($_SESSION['login_needed']);
 }
+if (isset($_POST['acceptCookies'])) {
+    // ✅ Set cookie valid for 1 year
+    setcookie("cookiesAccepted", "true", time() + (365 * 24 * 60 * 60), "/");
+    // Refresh page para mawala yung banner agad
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit;
+}
 
+$cookieAccepted = isset($_COOKIE['cookiesAccepted']) && $_COOKIE['cookiesAccepted'] === 'true';
 // 1. Fetch all variants (basic list) - UNCHANGED
 $query_variants1 = "SELECT id, type_id, color, size, price, percent, image, origin FROM product_variants ORDER BY id DESC";
 $result_variants = mysqli_query($conn, $query_variants1);
@@ -846,9 +854,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Furniture -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=furniture" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/furnibg/1.png" alt="Furniture" class="w-8 h-8 object-contain">
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Furniture</span>
                             </div>
@@ -858,11 +866,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Materials -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=materials" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="layers" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                   <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Materials</span>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Material Boards</span>
                             </div>
                         </a>
                     </div>
@@ -870,9 +878,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bedroom Furniture -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bedfurniture" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="bed-double" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                     <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Bedroom</span>
                             </div>
@@ -882,9 +890,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Lighting -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=lighting" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="lightbulb" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Lighting</span>
                             </div>
@@ -894,9 +902,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Aircon -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aircon" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="snowflake" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                     <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Aircon</span>
                             </div>
@@ -906,9 +914,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Doors -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=doors" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="door-closed" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                     <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Doors</span>
                             </div>
@@ -918,9 +926,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Tiles -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=tiles" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="grid" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                     <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Tiles</span>
                             </div>
@@ -930,9 +938,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Windows -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=windows" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="square" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Windows</span>
                             </div>
@@ -942,9 +950,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bathroom -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bathroom" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="shower-head" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Bathroom</span>
                             </div>
@@ -954,9 +962,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Kitchen -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=kitchen" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="utensils-crossed" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                    <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Kitchen</span>
                             </div>
@@ -966,9 +974,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- Pipes -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=pipes" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="pipe" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                 <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Pipes</span>
                             </div>
@@ -978,9 +986,9 @@ handleQueryError($conn, "New Status Query");
                     <!-- AAC Blocks -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aacblock" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-28 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <i data-lucide="box" class="w-6 h-6 text-orange-600"></i>
+                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                   <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">AAC Blocks</span>
                             </div>
@@ -995,54 +1003,54 @@ handleQueryError($conn, "New Status Query");
             <div class="grid grid-cols-6 gap-6">
                 <!-- Row 1 -->
                 <a href="shop?category[]=furniture" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/furnibg/1.png" alt="Furniture" class="w-10 h-10 object-contain">
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Furniture</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=materials" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="layers" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                          <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Material Boards</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=bedfurniture" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="bed-double" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                             <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Bedroom Furniture</span>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Bedroom </span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=lighting" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="lightbulb" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Lighting fixture</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=aircon" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="snowflake" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Aircon</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=doors" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="door-closed" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Doors</span>
                     </div>
@@ -1050,54 +1058,54 @@ handleQueryError($conn, "New Status Query");
 
                 <!-- Row 2 -->
                 <a href="shop?category[]=tiles" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="grid" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Tiles</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=windows" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="square" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Windows</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=bathroom" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="shower-head" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                            <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Bathroom Fixtures</span>
+                        <span class="text-sm font-semibold text-gray-700 text-center">Bathroom </span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=kitchen" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="utensils-crossed" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Kitchen Fixtures</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=pipes" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="pipe" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Pipes</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=aacblock" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-32 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <i data-lucide="box" class="w-7 h-7 text-orange-600"></i>
+                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                           <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">AAC BLOCKS</span>
                     </div>
@@ -1759,7 +1767,7 @@ handleQueryError($conn, "New Status Query");
                 <div class="inline-block mb-6">
                     <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
                     <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                        Browse Background
+                     We Design, We build, and We deliver
                     </h2>
                     <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
                 </div>
@@ -2661,6 +2669,23 @@ handleQueryError($conn, "New Status Query");
   margin: 4px 0;
 }
 </style>
+
+
+<?php if (!$cookieAccepted): ?>
+<section id="cookie-banner" class="fixed bottom-4 left-4 right-4 bg-white border shadow-lg rounded-lg p-4 flex items-center justify-between z-50">
+  <p class="text-sm text-gray-700">
+  This website uses cookies to personalize content, improve your browsing experience, 
+  remember your preferences, and analyze site traffic. By clicking "Accept", 
+  you consent to the use of cookies in accordance with our Privacy Policy.
+</p>
+
+  <form method="post">
+    <button type="submit" name="acceptCookies" class="ml-4 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
+      Accept
+    </button>
+  </form>
+</section>
+<?php endif; ?>
 
 <script>
 let chatOpen = false;

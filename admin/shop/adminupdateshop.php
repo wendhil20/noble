@@ -12,13 +12,6 @@ if (!isset($_SESSION['noble_user'])) {
   exit();
 }
 
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 86400) {
-  session_unset();
-  session_destroy();
-  header("Location: ../../loginpage/index.php?timeout=true");
-  exit();
-}
-$_SESSION['last_activity'] = time();
 
 // DELETE LOGIC
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {

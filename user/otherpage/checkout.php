@@ -808,9 +808,9 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <div class="text-sm text-gray-600 text-center mt-4">
                 By placing your order, you agree to our
-                <a href="terms.php" class="text-blue-600 underline hover:text-blue-800" target="_blank">Terms</a>
+                <a href="rules/terms.php" class="text-blue-600 underline hover:text-blue-800" target="_blank">Terms</a>
                 and
-                <a href="privacy_policy.php" class="text-blue-600 underline hover:text-blue-800" target="_blank">Privacy Policy</a>.
+                <a href="rules/privacy.php" class="text-blue-600 underline hover:text-blue-800" target="_blank">Privacy Policy</a>.
             </div>
 
             <button type="submit" class="<?= !$has_billing_addresses ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700' ?> text-white px-6 py-2 rounded mt-6" <?= !$has_billing_addresses ? 'disabled' : '' ?> id="placeOrderBtn">

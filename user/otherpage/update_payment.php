@@ -21,7 +21,7 @@ if (!$order_id) {
 }
 
 // Verify order belongs to user and has rejected payment status
-$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND email = ? AND payment_status = 'rejected'");
+$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND email = ? AND payment_status = 'rejected' LIMIT 1");
 $stmt->bind_param("is", $order_id, $user_email);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -35,118 +35,196 @@ if ($result->num_rows === 0) {
 $order = $result->fetch_assoc();
 $stmt->close();
 
-// Handle form submission
+// ---- Upload path configuration (used both for display and server operations) ----
+$UPLOAD_WEB_REL = '../../uploads/payment_screenshots/'; // web path used in <img src="...">
+$UPLOAD_DIR_FS_BASE = __DIR__ . '/../../uploads/payment_screenshots/'; // filesystem path relative to this file
+
+// Ensure upload dir exists
+if (!is_dir($UPLOAD_DIR_FS_BASE)) {
+    @mkdir($UPLOAD_DIR_FS_BASE, 0755, true);
+}
+$UPLOAD_DIR_FS = realpath($UPLOAD_DIR_FS_BASE);
+if ($UPLOAD_DIR_FS === false) {
+    // fallback to path even if realpath fails
+    $UPLOAD_DIR_FS = $UPLOAD_DIR_FS_BASE;
+}
+$UPLOAD_DIR_FS = rtrim($UPLOAD_DIR_FS, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+// Initialize messages
+$success_message = '';
+$error_message = '';
+
+// ---- Handle form submission (upload, delete old, update DB) ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $reference_number = $_POST['reference_number'] ?? null;
+    $reference_number = trim($_POST['reference_number'] ?? '');
     $upload_success = false;
-    $payment_screenshot = null;
-    
-    // Get current payment screenshot to delete later
+    $stored_filename = null;
+
+    // current DB value (may be filename or path)
     $old_screenshot = $order['payment_screenshot'] ?? null;
-    
-    // Handle file upload
-    if (isset($_FILES['payment_screenshot']) && $_FILES['payment_screenshot']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = '../../uploads/payment_screenshots/';
-        
-        // Create directory if it doesn't exist
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
-        
-        $file_tmp = $_FILES['payment_screenshot']['tmp_name'];
-        $file_type = $_FILES['payment_screenshot']['type'];
-        
-        // Validate file type
-        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        if (in_array($file_type, $allowed_types)) {
-            // Generate unique filename
-            $filename = 'payment_' . $order_id . '_' . time() . '.webp';
-            $upload_path = $upload_dir . $filename;
-            
-            // Convert to WebP format
-            try {
-                switch ($file_type) {
-                    case 'image/jpeg':
-                    case 'image/jpg':
-                        $image = imagecreatefromjpeg($file_tmp);
-                        break;
-                    case 'image/png':
-                        $image = imagecreatefrompng($file_tmp);
-                        break;
-                    case 'image/gif':
-                        $image = imagecreatefromgif($file_tmp);
-                        break;
-                }
-                
-                if ($image && imagewebp($image, $upload_path, 80)) {
-                    $payment_screenshot = 'uploads/payment_screenshots/' . $filename;
-                    $upload_success = true;
-                    imagedestroy($image);
-                    
-                    // Delete old payment screenshot if it exists
-                    if ($old_screenshot && file_exists('../../' . $old_screenshot)) {
-                        unlink('../../' . $old_screenshot);
+
+    // file rules
+    $MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    $allowed_mimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+
+    if (empty($_FILES['payment_screenshot']) || $_FILES['payment_screenshot']['error'] !== UPLOAD_ERR_OK) {
+        $error_message = "Please upload a payment screenshot.";
+    } else {
+        $file_tmp  = $_FILES['payment_screenshot']['tmp_name'];
+        $file_size = $_FILES['payment_screenshot']['size'];
+
+        if ($file_size > $MAX_FILE_SIZE) {
+            $error_message = "File size must be less than 10MB.";
+        } else {
+            // validate mime
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $file_tmp);
+            finfo_close($finfo);
+
+            $image_info = @getimagesize($file_tmp);
+            if (!$image_info || !in_array($mime, $allowed_mimes)) {
+                $error_message = "Invalid image file. Please upload JPG, PNG or GIF.";
+            } else {
+                // generate safe basename
+                $timestamp = time();
+                $oid = intval($order_id);
+                $base_filename = 'payment_' . $oid . '_' . $timestamp;
+
+                // try convert to webp if possible
+                $converted_to_webp = false;
+                $webp_filename = $base_filename . '.webp';
+                $webp_fullpath  = $UPLOAD_DIR_FS . $webp_filename;
+
+                $img = false;
+                if (function_exists('imagewebp')) {
+                    switch ($mime) {
+                        case 'image/jpeg': case 'image/jpg':
+                            $img = @imagecreatefromjpeg($file_tmp); break;
+                        case 'image/png':
+                            $img = @imagecreatefrompng($file_tmp);
+                            if ($img !== false) {
+                                if (!imageistruecolor($img)) {
+                                    $tmp = imagecreatetruecolor(imagesx($img), imagesy($img));
+                                    imagecopy($tmp, $img, 0, 0, 0, 0, imagesx($img), imagesy($img));
+                                    imagedestroy($img);
+                                    $img = $tmp;
+                                }
+                                imagealphablending($img, true);
+                                imagesavealpha($img, true);
+                            }
+                            break;
+                        case 'image/gif':
+                            $img = @imagecreatefromgif($file_tmp); break;
+                    }
+
+                    if ($img !== false) {
+                        if (@imagewebp($img, $webp_fullpath, 80)) {
+                            $converted_to_webp = true;
+                            imagedestroy($img);
+                            $stored_filename = $webp_filename; // store basename only
+                        } else {
+                            imagedestroy($img);
+                        }
                     }
                 }
-            } catch (Exception $e) {
-                $error_message = "Error converting image to WebP format.";
+
+                // fallback: move original file
+                if (!$converted_to_webp) {
+                    $ext = '';
+                    switch ($mime) {
+                        case 'image/jpeg': case 'image/jpg': $ext = '.jpg'; break;
+                        case 'image/png': $ext = '.png'; break;
+                        case 'image/gif': $ext = '.gif'; break;
+                    }
+                    $orig_filename = $base_filename . $ext;
+                    $orig_fullpath = $UPLOAD_DIR_FS . $orig_filename;
+
+                    if (!move_uploaded_file($file_tmp, $orig_fullpath)) {
+                        $error_message = "Failed to save uploaded file.";
+                    } else {
+                        $stored_filename = $orig_filename;
+                    }
+                }
+
+                // verify saved file exists
+                if (!empty($stored_filename)) {
+                    $candidate_full = $UPLOAD_DIR_FS . $stored_filename;
+                    if (!file_exists($candidate_full)) {
+                        $error_message = "Uploaded file not found after save.";
+                    } else {
+                        $upload_success = true;
+
+                        // delete old file if exists (old value may be filename or path)
+                        if (!empty($old_screenshot)) {
+                            $old_base = basename($old_screenshot);
+                            $old_full = $UPLOAD_DIR_FS . $old_base;
+                            if (file_exists($old_full) && is_file($old_full)) {
+                                @unlink($old_full);
+                            }
+                        }
+                    }
+                }
             }
-        } else {
-            $error_message = "Invalid file type. Please upload JPG, PNG, or GIF files only.";
         }
-    } else {
-        $error_message = "Please upload a payment screenshot.";
     }
-    
-    // Update database if upload was successful
-    if ($upload_success) {
-        try {
-            $conn->autocommit(false); // Start transaction
-            
-            // Update orders table
-            $update_query = "UPDATE orders SET 
-                            payment_status = 'pending', 
-                            payment_screenshot = ?, 
-                            reference_number = ?, 
-                            rejected_by = NULL, 
-                            updated_at = NOW() 
-                            WHERE id = ?";
-            
-            $stmt = $conn->prepare($update_query);
-            $stmt->bind_param("ssi", $payment_screenshot, $reference_number, $order_id);
-            
-            if ($stmt->execute()) {
-                $conn->commit();
-                $success_message = "Payment information updated successfully! Your payment is now pending review.";
-                
-                // Redirect after 2 seconds
-                echo "<script>
-                    setTimeout(function() {
-                        window.location.href = 'profile.php?updated=success';
-                    }, 2000);
-                </script>";
-            } else {
-                $conn->rollback();
-                $error_message = "Failed to update payment information. Please try again.";
+
+    // update DB if upload OK
+    if ($upload_success && !empty($stored_filename)) {
+        if (!($conn instanceof mysqli)) {
+            $error_message = "Database connection error.";
+        } else {
+            try {
+                $conn->autocommit(false);
+
+                $update_query = "UPDATE orders SET 
+                                    payment_status = 'pending', 
+                                    payment_screenshot = ?, 
+                                    reference_number = NULLIF(?, ''), 
+                                    rejected_by = NULL, 
+                                    updated_at = NOW() 
+                                 WHERE id = ? AND email = ?";
+
+                $stmt = $conn->prepare($update_query);
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+
+                $stmt->bind_param("ssis", $stored_filename, $reference_number, $order_id, $user_email);
+
+                if (!$stmt->execute()) {
+                    $conn->rollback();
+                    $stmt->close();
+                    throw new Exception("Execute failed: " . $stmt->error);
+                }
+
+                if (!$conn->commit()) {
+                    $stmt->close();
+                    throw new Exception("Commit failed: " . $conn->error);
+                }
+
+                $stmt->close();
+                $conn->autocommit(true);
+
+                // success: redirect to profile (so new image loads from DB)
+                header("Location: profile.php?updated=success");
+                exit;
+
+            } catch (Exception $e) {
+                if ($conn instanceof mysqli) $conn->rollback();
+                $error_message = "Database error occurred. " . $e->getMessage();
+            } finally {
+                if ($conn instanceof mysqli) $conn->autocommit(true);
             }
-            $stmt->close();
-            
-        } catch (Exception $e) {
-            $conn->rollback();
-            $error_message = "Database error occurred. Please try again.";
         }
-        
-        $conn->autocommit(true);
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Payment - Order #<?= $order_id ?></title>
+    <title>Update Payment - Order #<?= htmlspecialchars($order_id, ENT_QUOTES) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -215,7 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Update Payment Information</h1>
-                    <p class="text-gray-600">Order #<?= $order_id ?> - ₱<?= number_format($order['final_total'], 2) ?></p>
+                    <p class="text-gray-600">Order #<?= htmlspecialchars($order_id, ENT_QUOTES) ?> - ₱<?= number_format($order['final_total'], 2) ?></p>
                 </div>
             </div>
             
@@ -236,31 +314,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <!-- Success Message -->
-        <?php if (isset($success_message)): ?>
+        <?php if (!empty($success_message)): ?>
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 animate-fade-in">
                 <div class="flex items-center gap-3">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p class="text-green-800 font-medium"><?= $success_message ?></p>
+                    <p class="text-green-800 font-medium"><?= htmlspecialchars($success_message, ENT_QUOTES) ?></p>
                 </div>
             </div>
         <?php endif; ?>
 
         <!-- Error Message -->
-        <?php if (isset($error_message)): ?>
+        <?php if (!empty($error_message)): ?>
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 animate-fade-in">
                 <div class="flex items-center gap-3">
                     <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p class="text-red-800 font-medium"><?= $error_message ?></p>
+                    <p class="text-red-800 font-medium"><?= htmlspecialchars($error_message, ENT_QUOTES) ?></p>
                 </div>
             </div>
         <?php endif; ?>
 
         <!-- Update Form -->
         <div class="bg-white rounded-2xl shadow-lg p-8 animate-fade-in">
+
+            <!-- Current screenshot preview (if exists) -->
+            <?php
+                $current_image_basename = !empty($order['payment_screenshot']) ? basename($order['payment_screenshot']) : '';
+                $current_image_web = '';
+                if (!empty($current_image_basename)) {
+                    $current_image_web = $UPLOAD_WEB_REL . $current_image_basename;
+                }
+            ?>
+            <?php if ($current_image_web && file_exists($UPLOAD_DIR_FS . $current_image_basename)): ?>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700">Current Screenshot</label>
+                    <a href="<?= htmlspecialchars($current_image_web, ENT_QUOTES) ?>" target="_blank" rel="noopener">
+                        <img src="<?= htmlspecialchars($current_image_web, ENT_QUOTES) ?>" alt="Current screenshot" class="max-h-48 rounded-lg shadow-sm mt-2">
+                    </a>
+                    <p class="text-xs text-gray-500 mt-1">Click image to open full size.</p>
+                </div>
+            <?php endif; ?>
+
             <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 
                 <!-- Payment Screenshot Upload -->
@@ -268,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-lg font-semibold text-gray-900 mb-3">
                         <span class="flex items-center gap-2">
                             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 003-3V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             Payment Screenshot *
                         </span>
@@ -294,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 Drag and drop your payment screenshot here, or click to browse
                             </p>
                             <p class="text-xs text-gray-500">
-                                Supported formats: JPG, PNG, GIF (Max 10MB) - Will be converted to WebP
+                                Supported formats: JPG, PNG, GIF (Max 10MB) - Will be converted to WebP if supported
                             </p>
                         </div>
                         
@@ -323,7 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" 
                            id="reference_number" 
                            name="reference_number"
-                           value="<?= htmlspecialchars($order['reference_number'] ?? '') ?>"
+                           value="<?= htmlspecialchars($order['reference_number'] ?? '', ENT_QUOTES) ?>"
                            placeholder="Enter transaction reference number"
                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                     <p class="text-sm text-gray-600 mt-2">
@@ -342,7 +439,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="space-y-2">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Order ID:</span>
-                            <span class="font-semibold">#<?= $order_id ?></span>
+                            <span class="font-semibold">#<?= htmlspecialchars($order_id, ENT_QUOTES) ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Total Amount:</span>

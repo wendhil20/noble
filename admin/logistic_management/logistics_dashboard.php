@@ -679,7 +679,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
 <body class="bg-gray-50">
     <?php include '../navbar/top.php'; ?>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center space-x-4 mb-4">

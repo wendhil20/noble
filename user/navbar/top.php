@@ -347,8 +347,8 @@ if ($user_id) {
 
       <!-- Right: Links -->
       <div class="flex items-center gap-4">
-      
-       
+
+
 
         <a href="javascript:void(0)" onclick="navigateWithLoading('../rules/help')"
           class="hover:text-orange-300 transition inline-flex items-center gap-1">
@@ -774,24 +774,24 @@ if ($user_id) {
             </div>
           </div>
         </div>
-<?php
-  $hidden_pages = ['help.php', 'about.php']; 
+        <?php
+        $hidden_pages = ['help.php', 'about.php'];
 
-?>
+        ?>
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
-<?php if (!in_array($current_page, $hidden_pages)): ?>
-  <a href="javascript:void(0)"
-    onclick="navigateWithLoading('../otherpage/cart_view')"
-    class="<?= $current_page == 'cart_view.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
-    id="cart-link">
-    <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
-    Cart
-    <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
-      <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
-    </span>
-  </a>
-<?php endif; ?>
+          <?php if (!in_array($current_page, $hidden_pages)): ?>
+            <a href="javascript:void(0)"
+              onclick="navigateWithLoading('../otherpage/cart_view')"
+              class="<?= $current_page == 'cart_view.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+              id="cart-link">
+              <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
+              Cart
+              <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+                <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
+              </span>
+            </a>
+          <?php endif; ?>
 
           <!-- Cart Hover Modal -->
           <div id="cart-modal" class="cart-modal fixed right-4 top-16 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-[80vh] overflow-hidden max-w-[calc(100vw-2rem)] opacity-0 invisible">
@@ -1446,8 +1446,8 @@ if ($user_id) {
             </svg>
           </button>
 
-         <div x-show="productsOpen" x-cloak x-transition 
-     class="mt-2 ml-4 space-y-2 max-h-64 overflow-y-auto pr-2">
+          <div x-show="productsOpen" x-cloak x-transition
+            class="mt-2 ml-4 space-y-2 max-h-64 overflow-y-auto pr-2">
 
             <div>
               <button @click="selectedCategory = selectedCategory === 'materials' ? null : 'materials'"
@@ -1858,221 +1858,252 @@ if ($user_id) {
 </nav>
 
 <?php if (!in_array($current_page, $hidden_pages)): ?>
-<!-- Enhanced Second Navbar (Subcategories) -->
-<nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg border-b border-orange-300/20">
-  <div class="max-w-screen-xl mx-auto px-2 relative">
-    <!-- Gradient Overlays for Scroll Indication -->
-    <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
-    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
-    
-    <ul id="categoryNav" class="flex justify-between md:justify-center gap-8 overflow-x-auto no-scrollbar py-4 text-white font-medium scroll-smooth">
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-       
-          <span class="relative">
-            Table
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-     
-          <span class="relative">
-            Chair
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-        
-          <span class="relative">
-            Sofa
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-       
-          <span class="relative">
-            Cabinet
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-      
-          <span class="relative">
-            Bed
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-        
-          <span class="relative">
-            AAC Block
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-      
-          <span class="relative">
-            WPC Panels
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-     
-          <span class="relative">
-            PVC Panels
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-          </span>
-        </a>
-      </li>
-    </ul>
-    
-    <!-- Navigation Arrows for Mobile -->
-    <button id="scrollLeftBtn" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-      </svg>
-    </button>
-    
-    <button id="scrollRightBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-      </svg>
-    </button>
-  </div>
-</nav>
+  <!-- Enhanced Second Navbar (Subcategories) -->
+  <nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg border-b border-orange-300/20">
+    <div class="max-w-screen-xl mx-auto px-2 relative">
+      <!-- Gradient Overlays for Scroll Indication -->
+      <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
+      <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
+
+      <ul id="categoryNav" class="flex justify-between md:justify-center gap-8 overflow-x-auto no-scrollbar py-4 text-white font-medium scroll-smooth">
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              Table
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              Chair
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              Sofa
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              Cabinet
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              Bed
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              AAC Block
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              WPC Panels
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+
+            <span class="relative">
+              PVC Panels
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
+            </span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Navigation Arrows for Mobile -->
+      <button id="scrollLeftBtn" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <button id="scrollRightBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </nav>
 <?php endif; ?>
 
 
 <style>
-/* Enhanced scrollbar hiding */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Smooth scroll behavior */
-.scroll-smooth {
-  scroll-behavior: smooth;
-}
-
-/* Simple hover effects without boxes */
-.nav-item:hover .nav-link {
-  transform: translateY(-1px);
-}
-
-/* Active category styling */
-.nav-link.active {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
-}
-
-.nav-link.active span span {
-  width: 100%;
-}
-
-/* Fade animation for nav items */
-.nav-item {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.nav-item:nth-child(1) { animation-delay: 0.1s; }
-.nav-item:nth-child(2) { animation-delay: 0.15s; }
-.nav-item:nth-child(3) { animation-delay: 0.2s; }
-.nav-item:nth-child(4) { animation-delay: 0.25s; }
-.nav-item:nth-child(5) { animation-delay: 0.3s; }
-.nav-item:nth-child(6) { animation-delay: 0.35s; }
-.nav-item:nth-child(7) { animation-delay: 0.4s; }
-.nav-item:nth-child(8) { animation-delay: 0.45s; }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  /* Enhanced scrollbar hiding */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .nav-link {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-}
+
+  /* Smooth scroll behavior */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Simple hover effects without boxes */
+  .nav-item:hover .nav-link {
+    transform: translateY(-1px);
+  }
+
+  /* Active category styling */
+  .nav-link.active {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+  }
+
+  .nav-link.active span span {
+    width: 100%;
+  }
+
+  /* Fade animation for nav items */
+  .nav-item {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .nav-item:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+
+  .nav-item:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .nav-item:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+
+  .nav-item:nth-child(4) {
+    animation-delay: 0.25s;
+  }
+
+  .nav-item:nth-child(5) {
+    animation-delay: 0.3s;
+  }
+
+  .nav-item:nth-child(6) {
+    animation-delay: 0.35s;
+  }
+
+  .nav-item:nth-child(7) {
+    animation-delay: 0.4s;
+  }
+
+  .nav-item:nth-child(8) {
+    animation-delay: 0.45s;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .nav-link {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+  }
 </style>
 
 <script>
-// Enhanced scroll functionality
-document.addEventListener('DOMContentLoaded', function() {
-  const categoryNav = document.getElementById('categoryNav');
-  const scrollLeftBtn = document.getElementById('scrollLeftBtn');
-  const scrollRightBtn = document.getElementById('scrollRightBtn');
-  
-  // Scroll navigation
-  scrollLeftBtn.addEventListener('click', () => {
-    categoryNav.scrollBy({ left: -200, behavior: 'smooth' });
-  });
-  
-  scrollRightBtn.addEventListener('click', () => {
-    categoryNav.scrollBy({ left: 200, behavior: 'smooth' });
-  });
-  
-  // Active state management
-  const navLinks = document.querySelectorAll('.nav-link');
-  
-  navLinks.forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      
-      // Remove active class from all links
-      navLinks.forEach(l => l.classList.remove('active'));
-      
-      // Add active class to clicked link
-      this.classList.add('active');
-      
-      // Add ripple effect
-      createRipple(e, this);
+  // Enhanced scroll functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const categoryNav = document.getElementById('categoryNav');
+    const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+    const scrollRightBtn = document.getElementById('scrollRightBtn');
+
+    // Scroll navigation
+    scrollLeftBtn.addEventListener('click', () => {
+      categoryNav.scrollBy({
+        left: -200,
+        behavior: 'smooth'
+      });
     });
-  });
-  
-  // Ripple effect function
-  function createRipple(event, element) {
-    const ripple = document.createElement('span');
-    const rect = element.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
-    
-    ripple.style.cssText = `
+
+    scrollRightBtn.addEventListener('click', () => {
+      categoryNav.scrollBy({
+        left: 200,
+        behavior: 'smooth'
+      });
+    });
+
+    // Active state management
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // Remove active class from all links
+        navLinks.forEach(l => l.classList.remove('active'));
+
+        // Add active class to clicked link
+        this.classList.add('active');
+
+        // Add ripple effect
+        createRipple(e, this);
+      });
+    });
+
+    // Ripple effect function
+    function createRipple(event, element) {
+      const ripple = document.createElement('span');
+      const rect = element.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = event.clientX - rect.left - size / 2;
+      const y = event.clientY - rect.top - size / 2;
+
+      ripple.style.cssText = `
       position: absolute;
       width: ${size}px;
       height: ${size}px;
@@ -2085,19 +2116,19 @@ document.addEventListener('DOMContentLoaded', function() {
       pointer-events: none;
       z-index: 1;
     `;
-    
-    element.style.position = 'relative';
-    element.style.overflow = 'hidden';
-    element.appendChild(ripple);
-    
-    setTimeout(() => {
-      ripple.remove();
-    }, 600);
-  }
-  
-  // Add ripple animation CSS
-  const style = document.createElement('style');
-  style.textContent = `
+
+      element.style.position = 'relative';
+      element.style.overflow = 'hidden';
+      element.appendChild(ripple);
+
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    }
+
+    // Add ripple animation CSS
+    const style = document.createElement('style');
+    style.textContent = `
     @keyframes ripple {
       to {
         transform: scale(2);
@@ -2105,24 +2136,24 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   `;
-  document.head.appendChild(style);
-  
-  // Update scroll button visibility
-  function updateScrollButtons() {
-    const isScrollable = categoryNav.scrollWidth > categoryNav.clientWidth;
-    const isAtStart = categoryNav.scrollLeft <= 0;
-    const isAtEnd = categoryNav.scrollLeft >= categoryNav.scrollWidth - categoryNav.clientWidth;
-    
-    scrollLeftBtn.style.opacity = isAtStart ? '0.5' : '1';
-    scrollRightBtn.style.opacity = isAtEnd ? '0.5' : '1';
-    scrollLeftBtn.disabled = isAtStart;
-    scrollRightBtn.disabled = isAtEnd;
-  }
-  
-  categoryNav.addEventListener('scroll', updateScrollButtons);
-  window.addEventListener('resize', updateScrollButtons);
-  updateScrollButtons();
-});
+    document.head.appendChild(style);
+
+    // Update scroll button visibility
+    function updateScrollButtons() {
+      const isScrollable = categoryNav.scrollWidth > categoryNav.clientWidth;
+      const isAtStart = categoryNav.scrollLeft <= 0;
+      const isAtEnd = categoryNav.scrollLeft >= categoryNav.scrollWidth - categoryNav.clientWidth;
+
+      scrollLeftBtn.style.opacity = isAtStart ? '0.5' : '1';
+      scrollRightBtn.style.opacity = isAtEnd ? '0.5' : '1';
+      scrollLeftBtn.disabled = isAtStart;
+      scrollRightBtn.disabled = isAtEnd;
+    }
+
+    categoryNav.addEventListener('scroll', updateScrollButtons);
+    window.addEventListener('resize', updateScrollButtons);
+    updateScrollButtons();
+  });
 </script>
 
 <script src="../navbar/top-obf.js"></script>

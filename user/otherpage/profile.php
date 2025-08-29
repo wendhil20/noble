@@ -172,7 +172,6 @@ $stmt->close();
 $is_verified = $user['is_verified'] ?? null;
 
 
-
 ?>
 
 

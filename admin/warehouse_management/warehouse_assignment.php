@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
-require_role(['superadmin', 'sales', 'productspecialist']); // Only managers can access
+require_role(['superadmin', 'warehouse']); // Only managers can access
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {

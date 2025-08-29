@@ -607,77 +607,182 @@ handleQueryError($conn, "New Status Query");
         }
     </style>
 
-    <!-- POPUP MODAL -->
-    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-gradient-to-b from-orange-500 to-orange-600 rounded-2xl shadow-2xl max-w-sm w-full p-6 relative text-center text-white">
-            <!-- Close Button -->
-            <button onclick="closePopup()" class="absolute top-2 right-2 text-white hover:text-black bg-black/20 rounded-full px-2">✕</button>
-
-            <!-- Offer Content -->
-            <h2 class="text-3xl font-extrabold mb-4 animate-bounce"> Discount Offers!</h2>
-            <p class="text-lg mb-6">Choose your deal and start saving!</p>
-
-            <!-- 20% OFF -->
-            <div class="mb-4">
-                <p class="text-xl font-bold mb-2">🔥 Get <span class="text-yellow-300 text-2xl">20% OFF!</span></p>
-                <a href="allproduct.php?discount=20"
-                    class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
-                    Shop 20% OFF!
+<!-- POPUP MODAL -->
+<div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div class="relative max-w-4xl w-full mx-4">
+        <!-- Close Button -->
+        <button onclick="hidePromoModal()"
+             class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
+        
+        <!-- Carousel Container -->
+        <div class="relative overflow-hidden shadow-2xl">
+            <div id="slideContainer" class="flex transition-transform duration-700 ease-in-out">
+                <!-- Slide 1 -->
+                <a href="allproduct.php?discount=20" class="flex-shrink-0 w-full relative group flex items-center justify-center">
+                    <img src="../img/sale/a.png" alt="20% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop 20% OFF</span>
+                    </div>
+                </a>
+                
+                <!-- Slide 2 -->
+                <a href="allproduct.php?discount=30" class="flex-shrink-0 w-full relative group flex items-center justify-center">
+                    <img src="promo2.jpg" alt="30% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop 30% OFF</span>
+                    </div>
+                </a>
+                
+                <!-- Slide 3 -->
+                <a href="allproduct.php?discount=50" class="flex-shrink-0 w-full relative group flex items-center justify-center">
+                    <img src="../img/sale/c.png" alt="50% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop 50% OFF</span>
+                    </div>
                 </a>
             </div>
-
-            <!-- Divider -->
-            <div class="my-4 border-t border-white/30"></div>
-
-            <!-- 30% OFF -->
-            <div>
-                <p class="text-xl font-bold mb-2">🚀 Get <span class="text-yellow-300 text-2xl">30% OFF</span></p>
-                <a href="allproduct.php?discount=30"
-                    class="bg-yellow-300 text-orange-800 px-5 py-2 rounded-lg font-bold shadow-lg hover:bg-yellow-400 transition">
-                    Shop 30% OFF
-                </a>
-            </div>
+            
+            <!-- Left Arrow -->
+            <button onclick="moveToPreviousSlide()" 
+                    class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 w-12 h-12 rounded-full text-2xl flex items-center justify-center transition-all duration-300 shadow-lg">
+                ‹
+            </button>
+            
+            <!-- Right Arrow -->
+            <button onclick="moveToNextSlide()" 
+                    class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 w-12 h-12 rounded-full text-2xl flex items-center justify-center transition-all duration-300 shadow-lg">
+                ›
+            </button>
+        </div>
+        
+        <!-- Slide Indicators -->
+        <div class="flex justify-center mt-6 gap-2">
+            <button onclick="jumpToSpecificSlide(0)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
+            <button onclick="jumpToSpecificSlide(1)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
+            <button onclick="jumpToSpecificSlide(2)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
         </div>
     </div>
+</div>
 
-    <script>
-        function openPopup() {
-            document.getElementById('promoPopup').classList.remove('hidden');
-            localStorage.setItem("lastPopupTime", Date.now()); // save time opened
-        }
-
-        function closePopup() {
-            document.getElementById('promoPopup').classList.add('hidden');
-        }
-
-        // check timing sequence
-        function checkPopupSchedule() {
-            const lastTime = localStorage.getItem("lastPopupTime");
-            const now = Date.now();
-
-            if (!lastTime) {
-                // First time visitor → show after 5s
-                setTimeout(openPopup, 5000);
+<script>
+    let activeSlidePosition = 0;
+    const maxSlideCount = document.querySelectorAll("#slideContainer a").length;
+    const carouselWrapper = document.getElementById("slideContainer");
+    const dotIndicators = document.querySelectorAll(".slide-indicator");
+    
+    function moveToSlidePosition(pos) {
+        if (pos >= maxSlideCount) activeSlidePosition = 0;
+        else if (pos < 0) activeSlidePosition = maxSlideCount - 1;
+        else activeSlidePosition = pos;
+        
+        carouselWrapper.style.transform = `translateX(-${activeSlidePosition * 100}%)`;
+        refreshIndicatorDots();
+    }
+    
+    function refreshIndicatorDots() {
+        dotIndicators.forEach((dot, idx) => {
+            if (idx === activeSlidePosition) {
+                dot.classList.remove('bg-white/50');
+                dot.classList.add('bg-white');
             } else {
-                const elapsed = (now - lastTime) / 1000; // seconds passed
-
-                if (elapsed >= 1200) {
-                    // 20 mins later
-                    openPopup();
-                } else if (elapsed >= 300) {
-                    // 5 mins later
-                    openPopup();
-                } else {
-                    // else wala pa
-                    console.log("Popup will wait, elapsed: " + elapsed + "s");
-                }
+                dot.classList.remove('bg-white');
+                dot.classList.add('bg-white/50');
+            }
+        });
+    }
+    
+    function moveToNextSlide() { 
+        moveToSlidePosition(activeSlidePosition + 1); 
+    }
+    
+    function moveToPreviousSlide() { 
+        moveToSlidePosition(activeSlidePosition - 1); 
+    }
+    
+    function jumpToSpecificSlide(pos) {
+        moveToSlidePosition(pos);
+    }
+    
+    // Auto-advance slides every 5 seconds
+    let carouselTimer = setInterval(() => { 
+        moveToNextSlide(); 
+    }, 5000);
+    
+    // Pause auto-advance on hover
+    document.getElementById('promoPopup').addEventListener('mouseenter', () => {
+        clearInterval(carouselTimer);
+    });
+    
+    // Resume auto-advance when mouse leaves
+    document.getElementById('promoPopup').addEventListener('mouseleave', () => {
+        carouselTimer = setInterval(() => { 
+            moveToNextSlide(); 
+        }, 5000);
+    });
+    
+    // Popup management functions
+    function displayPromoModal() {
+        document.getElementById('promoPopup').classList.remove('hidden');
+        const timestamp = Date.now();
+        // Store timestamp in session that persists across page reloads
+        try {
+            sessionStorage.setItem('promoModalLastShown', timestamp.toString());
+        } catch (e) {
+            // Fallback to window object if sessionStorage fails
+            window.modalLastShown = timestamp;
+        }
+    }
+    
+    function hidePromoModal() {
+        document.getElementById('promoPopup').classList.add('hidden');
+        clearInterval(carouselTimer);
+    }
+    
+    function getLastShownTime() {
+        try {
+            const stored = sessionStorage.getItem('promoModalLastShown');
+            return stored ? parseInt(stored) : null;
+        } catch (e) {
+            // Fallback to window object
+            return window.modalLastShown || null;
+        }
+    }
+    
+    function setupModalSchedule() {
+        const currentTimestamp = Date.now();
+        const lastShownTime = getLastShownTime();
+        
+        console.log('Current time:', new Date(currentTimestamp).toLocaleTimeString());
+        
+        if (!lastShownTime) {
+            console.log('First visit - popup will show in 5 seconds');
+            setTimeout(displayPromoModal, 5000);
+        } else {
+            const elapsedSeconds = Math.floor((currentTimestamp - lastShownTime) / 1000);
+            const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+            
+            console.log(`Last shown: ${new Date(lastShownTime).toLocaleTimeString()}`);
+            console.log(`Time elapsed: ${elapsedMinutes} minutes and ${elapsedSeconds % 60} seconds`);
+            
+            if (elapsedSeconds >= 300) { // 5 minutes = 300 seconds
+                console.log('5+ minutes passed - showing popup now');
+                displayPromoModal();
+            } else {
+                const remainingSeconds = 300 - elapsedSeconds;
+                const remainingMinutes = Math.floor(remainingSeconds / 60);
+                console.log(`Popup will show in ${remainingMinutes} minutes and ${remainingSeconds % 60} seconds`);
+                
+                setTimeout(displayPromoModal, remainingSeconds * 1000);
             }
         }
-
-        // Run check on page load
-        checkPopupSchedule();
-    </script>
-
+    }
+    
+    // Initialize popup logic
+    setupModalSchedule();
+    
+    // Initialize indicators
+    refreshIndicatorDots();
+</script>
 
     <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
         <div class="max-w-7xl mx-auto">

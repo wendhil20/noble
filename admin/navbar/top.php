@@ -16,7 +16,6 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 
-
 // Update activity time
 $_SESSION['last_activity'] = time();
 
@@ -271,9 +270,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                     <?php endif; ?>
 
 
-                    <?php if (hasAnyRole(['', 'superadmin'])): ?>
+                    <?php if (hasAnyRole(['sales', 'ksuperadmin'])): ?>
                         <!-- Inquiries -->
-                        <a href="../chatadmin/admin_chat"
+                        <a href="../chatadmin/admin_chatmain"
                             class="nav-item px-4 py-2 rounded-lg font-medium transition-all duration-300 
                               <?= $current_page == '../chatadmin/admin_chat' ? 'text-orange-600 bg-orange-50 active-link' : 'text-gray-700 hover:text-orange-500 hover:bg-gray-50' ?>">
                             <div class="flex items-center space-x-2">
@@ -592,6 +591,34 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <hr class="my-2 border-gray-200">
                             <?php endif; ?>
 
+                                   <?php if (hasAnyRole(['superadmin', 'hr'])): ?>
+                                <!-- Supplier Section -->
+                                <div class="px-3 py-2">
+                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Human Resources</div>
+                                    <a href="../hr/assign_head"
+                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span>Head Management</span>
+                                    </a>
+                                </div>
+
+                                   <!-- Supplier Section -->
+                                <div class="px-3 py-2">
+                                  
+                                    <a href="../hr/account"
+                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span>Account Management</span>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+
                             <?php if (hasAnyRole(['superadmin', 'supplier'])): ?>
                                 <!-- Supplier Section -->
                                 <div class="px-3 py-2">
@@ -606,6 +633,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     </a>
                                 </div>
                             <?php endif; ?>
+
+
                             <?php if (hasAnyRole(['superadmin', 'warehouse'])): ?>
                                 <!-- Supplier Section -->
                                 <div class="px-3 py-2">

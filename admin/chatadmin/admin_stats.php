@@ -3,7 +3,7 @@
 session_name("nobleadmin");
 session_start();
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin']);
+require_role(['sales', 'superadmin']);
 
 header('Content-Type: application/json');
 include '../../connection/connect.php';

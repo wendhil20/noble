@@ -180,6 +180,7 @@ if (isset($conn) && $conn) $conn->close();
                 <option value="accountant" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'accountant') ? 'selected' : ''; ?>>Accountant</option>
                 <option value="logistic" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'logistic') ? 'selected' : ''; ?>>Logistic</option>
                 <option value="warehouse" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'warehouse') ? 'selected' : ''; ?>>Warehouse</option>
+                <option value="hr" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'hr') ? 'selected' : ''; ?>>HR</option>
             </select>
         </div>
         <!-- Sales ID -->

@@ -15,6 +15,7 @@ if (isset($_SESSION['noble_user'])) {
         'accountant' => "../admin/accountant/dashboard",
         'logistic' => "../admin/logistic_management/logistics_dashboard",
         'warehouse' => "../admin/warehouse_management/order_list",
+         'hr' => "../admin/hr/account",
         default => "../admin/client/dashboard.php"
     };
 

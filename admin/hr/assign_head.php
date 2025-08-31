@@ -4,10 +4,10 @@ session_start();
 require_once '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 
-require_role(['superadmin']); // only superadmin can manage heads
+require_role(['superadmin','hr']); // only superadmin can manage heads
 
 // departments to manage (supplier removed)
-$departments = ['sales','accountant','human resource','warehouse', 'logistic'];
+$departments = ['sales','accountant','hr','warehouse', 'logistic'];
 
 // Fetch all accounts
 $q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head

@@ -607,182 +607,182 @@ handleQueryError($conn, "New Status Query");
         }
     </style>
 
-<!-- POPUP MODAL -->
-<div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="relative max-w-4xl w-full mx-4">
-        <!-- Close Button -->
-        <button onclick="hidePromoModal()"
-             class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
-        
-        <!-- Carousel Container -->
-        <div class="relative overflow-hidden shadow-2xl">
-            <div id="slideContainer" class="flex transition-transform duration-700 ease-in-out">
-                <!-- Slide 1 -->
-                <a href="allproduct.php?discount=20" class="flex-shrink-0 w-full relative group flex items-center justify-center">
-                    <img src="../img/sale/a.png" alt="20% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop 20% OFF</span>
-                    </div>
-                </a>
-                
-                <!-- Slide 2 -->
-                <a href="allproduct.php?discount=30" class="flex-shrink-0 w-full relative group flex items-center justify-center">
-                    <img src="promo2.jpg" alt="30% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop 30% OFF</span>
-                    </div>
-                </a>
-                
-                <!-- Slide 3 -->
-                <a href="allproduct.php?discount=50" class="flex-shrink-0 w-full relative group flex items-center justify-center">
-                    <img src="../img/sale/c.png" alt="50% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop 50% OFF</span>
-                    </div>
-                </a>
-            </div>
-            
-            <!-- Left Arrow -->
-            <button onclick="moveToPreviousSlide()" 
+    <!-- POPUP MODAL -->
+    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+        <div class="relative max-w-4xl w-full mx-4">
+            <!-- Close Button -->
+            <button onclick="hidePromoModal()"
+                class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
+
+            <!-- Carousel Container -->
+            <div class="relative overflow-hidden">
+                <div id="slideContainer" class="flex transition-transform duration-700 ease-in-out">
+                    <!-- Slide 1 -->
+                    <a href="allproduct.php?discount=20" class="flex-shrink-0 w-full relative group flex items-center justify-center">
+                        <img src="../img/sale/c.png" alt="20% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                            <span class="text-white text-4xl font-extrabold tracking-wide">Shop 20% OFF</span>
+                        </div>
+                    </a>
+
+                    <!-- Slide 2 -->
+                    <a href="allproduct.php?discount=30" class="flex-shrink-0 w-full relative group flex items-center justify-center">
+                        <img src="../img/sale/c.png" alt="30% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                            <span class="text-white text-4xl font-extrabold tracking-wide">Shop 30% OFF</span>
+                        </div>
+                    </a>
+
+                    <!-- Slide 3 -->
+                    <a href="allproduct.php?discount=50" class="flex-shrink-0 w-full relative group flex items-center justify-center">
+                        <img src="../img/sale/c.png" alt="50% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                            <span class="text-white text-4xl font-extrabold tracking-wide">Shop 50% OFF</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Left Arrow -->
+                <button onclick="moveToPreviousSlide()"
                     class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 w-12 h-12 rounded-full text-2xl flex items-center justify-center transition-all duration-300 shadow-lg">
-                ‹
-            </button>
-            
-            <!-- Right Arrow -->
-            <button onclick="moveToNextSlide()" 
+                    ‹
+                </button>
+
+                <!-- Right Arrow -->
+                <button onclick="moveToNextSlide()"
                     class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 w-12 h-12 rounded-full text-2xl flex items-center justify-center transition-all duration-300 shadow-lg">
-                ›
-            </button>
-        </div>
-        
-        <!-- Slide Indicators -->
-        <div class="flex justify-center mt-6 gap-2">
-            <button onclick="jumpToSpecificSlide(0)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
-            <button onclick="jumpToSpecificSlide(1)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
-            <button onclick="jumpToSpecificSlide(2)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
+                    ›
+                </button>
+            </div>
+
+            <!-- Slide Indicators -->
+            <div class="flex justify-center mt-6 gap-2">
+                <button onclick="jumpToSpecificSlide(0)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
+                <button onclick="jumpToSpecificSlide(1)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
+                <button onclick="jumpToSpecificSlide(2)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    let activeSlidePosition = 0;
-    const maxSlideCount = document.querySelectorAll("#slideContainer a").length;
-    const carouselWrapper = document.getElementById("slideContainer");
-    const dotIndicators = document.querySelectorAll(".slide-indicator");
-    
-    function moveToSlidePosition(pos) {
-        if (pos >= maxSlideCount) activeSlidePosition = 0;
-        else if (pos < 0) activeSlidePosition = maxSlideCount - 1;
-        else activeSlidePosition = pos;
-        
-        carouselWrapper.style.transform = `translateX(-${activeSlidePosition * 100}%)`;
-        refreshIndicatorDots();
-    }
-    
-    function refreshIndicatorDots() {
-        dotIndicators.forEach((dot, idx) => {
-            if (idx === activeSlidePosition) {
-                dot.classList.remove('bg-white/50');
-                dot.classList.add('bg-white');
-            } else {
-                dot.classList.remove('bg-white');
-                dot.classList.add('bg-white/50');
-            }
-        });
-    }
-    
-    function moveToNextSlide() { 
-        moveToSlidePosition(activeSlidePosition + 1); 
-    }
-    
-    function moveToPreviousSlide() { 
-        moveToSlidePosition(activeSlidePosition - 1); 
-    }
-    
-    function jumpToSpecificSlide(pos) {
-        moveToSlidePosition(pos);
-    }
-    
-    // Auto-advance slides every 5 seconds
-    let carouselTimer = setInterval(() => { 
-        moveToNextSlide(); 
-    }, 5000);
-    
-    // Pause auto-advance on hover
-    document.getElementById('promoPopup').addEventListener('mouseenter', () => {
-        clearInterval(carouselTimer);
-    });
-    
-    // Resume auto-advance when mouse leaves
-    document.getElementById('promoPopup').addEventListener('mouseleave', () => {
-        carouselTimer = setInterval(() => { 
-            moveToNextSlide(); 
+    <script>
+        let activeSlidePosition = 0;
+        const maxSlideCount = document.querySelectorAll("#slideContainer a").length;
+        const carouselWrapper = document.getElementById("slideContainer");
+        const dotIndicators = document.querySelectorAll(".slide-indicator");
+
+        function moveToSlidePosition(pos) {
+            if (pos >= maxSlideCount) activeSlidePosition = 0;
+            else if (pos < 0) activeSlidePosition = maxSlideCount - 1;
+            else activeSlidePosition = pos;
+
+            carouselWrapper.style.transform = `translateX(-${activeSlidePosition * 100}%)`;
+            refreshIndicatorDots();
+        }
+
+        function refreshIndicatorDots() {
+            dotIndicators.forEach((dot, idx) => {
+                if (idx === activeSlidePosition) {
+                    dot.classList.remove('bg-white/50');
+                    dot.classList.add('bg-white');
+                } else {
+                    dot.classList.remove('bg-white');
+                    dot.classList.add('bg-white/50');
+                }
+            });
+        }
+
+        function moveToNextSlide() {
+            moveToSlidePosition(activeSlidePosition + 1);
+        }
+
+        function moveToPreviousSlide() {
+            moveToSlidePosition(activeSlidePosition - 1);
+        }
+
+        function jumpToSpecificSlide(pos) {
+            moveToSlidePosition(pos);
+        }
+
+        // Auto-advance slides every 5 seconds
+        let carouselTimer = setInterval(() => {
+            moveToNextSlide();
         }, 5000);
-    });
-    
-    // Popup management functions
-    function displayPromoModal() {
-        document.getElementById('promoPopup').classList.remove('hidden');
-        const timestamp = Date.now();
-        // Store timestamp in session that persists across page reloads
-        try {
-            sessionStorage.setItem('promoModalLastShown', timestamp.toString());
-        } catch (e) {
-            // Fallback to window object if sessionStorage fails
-            window.modalLastShown = timestamp;
-        }
-    }
-    
-    function hidePromoModal() {
-        document.getElementById('promoPopup').classList.add('hidden');
-        clearInterval(carouselTimer);
-    }
-    
-    function getLastShownTime() {
-        try {
-            const stored = sessionStorage.getItem('promoModalLastShown');
-            return stored ? parseInt(stored) : null;
-        } catch (e) {
-            // Fallback to window object
-            return window.modalLastShown || null;
-        }
-    }
-    
-    function setupModalSchedule() {
-        const currentTimestamp = Date.now();
-        const lastShownTime = getLastShownTime();
-        
-        console.log('Current time:', new Date(currentTimestamp).toLocaleTimeString());
-        
-        if (!lastShownTime) {
-            console.log('First visit - popup will show in 5 seconds');
-            setTimeout(displayPromoModal, 5000);
-        } else {
-            const elapsedSeconds = Math.floor((currentTimestamp - lastShownTime) / 1000);
-            const elapsedMinutes = Math.floor(elapsedSeconds / 60);
-            
-            console.log(`Last shown: ${new Date(lastShownTime).toLocaleTimeString()}`);
-            console.log(`Time elapsed: ${elapsedMinutes} minutes and ${elapsedSeconds % 60} seconds`);
-            
-            if (elapsedSeconds >= 300) { // 5 minutes = 300 seconds
-                console.log('5+ minutes passed - showing popup now');
-                displayPromoModal();
-            } else {
-                const remainingSeconds = 300 - elapsedSeconds;
-                const remainingMinutes = Math.floor(remainingSeconds / 60);
-                console.log(`Popup will show in ${remainingMinutes} minutes and ${remainingSeconds % 60} seconds`);
-                
-                setTimeout(displayPromoModal, remainingSeconds * 1000);
+
+        // Pause auto-advance on hover
+        document.getElementById('promoPopup').addEventListener('mouseenter', () => {
+            clearInterval(carouselTimer);
+        });
+
+        // Resume auto-advance when mouse leaves
+        document.getElementById('promoPopup').addEventListener('mouseleave', () => {
+            carouselTimer = setInterval(() => {
+                moveToNextSlide();
+            }, 5000);
+        });
+
+        // Popup management functions
+        function displayPromoModal() {
+            document.getElementById('promoPopup').classList.remove('hidden');
+            const timestamp = Date.now();
+            // Store timestamp in session that persists across page reloads
+            try {
+                sessionStorage.setItem('promoModalLastShown', timestamp.toString());
+            } catch (e) {
+                // Fallback to window object if sessionStorage fails
+                window.modalLastShown = timestamp;
             }
         }
-    }
-    
-    // Initialize popup logic
-    setupModalSchedule();
-    
-    // Initialize indicators
-    refreshIndicatorDots();
-</script>
+
+        function hidePromoModal() {
+            document.getElementById('promoPopup').classList.add('hidden');
+            clearInterval(carouselTimer);
+        }
+
+        function getLastShownTime() {
+            try {
+                const stored = sessionStorage.getItem('promoModalLastShown');
+                return stored ? parseInt(stored) : null;
+            } catch (e) {
+                // Fallback to window object
+                return window.modalLastShown || null;
+            }
+        }
+
+        function setupModalSchedule() {
+            const currentTimestamp = Date.now();
+            const lastShownTime = getLastShownTime();
+
+            console.log('Current time:', new Date(currentTimestamp).toLocaleTimeString());
+
+            if (!lastShownTime) {
+                console.log('First visit - popup will show in 5 seconds');
+                setTimeout(displayPromoModal, 5000);
+            } else {
+                const elapsedSeconds = Math.floor((currentTimestamp - lastShownTime) / 1000);
+                const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+
+                console.log(`Last shown: ${new Date(lastShownTime).toLocaleTimeString()}`);
+                console.log(`Time elapsed: ${elapsedMinutes} minutes and ${elapsedSeconds % 60} seconds`);
+
+                if (elapsedSeconds >= 300) { // 5 minutes = 300 seconds
+                    console.log('5+ minutes passed - showing popup now');
+                    displayPromoModal();
+                } else {
+                    const remainingSeconds = 300 - elapsedSeconds;
+                    const remainingMinutes = Math.floor(remainingSeconds / 60);
+                    console.log(`Popup will show in ${remainingMinutes} minutes and ${remainingSeconds % 60} seconds`);
+
+                    setTimeout(displayPromoModal, remainingSeconds * 1000);
+                }
+            }
+        }
+
+        // Initialize popup logic
+        setupModalSchedule();
+
+        // Initialize indicators
+        refreshIndicatorDots();
+    </script>
 
     <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
         <div class="max-w-7xl mx-auto">
@@ -973,7 +973,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=materials" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                   <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Material Boards</span>
                             </div>
@@ -985,7 +985,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=bedfurniture" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                     <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Bedroom</span>
                             </div>
@@ -1009,7 +1009,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=aircon" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                     <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Aircon</span>
                             </div>
@@ -1021,7 +1021,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=doors" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                     <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Doors</span>
                             </div>
@@ -1033,7 +1033,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=tiles" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                     <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Tiles</span>
                             </div>
@@ -1081,7 +1081,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=pipes" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                 <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Pipes</span>
                             </div>
@@ -1093,7 +1093,7 @@ handleQueryError($conn, "New Status Query");
                         <a href="shop?category[]=aacblock" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                   <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
+                                    <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">AAC Blocks</span>
                             </div>
@@ -1119,7 +1119,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=materials" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                          <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Material Boards</span>
                     </div>
@@ -1128,7 +1128,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=bedfurniture" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                             <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Bedroom </span>
                     </div>
@@ -1137,7 +1137,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=lighting" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Lighting fixture</span>
                     </div>
@@ -1146,7 +1146,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=aircon" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Aircon</span>
                     </div>
@@ -1155,7 +1155,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=doors" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Doors</span>
                     </div>
@@ -1174,7 +1174,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=windows" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Windows</span>
                     </div>
@@ -1192,7 +1192,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=kitchen" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Kitchen Fixtures</span>
                     </div>
@@ -1201,7 +1201,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=pipes" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Pipes</span>
                     </div>
@@ -1210,7 +1210,7 @@ handleQueryError($conn, "New Status Query");
                 <a href="shop?category[]=aacblock" class="group">
                     <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                           <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
+                            <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">AAC BLOCKS</span>
                     </div>
@@ -1730,7 +1730,7 @@ handleQueryError($conn, "New Status Query");
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text  to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
                 Furniture
             </h2>
-         <div class="ms-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-400 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+            <div class="ms-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-400 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
 
 
         </div>
@@ -1873,7 +1873,7 @@ handleQueryError($conn, "New Status Query");
                 <div class="inline-block mb-6">
                     <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
                     <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                     We Design, We build, and We deliver
+                        We Design, We build, and We deliver
                     </h2>
                     <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
                 </div>
@@ -2409,7 +2409,7 @@ handleQueryError($conn, "New Status Query");
                     $priceWithMarkup = $base + ($base * $percent / 100);
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                     ?>
-                        <div class="swiper-slide p-2">
+                    <div class="swiper-slide p-2">
                         <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
@@ -2668,279 +2668,281 @@ handleQueryError($conn, "New Status Query");
         </script>
     </section>
 
-  
+    <!----Chat bot------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-<!-- Floating Chatbot Widget -->
-<div id="chatbot-widget" class="fixed bottom-5 right-5 z-50">
-  <!-- Toggle Button -->
-  <button 
-    id="chatbot-toggle" 
-    class="w-16 h-16 bg-orange-400 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
-  >
-    <svg id="chat-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-    </svg>
-    <svg id="close-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-  </button>
+    <!-- Floating Chatbot Widget -->
+    <div id="chatbot-widget" class="fixed bottom-5 right-5 z-50">
+        <!-- Toggle Button -->
+        <button
+            id="chatbot-toggle"
+            class="w-16 h-16 bg-orange-400 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center">
+            <svg id="chat-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            <svg id="close-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
 
-  <!-- Chat Container -->
-  <div 
-    id="chatbot-container" 
-    class="absolute bottom-20 right-0 w-96 h-[500px] bg-white rounded-2xl shadow-2xl transform scale-0 opacity-0 transition-all duration-300 ease-out origin-bottom-right overflow-hidden"
-  >
-    <!-- Header -->
-    <div class="bg-orange-400 text-white p-4 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-        <h3 class="font-semibold text-lg">Noblehome Assistant</h3>
-      </div>
-      <button id="minimize-chat" class="text-white hover:text-gray-200 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-    </div>
+        <!-- Chat Container -->
+        <div
+            id="chatbot-container"
+            class="absolute bottom-20 right-0 w-96 h-[500px] bg-white rounded-2xl shadow-2xl transform scale-0 opacity-0 transition-all duration-300 ease-out origin-bottom-right overflow-hidden">
+            <!-- Header -->
+            <div class="bg-orange-400 text-white p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <h3 class="font-semibold text-lg">Noblehome Assistant</h3>
+                </div>
+                <button id="minimize-chat" class="text-white hover:text-gray-200 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
 
-    <!-- Messages Area -->
-    <div id="chat-messages" class="h-80 overflow-y-auto p-4 bg-gray-50 space-y-3">
-      <!-- Welcome Message -->
-      <div class="flex">
-        <div class="bg-white rounded-2xl rounded-bl-sm p-3 max-w-xs shadow-sm">
-          <p class="text-gray-700 text-sm">👋 Hi! I'm your Noblehome product assistant. Ask me about our products, prices, or availability!</p>
+            <!-- Messages Area -->
+            <div id="chat-messages" class="h-80 overflow-y-auto p-4 bg-gray-50 space-y-3">
+                <!-- Welcome Message -->
+                <div class="flex">
+                    <div class="bg-white rounded-2xl rounded-bl-sm p-3 max-w-xs shadow-sm">
+                        <p class="text-gray-700 text-sm">👋 Hi! I'm your Noblehome product assistant. Ask me about our products, prices, or availability!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Replies -->
+            <div class="px-4 py-2 bg-gray-50 border-t border-gray-100">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="sendQuickMessage('Show me some products')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full text-xs transition-colors">
+                        Show products
+                    </button>
+                    <button onclick="sendQuickMessage('Best sellers')" class="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full text-xs transition-colors">
+                        Best sellers
+                    </button>
+                    <button onclick="sendQuickMessage('Under ₱5000')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-xs transition-colors">
+                        Under ₱5000
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-white border-t border-gray-100">
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="chat-input"
+                        type="text"
+                        placeholder="Ask about products..."
+                        class="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onkeypress="handleChatKeyPress(event)" />
+                    <button
+                        id="send-btn"
+                        onclick="sendMessage()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <!-- Quick Replies -->
-    <div class="px-4 py-2 bg-gray-50 border-t border-gray-100">
-      <div class="flex flex-wrap gap-2">
-        <button onclick="sendQuickMessage('Show me some products')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full text-xs transition-colors">
-          Show products
-        </button>
-        <button onclick="sendQuickMessage('Best sellers')" class="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full text-xs transition-colors">
-          Best sellers
-        </button>
-        <button onclick="sendQuickMessage('Under ₱5000')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-xs transition-colors">
-          Under ₱5000
-        </button>
-      </div>
-    </div>
+    <style>
+        .typing-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #e79a25ff;
+            animation: spin 1s ease-in-out infinite;
+        }
 
-    <!-- Input Area -->
-    <div class="p-4 bg-white border-t border-gray-100">
-      <div class="flex items-center space-x-2">
-        <input 
-          id="chat-input" 
-          type="text" 
-          placeholder="Ask about products..." 
-          class="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          onkeypress="handleChatKeyPress(event)"
-        />
-        <button 
-          id="send-btn"
-          onclick="sendMessage()" 
-          class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
-<style>
-.typing-indicator {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-radius: 50%;
-  border-top-color: #e79a25ff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.chat-message img {
-  max-width: 150px;
-  max-height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin: 4px 0;
-}
-</style>
+        .chat-message img {
+            max-width: 150px;
+            max-height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 4px 0;
+        }
+    </style>
 
 
-<?php if (!$cookieAccepted): ?>
-<section id="cookie-banner" class="fixed bottom-4 left-4 right-4 bg-white border shadow-lg rounded-lg p-4 flex items-center justify-between z-50">
-  <p class="text-sm text-gray-700">
-  This website uses cookies to personalize content, improve your browsing experience, 
-  remember your preferences, and analyze site traffic. By clicking "Accept", 
-  you consent to the use of cookies in accordance with our Privacy Policy.
-</p>
+    <?php if (!$cookieAccepted): ?>
+        <section id="cookie-banner" class="fixed bottom-4 left-4 right-4 bg-white border shadow-lg rounded-lg p-4 flex items-center justify-between z-50">
+            <p class="text-sm text-gray-700">
+                This website uses cookies to personalize content, improve your browsing experience,
+                remember your preferences, and analyze site traffic. By clicking "Accept",
+                you consent to the use of cookies in accordance with our Privacy Policy.
+            </p>
 
-  <form method="post">
-    <button type="submit" name="acceptCookies" class="ml-4 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
-      Accept
-    </button>
-  </form>
-</section>
-<?php endif; ?>
+            <form method="post">
+                <button type="submit" name="acceptCookies" class="ml-4 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
+                    Accept
+                </button>
+            </form>
+        </section>
+    <?php endif; ?>
 
-<script>
-let chatOpen = false;
+    <script>
+        let chatOpen = false;
 
-// Toggle chat
-document.getElementById('chatbot-toggle').addEventListener('click', function() {
-  const container = document.getElementById('chatbot-container');
-  const chatIcon = document.getElementById('chat-icon');
-  const closeIcon = document.getElementById('close-icon');
-  
-  if (!chatOpen) {
-    container.classList.remove('scale-0', 'opacity-0');
-    container.classList.add('scale-100', 'opacity-100');
-    chatIcon.classList.add('hidden');
-    closeIcon.classList.remove('hidden');
-    chatOpen = true;
-  } else {
-    container.classList.add('scale-0', 'opacity-0');
-    container.classList.remove('scale-100', 'opacity-100');
-    chatIcon.classList.remove('hidden');
-    closeIcon.classList.add('hidden');
-    chatOpen = false;
-  }
-});
+        // Toggle chat
+        document.getElementById('chatbot-toggle').addEventListener('click', function() {
+            const container = document.getElementById('chatbot-container');
+            const chatIcon = document.getElementById('chat-icon');
+            const closeIcon = document.getElementById('close-icon');
 
-// Minimize chat
-document.getElementById('minimize-chat').addEventListener('click', function() {
-  document.getElementById('chatbot-toggle').click();
-});
+            if (!chatOpen) {
+                container.classList.remove('scale-0', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+                chatIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+                chatOpen = true;
+            } else {
+                container.classList.add('scale-0', 'opacity-0');
+                container.classList.remove('scale-100', 'opacity-100');
+                chatIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+                chatOpen = false;
+            }
+        });
 
-function handleChatKeyPress(event) {
-  if (event.key === 'Enter') {
-    sendMessage();
-  }
-}
+        // Minimize chat
+        document.getElementById('minimize-chat').addEventListener('click', function() {
+            document.getElementById('chatbot-toggle').click();
+        });
 
-function sendQuickMessage(message) {
-  document.getElementById('chat-input').value = message;
-  sendMessage();
-}
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
 
-async function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const messagesContainer = document.getElementById('chat-messages');
-  const sendBtn = document.getElementById('send-btn');
-  
-  const message = input.value.trim();
-  if (!message) return;
-  
-  // Add user message
-  const userMessage = document.createElement('div');
-  userMessage.className = 'flex justify-end';
-  userMessage.innerHTML = `
+        function sendQuickMessage(message) {
+            document.getElementById('chat-input').value = message;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const messagesContainer = document.getElementById('chat-messages');
+            const sendBtn = document.getElementById('send-btn');
+
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'flex justify-end';
+            userMessage.innerHTML = `
     <div class="bg-blue-600 text-white rounded-2xl rounded-br-sm p-3 max-w-xs">
       <p class="text-sm">${escapeHtml(message)}</p>
     </div>
   `;
-  messagesContainer.appendChild(userMessage);
-  
-  input.value = '';
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  
-  // Show typing indicator
-  const typingMessage = document.createElement('div');
-  typingMessage.className = 'flex';
-  typingMessage.id = 'typing-message';
-  typingMessage.innerHTML = `
+            messagesContainer.appendChild(userMessage);
+
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Show typing indicator
+            const typingMessage = document.createElement('div');
+            typingMessage.className = 'flex';
+            typingMessage.id = 'typing-message';
+            typingMessage.innerHTML = `
     <div class="bg-white rounded-2xl rounded-bl-sm p-3 shadow-sm">
       <div class="typing-indicator"></div>
       <span class="ml-2 text-gray-500 text-sm">Thinking...</span>
     </div>
   `;
-  messagesContainer.appendChild(typingMessage);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  
-  // Disable send button
-  sendBtn.disabled = true;
-  
-  try {
-    const response = await fetch('chatbot_api.php', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({question: message})
-    });
-    
-    const data = await response.json();
-    
-    // Remove typing indicator
-    document.getElementById('typing-message')?.remove();
-    
-    // Add bot response
-    const botMessage = document.createElement('div');
-    botMessage.className = 'flex';
-    
-    let reply = '';
-    if (data.error) {
-      reply = `Sorry, there was an error: ${data.error}`;
-    } else {
-      reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't process your request.";
-    }
-    
-    botMessage.innerHTML = `
+            messagesContainer.appendChild(typingMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Disable send button
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch('chatbot_api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: message
+                    })
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                document.getElementById('typing-message')?.remove();
+
+                // Add bot response
+                const botMessage = document.createElement('div');
+                botMessage.className = 'flex';
+
+                let reply = '';
+                if (data.error) {
+                    reply = `Sorry, there was an error: ${data.error}`;
+                } else {
+                    reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't process your request.";
+                }
+
+                botMessage.innerHTML = `
       <div class="bg-white rounded-2xl rounded-bl-sm p-3 max-w-xs shadow-sm">
         <div class="text-gray-700 text-sm">${formatChatMessage(reply)}</div>
       </div>
     `;
-    messagesContainer.appendChild(botMessage);
-    
-  } catch (error) {
-    document.getElementById('typing-message')?.remove();
-    
-    const errorMessage = document.createElement('div');
-    errorMessage.className = 'flex';
-    errorMessage.innerHTML = `
+                messagesContainer.appendChild(botMessage);
+
+            } catch (error) {
+                document.getElementById('typing-message')?.remove();
+
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'flex';
+                errorMessage.innerHTML = `
       <div class="bg-red-100 text-red-700 rounded-2xl rounded-bl-sm p-3 max-w-xs">
         <p class="text-sm">Sorry, couldn't connect to server.</p>
       </div>
     `;
-    messagesContainer.appendChild(errorMessage);
-  }
-  
-  sendBtn.disabled = false;
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+                messagesContainer.appendChild(errorMessage);
+            }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+            sendBtn.disabled = false;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
 
-function formatChatMessage(message) {
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-  // Convert markdown links
-  message = message.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
-  
-  // Convert markdown bold
-  message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  
-  // Convert line breaks
-  message = message.replace(/\n/g, '<br>');
-  
-  // Format prices
-  message = message.replace(/₱(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="font-semibold text-green-600">₱$1</span>');
-  
-  return message;
-}
-</script>
+        function formatChatMessage(message) {
 
+            // Convert markdown links
+            message = message.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+
+            // Convert markdown bold
+            message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Convert line breaks
+            message = message.replace(/\n/g, '<br>');
+
+            // Format prices
+            message = message.replace(/₱(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="font-semibold text-green-600">₱$1</span>');
+
+            return message;
+        }
+    </script>
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
@@ -3081,6 +3083,8 @@ function formatChatMessage(message) {
             </svg>
         </div>
     </footer>
+
+    
 
     <script>
         AOS.init();
@@ -3295,7 +3299,7 @@ function formatChatMessage(message) {
                         spaceBetween: 18
                     },
                     1280: {
-                        slidesPerView: 7,
+                        slidesPerView: 5,
                         spaceBetween: 20
                     },
                     1536: {

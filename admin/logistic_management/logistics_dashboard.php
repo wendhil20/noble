@@ -587,7 +587,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
             background-color: #dc2626 !important;
         }
         .calendar-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #f59e0b 100%);
             color: white;
             border-radius: 12px;
             padding: 1rem;
@@ -683,7 +683,7 @@ $stats = $conn->query($statsSql)->fetch_assoc();
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center space-x-4 mb-4">
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
+                <div class="bg-orange-400 p-3 rounded-xl shadow-lg">
                     <i class="fas fa-truck text-white text-2xl"></i>
                 </div>
                 <div>
@@ -723,8 +723,8 @@ $stats = $conn->query($statsSql)->fetch_assoc();
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center">
-                        <div class="bg-purple-100 p-3 rounded-lg">
-                            <i class="fas fa-check-circle text-purple-600 text-xl"></i>
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
                             <p class="text-sm text-gray-600">Completed Today</p>

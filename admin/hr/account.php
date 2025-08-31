@@ -2,7 +2,7 @@
 session_name("nobleadmin");
 session_start();
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin']);
+require_role(['hr', 'superadmin']);
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
     // Redirect to login page

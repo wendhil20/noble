@@ -57,6 +57,9 @@ $error_message = '';
 // ---- Handle form submission (upload, delete old, update DB) ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reference_number = trim($_POST['reference_number'] ?? '');
+    // Handle empty string to NULL conversion in PHP instead of SQL
+    $reference_number_value = !empty($reference_number) ? $reference_number : null;
+    
     $upload_success = false;
     $stored_filename = null;
 
@@ -176,10 +179,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->autocommit(false);
 
+                // Updated query without NULLIF - handle NULL conversion in PHP
                 $update_query = "UPDATE orders SET 
                                     payment_status = 'pending', 
                                     payment_screenshot = ?, 
-                                    reference_number = NULLIF(?, ''), 
+                                    reference_number = ?, 
                                     rejected_by = NULL, 
                                     updated_at = NOW() 
                                  WHERE id = ? AND email = ?";
@@ -189,7 +193,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("Prepare failed: " . $conn->error);
                 }
 
-                $stmt->bind_param("ssis", $stored_filename, $reference_number, $order_id, $user_email);
+                // Use the processed reference_number_value (can be NULL or string)
+                $stmt->bind_param("ssis", $stored_filename, $reference_number_value, $order_id, $user_email);
 
                 if (!$stmt->execute()) {
                     $conn->rollback();

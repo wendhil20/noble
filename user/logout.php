@@ -18,7 +18,7 @@ $googleLogoutUrl = 'https://accounts.google.com/Logout';
 // Google logout works as expected, but we need a workaround to return to your site after logout.
 $redirectUrl = 'http://localhost/noble/user/otherpage/index.php'; // Change to your actual redirect URL (e.g., 'index.php')
 
-// Set up the location header to redirect after Google logout
+// Set up the location header to redirect after Google logout https://noblehomedepot.com/user/otherpage/index.php
 header("Location: $googleLogoutUrl");
 
 // Redirect back to your site after Google logout

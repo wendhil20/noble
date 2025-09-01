@@ -11,7 +11,7 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin']);
+require_role(['hr', 'superadmin']);
 
 require_once '../../connection/connect.php';
 

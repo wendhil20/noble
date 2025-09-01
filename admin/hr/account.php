@@ -34,14 +34,27 @@ require_once '../../connection/connect.php'; // make sure this sets $conn (mysql
 <body class="bg-gray-50">
 
     <?php include '../navbar/top.php'; ?>
-
+<section>
     <!-- Header -->
-    <div class="bg-white border-b border-gray-200">
-        <div class="max-w-full mx-auto px-4 py-6">
+<div class="bg-white border-b border-gray-200">
+
+    <div class="max-w-full mx-auto px-4 py-6 flex justify-between items-center">
+        <div>
             <h1 class="text-3xl font-semibold text-orange-400">Account Management System</h1>
             <p class="mt-2 text-gray-600">Manage user accounts and verification processes</p>
         </div>
+
+
+        <!-- Link button na bubukas ng bagong tab -->
+        <a href="../registration/account" target="_blank"
+           class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
+           registration account
+        </a>
     </div>
+
+</div>
+
+</section>
 
     <div class="max-w-full mx-auto px-4 py-8">
 
@@ -177,7 +190,7 @@ require_once '../../connection/connect.php'; // make sure this sets $conn (mysql
         <div class="mb-10">
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
                 <div class="border-b border-gray-200 px-6 py-4">
-                    <h2 class="text-xl font-semibold text-gray-900">User Details Management</h2>
+                    <h2 class="text-xl font-bold text-orange-400">User Details Management</h2>
                 </div>
                 <!-- Scrollable container with max height -->
                 <div class="overflow-auto max-h-96" style="scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9;">

@@ -2,7 +2,8 @@
 include '../../connection/connect.php';
 
 // Auto-increment reset function
-function resetAutoIncrement($conn, $tables) {
+function resetAutoIncrement($conn, $tables)
+{
     foreach ($tables as $table) {
         try {
             $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
@@ -126,101 +127,270 @@ if (isset($conn) && $conn) $conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Register</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Registration - Noble Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        
+        .btn-primary {
+           
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-<div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-    <h2 class="text-2xl font-bold mb-6 text-center text-blue-600">Register</h2>
 
-    <?php if (!empty($error)): ?>
-    <div id="error-notification" class="bg-red-100 border border-red-300 text-red-700 p-3 rounded mb-4">
-        <div class="flex justify-between items-start">
-            <div><strong>Error:</strong> <?php echo htmlspecialchars($error); ?></div>
-            <button onclick="hideNotification('error-notification')" class="text-red-500 hover:text-red-700 ml-2">&times;</button>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-lg">
+        <!-- Header Section -->
+        <div class="text-center mb-8 form-section">
+            <div class="glass-effect rounded-2xl p-6 mb-6">
+                <div class="w-16 h-16 bg-orange-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-user-plus text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Account Registration</h1>
+                <p class="text-gray-600 text-sm">NobleHomedepot Management System</p>
+            </div>
+        </div>
+
+        <!-- Notification Messages -->
+        <?php if (!empty($error)): ?>
+            <div id="error-notification" class="notification glass-effect rounded-xl p-4 mb-6 border-l-4 border-red-500">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h4 class="text-red-800 font-semibold text-sm">Registration Error</h4>
+                        <p class="text-red-700 text-sm mt-1"><?php echo htmlspecialchars($error); ?></p>
+                    </div>
+                    <button onclick="hideNotification('error-notification')" class="ml-4 text-red-500 hover:text-red-700 text-xl">&times;</button>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($success)): ?>
+            <div id="success-notification" class="notification glass-effect rounded-xl p-4 mb-6 border-l-4 border-green-500">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h4 class="text-green-800 font-semibold text-sm">Registration Successful</h4>
+                        <p class="text-green-700 text-sm mt-1"><?php echo htmlspecialchars($success); ?></p>
+                    </div>
+                    <button onclick="hideNotification('success-notification')" class="ml-4 text-green-500 hover:text-green-700 text-xl">&times;</button>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Registration Form -->
+        <div class="glass-effect rounded-2xl p-8 form-section">
+            <form method="POST" class="space-y-6" novalidate>
+                <!-- Full Name -->
+                <div class="space-y-2">
+                    <label for="fullname" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user text-gray-400 mr-2"></i>Full Name
+                    </label>
+                    <input type="text" id="fullname" name="fullname" required 
+                           class="w-full border border-gray-300 px-4 py-3 rounded-xl input-focus focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Enter your full name"
+                           value="<?php echo isset($_POST['fullname']) && !empty($success) ? '' : (isset($_POST['fullname']) ? htmlspecialchars($_POST['fullname']) : ''); ?>">
+                </div>
+
+                <!-- Email -->
+                <div class="space-y-2">
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-envelope text-gray-400 mr-2"></i>Email Address
+                    </label>
+                    <input type="email" id="email" name="email" required 
+                           class="w-full border border-gray-300 px-4 py-3 rounded-xl input-focus focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Enter your email address"
+                           value="<?php echo isset($_POST['email']) && !empty($success) ? '' : (isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''); ?>">
+                </div>
+
+                <!-- Password -->
+                <div class="space-y-2">
+                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-lock text-gray-400 mr-2"></i>Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required minlength="6" 
+                               class="w-full border border-gray-300 px-4 py-3 pr-12 rounded-xl input-focus focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Minimum 6 characters">
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                            <i id="password-icon" class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Account Level -->
+                <div class="space-y-2">
+                    <label for="lvl" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user-tag text-gray-400 mr-2"></i>Account Level
+                    </label>
+                    <select name="lvl" id="lvl-select" required 
+                            class="w-full border border-gray-300 px-4 py-3 rounded-xl input-focus focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            onchange="toggleDropdowns(this.value)">
+                        <option value="">Select your role</option>
+                        <option value="superadmin" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'superadmin') ? 'selected' : ''; ?>>Super Administrator</option>
+                        <option value="sales" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'sales') ? 'selected' : ''; ?>>Sales Representative</option>
+                        <option value="productspecialist" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'productspecialist') ? 'selected' : ''; ?>>Product Specialist</option>
+                        <option value="accountant" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'accountant') ? 'selected' : ''; ?>>Accountant</option>
+                        <option value="logistic" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'logistic') ? 'selected' : ''; ?>>Logistics Coordinator</option>
+                        <option value="warehouse" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'warehouse') ? 'selected' : ''; ?>>Warehouse Manager</option>
+                        <option value="hr" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'hr') ? 'selected' : ''; ?>>Human Resources</option>
+                    </select>
+                </div>
+
+                <!-- Sales ID -->
+                <div id="sales-dropdown" class="space-y-2" style="display: <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'sales') ? 'block' : 'none'; ?>;">
+                    <label for="sales_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-id-badge text-gray-400 mr-2"></i>Sales ID Number
+                    </label>
+                    <input type="number" id="sales_id" name="sales_id" min="1" 
+                           class="w-full border border-gray-300 px-4 py-3 rounded-xl input-focus focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Enter your Sales ID"
+                           value="<?php echo isset($_POST['sales_id']) && !empty($success) ? '' : (isset($_POST['sales_id']) ? htmlspecialchars($_POST['sales_id']) : ''); ?>">
+                </div>
+
+                <!-- Supplier ID -->
+                <div id="supplier-dropdown" class="space-y-2" style="display: <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'supplier') ? 'block' : 'none'; ?>;">
+                    <label for="supplier_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-building text-gray-400 mr-2"></i>Supplier ID Number
+                    </label>
+                    <input type="number" id="supplier_id" name="supplier_id" min="1" 
+                           class="w-full border border-gray-300 px-4 py-3 rounded-xl input-focus focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Enter your Supplier ID"
+                           value="<?php echo isset($_POST['supplier_id']) && !empty($success) ? '' : (isset($_POST['supplier_id']) ? htmlspecialchars($_POST['supplier_id']) : ''); ?>">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full  text-black font-semibold py-3 px-6 rounded-xl text-lg bg-orange-400">
+                    <i class="fas fa-user-plus mr-2"></i>Create Account
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                <p class="text-gray-500 text-sm">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    Your information is secure and protected
+                </p>
+            </div>
         </div>
     </div>
-    <?php endif; ?>
 
-    <?php if (!empty($success)): ?>
-    <div id="success-notification" class="bg-green-100 border border-green-300 text-green-700 p-3 rounded mb-4">
-        <div class="flex justify-between items-start">
-            <div><strong>Success:</strong> <?php echo htmlspecialchars($success); ?></div>
-            <button onclick="hideNotification('success-notification')" class="text-green-500 hover:text-green-700 ml-2">&times;</button>
-        </div>
-    </div>
-    <?php endif; ?>
+    <script>
+        function toggleDropdowns(role) {
+            const supplierDropdown = document.getElementById('supplier-dropdown');
+            const salesDropdown = document.getElementById('sales-dropdown');
+            const supplierInput = document.getElementById('supplier_id');
+            const salesInput = document.getElementById('sales_id');
 
-    <form method="POST" class="space-y-4" novalidate>
-        <div>
-            <label for="fullname" class="block text-sm font-medium mb-1">Full Name</label>
-            <input type="text" id="fullname" name="fullname" required class="w-full border px-4 py-2 rounded-md"
-                value="<?php echo isset($_POST['fullname']) && !empty($success) ? '' : (isset($_POST['fullname']) ? htmlspecialchars($_POST['fullname']) : ''); ?>">
-        </div>
-        <div>
-            <label for="email" class="block text-sm font-medium mb-1">Email</label>
-            <input type="email" id="email" name="email" required class="w-full border px-4 py-2 rounded-md"
-                value="<?php echo isset($_POST['email']) && !empty($success) ? '' : (isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''); ?>">
-        </div>
-        <div>
-            <label for="password" class="block text-sm font-medium mb-1">Password</label>
-            <input type="password" id="password" name="password" required minlength="6" class="w-full border px-4 py-2 rounded-md">
-        </div>
-        <div>
-            <label for="lvl" class="block text-sm font-medium mb-1">Account Level</label>
-            <select name="lvl" id="lvl-select" required class="w-full border px-4 py-2 rounded-md" onchange="toggleDropdowns(this.value)">
-                <option value="">Select Account Level</option>
-                <option value="superadmin" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'superadmin') ? 'selected' : ''; ?>>Superadmin</option>
-                <option value="sales" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'sales') ? 'selected' : ''; ?>>Sales</option>
-                <option value="productspecialist" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'productspecialist') ? 'selected' : ''; ?>>Product Specialist</option>
-                <option value="supplier" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'supplier') ? 'selected' : ''; ?>>Supplier</option>
-                <option value="accountant" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'accountant') ? 'selected' : ''; ?>>Accountant</option>
-                <option value="logistic" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'logistic') ? 'selected' : ''; ?>>Logistic</option>
-                <option value="warehouse" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'warehouse') ? 'selected' : ''; ?>>Warehouse</option>
-                <option value="hr" <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'hr') ? 'selected' : ''; ?>>HR</option>
-            </select>
-        </div>
-        <!-- Sales ID -->
-        <div id="sales-dropdown" style="display: <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'sales') ? 'block' : 'none'; ?>;">
-            <label for="sales_id" class="block text-sm font-medium mb-1">Sales ID</label>
-            <input type="number" id="sales_id" name="sales_id" min="1" class="w-full border px-4 py-2 rounded-md"
-                value="<?php echo isset($_POST['sales_id']) && !empty($success) ? '' : (isset($_POST['sales_id']) ? htmlspecialchars($_POST['sales_id']) : ''); ?>">
-        </div>
-        <!-- Supplier ID -->
-        <div id="supplier-dropdown" style="display: <?php echo (isset($_POST['lvl']) && $_POST['lvl'] === 'supplier') ? 'block' : 'none'; ?>;">
-            <label for="supplier_id" class="block text-sm font-medium mb-1">Supplier ID</label>
-            <input type="number" id="supplier_id" name="supplier_id" min="1" class="w-full border px-4 py-2 rounded-md"
-                value="<?php echo isset($_POST['supplier_id']) && !empty($success) ? '' : (isset($_POST['supplier_id']) ? htmlspecialchars($_POST['supplier_id']) : ''); ?>">
-        </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md w-full">Register</button>
-    </form>
-</div>
-<script>
-function toggleDropdowns(role) {
-    const supplierDropdown = document.getElementById('supplier-dropdown');
-    const salesDropdown = document.getElementById('sales-dropdown');
-    const supplierInput = document.getElementById('supplier_id');
-    const salesInput = document.getElementById('sales_id');
+            supplierDropdown.style.display = (role === 'supplier') ? 'block' : 'none';
+            salesDropdown.style.display = (role === 'sales') ? 'block' : 'none';
 
-    supplierDropdown.style.display = (role === 'supplier') ? 'block' : 'none';
-    salesDropdown.style.display = (role === 'sales') ? 'block' : 'none';
+            supplierInput.required = (role === 'supplier');
+            salesInput.required = (role === 'sales');
 
-    supplierInput.required = (role === 'supplier');
-    salesInput.required = (role === 'sales');
+            if (role !== 'supplier') supplierInput.value = '';
+            if (role !== 'sales') salesInput.value = '';
+        }
 
-    if (role !== 'supplier') supplierInput.value = '';
-    if (role !== 'sales') salesInput.value = '';
-}
-function hideNotification(id) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-}
-document.addEventListener('DOMContentLoaded', () => {
-    toggleDropdowns(document.getElementById('lvl-select').value);
-});
-</script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('password-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'fas fa-eye';
+            }
+        }
+
+        function hideNotification(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.animation = 'slideOut 0.3s ease-in forwards';
+                setTimeout(() => el.style.display = 'none', 300);
+            }
+        }
+
+        // Auto-hide notifications after 5 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleDropdowns(document.getElementById('lvl-select').value);
+            
+            const notifications = document.querySelectorAll('.notification');
+            notifications.forEach(notification => {
+                setTimeout(() => {
+                    if (notification.style.display !== 'none') {
+                        hideNotification(notification.id);
+                    }
+                }, 5000);
+            });
+        });
+
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
+
 </html>

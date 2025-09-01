@@ -10,7 +10,6 @@
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
-
             overflow-x: hidden;
         }
 
@@ -95,7 +94,6 @@
             <p class="text-2xl text-black mb-8">Your Premium Furniture Marketplace</p>
         </div>
 
-
         <!-- Main Content Cards - Alternating Layout -->
         <div class="space-y-8 mb-10">
             <!-- Card 1 - From Left -->
@@ -113,7 +111,6 @@
             <!-- Card 2 - From Right -->
             <div class="glass-card rounded-2xl p-8 fade-in-right delay-2">
                 <div class="flex items-center">
-
                     <div class="order-1 text-right">
                         <h3 class="text-2xl font-bold text-black mb-4">Why Choose Us</h3>
                         <p class="text-black text-lg leading-relaxed">
@@ -152,19 +149,53 @@
         <!-- Footer -->
         <footer class="text-center mt-16 fade-in-center delay-3">
             <p class="text-gray-400">© 2025 NobleHome Depot. All rights reserved.</p>
-            
         </footer>
 
     </div>
 
     <script>
-        // Manual redirect button
+        // Check if user has already entered before
+        window.addEventListener('load', function() {
+            const hasEntered = localStorage.getItem('noblehome_entered');
+            if (hasEntered === 'true') {
+                // User has entered before, redirect immediately
+                document.body.style.display = 'none';
+                window.location.href = 'user/otherpage/index';
+                return;
+            }
+        });
+
+        // Enter button click handler
         document.getElementById('enterBtn').addEventListener('click', function() {
             this.innerHTML = 'Entering...';
             this.disabled = true;
+            
+            // Mark that user has entered the site
+            localStorage.setItem('noblehome_entered', 'true');
+            localStorage.setItem('enter_timestamp', Date.now().toString());
+            
             setTimeout(() => {
-                window.location.href = 'user/otherpage/index';
+                window.location.href = 'index.php';
             }, 1000);
+        });
+
+        // Optional: Add reset function (you can call this if needed)
+        function resetLandingPage() {
+            localStorage.removeItem('noblehome_entered');
+            localStorage.removeItem('enter_timestamp');
+            location.reload();
+        }
+
+       // Optional: Auto-reset after certain period (uncomment if needed)
+        window.addEventListener('load', function() {
+            const timestamp = localStorage.getItem('enter_timestamp');
+            if (timestamp) {
+                const daysPassed = (Date.now() - parseInt(timestamp)) / (1000 * 60 * 60 * 24);
+                if (daysPassed > 7) { // Reset after 7 days
+                    localStorage.removeItem('noblehome_entered');
+                    localStorage.removeItem('enter_timestamp');
+                }
+            }
         });
     </script>
 </body>

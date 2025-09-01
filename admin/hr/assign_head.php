@@ -35,7 +35,7 @@ while ($r = mysqli_fetch_assoc($res)) {
   <title>Assign Department Head — List</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-orange-50 min-h-screen text-gray-800">
+<body class=" min-h-screen text-gray-800">
     <?php include '../navbar/top.php'; ?>
   <div class="max-w-7xl mx-auto p-6">
     <!-- Header -->
@@ -47,7 +47,7 @@ while ($r = mysqli_fetch_assoc($res)) {
 
       <div class="w-full md:w-96 relative">
         <input id="searchInput" type="search" placeholder="Search members or heads..."
-               class="w-full pl-10 pr-4 py-2 rounded-lg border border-orange-200 bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-300" />
+               class="w-full pl-10 pr-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300" />
         <div class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 111 0z"/></svg>
         </div>

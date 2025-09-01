@@ -17,6 +17,25 @@ $user_email = $_SESSION['user_email'] ?? null;
 if ($_POST && isset($_POST['add_address'])) {
     $full_name = $_POST['full_name'] ?? '';
     $phone = $_POST['phone'] ?? '';
+    
+    // Format phone number to +63 XXX XXX XXXX format
+    if ($phone) {
+        // Remove all non-digits
+        $phone_digits = preg_replace('/\D/', '', $phone);
+        
+        // If it starts with 63, remove it
+        if (substr($phone_digits, 0, 2) === '63') {
+            $phone_digits = substr($phone_digits, 2);
+        }
+        
+        // Ensure it's a 10-digit mobile number starting with 9
+        if (strlen($phone_digits) === 10 && substr($phone_digits, 0, 1) === '9') {
+            // Format as +63 XXX XXX XXXX
+            $formatted_phone = '+63 ' . substr($phone_digits, 0, 3) . ' ' . substr($phone_digits, 3, 3) . ' ' . substr($phone_digits, 6);
+            $phone = $formatted_phone;
+        }
+    }
+    
     $address = $_POST['address'] ?? '';
     $city = $_POST['city'] ?? '';
     $state = $_POST['state'] ?? '';
@@ -45,7 +64,7 @@ if ($_POST && isset($_POST['add_address'])) {
                     if (document.referrer && document.referrer !== window.location.href) {
                         window.location.href = document.referrer;
                     } else {
-                        window.location.href = 'profile.php';
+                        window.location.href = 'checkout.php';
                     }
                 }, 2000);
             });
@@ -195,7 +214,7 @@ if ($_POST && isset($_POST['add_address'])) {
             z-index: 1;
         }
 
-        /* Phone input styling */
+        /* Phone input styling - Updated for +63 XXX XXX XXXX format */
         .phone-input {
             padding-left: 60px;
         }
@@ -388,23 +407,20 @@ if ($_POST && isset($_POST['add_address'])) {
                                 >
                             </div>
 
-                            <!-- Phone with Fixed Design -->
+                            <!-- Phone with Updated Format -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                                <div class="relative">
-                                    <span class="phone-prefix">+63</span>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        id="phoneInput"
-                                        required
-                                        readonly
-                                        class="w-full border border-gray-300 rounded-lg phone-input py-3 pr-4 bg-gray-50 text-gray-500 focus:outline-none transition-all cursor-not-allowed form-field"
-                                        placeholder="Set location first to enable editing"
-                                        maxlength="13"
-                                    >
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Enter your 10-digit mobile number (without +63)</p>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    id="phoneInput"
+                                    required
+                                    readonly
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-500 focus:outline-none transition-all cursor-not-allowed form-field"
+                                    placeholder="Set location first to enable editing"
+                                    maxlength="16"
+                                >
+                                <p class="text-xs text-gray-500 mt-1">Format: +63 XXX XXX XXXX (e.g., +63 967 167 7760)</p>
                             </div>
 
                             <!-- Complete Address -->
@@ -609,7 +625,7 @@ if ($_POST && isset($_POST['add_address'])) {
                         field.placeholder = 'Enter your full name';
                         break;
                     case 'phone':
-                        field.placeholder = '9XX XXX XXXX';
+                        field.placeholder = '+63 9XX XXX XXXX';
                         break;
                     case 'address':
                         field.placeholder = 'Add details like unit/floor number, landmarks...';
@@ -977,12 +993,12 @@ if ($_POST && isset($_POST['add_address'])) {
             }
         }
         
-        // Improved phone number formatting for Philippines
+        // Updated phone number formatting for +63 XXX XXX XXXX format
         function formatPhoneNumber(value) {
-            // Remove all non-digits
-            let cleaned = value.replace(/\D/g, '');
+            // Remove all non-digits and the + symbol
+            let cleaned = value.replace(/[^\d]/g, '');
             
-            // Remove leading +63 if present
+            // Remove leading 63 if present
             if (cleaned.startsWith('63')) {
                 cleaned = cleaned.substring(2);
             }
@@ -995,13 +1011,15 @@ if ($_POST && isset($_POST['add_address'])) {
             // Limit to 10 digits
             cleaned = cleaned.substring(0, 10);
             
-            // Format as XXX XXX XXXX
-            if (cleaned.length <= 3) {
-                return cleaned;
+            // Format as +63 XXX XXX XXXX
+            if (cleaned.length === 0) {
+                return '+63 ';
+            } else if (cleaned.length <= 3) {
+                return '+63 ' + cleaned;
             } else if (cleaned.length <= 6) {
-                return cleaned.substring(0, 3) + ' ' + cleaned.substring(3);
+                return '+63 ' + cleaned.substring(0, 3) + ' ' + cleaned.substring(3);
             } else {
-                return cleaned.substring(0, 3) + ' ' + cleaned.substring(3, 6) + ' ' + cleaned.substring(6);
+                return '+63 ' + cleaned.substring(0, 3) + ' ' + cleaned.substring(3, 6) + ' ' + cleaned.substring(6);
             }
         }
         
@@ -1019,6 +1037,37 @@ if ($_POST && isset($_POST['add_address'])) {
                     field.classList.remove('border-red-500');
                 }
             });
+            
+            // Special validation for phone number format
+            const phoneField = document.querySelector('[name="phone"]');
+            const phoneValue = phoneField.value.trim();
+            
+            // Check if phone follows +63 XXX XXX XXXX format
+            const phoneRegex = /^\+63 9\d{2} \d{3} \d{4}$/;
+            if (phoneValue && !phoneRegex.test(phoneValue)) {
+                phoneField.classList.add('border-red-500');
+                isValid = false;
+                
+                // Show phone format error
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'mb-6 bg-amber-100 border border-amber-400 text-amber-700 px-4 py-3 rounded-lg fade-in';
+                errorDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        Phone number must be in format: +63 9XX XXX XXXX (e.g., +63 967 167 7760)
+                    </div>
+                `;
+                
+                document.querySelector('form').insertBefore(errorDiv, document.querySelector('form').firstChild);
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            } else {
+                phoneField.classList.remove('border-red-500');
+            }
             
             // Special validation for coordinates
             const lat = document.getElementById('latitude').value;
@@ -1067,10 +1116,40 @@ if ($_POST && isset($_POST['add_address'])) {
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
             
-            // Phone number formatting
+            // Phone number formatting with +63 prefix
             const phoneInput = document.getElementById('phoneInput');
+            
+            // Set initial value with +63 prefix
+            if (!phoneInput.value || phoneInput.value.trim() === '') {
+                phoneInput.value = '+63 ';
+            }
+            
             phoneInput.addEventListener('input', function(e) {
                 e.target.value = formatPhoneNumber(e.target.value);
+            });
+            
+            // Prevent deletion of +63 prefix
+            phoneInput.addEventListener('keydown', function(e) {
+                const cursorPosition = e.target.selectionStart;
+                
+                // Prevent deletion of +63 prefix
+                if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 4) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Ensure +63 prefix is always present on focus
+            phoneInput.addEventListener('focus', function(e) {
+                if (!e.target.value.startsWith('+63 ')) {
+                    e.target.value = '+63 ';
+                }
+                
+                // Move cursor to end if at beginning
+                setTimeout(() => {
+                    if (e.target.selectionStart <= 4) {
+                        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+                    }
+                }, 10);
             });
             
             // Form validation on submit
@@ -1085,7 +1164,7 @@ if ($_POST && isset($_POST['add_address'])) {
                             <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                             </svg>
-                            Please fill in all required fields and set your location on the map.
+                            Please fill in all required fields correctly and set your location on the map.
                         </div>
                     `;
                     

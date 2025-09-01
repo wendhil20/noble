@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->autocommit(false);
 
-                // Updated query without NULLIF - handle NULL conversion in PHP
+                // FIXED: Removed NULLIF - handle NULL conversion in PHP above
                 $update_query = "UPDATE orders SET 
                                     payment_status = 'pending', 
                                     payment_screenshot = ?, 
@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
                 $conn->autocommit(true);
 
-                // success: redirect to profile (so new image loads from DB)
+                // success: redirect to profile
                 header("Location: profile.php?updated=success");
                 exit;
 

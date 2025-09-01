@@ -409,7 +409,7 @@ if ($_POST && isset($_POST['add_address'])) {
 
                             <!-- Phone with Updated Format -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number/ Mobile Number *</label>
                                 <input
                                     type="tel"
                                     name="phone"

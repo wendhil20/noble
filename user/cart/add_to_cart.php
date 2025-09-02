@@ -35,6 +35,35 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// NEW: Check if user account is verified
+$user_id = $_SESSION['user_id'];
+$verify_stmt = $conn->prepare("SELECT ud.is_verified FROM user_details ud WHERE ud.user_id = ?");
+$verify_stmt->bind_param("i", $user_id);
+$verify_stmt->execute();
+$verify_result = $verify_stmt->get_result();
+$verify_stmt->close();
+
+if ($verify_result->num_rows === 0) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Your account details are incomplete. Please complete your profile verification to add items to cart.',
+        'error_code' => 'PROFILE_INCOMPLETE'
+    ]);
+    exit;
+}
+
+$user_verification = $verify_result->fetch_assoc();
+if (!$user_verification['is_verified'] || $user_verification['is_verified'] == 0) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Your account is not verified. Please verify your account to add items to cart.',
+        'error_code' => 'ACCOUNT_NOT_VERIFIED'
+    ]);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $product_id = (int)($_POST['product_id'] ?? 0);
@@ -42,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $selected_variant = trim($_POST['selected_variant'] ?? '');
         $selected_color_id = (int)($_POST['selected_color_id'] ?? 0);
         $variant_id = (int)($_POST['variant_id'] ?? 0);
-        $user_id = $_SESSION['user_id'];
 
         if (!$product_id) throw new Exception('Product ID is required.');
 

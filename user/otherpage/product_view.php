@@ -1631,7 +1631,7 @@ $avg_stmt->close();
           }
 
         } catch (error) {
-          this.showNotification('Error: ' + error.message, 'error');
+          this.showNotification('' + error.message, 'error');
           console.error('Add to cart error:', error);
         }
       }

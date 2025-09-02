@@ -104,10 +104,6 @@ if (!isset($_SESSION['noble_user'])) {
       border-bottom: 1px solid #e5e7eb;
     }
 
-    .vat-breakdown {
-      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
-      border: 2px solid #fb923c;
-    }
   </style>
 </head>
 
@@ -275,13 +271,13 @@ if (!isset($_SESSION['noble_user'])) {
     function getVATBreakdownHTML(totals) {
       return `
       <!-- Enhanced VAT Calculation Breakdown -->
-      <div class="vat-breakdown rounded-lg p-4 text-sm bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200">
+      <div class="vat-breakdown rounded-lg p-4 text-sm">
         <h5 class="font-semibold text-orange-900 mb-4 flex items-center">
           <i class="fas fa-calculator text-orange-600 mr-2"></i>
           VAT Calculation Breakdown (12% VAT Rate) - Using Price Column
         </h5>
         
-        <div class="bg-white rounded-lg p-4 border-2 border-orange-300 shadow-sm">
+        <div class="bg-white rounded-lg p-4 shadow-sm">
           <div class="space-y-2 text-gray-700">
             <!-- Items Net Calculation -->
             <div class="flex justify-between items-center py-1 border-b border-orange-100">
@@ -310,20 +306,13 @@ if (!isset($_SESSION['noble_user'])) {
               <span class="font-semibold text-orange-800">₱${totals.finalItemsWithVAT}</span>
             </div>
             
-            <!-- Database Reference -->
-            <div class="flex justify-between items-center py-1 border-b border-orange-100">
-              <span class="flex items-center">
-                <i class="fas fa-database text-gray-400 mr-2 w-4"></i>
-                <span class="text-sm text-gray-500">DB Subtotal (reference):</span>
-              </span>
-              <span class="text-sm text-gray-500">₱${totals.itemsSubtotal}</span>
-            </div>
+          
             
             <!-- Delivery Fees -->
             <div class="flex justify-between items-center py-1 border-b border-orange-100">
               <span class="flex items-center">
                 <i class="fas fa-truck text-orange-600 mr-2 w-4"></i>
-                <span class="font-medium">Delivery (VAT-exempt):</span>
+                <span class="font-medium">Delivery (Fee):</span>
               </span>
               <span class="font-semibold text-orange-800">+₱${totals.finalDeliveryTotal}</span>
             </div>
@@ -340,7 +329,7 @@ if (!isset($_SESSION['noble_user'])) {
         </div>
         
         <!-- VAT Summary -->
-        <div class="mt-4 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg p-3 border border-orange-300">
+        <div class="mt-4 rounded-lg p-3 ">
           <div class="flex items-center justify-between">
             <span class="font-medium text-orange-900 flex items-center">
               <i class="fas fa-info-circle mr-2"></i>
@@ -579,11 +568,7 @@ if (!isset($_SESSION['noble_user'])) {
         <span class="text-sm font-medium text-gray-600">Subtotal:</span> ₱${item.subtotal}
         <br><span class="text-xs text-blue-600">(VAT inclusive)</span>
       </div>
-      <a href="set_supplier.php?order_id=${order.id}&item_index=${itemIndex}" 
-         class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition-colors duration-200 flex items-center space-x-1 shadow-sm text-xs">
-        <i class="fas fa-truck-loading"></i>
-        <span>Set Supplier</span>
-      </a>
+    
     </div>
   </div>`).join('');
 
@@ -662,11 +647,7 @@ if (!isset($_SESSION['noble_user'])) {
                       <i class="fas fa-shopping-bag text-primary-600 mr-2"></i>
                       Order Items
                     </h4>
-                    <a href="po_management.php?order_id=${order.id}" 
-                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm">
-                      <i class="fas fa-clipboard-list"></i>
-                      <span>P.O Management</span>
-                    </a>
+                   
                   </div>
                   <div class="max-h-60 overflow-y-auto scrollbar-hide space-y-1 pr-1 bg-gray-50 rounded-lg p-3">
                     ${itemsHtml}

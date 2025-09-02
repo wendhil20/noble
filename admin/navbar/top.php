@@ -146,7 +146,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                 <!-- Logo Section -->
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-lg overflow-hidden shadow-md">
+                    <div class="w-10 h-10 rounded-lg overflow-hidden">
                         <img src="../img/logo/logo.png" alt="Noble Home Logo" class="w-full h-full object-cover">
                     </div>
                     <div>

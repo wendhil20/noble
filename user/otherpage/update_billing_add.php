@@ -499,7 +499,7 @@ if ($_POST && isset($_POST['add_address'])) {
                                     readonly
                                     class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-500 focus:outline-none transition-all cursor-not-allowed form-field"
                                     placeholder="Set location first to enable editing"
-                                    maxlength="13">
+                                    maxlength="16">
                                 <p class="text-xs text-gray-500 mt-1">Format: +63 XXX XXX XXXX (e.g., +63 967 167 7760)</p>
                             </div>
 

@@ -6,15 +6,59 @@ include '../role/roleaccount.php';
 
 require_role(['superadmin']); // allow only admin and superadmin
 
-// Check if user is logged in
-if (!isset($_SESSION['noble_user'])) {
-    // Redirect to login page
-    header("Location: ../../loginpage/index.php");
-    exit();
+// ✅ Update last activity time (this extends the session)
+$_SESSION['last_activity'] = time();
+
+// ✅ ENHANCED: Periodic database validation (every 5 minutes)
+$should_validate = !isset($_SESSION['last_db_check']) || (time() - $_SESSION['last_db_check']) > 300;
+
+if ($should_validate) {
+    // Verify user still exists and is active
+    $email = $_SESSION['noble_user'];
+    $stmt = $conn->prepare("SELECT id, lvl, status FROM nobleaccount WHERE email = ? LIMIT 1");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        // User not found, logout
+        session_unset();
+        session_destroy();
+        $_SESSION['access_denied'] = "Account not found.";
+        header("Location: ../../loginpage/index.php");
+        exit;
+    }
+
+    $user = $result->fetch_assoc();
+
+    // Check if account is still active
+    if (strtolower($user['status']) !== 'active') {
+        // Account deactivated, logout
+        session_unset();
+        session_destroy();
+        $_SESSION['access_denied'] = "Account deactivated.";
+        header("Location: ../../loginpage/index.php");
+        exit;
+    }
+
+    // Update session with fresh data
+    $_SESSION['noble_lvl'] = $user['lvl'];
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['last_db_check'] = time();
+    
+    // Update database activity
+    $update = $conn->prepare("UPDATE nobleaccount SET last_activity = NOW(), is_online = 1 WHERE id = ?");
+    $update->bind_param("i", $user['id']);
+    $update->execute();
+    $update->close();
+    
+    $stmt->close();
 }
 
-// Update last activity time
-$_SESSION['last_activity'] = time();
+// ✅ CSRF Protection - Generate token if not exists
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 // Handle search and filters
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -46,6 +90,9 @@ if (!empty($status_filter)) {
 
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
+// ✅ Initialize $final_orders to prevent undefined variable error
+$final_orders = [];
+
 // Get unique emails first to prevent duplicates
 $unique_query = "SELECT DISTINCT o.email FROM orders o $where_clause";
 $unique_stmt = $conn->prepare($unique_query);
@@ -54,6 +101,7 @@ if (!empty($params)) {
 }
 $unique_stmt->execute();
 $unique_emails = $unique_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$unique_stmt->close();
 
 // Total record count (based on unique emails)
 $total_records = count($unique_emails);
@@ -61,7 +109,6 @@ $total_pages = ceil($total_records / $records_per_page);
 
 // Get paginated unique emails
 $paginated_emails = array_slice($unique_emails, $offset, $records_per_page);
-
 $email_list = array_column($paginated_emails, 'email');
 
 if (count($email_list) > 0) {
@@ -78,6 +125,7 @@ if (count($email_list) > 0) {
     $stmt->bind_param(str_repeat('s', count($email_list)), ...$email_list);
     $stmt->execute();
     $all_results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
 
     foreach ($all_results as $row) {
         if ($row['rn'] == 1) {
@@ -89,47 +137,118 @@ if (count($email_list) > 0) {
 // For filters (status only in this table)
 $status_options = $conn->query("SELECT DISTINCT status FROM orders WHERE status IS NOT NULL ORDER BY status")->fetch_all(MYSQLI_ASSOC);
 
-// Function to get order items
+// ✅ Enhanced helper functions with security improvements
 function getOrderItems($conn, $order_id)
 {
+    // Validate order_id is numeric and belongs to current user's accessible data
+    if (!is_numeric($order_id) || $order_id <= 0) {
+        return [];
+    }
+    
     $query = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('i', $order_id);
     $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $result;
 }
 
-// Function to get all orders for a specific email
 function getOrdersByEmail($conn, $email)
 {
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return [];
+    }
+    
     $query = "SELECT * FROM orders WHERE email = ? ORDER BY created_at DESC";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('s', $email);
     $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $result;
 }
 
-// Function to check if email has multiple orders
 function hasMultipleOrders($conn, $email)
 {
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    
     $query = "SELECT COUNT(*) as count FROM orders WHERE email = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
     return $result['count'] > 1;
 }
 
-// Function to get specific order details
 function getOrderDetails($conn, $order_id)
 {
+    // Validate order_id is numeric
+    if (!is_numeric($order_id) || $order_id <= 0) {
+        return null;
+    }
+    
     $query = "SELECT * FROM orders WHERE id = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('i', $order_id);
     $stmt->execute();
-    return $stmt->get_result()->fetch_assoc();
+    $result = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $result;
 }
 
+// ✅ Helper function to get CSRF token for forms
+function get_csrf_token() {
+    return $_SESSION['csrf_token'] ?? '';
+}
+
+// ✅ Helper function to generate CSRF hidden field
+function generate_csrf_field() {
+    $token = get_csrf_token();
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
+}
+
+// ✅ Session status check function for AJAX calls
+function check_session_ajax() {
+    if (!isset($_SESSION['noble_user'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Session expired', 'redirect' => '../../loginpage/index.php']);
+        exit;
+    }
+    
+    $is_remember_me = isset($_SESSION['remember_me']) && $_SESSION['remember_me'];
+    $timeout_limit = $is_remember_me ? 2592000 : 86400; // 30 days vs 24 hours
+    $time_left = $timeout_limit - (time() - ($_SESSION['last_activity'] ?? time()));
+    
+    echo json_encode([
+        'status' => 'success',
+        'time_left' => $time_left,
+        'remember_me' => $is_remember_me,
+        'session_type' => $is_remember_me ? 'persistent' : 'regular'
+    ]);
+}
+
+// ✅ Handle AJAX requests for session management
+if (isset($_POST['action'])) {
+    switch ($_POST['action']) {
+        case 'check_session':
+            check_session_ajax();
+            break;
+        case 'extend_session':
+            if (isset($_SESSION['noble_user'])) {
+                $_SESSION['last_activity'] = time();
+                echo json_encode(['status' => 'success', 'message' => 'Session extended']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'No active session']);
+            }
+            exit;
+            break;
+    }
+}
 
 ?>
 
@@ -902,6 +1021,8 @@ function getOrderDetails($conn, $order_id)
                 setTimeout(() => accessMsg.remove(), 500);
             }
         }, 5000);
+
+
     </script>
 
 </body>

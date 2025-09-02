@@ -3,7 +3,73 @@ session_name("nobleadmin");
 session_start();
 include '../connection/connect.php';
 
+// ✅ AUTO-LOGIN CHECK - Add this before the session check
+if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) && isset($_COOKIE['noble_remember_email'])) {
+    
+    $remember_token = $_COOKIE['noble_remember_token'];
+    $remember_email = $_COOKIE['noble_remember_email'];
+    
+    // Validate remember token
+    $stmt = $conn->prepare("SELECT id, email, lvl, status, remember_token, remember_expires FROM nobleaccount WHERE email = ? AND remember_token = ? AND remember_expires > NOW() LIMIT 1");
+    $stmt->bind_param("ss", $remember_email, $remember_token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        
+        // Valid remember token - auto login
+        if ($user['status'] === 'active') {
+            
+            // Update user activity
+            $update_stmt = $conn->prepare("UPDATE nobleaccount SET last_activity = NOW(), is_online = 1, last_login = NOW() WHERE email = ?");
+            $update_stmt->bind_param("s", $remember_email);
+            $update_stmt->execute();
+            $update_stmt->close();
+            
+            // Set session data
+            $_SESSION['noble_user'] = $user['email'];
+            $_SESSION['noble_lvl'] = $user['lvl'];
+            $_SESSION['noble_id'] = $user['id'];
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['login_time'] = time();
+            $_SESSION['last_activity'] = time();
+            $_SESSION['last_db_check'] = time();
+            $_SESSION['session_expires'] = time() + 86400;
+            $_SESSION['is_online'] = true;
+            $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
+            $_SESSION['remember_me'] = true;
+            
+            // Determine redirect based on user level
+            $redirect = match (strtolower($user['lvl'])) {
+                'superadmin', 'admin' => "../admin/client/dashboard.php",
+                'sales' => "../admin/orders/ordering",
+                'accountant' => "../admin/accountant/accountant",
+                'supplier' => "../admin/suppliermain/suppliercompany",
+                'productspecialist' => "../admin/shop/adminshop",
+                'logistic' => "../admin/logistic_management/logistics_dashboard",
+                'warehouse' => "../admin/warehouse_management/order_list",
+                'hr' => "../admin/hr/account",
+                default => "../admin/client/dashboard.php"
+            };
+            
+            // Log auto-login
+            error_log("Auto-login successful for user: " . $remember_email);
+            
+            // Redirect to appropriate dashboard
+            header("Location: " . $redirect);
+            exit();
+        }
+    } else {
+        // Invalid or expired token - clear cookies
+        setcookie('noble_remember_token', '', time() - 3600, '/');
+        setcookie('noble_remember_email', '', time() - 3600, '/');
+    }
+    
+    $stmt->close();
+}
 
+// ✅ Regular session check
 if (isset($_SESSION['noble_user'])) {
     $role = strtolower($_SESSION['noble_lvl'] ?? '');
 
@@ -12,16 +78,25 @@ if (isset($_SESSION['noble_user'])) {
         'sales' => "../admin/orders/ordering",
         'accountant' => "../admin/accountant/accountant",
         'productspecialist' => "../admin/shop/adminshop",
-        'accountant' => "../admin/accountant/dashboard",
         'logistic' => "../admin/logistic_management/logistics_dashboard",
         'warehouse' => "../admin/warehouse_management/order_list",
-         'hr' => "../admin/hr/account",
+        'hr' => "../admin/hr/account",
         default => "../admin/client/dashboard.php"
     };
 
     header("Location: $redirect");
     exit();
 }
+
+// ✅ Clear old sessions periodically
+if (!isset($_SESSION['last_cleanup']) || (time() - $_SESSION['last_cleanup']) > 86400) {
+    $cleanup = $conn->prepare("UPDATE nobleaccount SET is_online = 0 WHERE last_activity < DATE_SUB(NOW(), INTERVAL 2 HOUR)");
+    $cleanup->execute();
+    $cleanup->close();
+    $_SESSION['last_cleanup'] = time();
+}
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -130,6 +205,31 @@ if (isset($_SESSION['noble_user'])) {
         .toast.show {
             transform: translateX(0);
         }
+
+        /* ✅ Force Login Modal Styles */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
     </style>
 </head>
 
@@ -149,6 +249,42 @@ if (isset($_SESSION['noble_user'])) {
                     <button onclick="hideToast()" class="text-gray-400 hover:text-gray-600">
                         <i class="ri-close-line"></i>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Force Login Modal -->
+    <div id="forceLoginModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="relative z-10 flex items-center justify-center min-h-full p-4">
+            <div class="modal-content bg-white rounded-xl shadow-2xl p-6 max-w-md w-full slide-in">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                        <i class="ri-error-warning-line text-yellow-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Account Already Active</h3>
+                    <p id="forceLoginMessage" class="text-sm text-gray-600 mb-6">This account is currently active on another device.</p>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                        <div class="flex items-start">
+                            <i class="ri-information-line text-blue-500 mt-0.5 mr-2"></i>
+                            <p class="text-xs text-blue-700">Continuing will log out the other session and may disrupt any ongoing work.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="button" 
+                                onclick="cancelForceLogin()"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="button" 
+                                onclick="doForceLogin()"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                            Force Login
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,18 +369,22 @@ if (isset($_SESSION['noble_user'])) {
                     </div>
                 </div>
 
-                <!-- Remember Me -->
+                <!-- ✅ Enhanced Remember Me with better styling -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <input id="remember" 
-                               name="remember" 
+                        <input id="remember_me" 
+                               name="remember_me" 
                                type="checkbox" 
+                               value="1"
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                        <label for="remember" class="ml-2 block text-sm text-gray-700">
-                            Remember me
+                        <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                            Remember me for 30 days
                         </label>
                     </div>
                 </div>
+
+                <!-- ✅ Hidden field for force login -->
+                <input type="hidden" name="force_login" id="force_login" value="0">
 
                 <!-- Submit Button -->
                 <button type="submit"
@@ -277,6 +417,14 @@ if (isset($_SESSION['noble_user'])) {
     </div>
 
     <script>
+        // ✅ Auto-fill remembered email on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const rememberedEmail = localStorage.getItem('noble_remembered_email');
+            if (rememberedEmail && !document.getElementById('email').value) {
+                document.getElementById('email').value = rememberedEmail;
+            }
+        });
+
         // Password visibility toggle
         document.getElementById('togglePassword').addEventListener('click', function() {
             const passwordInput = document.getElementById('password');
@@ -291,7 +439,7 @@ if (isset($_SESSION['noble_user'])) {
             }
         });
 
-        // Form submission with AJAX
+        // ✅ Enhanced form submission with force login support
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -312,6 +460,13 @@ if (isset($_SESSION['noble_user'])) {
             // Create FormData
             const formData = new FormData(form);
             
+            // ✅ Save email to localStorage if remember me is checked
+            if (document.getElementById('remember_me').checked) {
+                localStorage.setItem('noble_remembered_email', document.getElementById('email').value);
+            } else {
+                localStorage.removeItem('noble_remembered_email');
+            }
+            
             // Send AJAX request
             fetch('logging.php', {
                 method: 'POST',
@@ -327,6 +482,9 @@ if (isset($_SESSION['noble_user'])) {
                     setTimeout(() => {
                         window.location.href = data.redirect;
                     }, 1000);
+                } else if (data.force_login_required) {
+                    // ✅ Show force login modal instead of error
+                    showForceLoginModal(data.message, data.inactive_minutes);
                 } else {
                     showError(data.message);
                     // Add shake animation to form
@@ -345,7 +503,47 @@ if (isset($_SESSION['noble_user'])) {
                 submitBtn.disabled = false;
                 btnText.classList.remove('hidden');
                 btnLoading.classList.add('hidden');
+                // Reset force login flag
+                document.getElementById('force_login').value = '0';
             });
+        });
+
+        // ✅ Force Login Modal Functions
+        function showForceLoginModal(message, inactiveMinutes) {
+            const modal = document.getElementById('forceLoginModal');
+            const messageElement = document.getElementById('forceLoginMessage');
+            
+            messageElement.textContent = message + (inactiveMinutes ? ` (Inactive for ${inactiveMinutes} minutes)` : '');
+            modal.classList.remove('hidden');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function doForceLogin() {
+            document.getElementById('force_login').value = '1';
+            hideForceLoginModal();
+            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        }
+
+        function cancelForceLogin() {
+            document.getElementById('force_login').value = '0';
+            hideForceLoginModal();
+        }
+
+        function hideForceLoginModal() {
+            const modal = document.getElementById('forceLoginModal');
+            modal.classList.add('hidden');
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('forceLoginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cancelForceLogin();
+            }
         });
 
         // Error handling functions
@@ -424,6 +622,21 @@ if (isset($_SESSION['noble_user'])) {
             setTimeout(() => {
                 isSubmitting = false;
             }, 3000);
+        });
+
+        // ✅ Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key to close modal
+            if (e.key === 'Escape') {
+                if (!document.getElementById('forceLoginModal').classList.contains('hidden')) {
+                    cancelForceLogin();
+                }
+            }
+            
+            // Enter key in modal to force login
+            if (e.key === 'Enter' && !document.getElementById('forceLoginModal').classList.contains('hidden')) {
+                doForceLogin();
+            }
         });
     </script>
 

@@ -108,6 +108,7 @@ $total_cart_items = count($cart_items);
 </head>
 
 <body class="bg-gray-100 ">
+    <?php include '../navbar/top.php'; ?>
   <!-- Hero Section -->
   <div class="gradient-bg text-white  relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none z-0">
@@ -120,7 +121,7 @@ $total_cart_items = count($cart_items);
         <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
       </svg>
     </div>
-    <?php include '../navbar/top.php'; ?>
+  
     <div class="bg-orange-400 text-white py-5 z-0">
       <div class="container mx-auto px-4">
         <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>

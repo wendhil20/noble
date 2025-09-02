@@ -409,7 +409,7 @@ if ($_POST && isset($_POST['add_address'])) {
 
                             <!-- Phone with Updated Format -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number/ Mobile Number *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
                                 <input
                                     type="tel"
                                     name="phone"
@@ -555,296 +555,212 @@ if ($_POST && isset($_POST['add_address'])) {
     </div>
 
     <script>
-        let map, marker;
-        let searchTimeout;
-        let isGeocoding = false;
-        
-        // Initialize Leaflet Map
-        function initMap() {
-            // Default location (Philippines - Manila)
-            const defaultLat = 14.5995;
-            const defaultLng = 120.9842;
-            
-            // Initialize map with proper z-index settings
-            map = L.map('map', {
-                zIndex: 1
-            }).setView([defaultLat, defaultLng], 15);
-            
-            // Add tile layer
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19
-            }).addTo(map);
-            
-            // Custom marker icon
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color: #3B82F6; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
-            });
-            
-            // Add marker
-            marker = L.marker([defaultLat, defaultLng], { 
-                icon: customIcon,
-                draggable: true 
-            }).addTo(map);
-            
-            // Click event for map - PRIORITY: Location first
-            map.on('click', function(e) {
-                updateMarkerPosition(e.latlng, true);
-                showLocationSetSuccess();
-            });
-            
-            // Drag event for marker
-            marker.on('dragend', function(e) {
-                updateMarkerPosition(e.target.getLatLng(), true);
-                showLocationSetSuccess();
-            });
-            
-            // Initialize search functionality
-            initializeSearch();
-            
-            // Try to get user's current location on load
-            getCurrentLocation();
+    let map, marker;
+    let searchTimeout;
+    let isGeocoding = false;
+     
+    // Enhanced Address Search Manager Class
+    class AddressSearchManager {
+        constructor() {
+            this.searchTimeout = null;
+            this.isSearching = false;
+            this.selectedFromList = false;
         }
-        
-        // Enable form fields after location is set
-        function enableFormFields() {
-            const formFields = document.querySelectorAll('.form-field');
+
+        // Initialize address search with improved Philippines support
+        async searchAddress(query) {
+            if (this.isSearching) return;
             
-            formFields.forEach(field => {
-                field.removeAttribute('readonly');
-                field.classList.remove('bg-gray-50', 'text-gray-500', 'cursor-not-allowed');
-                field.classList.add('bg-white', 'text-gray-900', 'cursor-text');
-                
-                // Update placeholder text
-                const fieldName = field.getAttribute('name');
-                switch(fieldName) {
-                    case 'full_name':
-                        field.placeholder = 'Enter your full name';
-                        break;
-                    case 'phone':
-                        field.placeholder = '+63 9XX XXX XXXX';
-                        break;
-                    case 'address':
-                        field.placeholder = 'Add details like unit/floor number, landmarks...';
-                        break;
-                    case 'city':
-                        field.placeholder = 'City';
-                        break;
-                    case 'state':
-                        field.placeholder = 'State/Province';
-                        break;
-                    case 'postal_code':
-                        field.placeholder = 'Postal Code';
-                        break;
-                    case 'notes':
-                        field.placeholder = 'Delivery instructions, landmarks, or other helpful information...';
-                        break;
-                }
-                
-                // Add focus ring styles
-                field.addEventListener('focus', function() {
-                    this.classList.add('ring-2', 'ring-blue-500', 'border-transparent');
-                });
-                
-                field.addEventListener('blur', function() {
-                    this.classList.remove('ring-2', 'ring-blue-500', 'border-transparent');
-                });
-            });
-            
-            // Show fields enabled notification
-            const notice = document.createElement('div');
-            notice.className = 'fixed top-32 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
-            notice.innerHTML = `
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                    Form fields are now editable!
-                </div>
-            `;
-            document.body.appendChild(notice);
-            
-            setTimeout(() => {
-                notice.remove();
-            }, 3000);
-        }
-        
-        // Show success message when location is set
-        function showLocationSetSuccess() {
-            // Remove existing notification
-            const existingNotice = document.querySelector('.location-set-success');
-            if (existingNotice) {
-                existingNotice.remove();
-            }
-            
-            // Enable form fields
-            enableFormFields();
-            
-            // Create new success notification
-            const notice = document.createElement('div');
-            notice.className = 'location-set-success fixed top-20 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
-            notice.innerHTML = `
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                    Location set! You can now edit the address details.
-                </div>
-            `;
-            document.body.appendChild(notice);
-            
-            // Auto remove after 3 seconds
-            setTimeout(() => {
-                notice.remove();
-            }, 3000);
-        }
-        
-        // Initialize address search
-        function initializeSearch() {
-            const searchInput = document.getElementById('addressSearch');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const searchIcon = document.getElementById('searchIcon');
-            
-            searchInput.addEventListener('input', function() {
-                const query = this.value.trim();
-                
-                if (searchTimeout) {
-                    clearTimeout(searchTimeout);
-                }
-                
-                if (query.length < 3) {
-                    hideSuggestions();
-                    return;
-                }
-                
-                loadingSpinner.style.display = 'block';
-                searchIcon.style.display = 'none';
-                
-                searchTimeout = setTimeout(() => {
-                    searchAddress(query);
-                }, 500);
-            });
-        }
-        
-        // Search for addresses
-        async function searchAddress(query) {
+            this.isSearching = true;
             const loadingSpinner = document.getElementById('loadingSpinner');
             const searchIcon = document.getElementById('searchIcon');
             
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&countrycodes=ph`);
-                const results = await response.json();
-                showSuggestions(results);
+                loadingSpinner.style.display = 'block';
+                searchIcon.style.display = 'none';
+                
+                // Try multiple geocoding services for better Philippines coverage
+                let results = [];
+                
+                // Primary: Nominatim with Philippines focus
+                try {
+                    const nominatimResponse = await fetch(
+                        `https://nominatim.openstreetmap.org/search?` +
+                        `format=json&q=${encodeURIComponent(query + ', Philippines')}&` +
+                        `limit=3&addressdetails=1&countrycodes=ph&` +
+                        `bounded=1&viewbox=116.5,4.5,127.5,21.5`
+                    );
+                    const nominatimResults = await nominatimResponse.json();
+                    results = results.concat(nominatimResults.slice(0, 3));
+                } catch (error) {
+                    console.warn('Nominatim search failed:', error);
+                }
+                
+                // Secondary: Try broader search if no results
+                if (results.length === 0) {
+                    try {
+                        const broadResponse = await fetch(
+                            `https://nominatim.openstreetmap.org/search?` +
+                            `format=json&q=${encodeURIComponent(query)}&` +
+                            `limit=5&addressdetails=1&countrycodes=ph`
+                        );
+                        const broadResults = await broadResponse.json();
+                        results = results.concat(broadResults);
+                    } catch (error) {
+                        console.warn('Broad search failed:', error);
+                    }
+                }
+                
+                this.showSuggestions(results, query);
+                
             } catch (error) {
                 console.error('Search error:', error);
-                hideSuggestions();
+                this.showSearchError();
             } finally {
+                this.isSearching = false;
                 loadingSpinner.style.display = 'none';
                 searchIcon.style.display = 'block';
             }
         }
-        
-        // Show search suggestions
-        function showSuggestions(places) {
+
+        // Enhanced suggestions display with better Philippines addresses
+        showSuggestions(places, originalQuery) {
             const suggestionsDiv = document.getElementById('suggestions');
-            
             suggestionsDiv.innerHTML = '';
             
             if (places.length === 0) {
                 const noResults = document.createElement('div');
-                noResults.className = 'p-4 text-gray-500 text-center';
-                noResults.textContent = 'No results found';
+                noResults.className = 'p-4 text-center';
+                noResults.innerHTML = `
+                    <div class="text-gray-500 mb-2">No exact matches found for "${originalQuery}"</div>
+                    <div class="text-sm text-gray-400">
+                        Try searching with:
+                        <ul class="mt-1 text-left">
+                            <li>• Barangay name + City (e.g., "Barangay 1 Caloocan")</li>
+                            <li>• Street name + City (e.g., "Rizal Avenue Manila")</li>
+                            <li>• Landmark + City (e.g., "SM North EDSA")</li>
+                        </ul>
+                    </div>
+                `;
                 suggestionsDiv.appendChild(noResults);
                 suggestionsDiv.classList.remove('hidden');
                 return;
             }
             
-            places.forEach(place => {
+            places.forEach((place, index) => {
                 const suggestionItem = document.createElement('div');
-                suggestionItem.className = 'suggestion-item p-4 cursor-pointer border-b border-gray-100 hover:bg-gray-50';
+                suggestionItem.className = 'suggestion-item p-4 cursor-pointer border-b border-gray-100 hover:bg-gray-50 transition-colors';
                 
                 const address = place.address || {};
                 const displayName = place.display_name;
-                const mainAddress = [
-                    address.house_number,
-                    address.road,
-                    address.suburb || address.neighbourhood
-                ].filter(Boolean).join(' ');
                 
-                const locationDetails = [
+                // Build better address display for Philippines
+                let mainAddress = '';
+                let locationDetails = '';
+                
+                if (address.house_number || address.road) {
+                    mainAddress = [address.house_number, address.road].filter(Boolean).join(' ');
+                } else if (address.suburb || address.neighbourhood) {
+                    mainAddress = address.suburb || address.neighbourhood;
+                } else {
+                    mainAddress = displayName.split(',')[0];
+                }
+                
+                // Build location hierarchy
+                const locationParts = [
+                    address.village || address.suburb || address.neighbourhood,
                     address.city || address.town || address.municipality,
                     address.state || address.province,
-                    address.country
-                ].filter(Boolean).join(', ');
+                    'Philippines'
+                ].filter(Boolean);
+                
+                locationDetails = locationParts.join(', ');
                 
                 suggestionItem.innerHTML = `
                     <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 text-blue-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <div class="flex-1">
-                            <div class="font-medium text-gray-900 text-sm">${mainAddress || displayName.split(',')[0]}</div>
-                            <div class="text-xs text-gray-600">${locationDetails || displayName}</div>
+                            <div class="font-medium text-gray-900 text-sm">${mainAddress}</div>
+                            <div class="text-xs text-gray-600 mt-1">${locationDetails}</div>
+                            ${place.type ? `<div class="text-xs text-blue-600 mt-1">${this.formatPlaceType(place.type)}</div>` : ''}
                         </div>
+                        <div class="text-xs text-gray-400 ml-2">Click to select</div>
                     </div>
                 `;
                 
-                suggestionItem.addEventListener('click', function() {
-                    selectPlace(place, false);
-                    hideSuggestions();
+                suggestionItem.addEventListener('click', () => {
+                    this.selectedFromList = true;
+                    this.selectPlace(place);
+                    this.hideSuggestions();
                 });
+                
+                // Add data attribute for keyboard navigation
+                suggestionItem.setAttribute('data-index', index);
                 
                 suggestionsDiv.appendChild(suggestionItem);
             });
             
             suggestionsDiv.classList.remove('hidden');
         }
-        
-        // Hide suggestions
-        function hideSuggestions() {
-            document.getElementById('suggestions').classList.add('hidden');
+
+        formatPlaceType(type) {
+            const typeMap = {
+                'residential': 'Residential Area',
+                'commercial': 'Commercial Area',
+                'retail': 'Shopping Area',
+                'amenity': 'Amenity',
+                'building': 'Building',
+                'highway': 'Road/Highway'
+            };
+            return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
         }
-        
-        // Select a place from suggestions - PRIORITY: Location first
-        function selectPlace(place, fromMapClick = false) {
+
+        showSearchError() {
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = `
+                <div class="p-4 text-center text-red-600">
+                    <svg class="w-5 h-5 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>Search temporarily unavailable</div>
+                    <div class="text-sm text-gray-500 mt-1">Please try again or set your location manually on the map</div>
+                </div>
+            `;
+            suggestionsDiv.classList.remove('hidden');
+        }
+
+        selectPlace(place) {
             const lat = parseFloat(place.lat);
             const lng = parseFloat(place.lon);
             
-            // Update map and marker position first
-            if (!fromMapClick) {
-                map.setView([lat, lng], 16);
-                marker.setLatLng([lat, lng]);
-                showLocationSetSuccess();
-            }
+            // Update map and marker
+            map.setView([lat, lng], 16);
+            marker.setLatLng([lat, lng]);
             
-            // Update hidden coordinate fields
+            // Update coordinates
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
             
-            // Fill address form fields
+            // Update search input
             const address = place.address || {};
+            const mainAddress = [
+                address.house_number,
+                address.road,
+                address.suburb || address.neighbourhood
+            ].filter(Boolean).join(' ') || place.display_name.split(',')[0];
             
-            if (!fromMapClick) {
-                document.getElementById('addressSearch').value = place.display_name.split(',')[0];
-            }
+            document.getElementById('addressSearch').value = mainAddress;
             
-            // Auto-fill all fields including country
-            fillAddressFields(address, place.display_name, fromMapClick);
+            // Fill form fields
+            this.fillAddressFields(address, place.display_name);
+            showLocationSetSuccess();
         }
-        
-        // Enhanced function to fill address fields with auto country detection
-        function fillAddressFields(address, displayName, fromMapClick = false) {
-            const addressField = document.getElementById('address');
-            const cityField = document.getElementById('city');
-            const stateField = document.getElementById('state');
-            const postalCodeField = document.getElementById('postal_code');
-            const countryField = document.getElementById('country');
-            
-            // Build complete address
+
+        fillAddressFields(address, displayName) {
+            // Fill address components
             const addressComponents = [
                 address.house_number,
                 address.road,
@@ -852,285 +768,904 @@ if ($_POST && isset($_POST['add_address'])) {
             ].filter(Boolean);
             
             if (addressComponents.length > 0) {
-                addressField.value = addressComponents.join(' ');
-                highlightField(addressField, 'addressAutoFillIndicator');
-            } else if (displayName) {
-                const firstPart = displayName.split(',')[0];
-                if (firstPart) {
-                    addressField.value = firstPart;
-                    highlightField(addressField, 'addressAutoFillIndicator');
-                }
+                document.getElementById('address').value = addressComponents.join(' ');
+                highlightField(document.getElementById('address'), 'addressAutoFillIndicator');
+            } else {
+                document.getElementById('address').value = displayName.split(',')[0];
+                highlightField(document.getElementById('address'), 'addressAutoFillIndicator');
             }
             
             // Fill city
             const cityValue = address.city || address.town || address.municipality || address.county;
             if (cityValue) {
-                cityField.value = cityValue;
-                highlightField(cityField, 'cityAutoFillIndicator');
+                document.getElementById('city').value = cityValue;
+                highlightField(document.getElementById('city'), 'cityAutoFillIndicator');
             }
             
-            // Fill state/province
+            // Fill state
             const stateValue = address.state || address.province || address.region;
             if (stateValue) {
-                stateField.value = stateValue;
-                highlightField(stateField, 'stateAutoFillIndicator');
+                document.getElementById('state').value = stateValue;
+                highlightField(document.getElementById('state'), 'stateAutoFillIndicator');
             }
             
             // Fill postal code
             if (address.postcode) {
-                postalCodeField.value = address.postcode;
-                highlightField(postalCodeField, 'postalAutoFillIndicator');
+                document.getElementById('postal_code').value = address.postcode;
+                highlightField(document.getElementById('postal_code'), 'postalAutoFillIndicator');
             }
             
-            // Auto-fill country
-            if (address.country) {
-                let countryName = address.country;
-                
-                // Map common variations to proper names
-                const countryMappings = {
-                    'Philippines': 'Philippines',
-                    'United States of America': 'United States',
-                    'USA': 'United States',
-                    'US': 'United States'
-                };
-                
-                countryName = countryMappings[countryName] || countryName;
-                countryField.value = countryName;
-                countryField.classList.remove('bg-gray-50', 'text-gray-600');
-                countryField.classList.add('bg-blue-50', 'text-blue-800');
-                highlightField(countryField, 'countryAutoFillIndicator');
-            }
+            // Set country
+            document.getElementById('country').value = 'Philippines';
+            highlightField(document.getElementById('country'), 'countryAutoFillIndicator');
         }
-        
-        // Highlight field with animation
-        function highlightField(field, indicatorId) {
-            field.classList.add('field-updated');
-            
-            const indicator = document.getElementById(indicatorId);
-            if (indicator) {
-                indicator.style.display = 'inline';
-            }
-            
-            setTimeout(() => {
-                field.classList.remove('field-updated');
-            }, 1000);
+
+        hideSuggestions() {
+            document.getElementById('suggestions').classList.add('hidden');
         }
-        
-        // Update marker position and reverse geocode
-        function updateMarkerPosition(latlng, shouldReverseGeocode = true) {
-            marker.setLatLng(latlng);
+
+        // Handle keyboard navigation
+        handleKeyNavigation(e) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            const suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
             
-            document.getElementById('latitude').value = latlng.lat;
-            document.getElementById('longitude').value = latlng.lng;
+            if (suggestions.length === 0) return false;
             
-            if (shouldReverseGeocode && !isGeocoding) {
-                reverseGeocode(latlng.lat, latlng.lng);
-            }
-        }
-        
-        // Reverse geocode to get address from coordinates
-        async function reverseGeocode(lat, lng) {
-            if (isGeocoding) return;
-            
-            isGeocoding = true;
-            const addressField = document.getElementById('address');
-            
-            try {
-                addressField.classList.add('geocode-loading');
-                
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
-                const result = await response.json();
-                
-                if (result && result.address) {
-                    selectPlace(result, true);
-                }
-            } catch (error) {
-                console.error('Reverse geocoding error:', error);
-            } finally {
-                isGeocoding = false;
-                addressField.classList.remove('geocode-loading');
-            }
-        }
-        
-        // Get user's current location
-        function getCurrentLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        
-                        map.setView([lat, lng], 16);
-                        updateMarkerPosition(L.latLng(lat, lng), true);
-                        
-                        // Show notification that location was detected
-                        const notice = document.createElement('div');
-                        notice.className = 'fixed top-20 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
-                        notice.innerHTML = `
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                Your location detected and set!
-                            </div>
-                        `;
-                        document.body.appendChild(notice);
-                        
-                        setTimeout(() => {
-                            notice.remove();
-                        }, 4000);
-                    },
-                    function(error) {
-                        console.log('Geolocation error:', error.message);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 600000
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    this.navigateSuggestions(suggestions, 'down');
+                    return true;
+                    
+                case 'ArrowUp':
+                    e.preventDefault();
+                    this.navigateSuggestions(suggestions, 'up');
+                    return true;
+                    
+                case 'Enter':
+                    e.preventDefault();
+                    const activeSuggestion = suggestionsDiv.querySelector('.suggestion-item.active');
+                    if (activeSuggestion && !this.selectedFromList) {
+                        activeSuggestion.click();
                     }
-                );
+                    return true;
+                    
+                case 'Escape':
+                    this.hideSuggestions();
+                    return true;
             }
+            
+            return false;
         }
-        
-        // Updated phone number formatting for +63 XXX XXX XXXX format
-        function formatPhoneNumber(value) {
-            // Remove all non-digits and the + symbol
-            let cleaned = value.replace(/[^\d]/g, '');
+
+        navigateSuggestions(suggestions, direction) {
+            const currentActive = document.querySelector('.suggestion-item.active');
+            let newIndex = 0;
             
-            // Remove leading 63 if present
-            if (cleaned.startsWith('63')) {
-                cleaned = cleaned.substring(2);
-            }
-            
-            // Ensure it starts with 9 for mobile numbers
-            if (cleaned.length > 0 && !cleaned.startsWith('9')) {
-                cleaned = '9' + cleaned.substring(1);
-            }
-            
-            // Limit to 10 digits
-            cleaned = cleaned.substring(0, 10);
-            
-            // Format as +63 XXX XXX XXXX
-            if (cleaned.length === 0) {
-                return '+63 ';
-            } else if (cleaned.length <= 3) {
-                return '+63 ' + cleaned;
-            } else if (cleaned.length <= 6) {
-                return '+63 ' + cleaned.substring(0, 3) + ' ' + cleaned.substring(3);
-            } else {
-                return '+63 ' + cleaned.substring(0, 3) + ' ' + cleaned.substring(3, 6) + ' ' + cleaned.substring(6);
-            }
-        }
-        
-        // Form validation
-        function validateForm() {
-            const requiredFields = ['full_name', 'phone', 'address', 'city', 'state', 'postal_code'];
-            let isValid = true;
-            
-            requiredFields.forEach(fieldName => {
-                const field = document.querySelector(`[name="${fieldName}"]`);
-                if (!field.value.trim()) {
-                    field.classList.add('border-red-500');
-                    isValid = false;
+            if (currentActive) {
+                const currentIndex = parseInt(currentActive.getAttribute('data-index'));
+                currentActive.classList.remove('active');
+                
+                if (direction === 'down') {
+                    newIndex = (currentIndex + 1) % suggestions.length;
                 } else {
-                    field.classList.remove('border-red-500');
+                    newIndex = currentIndex === 0 ? suggestions.length - 1 : currentIndex - 1;
                 }
+            }
+            
+            suggestions[newIndex].classList.add('active');
+            suggestions[newIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+    
+    // Initialize Leaflet Map
+    function initMap() {
+        // Default location (Philippines - Manila)
+        const defaultLat = 14.5995;
+        const defaultLng = 120.9842;
+        
+        // Initialize map with proper z-index settings
+        map = L.map('map', {
+            zIndex: 1
+        }).setView([defaultLat, defaultLng], 15);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Custom marker icon
+        const customIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #3B82F6; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+        
+        // Add marker
+        marker = L.marker([defaultLat, defaultLng], { 
+            icon: customIcon,
+            draggable: true 
+        }).addTo(map);
+        
+        // Click event for map - PRIORITY: Location first
+        map.on('click', function(e) {
+            updateMarkerPosition(e.latlng, true);
+            showLocationSetSuccess();
+        });
+        
+        // Drag event for marker
+        marker.on('dragend', function(e) {
+            updateMarkerPosition(e.target.getLatLng(), true);
+            showLocationSetSuccess();
+        });
+        
+        // Try to get user's current location on load
+        getCurrentLocation();
+    }
+    
+    // Enable form fields after location is set
+    function enableFormFields() {
+        const formFields = document.querySelectorAll('.form-field');
+        
+        formFields.forEach(field => {
+            field.removeAttribute('readonly');
+            field.classList.remove('bg-gray-50', 'text-gray-500', 'cursor-not-allowed');
+            field.classList.add('bg-white', 'text-gray-900', 'cursor-text');
+            
+            // Update placeholder text
+            const fieldName = field.getAttribute('name');
+            switch(fieldName) {
+                case 'full_name':
+                    field.placeholder = 'Enter your full name';
+                    break;
+                case 'phone':
+                    field.placeholder = '+63 9XX XXX XXXX';
+                    break;
+                case 'address':
+                    field.placeholder = 'Add details like unit/floor number, landmarks...';
+                    break;
+                case 'city':
+                    field.placeholder = 'City';
+                    break;
+                case 'state':
+                    field.placeholder = 'State/Province';
+                    break;
+                case 'postal_code':
+                    field.placeholder = 'Postal Code';
+                    break;
+                case 'notes':
+                    field.placeholder = 'Delivery instructions, landmarks, or other helpful information...';
+                    break;
+            }
+            
+            // Add focus ring styles
+            field.addEventListener('focus', function() {
+                this.classList.add('ring-2', 'ring-blue-500', 'border-transparent');
             });
             
-            // Special validation for phone number format
-            const phoneField = document.querySelector('[name="phone"]');
-            const phoneValue = phoneField.value.trim();
-            
-            // Check if phone follows +63 XXX XXX XXXX format
-            const phoneRegex = /^\+63 9\d{2} \d{3} \d{4}$/;
-            if (phoneValue && !phoneRegex.test(phoneValue)) {
-                phoneField.classList.add('border-red-500');
-                isValid = false;
-                
-                // Show phone format error
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'mb-6 bg-amber-100 border border-amber-400 text-amber-700 px-4 py-3 rounded-lg fade-in';
-                errorDiv.innerHTML = `
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        Phone number must be in format: +63 9XX XXX XXXX (e.g., +63 967 167 7760)
-                    </div>
-                `;
-                
-                document.querySelector('form').insertBefore(errorDiv, document.querySelector('form').firstChild);
-                
-                setTimeout(() => {
-                    errorDiv.remove();
-                }, 5000);
-            } else {
-                phoneField.classList.remove('border-red-500');
-            }
-            
-            // Special validation for coordinates
-            const lat = document.getElementById('latitude').value;
-            const lng = document.getElementById('longitude').value;
-            
-            if (!lat || !lng) {
-                // Show location required message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'mb-6 bg-amber-100 border border-amber-400 text-amber-700 px-4 py-3 rounded-lg fade-in';
-                errorDiv.innerHTML = `
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        Please set your location on the map first by clicking on it or searching for your address.
-                    </div>
-                `;
-                
-                document.querySelector('form').insertBefore(errorDiv, document.querySelector('form').firstChild);
-                
-                // Scroll to map
-                document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
-                
-                setTimeout(() => {
-                    errorDiv.remove();
-                }, 5000);
-                
-                isValid = false;
-            }
-            
-            return isValid;
+            field.addEventListener('blur', function() {
+                this.classList.remove('ring-2', 'ring-blue-500', 'border-transparent');
+            });
+        });
+        
+        // Show fields enabled notification
+        const notice = document.createElement('div');
+        notice.className = 'fixed top-32 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
+        notice.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Form fields are now editable!
+            </div>
+        `;
+        document.body.appendChild(notice);
+        
+        setTimeout(() => {
+            notice.remove();
+        }, 3000);
+    }
+    
+    // Show success message when location is set
+    function showLocationSetSuccess() {
+        // Remove existing notification
+        const existingNotice = document.querySelector('.location-set-success');
+        if (existingNotice) {
+            existingNotice.remove();
         }
         
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', function(e) {
-            const searchInput = document.getElementById('addressSearch');
-            const suggestionsDiv = document.getElementById('suggestions');
+        // Enable form fields
+        enableFormFields();
+        
+        // Create new success notification
+        const notice = document.createElement('div');
+        notice.className = 'location-set-success fixed top-20 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
+        notice.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Location set! You can now edit the address details.
+            </div>
+        `;
+        document.body.appendChild(notice);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notice.remove();
+        }, 3000);
+    }
+    
+    // Highlight field with animation
+    function highlightField(field, indicatorId) {
+        field.classList.add('field-updated');
+        
+        const indicator = document.getElementById(indicatorId);
+        if (indicator) {
+            indicator.style.display = 'inline';
+        }
+        
+        setTimeout(() => {
+            field.classList.remove('field-updated');
+        }, 1000);
+    }
+    
+    // Update marker position and reverse geocode
+    function updateMarkerPosition(latlng, shouldReverseGeocode = true) {
+        marker.setLatLng(latlng);
+        
+        document.getElementById('latitude').value = latlng.lat;
+        document.getElementById('longitude').value = latlng.lng;
+        
+        if (shouldReverseGeocode && !isGeocoding) {
+            reverseGeocode(latlng.lat, latlng.lng);
+        }
+    }
+    
+    // Reverse geocode to get address from coordinates
+    async function reverseGeocode(lat, lng) {
+        if (isGeocoding) return;
+        
+        isGeocoding = true;
+        const addressField = document.getElementById('address');
+        
+        try {
+            addressField.classList.add('geocode-loading');
             
-            if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                hideSuggestions();
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+            const result = await response.json();
+            
+            if (result && result.address) {
+                selectPlace(result, true);
+            }
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+        } finally {
+            isGeocoding = false;
+            addressField.classList.remove('geocode-loading');
+        }
+    }
+    
+    // Select a place from suggestions or map click
+    function selectPlace(place, fromMapClick = false) {
+        const lat = parseFloat(place.lat);
+        const lng = parseFloat(place.lon);
+        
+        // Update map and marker position first
+        if (!fromMapClick) {
+            map.setView([lat, lng], 16);
+            marker.setLatLng([lat, lng]);
+            showLocationSetSuccess();
+        }
+        
+        // Update hidden coordinate fields
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        
+        // Fill address form fields
+        const address = place.address || {};
+        
+        if (!fromMapClick) {
+            document.getElementById('addressSearch').value = place.display_name.split(',')[0];
+        }
+        
+        // Auto-fill all fields including country
+        fillAddressFields(address, place.display_name, fromMapClick);
+    }
+    
+    // Enhanced function to fill address fields with auto country detection
+    function fillAddressFields(address, displayName, fromMapClick = false) {
+        const addressField = document.getElementById('address');
+        const cityField = document.getElementById('city');
+        const stateField = document.getElementById('state');
+        const postalCodeField = document.getElementById('postal_code');
+        const countryField = document.getElementById('country');
+        
+        // Build complete address
+        const addressComponents = [
+            address.house_number,
+            address.road,
+            address.suburb || address.neighbourhood || address.village
+        ].filter(Boolean);
+        
+        if (addressComponents.length > 0) {
+            addressField.value = addressComponents.join(' ');
+            highlightField(addressField, 'addressAutoFillIndicator');
+        } else if (displayName) {
+            const firstPart = displayName.split(',')[0];
+            if (firstPart) {
+                addressField.value = firstPart;
+                highlightField(addressField, 'addressAutoFillIndicator');
+            }
+        }
+        
+        // Fill city
+        const cityValue = address.city || address.town || address.municipality || address.county;
+        if (cityValue) {
+            cityField.value = cityValue;
+            highlightField(cityField, 'cityAutoFillIndicator');
+        }
+        
+        // Fill state/province
+        const stateValue = address.state || address.province || address.region;
+        if (stateValue) {
+            stateField.value = stateValue;
+            highlightField(stateField, 'stateAutoFillIndicator');
+        }
+        
+        // Fill postal code
+        if (address.postcode) {
+            postalCodeField.value = address.postcode;
+            highlightField(postalCodeField, 'postalAutoFillIndicator');
+        }
+        
+        // Auto-fill country
+        if (address.country) {
+            let countryName = address.country;
+            
+            // Map common variations to proper names
+            const countryMappings = {
+                'Philippines': 'Philippines',
+                'United States of America': 'United States',
+                'USA': 'United States',
+                'US': 'United States'
+            };
+            
+            countryName = countryMappings[countryName] || countryName;
+            countryField.value = countryName;
+            countryField.classList.remove('bg-gray-50', 'text-gray-600');
+            countryField.classList.add('bg-blue-50', 'text-blue-800');
+            highlightField(countryField, 'countryAutoFillIndicator');
+        }
+    }
+    
+    // Get user's current location
+    function getCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    map.setView([lat, lng], 16);
+                    updateMarkerPosition(L.latLng(lat, lng), true);
+                    
+                    // Show notification that location was detected
+                    const notice = document.createElement('div');
+                    notice.className = 'fixed top-20 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
+                    notice.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Your location detected and set!
+                        </div>
+                    `;
+                    document.body.appendChild(notice);
+                    
+                    setTimeout(() => {
+                        notice.remove();
+                    }, 4000);
+                },
+                function(error) {
+                    console.log('Geolocation error:', error.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 600000
+                }
+            );
+        }
+    }
+    
+    // Updated phone number formatting for +63 XXX XXX XXXX format
+    function formatPhoneNumber(value) {
+        // Remove all non-digits and the + symbol
+        let cleaned = value.replace(/[^\d]/g, '');
+        
+        // Remove leading 63 if present
+        if (cleaned.startsWith('63')) {
+            cleaned = cleaned.substring(2);
+        }
+        
+        // Ensure it starts with 9 for mobile numbers
+        if (cleaned.length > 0 && !cleaned.startsWith('9')) {
+            cleaned = '9' + cleaned.substring(1);
+        }
+        
+        // Limit to 10 digits
+        cleaned = cleaned.substring(0, 10);
+        
+        // Format as +63 XXX XXX XXXX
+        if (cleaned.length === 0) {
+            return '+63 ';
+        } else if (cleaned.length <= 3) {
+            return '+63 ' + cleaned;
+        } else if (cleaned.length <= 6) {
+            return '+63 ' + cleaned.substring(0, 3) + ' ' + cleaned.substring(3);
+        } else {
+            return '+63 ' + cleaned.substring(0, 3) + ' ' + cleaned.substring(3, 6) + ' ' + cleaned.substring(6);
+        }
+    }
+    
+    // Enhanced form validation with stricter phone validation
+    // LOCATION 1: Enhanced phone number validation function (around line 45-65 in your original code)
+// Replace the existing validatePhoneNumber function with this improved version:
+
+function validatePhoneNumber(phoneValue) {
+    console.log('Validating phone:', phoneValue); // Debug log
+    
+    // Check if phone is empty or just the prefix
+    if (!phoneValue || phoneValue.trim() === '' || phoneValue.trim() === '+63' || phoneValue.trim() === '+63 ') {
+        console.log('Phone validation failed: Empty or prefix only');
+        return false;
+    }
+    
+    // Remove all non-digits
+    const digits = phoneValue.replace(/[^\d]/g, '');
+    console.log('Phone digits extracted:', digits, 'Length:', digits.length);
+    
+    // Must have exactly 13 digits (63 + 10 mobile digits)
+    if (digits.length !== 13) {
+        console.log('Phone validation failed: Wrong digit count');
+        return false;
+    }
+    
+    // Must start with 63 (Philippines country code)
+    if (!digits.startsWith('63')) {
+        console.log('Phone validation failed: Does not start with 63');
+        return false;
+    }
+    
+    // The mobile number part (after 63) must start with 9
+    if (digits.charAt(2) !== '9') {
+        console.log('Phone validation failed: Mobile part does not start with 9');
+        return false;
+    }
+    
+    // Must match the exact format: +63 9XX XXX XXXX
+    const phoneRegex = /^\+63 9\d{2} \d{3} \d{4}$/;
+    const isValidFormat = phoneRegex.test(phoneValue.trim());
+    
+    console.log('Phone format validation result:', isValidFormat);
+    return isValidFormat;
+}
+
+// LOCATION 2: Stricter form validation function (around line 380-450 in your original code)
+// Replace the existing enhancedValidateForm function with this version:
+
+function enhancedValidateForm() {
+    const requiredFields = ['full_name', 'phone', 'address', 'city', 'state', 'postal_code'];
+    let isValid = true;
+    let errorMessages = [];
+    
+    console.log('Starting enhanced form validation...');
+    
+    // Clear previous error states
+    requiredFields.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.classList.remove('border-red-500', 'border-red-400');
+        }
+    });
+    
+    // Check all required fields first
+    requiredFields.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        const fieldValue = field ? field.value.trim() : '';
+        
+        console.log(`Checking required field ${fieldName}:`, fieldValue);
+        
+        if (!field || !fieldValue) {
+            if (field) {
+                field.classList.add('border-red-500');
+            }
+            isValid = false;
+            
+            const fieldLabels = {
+                'full_name': 'Full Name',
+                'phone': 'Phone Number', 
+                'address': 'Complete Address',
+                'city': 'City',
+                'state': 'State/Province',
+                'postal_code': 'Postal Code'
+            };
+            errorMessages.push(`${fieldLabels[fieldName]} is required`);
+        }
+    });
+    
+    // STRICT phone validation - this is the critical fix
+    const phoneField = document.querySelector('[name="phone"]');
+    if (phoneField) {
+        const phoneValue = phoneField.value.trim();
+        
+        console.log('STRICT Phone validation check:', {
+            phoneValue: phoneValue,
+            isEmpty: !phoneValue || phoneValue === '' || phoneValue === '+63' || phoneValue === '+63 ',
+            length: phoneValue.length
+        });
+        
+        // First check: Is phone field empty or contains only prefix?
+        if (!phoneValue || phoneValue === '' || phoneValue === '+63' || phoneValue === '+63 ') {
+            console.log('Phone validation FAILED: Field is empty or contains only prefix');
+            phoneField.classList.add('border-red-500');
+            isValid = false;
+            errorMessages.push('Phone number is required. Please enter your complete mobile number in format: +63 9XX XXX XXXX');
+        } 
+        // Second check: Does phone have content but fail validation?
+        else if (!validatePhoneNumber(phoneValue)) {
+            console.log('Phone validation FAILED: Invalid format or incomplete');
+            phoneField.classList.add('border-red-500');
+            isValid = false;
+            
+            // Provide specific error message based on the issue
+            const digits = phoneValue.replace(/[^\d]/g, '');
+            
+            if (digits.length === 0) {
+                errorMessages.push('Phone number is required. Please enter a valid Philippine mobile number.');
+            } else if (digits.length < 13) {
+                const actualMobileDigits = Math.max(0, digits.length - 2); // Subtract country code
+                errorMessages.push(`Phone number is incomplete. You have ${actualMobileDigits} digits, but need 10 digits after +63. Format: +63 9XX XXX XXXX`);
+            } else if (digits.length > 13) {
+                errorMessages.push('Phone number has too many digits. Please use format: +63 9XX XXX XXXX');
+            } else if (!digits.startsWith('639')) {
+                if (!digits.startsWith('63')) {
+                    errorMessages.push('Phone number must include Philippines country code +63');
+                } else {
+                    errorMessages.push('Philippine mobile numbers must start with +63 9. Format: +63 9XX XXX XXXX');
+                }
+            } else {
+                errorMessages.push('Phone number format is incorrect. Please use: +63 9XX XXX XXXX (example: +63 967 167 7760)');
+            }
+        } else {
+            console.log('Phone validation PASSED');
+            // Remove error styling if validation passes
+            phoneField.classList.remove('border-red-500', 'border-red-400');
+        }
+    } else {
+        console.error('Phone field not found in form!');
+        isValid = false;
+        errorMessages.push('Phone number field not found on the form');
+    }
+    
+    // Location validation
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    
+    console.log('Location validation:', { lat, lng });
+    
+    if (!lat || lng || lat === '' || lng === '') {
+        errorMessages.push('Please set your location on the map first by clicking on it or searching for your address');
+        isValid = false;
+    }
+    
+    console.log('Final form validation result:', { isValid, errorMessages });
+    
+    // Show validation errors if any
+    if (!isValid) {
+        showEnhancedValidationErrors(errorMessages);
+        
+        // Focus on the first field with error
+        const firstErrorField = document.querySelector('.border-red-500');
+        if (firstErrorField) {
+            firstErrorField.focus();
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    return isValid;
+}
+
+// LOCATION 3: Enhanced submit button event handler (around line 660-690 in your original code)
+// Replace the submit button click handler in your DOMContentLoaded section:
+
+// Enhanced form validation with STRICT submission prevention
+const form = document.querySelector('form');
+const submitButton = document.querySelector('button[type="submit"]');
+
+if (form && submitButton) {
+    console.log('Setting up strict form validation...');
+    
+    // Remove any existing event listeners by cloning the button
+    const newSubmitButton = submitButton.cloneNode(true);
+    submitButton.parentNode.replaceChild(newSubmitButton, submitButton);
+    
+    // Add STRICT click handler to submit button
+    newSubmitButton.addEventListener('click', function(e) {
+        console.log('=== SUBMIT BUTTON CLICKED ===');
+        
+        // ALWAYS prevent the default behavior first
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Remove any existing error messages
+        const existingError = document.querySelector('.validation-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        console.log('Running strict form validation...');
+        
+        // Run STRICT validation
+        const isFormValid = enhancedValidateForm();
+        
+        console.log('=== VALIDATION RESULT ===', { isFormValid });
+        
+        if (isFormValid) {
+            console.log('✓ Form validation PASSED - submitting form');
+            
+            // Show loading state
+            newSubmitButton.disabled = true;
+            newSubmitButton.innerHTML = `
+                <svg class="w-5 h-5 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Adding Address...
+            `;
+            
+            // Submit the form
+            setTimeout(() => {
+                form.submit();
+            }, 100);
+            
+        } else {
+            console.log('✗ Form validation FAILED - submission blocked');
+            
+            // Add visual feedback for failed submission
+            newSubmitButton.classList.add('bg-red-500', 'hover:bg-red-600');
+            newSubmitButton.innerHTML = `
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Please Fix Errors
+            `;
+            
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                newSubmitButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                newSubmitButton.innerHTML = `
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Delivery Address
+                `;
+            }, 3000);
+        }
+        
+        // Always return false to prevent any default submission
+        return false;
+    });
+    
+    // BLOCK ALL form submit events as a backup
+    form.addEventListener('submit', function(e) {
+        console.log('Form submit event intercepted and blocked');
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    });
+    
+    // BLOCK ALL other potential submission methods
+    form.onsubmit = function() {
+        console.log('Form onsubmit intercepted and blocked');
+        return false;
+    };
+    
+    console.log('✓ Strict form validation handlers attached successfully');
+} else {
+    console.error('❌ Form or submit button not found!', { form, submitButton });
+}
+
+    function showEnhancedValidationErrors(messages) {
+        // Remove existing error messages
+        const existingError = document.querySelector('.validation-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'validation-error-message mb-6 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg fade-in';
+        
+        let errorContent = `
+            <div class="flex items-start">
+                <svg class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <div class="flex-1">
+                    <h4 class="font-semibold text-red-800 mb-3">Please correct the following errors:</h4>
+                    <div class="space-y-2">
+        `;
+        
+        messages.forEach((message, index) => {
+            const isPhoneError = message.toLowerCase().includes('phone');
+            const iconClass = isPhoneError ? 'text-yellow-600' : 'text-red-600';
+            const icon = isPhoneError ? 
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />' :
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+            
+            errorContent += `
+                <div class="flex items-start text-sm">
+                    <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 ${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${icon}
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+        });
+        
+        errorContent += `
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        errorDiv.innerHTML = errorContent;
+        
+        const form = document.querySelector('form');
+        form.insertBefore(errorDiv, form.firstChild);
+        
+        // Scroll to error message
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Auto remove after 10 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 10000);
+    }
+    
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const addressManager = new AddressSearchManager();
+        const searchInput = document.getElementById('addressSearch');
+        
+        // Initialize map
+        initMap();
+        
+        // Enhanced search input handler
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            addressManager.selectedFromList = false; // Reset selection flag
+            
+            if (addressManager.searchTimeout) {
+                clearTimeout(addressManager.searchTimeout);
+            }
+            
+            if (query.length < 3) {
+                addressManager.hideSuggestions();
+                return;
+            }
+            
+            addressManager.searchTimeout = setTimeout(() => {
+                addressManager.searchAddress(query);
+            }, 800); // Increased delay to reduce API calls
+        });
+        
+        // Enhanced keyboard handling
+        searchInput.addEventListener('keydown', function(e) {
+            const handled = addressManager.handleKeyNavigation(e);
+            
+            if (e.key === 'Enter' && !handled) {
+                e.preventDefault();
+                // Don't auto-select, require manual selection
+                const suggestionsDiv = document.getElementById('suggestions');
+                if (!addressManager.selectedFromList && !suggestionsDiv.classList.contains('hidden')) {
+                    // Show message to select from list
+                    const notice = document.createElement('div');
+                    notice.className = 'fixed top-32 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg shadow-lg z-50 fade-in';
+                    notice.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5C3.312 17.333 4.308 19 5.85 19z"></path>
+                            </svg>
+                            Please click on a search result to select your address
+                        </div>
+                    `;
+                    document.body.appendChild(notice);
+                    
+                    setTimeout(() => {
+                        notice.remove();
+                    }, 4000);
+                }
+                return false;
             }
         });
         
-        // Initialize everything when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initMap();
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            const suggestionsDiv = document.getElementById('suggestions');
             
-            // Phone number formatting with +63 prefix
-            const phoneInput = document.getElementById('phoneInput');
+            if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                addressManager.hideSuggestions();
+            }
+        });
+        
+        // Enhanced phone input with real-time validation feedback
+        // Try multiple possible IDs for phone input
+        const phoneInput = document.getElementById('phoneInput') || 
+                          document.querySelector('input[name="phone"]') || 
+                          document.querySelector('input[type="tel"]');
+        
+        if (phoneInput) {
+            console.log('Phone input found:', phoneInput); // Debug log
             
-            // Set initial value with +63 prefix
+            // Set initial value
             if (!phoneInput.value || phoneInput.value.trim() === '') {
                 phoneInput.value = '+63 ';
             }
             
             phoneInput.addEventListener('input', function(e) {
+                console.log('Phone input changed:', e.target.value); // Debug log
+                
+                const oldValue = e.target.value;
                 e.target.value = formatPhoneNumber(e.target.value);
+                
+                // Real-time validation feedback
+                const isValid = validatePhoneNumber(e.target.value);
+                const digits = e.target.value.replace(/[^\d]/g, '');
+                
+                console.log('Phone validation:', {
+                    value: e.target.value,
+                    digits: digits,
+                    digitCount: digits.length,
+                    isValid: isValid
+                }); // Debug log
+                
+                // Remove existing validation classes
+                e.target.classList.remove('border-green-400', 'border-yellow-400', 'border-red-400', 'border-gray-300');
+                
+                if (e.target.value === '+63 ' || e.target.value === '') {
+                    // Empty state
+                    e.target.classList.add('border-gray-300');
+                } else if (isValid) {
+                    // Valid phone number
+                    e.target.classList.add('border-green-400');
+                    console.log('Phone is VALID'); // Debug log
+                } else if (digits.length < 13) {
+                    // Incomplete
+                    e.target.classList.add('border-yellow-400');
+                    console.log('Phone is INCOMPLETE'); // Debug log
+                } else {
+                    // Invalid
+                    e.target.classList.add('border-red-400');
+                    console.log('Phone is INVALID'); // Debug log
+                }
             });
             
-            // Prevent deletion of +63 prefix
             phoneInput.addEventListener('keydown', function(e) {
                 const cursorPosition = e.target.selectionStart;
+                
+                // Prevent Enter key
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    return false;
+                }
                 
                 // Prevent deletion of +63 prefix
                 if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 4) {
@@ -1138,87 +1673,141 @@ if ($_POST && isset($_POST['add_address'])) {
                 }
             });
             
-            // Ensure +63 prefix is always present on focus
             phoneInput.addEventListener('focus', function(e) {
                 if (!e.target.value.startsWith('+63 ')) {
                     e.target.value = '+63 ';
                 }
                 
-                // Move cursor to end if at beginning
                 setTimeout(() => {
                     if (e.target.selectionStart <= 4) {
                         e.target.setSelectionRange(e.target.value.length, e.target.value.length);
                     }
                 }, 10);
             });
-            
-            // Form validation on submit
-            document.querySelector('form').addEventListener('submit', function(e) {
-                if (!validateForm()) {
-                    e.preventDefault();
-                    
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg fade-in';
-                    errorDiv.innerHTML = `
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
-                            Please fill in all required fields correctly and set your location on the map.
-                        </div>
-                    `;
-                    
-                    this.insertBefore(errorDiv, this.firstChild);
-                    this.scrollIntoView({ behavior: 'smooth' });
-                    
-                    setTimeout(() => {
-                        errorDiv.remove();
-                    }, 5000);
-                }
-            });
-            
-            // Keyboard navigation for search
-            document.getElementById('addressSearch').addEventListener('keydown', function(e) {
-                const suggestionsDiv = document.getElementById('suggestions');
-                const suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
-                
-                if (suggestions.length === 0) return;
-                
-                let currentActive = suggestionsDiv.querySelector('.suggestion-item.active');
-                let currentIndex = Array.from(suggestions).indexOf(currentActive);
-                
-                switch(e.key) {
-                    case 'ArrowDown':
+        } else {
+            console.error('Phone input not found! Available inputs:', document.querySelectorAll('input'));
+        }
+        
+        // Prevent Enter key from submitting the form on any input field
+        document.querySelectorAll('input, textarea').forEach(function(element) {
+            element.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    // Only allow Enter for address search (handled separately above)
+                    if (e.target.id !== 'addressSearch') {
                         e.preventDefault();
-                        if (currentActive) currentActive.classList.remove('active');
-                        currentIndex = (currentIndex + 1) % suggestions.length;
-                        suggestions[currentIndex].classList.add('active');
-                        suggestions[currentIndex].scrollIntoView({ block: 'nearest' });
-                        break;
-                        
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        if (currentActive) currentActive.classList.remove('active');
-                        currentIndex = currentIndex <= 0 ? suggestions.length - 1 : currentIndex - 1;
-                        suggestions[currentIndex].classList.add('active');
-                        suggestions[currentIndex].scrollIntoView({ block: 'nearest' });
-                        break;
-                        
-                    case 'Enter':
-                        e.preventDefault();
-                        if (currentActive) {
-                            currentActive.click();
-                        }
-                        break;
-                        
-                    case 'Escape':
-                        hideSuggestions();
-                        this.blur();
-                        break;
+                        return false;
+                    }
                 }
             });
         });
-    </script>
+        
+        // Enhanced form validation with STRICT submission prevention
+        const form = document.querySelector('form');
+const submitButton = document.querySelector('button[type="submit"]');
+
+if (form && submitButton) {
+    console.log('Setting up strict form validation...');
+    
+    // Remove any existing event listeners by cloning the button
+    const newSubmitButton = submitButton.cloneNode(true);
+    submitButton.parentNode.replaceChild(newSubmitButton, submitButton);
+    
+    // Add STRICT click handler to submit button
+    newSubmitButton.addEventListener('click', function(e) {
+        console.log('=== SUBMIT BUTTON CLICKED ===');
+        
+        // ALWAYS prevent the default behavior first
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Remove any existing error messages
+        const existingError = document.querySelector('.validation-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        console.log('Running strict form validation...');
+        
+        // Run STRICT validation
+        const isFormValid = enhancedValidateForm();
+        
+        console.log('=== VALIDATION RESULT ===', { isFormValid });
+        
+        if (isFormValid) {
+            console.log('✓ Form validation PASSED - submitting form');
+            
+            // Show loading state
+            newSubmitButton.disabled = true;
+            newSubmitButton.innerHTML = `
+                <svg class="w-5 h-5 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Adding Address...
+            `;
+            
+            // Submit the form
+            setTimeout(() => {
+                form.submit();
+            }, 100);
+            
+        } else {
+            console.log('✗ Form validation FAILED - submission blocked');
+            
+            // Add visual feedback for failed submission
+            newSubmitButton.classList.add('bg-red-500', 'hover:bg-red-600');
+            newSubmitButton.innerHTML = `
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Please Fix Errors
+            `;
+            
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                newSubmitButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                newSubmitButton.innerHTML = `
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Delivery Address
+                `;
+            }, 3000);
+        }
+        
+        // Always return false to prevent any default submission
+        return false;
+    });
+    
+    // BLOCK ALL form submit events as a backup
+    form.addEventListener('submit', function(e) {
+        console.log('Form submit event intercepted and blocked');
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    });
+    
+    // BLOCK ALL other potential submission methods
+    form.onsubmit = function() {
+        console.log('Form onsubmit intercepted and blocked');
+        return false;
+    };
+    
+    console.log('✓ Strict form validation handlers attached successfully');
+} else {
+    console.error('❌ Form or submit button not found!', { form, submitButton });
+}
+        
+        // Prevent form submission on Enter for address search input specifically
+        document.getElementById('addressSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
 
     <?php
     // Output the redirect script if there's a success message

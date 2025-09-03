@@ -528,6 +528,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         </svg>
                                         <span>Orders</span>
                                     </a>
+                                       <a href="../orders/dashboardorder"
+                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <span>Dashboard Sales</span>
+                                    </a>
                                 </div>
                                 <hr class="my-2 border-gray-200">
                             <?php endif; ?>
@@ -544,15 +552,8 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         </svg>
                                         <span>Dashboard</span>
                                     </a>
-                                    <a href="../client/approvingorder"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Arrival Management</span>
-                                    </a>
-                                    <a href="../client/add_driver"
+                                  
+                                    <a href="../client/driver_management"
                                         class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -568,6 +569,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                         </svg>
                                         <span>Add Tracking</span>
                                     </a>
+                                    
                                     <a href="../client/monitortracking"
                                         class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

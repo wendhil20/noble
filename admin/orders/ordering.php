@@ -11,8 +11,6 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-
-
 include '../navbar/top.php';
 // Get order counts
 $pendingOrders = $conn->query("SELECT COUNT(*) as count FROM orders WHERE status = 'Pending' OR status IS NULL OR status = ''");

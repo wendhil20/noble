@@ -74,7 +74,17 @@ $total_price = 0;
 $error = null;
 $order_success = false;
 
-// ✅ Fetch delivery settings
+// ✅ Fetch delivery zones
+$delivery_zones = [];
+$stmt = $conn->prepare("SELECT * FROM delivery_zones ORDER BY zone_name");
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $delivery_zones[] = $row;
+}
+$stmt->close();
+
+// ✅ Fetch delivery settings (keep for store location)
 $delivery_settings = null;
 $stmt = $conn->prepare("SELECT * FROM delivery_settings ORDER BY created_at DESC LIMIT 1");
 $stmt->execute();
@@ -122,38 +132,111 @@ function generateReferenceNumber()
     return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
 }
 
-// ✅ Function to calculate delivery fee per item based on distance (same as sample code)
-function calculateDeliveryFeePerItem($distance_km, $delivery_settings)
-{
-    if (!$delivery_settings) {
-        return 0; // No delivery settings found
+// ✅ Function to detect zone by postal code
+function detectZoneByPostalCode($postal_code, $conn) {
+    // First try exact postal code match
+    $stmt = $conn->prepare("
+        SELECT dz.* FROM delivery_zones dz 
+        JOIN zone_postal_codes zpc ON dz.id = zpc.zone_id 
+        WHERE zpc.postal_code = ?
+    ");
+    $stmt->bind_param("s", $postal_code);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $zone = $result->fetch_assoc();
+        $stmt->close();
+        return $zone;
     }
-
-    $base_fee = (float) $delivery_settings['base_fee'];
-    $per_km_rate = (float) $delivery_settings['per_km_rate'];
-    $total_km_for_base = (float) $delivery_settings['total_km_base_fee'];
-
-    if ($distance_km <= $total_km_for_base) {
-        return $base_fee;
-    } else {
-        $extra_km = $distance_km - $total_km_for_base;
-        return $base_fee + ($extra_km * $per_km_rate);
+    $stmt->close();
+    
+    // Fallback: Auto-detect based on postal code ranges
+    $postal_num = intval($postal_code);
+    
+    // NCR postal codes (1000-1800)
+    if ($postal_num >= 1000 && $postal_num <= 1800) {
+        $zone_code = 'NCR';
     }
+    // Luzon postal codes (2000-3999)
+    elseif ($postal_num >= 2000 && $postal_num <= 3999) {
+        $zone_code = 'LUZON';
+    }
+    // Visayas postal codes (4000-6999)
+    elseif ($postal_num >= 4000 && $postal_num <= 6999) {
+        $zone_code = 'VISAYAS';
+    }
+    // Mindanao postal codes (7000-9999)
+    elseif ($postal_num >= 7000 && $postal_num <= 9999) {
+        $zone_code = 'MINDANAO';
+    }
+    // Default to Luzon for unknown codes
+    else {
+        $zone_code = 'LUZON';
+    }
+    
+    // Get the detected zone
+    $stmt = $conn->prepare("SELECT * FROM delivery_zones WHERE zone_code = ?");
+    $stmt->bind_param("s", $zone_code);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $zone = $result->fetch_assoc();
+        $stmt->close();
+        return $zone;
+    }
+    $stmt->close();
+    
+    // Final fallback to first available zone
+    $stmt = $conn->prepare("SELECT * FROM delivery_zones ORDER BY id LIMIT 1");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $zone = $result->fetch_assoc();
+    $stmt->close();
+    return $zone;
 }
 
-// ✅ Function to calculate total delivery cost for all items
-function calculateTotalDeliveryForOrder($cart_items, $distance_km, $delivery_settings)
-{
-    $delivery_fee_per_item = calculateDeliveryFeePerItem($distance_km, $delivery_settings);
-    $total_delivery_cost = 0;
-
-    foreach ($cart_items as $item) {
-        $quantity = (int) $item['quantity'];
-        $item_total_delivery = $delivery_fee_per_item * $quantity;
-        $total_delivery_cost += $item_total_delivery;
+// ✅ New zone-based delivery calculation
+function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone, $postal_code = null) {
+    // Check if NCR (free delivery)
+    if ($selected_zone['zone_code'] === 'NCR' || $selected_zone['is_free_delivery']) {
+        return [
+            'total_delivery_cost' => 0.00,
+            'delivery_fee_per_item' => 0.00,
+            'zone_info' => $selected_zone,
+            'is_free' => true
+        ];
     }
-
-    return $total_delivery_cost;
+    
+    // Calculate total items quantity
+    $total_quantity = 0;
+    foreach ($cart_items as $item) {
+        $total_quantity += (int)$item['quantity'];
+    }
+    
+    // Calculate zone-based fee
+    $base_fee = (float)$selected_zone['base_fee'];
+    $included_km = (float)$selected_zone['included_km'];
+    $per_km_rate = (float)$selected_zone['per_km_rate'];
+    
+    $total_delivery_fee = $base_fee;
+    
+    if ($distance_km > $included_km) {
+        $extra_km = $distance_km - $included_km;
+        $total_delivery_fee += ($extra_km * $per_km_rate);
+    }
+    
+    // Calculate per-item delivery cost
+    $delivery_fee_per_item = $total_quantity > 0 ? $total_delivery_fee / $total_quantity : 0;
+    
+    return [
+        'total_delivery_cost' => $total_delivery_fee,
+        'delivery_fee_per_item' => $delivery_fee_per_item,
+        'zone_info' => $selected_zone,
+        'is_free' => false,
+        'total_quantity' => $total_quantity
+    ];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -256,6 +339,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $validation_errors[] = "ZIP Code must be exactly 4 digits";
     }
 
+    // ✅ Zone detection and selection
+$selected_zone = null;
+$zone_id = trim($_POST['zone_id'] ?? '');
+
+if (!empty($zone_id) && is_numeric($zone_id)) {
+    // Manual zone selection
+    $stmt = $conn->prepare("SELECT * FROM delivery_zones WHERE id = ?");
+    $stmt->bind_param("i", $zone_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $selected_zone = $result->fetch_assoc();
+    }
+    $stmt->close();
+} else {
+    // Auto-detect by postal code
+    $selected_zone = detectZoneByPostalCode($zipcode, $conn);
+}
+
+if (!$selected_zone) {
+    $validation_errors[] = "Unable to determine delivery zone. Please select manually.";
+}
+
     if (empty($payment_method)) {
         $validation_errors[] = "Payment method is required";
     }
@@ -264,9 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $validation_errors[] = "Your cart is empty";
     }
 
-    if ($delivery_distance <= 0) {
-        $validation_errors[] = "Please calculate delivery distance first";
-    }
+   
 
     // ✅ If billing address is selected, fetch coordinates
     if (!empty($billing_address_id) && is_numeric($billing_address_id)) {
@@ -293,9 +397,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE order_items AUTO_INCREMENT = 1");
 
             // ✅ Calculate total with delivery fee and VAT (VAT only on items)
-            $subtotal = $total_price; // Items subtotal only
-            $vat_amount = $subtotal * 0.12; // 12% VAT only on items (not on delivery)
-            $grand_total = $subtotal + $vat_amount + $delivery_fee; // Items + VAT + Delivery
+$subtotal = $total_price; // Items subtotal only
+$vat_amount = $subtotal * 0.12; // 12% VAT only on items (not on delivery)
+$grand_total = $subtotal + $vat_amount + $delivery_fee; // Items + VAT + Delivery
 
             // ✅ Save order (UPDATED to include delivery info and bank transfer data)
             $payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
@@ -310,8 +414,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
 
 
-            // ✅ Calculate delivery fee per item (same logic as sample code)
-            $delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
+            // ✅ Calculate zone-based delivery
+$delivery_result = calculateZoneBasedDelivery($cart_items, $delivery_distance, $selected_zone, $zipcode);
+$delivery_fee = $delivery_result['total_delivery_cost'];
+$delivery_fee_per_item = $delivery_result['delivery_fee_per_item'];
 
             // ✅ Save each item with individual delivery calculations
             $stmt = $conn->prepare("INSERT INTO order_items (
@@ -328,11 +434,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $price = $item['price'];
                 $quantity = $item['quantity'];
 
-                // ✅ Make sure delivery fee per item is available in this scope
-                // Re-calculate or ensure it's properly set
-                if (!isset($delivery_fee_per_item) || $delivery_fee_per_item <= 0) {
-                    $delivery_fee_per_item = calculateDeliveryFeePerItem($delivery_distance, $delivery_settings);
-                }
+                
+                // ✅ Calculate zone-based delivery
+$delivery_result = calculateZoneBasedDelivery($cart_items, $delivery_distance, $selected_zone, $zipcode);
+$delivery_fee = $delivery_result['total_delivery_cost'];
+$delivery_fee_per_item = $delivery_result['delivery_fee_per_item'];
 
                 // ✅ Calculate delivery fee per item and total delivery for this item (exactly like sample code)
                 $item_total_delivery = $delivery_fee_per_item * $quantity;
@@ -529,7 +635,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         </div>
 
         <form method="POST" class="space-y-6" id="checkoutForm" enctype="multipart/form-data">
-
+            
             <!-- STEP 1: Customer Information -->
             <div class="step-content" id="step1">
                 <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
@@ -549,14 +655,14 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>
                         <label class="block font-medium mb-2">Full Name</label>
-                        <input type="text" name="customer_name" required
+                        <input type="text" name="customer_name" required 
                             class="w-full border border-gray-300 px-4 py-3 rounded-lg bg-gray-50"
                             value="<?= htmlspecialchars($userName ?? '') ?>" readonly />
                     </div>
 
                     <div>
                         <label class="block font-medium mb-2">Email Address</label>
-                        <input type="email" name="email" required
+                        <input type="email" name="email" required 
                             class="w-full border border-gray-300 px-4 py-3 rounded-lg bg-gray-50"
                             value="<?= htmlspecialchars($userEmail ?? '') ?>" readonly />
                     </div>
@@ -564,7 +670,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
                 <div class="flex justify-end mt-6">
                     <button type="button" class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium" onclick="goToStep(2)">
-                        Continue
+                        Continue 
                     </button>
                 </div>
             </div>
@@ -625,25 +731,56 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     <!-- Address Details Display -->
                     <div class="bg-gray-50 p-6 rounded-lg">
                         <h4 class="font-bold text-gray-800 mb-4">Selected Address Details</h4>
-
+                        
                         <div class="grid md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block font-medium mb-2">Mobile Number</label>
-                                <input type="tel" name="mobile" id="mobileInput" pattern="[0-9]{11}" required
+                                <input type="tel" name="mobile" id="mobileInput" pattern="[0-9]{11}" required 
                                     class="w-full border px-4 py-3 rounded-lg bg-white" readonly />
                             </div>
                             <div>
                                 <label class="block font-medium mb-2">ZIP Code</label>
-                                <input type="text" name="zipcode" id="zipcodeInput" pattern="[0-9]{4}" required
+                                <input type="text" name="zipcode" id="zipcodeInput" pattern="[0-9]{4}" required 
                                     class="w-full border px-4 py-3 rounded-lg bg-white" readonly />
                             </div>
                         </div>
 
                         <div class="mt-4">
                             <label class="block font-medium mb-2">Full Address</label>
-                            <textarea name="address" id="addressInput" rows="3" required
+                            <textarea name="address" id="addressInput" rows="3" required 
                                 class="w-full border px-4 py-3 rounded-lg resize-none bg-white" readonly></textarea>
                         </div>
+                        <!-- Modified HTML section - make the select disabled/readonly -->
+<div class="mt-6">
+    <label class="block font-medium mb-2">Delivery Zone</label>
+    <select name="zone_id" id="zoneSelect" required 
+            class="w-full border border-gray-300 px-4 py-3 rounded-lg bg-gray-100 cursor-not-allowed pointer-events-none" 
+            disabled
+            readonly
+            tabindex="-1"
+            onchange="selectDeliveryZone(this)">
+        <option value="">Auto-detecting delivery zone...</option>
+        <?php foreach ($delivery_zones as $zone): ?>
+            <option value="<?= $zone['id'] ?>" 
+                data-zone-name="<?= htmlspecialchars($zone['zone_name']) ?>"
+                data-zone-code="<?= htmlspecialchars($zone['zone_code']) ?>"
+                data-base-fee="<?= $zone['base_fee'] ?>"
+                data-included-km="<?= $zone['included_km'] ?>"
+                data-per-km-rate="<?= $zone['per_km_rate'] ?>"
+                data-is-free="<?= $zone['is_free_delivery'] ?>">
+                <?= htmlspecialchars($zone['zone_name']) ?>
+                <?php if ($zone['is_free_delivery']): ?>
+                    - FREE DELIVERY
+                <?php else: ?>
+                    - Base: ₱<?= number_format($zone['base_fee'], 2) ?>
+                <?php endif; ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+    <div class="text-xs text-gray-500 mt-1" id="zoneDescription">
+        Delivery zone will be automatically selected based on your address
+    </div>
+</div>
                     </div>
                 <?php else: ?>
                     <div class="border-2 border-dashed border-red-300 rounded-lg p-8 text-center bg-red-50">
@@ -664,10 +801,10 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <?php if ($has_billing_addresses): ?>
                     <div class="flex justify-between mt-8">
                         <button type="button" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition font-medium" onclick="goToStep(1)">
-                            Back to Customer Info
+                             Back to Customer Info
                         </button>
                         <button type="button" id="continueToDelivery" class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium" onclick="goToStep(3)" disabled>
-                            Continue
+                            Continue  
                         </button>
                     </div>
                 <?php endif; ?>
@@ -692,7 +829,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 <?php if ($delivery_settings && $has_billing_addresses): ?>
                     <div class="bg-white border-2 border-yellow-300 rounded-lg p-6">
                         <h4 class="font-bold text-gray-800 mb-4">Delivery Distance Calculator</h4>
-
+                        
                         <div class="grid md:grid-cols-2 gap-6 mb-6">
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 <h5 class="font-bold text-gray-700 mb-3">Store Information</h5>
@@ -705,17 +842,17 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     <div><strong>Free Delivery Distance:</strong> <?= $delivery_settings['total_km_base_fee'] ?> km</div>
                                 </div>
                             </div>
-
+                            
                             <div class="bg-blue-50 p-4 rounded-lg">
                                 <h5 class="font-bold text-gray-700 mb-3">Distance Calculation</h5>
                                 <div class="space-y-3">
-                                    <button type="button" id="calculateDistance"
-                                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-400"
+                                    <button type="button" id="calculateDistance" 
+                                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-400" 
                                         disabled>
                                         Calculate Distance & Fee
                                     </button>
-                                    <button type="button" id="showMapModal"
-                                        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
+                                    <button type="button" id="showMapModal" 
+                                        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2" 
                                         disabled>
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
@@ -735,7 +872,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
                 <div class="flex justify-between mt-8">
                     <button type="button" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition font-medium" onclick="goToStep(2)">
-                        Back to Address
+                          Back to Address
                     </button>
                     <button type="button" id="continueToPayment" class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium" onclick="goToStep(4)" disabled>
                         Continue
@@ -763,7 +900,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     <!-- Payment Method -->
                     <div class="bg-white border rounded-lg p-6">
                         <h4 class="font-bold text-gray-800 mb-4">Select Payment Method</h4>
-
+                        
                         <div class="space-y-4">
                             <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-purple-300 transition">
                                 <input type="radio" name="payment_method" value="Bank Transfer" required class="mr-4" onclick="showBankSelection()" />
@@ -893,7 +1030,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
                     <div class="flex justify-between">
                         <button type="button" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition font-medium" onclick="goToStep(3)">
-                            Back to Delivery
+                             Back to Delivery
                         </button>
                         <button type="submit" id="placeOrderBtn" class="bg-green-600 text-white px-12 py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg" disabled>
                             Place Order
@@ -901,12 +1038,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     </div>
                 </div>
 
-
+              
             </div>
         </form>
     </div>
 
-    <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
+        <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
@@ -1048,54 +1185,56 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
 
     <script>
-        // Global variables
-        let deliverySettings = <?= $delivery_settings ? json_encode($delivery_settings) : 'null' ?>;
-        let subtotal = <?= $total_price ?>;
+   // Global variables
+let deliverySettings = <?= $delivery_settings ? json_encode($delivery_settings) : 'null' ?>;
+let deliveryZones = <?= json_encode($delivery_zones) ?>;
+let selectedZone = null;
+let subtotal = <?= $total_price ?>;
 
-        // Function to calculate VAT and totals (UPDATED - VAT only on items, not delivery)
-        function calculateTotalsWithVAT(itemsSubtotal, deliveryCost) {
-            const vatAmount = itemsSubtotal * 0.12; // VAT only on items, not delivery
-            const grandTotal = itemsSubtotal + vatAmount + deliveryCost; // Add delivery after VAT calculation
+// Function to calculate VAT and totals (UPDATED - VAT only on items, not delivery)
+function calculateTotalsWithVAT(itemsSubtotal, deliveryCost) {
+    const vatAmount = itemsSubtotal * 0.12; // VAT only on items, not delivery
+    const grandTotal = itemsSubtotal + vatAmount + deliveryCost; // Add delivery after VAT calculation
 
-            return {
-                subtotalWithDelivery: itemsSubtotal + deliveryCost,
-                vatAmount: vatAmount,
-                grandTotal: grandTotal
-            };
-        }
+    return {
+        subtotalWithDelivery: itemsSubtotal + deliveryCost,
+        vatAmount: vatAmount,
+        grandTotal: grandTotal
+    };
+}
 
-        let selectedAddress = null;
+let selectedAddress = null;
 
-        // Global variables for the map modal
-        let deliveryMap = null;
-        let routingControl = null;
-        let storeMarker = null;
-        let customerMarker = null;
-        let currentRouteData = null;
+// Global variables for the map modal
+let deliveryMap = null;
+let routingControl = null;
+let storeMarker = null;
+let customerMarker = null;
+let currentRouteData = null;
 
-        // Step management variables
-        let currentStep = 1;
-        const totalSteps = 4;
+// Step management variables
+let currentStep = 1;
+const totalSteps = 4;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize all event listeners
-            initializeStepNavigation();
-            initializeAddressSelection();
-            initializeDistanceCalculation();
-            initializeMapModal();
-            initializeCheckoutForm();
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all event listeners
+    initializeStepNavigation();
+    initializeAddressSelection();
+    initializeDistanceCalculation();
+    initializeMapModal();
+    initializeCheckoutForm();
+    
+    // Show first step by default
+    showStep(1);
+});
 
-            // Show first step by default
-            showStep(1);
-        });
-
-        // Step Navigation Functions
-        function initializeStepNavigation() {
-            // Add CSS for step indicators
-            if (!document.getElementById('stepStyles')) {
-                const style = document.createElement('style');
-                style.id = 'stepStyles';
-                style.textContent = `
+// Step Navigation Functions
+function initializeStepNavigation() {
+    // Add CSS for step indicators
+    if (!document.getElementById('stepStyles')) {
+        const style = document.createElement('style');
+        style.id = 'stepStyles';
+        style.textContent = `
             .step-circle {
                 width: 40px;
                 height: 40px;
@@ -1136,140 +1275,179 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 font-weight: 500;
             }
         `;
-                document.head.appendChild(style);
-            }
-        }
+        document.head.appendChild(style);
+    }
+}
 
-        function goToStep(stepNumber) {
-            if (stepNumber < 1 || stepNumber > totalSteps) return;
+function goToStep(stepNumber) {
+    if (stepNumber < 1 || stepNumber > totalSteps) return;
+    
+    // Validate current step before moving
+    if (!validateStep(currentStep) && stepNumber > currentStep) {
+        return;
+    }
+    
+    currentStep = stepNumber;
+    showStep(stepNumber);
+    updateStepIndicators();
+    
+    // Scroll to top of form
+    document.querySelector('.bg-white.p-6').scrollIntoView({ behavior: 'smooth' });
+}
 
-            // Validate current step before moving
-            if (!validateStep(currentStep) && stepNumber > currentStep) {
-                return;
-            }
+function showStep(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll('.step-content').forEach(step => {
+        step.classList.add('hidden');
+    });
+    
+    // Show current step
+    const currentStepElement = document.getElementById(`step${stepNumber}`);
+    if (currentStepElement) {
+        currentStepElement.classList.remove('hidden');
+    }
+}
 
-            currentStep = stepNumber;
-            showStep(stepNumber);
-            updateStepIndicators();
-
-            // Scroll to top of form
-            document.querySelector('.bg-white.p-6').scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
-
-        function showStep(stepNumber) {
-            // Hide all steps
-            document.querySelectorAll('.step-content').forEach(step => {
-                step.classList.add('hidden');
-            });
-
-            // Show current step
-            const currentStepElement = document.getElementById(`step${stepNumber}`);
-            if (currentStepElement) {
-                currentStepElement.classList.remove('hidden');
-            }
-        }
-
-        function updateStepIndicators() {
-            document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
-                const stepNumber = index + 1;
-                const circle = indicator.querySelector('.step-circle');
-
-                // Reset classes
-                indicator.classList.remove('active', 'completed');
-                circle.classList.remove('active', 'completed');
-
-                if (stepNumber < currentStep) {
-                    // Completed steps
-                    indicator.classList.add('completed');
-                    circle.classList.add('completed');
-                    circle.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+function updateStepIndicators() {
+    document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+        const stepNumber = index + 1;
+        const circle = indicator.querySelector('.step-circle');
+        
+        // Reset classes
+        indicator.classList.remove('active', 'completed');
+        circle.classList.remove('active', 'completed');
+        
+        if (stepNumber < currentStep) {
+            // Completed steps
+            indicator.classList.add('completed');
+            circle.classList.add('completed');
+            circle.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
             </svg>`;
-                } else if (stepNumber === currentStep) {
-                    // Current active step
-                    indicator.classList.add('active');
-                    circle.classList.add('active');
-                    circle.textContent = stepNumber;
-                } else {
-                    // Future steps
-                    circle.textContent = stepNumber;
+        } else if (stepNumber === currentStep) {
+            // Current active step
+            indicator.classList.add('active');
+            circle.classList.add('active');
+            circle.textContent = stepNumber;
+        } else {
+            // Future steps
+            circle.textContent = stepNumber;
+        }
+    });
+}
+
+function validateStep(stepNumber) {
+    switch(stepNumber) {
+        case 1:
+            // Customer info is readonly, always valid
+            return true;
+            
+        case 2:
+            // Check if address is selected
+            const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
+            if (!selectedRadio) {
+                showNotification('Please select a delivery address to continue.', 'error');
+                return false;
+            }
+            return true;
+            
+        case 3:
+            // FIXED: Check delivery calculation based on zone type
+            if (!selectedZone) {
+                showNotification('Please select a delivery zone to continue.', 'error');
+                return false;
+            }
+            
+            // For free delivery zones (NCR), no distance calculation needed
+            if (selectedZone.zone_code === 'NCR' || selectedZone.is_free_delivery) {
+                // Auto-calculate free delivery if not already done
+                const deliveryFeeInput = document.getElementById('deliveryFee');
+                const deliveryDistanceInput = document.getElementById('deliveryDistance');
+                
+                if (!deliveryFeeInput.value || parseFloat(deliveryFeeInput.value) !== 0) {
+                    // Set free delivery values
+                    deliveryFeeInput.value = '0.00';
+                    deliveryDistanceInput.value = '0.00';
+                    updateTotalsDisplay(0);
+                    
+                    // Update delivery display for free zones
+                    const distanceResultElement = document.getElementById('distanceResult');
+                    if (distanceResultElement) {
+                        distanceResultElement.innerHTML = `
+                            <div class="bg-green-100 border border-green-300 rounded p-3">
+                                <div class="font-medium text-green-800">FREE DELIVERY!</div>
+                                <div class="font-medium text-green-800">Zone: ${selectedZone.zone_name}</div>
+                                <div class="text-sm text-green-600 mt-1">No delivery charges for this area</div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Enable continue to payment button
+                    const continueToPaymentBtn = document.getElementById('continueToPayment');
+                    if (continueToPaymentBtn) {
+                        continueToPaymentBtn.disabled = false;
+                        continueToPaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                    }
                 }
-            });
-        }
-
-        function validateStep(stepNumber) {
-            switch (stepNumber) {
-                case 1:
-                    // Customer info is readonly, always valid
-                    return true;
-
-                case 2:
-                    // Check if address is selected
-                    const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
-                    if (!selectedRadio) {
-                        showNotification('Please select a delivery address to continue.', 'error');
-                        return false;
-                    }
-                    return true;
-
-                case 3:
-                    // Check if delivery fee is calculated
-                    const deliveryDistance = parseFloat(document.getElementById('deliveryDistance')?.value || '0');
-                    if (deliveryDistance <= 0) {
-                        showNotification('Please calculate delivery distance and fee to continue.', 'error');
-                        return false;
-                    }
-                    return true;
-
-                case 4:
-                    // Check payment method selection
-                    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-                    if (!paymentMethod) {
-                        showNotification('Please select a payment method to continue.', 'error');
-                        return false;
-                    }
-
-                    if (paymentMethod.value === 'Bank Transfer') {
-                        const selectedBank = document.getElementById('selectedBank').value;
-                        const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
-
-                        if (!selectedBank) {
-                            showNotification('Please select a bank for transfer.', 'error');
-                            return false;
-                        }
-
-                        if (!paymentScreenshot || !paymentScreenshot.files[0]) {
-                            showNotification('Please upload a payment screenshot.', 'error');
-                            return false;
-                        }
-                    }
-                    return true;
-
-                default:
-                    return true;
+                return true;
+            } else {
+                // For paid delivery zones, check if distance is calculated
+                const deliveryDistance = parseFloat(document.getElementById('deliveryDistance')?.value || '0');
+                if (deliveryDistance <= 0) {
+                    showNotification('Please calculate delivery distance and fee to continue.', 'error');
+                    return false;
+                }
+                return true;
             }
-        }
-
-        function showNotification(message, type = 'info') {
-            // Remove existing notifications
-            const existingNotification = document.getElementById('stepNotification');
-            if (existingNotification) {
-                existingNotification.remove();
+            
+        case 4:
+            // Check payment method selection
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            if (!paymentMethod) {
+                showNotification('Please select a payment method to continue.', 'error');
+                return false;
             }
+            
+            if (paymentMethod.value === 'Bank Transfer') {
+                const selectedBank = document.getElementById('selectedBank').value;
+                const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
+                
+                if (!selectedBank) {
+                    showNotification('Please select a bank for transfer.', 'error');
+                    return false;
+                }
+                
+                if (!paymentScreenshot || !paymentScreenshot.files[0]) {
+                    showNotification('Please upload a payment screenshot.', 'error');
+                    return false;
+                }
+            }
+            return true;
+            
+        default:
+            return true;
+    }
+}
 
-            const colors = {
-                'error': 'bg-red-100 border-red-400 text-red-700',
-                'success': 'bg-green-100 border-green-400 text-green-700',
-                'info': 'bg-blue-100 border-blue-400 text-blue-700',
-                'warning': 'bg-yellow-100 border-yellow-400 text-yellow-700'
-            };
-
-            const notification = document.createElement('div');
-            notification.id = 'stepNotification';
-            notification.className = `fixed top-4 right-4 ${colors[type]} px-6 py-4 rounded-lg border shadow-lg z-50 max-w-md`;
-            notification.innerHTML = `
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotification = document.getElementById('stepNotification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const colors = {
+        'error': 'bg-red-100 border-red-400 text-red-700',
+        'success': 'bg-green-100 border-green-400 text-green-700',
+        'info': 'bg-blue-100 border-blue-400 text-blue-700',
+        'warning': 'bg-yellow-100 border-yellow-400 text-yellow-700'
+    };
+    
+    const notification = document.createElement('div');
+    notification.id = 'stepNotification';
+    notification.className = `fixed top-4 right-4 ${colors[type]} px-6 py-4 rounded-lg border shadow-lg z-50 max-w-md`;
+    notification.innerHTML = `
         <div class="flex items-center gap-3">
             <div class="flex-1">${message}</div>
             <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
@@ -1279,416 +1457,651 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             </button>
         </div>
     `;
-
-            document.body.appendChild(notification);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 5000);
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
         }
+    }, 5000);
+}
 
-        function initializeAddressSelection() {
-            const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
-            const continueToDeliveryBtn = document.getElementById('continueToDelivery');
-            const calculateDistanceBtn = document.getElementById('calculateDistance');
-            const showMapBtn = document.getElementById('showMapModal');
+function initializeAddressSelection() {
+    const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
+    const continueToDeliveryBtn = document.getElementById('continueToDelivery');
+    const calculateDistanceBtn = document.getElementById('calculateDistance');
+    const showMapBtn = document.getElementById('showMapModal');
 
-            const mobileInput = document.getElementById('mobileInput');
-            const addressInput = document.getElementById('addressInput');
-            const zipcodeInput = document.getElementById('zipcodeInput');
+    const mobileInput = document.getElementById('mobileInput');
+    const addressInput = document.getElementById('addressInput');
+    const zipcodeInput = document.getElementById('zipcodeInput');
 
-            // Check if user has addresses
-            const hasAddresses = <?= $has_billing_addresses ? 'true' : 'false' ?>;
+    // Check if user has addresses
+    const hasAddresses = <?= $has_billing_addresses ? 'true' : 'false' ?>;
 
-            // Handle billing address selection
-            billingRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        selectedAddress = {
-                            latitude: parseFloat(this.dataset.latitude),
-                            longitude: parseFloat(this.dataset.longitude),
-                            address: this.dataset.address
-                        };
-
-                        // Clean and format mobile number
-                        let phone = this.dataset.phone;
-                        // Remove spaces, dashes, parentheses, plus signs
-                        phone = phone.replace(/[\s\-\(\)\+]/g, '');
-                        // Convert +63 format to 09 format
-                        if (phone.match(/^63([0-9]{10})$/)) {
-                            phone = '0' + phone.substring(2);
-                        }
-
-                        // Populate the fields and enable them
-                        if (mobileInput) mobileInput.value = phone;
-                        if (addressInput) addressInput.value = this.dataset.address;
-                        if (zipcodeInput) zipcodeInput.value = this.dataset.postalCode;
-
-                        // Enable fields for form submission but keep them visually disabled
-                        if (mobileInput) {
-                            mobileInput.disabled = false;
-                            mobileInput.readOnly = true;
-                        }
-                        if (addressInput) {
-                            addressInput.disabled = false;
-                            addressInput.readOnly = true;
-                        }
-                        if (zipcodeInput) {
-                            zipcodeInput.disabled = false;
-                            zipcodeInput.readOnly = true;
-                        }
-
-                        // Enable continue button and other controls
-                        if (continueToDeliveryBtn) {
-                            continueToDeliveryBtn.disabled = false;
-                            continueToDeliveryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                            continueToDeliveryBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-                        }
-
-                        if (calculateDistanceBtn) {
-                            calculateDistanceBtn.disabled = false;
-                            calculateDistanceBtn.classList.remove('bg-gray-400');
-                            calculateDistanceBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                        }
-
-                        if (showMapBtn) {
-                            showMapBtn.disabled = false;
-                            showMapBtn.classList.remove('bg-gray-400');
-                            showMapBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                        }
-
-                        // Show success notification
-                        showNotification('Address selected successfully! You can now calculate delivery fee.', 'success');
-                    }
-                });
-            });
-        }
-
-        // Function to calculate distance using OSRM (same as map routing)
-        async function calculateRoutingDistance(storeLatLng, customerLatLng) {
-            try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${storeLatLng.lng},${storeLatLng.lat};${customerLatLng.lng},${customerLatLng.lat}?overview=false&geometries=geojson`;
-
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data.routes && data.routes.length > 0) {
-                    const route = data.routes[0];
-                    const distanceKm = route.distance / 1000; // Convert to kilometers
-                    const timeMinutes = Math.round(route.duration / 60); // Convert to minutes
-
-                    return {
-                        distance: distanceKm,
-                        time: timeMinutes,
-                        success: true
-                    };
-                } else {
-                    throw new Error('No routes found');
-                }
-            } catch (error) {
-                console.error('Routing API error:', error);
-                // Fallback to Haversine distance
-                const distance = calculateHaversineDistance(
-                    storeLatLng.lat, storeLatLng.lng,
-                    customerLatLng.lat, customerLatLng.lng
-                );
-                return {
-                    distance: distance,
-                    time: Math.round(distance * 2), // Rough estimate: 2 minutes per km
-                    success: false,
-                    fallback: true
+    // Handle billing address selection
+    billingRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                selectedAddress = {
+                    latitude: parseFloat(this.dataset.latitude),
+                    longitude: parseFloat(this.dataset.longitude),
+                    address: this.dataset.address
                 };
+
+                // Clean and format mobile number
+                let phone = this.dataset.phone;
+                // Remove spaces, dashes, parentheses, plus signs
+                phone = phone.replace(/[\s\-\(\)\+]/g, '');
+                // Convert +63 format to 09 format
+                if (phone.match(/^63([0-9]{10})$/)) {
+                    phone = '0' + phone.substring(2);
+                }
+
+                // Populate the fields and enable them
+                if (mobileInput) mobileInput.value = phone;
+                if (addressInput) addressInput.value = this.dataset.address;
+                if (zipcodeInput) zipcodeInput.value = this.dataset.postalCode;
+
+                // Enable fields for form submission but keep them visually disabled
+                if (mobileInput) {
+                    mobileInput.disabled = false;
+                    mobileInput.readOnly = true;
+                }
+                if (addressInput) {
+                    addressInput.disabled = false;
+                    addressInput.readOnly = true;
+                }
+                if (zipcodeInput) {
+                    zipcodeInput.disabled = false;
+                    zipcodeInput.readOnly = true;
+                }
+
+                // AUTO-DETECT AND SELECT DELIVERY ZONE BASED ON POSTAL CODE
+                if (this.dataset.postalCode) {
+                    autoDetectAndSelectZone(this.dataset.postalCode);
+                }
+
+                // Enable continue button and other controls
+                if (continueToDeliveryBtn) {
+                    continueToDeliveryBtn.disabled = false;
+                    continueToDeliveryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    continueToDeliveryBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                }
+
+                if (calculateDistanceBtn) {
+                    calculateDistanceBtn.disabled = false;
+                    calculateDistanceBtn.classList.remove('bg-gray-400');
+                    calculateDistanceBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+                
+                if (showMapBtn) {
+                    showMapBtn.disabled = false;
+                    showMapBtn.classList.remove('bg-gray-400');
+                    showMapBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                }
+
+                // Show success notification
+                showNotification('Address selected successfully! Delivery zone auto-detected.', 'success');
             }
+        });
+    });
+}
+
+// Enhanced auto-detect and select zone function
+function autoDetectAndSelectZone(postalCode) {
+    const zoneSelect = document.getElementById('zoneSelect');
+    if (!zoneSelect || !postalCode) return;
+    
+    const postal_num = parseInt(postalCode);
+    let targetZoneCode = 'LUZON'; // default fallback
+    let detectedRegion = 'LUZON';
+    
+    // Enhanced postal code zone detection
+    if (postal_num >= 1000 && postal_num <= 1800) {
+        targetZoneCode = 'NCR';
+        detectedRegion = 'NCR (Metro Manila)';
+    } else if (postal_num >= 2000 && postal_num <= 3999) {
+        targetZoneCode = 'LUZON';
+        detectedRegion = 'LUZON';
+    } else if (postal_num >= 4000 && postal_num <= 6999) {
+        targetZoneCode = 'VISAYAS';
+        detectedRegion = 'VISAYAS';
+    } else if (postal_num >= 7000 && postal_num <= 9999) {
+        targetZoneCode = 'MINDANAO';
+        detectedRegion = 'MINDANAO';
+    }
+    
+    // Find and select the matching zone option
+    let zoneFound = false;
+for (let i = 0; i < zoneSelect.options.length; i++) {
+    const option = zoneSelect.options[i];
+    if (option.dataset.zoneCode === targetZoneCode) {
+        // Enable the select and update styling before setting the value
+        zoneSelect.disabled = false;
+zoneSelect.removeAttribute('readonly');
+zoneSelect.removeAttribute('tabindex');
+zoneSelect.classList.remove('bg-gray-100', 'cursor-not-allowed', 'pointer-events-none');
+zoneSelect.classList.add('bg-white');
+        
+        zoneSelect.selectedIndex = i;
+        selectDeliveryZone(zoneSelect);
+        zoneFound = true;
+            
+            // Show appropriate notification with delivery cost info
+            let message = `${detectedRegion} zone auto-selected based on postal code ${postalCode}`;
+            let messageType = 'info';
+            
+            if (targetZoneCode === 'NCR') {
+                message += ' - FREE DELIVERY!';
+                messageType = 'success';
+                
+                // ADDED: Auto-setup free delivery for NCR
+                setupFreeDelivery();
+                
+            } else {
+                message += ` - Base delivery: ₱${parseFloat(option.dataset.baseFee).toFixed(2)}`;
+                messageType = 'info';
+            }
+            
+            showNotification(message, messageType);
+            break;
         }
+    }
+    
+    if (!zoneFound) {
+        console.warn('No matching zone found for postal code:', postalCode);
+        showNotification(`Postal code ${postalCode} detected as ${detectedRegion}, but no matching delivery zone found. Please select manually.`, 'warning');
+    }
+}
 
-        function initializeDistanceCalculation() {
-            const calculateDistanceBtn = document.getElementById('calculateDistance');
-            const continueToPaymentBtn = document.getElementById('continueToPayment');
+// ADDED: Function to setup free delivery automatically
+function setupFreeDelivery() {
+    if (!selectedZone || (!selectedZone.is_free_delivery && selectedZone.zone_code !== 'NCR')) {
+        return;
+    }
+    
+    // Set delivery values to zero
+    const deliveryFeeInput = document.getElementById('deliveryFee');
+    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+    
+    if (deliveryFeeInput) deliveryFeeInput.value = '0.00';
+    if (deliveryDistanceInput) deliveryDistanceInput.value = '0.00';
+    
+    // Update totals display
+    updateTotalsDisplay(0);
+    
+    // Update delivery display
+    const distanceResultElement = document.getElementById('distanceResult');
+    if (distanceResultElement) {
+        distanceResultElement.innerHTML = `
+            <div class="bg-green-100 border border-green-300 rounded p-3">
+                <div class="font-medium text-green-800">FREE DELIVERY!</div>
+                <div class="font-medium text-green-800">Zone: ${selectedZone.zone_name}</div>
+                <div class="text-sm text-green-600 mt-1">No delivery charges for this area</div>
+            </div>
+        `;
+    }
+    
+    // Enable continue to payment button
+    const continueToPaymentBtn = document.getElementById('continueToPayment');
+    if (continueToPaymentBtn) {
+        continueToPaymentBtn.disabled = false;
+        continueToPaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+    }
+    
+    // Update individual item delivery displays to show free
+    const cartItems = document.querySelectorAll('[id^="cartItem"]');
+    cartItems.forEach(cartItem => {
+        const deliveryPerItemElement = cartItem.querySelector('.deliveryPerItem');
+        const totalDeliveryForItemElement = cartItem.querySelector('.totalDeliveryForItem');
+        
+        if (deliveryPerItemElement) {
+            deliveryPerItemElement.textContent = '₱0.00';
+        }
+        if (totalDeliveryForItemElement) {
+            totalDeliveryForItemElement.textContent = '₱0.00';
+        }
+    });
+}
 
-            if (calculateDistanceBtn) {
-                calculateDistanceBtn.addEventListener('click', async function() {
-                    if (!selectedAddress || !deliverySettings) {
-                        showNotification('Please select an address and ensure delivery settings are available.', 'error');
-                        return;
+// Function to calculate distance using OSRM (same as map routing)
+async function calculateRoutingDistance(storeLatLng, customerLatLng) {
+    try {
+        // First try OSRM routing
+        const url = `https://router.project-osrm.org/route/v1/driving/${storeLatLng.lng},${storeLatLng.lat};${customerLatLng.lng},${customerLatLng.lat}?overview=false&geometries=geojson`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`OSRM API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+            const route = data.routes[0];
+            const distanceKm = route.distance / 1000;
+            const timeMinutes = Math.round(route.duration / 60);
+
+            return {
+                distance: distanceKm,
+                time: timeMinutes,
+                success: true,
+                fallback: false
+            };
+        } else {
+            throw new Error('No routes found in response');
+        }
+    } catch (error) {
+        console.warn('OSRM routing failed, using fallback calculation:', error.message);
+        
+        // Validate coordinates before fallback calculation
+        if (isNaN(storeLatLng.lat) || isNaN(storeLatLng.lng) || isNaN(customerLatLng.lat) || isNaN(customerLatLng.lng)) {
+            throw new Error('Invalid coordinates provided for distance calculation');
+        }
+        
+        // Fallback to Haversine distance
+        const distance = calculateHaversineDistance(
+            storeLatLng.lat, storeLatLng.lng,
+            customerLatLng.lat, customerLatLng.lng
+        );
+        
+        return {
+            distance: distance,
+            time: Math.round(distance * 3), // More realistic time estimate
+            success: true,
+            fallback: true
+        };
+    }
+}
+
+function initializeDistanceCalculation() {
+    const calculateDistanceBtn = document.getElementById('calculateDistance');
+    const continueToPaymentBtn = document.getElementById('continueToPayment');
+
+    if (calculateDistanceBtn) {
+        calculateDistanceBtn.addEventListener('click', async function() {
+            if (!selectedAddress || !selectedZone) {
+                showNotification('Please select an address and delivery zone.', 'error');
+                return;
+            }
+
+            // ADDED: Handle free delivery zones without distance calculation
+            if (selectedZone.zone_code === 'NCR' || selectedZone.is_free_delivery) {
+                setupFreeDelivery();
+                showNotification('Free delivery confirmed!', 'success');
+                return;
+            }
+
+            // Show loading
+            const originalText = calculateDistanceBtn.textContent;
+            calculateDistanceBtn.textContent = 'Calculating...';
+            calculateDistanceBtn.disabled = true;
+
+            try {
+                // Validate required data
+                if (!selectedAddress) {
+                    throw new Error('No delivery address selected');
+                }
+                if (!selectedZone) {
+                    throw new Error('No delivery zone selected');
+                }
+                if (!deliverySettings) {
+                    throw new Error('Delivery settings not loaded');
+                }
+
+                let distance = 0;
+                let routeData = { distance: 0, time: 0, fallback: false };
+
+                // Only calculate distance for paid delivery zones
+                const storeLatLng = {
+                    lat: parseFloat(deliverySettings.latitude),
+                    lng: parseFloat(deliverySettings.longitude)
+                };
+                const customerLatLng = {
+                    lat: selectedAddress.latitude,
+                    lng: selectedAddress.longitude
+                };
+
+                if (isNaN(storeLatLng.lat) || isNaN(storeLatLng.lng)) {
+                    throw new Error('Invalid store coordinates');
+                }
+                if (isNaN(customerLatLng.lat) || isNaN(customerLatLng.lng)) {
+                    throw new Error('Invalid customer address coordinates');
+                }
+
+                routeData = await calculateRoutingDistance(storeLatLng, customerLatLng);
+                distance = routeData.distance || 0;
+
+                // Calculate zone-based delivery
+                const deliveryResult = calculateZoneBasedDeliveryJS(distance, selectedZone);
+                
+                if (!deliveryResult) {
+                    throw new Error('Failed to calculate delivery costs');
+                }
+                
+                // Update UI
+                updateDeliveryDisplay(deliveryResult, routeData, distance);
+                
+                // Update hidden fields
+                document.getElementById('deliveryDistance').value = distance.toFixed(2);
+                document.getElementById('deliveryFee').value = deliveryResult.totalDeliveryCost.toFixed(2);
+                
+                // Update totals
+                updateTotalsDisplay(deliveryResult.totalDeliveryCost);
+                
+                // Enable continue button
+                if (continueToPaymentBtn) {
+                    continueToPaymentBtn.disabled = false;
+                    continueToPaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                }
+
+                const successMessage = `Delivery fee calculated: ₱${deliveryResult.totalDeliveryCost.toFixed(2)}`;
+                showNotification(successMessage, 'success');
+
+            } catch (error) {
+                console.error('Delivery calculation error:', error);
+                
+                let errorMessage = 'Error calculating delivery fee. ';
+                if (error.message.includes('coordinates')) {
+                    errorMessage += 'Invalid location data.';
+                } else if (error.message.includes('zone')) {
+                    errorMessage += 'Please select a delivery zone.';
+                } else if (error.message.includes('address')) {
+                    errorMessage += 'Please select a delivery address.';
+                } else {
+                    errorMessage += 'Please try again or contact support.';
+                }
+                
+                showNotification(errorMessage, 'error');
+            } finally {
+                calculateDistanceBtn.textContent = 'Recalculate Distance';
+                calculateDistanceBtn.disabled = false;
+            }
+        });
+    }
+}
+
+// JavaScript zone-based calculation
+function calculateZoneBasedDeliveryJS(distance, zone) {
+    if (zone.zone_code === 'NCR' || zone.is_free_delivery == 1) {
+        return {
+            totalDeliveryCost: 0,
+            deliveryFeePerItem: 0,
+            isFree: true
+        };
+    }
+    
+    // Calculate total items quantity
+    let totalQuantity = 0;
+    const cartItems = document.querySelectorAll('[id^="cartItem"]');
+    cartItems.forEach(cartItem => {
+        const quantityElement = cartItem.querySelector('.itemQuantity');
+        totalQuantity += parseInt(quantityElement.textContent);
+    });
+    
+    // Calculate zone fee
+    const baseFee = parseFloat(zone.base_fee);
+    const includedKm = parseFloat(zone.included_km);
+    const perKmRate = parseFloat(zone.per_km_rate);
+    
+    let totalDeliveryFee = baseFee;
+    if (distance > includedKm) {
+        const extraKm = distance - includedKm;
+        totalDeliveryFee += (extraKm * perKmRate);
+    }
+    
+    const deliveryFeePerItem = totalQuantity > 0 ? totalDeliveryFee / totalQuantity : 0;
+    
+    return {
+        totalDeliveryCost: totalDeliveryFee,
+        deliveryFeePerItem: deliveryFeePerItem,
+        isFree: false,
+        totalQuantity: totalQuantity
+    };
+}
+
+function updateDeliveryDisplay(deliveryResult, routeData, distance) {
+    // Update distance result
+    const distanceResultElement = document.getElementById('distanceResult');
+    if (distanceResultElement) {
+        if (deliveryResult.isFree) {
+            distanceResultElement.innerHTML = `
+                <div class="bg-green-100 border border-green-300 rounded p-3">
+                    <div class="font-medium text-green-800">FREE DELIVERY!</div>
+                    <div class="font-medium text-green-800">Zone: ${selectedZone.zone_name}</div>
+                    <div class="text-sm text-green-600 mt-1">No delivery charges for this area</div>
+                </div>
+            `;
+        } else {
+            distanceResultElement.innerHTML = `
+                <div class="bg-blue-100 border border-blue-300 rounded p-3">
+                    <div class="font-medium text-blue-800">Zone: ${selectedZone.zone_name}</div>
+                    <div class="font-medium text-blue-800">Distance: ${distance.toFixed(2)} km</div>
+                    <div class="font-medium text-blue-800">Est. Time: ${routeData.time} minutes</div>
+                    <div class="font-medium text-blue-800">Total Delivery: ₱${deliveryResult.totalDeliveryCost.toFixed(2)}</div>
+                    <div class="font-medium text-blue-800">Per Item: ₱${deliveryResult.deliveryFeePerItem.toFixed(2)}</div>
+                </div>
+            `;
+        }
+    }
+    
+    // Update individual item delivery displays
+    const cartItems = document.querySelectorAll('[id^="cartItem"]');
+    cartItems.forEach(cartItem => {
+        const quantityElement = cartItem.querySelector('.itemQuantity');
+        const quantity = parseInt(quantityElement.textContent);
+        
+        const deliveryPerItemElement = cartItem.querySelector('.deliveryPerItem');
+        const totalDeliveryForItemElement = cartItem.querySelector('.totalDeliveryForItem');
+        
+        const itemTotalDelivery = deliveryResult.deliveryFeePerItem * quantity;
+        
+        if (deliveryPerItemElement) {
+            deliveryPerItemElement.textContent = `₱${deliveryResult.deliveryFeePerItem.toFixed(2)}`;
+        }
+        if (totalDeliveryForItemElement) {
+            totalDeliveryForItemElement.textContent = `₱${itemTotalDelivery.toFixed(2)}`;
+        }
+    });
+}
+
+function updateTotalsDisplay(deliveryCost) {
+    const subtotal = <?= $total_price ?>;
+    const totals = calculateTotalsWithVAT(subtotal, deliveryCost);
+    
+    // Update displays
+    const subtotalBeforeVATElement = document.getElementById('subtotalBeforeVAT');
+    const totalDeliveryCostDisplayElement = document.getElementById('totalDeliveryCostDisplay');
+    const vatAmountElement = document.getElementById('vatAmount');
+    const grandTotalDisplayElement = document.getElementById('grandTotalDisplay');
+    
+    if (subtotalBeforeVATElement) {
+        subtotalBeforeVATElement.textContent = `₱${totals.subtotalWithDelivery.toFixed(2)}`;
+    }
+    if (totalDeliveryCostDisplayElement) {
+        totalDeliveryCostDisplayElement.textContent = `₱${deliveryCost.toFixed(2)}`;
+    }
+    if (vatAmountElement) {
+        vatAmountElement.textContent = `₱${totals.vatAmount.toFixed(2)}`;
+    }
+    if (grandTotalDisplayElement) {
+        grandTotalDisplayElement.textContent = `₱${totals.grandTotal.toFixed(2)}`;
+    }
+    
+    // Update bank transfer amount if visible
+    updateBankPaymentAmount();
+}
+
+function initializeMapModal() {
+    const showMapBtn = document.getElementById('showMapModal');
+
+    if (showMapBtn) {
+        showMapBtn.addEventListener('click', function() {
+            if (!selectedAddress || !deliverySettings) {
+                showNotification('Please select an address first.', 'error');
+                return;
+            }
+
+            // Prepare store data
+            const storeData = {
+                name: deliverySettings.location_name,
+                latitude: parseFloat(deliverySettings.latitude),
+                longitude: parseFloat(deliverySettings.longitude)
+            };
+
+            // Prepare customer data
+            const customerData = {
+                address: selectedAddress.address,
+                latitude: selectedAddress.latitude,
+                longitude: selectedAddress.longitude
+            };
+
+            // Create and show the map modal
+            createMapModal(storeData, customerData, deliverySettings);
+        });
+    }
+}
+
+function initializeCheckoutForm() {
+    const checkoutForm = document.querySelector('#checkoutForm');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+    if (checkoutForm && placeOrderBtn) {
+        checkoutForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent normal form submission
+
+            // Final validation
+            if (!validateStep(4)) {
+                return;
+            }
+
+            // UPDATED: Check if delivery fee is calculated (considering free delivery)
+            if (!selectedZone) {
+                showNotification('Please select a delivery zone first.', 'error');
+                return;
+            }
+
+            const deliveryFeeInput = document.getElementById('deliveryFee');
+            const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
+
+            if (deliveryFee === null || deliveryFee === undefined) {
+                if (selectedZone.zone_code === 'NCR' || selectedZone.is_free_delivery) {
+                    // Auto-setup free delivery if not already done
+                    setupFreeDelivery();
+                } else {
+                    showNotification('Please calculate delivery distance first before placing your order.', 'error');
+                    return;
+                }
+            }
+
+            // Show loading state
+            const originalText = placeOrderBtn.textContent;
+            placeOrderBtn.textContent = 'Processing Order...';
+            placeOrderBtn.disabled = true;
+
+            // Create FormData object
+            const formData = new FormData(checkoutForm);
+
+            // Send AJAX request with proper headers
+            fetch('', { // Empty string means current page
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // This identifies it as an AJAX request
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    // Check if response is JSON or HTML
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        return response.text();
                     }
+                })
+                .then(data => {
+                    if (typeof data === 'object' && data.success) {
+                        // JSON response - success
+                        showNotification('Order placed successfully! Redirecting to receipt...', 'success');
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 2000);
+                    } else if (typeof data === 'string') {
+                        // HTML response - check for errors
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data, 'text/html');
+                        const errorDiv = doc.querySelector('.bg-red-100');
 
-                    // Show loading
-                    const originalText = calculateDistanceBtn.textContent;
-                    calculateDistanceBtn.textContent = 'Calculating...';
-                    calculateDistanceBtn.disabled = true;
-
-                    try {
-                        // Calculate distance using routing API (same as map)
-                        const storeLatLng = {
-                            lat: parseFloat(deliverySettings.latitude),
-                            lng: parseFloat(deliverySettings.longitude)
-                        };
-                        const customerLatLng = {
-                            lat: selectedAddress.latitude,
-                            lng: selectedAddress.longitude
-                        };
-
-                        const routeData = await calculateRoutingDistance(storeLatLng, customerLatLng);
-                        const distance = routeData.distance;
-
-                        // Calculate delivery fee per item
-                        const baseFee = parseFloat(deliverySettings.base_fee);
-                        const perKmRate = parseFloat(deliverySettings.per_km_rate);
-                        const baseKm = parseFloat(deliverySettings.total_km_base_fee);
-
-                        let deliveryFeePerItem;
-                        if (distance <= baseKm) {
-                            deliveryFeePerItem = baseFee;
+                        if (errorDiv) {
+                            const errorText = errorDiv.textContent.replace('Error:', '').trim();
+                            showNotification('Error: ' + errorText, 'error');
                         } else {
-                            const extraKm = distance - baseKm;
-                            deliveryFeePerItem = baseFee + (extraKm * perKmRate);
+                            showNotification('An unexpected error occurred. Please try again.', 'error');
                         }
 
-                        // Calculate total delivery cost for all items (delivery fee per item × quantity for each item)
-                        let totalDeliveryCost = 0;
-                        const cartItems = document.querySelectorAll('[id^="cartItem"]');
-
-                        cartItems.forEach((cartItem, index) => {
-                            const quantityElement = cartItem.querySelector('.itemQuantity');
-                            const quantity = parseInt(quantityElement.textContent);
-
-                            // Calculate item total delivery (delivery fee per item × quantity)
-                            const itemTotalDelivery = deliveryFeePerItem * quantity;
-                            totalDeliveryCost += itemTotalDelivery;
-
-                            // Update UI for each item
-                            const deliveryPerItemElement = cartItem.querySelector('.deliveryPerItem');
-                            const totalDeliveryForItemElement = cartItem.querySelector('.totalDeliveryForItem');
-
-                            if (deliveryPerItemElement) {
-                                deliveryPerItemElement.textContent = `₱${deliveryFeePerItem.toFixed(2)}`;
-                            }
-                            if (totalDeliveryForItemElement) {
-                                totalDeliveryForItemElement.textContent = `₱${itemTotalDelivery.toFixed(2)}`;
-                            }
-                        });
-
-                        // Update distance result
-                        const distanceResultElement = document.getElementById('distanceResult');
-                        if (distanceResultElement) {
-                            const fallbackNote = routeData.fallback ? '<div class="text-xs text-orange-600 mt-1">* Distance calculated using straight-line method</div>' : '';
-                            distanceResultElement.innerHTML = `
-                        <div class="bg-green-100 border border-green-300 rounded p-3">
-                            <div class="font-medium text-green-800">Distance: ${distance.toFixed(2)} km</div>
-                            <div class="font-medium text-green-800">Est. Time: ${routeData.time} minutes</div>
-                            <div class="font-medium text-green-800">Delivery Fee per Item: ₱${deliveryFeePerItem.toFixed(2)}</div>
-                            <div class="font-medium text-green-800">Total Delivery Cost: ₱${totalDeliveryCost.toFixed(2)}</div>
-                            ${fallbackNote}
-                        </div>
-                    `;
-                        }
-
-                        // Update hidden fields
-                        const deliveryDistanceInput = document.getElementById('deliveryDistance');
-                        const deliveryFeeInput = document.getElementById('deliveryFee');
-
-                        if (deliveryDistanceInput) deliveryDistanceInput.value = distance.toFixed(2);
-                        if (deliveryFeeInput) deliveryFeeInput.value = totalDeliveryCost.toFixed(2);
-
-                        // Update totals display with corrected VAT calculation
-                        const totals = calculateTotalsWithVAT(subtotal, totalDeliveryCost);
-
-                        const totalDeliveryCostDisplay = document.getElementById('totalDeliveryCostDisplay');
-                        const subtotalBeforeVATDisplay = document.getElementById('subtotalBeforeVAT');
-                        const vatAmountDisplay = document.getElementById('vatAmount');
-                        const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-
-                        if (totalDeliveryCostDisplay) {
-                            totalDeliveryCostDisplay.textContent = `₱${totalDeliveryCost.toFixed(2)}`;
-                        }
-                        if (subtotalBeforeVATDisplay) {
-                            // Show items subtotal only (before VAT, before delivery)
-                            subtotalBeforeVATDisplay.textContent = `₱${subtotal.toFixed(2)}`;
-                        }
-                        if (vatAmountDisplay) {
-                            vatAmountDisplay.textContent = `₱${totals.vatAmount.toFixed(2)}`;
-                        }
-                        if (grandTotalDisplay) {
-                            grandTotalDisplay.textContent = `₱${totals.grandTotal.toFixed(2)}`;
-                        }
-
-                        // Enable continue to payment button
-                        if (continueToPaymentBtn) {
-                            continueToPaymentBtn.disabled = false;
-                            continueToPaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                            continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-                        }
-
-                        // Also update the updateBankPaymentAmount function to be called after delivery calculation
-                        if (typeof updateBankPaymentAmount === 'function') {
-                            updateBankPaymentAmount();
-                        }
-
-                        showNotification('Delivery fee calculated successfully! You can now proceed to payment.', 'success');
-
-                    } catch (error) {
-                        console.error('Error calculating delivery fee:', error);
-                        showNotification('Error calculating delivery fee. Please try again.', 'error');
-                    } finally {
-                        // Reset button
-                        calculateDistanceBtn.textContent = 'Recalculate Distance';
-                        calculateDistanceBtn.disabled = false;
+                        placeOrderBtn.textContent = originalText;
+                        placeOrderBtn.disabled = false;
+                    } else {
+                        // Unexpected response format
+                        showNotification('An unexpected error occurred. Please try again.', 'error');
+                        placeOrderBtn.textContent = originalText;
+                        placeOrderBtn.disabled = false;
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('A network error occurred. Please check your connection and try again.', 'error');
+                    placeOrderBtn.textContent = originalText;
+                    placeOrderBtn.disabled = false;
                 });
-            }
-        }
+        });
+    }
+}
 
-        function initializeMapModal() {
-            const showMapBtn = document.getElementById('showMapModal');
+// Haversine formula to calculate distance between two coordinates
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
 
-            if (showMapBtn) {
-                showMapBtn.addEventListener('click', function() {
-                    if (!selectedAddress || !deliverySettings) {
-                        showNotification('Please select an address first.', 'error');
-                        return;
-                    }
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
 
-                    // Prepare store data
-                    const storeData = {
-                        name: deliverySettings.location_name,
-                        latitude: parseFloat(deliverySettings.latitude),
-                        longitude: parseFloat(deliverySettings.longitude)
-                    };
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
-                    // Prepare customer data
-                    const customerData = {
-                        address: selectedAddress.address,
-                        latitude: selectedAddress.latitude,
-                        longitude: selectedAddress.longitude
-                    };
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-                    // Create and show the map modal
-                    createMapModal(storeData, customerData, deliverySettings);
-                });
-            }
-        }
+    const distance = R * c; // Distance in kilometers
+    return distance;
+}
 
-        function initializeCheckoutForm() {
-            const checkoutForm = document.querySelector('#checkoutForm');
-            const placeOrderBtn = document.getElementById('placeOrderBtn');
+// Function to create and display the map modal with fixed layout
+function createMapModal(storeData, customerData, deliverySettings) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('deliveryMapModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
 
-            if (checkoutForm && placeOrderBtn) {
-                checkoutForm.addEventListener('submit', function(e) {
-                    e.preventDefault(); // Prevent normal form submission
-
-                    // Final validation
-                    if (!validateStep(4)) {
-                        return;
-                    }
-
-                    // Check if delivery fee is calculated
-                    const deliveryDistanceInput = document.getElementById('deliveryDistance');
-                    const deliveryDistance = deliveryDistanceInput ? parseFloat(deliveryDistanceInput.value) : 0;
-
-                    if (deliveryDistance <= 0) {
-                        showNotification('Please calculate delivery distance first before placing your order.', 'error');
-                        return;
-                    }
-
-                    // Show loading state
-                    const originalText = placeOrderBtn.textContent;
-                    placeOrderBtn.textContent = 'Processing Order...';
-                    placeOrderBtn.disabled = true;
-
-                    // Create FormData object
-                    const formData = new FormData(checkoutForm);
-
-                    // Send AJAX request with proper headers
-                    fetch('', { // Empty string means current page
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest' // This identifies it as an AJAX request
-                            },
-                            body: formData
-                        })
-                        .then(response => {
-                            // Check if response is JSON or HTML
-                            const contentType = response.headers.get('content-type');
-                            if (contentType && contentType.includes('application/json')) {
-                                return response.json();
-                            } else {
-                                return response.text();
-                            }
-                        })
-                        .then(data => {
-                            if (typeof data === 'object' && data.success) {
-                                // JSON response - success
-                                showNotification('Order placed successfully! Redirecting to receipt...', 'success');
-                                setTimeout(() => {
-                                    window.location.href = data.redirect_url;
-                                }, 2000);
-                            } else if (typeof data === 'string') {
-                                // HTML response - check for errors
-                                const parser = new DOMParser();
-                                const doc = parser.parseFromString(data, 'text/html');
-                                const errorDiv = doc.querySelector('.bg-red-100');
-
-                                if (errorDiv) {
-                                    const errorText = errorDiv.textContent.replace('Error:', '').trim();
-                                    showNotification('Error: ' + errorText, 'error');
-                                } else {
-                                    showNotification('An unexpected error occurred. Please try again.', 'error');
-                                }
-
-                                placeOrderBtn.textContent = originalText;
-                                placeOrderBtn.disabled = false;
-                            } else {
-                                // Unexpected response format
-                                showNotification('An unexpected error occurred. Please try again.', 'error');
-                                placeOrderBtn.textContent = originalText;
-                                placeOrderBtn.disabled = false;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            showNotification('A network error occurred. Please check your connection and try again.', 'error');
-                            placeOrderBtn.textContent = originalText;
-                            placeOrderBtn.disabled = false;
-                        });
-                });
-            }
-        }
-
-        // Haversine formula to calculate distance between two coordinates
-        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Earth's radius in kilometers
-
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            const distance = R * c; // Distance in kilometers
-            return distance;
-        }
-
-        // Function to create and display the map modal with fixed layout
-        function createMapModal(storeData, customerData, deliverySettings) {
-            // Remove existing modal if any
-            const existingModal = document.getElementById('deliveryMapModal');
-            if (existingModal) {
-                existingModal.remove();
-            }
-
-            // Create modal HTML with improved layout
-            const modalHTML = `
+    // Create modal HTML with improved layout
+    const modalHTML = `
         <div id="deliveryMapModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="backdrop-filter: blur(4px);">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
                 <!-- Modal Header -->
@@ -1805,92 +2218,89 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         </div>
     `;
 
-            // Add modal to page
-            document.body.appendChild(document.createElement('div')).innerHTML = modalHTML;
-            const modal = document.getElementById('deliveryMapModal');
+    // Add modal to page
+    document.body.appendChild(document.createElement('div')).innerHTML = modalHTML;
+    const modal = document.getElementById('deliveryMapModal');
 
-            // Initialize the map
-            setTimeout(() => {
-                initializeDeliveryMap(storeData, customerData, deliverySettings);
-            }, 100);
-        }
+    // Initialize the map
+    setTimeout(() => {
+        initializeDeliveryMap(storeData, customerData, deliverySettings);
+    }, 100);
+}
 
-        // Function to initialize the delivery map
-        async function initializeDeliveryMap(storeData, customerData, deliverySettings) {
-            const mapContainer = document.getElementById('deliveryMapContainer');
+// Function to initialize the delivery map
+async function initializeDeliveryMap(storeData, customerData, deliverySettings) {
+    const mapContainer = document.getElementById('deliveryMapContainer');
+    
+    if (!mapContainer) return;
 
-            if (!mapContainer) return;
+    // Create the map
+    deliveryMap = L.map('deliveryMapContainer').setView([storeData.latitude, storeData.longitude], 13);
 
-            // Create the map
-            deliveryMap = L.map('deliveryMapContainer').setView([storeData.latitude, storeData.longitude], 13);
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(deliveryMap);
 
-            // Add tile layer
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(deliveryMap);
-
-            // Store marker (green)
-            storeMarker = L.marker([storeData.latitude, storeData.longitude], {
-                icon: L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color: #10b981; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+    // Store marker (green)
+    storeMarker = L.marker([storeData.latitude, storeData.longitude], {
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #10b981; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
                 <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
                 </svg>
             </div>`,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20],
-                    popupAnchor: [0, -20]
-                })
-            }).addTo(deliveryMap);
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        })
+    }).addTo(deliveryMap);
 
-            storeMarker.bindPopup(`
+    storeMarker.bindPopup(`
         <div class="text-center">
             <div class="font-bold text-green-700">${storeData.name}</div>
             <div class="text-sm text-gray-600 mt-1">Store Location</div>
         </div>
     `);
 
-            // Customer marker (blue)
-            customerMarker = L.marker([customerData.latitude, customerData.longitude], {
-                icon: L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color: #3b82f6; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+    // Customer marker (blue)
+    customerMarker = L.marker([customerData.latitude, customerData.longitude], {
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #3b82f6; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
                 <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
                 </svg>
             </div>`,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20],
-                    popupAnchor: [0, -20]
-                })
-            }).addTo(deliveryMap);
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        })
+    }).addTo(deliveryMap);
 
-            customerMarker.bindPopup(`
+    customerMarker.bindPopup(`
         <div class="text-center">
             <div class="font-bold text-blue-700">Your Address</div>
             <div class="text-sm text-gray-600 mt-1">${customerData.address}</div>
         </div>
     `);
 
-            // Calculate and display route
-            try {
-                const routeData = await calculateRoutingDistance({
-                    lat: storeData.latitude,
-                    lng: storeData.longitude
-                }, {
-                    lat: customerData.latitude,
-                    lng: customerData.longitude
-                });
+    // Calculate and display route
+    try {
+        const routeData = await calculateRoutingDistance(
+            { lat: storeData.latitude, lng: storeData.longitude },
+            { lat: customerData.latitude, lng: customerData.longitude }
+        );
 
-                currentRouteData = routeData;
+        currentRouteData = routeData;
 
-                // Update route info display
-                const routeInfoDisplay = document.getElementById('routeInfoDisplay');
-                if (routeInfoDisplay) {
-                    const fallbackNote = routeData.fallback ? '<div class="text-xs text-orange-600 mt-1">* Distance calculated using straight-line method</div>' : '';
-
-                    routeInfoDisplay.innerHTML = `
+        // Update route info display
+        const routeInfoDisplay = document.getElementById('routeInfoDisplay');
+        if (routeInfoDisplay) {
+            const fallbackNote = routeData.fallback ? '<div class="text-xs text-orange-600 mt-1">* Distance calculated using straight-line method</div>' : '';
+            
+            routeInfoDisplay.innerHTML = `
                 <div class="text-sm">
                     <div class="flex justify-between py-1">
                         <span class="text-gray-600">Distance:</span>
@@ -1909,51 +2319,49 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     ${fallbackNote}
                 </div>
             `;
-                }
+        }
 
-                // Add route to map if not using fallback
-                if (!routeData.fallback && typeof L.Routing !== 'undefined') {
-                    routingControl = L.Routing.control({
-                        waypoints: [
-                            L.latLng(storeData.latitude, storeData.longitude),
-                            L.latLng(customerData.latitude, customerData.longitude)
-                        ],
-                        routeWhileDragging: false,
-                        addWaypoints: false,
-                        createMarker: function() {
-                            return null;
-                        }, // Don't create default markers
-                        lineOptions: {
-                            styles: [{
-                                color: '#f97316',
-                                weight: 6,
-                                opacity: 0.8
-                            }]
-                        },
-                        show: false // Hide the directions panel
-                    }).addTo(deliveryMap);
-                } else {
-                    // Draw straight line if routing failed
-                    const straightLine = L.polyline([
-                        [storeData.latitude, storeData.longitude],
-                        [customerData.latitude, customerData.longitude]
-                    ], {
-                        color: '#f59e0b',
-                        weight: 4,
-                        opacity: 0.7,
-                        dashArray: '10, 5'
-                    }).addTo(deliveryMap);
-                }
+        // Add route to map if not using fallback
+        if (!routeData.fallback && typeof L.Routing !== 'undefined') {
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(storeData.latitude, storeData.longitude),
+                    L.latLng(customerData.latitude, customerData.longitude)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                createMarker: function() { return null; }, // Don't create default markers
+                lineOptions: {
+                    styles: [{
+                        color: '#f97316',
+                        weight: 6,
+                        opacity: 0.8
+                    }]
+                },
+                show: false // Hide the directions panel
+            }).addTo(deliveryMap);
+        } else {
+            // Draw straight line if routing failed
+            const straightLine = L.polyline([
+                [storeData.latitude, storeData.longitude],
+                [customerData.latitude, customerData.longitude]
+            ], {
+                color: '#f59e0b',
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 5'
+            }).addTo(deliveryMap);
+        }
 
-                // Fit map to show both markers
-                fitMapToRoute();
+        // Fit map to show both markers
+        fitMapToRoute();
 
-            } catch (error) {
-                console.error('Error displaying route on map:', error);
-
-                const routeInfoDisplay = document.getElementById('routeInfoDisplay');
-                if (routeInfoDisplay) {
-                    routeInfoDisplay.innerHTML = `
+    } catch (error) {
+        console.error('Error displaying route on map:', error);
+        
+        const routeInfoDisplay = document.getElementById('routeInfoDisplay');
+        if (routeInfoDisplay) {
+            routeInfoDisplay.innerHTML = `
                 <div class="text-sm text-red-600">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -1964,67 +2372,67 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     <div class="text-xs mt-1">Distance will be estimated during checkout</div>
                 </div>
             `;
-                }
-
-                // Still fit map to show both markers
-                fitMapToRoute();
-            }
         }
+        
+        // Still fit map to show both markers
+        fitMapToRoute();
+    }
+}
 
-        // Map control functions
-        function centerMapOnStore() {
-            if (deliveryMap && storeMarker) {
-                deliveryMap.setView(storeMarker.getLatLng(), 15);
-                storeMarker.openPopup();
-            }
-        }
+// Map control functions
+function centerMapOnStore() {
+    if (deliveryMap && storeMarker) {
+        deliveryMap.setView(storeMarker.getLatLng(), 15);
+        storeMarker.openPopup();
+    }
+}
 
-        function centerMapOnCustomer() {
-            if (deliveryMap && customerMarker) {
-                deliveryMap.setView(customerMarker.getLatLng(), 15);
-                customerMarker.openPopup();
-            }
-        }
+function centerMapOnCustomer() {
+    if (deliveryMap && customerMarker) {
+        deliveryMap.setView(customerMarker.getLatLng(), 15);
+        customerMarker.openPopup();
+    }
+}
 
-        function fitMapToRoute() {
-            if (deliveryMap && storeMarker && customerMarker) {
-                const group = new L.featureGroup([storeMarker, customerMarker]);
-                deliveryMap.fitBounds(group.getBounds().pad(0.1));
-            }
-        }
+function fitMapToRoute() {
+    if (deliveryMap && storeMarker && customerMarker) {
+        const group = new L.featureGroup([storeMarker, customerMarker]);
+        deliveryMap.fitBounds(group.getBounds().pad(0.1));
+    }
+}
 
-        // Function to close the map modal
-        function closeDeliveryMapModal() {
-            const modal = document.getElementById('deliveryMapModal');
-            if (modal) {
-                modal.remove();
-            }
+// Function to close the map modal
+function closeDeliveryMapModal() {
+    const modal = document.getElementById('deliveryMapModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    // Clean up map resources
+    if (deliveryMap) {
+        deliveryMap.remove();
+        deliveryMap = null;
+    }
+    if (routingControl) {
+        routingControl = null;
+    }
+    storeMarker = null;
+    customerMarker = null;
+    currentRouteData = null;
+}
 
-            // Clean up map resources
-            if (deliveryMap) {
-                deliveryMap.remove();
-                deliveryMap = null;
-            }
-            if (routingControl) {
-                routingControl = null;
-            }
-            storeMarker = null;
-            customerMarker = null;
-            currentRouteData = null;
-        }
-
-        // Bank Transfer Functions
-        function showBankSelection() {
-            const bankTransferFields = document.getElementById('bankTransferFields');
-            const bankSelectionArea = document.getElementById('bankSelectionArea');
-            const placeOrderBtn = document.getElementById('placeOrderBtn');
-
-            if (bankTransferFields) {
-                bankTransferFields.classList.remove('hidden');
-            }
-
-            if (bankSelectionArea) {
-                bankSelectionArea.innerHTML = `
+// Bank Transfer Functions
+function showBankSelection() {
+    const bankTransferFields = document.getElementById('bankTransferFields');
+    const bankSelectionArea = document.getElementById('bankSelectionArea');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    
+    if (bankTransferFields) {
+        bankTransferFields.classList.remove('hidden');
+    }
+    
+    if (bankSelectionArea) {
+        bankSelectionArea.innerHTML = `
             <div class="space-y-4">
                 <h5 class="font-bold text-blue-800 mb-3">Select Bank for Transfer</h5>
                 
@@ -2074,43 +2482,43 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 </div>
             </div>
         `;
-            }
+    }
+}
+
+function selectBank(bankType) {
+    const selectedBankInput = document.getElementById('selectedBank');
+    const bankDetailsArea = document.getElementById('bankDetailsArea');
+    
+    if (selectedBankInput) {
+        selectedBankInput.value = bankType;
+    }
+    
+    // Bank account details (you should replace these with actual account details)
+    const bankDetails = {
+        'BPI': {
+            name: 'Bank of the Philippine Islands',
+            accountName: 'Your Store Name',
+            accountNumber: '1234567890',
+            color: 'red'
+        },
+        'BDO': {
+            name: 'Banco de Oro',
+            accountName: 'Your Store Name',
+            accountNumber: '0987654321',
+            color: 'blue'
+        },
+        'Metrobank': {
+            name: 'Metropolitan Bank',
+            accountName: 'Your Store Name',
+            accountNumber: '5678901234',
+            color: 'yellow'
         }
-
-        function selectBank(bankType) {
-            const selectedBankInput = document.getElementById('selectedBank');
-            const bankDetailsArea = document.getElementById('bankDetailsArea');
-
-            if (selectedBankInput) {
-                selectedBankInput.value = bankType;
-            }
-
-            // Bank account details (you should replace these with actual account details)
-            const bankDetails = {
-                'BPI': {
-                    name: 'Bank of the Philippine Islands',
-                    accountName: 'Your Store Name',
-                    accountNumber: '1234567890',
-                    color: 'red'
-                },
-                'BDO': {
-                    name: 'Banco de Oro',
-                    accountName: 'Your Store Name',
-                    accountNumber: '0987654321',
-                    color: 'blue'
-                },
-                'Metrobank': {
-                    name: 'Metropolitan Bank',
-                    accountName: 'Your Store Name',
-                    accountNumber: '5678901234',
-                    color: 'yellow'
-                }
-            };
-
-            const bank = bankDetails[bankType];
-            if (bank && bankDetailsArea) {
-                bankDetailsArea.classList.remove('hidden');
-                bankDetailsArea.innerHTML = `
+    };
+    
+    const bank = bankDetails[bankType];
+    if (bank && bankDetailsArea) {
+        bankDetailsArea.classList.remove('hidden');
+        bankDetailsArea.innerHTML = `
             <div class="bg-${bank.color}-50 border border-${bank.color}-200 rounded-lg p-4 mt-4">
                 <h6 class="font-bold text-${bank.color}-800 mb-3">Transfer Details for ${bank.name}</h6>
                 <div class="space-y-2 text-sm">
@@ -2150,145 +2558,176 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 </div>
             </div>
         `;
+        
+        // Update the transfer amount
+        updateBankPaymentAmount();
+    }
+}
 
-                // Update the transfer amount
-                updateBankPaymentAmount();
+function updateBankPaymentAmount() {
+    const bankTransferAmountElement = document.getElementById('bankTransferAmount');
+    const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+    
+    if (bankTransferAmountElement && grandTotalDisplay) {
+        const grandTotal = grandTotalDisplay.textContent;
+        bankTransferAmountElement.textContent = grandTotal;
+    }
+}
+
+function updateReferenceNumber(value) {
+    const referenceNumberInput = document.getElementById('referenceNumber');
+    if (referenceNumberInput) {
+        referenceNumberInput.value = value;
+    }
+}
+
+function validatePaymentScreenshot(input) {
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileSize = file.size / 1024 / 1024; // Convert to MB
+        
+        if (fileSize > 5) {
+            showNotification('Payment screenshot must be less than 5MB', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Check if all required fields are filled
+        const selectedBank = document.getElementById('selectedBank').value;
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+        const deliveryFeeInput = document.getElementById('deliveryFee');
+        const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
+        
+        if (selectedBank && paymentMethod && (deliveryFee !== null && deliveryFee >= 0)) {
+            if (placeOrderBtn) {
+                placeOrderBtn.disabled = false;
+                placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             }
         }
+        
+        showNotification('Payment screenshot uploaded successfully!', 'success');
+    }
+}
 
-        function updateBankPaymentAmount() {
-            const bankTransferAmountElement = document.getElementById('bankTransferAmount');
-            const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-
-            if (bankTransferAmountElement && grandTotalDisplay) {
-                const grandTotal = grandTotalDisplay.textContent;
-                bankTransferAmountElement.textContent = grandTotal;
-            }
-        }
-
-        function updateReferenceNumber(value) {
-            const referenceNumberInput = document.getElementById('referenceNumber');
-            if (referenceNumberInput) {
-                referenceNumberInput.value = value;
-            }
-        }
-
-        function validatePaymentScreenshot(input) {
-            const placeOrderBtn = document.getElementById('placeOrderBtn');
-
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const fileSize = file.size / 1024 / 1024; // Convert to MB
-
-                if (fileSize > 5) {
-                    showNotification('Payment screenshot must be less than 5MB', 'error');
-                    input.value = '';
-                    return;
-                }
-
-                // Check if all required fields are filled
-                const selectedBank = document.getElementById('selectedBank').value;
-                const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-                const deliveryDistance = parseFloat(document.getElementById('deliveryDistance')?.value || '0');
-
-                if (selectedBank && paymentMethod && deliveryDistance > 0) {
-                    if (placeOrderBtn) {
-                        placeOrderBtn.disabled = false;
-                        placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                        placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                    }
-                }
-
-                showNotification('Payment screenshot uploaded successfully!', 'success');
-            }
-        }
-
-        // Additional helper functions for better UX
-        function previewPaymentScreenshot(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Create preview if needed
-                    const previewArea = document.getElementById('screenshotPreview');
-                    if (previewArea) {
-                        previewArea.innerHTML = `
+// Additional helper functions for better UX
+function previewPaymentScreenshot(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Create preview if needed
+            const previewArea = document.getElementById('screenshotPreview');
+            if (previewArea) {
+                previewArea.innerHTML = `
                     <img src="${e.target.result}" class="max-w-full h-32 object-cover rounded-lg border" alt="Payment Screenshot Preview">
                 `;
-                    }
-                };
-                reader.readAsDataURL(input.files[0]);
             }
-        }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
 
-        // Function to handle step validation for payment method
-        function validatePaymentStep() {
-            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-            const placeOrderBtn = document.getElementById('placeOrderBtn');
-
-            if (!paymentMethod) return false;
-
-            if (paymentMethod.value === 'Bank Transfer') {
-                const selectedBank = document.getElementById('selectedBank').value;
-                const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
-
-                if (!selectedBank) {
-                    showNotification('Please select a bank for transfer.', 'error');
-                    return false;
-                }
-
-                if (!paymentScreenshot || !paymentScreenshot.files[0]) {
-                    showNotification('Please upload a payment screenshot.', 'error');
-                    return false;
-                }
-
-                // Enable place order button
-                if (placeOrderBtn) {
-                    placeOrderBtn.disabled = false;
-                    placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                    placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                }
-
-                return true;
-            }
-
+// Function to handle step validation for payment method
+function validatePaymentStep() {
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    
+    if (!paymentMethod) return false;
+    
+    if (paymentMethod.value === 'Bank Transfer') {
+        const selectedBank = document.getElementById('selectedBank').value;
+        const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
+        
+        if (!selectedBank) {
+            showNotification('Please select a bank for transfer.', 'error');
             return false;
         }
-
-        // Close modal when clicking outside
-        document.addEventListener('click', function(event) {
-            const modal = document.getElementById('deliveryMapModal');
-            if (modal && event.target === modal) {
-                closeDeliveryMapModal();
-            }
-        });
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const modal = document.getElementById('deliveryMapModal');
-                if (modal) {
-                    closeDeliveryMapModal();
-                }
-            }
-        });
-
-        // Load Leaflet Routing Machine when needed
-        function loadLeafletRouting() {
-            if (typeof L !== 'undefined' && !window.leafletRoutingLoaded) {
-                const script = document.createElement('script');
-                script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js';
-                script.onload = function() {
-                    window.leafletRoutingLoaded = true;
-                };
-                document.head.appendChild(script);
-            }
+        
+        if (!paymentScreenshot || !paymentScreenshot.files[0]) {
+            showNotification('Please upload a payment screenshot.', 'error');
+            return false;
         }
+        
+        // Enable place order button
+        if (placeOrderBtn) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+        
+        return true;
+    }
+    
+    return false;
+}
 
-        // Initialize routing library on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadLeafletRouting();
-        });
-    </script>
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('deliveryMapModal');
+    if (modal && event.target === modal) {
+        closeDeliveryMapModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('deliveryMapModal');
+        if (modal) {
+            closeDeliveryMapModal();
+        }
+    }
+});
+
+// Load Leaflet Routing Machine when needed
+function loadLeafletRouting() {
+    if (typeof L !== 'undefined' && !window.leafletRoutingLoaded) {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js';
+        script.onload = function() {
+            window.leafletRoutingLoaded = true;
+        };
+        document.head.appendChild(script);
+    }
+}
+
+// Initialize routing library on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadLeafletRouting();
+});
+
+// Zone selection functions
+function selectDeliveryZone(select) {
+    const option = select.options[select.selectedIndex];
+    if (option.value) {
+        selectedZone = {
+            id: option.value,
+            zone_name: option.dataset.zoneName,
+            zone_code: option.dataset.zoneCode,
+            base_fee: option.dataset.baseFee,
+            included_km: option.dataset.includedKm,
+            per_km_rate: option.dataset.perKmRate,
+            is_free_delivery: option.dataset.isFree === '1'
+        };
+        
+        const description = document.getElementById('zoneDescription');
+        if (selectedZone.is_free_delivery) {
+            description.innerHTML = `<span class="text-green-600 font-medium">🎉 Free delivery for ${selectedZone.zone_name}!</span>`;
+            
+            // ADDED: Auto-setup free delivery when zone is selected
+            setupFreeDelivery();
+            
+        } else {
+            description.innerHTML = `<span class="text-blue-600">Base fee: ₱${parseFloat(selectedZone.base_fee).toFixed(2)} (includes ${selectedZone.included_km} km), ₱${parseFloat(selectedZone.per_km_rate).toFixed(2)} per additional km</span>`;
+        }
+    } else {
+        selectedZone = null;
+        document.getElementById('zoneDescription').textContent = 'Select your delivery zone to calculate shipping costs';
+    }
+}
+</script>
 </body>
 
 </html>

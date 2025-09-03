@@ -638,54 +638,54 @@ if ($user_id) {
               <template x-if="selectedCategory === 'AccBlock'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Tables</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                 </div>
               </template>
 
               <template x-if="selectedCategory === 'aircon'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Tables</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                 </div>
               </template>
 
               <template x-if="selectedCategory === 'KitchenFixtures'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Tables</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                 </div>
               </template>
 
               <template x-if="selectedCategory === 'Lightingfixture'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Tables</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                 </div>
               </template>
 
               <template x-if="selectedCategory === 'Doors'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Tables</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                 </div>
               </template>
 
               <template x-if="selectedCategory === 'windows'">
                 <div class="space-y-1">
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Chairs</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                   <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Tables</a>
+                    class="block hover:text-orange-500 text-sm">Not Available</a>
                 </div>
               </template>
             </div>

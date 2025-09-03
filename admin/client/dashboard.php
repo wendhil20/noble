@@ -55,11 +55,6 @@ if ($should_validate) {
     $stmt->close();
 }
 
-// ✅ CSRF Protection - Generate token if not exists
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
 // Handle search and filters
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
@@ -200,17 +195,6 @@ function getOrderDetails($conn, $order_id)
     $result = $stmt->get_result()->fetch_assoc();
     $stmt->close();
     return $result;
-}
-
-// ✅ Helper function to get CSRF token for forms
-function get_csrf_token() {
-    return $_SESSION['csrf_token'] ?? '';
-}
-
-// ✅ Helper function to generate CSRF hidden field
-function generate_csrf_field() {
-    $token = get_csrf_token();
-    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
 }
 
 // ✅ Session status check function for AJAX calls

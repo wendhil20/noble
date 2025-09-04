@@ -344,7 +344,7 @@ if (!$paypal_order_id) {
                                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-medium text-center">
                                 View Order Receipt
                             </a>
-                            <a href="../index.php" 
+                            <a href="index.php" 
                                class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition font-medium text-center">
                                 Continue Shopping
                             </a>
@@ -396,7 +396,7 @@ if (!$paypal_order_id) {
                                class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-medium text-center">
                                 Try Again
                             </a>
-                            <a href="../index.php" 
+                            <a href="index.php" 
                                class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition font-medium text-center">
                                 Return to Home
                             </a>

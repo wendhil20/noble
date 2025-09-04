@@ -3011,6 +3011,13 @@ handleQueryError($conn, "New Status Query");
     </script>
     <!-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
+    
+
+
+
+
+
+
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>

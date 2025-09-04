@@ -558,7 +558,7 @@ handleQueryError($conn, "New Status Query");
                         d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
                 </svg>
                 <p class="text-lg font-semibold">
-                    🎉 Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
+                   Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
                 </p>
             </div>
 
@@ -927,7 +927,7 @@ handleQueryError($conn, "New Status Query");
     <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
         <!-- Heading and description -->
         <div class="text-center mb-8">
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">Shop by Categories</h2>
+            <h2 class="text-3xl sm:text-4xl font-bold text-black mb-3">Shop by Categories</h2>
             <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
                 Discover our wide range of home improvement products organized by category
             </p>
@@ -1579,10 +1579,33 @@ handleQueryError($conn, "New Status Query");
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black  bg-clip-text text-black mb-4 tracking-tight" data-aos="fade-up">
-                Bed Furniture
-            </h2>
-            <div class="mx-start w-40 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+            <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+                <!-- Details Button (as Title) -->
+                <a href="shop.php"
+                    class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                    <span class="relative">
+                        <span class="block group-hover:text-orange-600 transition-colors duration-300">
+                            Bed Furniture
+                        </span>
+                        <!-- Animated overlay text -->
+                        <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
+                            Bed Furniture
+                        </span>
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24"
+                        stroke-width="2.5" stroke="currentColor"
+                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                    <!-- underline -->
+                    <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </div>
+
+
+
 
         </div>
         <style>
@@ -1727,13 +1750,36 @@ handleQueryError($conn, "New Status Query");
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text  to-pink-500 mb-4 tracking-tight" data-aos="fade-up">
-                Furniture
-            </h2>
-            <div class="ms-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-400 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+
+            <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+                <!-- Details Button (as Title) -->
+                <a href="shop.php"
+                    class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                    <span class="relative">
+                        <span class="block group-hover:text-orange-600 transition-colors duration-300">
+                            Furniture
+                        </span>
+                        <!-- Animated overlay text -->
+                        <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
+                            Furniture
+                        </span>
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24"
+                        stroke-width="2.5" stroke="currentColor"
+                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                    <!-- underline -->
+                    <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </div>
+
 
 
         </div>
+
         <style>
             .bubble-bounce {
                 position: absolute;
@@ -2017,10 +2063,31 @@ handleQueryError($conn, "New Status Query");
                 <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
                 <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
             </div>
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text mb-4 tracking-tight" data-aos="fade-up">
-                Materials Boards
-            </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-4 via-orange-400 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
+
+            <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+                <!-- Details Button (as Title) -->
+                <a href="shop.php"
+                    class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                    <span class="relative">
+                        <span class="block group-hover:text-orange-600 transition-colors duration-300">
+                            Material Boards
+                        </span>
+                        <!-- Animated overlay text -->
+                        <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
+                            Material Boards
+                        </span>
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24"
+                        stroke-width="2.5" stroke="currentColor"
+                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                    <!-- underline -->
+                    <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </div>
 
         </div>
         <style>
@@ -3084,7 +3151,7 @@ handleQueryError($conn, "New Status Query");
         </div>
     </footer>
 
-    
+
 
     <script>
         AOS.init();

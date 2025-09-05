@@ -306,9 +306,10 @@ while ($row = $types_result->fetch_assoc()) {
                                 <a href="view_supplier.php?id=<?= $supplier['id'] ?>" class="flex-1 bg-noble-primary hover:bg-blue-700 text-white text-sm py-2 px-3 rounded-lg transition-colors duration-200 text-center">
     <i class="fas fa-eye mr-2"></i>View Details
 </a>
-                                <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200">
-                                    <i class="fas fa-edit mr-2"></i>Edit
-                                </button>
+                                <a href="edit_supplier.php?edit_id=<?= $supplier['id'] ?>" 
+   class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200 inline-flex items-center justify-center text-decoration-none">
+    <i class="fas fa-edit mr-2"></i>Edit
+</a>
                                 <div class="relative">
                                     <button onclick="toggleDropdown(<?= $supplier['id'] ?>)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg transition-colors duration-200">
                                         <i class="fas fa-ellipsis-v"></i>
@@ -321,7 +322,7 @@ while ($row = $types_result->fetch_assoc()) {
                                                 <i class="fas fa-link mr-3 text-gray-400"></i>
                                                 Link Products
                                             </a>
-                                            <a href="supplier_management.php?edit_id=<?= $supplier['id'] ?>" 
+                                            <a href="edit_supplier.php?edit_id=<?= $supplier['id'] ?>" 
                                                class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-noble-primary transition-colors duration-200">
                                                 <i class="fas fa-edit mr-3 text-gray-400"></i>
                                                 Edit Supplier
@@ -332,11 +333,6 @@ while ($row = $types_result->fetch_assoc()) {
                                                 View Details
                                             </a>
                                             <hr class="my-1 border-gray-200">
-                                            <button onclick="confirmDelete(<?= $supplier['id'] ?>, '<?= htmlspecialchars($supplier['business_name'], ENT_QUOTES) ?>')" 
-                                                    class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200">
-                                                <i class="fas fa-trash mr-3 text-red-400"></i>
-                                                Delete Supplier
-                                            </button>
                                         </div>
                                     </div>
                                 </div>

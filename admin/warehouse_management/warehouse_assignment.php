@@ -14,6 +14,110 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
+// ADD HEAD ACCESS CHECK HERE - LOCATION 1
+// --- Resolve logged-in user and check head status ---
+$user_id = null;
+$fullname = '';
+$user_lvl = '';
+$is_head = false;
+
+$sessionUser = $_SESSION['noble_user'];
+
+if (is_array($sessionUser)) {
+    if (isset($sessionUser['id'])) {
+        $user_id = (int)$sessionUser['id'];
+    } elseif (isset($sessionUser['user_id'])) {
+        $user_id = (int)$sessionUser['user_id'];
+    }
+    $fullname = $sessionUser['fullname'] ?? $sessionUser['name'] ?? '';
+    $user_lvl = $sessionUser['lvl'] ?? $sessionUser['level'] ?? '';
+    $is_head = isset($sessionUser['is_head']) && (int)$sessionUser['is_head'] === 1;
+}
+
+if (empty($user_id) || empty($user_lvl)) {
+    // Try lookup by numeric or email stored in session
+    if (!is_array($sessionUser)) {
+        if (ctype_digit((string)$sessionUser)) {
+            $candidate = (int)$sessionUser;
+            $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE id = ? LIMIT 1";
+            if ($s = $conn->prepare($sql)) {
+                $s->bind_param("i", $candidate);
+                $s->execute();
+                $r = $s->get_result()->fetch_assoc();
+                $s->close();
+                if ($r) { 
+                    $user_id = (int)$r['id']; 
+                    $fullname = $r['fullname']; 
+                    $user_lvl = $r['lvl']; 
+                    $is_head = (int)$r['is_head'] === 1;
+                }
+            }
+        } else {
+            $candidate = (string)$sessionUser;
+            $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE email = ? LIMIT 1";
+            if ($s = $conn->prepare($sql)) {
+                $s->bind_param("s", $candidate);
+                $s->execute();
+                $r = $s->get_result()->fetch_assoc();
+                $s->close();
+                if ($r) { 
+                    $user_id = (int)$r['id']; 
+                    $fullname = $r['fullname']; 
+                    $user_lvl = $r['lvl']; 
+                    $is_head = (int)$r['is_head'] === 1;
+                }
+            }
+        }
+    } else {
+        // if session array had email
+        if (!empty($sessionUser['email'])) {
+            $candidate = $sessionUser['email'];
+            $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE email = ? LIMIT 1";
+            if ($s = $conn->prepare($sql)) {
+                $s->bind_param("s", $candidate);
+                $s->execute();
+                $r = $s->get_result()->fetch_assoc();
+                $s->close();
+                if ($r) { 
+                    $user_id = (int)$r['id']; 
+                    $fullname = $r['fullname']; 
+                    $user_lvl = $r['lvl']; 
+                    $is_head = (int)$r['is_head'] === 1;
+                }
+            }
+        } elseif (!empty($sessionUser['id'])) {
+            $candidate = (int)$sessionUser['id'];
+            $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE id = ? LIMIT 1";
+            if ($s = $conn->prepare($sql)) {
+                $s->bind_param("i", $candidate);
+                $s->execute();
+                $r = $s->get_result()->fetch_assoc();
+                $s->close();
+                if ($r) { 
+                    $user_id = (int)$r['id']; 
+                    $fullname = $r['fullname']; 
+                    $user_lvl = $r['lvl']; 
+                    $is_head = (int)$r['is_head'] === 1;
+                }
+            }
+        }
+    }
+}
+
+// If still unresolved -> logout
+if (empty($user_id) || empty($user_lvl)) {
+    session_unset();
+    session_destroy();
+    header("Location: ../../loginpage/index.php");
+    exit();
+}
+
+// REDIRECT NON-HEAD USERS - LOCATION 2
+if (!$is_head) {
+    header("Location: order_list.php");
+    exit();
+}
+
 // Handle warehouse assignment via AJAX
 if (isset($_POST['action']) && $_POST['action'] === 'assign_warehouse') {
     header('Content-Type: application/json');
@@ -233,6 +337,8 @@ if (!empty($view_assigned)) {
 }
 ?>
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -275,6 +381,10 @@ if (!empty($view_assigned)) {
                             <?php else: ?>
                                 Assign warehouse employees to ongoing orders
                             <?php endif; ?>
+                            <!-- ADD HEAD INDICATOR - LOCATION 3 (OPTIONAL) -->
+                            <span class="inline-flex items-center ml-3 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-crown mr-1"></i>Head Access Only
+                            </span>
                         </p>
                     </div>
                 </div>

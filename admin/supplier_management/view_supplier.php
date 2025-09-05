@@ -93,6 +93,25 @@ $inactive_products = count($linked_products) - $active_products;
             </a>
         </div>
 
+        <!-- Success/Error Messages -->
+        <?php if (isset($_GET['success'])): ?>
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                    <p class="text-green-800"><?= htmlspecialchars($_GET['success']) ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['error'])): ?>
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-400 mr-3"></i>
+                    <p class="text-red-800"><?= htmlspecialchars($_GET['error']) ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Supplier Information Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
             <div class="p-8">
@@ -159,8 +178,8 @@ $inactive_products = count($linked_products) - $active_products;
                                     </span>
                                 </div>
                             </div>
-                            <div class="flex space-x-2">
-                                <a href="supplier_management.php?edit_id=<?= $supplier['id'] ?>" 
+                            <div class="flex flex-wrap gap-2">
+                                <a href="edit_supplier.php?edit_id=<?= $supplier['id'] ?>" 
                                    class="bg-noble-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
                                     <i class="fas fa-edit mr-2"></i>Edit Supplier
                                 </a>
@@ -168,6 +187,12 @@ $inactive_products = count($linked_products) - $active_products;
                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
                                     <i class="fas fa-link mr-2"></i>Link Products
                                 </a>
+                                <!-- Status Toggle Button -->
+                                <button onclick="toggleSupplierStatus(<?= $supplier['id'] ?>, '<?= $supplier['status'] ?>', '<?= htmlspecialchars($supplier['business_name'], ENT_QUOTES) ?>')"
+                                        class="<?= $supplier['status'] == 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' ?> text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+                                    <i class="fas fa-<?= $supplier['status'] == 'active' ? 'pause' : 'play' ?> mr-2"></i>
+                                    <?= $supplier['status'] == 'active' ? 'Deactivate' : 'Activate' ?>
+                                </button>
                             </div>
                         </div>
 
@@ -377,6 +402,33 @@ $inactive_products = count($linked_products) - $active_products;
     </div>
 
     <script>
+        function toggleSupplierStatus(supplierId, currentStatus, supplierName) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            const action = newStatus === 'active' ? 'activate' : 'deactivate';
+            
+            if (confirm(`Are you sure you want to ${action} "${supplierName}"?`)) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'toggle_supplier_status.php';
+                
+                const supplierInput = document.createElement('input');
+                supplierInput.type = 'hidden';
+                supplierInput.name = 'supplier_id';
+                supplierInput.value = supplierId;
+                
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'new_status';
+                statusInput.value = newStatus;
+                
+                form.appendChild(supplierInput);
+                form.appendChild(statusInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
         function toggleLinkStatus(supplierId, productId, currentStatus) {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             const action = newStatus === 'active' ? 'activate' : 'deactivate';
@@ -434,17 +486,17 @@ $inactive_products = count($linked_products) - $active_products;
             }
         }
 
-        // Add smooth animations
+        // Auto-hide success/error messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            // Animate table rows on hover
-            document.querySelectorAll('tbody tr').forEach(row => {
-                row.addEventListener('mouseenter', function() {
-                    this.style.transform = 'scale(1.01)';
-                });
-                
-                row.addEventListener('mouseleave', function() {
-                    this.style.transform = 'scale(1)';
-                });
+            const messages = document.querySelectorAll('.bg-green-50, .bg-red-50');
+            messages.forEach(message => {
+                setTimeout(() => {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(() => {
+                        message.remove();
+                    }, 500);
+                }, 5000);
             });
         });
     </script>

@@ -20,6 +20,7 @@
     $user_id = null;
     $fullname = '';
     $user_lvl = '';
+    $is_head = false; // ADD THIS LINE
 
     $sessionUser = $_SESSION['noble_user'];
 
@@ -31,6 +32,7 @@
         }
         $fullname = $sessionUser['fullname'] ?? $sessionUser['name'] ?? '';
         $user_lvl = $sessionUser['lvl'] ?? $sessionUser['level'] ?? '';
+        $is_head = isset($sessionUser['is_head']) && (int)$sessionUser['is_head'] === 1; // ADD THIS LINE
     }
 
     if (empty($user_id) || empty($user_lvl)) {
@@ -38,46 +40,70 @@
         if (!is_array($sessionUser)) {
             if (ctype_digit((string)$sessionUser)) {
                 $candidate = (int)$sessionUser;
-                $sql = "SELECT id, fullname, lvl FROM nobleaccount WHERE id = ? LIMIT 1";
+                // MODIFY THIS QUERY TO INCLUDE is_head
+                $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE id = ? LIMIT 1";
                 if ($s = $conn->prepare($sql)) {
                     $s->bind_param("i", $candidate);
                     $s->execute();
                     $r = $s->get_result()->fetch_assoc();
                     $s->close();
-                    if ($r) { $user_id = (int)$r['id']; $fullname = $r['fullname']; $user_lvl = $r['lvl']; }
+                    if ($r) { 
+                        $user_id = (int)$r['id']; 
+                        $fullname = $r['fullname']; 
+                        $user_lvl = $r['lvl']; 
+                        $is_head = (int)$r['is_head'] === 1; // ADD THIS LINE
+                    }
                 }
             } else {
                 $candidate = (string)$sessionUser;
-                $sql = "SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1";
+                // MODIFY THIS QUERY TO INCLUDE is_head
+                $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE email = ? LIMIT 1";
                 if ($s = $conn->prepare($sql)) {
                     $s->bind_param("s", $candidate);
                     $s->execute();
                     $r = $s->get_result()->fetch_assoc();
                     $s->close();
-                    if ($r) { $user_id = (int)$r['id']; $fullname = $r['fullname']; $user_lvl = $r['lvl']; }
+                    if ($r) { 
+                        $user_id = (int)$r['id']; 
+                        $fullname = $r['fullname']; 
+                        $user_lvl = $r['lvl']; 
+                        $is_head = (int)$r['is_head'] === 1; // ADD THIS LINE
+                    }
                 }
             }
         } else {
             // if session array had email
             if (!empty($sessionUser['email'])) {
                 $candidate = $sessionUser['email'];
-                $sql = "SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1";
+                // MODIFY THIS QUERY TO INCLUDE is_head
+                $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE email = ? LIMIT 1";
                 if ($s = $conn->prepare($sql)) {
                     $s->bind_param("s", $candidate);
                     $s->execute();
                     $r = $s->get_result()->fetch_assoc();
                     $s->close();
-                    if ($r) { $user_id = (int)$r['id']; $fullname = $r['fullname']; $user_lvl = $r['lvl']; }
+                    if ($r) { 
+                        $user_id = (int)$r['id']; 
+                        $fullname = $r['fullname']; 
+                        $user_lvl = $r['lvl']; 
+                        $is_head = (int)$r['is_head'] === 1; // ADD THIS LINE
+                    }
                 }
             } elseif (!empty($sessionUser['id'])) {
                 $candidate = (int)$sessionUser['id'];
-                $sql = "SELECT id, fullname, lvl FROM nobleaccount WHERE id = ? LIMIT 1";
+                // MODIFY THIS QUERY TO INCLUDE is_head
+                $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE id = ? LIMIT 1";
                 if ($s = $conn->prepare($sql)) {
                     $s->bind_param("i", $candidate);
                     $s->execute();
                     $r = $s->get_result()->fetch_assoc();
                     $s->close();
-                    if ($r) { $user_id = (int)$r['id']; $fullname = $r['fullname']; $user_lvl = $r['lvl']; }
+                    if ($r) { 
+                        $user_id = (int)$r['id']; 
+                        $fullname = $r['fullname']; 
+                        $user_lvl = $r['lvl']; 
+                        $is_head = (int)$r['is_head'] === 1; // ADD THIS LINE
+                    }
                 }
             }
         }
@@ -253,12 +279,15 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="bg-primary-50 px-4 py-2 rounded-lg mb-2">
-                            <span class="text-primary-700 font-medium">Logged in as: <?php echo htmlspecialchars($fullname); ?></span>
-                        </div>
-                        <div class="bg-primary-50 px-4 py-2 rounded-lg">
-                            <span class="text-primary-700 font-medium"><?php echo number_format(count($orders)); ?> Orders</span>
-                        </div>
+                        <!-- ADD HEAD BUTTON HERE -->
+                        <?php if ($is_head): ?>
+                            <div class="mt-2">
+                                <a href="warehouse_assignment.php" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg">
+                                    <i class="fas fa-crown"></i>
+                                    <span class="font-medium">Head Dashboard</span>
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

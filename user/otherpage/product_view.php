@@ -733,7 +733,7 @@ $avg_stmt->close();
               <!-- Add to Cart Button -->
               <button type="submit" id="addToCartBtn"
                 <?= !$is_logged_in ? 'disabled' : '' ?>
-                class="w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300
+                class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300
                   <?= $is_logged_in ? 'bg-gray-400 hover:bg-orange-500' : 'bg-red-400' ?> 
                   text-white disabled:cursor-not-allowed disabled:opacity-75">
                 <span id="btnText" class="flex items-center justify-center gap-2">
@@ -741,6 +741,7 @@ $avg_stmt->close();
                   <?= $is_logged_in ? 'Select Options to Pre-Order' : 'Login to Pre-Order' ?>
                 </span>
               </button>
+
             </form>
           </div>
         </div>

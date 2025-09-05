@@ -1,1 +1,577 @@
-function a0_0x37e5(){const _0x189554=['bg-red-500\x20text-white','YJZAy','OapgR','cart_hash','nYcyp','Oilpk','cart_update','AUGWa','scale(1.2)','OvGnm','KfKJb','show','data','translateX(0)','POST','../remove_from_cart_ajax.php','EsMBP','success','translateX(-100%)','footer_html','tOgyw','WebSocket\x20closed,\x20falling\x20back\x20to\x20polling','scale(0.8)','QrFFO','bg-green-500\x20text-white','div','dFYPo','top','Failed\x20to\x20remove\x20item','contains','4272587BGTJxG','MpDHs','KLlpo','none','1397622fcZnot','border-t\x20border-gray-200\x20p-3\x20sm:p-4\x20bg-gray-50\x20rounded-b-xl','epusR','FkbCm','auto','KoOeJ','XMLHttpRequest','name','opacity','appendChild','block','mouseenter','EZTaM','\x20items','22473RHpukH','/noble/navbar/remove_from_cart_ajax.php','UXCUP','Cross-tab\x20sync\x20not\x20available','1554YByNDA','hFnKF','right','cart_html','GmElZ','scroll','\x20mr-2\x22></i>','WcUYX','OekBb','width','body','25362IuaOWZ','xxhUj','QpDKE','xsWUg','xCGYW','XYCeu','0.5rem','eQFUR','KWiMI','ibCRh','forEach','application/json','finally','ncBGg','dvkLO','fas\x20fa-exclamation-triangle','CPiji','WtLdz','hHBul','cart_updated','WdfBF','disabled','.cart-notification','onclose','scale(1)','Cart\x20updated!','kqRsk','refresh-cart-btn','createElement','fZBbE','cart-modal','fas\x20fa-info-circle','🔄\x20Same-tab\x20update\x20detected','JENIW','uccqw','fMdDb','joXBn','BUhtV','DOMContentLoaded','PpAiY','DDTSC','scale(1.05)','remove','parse','UqazA','type','LvRSo','GxqEw','qaWDP','log','Request\x20timeout,\x20trying\x20next\x20path','yzkKr','\x0a\x20\x20\x20\x20.cart-count[data-cart-count]\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20all\x200.3s\x20cubic-bezier(0.4,\x200,\x200.2,\x201);\x0a\x20\x20\x20\x20\x20\x20\x20\x20transform-origin:\x20center;\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20#modal-cart-count\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20all\x200.2s\x20ease;\x0a\x20\x20\x20\x20\x20\x20\x20\x20transform-origin:\x20center;\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20#cart-items-container\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20opacity\x200.15s\x20ease;\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20.cart-modal\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20will-change:\x20transform,\x20opacity;\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20all\x200.25s\x20cubic-bezier(0.4,\x200,\x200.2,\x201)\x20!important;\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20.cart-item-slide\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20all\x200.3s\x20cubic-bezier(0.4,\x200,\x200.2,\x201);\x0a\x20\x20\x20\x20\x20\x20\x20\x20will-change:\x20transform,\x20opacity;\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20.cart-notification\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20will-change:\x20transform;\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20transform\x200.3s\x20cubic-bezier(0.4,\x200,\x200.2,\x201);\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20@keyframes\x20slideInRight\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20from\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20opacity:\x200;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20transform:\x20translateX(30px);\x0a\x20\x20\x20\x20\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x20\x20\x20\x20to\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20opacity:\x201;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20transform:\x20translateX(0);\x0a\x20\x20\x20\x20\x20\x20\x20\x20}\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20/*\x20Smooth\x20count\x20bubble\x20transitions\x20*/\x0a\x20\x20\x20\x20#cart-count-bubble\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20transition:\x20all\x200.25s\x20cubic-bezier(0.4,\x200,\x200.2,\x201);\x0a\x20\x20\x20\x20\x20\x20\x20\x20transform-origin:\x20center;\x0a\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20/*\x20Optimized\x20for\x20performance\x20*/\x0a\x20\x20\x20\x20.cart-modal\x20*\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20backface-visibility:\x20hidden;\x0a\x20\x20\x20\x20\x20\x20\x20\x20-webkit-backface-visibility:\x20hidden;\x0a\x20\x20\x20\x20}\x0a','now','OhpMt','add','setItem','<!DOCTYPE\x20html>','KpGfl','className','hidden','removeFromCart','cart-count-bubble','20EAltcy','EYXHT','PGRHd','textContent','mNktp','s\x20forwards','animation','959435waYzbt','gfzHA','WZMba','cart-notification\x20fixed\x20top-4\x20right-4\x20px-4\x20py-2\x20rounded-lg\x20shadow-lg\x20z-[10000]\x20text-sm\x20font-medium\x20transition-all\x20duration-300\x20transform\x20translate-x-full','Update\x20failed','classList','VlEjV','3408Ofejkg','cart-container','FLyVK','hlQui','ZIRGV','key','ws://your-websocket-server.com/cart-updates','Silent\x20update\x20failed:','Could\x20not\x20find\x20remove_from_cart_ajax.php','LCXes','/Noble/navbar/refresh_cart.php','../../navbar/refresh_cart.php','NrazV','dispatchEvent','total_items','<i\x20class=\x22','uavOu','mjhCE','.cart-count[data-cart-count]','Tdpub','/Noble/user/navbar/refresh_cart.php','vKqsV','tAMYX','JsSWm','querySelectorAll','aCRBp','addEventListener','kATBI','ApCUn','backgroundColor','hmajf','modal-cart-count','🔄\x20WebSocket\x20cart\x20update\x20received','transform','toString','PiVHS','/Noble/user/otherpage/navbar/refresh_cart.php','tDLuQ','🔄\x20Enhanced\x20auto-refresh\x20started\x20with\x20adaptive\x20intervals','EoIxu','#10b981','gNWFN','innerHTML','innerWidth','1162zJpeVB','no-cache','GET','Lrole','getBoundingClientRect','PBnzd','cart-items-container','push','BiYVU','left','../navbar/refresh_cart.php','updateCartGlobally','UbWgQ','qzxdw','AJpaI','stringify','same-origin','getElementById','mouseleave','AaYyg','FBPKf','dLYWR','application/x-www-form-urlencoded','vokWq','cart-footer','click','VCvUU','kqXqt','NyllP','GMgqk','fQFDh','OEkkx','uqlSX','../navbar/remove_from_cart_ajax.php','display','EpXTc','refreshCart',')\x22]','owOEs','mtgIO','text','sDXPC','hvdff','337eNtCRZ','jDuBJ','[onclick=\x22removeFromCart(','220552GmfDuS','fmLIw','JgSfr','head','error','cart_data','aRxUC','visibilitychange','trim','DRqex','yrQSl','startsWith','createDocumentFragment','style','fas\x20fa-check','vPgyz','Update\x20failed:','🚀\x20Enhanced\x20Real-time\x20Cart\x20System\x20Loaded\x20-\x20No\x20Refresh\x20Needed!','focus','HdvcA','qpFkl','abort','length','xAftb','wuIiQ','bottom','AkGvD'];a0_0x37e5=function(){return _0x189554;};return a0_0x37e5();}const a0_0x249a1a=a0_0x5b37;(function(_0x38417a,_0x542e03){const _0x4657b6=a0_0x5b37,_0xb5e0f7=_0x38417a();while(!![]){try{const _0x1b5448=-parseInt(_0x4657b6(0x246))/0x1*(-parseInt(_0x4657b6(0x21b))/0x2)+-parseInt(_0x4657b6(0x185))/0x3+parseInt(_0x4657b6(0x249))/0x4+parseInt(_0x4657b6(0x1e8))/0x5+-parseInt(_0x4657b6(0x1a2))/0x6*(-parseInt(_0x4657b6(0x197))/0x7)+parseInt(_0x4657b6(0x1ef))/0x8*(-parseInt(_0x4657b6(0x193))/0x9)+parseInt(_0x4657b6(0x1e1))/0xa*(parseInt(_0x4657b6(0x181))/0xb);if(_0x1b5448===_0x542e03)break;else _0xb5e0f7['push'](_0xb5e0f7['shift']());}catch(_0x287d69){_0xb5e0f7['push'](_0xb5e0f7['shift']());}}}(a0_0x37e5,0x996e6),document['addEventListener'](a0_0x249a1a(0x1c8),function(){const _0x2e9bef=a0_0x249a1a,_0x3ee04c={'yrQSl':function(_0x21bcd6,_0x40c02b){return _0x21bcd6===_0x40c02b;},'ClaXX':_0x2e9bef(0x26a),'aCRBp':_0x2e9bef(0x20f),'VCvUU':function(_0x4470d8,_0x4fb80f){return _0x4470d8(_0x4fb80f);},'DDTSC':_0x2e9bef(0x1f5),'LCXes':function(_0x297b4e,_0x2b61cc){return _0x297b4e-_0x2b61cc;},'ghfAZ':function(_0x4ca3aa,_0x5d69d6){return _0x4ca3aa<_0x5d69d6;},'mNktp':function(_0x54080c,_0x487fa0,_0x411575){return _0x54080c(_0x487fa0,_0x411575);},'HdvcA':_0x2e9bef(0x190),'AaYyg':_0x2e9bef(0x25b),'PJezB':_0x2e9bef(0x215),'GMgqk':function(_0x3ac320){return _0x3ac320();},'UXCUP':function(_0x2a19a1,_0x55c8e7){return _0x2a19a1===_0x55c8e7;},'ytQph':function(_0x3d4e70,_0xc0ab3d){return _0x3d4e70>_0xc0ab3d;},'kqRsk':function(_0x15e8b3,_0xb39a54){return _0x15e8b3(_0xb39a54);},'kATBI':function(_0x15a56b){return _0x15a56b();},'gfzHA':function(_0x26fff4,_0x341ec8){return _0x26fff4-_0x341ec8;},'xsWUg':function(_0xb6ac2c,_0x20efa2){return _0xb6ac2c-_0x20efa2;},'dFYPo':function(_0x4e703d,_0xa2c69a){return _0x4e703d<=_0xa2c69a;},'fmLIw':_0x2e9bef(0x1a8),'ntFBM':_0x2e9bef(0x189),'uccqw':function(_0x5b1553,_0x225938){return _0x5b1553+_0x225938;},'xAftb':_0x2e9bef(0x26f),'KpGfl':_0x2e9bef(0x18f),'Lrole':function(_0x58d800,_0x563ba7,_0x52630e){return _0x58d800(_0x563ba7,_0x52630e);},'VlEjV':function(_0xf6adf5,_0x5652ac,_0xf44d6d){return _0xf6adf5(_0x5652ac,_0xf44d6d);},'gNWFN':function(_0x1fe9d9,_0x112d03){return _0x1fe9d9(_0x112d03);},'uavOu':_0x2e9bef(0x1ad),'qpFkl':_0x2e9bef(0x21c),'fQFDh':'same-origin','fMdDb':function(_0x4f707f,_0x4a1e1e){return _0x4f707f(_0x4a1e1e);},'FBPKf':_0x2e9bef(0x1db),'DRqex':function(_0x2d311a,_0x197c42){return _0x2d311a+_0x197c42;},'jDuBJ':'AbortError','okhQN':_0x2e9bef(0x1d4),'YtiLd':'navbar/refresh_cart.php','HRVnh':_0x2e9bef(0x1fa),'BUhtV':_0x2e9bef(0x213),'Tdpub':_0x2e9bef(0x203),'dOwlX':_0x2e9bef(0x1f9),'CPiji':function(_0x2c0512){return _0x2c0512();},'hmajf':function(_0xecfc0f,_0x3d6b74,_0x3cd292,_0x2f87da){return _0xecfc0f(_0x3d6b74,_0x3cd292,_0x2f87da);},'OvGnm':_0x2e9bef(0x1f6),'dLYWR':function(_0x17172b,_0x121790){return _0x17172b===_0x121790;},'KLlpo':'.cart-item-slide','MpDHs':_0x2e9bef(0x221),'JgSfr':function(_0x4a34af,_0x2467b2){return _0x4a34af&&_0x2467b2;},'ozRmA':function(_0x3eb712,_0x1e1483,_0x4fb546){return _0x3eb712(_0x1e1483,_0x4fb546);},'epusR':_0x2e9bef(0x1ba),'LvRSo':_0x2e9bef(0x20e),'tAMYX':_0x2e9bef(0x1e0),'eQFUR':function(_0x492fc7,_0x38d750){return _0x492fc7+_0x38d750;},'qaWDP':_0x2e9bef(0x192),'XYCeu':function(_0x1f6c13,_0x4d0040){return _0x1f6c13!==_0x4d0040;},'NyllP':_0x2e9bef(0x26c),'AUGWa':_0x2e9bef(0x217),'DqkLu':function(_0x10b5a4,_0x4a0399,_0x190bb4){return _0x10b5a4(_0x4a0399,_0x190bb4);},'dvkLO':function(_0x5894d7,_0x2ce588){return _0x5894d7>_0x2ce588;},'SddyO':'hidden','CggIB':_0x2e9bef(0x27a),'ibCRh':_0x2e9bef(0x233),'PGRHd':'div','kqXqt':_0x2e9bef(0x186),'nVqGN':function(_0xf95ced,_0x46b9b4){return _0xf95ced(_0x46b9b4);},'ZzAui':function(_0x27ecf4,_0x329415){return _0x27ecf4>=_0x329415;},'yzkKr':function(_0x31fcc7,_0x4feec5,_0x34be3a){return _0x31fcc7(_0x4feec5,_0x34be3a);},'EZTaM':_0x2e9bef(0x231),'RnHSk':_0x2e9bef(0x18b),'tOgyw':'key=','BiYVU':'0.5','FLyVK':'translateX(-20px)','UbWgQ':'remove_from_cart_ajax.php','OEkkx':'navbar/remove_from_cart_ajax.php','LyQJX':_0x2e9bef(0x23c),'fZBbE':_0x2e9bef(0x194),'owOEs':_0x2e9bef(0x276),'AkGvD':function(_0x266470,_0x5a5ca4,_0x4a0f58){return _0x266470(_0x5a5ca4,_0x4a0f58);},'UqazA':function(_0x27e718,_0x3fc2e8,_0x31179e){return _0x27e718(_0x3fc2e8,_0x31179e);},'EpXTc':'Item\x20removed!','fFhSd':_0x2e9bef(0x271),'hlQui':function(_0x1a2dd9,_0xec4128,_0x1efa2e){return _0x1a2dd9(_0xec4128,_0x1efa2e);},'mtgIO':_0x2e9bef(0x17f),'OekBb':_0x2e9bef(0x24d),'QrFFO':function(_0x3625fb,_0x53311e,_0x1b6c62){return _0x3625fb(_0x53311e,_0x1b6c62);},'xCGYW':_0x2e9bef(0x275),'KWiMI':'<i\x20class=\x22fas\x20fa-spinner\x20fa-spin\x20text-sm\x22></i>','PiVHS':_0x2e9bef(0x1b8),'tDLuQ':_0x2e9bef(0x27c),'Oilpk':'bg-blue-500\x20text-white','YJZAy':_0x2e9bef(0x257),'KfKJb':_0x2e9bef(0x1b1),'WdfBF':'cartUpdated','aRxUC':_0x2e9bef(0x196),'sDXPC':_0x2e9bef(0x1b5),'ZmIUw':'🔄\x20Cross-tab\x20update\x20detected','SEFre':_0x2e9bef(0x1c2),'xIDzk':function(_0x35f9dd){return _0x35f9dd();},'uqlSX':function(_0x1174b0,_0x4e0f62){return _0x1174b0(_0x4e0f62);},'EsMBP':function(_0x32faf0,_0xda99bf){return _0x32faf0(_0xda99bf);},'WZMba':function(_0x5bfa26,_0x4b9a42){return _0x5bfa26(_0x4b9a42);},'vKqsV':_0x2e9bef(0x1f0),'AJpaI':_0x2e9bef(0x1c0),'dRFCP':_0x2e9bef(0x184),'bJyvF':'storage','OapgR':_0x2e9bef(0x250),'pLLHi':function(_0x530d4d){return _0x530d4d();},'ncBGg':_0x2e9bef(0x25a)},_0x45649e=document[_0x2e9bef(0x22c)](_0x3ee04c[_0x2e9bef(0x204)]),_0x9d2121=document[_0x2e9bef(0x22c)](_0x3ee04c[_0x2e9bef(0x229)]);let _0x12e994,_0x8f47b8,_0x2bf21e='',_0x2dc6ae=![],_0x5a3837=[],_0x52facb=null;_0x9d2121[_0x2e9bef(0x1ed)][_0x2e9bef(0x1cc)](_0x3ee04c[_0x2e9bef(0x260)]),_0x9d2121[_0x2e9bef(0x256)][_0x2e9bef(0x23d)]=_0x3ee04c['dRFCP'];function _0x38680c(){const _0x304df5=_0x2e9bef;try{_0x52facb=new WebSocket(_0x3ee04c[_0x304df5(0x1ca)]),_0x52facb['onmessage']=function(_0x29b700){const _0x299079=_0x304df5,_0x24cb04=JSON['parse'](_0x29b700[_0x299079(0x270)]);_0x3ee04c[_0x299079(0x253)](_0x24cb04[_0x299079(0x1cf)],_0x3ee04c['ClaXX'])&&(console[_0x299079(0x1d3)](_0x3ee04c[_0x299079(0x208)]),_0x3ee04c[_0x299079(0x235)](handleRealtimeUpdate,_0x24cb04[_0x299079(0x24e)]));},_0x52facb[_0x304df5(0x1b9)]=function(){const _0xe6bf17=_0x304df5;console[_0xe6bf17(0x1d3)](_0xe6bf17(0x279)),_0x551e30();};}catch(_0x3a4225){console[_0x304df5(0x1d3)]('WebSocket\x20not\x20available,\x20using\x20enhanced\x20polling'),_0x551e30();}}function _0x551e30(){const _0x5c0915=_0x2e9bef;_0x8f47b8&&clearInterval(_0x8f47b8);let _0x68728d=0x1388,_0x2e8981=Date['now']();_0x8f47b8=_0x3ee04c[_0x5c0915(0x1e5)](setInterval,()=>{const _0x5340bb=_0x5c0915,_0x1b2476=_0x3ee04c[_0x5340bb(0x1f8)](Date[_0x5340bb(0x1d7)](),_0x2e8981);if(_0x3ee04c['ghfAZ'](_0x1b2476,0x7530))_0x68728d=0xbb8;else _0x1b2476<0x493e0?_0x68728d=0x2710:_0x68728d=0x7530;_0x5ec186();},_0x68728d),[_0x3ee04c[_0x5c0915(0x25c)],_0x5c0915(0x234),_0x3ee04c[_0x5c0915(0x22e)],_0x5c0915(0x19c)][_0x5c0915(0x1ac)](_0x14b41d=>{const _0xa2efa3=_0x5c0915;_0x45649e[_0xa2efa3(0x209)](_0x14b41d,()=>{const _0x203d4b=_0xa2efa3;_0x2e8981=Date[_0x203d4b(0x1d7)]();});}),console[_0x5c0915(0x1d3)](_0x3ee04c['PJezB']);}function _0x9ade30(_0x2af0f9){const _0x513aa7=_0x2e9bef;_0x5a3837[_0x513aa7(0x222)](_0x2af0f9),_0x3ee04c['GMgqk'](_0x218ad1);}async function _0x218ad1(){const _0x2e020b=_0x2e9bef;if(_0x2dc6ae||_0x3ee04c[_0x2e020b(0x195)](_0x5a3837[_0x2e020b(0x25f)],0x0))return;_0x2dc6ae=!![];while(_0x3ee04c['ytQph'](_0x5a3837[_0x2e020b(0x25f)],0x0)){const _0x2fa83f=_0x5a3837['shift']();try{await _0x3ee04c[_0x2e020b(0x238)](_0x2fa83f),await new Promise(_0x43f848=>setTimeout(_0x43f848,0x64));}catch(_0x8bae0f){console['error'](_0x2e020b(0x259),_0x8bae0f);}}_0x2dc6ae=![];}_0x45649e['addEventListener'](_0x2e9bef(0x190),function(){const _0x45273a=_0x2e9bef;clearTimeout(_0x12e994),_0x3ee04c['kqRsk'](_0x9ade30,()=>_0x160d76()),_0x3ee04c[_0x45273a(0x20a)](_0x1dbb31),_0x575362();});function _0x1dbb31(){const _0x1dcec7=_0x2e9bef,_0x3c82fa=_0x45649e[_0x1dcec7(0x21f)](),_0xd267e2=0x140,_0x26bb0d=window[_0x1dcec7(0x21a)];let _0x8ccf9=_0x3ee04c[_0x1dcec7(0x1e9)](_0x26bb0d,_0x3c82fa[_0x1dcec7(0x199)]);_0x3ee04c[_0x1dcec7(0x1a5)](_0x3c82fa[_0x1dcec7(0x199)],_0xd267e2)<0x0&&(_0x8ccf9=0x10),_0x3ee04c[_0x1dcec7(0x17d)](window[_0x1dcec7(0x21a)],0x280)?(_0x9d2121[_0x1dcec7(0x256)]['right']=_0x3ee04c[_0x1dcec7(0x24a)],_0x9d2121[_0x1dcec7(0x256)]['left']=_0x1dcec7(0x1a8),_0x9d2121[_0x1dcec7(0x256)][_0x1dcec7(0x1a0)]=_0x1dcec7(0x189)):(_0x9d2121[_0x1dcec7(0x256)][_0x1dcec7(0x199)]=_0x8ccf9+'px',_0x9d2121[_0x1dcec7(0x256)][_0x1dcec7(0x224)]=_0x3ee04c['ntFBM'],_0x9d2121[_0x1dcec7(0x256)]['width']=''),_0x9d2121[_0x1dcec7(0x256)][_0x1dcec7(0x17e)]=_0x3ee04c[_0x1dcec7(0x1c4)](_0x3c82fa[_0x1dcec7(0x262)],0x8)+'px';}function _0x575362(){const _0x1813d9=_0x2e9bef,_0x38b2b4={'EYXHT':_0x3ee04c[_0x1813d9(0x260)]};_0x9d2121[_0x1813d9(0x256)][_0x1813d9(0x23d)]=_0x3ee04c[_0x1813d9(0x1dc)],_0x3ee04c[_0x1813d9(0x1bc)](requestAnimationFrame,()=>{const _0xa5bc8f=_0x1813d9;_0x9d2121[_0xa5bc8f(0x1ed)][_0xa5bc8f(0x1d9)](_0x38b2b4[_0xa5bc8f(0x1e2)]);});}function _0x3c2231(){const _0x422c46=_0x2e9bef;_0x12e994=_0x3ee04c[_0x422c46(0x1ee)](setTimeout,()=>{const _0x3148d0=_0x422c46,_0x1bd717={'qzxdw':_0x3ee04c['xAftb']};_0x9d2121[_0x3148d0(0x1ed)]['remove'](_0x3ee04c[_0x3148d0(0x260)]),_0x3ee04c[_0x3148d0(0x21e)](setTimeout,()=>{const _0x5b49b9=_0x3148d0;!_0x9d2121[_0x5b49b9(0x1ed)][_0x5b49b9(0x180)](_0x1bd717[_0x5b49b9(0x228)])&&(_0x9d2121['style'][_0x5b49b9(0x23d)]='none');},0x12c);},0x12c);}_0x45649e[_0x2e9bef(0x209)](_0x2e9bef(0x22d),_0x3c2231),_0x9d2121[_0x2e9bef(0x209)](_0x3ee04c[_0x2e9bef(0x25c)],()=>clearTimeout(_0x12e994)),_0x9d2121[_0x2e9bef(0x209)](_0x2e9bef(0x22d),_0x3c2231);async function _0x160d76(){const _0x439d70=_0x2e9bef;return _0x3ee04c[_0x439d70(0x218)](_0x5ec186,!![]);}async function _0x5ec186(_0x27b18f=![]){const _0x545471=_0x2e9bef,_0x540bf0={'PpAiY':function(_0x2c759a,_0x2c7e5e){return _0x2c759a>=_0x2c7e5e;},'PBnzd':function(_0x3e5f4a,_0x2b818e,_0x4d1e25){return _0x3ee04c['VlEjV'](_0x3e5f4a,_0x2b818e,_0x4d1e25);},'yDyOT':_0x545471(0x21d),'qKYkf':_0x545471(0x18b),'NrazV':_0x3ee04c[_0x545471(0x1ff)],'WtLdz':'no-cache,\x20no-store,\x20must-revalidate','RjxCI':_0x3ee04c[_0x545471(0x25d)],'FkbCm':_0x3ee04c[_0x545471(0x239)],'nYcyp':function(_0x4ffd43,_0x14f271){return _0x3ee04c['fMdDb'](_0x4ffd43,_0x14f271);},'ApCUn':_0x3ee04c[_0x545471(0x22f)],'xxhUj':function(_0x508513,_0x191a62){const _0x34a4e7=_0x545471;return _0x3ee04c[_0x34a4e7(0x252)](_0x508513,_0x191a62);},'GxqEw':function(_0x3e64ba,_0xe64b95){const _0x662711=_0x545471;return _0x3ee04c[_0x662711(0x195)](_0x3e64ba,_0xe64b95);},'JENIW':_0x3ee04c[_0x545471(0x247)],'qsSri':_0x3ee04c['okhQN']},_0x49dae5=[_0x3ee04c['YtiLd'],_0x545471(0x225),_0x3ee04c['HRVnh'],_0x3ee04c[_0x545471(0x1c7)],_0x3ee04c[_0x545471(0x202)],_0x3ee04c['dOwlX']];async function _0x42707b(_0x2f0540=0x0){const _0xd51fb8=_0x545471;if(_0x540bf0[_0xd51fb8(0x1c9)](_0x2f0540,_0x49dae5[_0xd51fb8(0x25f)]))return null;try{const _0x28c57d=new AbortController(),_0x3c0736=_0x540bf0[_0xd51fb8(0x220)](setTimeout,()=>_0x28c57d[_0xd51fb8(0x25e)](),_0x27b18f?0x7d0:0x1388),_0x173564=await fetch(_0x49dae5[_0x2f0540],{'method':_0x540bf0['yDyOT'],'headers':{'X-Requested-With':_0x540bf0['qKYkf'],'Content-Type':_0xd51fb8(0x1ad),'Accept':_0x540bf0[_0xd51fb8(0x1fb)],'Cache-Control':_0x540bf0[_0xd51fb8(0x1b3)],'Pragma':_0x540bf0['RjxCI'],'Expires':'0'},'credentials':_0x540bf0[_0xd51fb8(0x188)],'signal':_0x28c57d['signal']});_0x540bf0[_0xd51fb8(0x268)](clearTimeout,_0x3c0736);if(!_0x173564['ok'])return _0x540bf0[_0xd51fb8(0x268)](_0x42707b,_0x2f0540+0x1);const _0xe05abb=await _0x173564['text']();if(_0xe05abb['trim']()[_0xd51fb8(0x254)](_0x540bf0[_0xd51fb8(0x20b)])||_0xe05abb['trim']()[_0xd51fb8(0x254)]('<html'))return _0x540bf0[_0xd51fb8(0x268)](_0x42707b,_0x540bf0[_0xd51fb8(0x1a3)](_0x2f0540,0x1));const _0xb5b139=JSON[_0xd51fb8(0x1cd)](_0xe05abb);if(_0xb5b139&&_0xb5b139['success'])return _0xb5b139;return _0x540bf0[_0xd51fb8(0x268)](_0x42707b,_0x540bf0[_0xd51fb8(0x1a3)](_0x2f0540,0x1));}catch(_0x321c72){return _0x540bf0[_0xd51fb8(0x1d1)](_0x321c72[_0xd51fb8(0x18c)],_0x540bf0[_0xd51fb8(0x1c3)])&&console[_0xd51fb8(0x1d3)](_0x540bf0['qsSri']),_0x42707b(_0x2f0540+0x1);}}try{const _0xa1ab8d=await _0x3ee04c[_0x545471(0x1b2)](_0x42707b);if(_0xa1ab8d)return _0x3ee04c['hmajf'](_0x110cc8,_0xa1ab8d,!_0x27b18f,!![]),_0xa1ab8d;}catch(_0x2ed81d){console['log'](_0x3ee04c[_0x545471(0x26d)],_0x2ed81d['message']);}return null;}function _0x110cc8(_0x106beb,_0x49f0f9=![],_0x2cca4b=![]){const _0x5a4c5c=_0x2e9bef,_0x4a17b6=document[_0x5a4c5c(0x255)](),_0x434e90=_0x106beb[_0x5a4c5c(0x267)]||JSON[_0x5a4c5c(0x22a)](_0x106beb[_0x5a4c5c(0x19a)]);if(_0x2cca4b&&_0x3ee04c[_0x5a4c5c(0x230)](_0x434e90,_0x2bf21e))return;_0x2bf21e=_0x434e90,_0x3ee04c[_0x5a4c5c(0x1c5)](requestAnimationFrame,()=>{const _0x2bd3e9=_0x5a4c5c;_0x3ee04c[_0x2bd3e9(0x20d)](_0x13596d,_0x106beb,_0x49f0f9,_0x2cca4b),_0x3ee04c[_0x2bd3e9(0x20d)](_0x54adc2,_0x106beb,_0x49f0f9,_0x2cca4b),_0x8d446c(_0x106beb);}),_0x3ee04c['kATBI'](_0x383739);}function _0x13596d(_0x1dbbc0,_0x266288,_0x849c38){const _0x58b8f7=_0x2e9bef,_0x3af8c1=document[_0x58b8f7(0x22c)](_0x3ee04c[_0x58b8f7(0x182)]);if(!_0x1dbbc0[_0x58b8f7(0x19a)]||!_0x3af8c1)return;_0x3ee04c[_0x58b8f7(0x24b)](_0x266288,!_0x849c38)?(_0x3af8c1[_0x58b8f7(0x256)][_0x58b8f7(0x18d)]='0',_0x3ee04c['ozRmA'](setTimeout,()=>{const _0x29fc79=_0x58b8f7,_0x3c587e={'hvdff':function(_0x3c7a75,_0x138639){return _0x3c7a75*_0x138639;}};_0x3af8c1[_0x29fc79(0x219)]=_0x1dbbc0['cart_html'],_0x3af8c1['style']['opacity']='1';const _0xd64894=_0x3af8c1['querySelectorAll'](_0x3ee04c[_0x29fc79(0x183)]);_0xd64894[_0x29fc79(0x1ac)]((_0x5d76ad,_0x1b7a59)=>{const _0xbd8293=_0x29fc79;_0x5d76ad[_0xbd8293(0x256)][_0xbd8293(0x1e7)]='slideInRight\x200.3s\x20ease-out\x20'+_0x3c587e[_0xbd8293(0x245)](_0x1b7a59,0.05)+_0xbd8293(0x1e6);});},0x64)):_0x3af8c1[_0x58b8f7(0x219)]=_0x1dbbc0[_0x58b8f7(0x19a)];}function _0x54adc2(_0x3d74b0,_0x89c79c,_0x423624){const _0x1d99bb=_0x2e9bef,_0x36204c={'JsSWm':_0x3ee04c[_0x1d99bb(0x187)],'PrICP':_0x1d99bb(0x1de)},_0x26f1db=document[_0x1d99bb(0x22c)](_0x3ee04c[_0x1d99bb(0x1d0)]),_0x1a7223=document[_0x1d99bb(0x22c)](_0x3ee04c[_0x1d99bb(0x205)]),_0x41cf00=document['querySelector'](_0x1d99bb(0x201));if(_0x3d74b0[_0x1d99bb(0x1fd)]===undefined)return;if(_0x26f1db){const _0x4edae5=_0x3ee04c[_0x1d99bb(0x1a9)](_0x3d74b0[_0x1d99bb(0x1fd)],_0x3ee04c[_0x1d99bb(0x1d2)]);_0x26f1db['textContent']!==_0x4edae5&&(_0x26f1db[_0x1d99bb(0x1e4)]=_0x4edae5,_0x3ee04c[_0x1d99bb(0x24b)](_0x89c79c,!_0x423624)&&(_0x26f1db['style'][_0x1d99bb(0x210)]=_0x1d99bb(0x1cb),setTimeout(()=>{const _0x1abf4b=_0x1d99bb;_0x26f1db[_0x1abf4b(0x256)][_0x1abf4b(0x210)]=_0x36204c[_0x1abf4b(0x206)];},0xc8)));}if(_0x41cf00){const _0x2d6d6c=_0x3d74b0[_0x1d99bb(0x1fd)][_0x1d99bb(0x211)]();_0x3ee04c[_0x1d99bb(0x1a7)](_0x41cf00[_0x1d99bb(0x1e4)],_0x2d6d6c)&&(_0x41cf00['textContent']=_0x2d6d6c,_0x89c79c&&!_0x423624&&(_0x41cf00[_0x1d99bb(0x256)][_0x1d99bb(0x210)]=_0x3ee04c[_0x1d99bb(0x237)],_0x41cf00[_0x1d99bb(0x256)][_0x1d99bb(0x20c)]=_0x3ee04c[_0x1d99bb(0x26b)],_0x3ee04c['DqkLu'](setTimeout,()=>{const _0x1df553=_0x1d99bb;_0x41cf00[_0x1df553(0x256)]['transform']=_0x36204c['JsSWm'],_0x41cf00[_0x1df553(0x256)][_0x1df553(0x20c)]='';},0x12c)));}_0x1a7223&&(_0x3ee04c[_0x1d99bb(0x1b0)](_0x3d74b0['total_items'],0x0)?(_0x1a7223[_0x1d99bb(0x1ed)]['remove'](_0x3ee04c['SddyO']),_0x1a7223[_0x1d99bb(0x256)]['opacity']='1',_0x1a7223[_0x1d99bb(0x256)][_0x1d99bb(0x210)]=_0x3ee04c[_0x1d99bb(0x187)]):(_0x1a7223[_0x1d99bb(0x256)][_0x1d99bb(0x18d)]='0',_0x1a7223[_0x1d99bb(0x256)][_0x1d99bb(0x210)]=_0x3ee04c['CggIB'],_0x3ee04c[_0x1d99bb(0x21e)](setTimeout,()=>{const _0x3ac0e6=_0x1d99bb;_0x1a7223[_0x3ac0e6(0x1ed)][_0x3ac0e6(0x1d9)](_0x36204c['PrICP']);},0xc8)));}function _0x8d446c(_0x20965c){const _0x3b7292=_0x2e9bef;let _0x383cb6=document['getElementById'](_0x3ee04c[_0x3b7292(0x1ab)]);if(_0x20965c['footer_html'])_0x383cb6?_0x3ee04c[_0x3b7292(0x1a7)](_0x383cb6[_0x3b7292(0x219)],_0x20965c[_0x3b7292(0x277)])&&(_0x383cb6[_0x3b7292(0x219)]=_0x20965c[_0x3b7292(0x277)]):(_0x383cb6=document[_0x3b7292(0x1be)](_0x3ee04c[_0x3b7292(0x1e3)]),_0x383cb6['id']=_0x3ee04c[_0x3b7292(0x1ab)],_0x383cb6['className']=_0x3ee04c[_0x3b7292(0x236)],_0x383cb6['innerHTML']=_0x20965c[_0x3b7292(0x277)],_0x9d2121[_0x3b7292(0x18e)](_0x383cb6));else _0x383cb6&&_0x383cb6[_0x3b7292(0x1cc)]();}window[_0x2e9bef(0x1df)]=async function(_0x2a5fa4){const _0x3e6c56=_0x2e9bef,_0x2b3dba={'wuIiQ':function(_0x829fea,_0x390e4f){return _0x3ee04c['ZzAui'](_0x829fea,_0x390e4f);},'OhpMt':_0x3e6c56(0x1f7),'zLKdn':function(_0x3fe726,_0x1f7d21,_0xa3ddd1){const _0x404d42=_0x3e6c56;return _0x3ee04c[_0x404d42(0x1d5)](_0x3fe726,_0x1f7d21,_0xa3ddd1);},'mjhCE':_0x3ee04c[_0x3e6c56(0x191)],'xyWPb':_0x3ee04c['RnHSk'],'hHBul':function(_0x120db8,_0x3563b0){return _0x3ee04c['DRqex'](_0x120db8,_0x3563b0);},'QpDKE':_0x3ee04c[_0x3e6c56(0x278)],'WcUYX':_0x3ee04c[_0x3e6c56(0x22f)],'vPgyz':function(_0x399211,_0x2f2235){return _0x399211(_0x2f2235);},'GmElZ':function(_0x51328b,_0x136dd5){const _0x403c64=_0x3e6c56;return _0x3ee04c[_0x403c64(0x1a9)](_0x51328b,_0x136dd5);},'hFnKF':function(_0x4dffae,_0x5d6ecf){return _0x3ee04c['fMdDb'](_0x4dffae,_0x5d6ecf);}},_0x8ea35f=document['querySelector'](_0x3e6c56(0x248)+_0x2a5fa4+_0x3e6c56(0x240))['closest'](_0x3ee04c[_0x3e6c56(0x183)]);_0x8ea35f&&(_0x8ea35f[_0x3e6c56(0x256)][_0x3e6c56(0x18d)]=_0x3ee04c[_0x3e6c56(0x223)],_0x8ea35f[_0x3e6c56(0x256)]['transform']=_0x3ee04c[_0x3e6c56(0x1f1)]);const _0x5291eb=[_0x3ee04c[_0x3e6c56(0x227)],_0x3ee04c[_0x3e6c56(0x23a)],_0x3e6c56(0x273),_0x3ee04c['LyQJX'],_0x3ee04c[_0x3e6c56(0x1bf)]];async function _0x97d661(_0x489632=0x0){const _0x5cca2e=_0x3e6c56;if(_0x2b3dba[_0x5cca2e(0x261)](_0x489632,_0x5291eb[_0x5cca2e(0x25f)]))throw new Error(_0x2b3dba[_0x5cca2e(0x1d8)]);try{const _0x256fab=await _0x2b3dba['zLKdn'](fetch,_0x5291eb[_0x489632],{'method':_0x5cca2e(0x272),'headers':{'Content-Type':_0x2b3dba[_0x5cca2e(0x200)],'X-Requested-With':_0x2b3dba['xyWPb'],'Accept':_0x5cca2e(0x1ad),'Cache-Control':'no-cache'},'credentials':_0x5cca2e(0x22b),'body':_0x2b3dba[_0x5cca2e(0x1b4)](_0x2b3dba[_0x5cca2e(0x1a4)],encodeURIComponent(_0x2a5fa4))});if(!_0x256fab['ok'])return _0x97d661(_0x489632+0x1);const _0x3c12b7=await _0x256fab[_0x5cca2e(0x243)]();if(_0x3c12b7[_0x5cca2e(0x251)]()[_0x5cca2e(0x254)](_0x2b3dba[_0x5cca2e(0x19e)]))return _0x97d661(_0x2b3dba[_0x5cca2e(0x1b4)](_0x489632,0x1));const _0x179acb=JSON[_0x5cca2e(0x1cd)](_0x3c12b7);if(_0x179acb&&_0x179acb[_0x5cca2e(0x275)])return _0x179acb;return _0x2b3dba[_0x5cca2e(0x258)](_0x97d661,_0x2b3dba['GmElZ'](_0x489632,0x1));}catch(_0xfabe21){return _0x2b3dba[_0x5cca2e(0x198)](_0x97d661,_0x2b3dba[_0x5cca2e(0x19b)](_0x489632,0x1));}}try{const _0x4f91dc=await _0x3ee04c[_0x3e6c56(0x1b2)](_0x97d661);if(_0x4f91dc&&_0x4f91dc['success'])_0x8ea35f&&(_0x8ea35f[_0x3e6c56(0x256)][_0x3e6c56(0x210)]=_0x3ee04c[_0x3e6c56(0x241)],_0x8ea35f[_0x3e6c56(0x256)][_0x3e6c56(0x18d)]='0',setTimeout(()=>{const _0x324b73=_0x3e6c56;_0x8ea35f[_0x324b73(0x1cc)]();},0x12c)),_0x3ee04c[_0x3e6c56(0x263)](setTimeout,()=>{_0x3ee04c['nVqGN'](_0x9ade30,()=>_0x160d76());},0x12c),_0x3ee04c[_0x3e6c56(0x1ce)](_0xb198e1,_0x3ee04c[_0x3e6c56(0x23e)],'success');else throw new Error('Failed\x20to\x20remove\x20item');}catch(_0x387b74){_0x8ea35f&&(_0x8ea35f['style']['opacity']='1',_0x8ea35f[_0x3e6c56(0x256)][_0x3e6c56(0x210)]=_0x3ee04c['fFhSd']),_0x3ee04c[_0x3e6c56(0x1f2)](_0xb198e1,_0x3ee04c[_0x3e6c56(0x242)],_0x3ee04c[_0x3e6c56(0x19f)]);}},window[_0x2e9bef(0x23f)]=function(){const _0x395335=_0x2e9bef,_0xa3ea1d={'vokWq':function(_0x41cb57,_0x180d5a,_0x14c47c){const _0x3d8e75=a0_0x5b37;return _0x3ee04c[_0x3d8e75(0x27b)](_0x41cb57,_0x180d5a,_0x14c47c);},'joXBn':_0x3ee04c[_0x395335(0x1a6)],'ZIRGV':function(_0xc92ae7,_0x56d2d3,_0x58f71d){const _0x310580=_0x395335;return _0x3ee04c[_0x310580(0x1ee)](_0xc92ae7,_0x56d2d3,_0x58f71d);},'ifcXg':_0x395335(0x1ec),'KoOeJ':_0x3ee04c['OekBb']},_0x4048a9=document['getElementById'](_0x395335(0x1bd));_0x4048a9&&(_0x4048a9['innerHTML']=_0x3ee04c[_0x395335(0x1aa)],_0x4048a9[_0x395335(0x1b7)]=!![]),_0x3ee04c[_0x395335(0x1c5)](_0x9ade30,async()=>{const _0x2b9882=_0x395335,_0xd5dde=await _0x5ec186();_0xd5dde?_0xa3ea1d[_0x2b9882(0x232)](_0xb198e1,_0x2b9882(0x1bb),_0xa3ea1d[_0x2b9882(0x1c6)]):_0xa3ea1d[_0x2b9882(0x1f3)](_0xb198e1,_0xa3ea1d['ifcXg'],_0xa3ea1d[_0x2b9882(0x18a)]);})[_0x395335(0x1ae)](()=>{const _0x2341c2=_0x395335;_0x4048a9&&(_0x4048a9[_0x2341c2(0x219)]='<i\x20class=\x22fas\x20fa-sync-alt\x20text-sm\x22></i>',_0x4048a9[_0x2341c2(0x1b7)]=![]);});};function _0xb198e1(_0x21428a,_0x568ba0='success'){const _0x363748=_0x2e9bef,_0x39fa4a={'EoIxu':function(_0x1565e9,_0x4b00a3,_0x427698){const _0x41fe9f=a0_0x5b37;return _0x3ee04c[_0x41fe9f(0x263)](_0x1565e9,_0x4b00a3,_0x427698);}};document[_0x363748(0x207)](_0x3ee04c[_0x363748(0x212)])[_0x363748(0x1ac)](_0x30b0aa=>_0x30b0aa['remove']());const _0x459a5e=document[_0x363748(0x1be)](_0x363748(0x17c));_0x459a5e[_0x363748(0x1dd)]=_0x363748(0x1eb);const _0x2dcb35={'success':_0x3ee04c[_0x363748(0x214)],'error':_0x363748(0x264),'info':_0x3ee04c[_0x363748(0x269)]},_0x3a61c7={'success':_0x3ee04c[_0x363748(0x265)],'error':_0x3ee04c[_0x363748(0x26e)],'info':_0x363748(0x1c1)};_0x459a5e[_0x363748(0x1dd)]+='\x20'+(_0x2dcb35[_0x568ba0]||_0x2dcb35['success']),_0x459a5e[_0x363748(0x219)]=_0x363748(0x1fe)+(_0x3a61c7[_0x568ba0]||_0x3a61c7['success'])+_0x363748(0x19d)+_0x21428a,document[_0x363748(0x1a1)][_0x363748(0x18e)](_0x459a5e),requestAnimationFrame(()=>{const _0x28f413=_0x363748;_0x459a5e['style'][_0x28f413(0x210)]=_0x28f413(0x271);}),setTimeout(()=>{const _0x25812b=_0x363748;_0x459a5e[_0x25812b(0x256)][_0x25812b(0x210)]='translateX(400px)',_0x39fa4a[_0x25812b(0x216)](setTimeout,()=>_0x459a5e['remove'](),0x12c);},_0x3ee04c['yrQSl'](_0x568ba0,'error')?0xfa0:0x9c4);}function _0x383739(){const _0xfb5903=_0x2e9bef;try{localStorage[_0xfb5903(0x1da)]('cart_updated',Date[_0xfb5903(0x1d7)]()[_0xfb5903(0x211)]()),window[_0xfb5903(0x1fc)](new CustomEvent(_0x3ee04c[_0xfb5903(0x1b6)],{'detail':{'timestamp':Date[_0xfb5903(0x1d7)]()}}));}catch(_0x168aa9){console[_0xfb5903(0x1d3)](_0x3ee04c[_0xfb5903(0x24f)]);}}window[_0x2e9bef(0x209)](_0x3ee04c['bJyvF'],function(_0xacde1e){const _0x3adddb=_0x2e9bef;_0xacde1e[_0x3adddb(0x1f4)]===_0x3ee04c[_0x3adddb(0x244)]&&(console[_0x3adddb(0x1d3)](_0x3ee04c['ZmIUw']),_0x3ee04c[_0x3adddb(0x1c5)](_0x9ade30,()=>_0x5ec186(!![])));}),window[_0x2e9bef(0x209)](_0x3ee04c[_0x2e9bef(0x1b6)],function(_0x4ce798){const _0x1c36da=_0x2e9bef;console['log'](_0x3ee04c['SEFre']),_0x3ee04c[_0x1c36da(0x1bc)](_0x9ade30,()=>_0x5ec186(!![]));}),document[_0x2e9bef(0x209)](_0x3ee04c[_0x2e9bef(0x266)],function(){const _0x4c55cb=_0x2e9bef;document[_0x4c55cb(0x1de)]?_0x3ee04c[_0x4c55cb(0x1c5)](clearInterval,_0x8f47b8):(_0x3ee04c['xIDzk'](_0x551e30),_0x3ee04c[_0x4c55cb(0x23b)](_0x9ade30,()=>_0x160d76()));}),window[_0x2e9bef(0x226)]=function(){const _0x31cd49=_0x2e9bef;_0x3ee04c[_0x31cd49(0x274)](_0x9ade30,()=>_0x160d76()),_0x383739();},_0x3ee04c['pLLHi'](_0x38680c),_0x3ee04c[_0x2e9bef(0x1f2)](setTimeout,()=>{const _0x2d4dfe=_0x2e9bef;_0x3ee04c[_0x2d4dfe(0x1ea)](_0x9ade30,()=>_0x5ec186(!![]));},0x1f4),console['log'](_0x3ee04c[_0x2e9bef(0x1af)]);}));function a0_0x5b37(_0x25960c,_0x320c8d){const _0x37e59f=a0_0x37e5();return a0_0x5b37=function(_0x5b37a1,_0x25234a){_0x5b37a1=_0x5b37a1-0x17c;let _0x59b78a=_0x37e59f[_0x5b37a1];return _0x59b78a;},a0_0x5b37(_0x25960c,_0x320c8d);}const enhancedStyles=document[a0_0x249a1a(0x1be)](a0_0x249a1a(0x256));enhancedStyles[a0_0x249a1a(0x1e4)]=a0_0x249a1a(0x1d6),document[a0_0x249a1a(0x24c)]['appendChild'](enhancedStyles);
+          // ===== ENHANCED REAL-TIME CART SYSTEM =====
+document.addEventListener('DOMContentLoaded', function () {
+    const cartContainer = document.getElementById('cart-container');
+    const cartModal = document.getElementById('cart-modal');
+    let hoverTimeout;
+    let autoRefreshInterval;
+    let lastCartHash = '';
+    let isUpdating = false;
+    let updateQueue = [];
+    let wsConnection = null;
+
+    // Remove existing show class and hide modal initially
+    cartModal.classList.remove('show');
+    cartModal.style.display = 'none';
+
+    // ===== ENHANCED AUTO-REFRESH WITH INTELLIGENT INTERVALS =====
+    function startEnhancedAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+        
+        let intervalTime = 5000; // Start with 5 seconds
+        let lastActivity = Date.now();
+        
+        autoRefreshInterval = setInterval(() => {
+            const timeSinceLastActivity = Date.now() - lastActivity;
+            
+            // Adjust interval based on user activity
+            if (timeSinceLastActivity < 30000) { // Active in last 30 seconds
+                intervalTime = 3000; // 3 second updates
+            } else if (timeSinceLastActivity < 300000) { // Active in last 5 minutes
+                intervalTime = 10000; // 10 second updates
+            } else {
+                intervalTime = 30000; // 30 second updates for inactive users
+            }
+            
+            silentCartUpdate();
+        }, intervalTime);
+        
+        // Track user activity
+        ['mouseenter', 'click', 'focus', 'scroll'].forEach(event => {
+            cartContainer.addEventListener(event, () => {
+                lastActivity = Date.now();
+            });
+        });
+        
+        console.log('');
+    }
+
+    // ===== QUEUE-BASED UPDATE SYSTEM =====
+    function queueUpdate(updateFunction) {
+        updateQueue.push(updateFunction);
+        processUpdateQueue();
+    }
+
+    async function processUpdateQueue() {
+        if (isUpdating || updateQueue.length === 0) return;
+        
+        isUpdating = true;
+        
+        while (updateQueue.length > 0) {
+            const update = updateQueue.shift();
+            try {
+                await update();
+                // Small delay between updates to prevent overwhelming
+                await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (error) {
+                console.error('Update failed:', error);
+            }
+        }
+        
+        isUpdating = false;
+    }
+
+    // ===== ENHANCED HOVER FUNCTIONALITY =====
+    cartContainer.addEventListener('mouseenter', function () {
+        clearTimeout(hoverTimeout);
+        
+        // Immediate update on hover without loading indicators
+        queueUpdate(() => instantCartUpdate());
+        
+        positionModal();
+        showModal();
+    });
+
+    function positionModal() {
+        const cartRect = cartContainer.getBoundingClientRect();
+        const modalWidth = 320;
+        const viewportWidth = window.innerWidth;
+
+        let rightPos = viewportWidth - cartRect.right;
+        if (cartRect.right - modalWidth < 0) {
+            rightPos = 16;
+        }
+
+        // Responsive positioning
+        if (window.innerWidth <= 640) {
+            cartModal.style.right = '0.5rem';
+            cartModal.style.left = '0.5rem';
+            cartModal.style.width = 'auto';
+        } else {
+            cartModal.style.right = rightPos + 'px';
+            cartModal.style.left = 'auto';
+            cartModal.style.width = '';
+        }
+        
+        cartModal.style.top = (cartRect.bottom + 8) + 'px';
+    }
+
+    function showModal() {
+        cartModal.style.display = 'block';
+        // Use requestAnimationFrame for smooth animation
+        requestAnimationFrame(() => {
+            cartModal.classList.add('show');
+        });
+    }
+
+    function hideModal() {
+        hoverTimeout = setTimeout(() => {
+            cartModal.classList.remove('show');
+            setTimeout(() => {
+                if (!cartModal.classList.contains('show')) {
+                    cartModal.style.display = 'none';
+                }
+            }, 300);
+        }, 300);
+    }
+
+    cartContainer.addEventListener('mouseleave', hideModal);
+    cartModal.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
+    cartModal.addEventListener('mouseleave', hideModal);
+
+    // ===== INSTANT UPDATE (NO LOADING INDICATORS) =====
+    async function instantCartUpdate() {
+        return silentCartUpdate(true); // true = instant mode
+    }
+
+    // ===== ENHANCED SILENT UPDATE =====
+    async function silentCartUpdate(instantMode = false) {
+        const possiblePaths = [
+            'navbar/refresh_cart.php',
+            '../navbar/refresh_cart.php',
+            '../../navbar/refresh_cart.php',
+            '/Noble/user/otherpage/navbar/refresh_cart.php',
+            '/Noble/user/navbar/refresh_cart.php',
+            '/Noble/navbar/refresh_cart.php'
+        ];
+
+        async function tryPath(pathIndex = 0) {
+            if (pathIndex >= possiblePaths.length) return null;
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), instantMode ? 2000 : 5000);
+
+                const response = await fetch(possiblePaths[pathIndex], {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    credentials: 'same-origin',
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) return tryPath(pathIndex + 1);
+                
+                const responseText = await response.text();
+                if (responseText.trim().startsWith('<!DOCTYPE html>') || 
+                    responseText.trim().startsWith('<html')) {
+                    return tryPath(pathIndex + 1);
+                }
+
+                const data = JSON.parse(responseText);
+                if (data && data.success) {
+                    return data;
+                }
+                return tryPath(pathIndex + 1);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Request timeout, trying next path');
+                }
+                return tryPath(pathIndex + 1);
+            }
+        }
+
+        try {
+            const data = await tryPath();
+            if (data) {
+                updateCartDisplay(data, !instantMode, true);
+                return data;
+            }
+        } catch (error) {
+            console.log('Silent update failed:', error.message);
+        }
+        return null;
+    }
+
+    // ===== OPTIMIZED UPDATE DISPLAY FUNCTION =====
+    function updateCartDisplay(data, withAnimations = false, isSilent = false) {
+        // Use DocumentFragment for better performance
+        const fragment = document.createDocumentFragment();
+        
+        // Check if cart content actually changed
+        const newCartHash = data.cart_hash || JSON.stringify(data.cart_html);
+        if (isSilent && newCartHash === lastCartHash) {
+            return; // No changes, skip update
+        }
+        lastCartHash = newCartHash;
+
+        // Batch DOM updates
+        requestAnimationFrame(() => {
+            updateCartItems(data, withAnimations, isSilent);
+            updateCartCounts(data, withAnimations, isSilent);
+            updateCartFooter(data);
+        });
+
+        // Trigger cross-tab update
+        triggerCartUpdate();
+    }
+
+    function updateCartItems(data, withAnimations, isSilent) {
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        if (!data.cart_html || !cartItemsContainer) return;
+
+        if (withAnimations && !isSilent) {
+            cartItemsContainer.style.opacity = '0';
+            setTimeout(() => {
+                cartItemsContainer.innerHTML = data.cart_html;
+                cartItemsContainer.style.opacity = '1';
+                
+                // Add slide animations with stagger
+                const items = cartItemsContainer.querySelectorAll('.cart-item-slide');
+                items.forEach((item, index) => {
+                    item.style.animation = `slideInRight 0.3s ease-out ${index * 0.05}s forwards`;
+                });
+            }, 100);
+        } else {
+            cartItemsContainer.innerHTML = data.cart_html;
+        }
+    }
+
+    function updateCartCounts(data, withAnimations, isSilent) {
+        const modalCartCount = document.getElementById('modal-cart-count');
+        const cartCountBubble = document.getElementById('cart-count-bubble');
+        const cartCountSpan = document.querySelector('.cart-count[data-cart-count]');
+
+        if (data.total_items === undefined) return;
+
+        // Update modal count
+        if (modalCartCount) {
+            const newText = data.total_items + ' items';
+            if (modalCartCount.textContent !== newText) {
+                modalCartCount.textContent = newText;
+                
+                if (withAnimations && !isSilent) {
+                    modalCartCount.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        modalCartCount.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            }
+        }
+
+        // Update count bubble
+        if (cartCountSpan) {
+            const newCount = data.total_items.toString();
+            if (cartCountSpan.textContent !== newCount) {
+                cartCountSpan.textContent = newCount;
+                
+                if (withAnimations && !isSilent) {
+                    cartCountSpan.style.transform = 'scale(1.2)';
+                    cartCountSpan.style.backgroundColor = '#10b981';
+                    setTimeout(() => {
+                        cartCountSpan.style.transform = 'scale(1)';
+                        cartCountSpan.style.backgroundColor = '';
+                    }, 300);
+                }
+            }
+        }
+
+        // Show/hide count bubble with smooth transition
+        if (cartCountBubble) {
+            if (data.total_items > 0) {
+                cartCountBubble.classList.remove('hidden');
+                cartCountBubble.style.opacity = '1';
+                cartCountBubble.style.transform = 'scale(1)';
+            } else {
+                cartCountBubble.style.opacity = '0';
+                cartCountBubble.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    cartCountBubble.classList.add('hidden');
+                }, 200);
+            }
+        }
+    }
+
+    function updateCartFooter(data) {
+        let cartFooter = document.getElementById('cart-footer');
+        
+        if (data.footer_html) {
+            if (cartFooter) {
+                if (cartFooter.innerHTML !== data.footer_html) {
+                    cartFooter.innerHTML = data.footer_html;
+                }
+            } else {
+                cartFooter = document.createElement('div');
+                cartFooter.id = 'cart-footer';
+                cartFooter.className = 'border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl';
+                cartFooter.innerHTML = data.footer_html;
+                cartModal.appendChild(cartFooter);
+            }
+        } else if (cartFooter) {
+            cartFooter.remove();
+        }
+    }
+
+    // ===== ENHANCED REMOVE FUNCTION =====
+    window.removeFromCart = async function(itemId) {
+        // Immediate visual feedback
+        const itemElement = document.querySelector(`[onclick="removeFromCart(${itemId})"]`).closest('.cart-item-slide');
+        if (itemElement) {
+            itemElement.style.opacity = '0.5';
+            itemElement.style.transform = 'translateX(-20px)';
+        }
+
+        const possiblePaths = [
+            'remove_from_cart_ajax.php',
+            'navbar/remove_from_cart_ajax.php',
+            '../remove_from_cart_ajax.php',
+            '../navbar/remove_from_cart_ajax.php',
+            '/noble/navbar/remove_from_cart_ajax.php'
+        ];
+
+        async function tryRemovePath(pathIndex = 0) {
+            if (pathIndex >= possiblePaths.length) {
+                throw new Error('Could not find remove_from_cart_ajax.php');
+            }
+
+            try {
+                const response = await fetch(possiblePaths[pathIndex], {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    credentials: 'same-origin',
+                    body: 'key=' + encodeURIComponent(itemId)
+                });
+
+                if (!response.ok) return tryRemovePath(pathIndex + 1);
+
+                const responseText = await response.text();
+                if (responseText.trim().startsWith('<!DOCTYPE html>')) {
+                    return tryRemovePath(pathIndex + 1);
+                }
+
+                const data = JSON.parse(responseText);
+                if (data && data.success) {
+                    return data;
+                }
+                return tryRemovePath(pathIndex + 1);
+
+            } catch (error) {
+                return tryRemovePath(pathIndex + 1);
+            }
+        }
+
+        try {
+            const result = await tryRemovePath();
+            if (result && result.success) {
+                // Remove item with animation
+                if (itemElement) {
+                    itemElement.style.transform = 'translateX(-100%)';
+                    itemElement.style.opacity = '0';
+                    setTimeout(() => {
+                        itemElement.remove();
+                    }, 300);
+                }
+
+                // Update cart immediately
+                setTimeout(() => {
+                    queueUpdate(() => instantCartUpdate());
+                }, 300);
+
+                showNotification('Item removed!', 'success');
+            } else {
+                throw new Error('Failed to remove item');
+            }
+        } catch (error) {
+            // Reset visual state on error
+            if (itemElement) {
+                itemElement.style.opacity = '1';
+                itemElement.style.transform = 'translateX(0)';
+            }
+            showNotification('Failed to remove item', 'error');
+        }
+    };
+
+    // ===== ENHANCED REFRESH FUNCTION =====
+    window.refreshCart = function() {
+        const refreshBtn = document.getElementById('refresh-cart-btn');
+        
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+            refreshBtn.disabled = true;
+        }
+
+        queueUpdate(async () => {
+            const data = await silentCartUpdate();
+            if (data) {
+                showNotification('Cart updated!', 'success');
+            } else {
+                showNotification('Update failed', 'error');
+            }
+        }).finally(() => {
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt text-sm"></i>';
+                refreshBtn.disabled = false;
+            }
+        });
+    };
+
+    // ===== NOTIFICATION SYSTEM =====
+    function showNotification(message, type = 'success') {
+        // Remove existing notifications
+        document.querySelectorAll('.cart-notification').forEach(n => n.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `cart-notification fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-[10000] text-sm font-medium transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            success: 'bg-green-500 text-white',
+            error: 'bg-red-500 text-white',
+            info: 'bg-blue-500 text-white'
+        };
+        
+        const icons = {
+            success: 'fas fa-check',
+            error: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+        
+        notification.className += ` ${colors[type] || colors.success}`;
+        notification.innerHTML = `<i class="${icons[type] || icons.success} mr-2"></i>${message}`;
+        
+        document.body.appendChild(notification);
+        
+        // Slide in
+        requestAnimationFrame(() => {
+            notification.style.transform = 'translateX(0)';
+        });
+        
+        // Auto-hide
+        setTimeout(() => {
+            notification.style.transform = 'translateX(400px)';
+            setTimeout(() => notification.remove(), 300);
+        }, type === 'error' ? 4000 : 2500);
+    }
+
+    // ===== CROSS-TAB SYNCHRONIZATION =====
+    function triggerCartUpdate() {
+        try {
+            localStorage.setItem('cart_updated', Date.now().toString());
+            // Broadcast custom event for same-tab updates
+            window.dispatchEvent(new CustomEvent('cartUpdated', { 
+                detail: { timestamp: Date.now() } 
+            }));
+        } catch (e) {
+            console.log('Cross-tab sync not available');
+        }
+    }
+
+    // Listen for storage events (cross-tab)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'cart_updated') {
+          
+            queueUpdate(() => silentCartUpdate(true));
+        }
+    });
+
+    // Listen for same-tab events
+    window.addEventListener('cartUpdated', function(e) {
+       
+        queueUpdate(() => silentCartUpdate(true));
+    });
+
+    // ===== PAGE VISIBILITY OPTIMIZATION =====
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            // Pause updates when tab is hidden
+            clearInterval(autoRefreshInterval);
+        } else {
+            // Resume updates when tab becomes visible
+            startEnhancedAutoRefresh();
+            queueUpdate(() => instantCartUpdate());
+        }
+    });
+
+    // ===== GLOBAL FUNCTIONS =====
+    window.updateCartGlobally = function() {
+        queueUpdate(() => instantCartUpdate());
+        triggerCartUpdate();
+    };
+    
+    // Initial update
+    setTimeout(() => {
+        queueUpdate(() => silentCartUpdate(true));
+    }, 500);
+
+    
+});
+
+// ===== ENHANCED CSS STYLES =====
+const enhancedStyles = document.createElement('style');
+enhancedStyles.textContent = `
+    .cart-count[data-cart-count] {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+    }
+    
+    #modal-cart-count {
+        transition: all 0.2s ease;
+        transform-origin: center;
+    }
+    
+    #cart-items-container {
+        transition: opacity 0.15s ease;
+    }
+    
+    .cart-modal {
+        will-change: transform, opacity;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    .cart-item-slide {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform, opacity;
+    }
+    
+    .cart-notification {
+        will-change: transform;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Smooth count bubble transitions */
+    #cart-count-bubble {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+    }
+    
+    /* Optimized for performance */
+    .cart-modal * {
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+`;
+document.head.appendChild(enhancedStyles);

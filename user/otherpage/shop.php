@@ -171,14 +171,14 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
     .product-card {
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(229, 231, 235, 0.6);
-      background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+     
+    
     }
 
     .product-card:hover {
       transform: translateY(-8px);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-      border-color: rgba(249, 115, 22, 0.4);
+    
+     
     }
 
     .filter-section {
@@ -385,10 +385,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
       border: 1px solid rgba(249, 115, 22, 0.2);
     }
 
-    .view-options {
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border: 1px solid rgba(226, 232, 240, 0.8);
-    }
+ 
 
     /* Page transition effect */
     .page-transition {
@@ -641,7 +638,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
       <div class="flex-1 lg:order-1 page-transition">
 
         <!-- Products Header with Enhanced Controls -->
-        <div class="view-options rounded-2xl p-6 mb-8 shadow-sm">
+        <div class="view-options rounded-2xl p-6 mb-8">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
 
             <!-- Controls -->
@@ -649,7 +646,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
               
               <!-- Sort Selector -->
               <div class="flex items-center gap-3">
-                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Sort by:</label>
+                <label class="text-sm font-medium text-black whitespace-nowrap">Sort by:</label>
                 <select onchange="changeSort(this.value)" class="py-2.5 px-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-sm font-medium min-w-[140px]">
                   <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
                   <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
@@ -684,37 +681,17 @@ foreach ($all_categories as $cat_key => $cat_name) {
             $variant_stmt->close();
             ?>
 
-            <div class="product-card group rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
-              <!-- Star Rating -->
-              <!-- Star Rating Section (Replace the existing one) -->
-              <div class="px-4 pt-4">
-                <div class="rate-stars flex items-center gap-1" data-product-id="<?= $product_id ?>">
-                  <!-- Interactive Star Buttons -->
-                  <?php for ($i = 1; $i <= 5; $i++): ?>
-                    <button type="button" class="star-button rating-star" data-rating="<?= $i ?>">
-                      <?php if ($i <= floor($avg_rating)): ?>
-                        <i class="fas fa-star text-yellow-400"></i>
-                      <?php elseif ($i - $avg_rating < 1): ?>
-                        <i class="fas fa-star-half-alt text-yellow-400"></i>
-                      <?php else: ?>
-                        <i class="far fa-star text-yellow-400"></i>
-                      <?php endif; ?>
-                    </button>
-                  <?php endfor; ?>
-
-                  <!-- Rating Display -->
-                  <span class="ml-2 text-gray-600 text-xs avg-rating">(<?= $avg_rating ?>/5)</span>
-                </div>
-              </div>
-
+            <div class="product-card group  overflow-hidden   transition-all duration-300">
+            
+        
               <!-- Product Link -->
               <a href="product_view.php?id=<?= $product_id ?>">
                 <!-- Product Image -->
-                <div class="product-image-container relative aspect-square mt-3">
+                <div class="product-image-container relative aspect-square mt-3 p-2 rounded">
                   <?php if (!empty($row['main_image'])): ?>
                     <img src="../../<?= htmlspecialchars($row['main_image']) ?>" alt="<?= htmlspecialchars($row['product_name']) ?>" class="product-image w-full h-full object-contain" loading="lazy">
                   <?php else: ?>
-                    <div class="product-image w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                    <div class="product-image w-full h-full flex items-center justify-center text-gray-400">
                       <i class="fas fa-image text-4xl"></i>
                     </div>
                   <?php endif; ?>
@@ -1110,91 +1087,6 @@ foreach ($all_categories as $cat_key => $cat_name) {
         closeMobileFilterPanel();
       }
     });
-
-    // FIXED: Enhanced Rating System
-    document.querySelectorAll('.rate-stars').forEach(function(starsContainer) {
-      const productId = starsContainer.dataset.productId;
-      const stars = starsContainer.querySelectorAll('.star-button');
-      const avgRatingElement = starsContainer.querySelector('.avg-rating');
-
-      stars.forEach(function(star, index) {
-        star.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          const rating = parseInt(star.dataset.rating);
-
-          // Send rating to server
-          fetch('../rate/rate_product.php', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                product_id: productId,
-                rating: rating
-              })
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                // Update stars display
-                updateStarsDisplay(stars, data.new_average);
-                avgRatingElement.textContent = `(${data.new_average}/5)`;
-
-                // Show success message
-                showNotification('Rating submitted successfully!', 'success');
-              } else {
-                showNotification(data.message || 'Failed to submit rating', 'error');
-              }
-            })
-            .catch(error => {
-              console.error('Rating error:', error);
-              showNotification('Failed to submit rating', 'error');
-            });
-        });
-
-        // Hover effect
-        star.addEventListener('mouseenter', function() {
-          const rating = parseInt(star.dataset.rating);
-          highlightStars(stars, rating);
-        });
-      });
-
-      // Reset on mouse leave
-      starsContainer.addEventListener('mouseleave', function() {
-        const currentRating = parseFloat(avgRatingElement.textContent.match(/\(([\d.]+)/)?.[1] || 0);
-        updateStarsDisplay(stars, currentRating);
-      });
-    });
-
-    function highlightStars(stars, rating) {
-      stars.forEach(function(star, index) {
-        const starRating = index + 1;
-        const icon = star.querySelector('i');
-
-        if (starRating <= rating) {
-          icon.className = 'fas fa-star text-yellow-400';
-        } else {
-          icon.className = 'far fa-star text-yellow-400';
-        }
-      });
-    }
-
-    function updateStarsDisplay(stars, average) {
-      stars.forEach(function(star, index) {
-        const starRating = index + 1;
-        const icon = star.querySelector('i');
-
-        if (starRating <= Math.floor(average)) {
-          icon.className = 'fas fa-star text-yellow-400';
-        } else if (starRating - average < 1) {
-          icon.className = 'fas fa-star-half-alt text-yellow-400';
-        } else {
-          icon.className = 'far fa-star text-yellow-400';
-        }
-      });
-    }
 
     // Quick Sort Function
     function quickSort(sortValue) {

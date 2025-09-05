@@ -1455,17 +1455,11 @@ function process_product_images($main_image, $sub_images, $type_image)
                 });
             }
 
-            console.log('🚀 E-commerce product display initialized successfully!');
+            console.log('');
         });
 
-        // Error handling for uncaught errors
-        window.addEventListener('error', function(e) {
-            console.error('Global error:', e.error);
-        });
 
-        window.addEventListener('unhandledrejection', function(e) {
-            console.error('Unhandled promise rejection:', e.reason);
-        });
+        
     </script>
 </body>
 

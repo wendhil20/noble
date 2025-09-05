@@ -183,473 +183,347 @@ $is_verified = $user['is_verified'] ?? null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#FF6B35',
-                        secondary: '#F7931E',
-                        accent: '#FFE15D',
-                        neutral: '#1F2937',
-                        success: '#10B981',
-                        warning: '#F59E0B',
-                        error: '#EF4444'
+                        primary: '#1E40AF',
+                        secondary: '#1F2937',
+                        accent: '#3B82F6',
+                        neutral: '#F8FAFC',
+                        success: '#059669',
+                        warning: '#D97706',
+                        error: '#DC2626',
+                        corporate: '#0F172A',
+                        professional: '#334155'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                        'roboto': ['Roboto', 'sans-serif']
                     },
                     animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.3s ease-out',
-                        'bounce-in': 'bounceIn 0.6s ease-out',
-                        'pulse-slow': 'pulse 3s infinite'
-                    }
-
-                }
-
-            }
-        }
-
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        // Sans-serif fonts
-                        mont: ['Montserrat', 'sans-serif'],
-
+                        'fade-in': 'fadeIn 0.6s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out'
                     }
                 }
             }
         }
     </script>
+    
     <style>
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        @keyframes bounceIn {
-            0% {
-                transform: scale(0.3);
-                opacity: 0;
-            }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #f8fafc;
+        }
 
-            50% {
-                transform: scale(1.05);
-                opacity: 0.9;
-            }
+        .professional-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            
+        }
 
-            70% {
-                transform: scale(0.9);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+        .professional-card:hover {
+          
+            transform: translateY(-2px);
         }
 
         .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* Bouncing animation for bubbles */
-        .bubble1 {
-            animation: bubble-bounce1 7s ease-in-out infinite alternate;
-        }
-
-        .bubble2 {
-            animation: bubble-bounce2 6s ease-in-out infinite alternate;
-        }
-
-        .bubble3 {
-            animation: bubble-bounce3 8s ease-in-out infinite alternate;
-        }
-
-        .bubble4 {
-            animation: bubble-bounce4 5.5s ease-in-out infinite alternate;
-        }
-
-        .bubble5 {
-            animation: bubble-bounce5 7.5s ease-in-out infinite alternate;
-        }
-
-        .bubble6 {
-            animation: bubble-bounce6 6.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes bubble-bounce1 {
-            0% {
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                transform: translateY(-60px) scale(1.08);
-            }
-        }
-
-        @keyframes bubble-bounce2 {
-            0% {
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                transform: translateY(-40px) scale(1.12);
-            }
-        }
-
-        @keyframes bubble-bounce3 {
-            0% {
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                transform: translateY(-70px) scale(1.05);
-            }
-        }
-
-        @keyframes bubble-bounce4 {
-            0% {
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                transform: translateY(-30px) scale(1.15);
-            }
-        }
-
-        @keyframes bubble-bounce5 {
-            0% {
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                transform: translateY(-55px) scale(1.09);
-            }
-        }
-
-        @keyframes bubble-bounce6 {
-            0% {
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                transform: translateY(-35px) scale(1.13);
-            }
-        }
-
-        @keyframes bounceFloat {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-15%);
-            }
-        }
-
-        .animate-bounce-slow {
-            animation: bounceFloat 5s ease-in-out infinite;
-        }
-
-        .animate-bounce-med {
-            animation: bounceFloat 3s ease-in-out infinite;
-        }
-
-        .animate-bounce-fast {
-            animation: bounceFloat 2s ease-in-out infinite;
-        }
-
-        /* Payment filter active state */
         .payment-filter.active {
-            background-color: #3B82F6 !important;
+            background-color: #1E40AF !important;
             color: white !important;
+        }
+
+        /* Custom scrollbar for order list */
+        #orderList::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #orderList::-webkit-scrollbar-track {
+            background: #F1F5F9;
+            border-radius: 3px;
+        }
+
+        #orderList::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 3px;
+        }
+
+        #orderList::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
         }
     </style>
 </head>
 
-<body class="bg-orange-50 ">
-
+<body class="min-h-screen bg-gray-50">
     <?php include '../navbar/top.php'; ?>
 
-
-    <div class="container max-w-full mx-auto">
-        <!-- Hero Section -->
-        <div class="gradient-bg text-white relative overflow-hidden">
-            <div class="absolute inset-0 pointer-events-none z-0">
-                <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
-                    <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
-                    <circle class="bubble bubble2" cx="25%" cy="90%" r="18" fill="#fff" fill-opacity="0.10" />
-                    <circle class="bubble bubble3" cx="40%" cy="85%" r="24" fill="#fff" fill-opacity="0.09" />
-                    <circle class="bubble bubble4" cx="60%" cy="92%" r="14" fill="#fff" fill-opacity="0.11" />
-                    <circle class="bubble bubble5" cx="75%" cy="88%" r="28" fill="#fff" fill-opacity="0.12" />
-                    <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
-                </svg>
+    <!-- Professional Header -->
+    <div class="bg-black text-white shadow-lg">
+        <div class="container mx-auto px-6 py-12">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold font-inter tracking-tight mb-4">Account Management Portal</h1>
+                <p class="text-blue-100 text-lg font-medium max-w-2xl mx-auto">
+                    Comprehensive dashboard for account information, order tracking, and profile management
+                </p>
             </div>
-            <div class="bg-orange-400 text-black py-5">
-                <div class="container mx-auto px-4 font-mont uppercase">
-                    <h1 class="text-4xl font-bold text-center mb-4">Profile</h1>
-                    <p class="text-xl text-center opacity-90 font-bold">Manage your account information, orders, and saved addresses</p>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="relative overflow-hidden bg-orange-400 p-6 md:p-8 mb-8 text-white shadow-xl animate-fade-in">
-            <!-- Bubbles -->
-            <div class="absolute inset-0 overflow-hidden z-0 pointer-events-none">
-                <div class="absolute w-16 h-16 bg-white/20 rounded-full top-10 left-10 animate-bounce-slow"></div>
-                <div class="absolute w-12 h-12 bg-white/10 rounded-full bottom-16 right-8 animate-bounce-med"></div>
-                <div class="absolute w-20 h-20 bg-white/30 rounded-full top-32 right-24 animate-bounce-fast"></div>
-                <div class="absolute w-10 h-10 bg-white/15 rounded-full bottom-12 left-20 animate-bounce-med"></div>
-            </div>
-
-            <!-- Main content -->
-            <div class="relative z-20 flex flex-col md:flex-row gap-8">
-                <!-- LEFT: Profile Section -->
-               <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
-    <!-- Profile Picture Section -->
-    <div class="relative group">
-        <!-- Profile Image Container (without badge) -->
-        <div class="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/30 
-               bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md shadow-xl 
-               transform transition-transform duration-300 group-hover:scale-105 
-               flex items-center justify-center relative">
-
-            <?php if ($user_picture): ?>
-                <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture"
-                    class="w-full h-full object-cover">
-            <?php else: ?>
-                <span class="text-3xl md:text-4xl font-bold text-black font-serif">
-                    <?= strtoupper(substr($user_name, 0, 1)); ?>
-                </span>
-            <?php endif; ?>
         </div>
     </div>
 
-    <!-- Name & Email with Badge -->
-    <div class="font-mont">
-        <!-- Username with Badge -->
-        <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
-            <h1 class="text-2xl md:text-4xl font-bold text-black drop-shadow-sm">
-                <?= htmlspecialchars($user_name); ?>
-            </h1>
-            
-            <!-- Verification Badge -->
-            <?php if (!empty($is_verified) && $is_verified == 1): ?>
-                <!-- Verified Badge -->
-                <div class="flex items-center justify-center w-6 h-6 md:w-7 md:h-7 
-                        bg-blue-500 rounded-full shadow-md border-2 border-white"
-                     title="Verified Account">
-                    <svg class="w-3 h-3 md:w-4 md:h-4 text-white" xmlns="http://www.w3.org/2000/svg"
-                         fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                              d="M16.707 5.293a1 1 0 0 1 0 1.414L8.414 15l-4.121-4.121a1 1 0 0 1 1.414-1.414L8.414 12.586l7.293-7.293a1 1 0 0 1 1.414 0z"
-                              clip-rule="evenodd" />
-                    </svg>
-                </div>
-            <?php else: ?>
-                <!-- Not Verified Badge -->
-                <div class="px-2 py-0.5 bg-red-500 text-white text-[9px] md:text-[10px] 
-                        font-semibold rounded-full border border-white shadow-md">
-                    Not Verified
-                </div>
-            <?php endif; ?>
-        </div>
+    <div class="container mx-auto px-6 py-8 max-w-full">
+        <!-- Professional Profile Section -->
+        <div class="professional-card rounded-xl p-8 mb-8 animate-fade-in">
+            <div class="flex flex-col lg:flex-row gap-8">
+                
+                <!-- Profile Information -->
+                <div class="flex-1">
+                    <div class="flex items-start gap-6">
+                        <!-- Professional Avatar -->
+                        <div class="relative">
+                            <?php if ($user_picture): ?>
+                                <div class="w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-200 shadow-md">
+                                    <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+                                </div>
+                            <?php else: ?>
+                                <div class="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                                <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-success rounded-full border-4 border-white flex items-center justify-center shadow-sm">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-        <!-- Email -->
-        <p class="text-base md:text-lg text-black"><?= htmlspecialchars($user_email); ?></p>
-
-        <!-- Orders and Settings side-by-side -->
-        <div class="flex items-center gap-3 mt-3">
-            <?php if ($is_verified == 1): ?>
-                <!-- VERIFIED (disabled, GCash style) -->
-                <button disabled
-                    class="flex items-center gap-2 px-5 py-2 rounded-full bg-green-100 text-green-700 font-semibold cursor-not-allowed shadow-sm">
-                    <!-- check icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Verified
-                </button>
-            <?php else: ?>
-                <!-- NOT VERIFIED (clickable, GCash style) -->
-                <a href="settings.php"
-                    class="flex items-center justify-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-md hover:from-blue-600 hover:to-blue-700 transition">
-                    <!-- shield icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z" />
-                    </svg>
-                    Complete Verification
-                </a>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>  
-
-                <!-- RIGHT: Stats Section -->
-                <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full font-mont">
-                    <!-- Total Orders -->
-                    <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600">Total Orders</p>
-                                <p class="text-3xl md:text-4xl font-extrabold text-gray-900"><?= count($all_orders); ?></p>
+                        <!-- User Details -->
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-3">
+                                <h2 class="text-2xl font-bold text-gray-900 font-inter"><?= htmlspecialchars($user_name); ?></h2>
+                                <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full border border-green-200">
+                                        <i class="fas fa-shield-alt mr-1"></i>Verified Account
+                                    </span>
+                                <?php else: ?>
+                                    <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full border border-red-200">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>Pending Verification
+                                    </span>
+                                <?php endif; ?>
                             </div>
-                            <div class="w-12 h-12 md:w-14 md:h-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                                <svg class="w-6 h-6 md:w-7 md:h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                </svg>
+                            
+                            <div class="space-y-2 text-gray-600 mb-6">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-envelope text-gray-400 w-4"></i>
+                                    <span class="font-medium"><?= htmlspecialchars($user_email); ?></span>
+                                </div>
+                            </div>
+
+                            <!-- Action Button -->
+                            <div>
+                                <?php if ($is_verified == 1): ?>
+                                    <button disabled class="flex items-center gap-3 px-6 py-3 bg-green-50 text-green-700 font-semibold rounded-lg border border-green-200 cursor-not-allowed">
+                                        <i class="fas fa-check-circle"></i>
+                                        Account Verified
+                                    </button>
+                                <?php else: ?>
+                                    <a href="settings.php" class="inline-flex items-center gap-3 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                                        <i class="fas fa-user-cog"></i>
+                                        Complete Verification
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Feedback Form -->
+<div class="mt-6 p-4 border rounded-lg bg-gray-50">
+    <h3 class="text-lg font-semibold text-gray-900 mb-3">Comment on this Website</h3>
+    <form action="profilerate.php" method="POST" class="space-y-3">
+        <input type="hidden" name="user_id" value="<?= $user_id; ?>">
+        
+        <!-- Rating -->
+        <div class="flex items-center gap-1">
+            <?php for ($i=1; $i<=5; $i++): ?>
+                <label>
+                    <input type="radio" name="rating" value="<?= $i ?>" required class="hidden peer">
+                    <i class="fas fa-star text-gray-300 peer-checked:text-yellow-500 cursor-pointer text-xl"></i>
+                </label>
+            <?php endfor; ?>
+        </div>
+
+        <!-- Comment -->
+        <textarea name="comment" rows="3" class="w-full border rounded-lg p-2 text-sm" placeholder="Write your feedback..."></textarea>
+
+        <!-- Submit -->
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Submit Feedback
+        </button>
+    </form>
+
+    <?php
+    // Kunin yung huling feedback na ginawa ng naka-login user para sa profile na ito
+    $current_feedback = $conn->query("
+        SELECT * FROM user_feedback 
+        WHERE user_id = $user_id AND author_id = {$_SESSION['user_id']}
+        ORDER BY created_at DESC LIMIT 1
+    ");
+    ?>
+
+    <?php if ($current_feedback && $current_feedback->num_rows > 0): 
+        $fb = $current_feedback->fetch_assoc(); ?>
+        
+        <details class="mt-4 border rounded-lg bg-white shadow-sm">
+            <summary class="cursor-pointer px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 rounded-t-lg">
+                Your Latest Review
+            </summary>
+            <div class="p-4 border-t">
+                <!-- Rating -->
+                <div class="flex items-center gap-1 mb-2">
+                    <?php for ($i=1; $i<=5; $i++): ?>
+                        <i class="fas fa-star <?= $i <= $fb['rating'] ? 'text-yellow-500' : 'text-gray-300' ?>"></i>
+                    <?php endfor; ?>
+                </div>
+
+                <!-- Comment -->
+                <p class="text-gray-700 text-sm mb-2"><?= htmlspecialchars($fb['comment']); ?></p>
+                <span class="text-xs text-gray-500">Submitted on <?= date('M j, Y g:i A', strtotime($fb['created_at'])); ?></span>
+            </div>
+        </details>
+
+    <?php endif; ?>
+</div>
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="lg:w-96">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <!-- Total Orders -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 mb-1">Total Orders</p>
+                                    <p class="text-2xl font-bold text-gray-900"><?= count($all_orders); ?></p>
+                                </div>
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-shopping-bag text-blue-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Orders -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 mb-1">Pending</p>
+                                    <p class="text-2xl font-bold text-warning"><?= count($pending_orders); ?></p>
+                                </div>
+                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-clock text-orange-600"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pending Orders -->
-                    <div class="bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600 ">Pending Orders</p>
-                                <p class="text-3xl md:text-4xl font-extrabold text-yellow-500"><?= count($pending_orders); ?></p>
-                            </div>
-                            <div class="w-12 h-12 md:w-14 md:h-14 bg-yellow-100 rounded-xl flex items-center justify-center">
-                                <svg class="w-6 h-6 md:w-7 md:h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <!-- View History Receipt Button -->
-                        <div class="mt-4">
-                            <a href="order_history.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 rounded-lg transition-all duration-200 shadow">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m1 0h-5m-6 4v2a2 2 0 002 2h6a2 2 0 002-2v-2a6 6 0 00-6-6h-4a2 2 0 00-2 2v2z" />
-                                </svg>
-                                View History Receipt
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Billing Address -->
-                    <div class="col-span-1 sm:col-span-2 bg-white/90 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                            <div class="flex items-center w-full sm:w-auto">
-                                <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 rounded-xl flex items-center justify-center mr-4">
-                                    <svg class="w-6 h-6 md:w-7 md:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
+                    <!-- Addresses Card -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-map-marker-alt text-green-600"></i>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600 ">Delivery Addresses</p>
-                                    <p class="text-lg font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
+                                    <p class="text-sm font-medium text-gray-500">Delivery Addresses</p>
+                                    <p class="font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
                                 </div>
                             </div>
-
-                            <div class="w-full sm:w-auto">
-                                <button onclick="openBillingModal()" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex justify-center items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </button>
-                            </div>
+                            <button onclick="openBillingModal()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </button>
                         </div>
-
-                        <button onclick="window.location.href='update_billing_add.php'" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add New Address
+                        
+                        <button onclick="window.location.href='update_billing_add.php'" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                            <i class="fas fa-plus mr-2"></i>Add New Address
                         </button>
+                    </div>
+
+                    <!-- Order History Button -->
+                    <div class="mt-4">
+                        <a href="order_history.php" class="w-full inline-flex items-center justify-center px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors font-medium">
+                            <i class="fas fa-history mr-2"></i>View Order History
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-1">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Orders History - LEFT (2 columns) -->
             <div class="lg:col-span-2">
-                <div class="bg-white p-6 shadow-lg animate-fade-in">
+                <div class="professional-card rounded-xl p-6 animate-fade-in">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
+                                <i class="fas fa-clipboard-list text-blue-600"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900">Order History</h3>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 font-inter">Recent Orders</h3>
+                                <p class="text-sm text-gray-500">Order history and tracking information</p>
+                            </div>
                         </div>
                         <?php if (!empty($all_orders)): ?>
-                            <span class="text-sm text-gray-500"><?php echo count($all_orders); ?> orders</span>
+                            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
+                                <?php echo count($all_orders); ?> orders
+                            </span>
                         <?php endif; ?>
                     </div>
 
-                    <!-- Search input -->
+                    <!-- Search and Filters -->
                     <?php if (!empty($all_orders)): ?>
-                        <div class="mb-4">
-                            <input type="text" id="orderSearch" placeholder="Search order ID, date, or payment status..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300" oninput="filterOrders()">
-                        </div>
+                        <div class="mb-6 space-y-4">
+                            <input type="text" id="orderSearch" 
+                                   placeholder="Search by order ID, date, or status..." 
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" 
+                                   oninput="filterOrders()">
 
-                        <!-- Payment Status Filter -->
-                        <div class="mb-4 flex flex-wrap gap-2">
-                            <button onclick="filterByPaymentStatus('all')"
-                                class="px-3 py-1 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors payment-filter active">
-                                All
-                            </button>
-                            <button onclick="filterByPaymentStatus('pending')"
-                                class="px-3 py-1 text-sm rounded-lg bg-yellow-100 hover:bg-yellow-200 transition-colors payment-filter">
-                                Pending Payment
-                            </button>
-                            <button onclick="filterByPaymentStatus('verified')"
-                                class="px-3 py-1 text-sm rounded-lg bg-green-100 hover:bg-green-200 transition-colors payment-filter">
-                                Verified
-                            </button>
-                            <button onclick="filterByPaymentStatus('rejected')"
-                                class="px-3 py-1 text-sm rounded-lg bg-red-100 hover:bg-red-200 transition-colors payment-filter">
-                                Rejected
-                            </button>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="filterByPaymentStatus('all')"
+                                    class="px-4 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors payment-filter active font-medium">
+                                    All Orders
+                                </button>
+                                <button onclick="filterByPaymentStatus('pending')"
+                                    class="px-4 py-2 text-sm rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors payment-filter font-medium">
+                                    Pending Payment
+                                </button>
+                                <button onclick="filterByPaymentStatus('verified')"
+                                    class="px-4 py-2 text-sm rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors payment-filter font-medium">
+                                    Verified
+                                </button>
+                                <button onclick="filterByPaymentStatus('rejected')"
+                                    class="px-4 py-2 text-sm rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors payment-filter font-medium">
+                                    Rejected
+                                </button>
+                            </div>
                         </div>
                     <?php endif; ?>
 
@@ -657,109 +531,101 @@ $is_verified = $user['is_verified'] ?? null;
                         <!-- NO ORDERS UI -->
                         <div class="text-center py-12">
                             <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                                </svg>
+                                <i class="fas fa-shopping-bag text-2xl text-gray-400"></i>
                             </div>
-                            <h4 class="text-lg font-semibold text-gray-900 mb-2">No orders yet</h4>
-                            <p class="text-gray-600 mb-6">Start your shopping journey with us!</p>
-                            <a href="index.php" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                                </svg>
-                                Start Shopping
+                            <h4 class="text-lg font-semibold text-gray-900 mb-2">No Orders Found</h4>
+                            <p class="text-gray-600 mb-6">You haven't placed any orders yet. Start exploring our products!</p>
+                            <a href="index.php" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <i class="fas fa-shopping-cart"></i>
+                                Browse Products
                             </a>
                         </div>
                     <?php else: ?>
-                        <div class="space-y-4" id="orderList">
+                        <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2" id="orderList">
                             <?php foreach ($all_orders as $order): ?>
-                                <div
-                                    class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer order-item"
+                                <div class="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer order-item bg-white"
                                     data-id="<?php echo $order['id']; ?>"
                                     data-date="<?php echo strtolower(date('M j, Y g:i A', strtotime($order['created_at']))); ?>"
                                     data-payment-status="<?php echo strtolower($order['payment_status'] ?? 'pending'); ?>"
                                     onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
+                                    
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
                                                 <span class="text-sm font-bold text-gray-600">#<?php echo $order['id']; ?></span>
                                             </div>
                                             <div>
-                                                <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
-                                                <p class="text-sm text-gray-600"><?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?></p>
+                                                <p class="font-semibold text-gray-900 mb-1">Order #<?php echo $order['id']; ?></p>
+                                                <p class="text-sm text-gray-500">
+                                                    <i class="far fa-calendar mr-1"></i>
+                                                    <?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?>
+                                                </p>
                                             </div>
                                         </div>
+                                        
                                         <div class="text-right">
-                                            <p class="font-bold text-lg text-gray-900">₱<?php echo number_format($order['final_total'], 2); ?></p>
-
-                                            <!-- Order Status and Payment Status -->
-                                            <div class="flex flex-col gap-1 items-end">
+                                            <p class="font-bold text-lg text-gray-900 mb-2">₱<?php echo number_format($order['total'], 2); ?></p>
+                                            
+                                            <div class="flex flex-col gap-2 items-end">
                                                 <!-- Order Status -->
-                                                <span class="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full
-                                                 <?php
+                                                <span class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full font-medium
+                                                    <?php
                                                     switch ($order['status']) {
                                                         case 'Pending':
-                                                            echo 'bg-orange-100 text-orange-800';
+                                                            echo 'bg-orange-100 text-orange-800 border border-orange-200';
                                                             break;
                                                         case 'Ongoing':
-                                                            echo 'bg-blue-100 text-blue-800';
+                                                            echo 'bg-blue-100 text-blue-800 border border-blue-200';
                                                             break;
                                                         case 'Arrival':
-                                                            echo 'bg-purple-100 text-purple-800';
+                                                            echo 'bg-purple-100 text-purple-800 border border-purple-200';
                                                             break;
                                                         case 'Departure':
-                                                            echo 'bg-yellow-100 text-yellow-800';
+                                                            echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
                                                             break;
                                                         case 'Complete':
-                                                            echo 'bg-green-100 text-green-800';
+                                                            echo 'bg-green-100 text-green-800 border border-green-200';
                                                             break;
                                                         default:
-                                                            echo 'bg-gray-100 text-gray-800';
+                                                            echo 'bg-gray-100 text-gray-800 border border-gray-200';
                                                             break;
                                                     }
                                                     ?>">
-                                                    <?php if ($order['status'] === 'Pending'): ?>
-                                                        <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
-                                                    <?php elseif ($order['status'] === 'Complete'): ?>
-                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                                        </svg>
+                                                    <?php if ($order['status'] === 'Complete'): ?>
+                                                        <i class="fas fa-check-circle"></i>
+                                                    <?php else: ?>
+                                                        <i class="fas fa-circle text-xs"></i>
                                                     <?php endif; ?>
                                                     <?php echo $order['status']; ?>
                                                 </span>
 
                                                 <!-- Payment Status -->
-                                                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full
-                                                 <?php
+                                                <span class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full font-medium
+                                                    <?php
                                                     $payment_status = $order['payment_status'] ?? 'pending';
                                                     switch (strtolower($payment_status)) {
                                                         case 'verified':
                                                         case 'approved':
-                                                            echo 'bg-green-100 text-green-800';
+                                                            echo 'bg-green-100 text-green-800 border border-green-200';
                                                             break;
                                                         case 'rejected':
                                                         case 'declined':
-                                                            echo 'bg-red-100 text-red-800';
+                                                            echo 'bg-red-100 text-red-800 border border-red-200';
                                                             break;
                                                         case 'pending':
                                                         default:
-                                                            echo 'bg-yellow-100 text-yellow-800';
+                                                            echo 'bg-yellow-100 text-yellow-800 border border-yellow-200';
                                                             break;
                                                     }
                                                     ?>">
                                                     <?php if (strtolower($payment_status) === 'verified' || strtolower($payment_status) === 'approved'): ?>
-                                                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                                        </svg>
+                                                        <i class="fas fa-check-circle"></i>
                                                     <?php elseif (strtolower($payment_status) === 'rejected' || strtolower($payment_status) === 'declined'): ?>
-                                                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                                        </svg>
+                                                        <i class="fas fa-times-circle"></i>
                                                     <?php else: ?>
-                                                        <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span>
+                                                        <i class="fas fa-clock"></i>
                                                     <?php endif; ?>
-
-                                                    Pay: <?php echo ucfirst($payment_status); ?>
+                                                    Payment: <?php echo ucfirst($payment_status); ?>
                                                 </span>
                                             </div>
                                         </div>
@@ -773,85 +639,81 @@ $is_verified = $user['is_verified'] ?? null;
 
             <!-- Pending Orders Sidebar - RIGHT (1 column) -->
             <div class="lg:col-span-1">
-                <div class="bg-white p-6 shadow-lg animate-fade-in">
+                <div class="professional-card rounded-xl p-6 border border-gray-200 animate-fade-in">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <i class="fas fa-hourglass-half text-orange-600"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900">Pending Orders</h3>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 font-inter">Pending Orders</h3>
+                            <p class="text-sm text-gray-500">Requires attention</p>
+                        </div>
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                         <?php if (empty($pending_orders)): ?>
                             <div class="text-center py-8">
                                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
+                                    <i class="fas fa-check-circle text-2xl text-gray-400"></i>
                                 </div>
-                                <p class="text-gray-500">All caught up!</p>
-                                <p class="text-sm text-gray-400">No pending orders</p>
+                                <p class="text-gray-600 font-medium">All Orders Current</p>
+                                <p class="text-sm text-gray-400">No pending orders require attention</p>
                             </div>
                         <?php else: ?>
                             <?php foreach ($pending_orders as $order): ?>
-                                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer" onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
+                                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50/50 hover:bg-orange-50 transition-colors cursor-pointer" 
+                                     onclick="window.location.href='order_tracking.php?order_id=<?php echo $order['id']; ?>'">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <p class="font-semibold text-gray-900">Order #<?php echo $order['id']; ?></p>
-                                            <p class="text-sm text-gray-600">₱<?php echo number_format($order['final_total'], 2); ?></p>
-                                            <p class="text-xs text-gray-500"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></p>
+                                            <p class="font-semibold text-gray-900 mb-1">Order #<?php echo $order['id']; ?></p>
+                                            <p class="text-sm font-medium text-gray-700">₱<?php echo number_format($order['total'], 2); ?></p>
+                                            <p class="text-xs text-gray-500">
+                                                <i class="far fa-calendar mr-1"></i>
+                                                <?php echo date('M j, Y', strtotime($order['created_at'])); ?>
+                                            </p>
                                         </div>
-                                        <div class="flex flex-col items-end gap-2">
+                                        
+                                        <div class="text-right space-y-2">
                                             <!-- Order Status -->
-                                            <div class="flex items-center gap-2">
-                                                <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                                            <div class="flex items-center gap-2 justify-end">
+                                                <i class="fas fa-circle text-orange-500 text-xs"></i>
                                                 <span class="text-xs text-orange-600 font-medium">Pending</span>
                                             </div>
 
                                             <!-- Payment Status -->
-                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full
-                 <?php
-                                $payment_status = $order['payment_status'] ?? 'pending';
-                                switch (strtolower($payment_status)) {
-                                    case 'verified':
-                                    case 'approved':
-                                        echo 'bg-green-100 text-green-700';
-                                        break;
-                                    case 'rejected':
-                                    case 'declined':
-                                        echo 'bg-red-100 text-red-700';
-                                        break;
-                                    case 'pending':
-                                    default:
-                                        echo 'bg-yellow-100 text-yellow-700';
-                                        break;
-                                }
-                    ?>">
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium
+                                                <?php
+                                                $payment_status = $order['payment_status'] ?? 'pending';
+                                                switch (strtolower($payment_status)) {
+                                                    case 'verified':
+                                                    case 'approved':
+                                                        echo 'bg-green-100 text-green-700 border border-green-200';
+                                                        break;
+                                                    case 'rejected':
+                                                    case 'declined':
+                                                        echo 'bg-red-100 text-red-700 border border-red-200';
+                                                        break;
+                                                    case 'pending':
+                                                    default:
+                                                        echo 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+                                                        break;
+                                                }
+                                                ?>">
                                                 <?php if (strtolower($payment_status) === 'verified'): ?>
-                                                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                                    </svg>
+                                                    <i class="fas fa-check text-xs"></i>
                                                 <?php elseif (strtolower($payment_status) === 'rejected'): ?>
-                                                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                                    </svg>
+                                                    <i class="fas fa-times text-xs"></i>
                                                 <?php else: ?>
-                                                    <span class="w-1.5 h-1.5 bg-yellow-600 rounded-full animate-pulse"></span>
+                                                    <i class="fas fa-clock text-xs"></i>
                                                 <?php endif; ?>
-
                                                 Pay: <?php echo ucfirst($payment_status); ?>
                                             </span>
 
                                             <!-- Update Payment Button (only show if payment is rejected) -->
                                             <?php if (strtolower($payment_status) === 'rejected'): ?>
                                                 <button onclick="updatePayment(<?php echo $order['id']; ?>); event.stopPropagation();"
-                                                    class="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 shadow-sm">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                                    </svg>
-                                                    Update Payment
+                                                    class="mt-2 w-full px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 transition-colors font-medium">
+                                                    <i class="fas fa-upload mr-1"></i>Update Payment
                                                 </button>
                                             <?php endif; ?>
                                         </div>
@@ -862,21 +724,17 @@ $is_verified = $user['is_verified'] ?? null;
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- Enhanced Order Details Modal -->
+    <!-- Professional Order Details Modal -->
     <div id="orderModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-3xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900">Order Details</h3>
-                <button onclick="closeModal()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+        <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-900 font-inter">Order Details</h3>
+                <button onclick="closeModal()" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-times text-gray-600"></i>
                 </button>
-
             </div>
             <div id="orderDetails" class="space-y-6">
                 <!-- Order details will be loaded here -->
@@ -887,35 +745,28 @@ $is_verified = $user['is_verified'] ?? null;
         </div>
     </div>
 
-    <!-- Billing Addresses Modal -->
+    <!-- Professional Billing Addresses Modal -->
     <div id="billingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-3xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up">
-            <div class="flex justify-between items-center mb-6">
+        <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-green-600"></i>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold text-gray-900">Billing Addresses</h3>
+                        <h3 class="text-2xl font-bold text-gray-900 font-inter">Delivery Addresses</h3>
                         <p class="text-sm text-gray-600"><?= count($billing_addresses) ?> saved addresses</p>
                     </div>
                 </div>
-                <button onclick="closeBillingModal()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+                <button onclick="closeBillingModal()" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-times text-gray-600"></i>
                 </button>
             </div>
 
-            <!-- Add New Address Button (Top) -->
+            <!-- Add New Address Button -->
             <div class="mb-6">
-                <button onclick="window.location.href='update_billing_add.php'" class="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
+                <button onclick="window.location.href='update_billing_add.php'" class="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-medium">
+                    <i class="fas fa-plus"></i>
                     Add New Address
                 </button>
             </div>
@@ -925,74 +776,62 @@ $is_verified = $user['is_verified'] ?? null;
                 <?php if (empty($billing_addresses)): ?>
                     <div class="text-center py-12">
                         <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                            <i class="fas fa-map-marker-alt text-2xl text-gray-400"></i>
                         </div>
-                        <h4 class="text-lg font-semibold text-gray-900 mb-2">No addresses saved yet</h4>
-                        <p class="text-gray-600 mb-6">Add your first billing address to make checkout faster</p>
-                        <button onclick="window.location.href='update_billing_add.php'" class="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">No Addresses Saved</h4>
+                        <p class="text-gray-600 mb-6">Add your first delivery address for faster checkout</p>
+                        <button onclick="window.location.href='update_billing_add.php'" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            <i class="fas fa-plus"></i>
                             Add Address
                         </button>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <?php foreach ($billing_addresses as $index => $address): ?>
-                            <div class="border-2 border-gray-200 rounded-xl p-6 hover:border-green-300 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-gray-50">
+                            <div class="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all duration-300 bg-white">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
+                                            <i class="fas fa-user text-green-600"></i>
                                         </div>
                                         <div>
                                             <h4 class="font-bold text-gray-900"><?= htmlspecialchars($address['full_name']) ?></h4>
                                             <?php if ($index === 0): ?>
-                                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Primary</span>
+                                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium border border-green-200">Primary Address</span>
                                             <?php endif; ?>
                                         </div>
                                     </div>
 
                                     <!-- Action Buttons -->
                                     <div class="flex gap-2">
-                                        <button onclick="editAddress(<?= $address['id'] ?>)" class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
+                                        <button onclick="editAddress(<?= $address['id'] ?>)" 
+                                                class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" 
+                                                title="Edit Address">
+                                            <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deleteAddress(<?= $address['id'] ?>, '<?= htmlspecialchars($address['full_name']) ?>')" class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
+                                        <button onclick="deleteAddress(<?= $address['id'] ?>, '<?= htmlspecialchars($address['full_name']) ?>')" 
+                                                class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors" 
+                                                title="Delete Address">
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
                                 </div>
 
                                 <!-- Contact Info -->
-                                <div class="space-y-2 mb-4">
-                                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                        <?= htmlspecialchars($address['phone']) ?>
+                                <div class="space-y-3 mb-4">
+                                    <div class="flex items-center gap-3 text-sm text-gray-600">
+                                        <i class="fas fa-phone text-gray-400 w-4"></i>
+                                        <span><?= htmlspecialchars($address['phone']) ?></span>
                                     </div>
                                 </div>
 
                                 <!-- Address -->
-                                <div class="bg-white/70 rounded-lg p-4 border border-gray-100">
-                                    <div class="flex items-start gap-2 mb-2">
-                                        <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                    <div class="flex items-start gap-3">
+                                        <i class="fas fa-map-marker-alt text-gray-500 mt-1 flex-shrink-0"></i>
                                         <div>
-                                            <p class="text-sm text-gray-700 font-medium"><?= htmlspecialchars($address['address']) ?></p>
-                                            <p class="text-xs text-gray-500 mt-1">
+                                            <p class="text-sm text-gray-700 font-medium mb-1"><?= htmlspecialchars($address['address']) ?></p>
+                                            <p class="text-xs text-gray-500">
                                                 <?= htmlspecialchars($address['city'] . ', ' . $address['state'] . ' ' . $address['postal_code']) ?>
                                             </p>
                                         </div>
@@ -1000,12 +839,12 @@ $is_verified = $user['is_verified'] ?? null;
 
                                     <?php if (!empty($address['notes'])): ?>
                                         <div class="mt-3 pt-3 border-t border-gray-200">
-                                            <p class="text-xs text-gray-600 italic">
-                                                <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                                </svg>
-                                                <?= htmlspecialchars($address['notes']) ?>
-                                            </p>
+                                            <div class="flex items-start gap-2">
+                                                <i class="fas fa-sticky-note text-gray-400 text-xs mt-0.5"></i>
+                                                <p class="text-xs text-gray-600 italic">
+                                                    <?= htmlspecialchars($address['notes']) ?>
+                                                </p>
+                                            </div>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -1192,10 +1031,10 @@ $is_verified = $user['is_verified'] ?? null;
         }
 
         function viewOrder(orderId) {
-    window.location.href = 'order_tracking.php?order_id=' + orderId;
-}
+            window.location.href = 'order_tracking.php?order_id=' + orderId;
+        }
 
-        
+
 
         // Billing Address Functions
         function toggleBillingDropdown() {

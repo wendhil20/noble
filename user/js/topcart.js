@@ -13,31 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
     cartModal.classList.remove('show');
     cartModal.style.display = 'none';
 
-    // ===== WEBSOCKET CONNECTION FOR REAL-TIME UPDATES =====
-    function initWebSocket() {
-        try {
-            // Replace with your actual WebSocket server
-            wsConnection = new WebSocket('ws://your-websocket-server.com/cart-updates');
-            
-            wsConnection.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                if (data.type === 'cart_update') {
-                    console.log('🔄 WebSocket cart update received');
-                    handleRealtimeUpdate(data.cart_data);
-                }
-            };
-            
-            wsConnection.onclose = function() {
-                console.log('WebSocket closed, falling back to polling');
-                // Fallback to more frequent polling if WebSocket fails
-                startEnhancedAutoRefresh();
-            };
-        } catch (error) {
-            console.log('WebSocket not available, using enhanced polling');
-            startEnhancedAutoRefresh();
-        }
-    }
-
     // ===== ENHANCED AUTO-REFRESH WITH INTELLIGENT INTERVALS =====
     function startEnhancedAutoRefresh() {
         if (autoRefreshInterval) {
@@ -69,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
         
-        console.log('🔄 Enhanced auto-refresh started with adaptive intervals');
+        console.log('');
     }
 
     // ===== QUEUE-BASED UPDATE SYSTEM =====
@@ -507,14 +482,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Listen for storage events (cross-tab)
     window.addEventListener('storage', function(e) {
         if (e.key === 'cart_updated') {
-            console.log('🔄 Cross-tab update detected');
+          
             queueUpdate(() => silentCartUpdate(true));
         }
     });
 
     // Listen for same-tab events
     window.addEventListener('cartUpdated', function(e) {
-        console.log('🔄 Same-tab update detected');
+       
         queueUpdate(() => silentCartUpdate(true));
     });
 
@@ -545,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function () {
         queueUpdate(() => silentCartUpdate(true));
     }, 500);
 
-    console.log('🚀 Enhanced Real-time Cart System Loaded - No Refresh Needed!');
+    
 });
 
 // ===== ENHANCED CSS STYLES =====

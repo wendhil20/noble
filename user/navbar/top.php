@@ -185,8 +185,7 @@ if ($user_id) {
         xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
         version="1.1" class="lampPost">
         <path
-          d="M252.882,0c-37.781,0-68.686,29.953-70.245,67.358h-6.917v8.954c-26.109,2.163-45.463,10.011-45.463,19.366h9.993
-          ... (lamp post path truncated for brevity) ...">
+          d="M252.882,0c-37.781,0-68.686,29.953-70.245,67.358h-6.917v8.954c-26.109,2.163-45.463,10.011-45.463,19.366h9.993">
         </path>
       </svg>
     </div>

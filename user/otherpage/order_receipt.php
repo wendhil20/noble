@@ -38,11 +38,17 @@ if ($order_result->num_rows === 0) {
 $order = $order_result->fetch_assoc();
 $stmt->close();
 
-// Fetch order items
 $stmt = $conn->prepare("
-    SELECT * FROM order_items 
-    WHERE order_id = ? 
-    ORDER BY id
+    SELECT 
+        oi.*,
+        p.id as product_id_from_products,
+        p.codename as product_category,
+        p.main_image as product_image,
+        p.product_name as catalog_product_name
+    FROM order_items oi
+    LEFT JOIN products p ON oi.product_id = p.id
+    WHERE oi.order_id = ? 
+    ORDER BY oi.id
 ");
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
@@ -53,6 +59,45 @@ while ($row = $items_result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Function to get user's rating for a specific product
+function getUserRating($conn, $user_id, $product_id)
+{
+    if (!$product_id) return 0;
+
+    $stmt = $conn->prepare("
+        SELECT rating FROM product_ratings 
+        WHERE user_id = ? AND product_id = ?
+        LIMIT 1
+    ");
+    $stmt->bind_param("ii", $user_id, $product_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rating = $result->num_rows > 0 ? $result->fetch_assoc()['rating'] : 0;
+    $stmt->close();
+    return $rating;
+}
+
+// Function to get average rating for a product
+function getAverageRating($conn, $product_id)
+{
+    if (!$product_id) return ['avg_rating' => 0, 'total_ratings' => 0];
+
+    $stmt = $conn->prepare("
+        SELECT AVG(rating) as avg_rating, COUNT(*) as total_ratings
+        FROM product_ratings 
+        WHERE product_id = ?
+    ");
+    $stmt->bind_param("i", $product_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $data = $result->fetch_assoc();
+    $stmt->close();
+    return [
+        'avg_rating' => round($data['avg_rating'] ?? 0, 1),
+        'total_ratings' => $data['total_ratings'] ?? 0
+    ];
+}
+
 // Calculate totals
 $subtotal = 0;
 foreach ($order_items as $item) {
@@ -60,11 +105,28 @@ foreach ($order_items as $item) {
 }
 $vat_rate = 0.12; // 12% VAT
 $vat_amount = $subtotal * $vat_rate;
-$delivery_fee = $order['delivery_fee'] ?? 0; // Get delivery fee from orders table
+$delivery_fee = $order['delivery_fee'] ?? 0;
 $total_with_vat_and_delivery = $subtotal + $vat_amount + $delivery_fee;
 
 // Format date
 $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
+
+// Category display names
+$category_names = [
+    'furniture' => 'Furniture',
+    'material' => 'Materials',
+    'electrical' => 'Electrical',
+    'lighting' => 'Lighting',
+    'bedfurniture' => 'Bedroom Furniture',
+    'aircon' => 'Air Conditioners',
+    'doors' => 'Doors',
+    'tiles' => 'Tiles',
+    'windows' => 'Windows',
+    'bathroom' => 'Bathroom Fixtures',
+    'kitchen' => 'Kitchen Fixtures',
+    'pipes' => 'Pipes',
+    'aacblock' => 'AAC BLOCKS',
+];
 ?>
 
 <!DOCTYPE html>
@@ -75,6 +137,7 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Receipt - <?= htmlspecialchars($order['reference_no']) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @media print {
             .no-print {
@@ -89,6 +152,20 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                 box-shadow: none !important;
             }
         }
+
+        .star-button {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .star-button:hover {
+            transform: scale(1.1);
+        }
+
+        .rating-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        
+        }
     </style>
 </head>
 
@@ -102,25 +179,17 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                 <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
                     <i class="fas fa-home mr-1"></i>Home
                 </a>
-
                 <i class="fas fa-chevron-right text-gray-400"></i>
                 <a href="order_history" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
                     Recent History
                 </a>
                 <i class="fas fa-chevron-right text-gray-400"></i>
-                <span class="text-gray-600 font-medium">receipt</span>
-                <?php if (!empty($search_keyword)): ?>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
-                    <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
-                <?php endif; ?>
+                <span class="text-gray-600 font-medium">Receipt</span>
             </div>
         </div>
     </nav>
 
-
     <div class="max-w-4xl mx-auto px-4">
-        <!-- Header with Actions -->
-
         <!-- Receipt Container -->
         <div class="bg-white shadow-lg print-shadow rounded-lg overflow-hidden mt-4" id="receipt">
             <!-- Receipt Header -->
@@ -170,7 +239,7 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                 </div>
             </div>
 
-            <!-- Order Items -->
+            <!-- Order Items with Rating -->
             <div class="p-6">
                 <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,70 +247,185 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                     </svg>
                     Order Details
                 </h3>
+ <div class="max-h-96 overflow-y-auto overflow-x-hidden">
+                <div class="space-y-6 ">
+                    <?php foreach ($order_items as $index => $item):
+                        $product_id = $item['product_id'] ?? 0;
+                        $category = $item['product_category'] ?? 'general';
+                        $user_rating = getUserRating($conn, $user_id, $product_id);
+                        $rating_data = getAverageRating($conn, $product_id);
+                        $avg_rating = $rating_data['avg_rating'];
+                        $total_ratings = $rating_data['total_ratings'];
+                        $category_display = $category_names[$category] ?? ucfirst($category);
+                    ?>
+                        <div class="bg-gray-50 rounded-lg p-4 border">
+                            <!-- Product Details -->
+                            <div class="grid md:grid-cols-5 gap-4 items-start mb-4">
+                                <div class="md:col-span-2">
+                                    <div class="font-medium text-gray-900 text-lg"><?= htmlspecialchars($item['product_name']) ?></div>
+                                    <?php if (!empty($item['codename'])): ?>
+                                        <div class="text-xs text-gray-500 mb-1">Code: <?= htmlspecialchars($item['codename']) ?></div>
+                                    <?php endif; ?>
+                                    <div class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                        <?= $category_display ?>
+                                    </div>
+                                    <?php if ($product_id): ?>
+                                        <div class="text-xs text-gray-400 mt-1">Product ID: <?= $product_id ?></div>
+                                    <?php else: ?>
+                                        <div class="text-xs text-red-400 mt-1">⚠️ Product not found in catalog</div>
+                                    <?php endif; ?>
+                                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="text-left p-3 font-medium text-gray-700">Product</th>
-                                <th class="text-left p-3 font-medium text-gray-700">Details</th>
-                                <th class="text-center p-3 font-medium text-gray-700">Qty</th>
-                                <th class="text-right p-3 font-medium text-gray-700">Unit Price</th>
-                                <th class="text-right p-3 font-medium text-gray-700">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <?php foreach ($order_items as $item): ?>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="p-3">
-                                        <div class="font-medium text-gray-900"><?= htmlspecialchars($item['product_name']) ?></div>
-                                        <?php if (!empty($item['codename'])): ?>
-                                            <div class="text-xs text-gray-500">Code: <?= htmlspecialchars($item['codename']) ?></div>
+                                <div class="text-gray-600 text-sm">
+                                    <div class="space-y-1">
+                                        <?php if (!empty($item['type_name'])): ?>
+                                            <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name']) ?></div>
                                         <?php endif; ?>
-                                    </td>
-                                    <td class="p-3 text-gray-600">
-                                        <div class="space-y-1">
-                                            <?php if (!empty($item['type_name'])): ?>
-                                                <div>Type: <?= htmlspecialchars($item['type_name']) ?></div>
-                                            <?php endif; ?>
+                                        <?php if (!empty($item['variant_color'])): ?>
+                                            <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['variant_color']) ?></div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
+                                            <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size']) ?></div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($item['origin'])): ?>
+                                            <?php
+                                            $is_local = stripos($item['origin'], 'local') !== false;
+                                            $origin_class = $is_local ? 'text-blue-600' : 'text-red-600';
+                                            ?>
+                                            <div class="<?= $origin_class ?> font-medium">
+                                                <span class="text-gray-600">Origin:</span> <?= htmlspecialchars($item['origin']) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
 
-                                            <?php if (!empty($item['variant_color'])): ?>
-                                                <div>Color: <?= htmlspecialchars($item['variant_color']) ?></div>
-                                            <?php endif; ?>
+                                <div class="text-center">
+                                    <div class="text-sm text-gray-600">Quantity</div>
+                                    <div class="text-xl font-bold"><?= $item['quantity'] ?></div>
+                                </div>
 
-                                            <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
-                                                <div>Size: <?= htmlspecialchars($item['size']) ?></div>
-                                            <?php endif; ?>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-600">Unit Price</div>
+                                    <div class="text-lg">₱<?= number_format($item['price'], 2) ?></div>
+                                    <hr class="my-1">
+                                    <div class="text-xl font-bold text-green-700">₱<?= number_format($item['subtotal'], 2) ?></div>
+                                </div>
+                            </div>
 
-                                            <?php if (!empty($item['origin'])): ?>
-                                                <?php
-                                                $is_local = stripos($item['origin'], 'local') !== false;
-                                                $origin_class = $is_local ? 'text-blue-600' : 'text-red-600';
-                                                ?>
-                                                <div class="<?= $origin_class ?> font-medium">Origin: <?= htmlspecialchars($item['origin']) ?></div>
-                                            <?php endif; ?>
+                            <?php if ($product_id > 0): ?>
+                                <?php
+                                // Check if order is completed/delivered to allow ratings
+                                $order_status = strtolower($order['status'] ?? 'pending');
+                                $can_rate = in_array($order_status, ['delivered', 'completed', 'received']);
+                                ?>
 
-                                            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                                                <div class="text-xs text-gray-500 italic">
-                                                    <?php if (!empty($item['descrip6'])): ?>
-                                                        <div><?= htmlspecialchars($item['descrip6']) ?></div>
-                                                    <?php endif; ?>
-                                                    <?php if (!empty($item['descrip7'])): ?>
-                                                        <div><?= htmlspecialchars($item['descrip7']) ?></div>
-                                                    <?php endif; ?>
-                                                </div>
+                                <div class="rating-section p-4 rounded-lg no-print">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800 flex items-center gap-2">
+                                                <i class="fas fa-star text-yellow-500"></i>
+                                                Rate this <?= $category_display ?> item
+                                            </h4>
+                                            <?php if ($can_rate): ?>
+                                                <p class="text-sm text-gray-600">Help others by sharing your experience</p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-orange-600">Rating will be available once your order is delivered</p>
                                             <?php endif; ?>
                                         </div>
-                                    </td>
-                                    <td class="p-3 text-center font-medium"><?= $item['quantity'] ?></td>
-                                    <td class="p-3 text-right">₱<?= number_format($item['price'], 2) ?></td>
-                                    <td class="p-3 text-right font-medium">₱<?= number_format($item['subtotal'], 2) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                                        <div class="text-right text-sm text-gray-600">
+                                            <div>Average: <?= $avg_rating ?>/5</div>
+                                            <div><?= $total_ratings ?> ratings</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-4">
+                                        <?php if ($can_rate): ?>
+                                            <!-- Interactive Rating Stars - Only if order is completed -->
+                                            <div class="rate-stars flex items-center gap-1"
+                                                data-product-id="<?= $product_id ?>"
+                                                data-category="<?= htmlspecialchars($category) ?>"
+                                                data-current-rating="<?= $user_rating ?>">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <button type="button" class="star-button" data-rating="<?= $i ?>">
+                                                        <?php if ($i <= $user_rating): ?>
+                                                            <i class="fas fa-star text-yellow-400 text-xl"></i>
+                                                        <?php else: ?>
+                                                            <i class="far fa-star text-gray-400 hover:text-yellow-400 text-xl"></i>
+                                                        <?php endif; ?>
+                                                    </button>
+                                                <?php endfor; ?>
+
+                                                <?php if ($user_rating > 0): ?>
+                                                    <span class="ml-2 text-sm text-green-600 font-medium">
+                                                        You rated: <?= $user_rating ?>/5
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="ml-2 text-sm text-gray-500">
+                                                        Click to rate
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <!-- Disabled Stars - Show current rating but no interaction -->
+                                            <div class="flex items-center gap-1 opacity-50">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <div>
+                                                        <?php if ($i <= $user_rating): ?>
+                                                            <i class="fas fa-star text-yellow-400 text-xl"></i>
+                                                        <?php else: ?>
+                                                            <i class="far fa-star text-gray-400 text-xl"></i>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endfor; ?>
+
+                                                <?php if ($user_rating > 0): ?>
+                                                    <span class="ml-2 text-sm text-gray-600">
+                                                        You rated: <?= $user_rating ?>/5 (Order Status: <?= ucfirst($order_status) ?>)
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="ml-2 text-sm text-gray-600">
+                                                        Rating available when delivered (Current: <?= ucfirst($order_status) ?>)
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Status Notice -->
+                                            <div class="ml-4 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+                                                <div class="flex items-center text-orange-700 text-sm">
+                                                    <i class="fas fa-clock mr-2"></i>
+                                                    <span>Complete your order to unlock product rating</span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded p-3 no-print">
+                                    <div class="flex items-center text-yellow-700">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        <span class="text-sm">Rating not available </span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Additional Details -->
+                            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                                <div class="mt-3 pt-3 border-t border-gray-200">
+                                    <div class="text-xs text-gray-500 italic">
+                                        <?php if (!empty($item['descrip6'])): ?>
+                                            <div><?= htmlspecialchars($item['descrip6']) ?></div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($item['descrip7'])): ?>
+                                            <div><?= htmlspecialchars($item['descrip7']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
+  </div>
 
             <!-- Order Summary -->
             <div class="p-6 bg-gray-50 border-t">
@@ -250,19 +434,15 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                         <span class="text-gray-700">Subtotal:</span>
                         <span class="font-medium">₱<?= number_format($subtotal, 2) ?></span>
                     </div>
-
                     <div class="flex justify-between items-center">
                         <span class="text-gray-700">VAT (12%):</span>
                         <span class="font-medium">₱<?= number_format($vat_amount, 2) ?></span>
                     </div>
-
                     <div class="flex justify-between items-center">
                         <span class="text-gray-700">Delivery Fee:</span>
                         <span class="font-medium">₱<?= number_format($delivery_fee, 2) ?></span>
                     </div>
-
                     <hr class="border-gray-300">
-
                     <div class="flex justify-between items-center text-lg font-bold">
                         <span>Total:</span>
                         <span class="text-green-700">₱<?= number_format($total_with_vat_and_delivery, 2) ?></span>
@@ -293,6 +473,7 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
                             <li>• We will review your order and contact you within 24 hours</li>
                             <li>• Final total includes 12% VAT and delivery fees</li>
                             <li>• Please keep this receipt for your records</li>
+                            <li>• Your ratings help us improve our products and services</li>
                             <li>• For questions, please contact us with your reference number: <strong><?= htmlspecialchars($order['reference_no']) ?></strong></li>
                         </ul>
                     </div>
@@ -307,9 +488,158 @@ $order_date = date('F j, Y g:i A', strtotime($order['created_at']));
         </div>
     </div>
 
+    <!-- Success/Error Messages -->
+    <div id="notification" class="fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0 z-50">
+        <div class="flex items-center gap-2">
+            <span id="notification-icon"></span>
+            <span id="notification-message"></span>
+        </div>
+    </div>
+
     <script>
+        // Rating System JavaScript
+        document.querySelectorAll('.rate-stars').forEach(function(starsContainer) {
+            const productId = parseInt(starsContainer.dataset.productId);
+            const category = starsContainer.dataset.category;
+            const currentRating = parseInt(starsContainer.dataset.currentRating) || 0;
+            const stars = starsContainer.querySelectorAll('.star-button');
+
+            // Skip if no valid product ID
+            if (!productId) return;
+
+            stars.forEach(function(star, index) {
+                star.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const rating = parseInt(star.dataset.rating);
+
+                    // Show loading state
+                    showNotification('Submitting your rating...', 'info');
+
+                    // Send rating to server
+                    fetch('../rate/rate_product.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                product_id: productId,
+                                rating: rating
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update stars display
+                                updateStarsDisplay(stars, rating);
+                                starsContainer.dataset.currentRating = rating;
+
+                                // Update rating text
+                                const ratingText = starsContainer.querySelector('span');
+                                if (ratingText) {
+                                    ratingText.textContent = `You rated: ${rating}/5`;
+                                    ratingText.className = 'ml-2 text-sm text-green-600 font-medium';
+                                }
+
+                                showNotification('Rating submitted successfully!', 'success');
+                            } else {
+                                showNotification(data.message || 'Failed to submit rating', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Rating error:', error);
+                            showNotification('Failed to submit rating. Please try again.', 'error');
+                        });
+                });
+
+                // Hover effects
+                star.addEventListener('mouseenter', function() {
+                    const rating = parseInt(star.dataset.rating);
+                    highlightStars(stars, rating);
+                });
+            });
+
+            // Reset on mouse leave
+            starsContainer.addEventListener('mouseleave', function() {
+                const current = parseInt(starsContainer.dataset.currentRating) || 0;
+                updateStarsDisplay(stars, current);
+            });
+        });
+
+        function highlightStars(stars, rating) {
+            stars.forEach(function(star, index) {
+                const starRating = index + 1;
+                const icon = star.querySelector('i');
+
+                if (starRating <= rating) {
+                    icon.className = 'fas fa-star text-yellow-400 text-xl';
+                } else {
+                    icon.className = 'far fa-star text-gray-400 hover:text-yellow-400 text-xl';
+                }
+            });
+        }
+
+        function updateStarsDisplay(stars, rating) {
+            stars.forEach(function(star, index) {
+                const starRating = index + 1;
+                const icon = star.querySelector('i');
+
+                if (starRating <= rating) {
+                    icon.className = 'fas fa-star text-yellow-400 text-xl';
+                } else {
+                    icon.className = 'far fa-star text-gray-400 hover:text-yellow-400 text-xl';
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notification-message');
+            const iconEl = document.getElementById('notification-icon');
+
+            // Set message
+            messageEl.textContent = message;
+
+            // Set icon and colors based on type
+            let bgColor, textColor, icon;
+            switch (type) {
+                case 'success':
+                    bgColor = 'bg-green-500';
+                    textColor = 'text-white';
+                    icon = '<i class="fas fa-check-circle"></i>';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-500';
+                    textColor = 'text-white';
+                    icon = '<i class="fas fa-exclamation-circle"></i>';
+                    break;
+                case 'info':
+                    bgColor = 'bg-blue-500';
+                    textColor = 'text-white';
+                    icon = '<i class="fas fa-info-circle"></i>';
+                    break;
+                default:
+                    bgColor = 'bg-gray-500';
+                    textColor = 'text-white';
+                    icon = '<i class="fas fa-bell"></i>';
+            }
+
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 z-50 ${bgColor} ${textColor}`;
+            iconEl.innerHTML = icon;
+
+            // Show notification
+            notification.classList.remove('translate-x-full', 'opacity-0');
+            notification.classList.add('translate-x-0', 'opacity-100');
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.add('translate-x-full', 'opacity-0');
+                notification.classList.remove('translate-x-0', 'opacity-100');
+            }, 3000);
+        }
+
         function downloadPDF() {
-            // Simple implementation - you can enhance this with a proper PDF library
             window.print();
         }
     </script>

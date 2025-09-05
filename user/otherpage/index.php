@@ -2820,7 +2820,7 @@ handleQueryError($conn, "New Status Query");
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2px solid rgba(59, 130, 246, 0.3);
+            border: 2px solid hsla(0, 0%, 100%, 1.00);
             border-radius: 50%;
             border-top-color: #e79a25ff;
             animation: spin 1s ease-in-out infinite;
@@ -3011,12 +3011,191 @@ handleQueryError($conn, "New Status Query");
     </script>
     <!-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-    
+
+<style>
+    /* Pagination dots */
+    .swiper-pagination-bullet {
+        background: linear-gradient(135deg, #6366f1, #3b82f6) !important;
+        opacity: 0.4 !important;
+        transition: all 0.3s ease-in-out;
+    }
+    .swiper-pagination-bullet-active {
+        opacity: 1 !important;
+        transform: scale(1.2);
+    }
+
+    /* Testimonial card */
+    .testimonial-card {
+        background: white;
+        border-radius: 1.25rem;
+       
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .testimonial-card:hover {
+        transform: translateY(-6px);
+       
+    }
+
+    /* Decorative gradient strip */
+    .testimonial-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 5px;
+      
+    }
+
+    /* Profile ring */
+    .profile-ring {
+        padding: 3px;
+        border-radius: 50%;
+      
+        display: inline-block;
+    }
+
+    /* Name highlight */
+    .name-highlight {
+        background: linear-gradient(90deg, #ffb006ff, #ffb006ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+
+<section class="py-12 md:py-24 px-4">     
+    <div class="max-w-6xl mx-auto text-center mb-12 md:mb-20">         
+        <h2 class="text-3xl md:text-5xl font-extrabold mb-4 md:mb-6 bg-clip-text text-black">What Our Customers Say</h2>         
+        <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Here's what people are saying about their experience with us.</p>     
+    </div>      
+
+    <!-- Swiper Container -->     
+    <div class="swiper reviewCarousel max-w-3xl mx-auto relative">         
+        <div class="swiper-wrapper" id="reviewWrapper">             
+            <!-- Loading placeholder -->
+            <div class="swiper-slide">
+                <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
+                    <div class="text-center py-8">
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                            <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                        </div>
+                        <p class="text-gray-500 mt-4">Loading reviews...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="swiper-pagination mt-8"></div>         
+    </div>      
 
 
 
+</section>
 
+<script> 
+document.addEventListener("DOMContentLoaded", function () {     
+    const reviewWrapper = document.getElementById("reviewWrapper");      
 
+    // Init Swiper with mobile-friendly settings     
+    let reviewSwiper = new Swiper(".reviewCarousel", {         
+        loop: true,         
+        autoplay: { 
+            delay: 4000,
+            disableOnInteraction: false
+        },         
+        pagination: { 
+            el: ".swiper-pagination", 
+            clickable: true 
+        },         
+        slidesPerView: 1,
+        spaceBetween: 20,
+        effect: "slide",
+        speed: 700,
+        // Mobile breakpoints
+        breakpoints: {
+            640: {
+                spaceBetween: 30
+            }
+        }
+    });      
+
+    async function loadReviews() {         
+        try {             
+            // Replace this with your actual fetch
+            const res = await fetch("profilefetch_reviews.php");             
+            const reviews = await res.json();
+        
+
+            reviewWrapper.innerHTML = "";              
+
+            if (reviews.length > 0) {                 
+                reviews.forEach(r => {                     
+                    let stars = "";                     
+                    for (let i = 1; i <= 5; i++) {                         
+                        stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;                     
+                    }                      
+
+                    reviewWrapper.innerHTML += `                         
+                        <div class="swiper-slide">                             
+                            <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">                                 
+                                <div class="flex justify-center mb-4 md:mb-6 space-x-1">                                     
+                                    ${stars}                                 
+                                </div>                                 
+                                <p class="text-gray-700 italic leading-relaxed mb-6 md:mb-8 text-base md:text-lg text-center font-medium px-2 md:px-6">                                     
+                                    "${r.comment}"                                 
+                                </p>                                 
+                                <div class="flex items-center justify-center space-x-3 md:space-x-4">                                     
+                                    <div class="profile-ring">                                     
+                                        <img src="${r.profile_picture}" alt="${r.name}"                                           
+                                             class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover">                                     
+                                    </div>                                     
+                                    <div class="text-left">                                         
+                                        <h4 class="name-highlight font-bold text-base md:text-lg">${r.name}</h4>                                         
+                                        <p class="text-xs md:text-sm text-gray-500 font-medium">${new Date(r.created_at).toLocaleDateString()}</p>                                     
+                                    </div>                                 
+                                </div>                             
+                            </div>                         
+                        </div>                     
+                    `;                 
+                });             
+            } else {                 
+                reviewWrapper.innerHTML = `                     
+                    <div class="swiper-slide">                         
+                        <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
+                            <div class="text-center py-8 md:py-12">
+                                <p class="text-gray-600 text-base md:text-lg">No reviews yet.</p>
+                            </div>
+                        </div>                      
+                    </div>                     
+                `;             
+            }              
+            
+            reviewSwiper.update();         
+        } catch (err) {             
+            console.error("Error fetching reviews:", err);
+            // Show error state
+            reviewWrapper.innerHTML = `                     
+                <div class="swiper-slide">                         
+                    <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
+                        <div class="text-center py-8 md:py-12">
+                            <p class="text-red-500 text-base md:text-lg">Error loading reviews. Please try again.</p>
+                        </div>
+                    </div>                      
+                </div>                     
+            `;
+            reviewSwiper.update();         
+        }     
+    }      
+
+    // Load on page load     
+    loadReviews();      
+
+    // Auto refresh every 10 seconds     
+    setInterval(loadReviews, 10000); 
+}); 
+</script>  
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->

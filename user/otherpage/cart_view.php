@@ -104,13 +104,13 @@ $total_cart_items = count($cart_items);
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
 </head>
 
-<body class="bg-gray-100 ">
+<body class="bg-gray-100">
     <?php include '../navbar/top.php'; ?>
+  
   <!-- Hero Section -->
-  <div class="gradient-bg text-white  relative overflow-hidden">
+  <div class="gradient-bg text-white relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none z-0">
       <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
         <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
@@ -122,10 +122,10 @@ $total_cart_items = count($cart_items);
       </svg>
     </div>
   
-    <div class="bg-orange-400 text-white py-5 z-0">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl font-bold text-center mb-4"> Your Shopping Cart</h1>
-        <p class="text-xl text-center opacity-90">Review your items and proceed to checkout</p>
+    <div class="bg-orange-400 text-white py-5 sm:py-8 lg:py-12 z-0">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-2 sm:mb-4">Your Shopping Cart</h1>
+        <p class="text-base sm:text-lg lg:text-xl text-center opacity-90">Review your items and proceed to checkout</p>
       </div>
     </div>
     <style>
@@ -162,7 +162,6 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
-
         100% {
           transform: translateY(-60px) scale(1.08);
         }
@@ -172,7 +171,6 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
-
         100% {
           transform: translateY(-40px) scale(1.12);
         }
@@ -182,7 +180,6 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
-
         100% {
           transform: translateY(-70px) scale(1.05);
         }
@@ -192,7 +189,6 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
-
         100% {
           transform: translateY(-30px) scale(1.15);
         }
@@ -202,7 +198,6 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
-
         100% {
           transform: translateY(-55px) scale(1.09);
         }
@@ -212,17 +207,64 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
-
         100% {
           transform: translateY(-35px) scale(1.13);
         }
       }
+
+      /* Custom styles for better mobile experience */
+      .cart-table-mobile {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .cart-table-desktop {
+          display: none;
+        }
+        .cart-table-mobile {
+          display: block;
+        }
+      }
+
+      .glass-effect {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .glow-effect {
+        box-shadow: 0 0 30px rgba(251, 146, 60, 0.3);
+      }
+
+      .floating {
+        animation: floating 3s ease-in-out infinite;
+      }
+
+      @keyframes floating {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+
+      .social-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(251, 146, 60, 0.4);
+      }
+
+      .link-hover:hover {
+        transform: translateX(5px);
+      }
+
+      .pattern-bg {
+        background-image: 
+          radial-gradient(circle at 25% 25%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 75% 75%, rgba(251, 146, 60, 0.05) 0%, transparent 50%);
+      }
     </style>
   </div>
 
-
-  <nav class="bg-white border-b border-gray-200 px-4 py-3 ">
-    <div class="">
+  <!-- Breadcrumb -->
+  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm">
         <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
@@ -237,10 +279,12 @@ $total_cart_items = count($cart_items);
     </div>
   </nav>
 
-
-  <div class="px-2 py-2">
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-3xl font-bold text-orange-400 mb-6 flex items-center gap-2">Your Cart</h2>
+  <!-- Cart Content -->
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 lg:p-8">
+      <h2 class="text-2xl sm:text-3xl font-bold text-orange-400 mb-4 sm:mb-6 flex items-center gap-2">
+        <i class="fas fa-shopping-cart"></i>Your Cart
+      </h2>
 
       <?php if ($notice): ?>
         <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow text-sm">
@@ -248,113 +292,204 @@ $total_cart_items = count($cart_items);
         </div>
       <?php endif; ?>
 
+      <!-- Empty Cart State -->
       <?php if (empty($cart_items)): ?>
-        <p class="text-gray-600 text-lg">Your cart is currently empty.</p>
-        <a href="shop" class="inline-block mt-4 bg-orange-400 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition">Continue Shopping</a>
+        <div class="text-center py-12">
+          <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
+          <p class="text-gray-600 text-lg mb-4">Your cart is currently empty.</p>
+          <a href="shop" class="inline-block bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+            <i class="fas fa-store mr-2"></i>Continue Shopping
+          </a>
+        </div>
       <?php else: ?>
-        <form action="../cart/update_cart.php" method="POST">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left border-collapse ">
-
-              <thead class="bg-orange-400 text-white uppercase text-xs rounded-lg">
-                <tr>
-                  <th class="py-3 px-4">Category</th>
-                  <th class="py-3 px-4">Product</th>
-                  <th class="py-3 px-4">Qty</th>
-                  <th class="py-3 px-4">Unit Price</th>
-                  <th class="py-3 px-4">Total</th>
-                  <th class="py-3 px-4">Image</th>
-                  <th class="py-3 px-4">Origin</th>
-                  <th class="py-3 px-4">Remove</th>
-                </tr>
-              </thead>
-
-
-             <tbody class="divide-y divide-gray-200">
-                <?php foreach ($cart_items as $item):
-                  $unit_price = floatval($item['price']);
-                  $quantity = intval($item['quantity']);
-                  $subtotal = $unit_price * $quantity;
-                  // ✅ REMOVED: $total_price += $subtotal; (already calculated above)
-                ?>
+        <!-- Cart Items - Desktop Table -->
+        <div class="cart-table-desktop">
+          <form action="../cart/update_cart.php" method="POST">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left border-collapse">
+                <thead class="bg-orange-400 text-white uppercase text-xs">
                   <tr>
-                    <td class="py-3 px-4 font-semibold text-gray-800 uppercase"><?= htmlspecialchars($item['codename']) ?></td>
-                    <td class="py-3 px-4 text-sm text-gray-700 space-y-1 uppercase ">
-                      <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
-                      <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
-                      <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
-                      <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
-                      <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
-                      <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
-                    </td>
-
-                    <td class="py-3 px-4">
-                      <input type="number" name="quantities[<?= $item['id'] ?>]"
-                        value="<?= $quantity ?>" min="1"
-                        class="w-16 text-sm border border-gray-300 rounded px-2 py-1 text-center shadow-sm">
-                    </td>
-
-                    <td class="py-3 px-4 text-orange-600 font-medium">
-                      ₱<?= number_format($unit_price, 2) ?>
-                    </td>
-                    <td class="py-3 px-4 text-green-600 font-bold">
-                      ₱<?= number_format($subtotal, 2) ?>
-                    </td>
-
-                    <td class="py-3 px-4">
-                      <?php if (!empty($item['type_image'])): ?>
-                        <img src="../../<?= ($item['type_image']) ?>" class="w-16 h-16 object-contain rounded" alt="Product Image">
-                      <?php else: ?>
-                        <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">No Image</div>
-                      <?php endif; ?>
-                    </td>
-
-                    <!-- Origin column -->
-                    <td class="py-3 px-4">
-                      <?php if (!empty($item['origin'])): ?>
-                        <?php if ($item['origin'] === 'local'): ?>
-                          <span class="text-blue-600 font-medium text-sm">Local</span>
-                        <?php elseif ($item['origin'] === 'international'): ?>
-                          <span class="text-red-600 font-medium text-sm">International</span>
-                        <?php else: ?>
-                          <span class="text-gray-600 font-medium text-sm"><?= htmlspecialchars($item['origin']) ?></span>
-                        <?php endif; ?>
-                      <?php else: ?>
-                        <span class="text-gray-400 text-sm">—</span>
-                      <?php endif; ?>
-                    </td>
-
-                    <td class="py-3 px-4 align-middle">
-                      <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
-                        class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 transition"
-                        title="Remove">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span class="text-sm hidden md:inline">Remove</span>
-                      </a>
-                    </td>
+                    <th class="py-3 px-4 rounded-tl-lg">Category</th>
+                    <th class="py-3 px-4">Product</th>
+                    <th class="py-3 px-4">Qty</th>
+                    <th class="py-3 px-4">Unit Price</th>
+                    <th class="py-3 px-4">Total</th>
+                    <th class="py-3 px-4">Image</th>
+                    <th class="py-3 px-4">Origin</th>
+                    <th class="py-3 px-4 rounded-tr-lg">Remove</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="mt-6 flex justify-between items-center flex-wrap gap-4">
-            <button type="submit" class="bg-orange-400 hover:bg-orange-700 text-white px-5 py-2 rounded shadow transition">Update Cart</button>
-            <div class="text-xl font-bold text-orange-700">
-              Total: ₱<?= number_format($total_price, 2) ?>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <?php foreach ($cart_items as $item):
+                    $unit_price = floatval($item['price']);
+                    $quantity = intval($item['quantity']);
+                    $subtotal = $unit_price * $quantity;
+                  ?>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="py-4 px-4 font-semibold text-gray-800 uppercase"><?= htmlspecialchars($item['codename']) ?></td>
+                      <td class="py-4 px-4 text-sm text-gray-700 space-y-1 uppercase">
+                        <div><span class="font-semibold">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
+                        <div><span class="font-semibold">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
+                        <div><span class="font-semibold">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
+                        <div><span class="font-semibold">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
+                        <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
+                        <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
+                      </td>
+                      <td class="py-4 px-4">
+                        <input type="number" name="quantities[<?= $item['id'] ?>]" value="<?= $quantity ?>" min="1"
+                          class="w-16 text-sm border border-gray-300 rounded px-2 py-1 text-center shadow-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-400">
+                      </td>
+                      <td class="py-4 px-4 text-orange-600 font-medium">₱<?= number_format($unit_price, 2) ?></td>
+                      <td class="py-4 px-4 text-green-600 font-bold">₱<?= number_format($subtotal, 2) ?></td>
+                      <td class="py-4 px-4">
+                        <?php if (!empty($item['type_image'])): ?>
+                          <img src="../../<?= ($item['type_image']) ?>" class="w-16 h-16 object-cover rounded-lg shadow-sm" alt="Product Image">
+                        <?php else: ?>
+                          <div class="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg">No Image</div>
+                        <?php endif; ?>
+                      </td>
+                      <td class="py-4 px-4">
+                        <?php if (!empty($item['origin'])): ?>
+                          <?php if ($item['origin'] === 'local'): ?>
+                            <span class="text-blue-600 font-medium text-sm bg-blue-50 px-2 py-1 rounded-full">Local</span>
+                          <?php elseif ($item['origin'] === 'international'): ?>
+                            <span class="text-red-600 font-medium text-sm bg-red-50 px-2 py-1 rounded-full">International</span>
+                          <?php else: ?>
+                            <span class="text-gray-600 font-medium text-sm bg-gray-50 px-2 py-1 rounded-full"><?= htmlspecialchars($item['origin']) ?></span>
+                          <?php endif; ?>
+                        <?php else: ?>
+                          <span class="text-gray-400 text-sm">—</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="py-4 px-4 align-middle">
+                        <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
+                          class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors" title="Remove">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span class="hidden lg:inline text-sm">Remove</span>
+                        </a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
             </div>
-          </div>
-        </form>
-        <div class="mt-6 flex flex-wrap gap-3 justify-end">
-          <a href="shop.php" class="bg-orange-400 hover:bg-gray-800 text-white px-5 py-2 rounded transition">Continue Shopping</a>
-          <a href="checkout.php" class="bg-orange-400 hover:bg-green-700 text-white px-5 py-2 rounded transition">Proceed to Checkout</a>
+
+            <!-- Desktop Cart Actions -->
+            <div class="mt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <button type="submit" class="w-full sm:w-auto bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition-colors font-medium">
+                <i class="fas fa-sync-alt mr-2"></i>Update Cart
+              </button>
+              <div class="text-xl lg:text-2xl font-bold text-orange-700 bg-orange-50 px-4 py-2 rounded-lg">
+                Total: ₱<?= number_format($total_price, 2) ?>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Cart Items - Mobile Cards -->
+        <div class="cart-table-mobile space-y-4">
+          <form action="../cart/update_cart.php" method="POST">
+            <?php foreach ($cart_items as $item):
+              $unit_price = floatval($item['price']);
+              $quantity = intval($item['quantity']);
+              $subtotal = $unit_price * $quantity;
+            ?>
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+                <!-- Product Image and Basic Info -->
+                <div class="flex items-start gap-4">
+                  <?php if (!empty($item['type_image'])): ?>
+                    <img src="../../<?= ($item['type_image']) ?>" class="w-20 h-20 object-cover rounded-lg shadow-sm flex-shrink-0" alt="Product Image">
+                  <?php else: ?>
+                    <div class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg flex-shrink-0">No Image</div>
+                  <?php endif; ?>
+                  
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-gray-800 uppercase text-sm mb-1"><?= htmlspecialchars($item['codename']) ?></h3>
+                    <div class="space-y-1 text-xs text-gray-600">
+                      <div><span class="font-medium">Variant:</span> <?= htmlspecialchars($item['variant_name'] ?: '—') ?></div>
+                      <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name'] ?: '—') ?></div>
+                      <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size'] ?: '—') ?></div>
+                      <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['color_name'] ?: '—') ?></div>
+                      <?php if (!empty($item['descrip6'])): ?>
+                        <div><?= htmlspecialchars($item['descrip6']) ?></div>
+                      <?php endif; ?>
+                      <?php if (!empty($item['descrip7'])): ?>
+                        <div><?= htmlspecialchars($item['descrip7']) ?></div>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                  
+                  <!-- Remove Button -->
+                  <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
+                    class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-colors" title="Remove">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </a>
+                </div>
+
+                <!-- Origin Badge -->
+                <div class="flex justify-between items-center">
+                  <div>
+                    <?php if (!empty($item['origin'])): ?>
+                      <?php if ($item['origin'] === 'local'): ?>
+                        <span class="text-blue-600 font-medium text-xs bg-blue-50 px-2 py-1 rounded-full">Local</span>
+                      <?php elseif ($item['origin'] === 'international'): ?>
+                        <span class="text-red-600 font-medium text-xs bg-red-50 px-2 py-1 rounded-full">International</span>
+                      <?php else: ?>
+                        <span class="text-gray-600 font-medium text-xs bg-gray-50 px-2 py-1 rounded-full"><?= htmlspecialchars($item['origin']) ?></span>
+                      <?php endif; ?>
+                    <?php endif; ?>
+                  </div>
+                </div>
+
+                <!-- Price and Quantity -->
+                <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+                    <input type="number" name="quantities[<?= $item['id'] ?>]" value="<?= $quantity ?>" min="1"
+                      class="w-full text-sm border border-gray-300 rounded px-3 py-2 text-center focus:border-orange-400 focus:ring-1 focus:ring-orange-400">
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs text-gray-600 mb-1">Unit Price</div>
+                    <div class="text-sm font-medium text-orange-600">₱<?= number_format($unit_price, 2) ?></div>
+                    <div class="text-xs text-gray-600 mt-1">Subtotal</div>
+                    <div class="text-lg font-bold text-green-600">₱<?= number_format($subtotal, 2) ?></div>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+
+            <!-- Mobile Cart Actions -->
+            <div class="sticky bottom-0 bg-white border-t border-gray-200 p-4 -mx-4 mt-6">
+              <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <button type="submit" class="w-full sm:w-auto bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition-colors font-medium">
+                  <i class="fas fa-sync-alt mr-2"></i>Update Cart
+                </button>
+                <div class="text-xl font-bold text-orange-700 bg-orange-50 px-4 py-3 rounded-lg">
+                  Total: ₱<?= number_format($total_price, 2) ?>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Final Action Buttons -->
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
+          <a href="shop.php" class="w-full sm:w-auto text-center bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+            <i class="fas fa-store mr-2"></i>Continue Shopping
+          </a>
+          <a href="checkout.php" class="w-full sm:w-auto text-center bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+            <i class="fas fa-credit-card mr-2"></i>Proceed to Checkout
+          </a>
         </div>
       <?php endif; ?>
     </div>
   </div>
 
+  <!-- Footer -->
   <footer class="bg-black pattern-bg text-white py-16 relative overflow-hidden">
     <!-- Decorative Elements -->
     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
@@ -377,10 +512,8 @@ $total_cart_items = count($cart_items);
             <!-- Text Branding -->
             <div>
               <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-
             </div>
           </div>
-
 
           <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
             Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
@@ -429,10 +562,6 @@ $total_cart_items = count($cart_items);
           </h3>
           <ul class="space-y-3 text-gray-300">
             <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
           </ul>
         </div>
       </div>

@@ -1,11 +1,6 @@
 <?php 
 session_start(); 
 
-// Enable error reporting for debugging (remove in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors in response
-ini_set('log_errors', 1);
-
 // Set content type to JSON early
 header('Content-Type: application/json; charset=utf-8');
 
@@ -257,7 +252,7 @@ try {
     
     echo json_encode([
         'success' => false,
-        'message' => 'Error removing item from cart',
+        'message' => 'Error removing item from cart please relogin',
         'error_details' => $e->getMessage(),
         'debug' => [
             'item_id' => $item_id ?? null,

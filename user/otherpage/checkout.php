@@ -58,7 +58,8 @@ $paypal_config = [
 ];
 
 // Function to get PayPal access token
-function getPayPalAccessToken($config) {
+function getPayPalAccessToken($config)
+{
     $url = $config['mode'] === 'sandbox'
         ? 'https://api-m.sandbox.paypal.com/v1/oauth2/token'
         : 'https://api-m.paypal.com/v1/oauth2/token';
@@ -94,7 +95,8 @@ function getPayPalAccessToken($config) {
 }
 
 // Function to create PayPal order
-function createPayPalOrder($amount, $order_id, $config) {
+function createPayPalOrder($amount, $order_id, $config)
+{
     $url = $config['mode'] === 'sandbox'
         ? 'https://api-m.sandbox.paypal.com/v2/checkout/orders'
         : 'https://api-m.paypal.com/v2/checkout/orders';
@@ -107,7 +109,7 @@ function createPayPalOrder($amount, $order_id, $config) {
 
     // Ensure amount is properly formatted
     $formatted_amount = number_format((float)$amount, 2, '.', '');
-    
+
     $order_data = [
         'intent' => 'CAPTURE',
         'purchase_units' => [[
@@ -147,7 +149,7 @@ function createPayPalOrder($amount, $order_id, $config) {
     error_log("PayPal Order Creation Request: " . json_encode($order_data));
     error_log("PayPal API Response: " . $response);
     error_log("PayPal HTTP Code: " . $http_code);
-    
+
     if ($error) {
         error_log("PayPal cURL Error: " . $error);
     }
@@ -382,138 +384,149 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $screenshot_filename = null;
 
     // In your main processing code:
-if ($payment_method === 'PayPal') {
-    try {
-        // Validate required variables exist
-        if (!isset($total_price, $delivery_fee)) {
-            throw new Exception("Missing required pricing data");
-        }
-
-        // Calculate grand total
-        $subtotal = (float)$total_price;
-        $delivery_fee = (float)$delivery_fee;
-        $vat_amount = $subtotal * 0.12;
-        $grand_total = $subtotal + $vat_amount + $delivery_fee;
-
-        // Validate grand total is reasonable
-        if ($grand_total <= 0) {
-            throw new Exception("Invalid order total: " . $grand_total);
-        }
-
-        // Generate reference number
-        $reference_no = generateReferenceNumber();
-
-        // Create PayPal order
-        $paypal_order = createPayPalOrder($grand_total, $reference_no, $paypal_config);
-
-        if ($paypal_order && isset($paypal_order['links'])) {
-            // Save order as pending first
-            $payment_status = 'pending_paypal';
-            $paypal_order_id = $paypal_order['id'];
-
-            // FIXED: Prepare SQL statement with correct number of placeholders (17 placeholders)
-            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            
-            if (!$stmt) {
-                throw new Exception("Database prepare failed: " . $conn->error);
+    if ($payment_method === 'PayPal') {
+        try {
+            // Validate required variables exist
+            if (!isset($total_price, $delivery_fee)) {
+                throw new Exception("Missing required pricing data");
             }
 
-            // FIXED: Bind exactly 17 parameters (matching the placeholders)
-            $stmt->bind_param("ssssssdsiddiddsss", 
-                $name,              // s
-                $email,             // s
-                $mobile,            // s
-                $address,           // s
-                $zipcode,           // s
-                $payment_method,    // s
-                $grand_total,       // d
-                $reference_no,      // s
-                $billing_address_id, // i
-                $latitude,          // d
-                $longitude,         // d
-                $user_id,           // i
-                $delivery_distance, // d
-                $delivery_fee,      // d
-                $subtotal,          // d
-                $payment_status,    // s
-                $paypal_order_id    // s
-            );
+            // Calculate grand total
+            $subtotal = (float)$total_price;
+            $delivery_fee = (float)$delivery_fee;
+            $vat_amount = $subtotal * 0.12;
+            $grand_total = $subtotal + $vat_amount + $delivery_fee;
 
-            if ($stmt->execute()) {
-                $order_id = $stmt->insert_id;
+            // Validate grand total is reasonable
+            if ($grand_total <= 0) {
+                throw new Exception("Invalid order total: " . $grand_total);
+            }
 
-                // Store order_id in session for later use
-                $_SESSION['pending_paypal_order'] = $order_id;
+            // Generate reference number
+            $reference_no = generateReferenceNumber();
 
-                // Add order items
-                $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                
-                if (!$stmt2) {
-                    throw new Exception("Database prepare failed for order items: " . $conn->error);
+            // Create PayPal order
+            $paypal_order = createPayPalOrder($grand_total, $reference_no, $paypal_config);
+
+            if ($paypal_order && isset($paypal_order['links'])) {
+                // Save order as pending first
+                $payment_status = 'pending_paypal';
+                $paypal_order_id = $paypal_order['id'];
+
+                // FIXED: Prepare SQL statement with correct number of placeholders (17 placeholders)
+                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+                if (!$stmt) {
+                    throw new Exception("Database prepare failed: " . $conn->error);
                 }
 
-                foreach ($cart_items as $item) {
-                    $subtotal_item = (float)$item['price'] * (int)$item['quantity'];
-                    $product_name = $item['product_name'] ?? $item['variant_name'];
-                    
-                    // Set default values for missing fields
-                    $codename = $item['codename'] ?? '';
-                    $type_name = $item['type_name'] ?? '';
-                    $variant_color = $item['variant_color'] ?? '';
-                    $size = $item['size'] ?? '';
-                    $desc6 = $item['descrip6'] ?? '';
-                    $desc7 = $item['descrip7'] ?? '';
-                    $origin = $item['origin'] ?? '';
-                    $delivery_fee_per_item = 0; // Calculate as needed
-                    $item_total_delivery = 0; // Calculate as needed
+                // FIXED: Bind exactly 17 parameters (matching the placeholders)
+                $stmt->bind_param(
+                    "ssssssdsiddiddsss",
+                    $name,              // s
+                    $email,             // s
+                    $mobile,            // s
+                    $address,           // s
+                    $zipcode,           // s
+                    $payment_method,    // s
+                    $grand_total,       // d
+                    $reference_no,      // s
+                    $billing_address_id, // i
+                    $latitude,          // d
+                    $longitude,         // d
+                    $user_id,           // i
+                    $delivery_distance, // d
+                    $delivery_fee,      // d
+                    $subtotal,          // d
+                    $payment_status,    // s
+                    $paypal_order_id    // s
+                );
 
-                    $stmt2->bind_param("iisssssdiisssdd", 
-                        $order_id, $item['product_id'], $product_name, 
-                        $codename, $type_name, $variant_color, $size, 
-                        $item['price'], $item['quantity'], $subtotal_item, 
-                        $desc6, $desc7, $origin, 
-                        $delivery_fee_per_item, $item_total_delivery
-                    );
-                    
-                    if (!$stmt2->execute()) {
-                        error_log("Failed to insert order item: " . $stmt2->error);
-                    }
-                }
+                if ($stmt->execute()) {
+                    $order_id = $stmt->insert_id;
 
-                // Get approval URL
-                $approval_url = null;
-                foreach ($paypal_order['links'] as $link) {
-                    if ($link['rel'] === 'approve') {
-                        $approval_url = $link['href'];
-                        break;
-                    }
-                }
+                    // Store order_id in session for later use
+                    $_SESSION['pending_paypal_order'] = $order_id;
 
-                if ($approval_url) {
-                    // Clear any output buffer to prevent header issues
-                    if (ob_get_level()) {
-                        ob_end_clean();
+                    // Add order items
+                    $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+                    if (!$stmt2) {
+                        throw new Exception("Database prepare failed for order items: " . $conn->error);
                     }
-                    
-                    // Redirect to PayPal
-                    header('Location: ' . $approval_url);
-                    exit;
+
+                    foreach ($cart_items as $item) {
+                        $subtotal_item = (float)$item['price'] * (int)$item['quantity'];
+                        $product_name = $item['product_name'] ?? $item['variant_name'];
+
+                        // Set default values for missing fields
+                        $codename = $item['codename'] ?? '';
+                        $type_name = $item['type_name'] ?? '';
+                        $variant_color = $item['variant_color'] ?? '';
+                        $size = $item['size'] ?? '';
+                        $desc6 = $item['descrip6'] ?? '';
+                        $desc7 = $item['descrip7'] ?? '';
+                        $origin = $item['origin'] ?? '';
+                        $delivery_fee_per_item = 0; // Calculate as needed
+                        $item_total_delivery = 0; // Calculate as needed
+
+                        $stmt2->bind_param(
+                            "iisssssdiisssdd",
+                            $order_id,
+                            $item['product_id'],
+                            $product_name,
+                            $codename,
+                            $type_name,
+                            $variant_color,
+                            $size,
+                            $item['price'],
+                            $item['quantity'],
+                            $subtotal_item,
+                            $desc6,
+                            $desc7,
+                            $origin,
+                            $delivery_fee_per_item,
+                            $item_total_delivery
+                        );
+
+                        if (!$stmt2->execute()) {
+                            error_log("Failed to insert order item: " . $stmt2->error);
+                        }
+                    }
+
+                    // Get approval URL
+                    $approval_url = null;
+                    foreach ($paypal_order['links'] as $link) {
+                        if ($link['rel'] === 'approve') {
+                            $approval_url = $link['href'];
+                            break;
+                        }
+                    }
+
+                    if ($approval_url) {
+                        // Clear any output buffer to prevent header issues
+                        if (ob_get_level()) {
+                            ob_end_clean();
+                        }
+
+                        // Redirect to PayPal
+                        header('Location: ' . $approval_url);
+                        exit;
+                    } else {
+                        throw new Exception("PayPal approval URL not found");
+                    }
                 } else {
-                    throw new Exception("PayPal approval URL not found");
+                    throw new Exception("Failed to insert order: " . $stmt->error);
                 }
             } else {
-                throw new Exception("Failed to insert order: " . $stmt->error);
+                throw new Exception("Failed to create PayPal order");
             }
-        } else {
-            throw new Exception("Failed to create PayPal order");
+        } catch (Exception $e) {
+            $error = "PayPal payment error: " . $e->getMessage();
+            error_log("PayPal error: " . $e->getMessage());
+            error_log("PayPal error trace: " . $e->getTraceAsString());
         }
-
-    } catch (Exception $e) {
-        $error = "PayPal payment error: " . $e->getMessage();
-        error_log("PayPal error: " . $e->getMessage());
-        error_log("PayPal error trace: " . $e->getTraceAsString());
     }
-}
 
     // Handle Bank Transfer specific data
     if ($payment_method === 'Bank Transfer') {
@@ -658,9 +671,10 @@ if ($payment_method === 'PayPal') {
             // ✅ Save order (FIXED: Use correct number of placeholders - 19 placeholders)
             $payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
             $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            
+
             // FIXED: Bind exactly 19 parameters (matching the placeholders)
-            $stmt->bind_param("ssssssdsiddiddsssss", 
+            $stmt->bind_param(
+                "ssssssdsiddiddsssss",
                 $name,                  // s
                 $email,                 // s  
                 $mobile,                // s
@@ -855,7 +869,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet JS -->
-     <script src="https://www.paypal.com/sdk/js?client-id=AZoPuOxAvAMZP9BaTJqQIq7fAHrJDsf73EeOqOeCER4w_U7q5qCVOKoWbdhzJynHtBpsWX8j1NuTa83T&currency=PHP&intent=capture"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AZoPuOxAvAMZP9BaTJqQIq7fAHrJDsf73EeOqOeCER4w_U7q5qCVOKoWbdhzJynHtBpsWX8j1NuTa83T&currency=PHP&intent=capture"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 </head>
@@ -874,32 +888,46 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
         <!-- Progress Steps -->
         <div class="mb-8">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center step-indicator" data-step="1">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:mb-6 space-y-6 sm:space-y-0">
+
+                <!-- Step 1 -->
+                <div class="flex items-center step-indicator flex-1" data-step="1">
                     <div class="step-circle active">1</div>
                     <div class="ml-3 text-sm">
                         <div class="font-medium step-title">Customer Info</div>
                         <div class="text-gray-500">Basic details</div>
                     </div>
                 </div>
-                <div class="flex-1 h-px bg-gray-300 mx-4"></div>
-                <div class="flex items-center step-indicator" data-step="2">
+
+                <!-- Divider -->
+                <div class="hidden sm:block flex-1 h-px bg-gray-300 mx-4"></div>
+
+                <!-- Step 2 -->
+                <div class="flex items-center step-indicator flex-1" data-step="2">
                     <div class="step-circle">2</div>
                     <div class="ml-3 text-sm">
                         <div class="font-medium step-title">Delivery Address</div>
                         <div class="text-gray-500">Where to deliver</div>
                     </div>
                 </div>
-                <div class="flex-1 h-px bg-gray-300 mx-4"></div>
-                <div class="flex items-center step-indicator" data-step="3">
+
+                <!-- Divider -->
+                <div class="hidden sm:block flex-1 h-px bg-gray-300 mx-4"></div>
+
+                <!-- Step 3 -->
+                <div class="flex items-center step-indicator flex-1" data-step="3">
                     <div class="step-circle">3</div>
                     <div class="ml-3 text-sm">
                         <div class="font-medium step-title">Delivery Fee</div>
                         <div class="text-gray-500">Calculate costs</div>
                     </div>
                 </div>
-                <div class="flex-1 h-px bg-gray-300 mx-4"></div>
-                <div class="flex items-center step-indicator" data-step="4">
+
+                <!-- Divider -->
+                <div class="hidden sm:block flex-1 h-px bg-gray-300 mx-4"></div>
+
+                <!-- Step 4 -->
+                <div class="flex items-center step-indicator flex-1" data-step="4">
                     <div class="step-circle">4</div>
                     <div class="ml-3 text-sm">
                         <div class="font-medium step-title">Payment</div>
@@ -908,6 +936,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                 </div>
             </div>
         </div>
+
 
         <form method="POST" class="space-y-6" id="checkoutForm" enctype="multipart/form-data">
 
@@ -1179,20 +1208,23 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                 </div>
                             </label>
 
-                             <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
-        <input type="radio" name="payment_method" value="PayPal" required class="mr-4" onclick="showPayPalOption()" />
-        <div class="flex items-center">
-            <div class="text-blue-600 mr-3">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.543c-.298-.2-.617-.347-.936-.442a6.194 6.194 0 0 0-1.015-.24 2.991 2.991 0 0 0-.495-.047h-5.212c-.524 0-.968.382-1.05.9L9.747 13.6a.641.641 0 0 0 .633.74h2.7c4.332 0 7.71-1.24 8.998-6.35a5.847 5.847 0 0 0 .144-1.073z"/>
-                </svg>
-            </div>
-            <div>
-                <div class="font-medium">PayPal</div>
-                <div class="text-sm text-gray-600">Pay securely with PayPal</div>
-            </div>
-        </div>
-    </label>
+                            <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
+                                <input type="radio" name="payment_method" value="PayPal" required class="mr-4" onclick="showPayPalOption()" />
+                                <div class="flex items-center">
+                                    <div class="mr-3">
+                                        <!-- Official PayPal Logo SVG -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-8 h-8">
+                                            <path fill="#003087" d="M15.7 4.2h6.5c2.2 0 3.9.5 5.1 1.5 1.1.9 1.6 2.3 1.3 4.2-.7 4.8-3.6 6.8-8.5 6.8h-2.2c-.5 0-.9.3-1 .8l-1 6.6c0 .3-.3.5-.6.5H11c-.5 0-.9-.4-.8-.9L13.5 5c.1-.4.4-.8.9-.8h1.3z" />
+                                            <path fill="#009cde" d="M26.8 10.6c-.3 2-1.2 3.6-2.6 4.6-1.4 1-3.3 1.5-5.7 1.5h-2.4c-.5 0-.9.3-1 .8l-1.1 7.1c0 .3-.3.5-.6.5h-3.4c-.5 0-.9-.4-.8-.9l2.4-15.6c.1-.4.4-.8.9-.8h7.2c1.4 0 2.6.2 3.6.6 1.5.6 2.1 2 1.9 3.2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">PayPal</div>
+                                        <div class="text-sm text-gray-600">Pay securely with PayPal</div>
+                                    </div>
+                                </div>
+                            </label>
+
                         </div>
 
                         <!-- Bank Transfer Fields -->
@@ -1205,35 +1237,37 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         </div>
 
                         <div id="paypalFields" class="hidden mt-6 p-4 bg-blue-50 rounded-lg">
-    <div class="flex items-center gap-3 mb-4">
-        <div class="text-blue-600">
-            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.543c-.298-.2-.617-.347-.936-.442a6.194 6.194 0 0 0-1.015-.24 2.991 2.991 0 0 0-.495-.047h-5.212c-.524 0-.968.382-1.05.9L9.747 13.6a.641.641 0 0 0 .633.74h2.7c4.332 0 7.71-1.24 8.998-6.35a5.847 5.847 0 0 0 .144-1.073z"/>
-            </svg>
-        </div>
-        <div>
-            <h5 class="font-bold text-blue-800">PayPal Payment</h5>
-            <p class="text-sm text-blue-600">You will be redirected to PayPal to complete your payment securely.</p>
-        </div>
-    </div>
-    
-    <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
-        <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-                <span class="text-gray-600">Total Amount:</span>
-                <span class="font-bold text-blue-800" id="paypalAmount">₱0.00</span>
-            </div>
-            <div class="text-xs text-blue-600 mt-2">
-                <ul class="list-disc list-inside space-y-1">
-                    <li>Safe and secure payment with PayPal</li>
-                    <li>Pay with your PayPal balance, bank account, or credit card</li>
-                    <li>No need to share financial details with us</li>
-                    <li>Instant payment confirmation</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="text-blue-600">
+                                    <!-- Official PayPal Logo SVG -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-8 h-8">
+                                        <path fill="#003087" d="M15.7 4.2h6.5c2.2 0 3.9.5 5.1 1.5 1.1.9 1.6 2.3 1.3 4.2-.7 4.8-3.6 6.8-8.5 6.8h-2.2c-.5 0-.9.3-1 .8l-1 6.6c0 .3-.3.5-.6.5H11c-.5 0-.9-.4-.8-.9L13.5 5c.1-.4.4-.8.9-.8h1.3z" />
+                                        <path fill="#009cde" d="M26.8 10.6c-.3 2-1.2 3.6-2.6 4.6-1.4 1-3.3 1.5-5.7 1.5h-2.4c-.5 0-.9.3-1 .8l-1.1 7.1c0 .3-.3.5-.6.5h-3.4c-.5 0-.9-.4-.8-.9l2.4-15.6c.1-.4.4-.8.9-.8h7.2c1.4 0 2.6.2 3.6.6 1.5.6 2.1 2 1.9 3.2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-blue-800">PayPal Payment</h5>
+                                    <p class="text-sm text-blue-600">You will be redirected to PayPal to complete your payment securely.</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Total Amount:</span>
+                                        <span class="font-bold text-blue-800" id="paypalAmount">₱0.00</span>
+                                    </div>
+                                    <div class="text-xs text-blue-600 mt-2">
+                                        <ul class="list-disc list-inside space-y-1">
+                                            <li>Safe and secure payment with PayPal</li>
+                                            <li>Pay with your PayPal balance, bank account, or credit card</li>
+                                            <li>No need to share financial details with us</li>
+                                            <li>Instant payment confirmation</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Order Summary -->
@@ -1733,20 +1767,20 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             return false;
                         }
                     }
-                     // PayPal handles all validation on their side
-    if (paymentMethod.value === 'PayPal') {
-        // Just ensure delivery fee is calculated
-        const deliveryFeeInput = document.getElementById('deliveryFee');
-        const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
-        
-        if (deliveryFee === null || deliveryFee === undefined) {
-            showNotification('Please calculate delivery costs first.', 'error');
-            return false;
-        }
-    }
-    
-    return true;
-              
+                    // PayPal handles all validation on their side
+                    if (paymentMethod.value === 'PayPal') {
+                        // Just ensure delivery fee is calculated
+                        const deliveryFeeInput = document.getElementById('deliveryFee');
+                        const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
+
+                        if (deliveryFee === null || deliveryFee === undefined) {
+                            showNotification('Please calculate delivery costs first.', 'error');
+                            return false;
+                        }
+                    }
+
+                    return true;
+
                 default:
                     return true;
             }
@@ -2347,36 +2381,36 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             });
         }
 
-       // Update your existing updateTotalsDisplay function to also update PayPal amount
-function updateTotalsDisplay(deliveryCost) {
-    const subtotal = <?= $total_price ?>;
-    const totals = calculateTotalsWithVAT(subtotal, deliveryCost);
+        // Update your existing updateTotalsDisplay function to also update PayPal amount
+        function updateTotalsDisplay(deliveryCost) {
+            const subtotal = <?= $total_price ?>;
+            const totals = calculateTotalsWithVAT(subtotal, deliveryCost);
 
-    // Update displays (your existing code)
-    const subtotalBeforeVATElement = document.getElementById('subtotalBeforeVAT');
-    const totalDeliveryCostDisplayElement = document.getElementById('totalDeliveryCostDisplay');
-    const vatAmountElement = document.getElementById('vatAmount');
-    const grandTotalDisplayElement = document.getElementById('grandTotalDisplay');
+            // Update displays (your existing code)
+            const subtotalBeforeVATElement = document.getElementById('subtotalBeforeVAT');
+            const totalDeliveryCostDisplayElement = document.getElementById('totalDeliveryCostDisplay');
+            const vatAmountElement = document.getElementById('vatAmount');
+            const grandTotalDisplayElement = document.getElementById('grandTotalDisplay');
 
-    if (subtotalBeforeVATElement) {
-        subtotalBeforeVATElement.textContent = `₱${totals.subtotalWithDelivery.toFixed(2)}`;
-    }
-    if (totalDeliveryCostDisplayElement) {
-        totalDeliveryCostDisplayElement.textContent = `₱${deliveryCost.toFixed(2)}`;
-    }
-    if (vatAmountElement) {
-        vatAmountElement.textContent = `₱${totals.vatAmount.toFixed(2)}`;
-    }
-    if (grandTotalDisplayElement) {
-        grandTotalDisplayElement.textContent = `₱${totals.grandTotal.toFixed(2)}`;
-    }
+            if (subtotalBeforeVATElement) {
+                subtotalBeforeVATElement.textContent = `₱${totals.subtotalWithDelivery.toFixed(2)}`;
+            }
+            if (totalDeliveryCostDisplayElement) {
+                totalDeliveryCostDisplayElement.textContent = `₱${deliveryCost.toFixed(2)}`;
+            }
+            if (vatAmountElement) {
+                vatAmountElement.textContent = `₱${totals.vatAmount.toFixed(2)}`;
+            }
+            if (grandTotalDisplayElement) {
+                grandTotalDisplayElement.textContent = `₱${totals.grandTotal.toFixed(2)}`;
+            }
 
-    // Update PayPal amount if PayPal is selected
-    updatePayPalAmount();
-    
-    // Update bank transfer amount if visible
-    updateBankPaymentAmount();
-}
+            // Update PayPal amount if PayPal is selected
+            updatePayPalAmount();
+
+            // Update bank transfer amount if visible
+            updateBankPaymentAmount();
+        }
 
         function initializeMapModal() {
             const showMapBtn = document.getElementById('showMapModal');
@@ -2408,143 +2442,143 @@ function updateTotalsDisplay(deliveryCost) {
             }
         }
 
-       function initializeCheckoutForm() {
-    const checkoutForm = document.querySelector('#checkoutForm');
-    const placeOrderBtn = document.getElementById('placeOrderBtn');
+        function initializeCheckoutForm() {
+            const checkoutForm = document.querySelector('#checkoutForm');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
 
-    if (checkoutForm && placeOrderBtn) {
-        checkoutForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent normal form submission
+            if (checkoutForm && placeOrderBtn) {
+                checkoutForm.addEventListener('submit', function(e) {
+                    e.preventDefault(); // Prevent normal form submission
 
-            // Final validation
-            if (!validateStep(4)) {
-                return;
-            }
-
-            // Check if delivery fee is calculated (considering free delivery)
-            if (!selectedZone) {
-                showNotification('Please select a delivery zone first.', 'error');
-                return;
-            }
-
-            const deliveryFeeInput = document.getElementById('deliveryFee');
-            const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
-
-            if (deliveryFee === null || deliveryFee === undefined) {
-                if (selectedZone.zone_code === 'NCR' || selectedZone.is_free_delivery) {
-                    // Auto-setup free delivery if not already done
-                    setupFreeDelivery();
-                } else {
-                    showNotification('Please calculate delivery distance first before placing your order.', 'error');
-                    return;
-                }
-            }
-
-            // Check selected payment method
-            const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked');
-            const isPayPal = selectedPaymentMethod && selectedPaymentMethod.value === 'PayPal';
-
-            // Show loading state
-            const originalText = placeOrderBtn.textContent;
-            placeOrderBtn.textContent = isPayPal ? 'Redirecting to PayPal...' : 'Processing Order...';
-            placeOrderBtn.disabled = true;
-
-            // For PayPal, we need to handle the redirect differently
-            if (isPayPal) {
-                // For PayPal, submit the form normally to allow PHP redirect
-                showNotification('Redirecting to PayPal for secure payment...', 'info');
-                
-                // Add a hidden field to identify this as a PayPal submission
-                const paypalFlag = document.createElement('input');
-                paypalFlag.type = 'hidden';
-                paypalFlag.name = 'paypal_checkout';
-                paypalFlag.value = '1';
-                checkoutForm.appendChild(paypalFlag);
-                
-                // Submit form normally for PayPal (allows redirect)
-                checkoutForm.submit();
-                return;
-            }
-
-            // For non-PayPal payments, use AJAX
-            const formData = new FormData(checkoutForm);
-
-            // Send AJAX request with proper headers
-            fetch('', { // Empty string means current page
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest' // This identifies it as an AJAX request
-                    },
-                    body: formData
-                })
-                .then(response => {
-                    // Check if response is a redirect (status 3xx)
-                    if (response.redirected || (response.status >= 300 && response.status < 400)) {
-                        // Handle redirect response
-                        window.location.href = response.url;
+                    // Final validation
+                    if (!validateStep(4)) {
                         return;
                     }
 
-                    // Check if response is JSON or HTML
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json();
-                    } else {
-                        return response.text();
+                    // Check if delivery fee is calculated (considering free delivery)
+                    if (!selectedZone) {
+                        showNotification('Please select a delivery zone first.', 'error');
+                        return;
                     }
-                })
-                .then(data => {
-                    if (typeof data === 'object' && data.success) {
-                        // JSON response - success
-                        showNotification('Order placed successfully! Redirecting to receipt...', 'success');
-                        setTimeout(() => {
-                            window.location.href = data.redirect_url;
-                        }, 2000);
-                    } else if (typeof data === 'string') {
-                        // HTML response - check for errors
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(data, 'text/html');
-                        const errorDiv = doc.querySelector('.bg-red-100, .alert-danger, .error-message');
 
-                        if (errorDiv) {
-                            let errorText = errorDiv.textContent.replace('Error:', '').trim();
-                            // Clean up common error prefixes
-                            errorText = errorText.replace(/^(Error|Warning|Notice):\s*/i, '');
-                            showNotification('Error: ' + errorText, 'error');
+                    const deliveryFeeInput = document.getElementById('deliveryFee');
+                    const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
+
+                    if (deliveryFee === null || deliveryFee === undefined) {
+                        if (selectedZone.zone_code === 'NCR' || selectedZone.is_free_delivery) {
+                            // Auto-setup free delivery if not already done
+                            setupFreeDelivery();
                         } else {
-                            // Check if the response contains "success" or similar indicators
-                            if (data.includes('success') || data.includes('receipt') || data.includes('order-confirmation')) {
-                                showNotification('Order placed successfully!', 'success');
-                                // Try to extract redirect URL or default to a success page
-                                setTimeout(() => {
-                                    window.location.reload(); // or redirect to appropriate page
-                                }, 2000);
-                            } else {
-                                showNotification('An unexpected error occurred. Please try again.', 'error');
-                            }
+                            showNotification('Please calculate delivery distance first before placing your order.', 'error');
+                            return;
                         }
+                    }
 
-                        // Reset button state for errors
-                        if (!data.includes('success')) {
+                    // Check selected payment method
+                    const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked');
+                    const isPayPal = selectedPaymentMethod && selectedPaymentMethod.value === 'PayPal';
+
+                    // Show loading state
+                    const originalText = placeOrderBtn.textContent;
+                    placeOrderBtn.textContent = isPayPal ? 'Redirecting to PayPal...' : 'Processing Order...';
+                    placeOrderBtn.disabled = true;
+
+                    // For PayPal, we need to handle the redirect differently
+                    if (isPayPal) {
+                        // For PayPal, submit the form normally to allow PHP redirect
+                        showNotification('Redirecting to PayPal for secure payment...', 'info');
+
+                        // Add a hidden field to identify this as a PayPal submission
+                        const paypalFlag = document.createElement('input');
+                        paypalFlag.type = 'hidden';
+                        paypalFlag.name = 'paypal_checkout';
+                        paypalFlag.value = '1';
+                        checkoutForm.appendChild(paypalFlag);
+
+                        // Submit form normally for PayPal (allows redirect)
+                        checkoutForm.submit();
+                        return;
+                    }
+
+                    // For non-PayPal payments, use AJAX
+                    const formData = new FormData(checkoutForm);
+
+                    // Send AJAX request with proper headers
+                    fetch('', { // Empty string means current page
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest' // This identifies it as an AJAX request
+                            },
+                            body: formData
+                        })
+                        .then(response => {
+                            // Check if response is a redirect (status 3xx)
+                            if (response.redirected || (response.status >= 300 && response.status < 400)) {
+                                // Handle redirect response
+                                window.location.href = response.url;
+                                return;
+                            }
+
+                            // Check if response is JSON or HTML
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                return response.json();
+                            } else {
+                                return response.text();
+                            }
+                        })
+                        .then(data => {
+                            if (typeof data === 'object' && data.success) {
+                                // JSON response - success
+                                showNotification('Order placed successfully! Redirecting to receipt...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = data.redirect_url;
+                                }, 2000);
+                            } else if (typeof data === 'string') {
+                                // HTML response - check for errors
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(data, 'text/html');
+                                const errorDiv = doc.querySelector('.bg-red-100, .alert-danger, .error-message');
+
+                                if (errorDiv) {
+                                    let errorText = errorDiv.textContent.replace('Error:', '').trim();
+                                    // Clean up common error prefixes
+                                    errorText = errorText.replace(/^(Error|Warning|Notice):\s*/i, '');
+                                    showNotification('Error: ' + errorText, 'error');
+                                } else {
+                                    // Check if the response contains "success" or similar indicators
+                                    if (data.includes('success') || data.includes('receipt') || data.includes('order-confirmation')) {
+                                        showNotification('Order placed successfully!', 'success');
+                                        // Try to extract redirect URL or default to a success page
+                                        setTimeout(() => {
+                                            window.location.reload(); // or redirect to appropriate page
+                                        }, 2000);
+                                    } else {
+                                        showNotification('An unexpected error occurred. Please try again.', 'error');
+                                    }
+                                }
+
+                                // Reset button state for errors
+                                if (!data.includes('success')) {
+                                    placeOrderBtn.textContent = originalText;
+                                    placeOrderBtn.disabled = false;
+                                }
+                            } else {
+                                // Unexpected response format
+                                showNotification('An unexpected error occurred. Please try again.', 'error');
+                                placeOrderBtn.textContent = originalText;
+                                placeOrderBtn.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showNotification('A network error occurred. Please check your connection and try again.', 'error');
                             placeOrderBtn.textContent = originalText;
                             placeOrderBtn.disabled = false;
-                        }
-                    } else {
-                        // Unexpected response format
-                        showNotification('An unexpected error occurred. Please try again.', 'error');
-                        placeOrderBtn.textContent = originalText;
-                        placeOrderBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('A network error occurred. Please check your connection and try again.', 'error');
-                    placeOrderBtn.textContent = originalText;
-                    placeOrderBtn.disabled = false;
+                        });
                 });
-        });
-    }
-}
+            }
+        }
 
         // Haversine formula to calculate distance between two coordinates
         function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
@@ -2899,64 +2933,64 @@ function updateTotalsDisplay(deliveryCost) {
         }
 
         // Function to show PayPal option
-function showPayPalOption() {
-    // Hide bank transfer fields
-    const bankTransferFields = document.getElementById('bankTransferFields');
-    if (bankTransferFields) {
-        bankTransferFields.classList.add('hidden');
-    }
-    
-    // Show PayPal fields
-    const paypalFields = document.getElementById('paypalFields');
-    if (paypalFields) {
-        paypalFields.classList.remove('hidden');
-    }
-    
-    // Update PayPal amount
-    updatePayPalAmount();
-    
-    // Enable place order button
-    enablePlaceOrderButton();
-}
+        function showPayPalOption() {
+            // Hide bank transfer fields
+            const bankTransferFields = document.getElementById('bankTransferFields');
+            if (bankTransferFields) {
+                bankTransferFields.classList.add('hidden');
+            }
 
-// Function to update PayPal amount display
-function updatePayPalAmount() {
-    const paypalAmountElement = document.getElementById('paypalAmount');
-    const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-    
-    if (paypalAmountElement && grandTotalDisplay) {
-        const grandTotal = grandTotalDisplay.textContent;
-        paypalAmountElement.textContent = grandTotal;
-    }
-}
+            // Show PayPal fields
+            const paypalFields = document.getElementById('paypalFields');
+            if (paypalFields) {
+                paypalFields.classList.remove('hidden');
+            }
 
-// Function to enable place order button for PayPal
-function enablePlaceOrderButton() {
-    const placeOrderBtn = document.getElementById('placeOrderBtn');
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-    
-    if (placeOrderBtn && paymentMethod && paymentMethod.value === 'PayPal') {
-        // Check if delivery fee is calculated
-        const deliveryFeeInput = document.getElementById('deliveryFee');
-        const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
-        
-        if (deliveryFee !== null && deliveryFee >= 0) {
-            placeOrderBtn.disabled = false;
-            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            // Update PayPal amount
+            updatePayPalAmount();
+
+            // Enable place order button
+            enablePlaceOrderButton();
         }
-    }
-}
+
+        // Function to update PayPal amount display
+        function updatePayPalAmount() {
+            const paypalAmountElement = document.getElementById('paypalAmount');
+            const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+
+            if (paypalAmountElement && grandTotalDisplay) {
+                const grandTotal = grandTotalDisplay.textContent;
+                paypalAmountElement.textContent = grandTotal;
+            }
+        }
+
+        // Function to enable place order button for PayPal
+        function enablePlaceOrderButton() {
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+
+            if (placeOrderBtn && paymentMethod && paymentMethod.value === 'PayPal') {
+                // Check if delivery fee is calculated
+                const deliveryFeeInput = document.getElementById('deliveryFee');
+                const deliveryFee = deliveryFeeInput ? parseFloat(deliveryFeeInput.value) : null;
+
+                if (deliveryFee !== null && deliveryFee >= 0) {
+                    placeOrderBtn.disabled = false;
+                    placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                }
+            }
+        }
 
         // Bank Transfer Functions
         function showBankSelection() {
             const bankTransferFields = document.getElementById('bankTransferFields');
             const bankSelectionArea = document.getElementById('bankSelectionArea');
             const placeOrderBtn = document.getElementById('placeOrderBtn');
-                const paypalFields = document.getElementById('paypalFields');
-    if (paypalFields) {
-        paypalFields.classList.add('hidden');
-    }
+            const paypalFields = document.getElementById('paypalFields');
+            if (paypalFields) {
+                paypalFields.classList.add('hidden');
+            }
 
             if (bankTransferFields) {
                 bankTransferFields.classList.remove('hidden');

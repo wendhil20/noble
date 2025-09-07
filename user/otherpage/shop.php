@@ -514,7 +514,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
   <section class="hero-gradient relative">
     <div class="relative max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
       <div class="text-center" data-aos="fade-up">
-        <h1 class="text-4xl lg:text-6xl font-playfair font-bold text-black mb-6">
+        <h1 class="text-4xl lg:text-6xl font-bold text-black mb-6">
           Premium <span class="text-orange-400">Collections</span>
         </h1>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">

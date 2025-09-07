@@ -558,7 +558,7 @@ handleQueryError($conn, "New Status Query");
                         d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
                 </svg>
                 <p class="text-lg font-semibold">
-                   Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
+                    Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
                 </p>
             </div>
 
@@ -1108,7 +1108,7 @@ handleQueryError($conn, "New Status Query");
             <div class="grid grid-cols-6 gap-6">
                 <!-- Row 1 -->
                 <a href="shop?category[]=furniture" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1117,7 +1117,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=materials" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1126,7 +1126,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=bedfurniture" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1135,7 +1135,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=lighting" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1144,7 +1144,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=aircon" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1153,7 +1153,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=doors" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1163,7 +1163,7 @@ handleQueryError($conn, "New Status Query");
 
                 <!-- Row 2 -->
                 <a href="shop?category[]=tiles" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1172,7 +1172,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=windows" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1181,7 +1181,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=bathroom" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1190,7 +1190,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=kitchen" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1199,7 +1199,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=pipes" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1208,7 +1208,7 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=aacblock" class="group">
-                    <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
@@ -1605,8 +1605,6 @@ handleQueryError($conn, "New Status Query");
             </div>
 
 
-
-
         </div>
         <style>
             .bubble-bounce {
@@ -1631,7 +1629,6 @@ handleQueryError($conn, "New Status Query");
             }
         </style>
 
-        <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
                 <?php while ($row = mysqli_fetch_assoc($resultss)) : ?>
@@ -1655,82 +1652,168 @@ handleQueryError($conn, "New Status Query");
                     $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                     $empty = 5 - $full - $half;
                     ?>
-                    <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
-                            <!-- Triangle Badge -->
+                    <div class="swiper-slide p-1">
+                        <div class="relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[450px] ">
+
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
                                     <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
                                 </div>
                             </div>
 
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
-                                <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                <?php endif; ?>
 
+                            <!-- Image Container with Overlay -->
+                            <div class="relative h-[280px] overflow-hidden">
+                                <!-- Gradient Overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+
+                                <?php if (!empty($row['main_image'])): ?>
+                                    <img src="../../<?= $row['main_image'] ?>"
+                                        loading="lazy"
+                                        alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                        class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                <?php else: ?>
+                                    <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['product_name']) ?>
-                                </h3>
+                            <!-- Content Section -->
+                            <div class="p-4 flex flex-col justify-between h-[170px]">
+
+                                <!-- Product Info -->
+                                <div class="space-y-2">
+                                    <!-- Title -->
+                                    <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
+                                        <?= htmlspecialchars($row['product_name']) ?>
+                                    </h3>
 
 
-                                <!-- Ratings Section (from Code 2) -->
-                                <?php if ($total_raters > 0): ?>
-                                    <div class="flex items-center justify-center gap-1 text-orange-400 text-xs mb-2">
-                                        <?php
-                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                                        ?>
-                                        <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
+
+                                    <!-- Rating Section -->
+                                    <div class="flex items-center justify-between">
+                                        <?php if ($total_raters > 0): ?>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex text-yellow-400 text-xs">
+                                                    <?php
+                                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                    ?>
+                                                </div>
+                                                <span class="text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                            </div>
+                                            <span class="text-xs text-gray-400">(<?= $total_raters ?> reviews)</span>
+                                        <?php else: ?>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex text-gray-300 text-xs">
+                                                    <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                </div>
+                                                <span class="text-xs text-gray-400">No rating</span>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
-                                <?php else: ?>
-                                    <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
-                                <?php endif; ?>
 
-                                <!-- Description -->
-                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                    <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                        <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                        <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
-                                        <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-
-                                    </p>
-                                    <!-- Display Origin (Local / International) -->
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                                <?php endif; ?>
+                                    <!-- Description -->
+                                    <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                        <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                            <?= htmlspecialchars($row['descrip6'] ?? '') ?>
+                                            <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? ' ' : '' ?>
+                                            <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-xs text-gray-400 italic">No description available</p>
+                                    <?php endif; ?>
 
 
-                                <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
+                                </div>
+
+                                <!-- Action Button -->
+                                <div class="mt-3 flex justify-start">
                                     <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
-                                            view
+                                        <button type="submit" class="Btn">
+                                            <div class="sign">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
+                                                </svg>
+                                            </div>
+                                            <div class="text">View</div>
                                         </button>
                                     </form>
                                 </div>
+
+                                <style>
+                                    /* From Uiverse.io by vinodjangid07 */
+                                    .Btn {
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: flex-start;
+                                        width: 45px;
+                                        height: 45px;
+                                        border: none;
+                                        border-radius: 0px;
+                                        cursor: pointer;
+                                        position: relative;
+                                        overflow: hidden;
+                                        transition-duration: .3s;
+                                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+                                        background-color: black;
+                                    }
+
+                                    /* icon */
+                                    .Btn .sign {
+                                        width: 100%;
+                                        font-size: 1.5em;
+                                        color: white;
+                                        transition-duration: .3s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+
+                                    /* text */
+                                    .Btn .text {
+                                        position: absolute;
+                                        right: 0%;
+                                        width: 0%;
+                                        opacity: 0;
+                                        color: white;
+                                        font-size: 1.1em;
+                                        font-weight: 500;
+                                        transition-duration: .3s;
+                                    }
+
+                                    /* hover effect */
+                                    .Btn:hover {
+                                        width: 125px;
+                                        border-radius: 0px;
+                                        transition-duration: .3s;
+                                    }
+
+                                    .Btn:hover .sign {
+                                        width: 30%;
+                                        transition-duration: .3s;
+                                        padding-left: 20px;
+                                    }
+
+                                    .Btn:hover .text {
+                                        opacity: 1;
+                                        width: 70%;
+                                        transition-duration: .3s;
+                                        padding-right: 20px;
+                                    }
+
+                                    /* click effect */
+                                    .Btn:active {
+                                        transform: translate(2px, 2px);
+                                    }
+                                </style>
+
                             </div>
                         </div>
                     </div>
@@ -1827,81 +1910,166 @@ handleQueryError($conn, "New Status Query");
                     $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                     $empty = 5 - $full - $half;
                     ?>
-                    <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
-                            <!-- Triangle Badge -->
+                    <div class="swiper-slide p-1">
+                        <div class="relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[450px] ">
+
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
                                     <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
                                 </div>
                             </div>
 
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-1">
+                            <!-- Image Container with Overlay -->
+                            <div class="relative h-[280px] overflow-hidden">
+                                <!-- Gradient Overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+
                                 <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                    <img src="../../<?= $row['main_image'] ?>"
+                                        loading="lazy"
+                                        alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                        class="w-full h-full object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
                                 <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                    <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['product_name']) ?>
-                                </h3>
+                            <!-- Content Section -->
+                            <div class="p-4 flex flex-col justify-between h-[170px]">
+
+                                <!-- Product Info -->
+                                <div class="space-y-2">
+                                    <!-- Title -->
+                                    <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
+                                        <?= htmlspecialchars($row['product_name']) ?>
+                                    </h3>
 
 
-                                <!-- Ratings Section (from Code 2) -->
-                                <?php if ($total_raters > 0): ?>
-                                    <div class="flex items-center justify-center gap-1 text-orange-400 text-xs mb-2">
-                                        <?php
-                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                                        ?>
-                                        <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
+
+                                    <!-- Rating Section -->
+                                    <div class="flex items-center justify-between">
+                                        <?php if ($total_raters > 0): ?>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex text-yellow-400 text-xs">
+                                                    <?php
+                                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                    ?>
+                                                </div>
+                                                <span class="text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                            </div>
+                                            <span class="text-xs text-gray-400">(<?= $total_raters ?> reviews)</span>
+                                        <?php else: ?>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex text-gray-300 text-xs">
+                                                    <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                </div>
+                                                <span class="text-xs text-gray-400">No rating</span>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
-                                <?php else: ?>
-                                    <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
-                                <?php endif; ?>
 
-                                <!-- Description -->
-                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                    <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                        <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                        <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
-                                        <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-
-                                    </p>
-                                    <!-- Display Origin (Local / International) -->
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                                <?php endif; ?>
+                                    <!-- Description -->
+                                    <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                        <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                            <?= htmlspecialchars($row['descrip6'] ?? '') ?>
+                                            <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? ' ' : '' ?>
+                                            <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-xs text-gray-400 italic">No description available</p>
+                                    <?php endif; ?>
 
 
-                                <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
+                                </div>
+
+                                <!-- Action Button -->
+                                <div class="mt-3 flex justify-start">
                                     <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
-                                            view
+                                        <button type="submit" class="Btn">
+                                            <div class="sign">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
+                                                </svg>
+                                            </div>
+                                            <div class="text">View</div>
                                         </button>
                                     </form>
                                 </div>
+
+                                <style>
+                                    /* From Uiverse.io by vinodjangid07 */
+                                    .Btn {
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: flex-start;
+                                        width: 45px;
+                                        height: 45px;
+                                        border: none;
+                                        border-radius: 0px;
+                                        cursor: pointer;
+                                        position: relative;
+                                        overflow: hidden;
+                                        transition-duration: .3s;
+                                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+                                        background-color: black;
+                                    }
+
+                                    /* icon */
+                                    .Btn .sign {
+                                        width: 100%;
+                                        font-size: 1.5em;
+                                        color: white;
+                                        transition-duration: .3s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+
+                                    /* text */
+                                    .Btn .text {
+                                        position: absolute;
+                                        right: 0%;
+                                        width: 0%;
+                                        opacity: 0;
+                                        color: white;
+                                        font-size: 1.1em;
+                                        font-weight: 500;
+                                        transition-duration: .3s;
+                                    }
+
+                                    /* hover effect */
+                                    .Btn:hover {
+                                        width: 125px;
+                                        border-radius: 0px;
+                                        transition-duration: .3s;
+                                    }
+
+                                    .Btn:hover .sign {
+                                        width: 30%;
+                                        transition-duration: .3s;
+                                        padding-left: 20px;
+                                    }
+
+                                    .Btn:hover .text {
+                                        opacity: 1;
+                                        width: 70%;
+                                        transition-duration: .3s;
+                                        padding-right: 20px;
+                                    }
+
+                                    /* click effect */
+                                    .Btn:active {
+                                        transform: translate(2px, 2px);
+                                    }
+                                </style>
                             </div>
                         </div>
                     </div>
@@ -2137,82 +2305,167 @@ handleQueryError($conn, "New Status Query");
                     $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                     $empty = 5 - $full - $half;
                     ?>
-                    <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl shadow-lg p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
-                            <!-- Triangle Badge -->
+                    <div class="swiper-slide p-1">
+                        <div class="relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[450px] ">
+
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
                                     <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
                                 </div>
                             </div>
 
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
-                                <?php if (!empty($row['main_image'])): ?>
-                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                <?php endif; ?>
 
+                            <!-- Image Container with Overlay -->
+                            <div class="relative h-[280px] overflow-hidden">
+                                <!-- Gradient Overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+
+                                <?php if (!empty($row['main_image'])): ?>
+                                    <img src="../../<?= $row['main_image'] ?>"
+                                        loading="lazy"
+                                        alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                        class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                <?php else: ?>
+                                    <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['product_name']) ?>
-                                </h3>
+                            <!-- Content Section -->
+                            <div class="p-4 flex flex-col justify-between h-[170px]">
+
+                                <!-- Product Info -->
+                                <div class="space-y-2">
+                                    <!-- Title -->
+                                    <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
+                                        <?= htmlspecialchars($row['product_name']) ?>
+                                    </h3>
 
 
-                                <!-- Ratings Section (from Code 2) -->
-                                <?php if ($total_raters > 0): ?>
-                                    <div class="flex items-center justify-center gap-1 text-orange-400 text-xs mb-2">
-                                        <?php
-                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                                        ?>
-                                        <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
+
+                                    <!-- Rating Section -->
+                                    <div class="flex items-center justify-between">
+                                        <?php if ($total_raters > 0): ?>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex text-yellow-400 text-xs">
+                                                    <?php
+                                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                    ?>
+                                                </div>
+                                                <span class="text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                            </div>
+                                            <span class="text-xs text-gray-400">(<?= $total_raters ?> reviews)</span>
+                                        <?php else: ?>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex text-gray-300 text-xs">
+                                                    <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                </div>
+                                                <span class="text-xs text-gray-400">No rating</span>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
-                                <?php else: ?>
-                                    <div class="text-gray-400 text-xs italic mb-2">No ratings</div>
-                                <?php endif; ?>
 
-                                <!-- Description -->
-                                <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                    <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                        <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                        <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
-                                        <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-
-                                    </p>
-                                    <!-- Display Origin (Local / International) -->
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                                <?php endif; ?>
+                                    <!-- Description -->
+                                    <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
+                                        <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                            <?= htmlspecialchars($row['descrip6'] ?? '') ?>
+                                            <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? ' ' : '' ?>
+                                            <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-xs text-gray-400 italic">No description available</p>
+                                    <?php endif; ?>
 
 
-                                <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
+                                </div>
+
+                                <!-- Action Button -->
+                                <div class="mt-3 flex justify-start">
                                     <form action="product_view" method="GET">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
-                                            view
+                                        <button type="submit" class="Btn">
+                                            <div class="sign">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
+                                                </svg>
+                                            </div>
+                                            <div class="text">View</div>
                                         </button>
                                     </form>
                                 </div>
+
+                                <style>
+                                    /* From Uiverse.io by vinodjangid07 */
+                                    .Btn {
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: flex-start;
+                                        width: 45px;
+                                        height: 45px;
+                                        border: none;
+                                        border-radius: 0px;
+                                        cursor: pointer;
+                                        position: relative;
+                                        overflow: hidden;
+                                        transition-duration: .3s;
+                                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+                                        background-color: black;
+                                    }
+
+                                    /* icon */
+                                    .Btn .sign {
+                                        width: 100%;
+                                        font-size: 1.5em;
+                                        color: white;
+                                        transition-duration: .3s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+
+                                    /* text */
+                                    .Btn .text {
+                                        position: absolute;
+                                        right: 0%;
+                                        width: 0%;
+                                        opacity: 0;
+                                        color: white;
+                                        font-size: 1.1em;
+                                        font-weight: 500;
+                                        transition-duration: .3s;
+                                    }
+
+                                    /* hover effect */
+                                    .Btn:hover {
+                                        width: 125px;
+                                        border-radius: 0px;
+                                        transition-duration: .3s;
+                                    }
+
+                                    .Btn:hover .sign {
+                                        width: 30%;
+                                        transition-duration: .3s;
+                                        padding-left: 20px;
+                                    }
+
+                                    .Btn:hover .text {
+                                        opacity: 1;
+                                        width: 70%;
+                                        transition-duration: .3s;
+                                        padding-right: 20px;
+                                    }
+
+                                    /* click effect */
+                                    .Btn:active {
+                                        transform: translate(2px, 2px);
+                                    }
+                                </style>
                             </div>
                         </div>
                     </div>
@@ -3012,132 +3265,137 @@ handleQueryError($conn, "New Status Query");
     <!-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
 
-<style>
-    /* Pagination dots */
-    .swiper-pagination-bullet {
-        background: linear-gradient(135deg, #6366f1, #3b82f6) !important;
-        opacity: 0.4 !important;
-        transition: all 0.3s ease-in-out;
-    }
-    .swiper-pagination-bullet-active {
-        opacity: 1 !important;
-        transform: scale(1.2);
-    }
+    <style>
+        /* Pagination dots */
+        .swiper-pagination-bullet {
+            background: linear-gradient(135deg, #6366f1, #3b82f6) !important;
+            opacity: 0.4 !important;
+            transition: all 0.3s ease-in-out;
+        }
 
-    /* Testimonial card */
-    .testimonial-card {
-        background: white;
-        border-radius: 1.25rem;
-       
-        transition: all 0.4s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    .testimonial-card:hover {
-        transform: translateY(-6px);
-       
-    }
+        .swiper-pagination-bullet-active {
+            opacity: 1 !important;
+            transform: scale(1.2);
+        }
 
-    /* Decorative gradient strip */
-    .testimonial-card::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 5px;
-      
-    }
+        /* Testimonial card */
+        .testimonial-card {
+            background: white;
+            border-radius: 1.25rem;
 
-    /* Profile ring */
-    .profile-ring {
-        padding: 3px;
-        border-radius: 50%;
-      
-        display: inline-block;
-    }
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-    /* Name highlight */
-    .name-highlight {
-        background: linear-gradient(90deg, #ffb006ff, #ffb006ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-</style>
+        .testimonial-card:hover {
+            transform: translateY(-6px);
 
-<section class="py-12 md:py-24 px-4">     
-    <div class="max-w-6xl mx-auto text-center mb-12 md:mb-20">         
-        <h2 class="text-3xl md:text-5xl font-extrabold mb-4 md:mb-6 bg-clip-text text-black">What Our Customers Say</h2>         
-        <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Here's what people are saying about their experience with us.</p>     
-    </div>      
+        }
 
-    <!-- Swiper Container -->     
-    <div class="swiper reviewCarousel max-w-3xl mx-auto relative">         
-        <div class="swiper-wrapper" id="reviewWrapper">             
-            <!-- Loading placeholder -->
-            <div class="swiper-slide">
-                <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
-                    <div class="text-center py-8">
-                        <div class="animate-pulse">
-                            <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-                            <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+        /* Decorative gradient strip */
+        .testimonial-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+
+        }
+
+        /* Profile ring */
+        .profile-ring {
+            padding: 3px;
+            border-radius: 50%;
+
+            display: inline-block;
+        }
+
+        /* Name highlight */
+        .name-highlight {
+            background: linear-gradient(90deg, #ffb006ff, #ffb006ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+
+    <section class="py-12 md:py-24 px-4">
+        <div class="max-w-6xl mx-auto text-center mb-12 md:mb-20">
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-4 md:mb-6 bg-clip-text text-black">What Our Customers Say</h2>
+            <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Here's what people are saying about their experience with us.</p>
+        </div>
+
+        <!-- Swiper Container -->
+        <div class="swiper reviewCarousel max-w-3xl mx-auto relative">
+            <div class="swiper-wrapper" id="reviewWrapper">
+                <!-- Loading placeholder -->
+                <div class="swiper-slide">
+                    <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
+                        <div class="text-center py-8">
+                            <div class="animate-pulse">
+                                <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                                <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                            </div>
+                            <p class="text-gray-500 mt-4">Loading reviews...</p>
                         </div>
-                        <p class="text-gray-500 mt-4">Loading reviews...</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <div class="swiper-pagination mt-8"></div>
         </div>
-        
-        <!-- Pagination -->
-        <div class="swiper-pagination mt-8"></div>         
-    </div>      
 
 
 
-</section>
+    </section>
 
-<script> 
-document.addEventListener("DOMContentLoaded", function () {     
-    const reviewWrapper = document.getElementById("reviewWrapper");      
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const reviewWrapper = document.getElementById("reviewWrapper");
 
-    // Init Swiper with mobile-friendly settings     
-    let reviewSwiper = new Swiper(".reviewCarousel", {         
-        loop: true,         
-        autoplay: { 
-            delay: 4000,
-            disableOnInteraction: false
-        },         
-        pagination: { 
-            el: ".swiper-pagination", 
-            clickable: true 
-        },         
-        slidesPerView: 1,
-        spaceBetween: 20,
-        effect: "slide",
-        speed: 700,
-        // Mobile breakpoints
-        breakpoints: {
-            640: {
-                spaceBetween: 30
-            }
-        }
-    });      
+            // Init Swiper with mobile-friendly settings     
+            let reviewSwiper = new Swiper(".reviewCarousel", {
+                loop: true,
+                autoplay: {
+                    delay: 4000,
+                    disableOnInteraction: false
+                },
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true
+                },
+                slidesPerView: 1,
+                spaceBetween: 20,
+                effect: "slide",
+                speed: 700,
+                // Mobile breakpoints
+                breakpoints: {
+                    640: {
+                        spaceBetween: 30
+                    }
+                }
+            });
 
-    async function loadReviews() {         
-        try {             
-            // Replace this with your actual fetch
-            const res = await fetch("profilefetch_reviews.php");             
-            const reviews = await res.json();
-        
+            async function loadReviews() {
+                try {
+                    // Replace this with your actual fetch
+                    const res = await fetch("profilefetch_reviews.php");
+                    const reviews = await res.json();
 
-            reviewWrapper.innerHTML = "";              
 
-            if (reviews.length > 0) {                 
-                reviews.forEach(r => {                     
-                    let stars = "";                     
-                    for (let i = 1; i <= 5; i++) {                         
-                        stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;                     
-                    }                      
+                    reviewWrapper.innerHTML = "";
 
-                    reviewWrapper.innerHTML += `                         
+                    if (reviews.length > 0) {
+                        reviews.forEach(r => {
+                            let stars = "";
+                            for (let i = 1; i <= 5; i++) {
+                                stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;
+                            }
+
+                            reviewWrapper.innerHTML += `                         
                         <div class="swiper-slide">                             
                             <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">                                 
                                 <div class="flex justify-center mb-4 md:mb-6 space-x-1">                                     
@@ -3158,10 +3416,10 @@ document.addEventListener("DOMContentLoaded", function () {
                                 </div>                             
                             </div>                         
                         </div>                     
-                    `;                 
-                });             
-            } else {                 
-                reviewWrapper.innerHTML = `                     
+                    `;
+                        });
+                    } else {
+                        reviewWrapper.innerHTML = `                     
                     <div class="swiper-slide">                         
                         <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                             <div class="text-center py-8 md:py-12">
@@ -3169,14 +3427,14 @@ document.addEventListener("DOMContentLoaded", function () {
                             </div>
                         </div>                      
                     </div>                     
-                `;             
-            }              
-            
-            reviewSwiper.update();         
-        } catch (err) {             
-            console.error("Error fetching reviews:", err);
-            // Show error state
-            reviewWrapper.innerHTML = `                     
+                `;
+                    }
+
+                    reviewSwiper.update();
+                } catch (err) {
+                    console.error("Error fetching reviews:", err);
+                    // Show error state
+                    reviewWrapper.innerHTML = `                     
                 <div class="swiper-slide">                         
                     <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                         <div class="text-center py-8 md:py-12">
@@ -3185,17 +3443,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     </div>                      
                 </div>                     
             `;
-            reviewSwiper.update();         
-        }     
-    }      
+                    reviewSwiper.update();
+                }
+            }
 
-    // Load on page load     
-    loadReviews();      
+            // Load on page load     
+            loadReviews();
 
-    // Auto refresh every 10 seconds     
-    setInterval(loadReviews, 10000); 
-}); 
-</script>  
+            // Auto refresh every 10 seconds     
+            setInterval(loadReviews, 10000);
+        });
+    </script>
 
     <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
         <!-- Decorative Elements -->

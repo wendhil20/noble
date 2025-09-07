@@ -326,8 +326,7 @@ if ($_POST && isset($_POST['add_address'])) {
         }
 
         .form-field:not([readonly]):focus {
-            ring: 2px;
-            ring-color: #3b82f6;
+            outline: 2px solid #3b82f6;
             border-color: transparent;
         }
 
@@ -639,7 +638,7 @@ if ($_POST && isset($_POST['add_address'])) {
                 this.selectedFromList = false;
             }
 
-            // Initialize address search with improved Philippines support
+            // Updated searchAddress method in AddressSearchManager class
             async searchAddress(query) {
                 if (this.isSearching) return;
 
@@ -651,36 +650,17 @@ if ($_POST && isset($_POST['add_address'])) {
                     loadingSpinner.style.display = 'block';
                     searchIcon.style.display = 'none';
 
-                    // Try multiple geocoding services for better Philippines coverage
-                    let results = [];
+                    // Use PHP search proxy instead of direct API calls
+                    const response = await fetch(`update_billing_search.php?q=${encodeURIComponent(query)}&limit=5`);
 
-                    // Primary: Nominatim with Philippines focus
-                    try {
-                        const nominatimResponse = await fetch(
-                            `https://nominatim.openstreetmap.org/search?` +
-                            `format=json&q=${encodeURIComponent(query + ', Philippines')}&` +
-                            `limit=3&addressdetails=1&countrycodes=ph&` +
-                            `bounded=1&viewbox=116.5,4.5,127.5,21.5`
-                        );
-                        const nominatimResults = await nominatimResponse.json();
-                        results = results.concat(nominatimResults.slice(0, 3));
-                    } catch (error) {
-                        console.warn('Nominatim search failed:', error);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
 
-                    // Secondary: Try broader search if no results
-                    if (results.length === 0) {
-                        try {
-                            const broadResponse = await fetch(
-                                `https://nominatim.openstreetmap.org/search?` +
-                                `format=json&q=${encodeURIComponent(query)}&` +
-                                `limit=5&addressdetails=1&countrycodes=ph`
-                            );
-                            const broadResults = await broadResponse.json();
-                            results = results.concat(broadResults);
-                        } catch (error) {
-                            console.warn('Broad search failed:', error);
-                        }
+                    const results = await response.json();
+
+                    if (results.error) {
+                        throw new Error(results.error);
                     }
 
                     this.showSuggestions(results, query);
@@ -1097,8 +1077,7 @@ if ($_POST && isset($_POST['add_address'])) {
                 reverseGeocode(latlng.lat, latlng.lng);
             }
         }
-
-        // Reverse geocode to get address from coordinates
+        // Updated reverseGeocode function to use PHP proxy
         async function reverseGeocode(lat, lng) {
             if (isGeocoding) return;
 
@@ -1108,14 +1087,24 @@ if ($_POST && isset($_POST['add_address'])) {
             try {
                 addressField.classList.add('geocode-loading');
 
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+                // Use your PHP proxy instead of direct Nominatim call
+                const response = await fetch(`update_billing_proxy.php?lat=${lat}&lon=${lng}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const result = await response.json();
 
                 if (result && result.address) {
                     selectPlace(result, true);
+                } else if (result.error) {
+                    console.error('Geocoding error:', result.error);
+                    showGeocodingError(result.error);
                 }
             } catch (error) {
                 console.error('Reverse geocoding error:', error);
+                showGeocodingError('Unable to get address for this location. Please enter manually.');
             } finally {
                 isGeocoding = false;
                 addressField.classList.remove('geocode-loading');

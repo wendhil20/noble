@@ -220,12 +220,32 @@ $avg_stmt->close();
 
     /* Swiper Styles */
     .related-swiper {
-      @apply relative px-4 md:px-16;
+      position: relative;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    @media (min-width: 768px) {
+      .related-swiper {
+        padding-left: 4rem;
+        padding-right: 4rem;
+      }
     }
 
     .related-swiper .swiper-button-next,
     .related-swiper .swiper-button-prev {
-      @apply top-1/2 -translate-y-1/2 w-10 h-10 bg-orange-500 rounded-full text-white transition-all duration-300 hover:bg-orange-600 hover:scale-110;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2.5rem;
+        height: 2.5rem;
+        background-color: #f97316;
+        border-radius: 9999px;
+        color: #fff;
+        transition: all 0.3s;
+      }
+      .related-swiper .swiper-button-next:hover,
+      .related-swiper .swiper-button-prev:hover {
+        background-color: #ea580c;
+        transform: scale(1.10);
     }
 
     .related-swiper .swiper-button-next {
@@ -241,6 +261,7 @@ $avg_stmt->close();
     .line-clamp-2 {
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -249,7 +270,10 @@ $avg_stmt->close();
     .type-btn:focus,
     .variant-btn:focus,
     .color-btn:focus {
-      @apply outline-2 outline-orange-500 outline-offset-2;
+      outline-width: 2px;
+      outline-color: #f97316; /* Tailwind's orange-500 */
+      outline-offset: 2px;
+      outline-style: solid;
     }
 
     /* Mobile Swiper Hide Navigation */
@@ -257,7 +281,7 @@ $avg_stmt->close();
 
       .related-swiper .swiper-button-next,
       .related-swiper .swiper-button-prev {
-        @apply hidden;
+        display: none;
       }
     }
   </style>

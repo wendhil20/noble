@@ -1,5 +1,5 @@
 <?php
-// logistics_dashboard.php
+// logistics_dashboard_view.php
 session_name("nobleadmin");
 session_start();
 
@@ -12,7 +12,7 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Get delivery schedules with related order and item information for the next 60 days
+// Get delivery schedules including past dates for overdue tracking
 $scheduleSql = "SELECT 
     ds.id as delivery_id,
     ds.order_id,
@@ -40,27 +40,38 @@ $scheduleSql = "SELECT
     oi.quantity,
     oi.subtotal,
     oi.size,
-    oi.tracking_status
+    oi.tracking_status,
+    CASE 
+        WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
+        WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
+        WHEN ds.delivered_at IS NULL AND ds.delivery_date > CURDATE() THEN 'upcoming'
+        WHEN ds.delivered_at IS NOT NULL THEN 'completed'
+    END as delivery_status,
+    CASE 
+        WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN DATEDIFF(CURDATE(), ds.delivery_date)
+        ELSE 0
+    END as days_overdue
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
-WHERE ds.delivery_date >= CURDATE() 
+WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
-ORDER BY ds.delivery_date ASC, ds.delivery_time ASC";
+ORDER BY ds.delivery_date DESC, ds.delivery_time ASC";
 
 $scheduleStmt = $conn->prepare($scheduleSql);
 $scheduleStmt->execute();
 $schedules = $scheduleStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $scheduleStmt->close();
 
-// Get delivery counts by date for calendar display
+// Get delivery counts by date for calendar display (including past dates)
 $countSql = "SELECT 
     DATE(ds.delivery_date) as date, 
     COUNT(*) as count,
     COUNT(CASE WHEN ds.delivered_at IS NULL THEN 1 END) as pending_count,
-    COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_count
+    COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_count,
+    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_count
 FROM delivery_schedules ds
-WHERE ds.delivery_date >= CURDATE() 
+WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
 GROUP BY DATE(ds.delivery_date)";
 
@@ -75,14 +86,15 @@ foreach ($deliveryCounts as $data) {
     $deliveryCountsByDate[$data['date']] = $data;
 }
 
-// Get summary statistics
+// Get summary statistics including overdue
 $statsSql = "SELECT 
     COUNT(*) as total_scheduled,
-    COUNT(CASE WHEN ds.delivered_at IS NULL THEN 1 END) as pending_deliveries,
+    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date >= CURDATE() THEN 1 END) as pending_deliveries,
     COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_deliveries,
-    COUNT(CASE WHEN ds.delivery_date = CURDATE() THEN 1 END) as today_deliveries
+    COUNT(CASE WHEN ds.delivery_date = CURDATE() AND ds.delivered_at IS NULL THEN 1 END) as today_deliveries,
+    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_deliveries
 FROM delivery_schedules ds
-WHERE ds.delivery_date >= CURDATE()";
+WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
 
 $statsStmt = $conn->prepare($statsSql);
 $statsStmt->execute();
@@ -96,7 +108,7 @@ $statsStmt->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistics Dashboard - Noble Home</title>
+    <title>Delivery Schedule View - Noble Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -118,11 +130,11 @@ $statsStmt->close();
         .calendar-day {
             transition: all 0.2s ease;
             cursor: pointer;
-            min-height: 50px;
+            min-height: 60px;
         }
         .calendar-day:hover {
             background-color: #e0f2fe;
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
         .calendar-day.selected {
             background-color: #1976d2 !important;
@@ -132,23 +144,36 @@ $statsStmt->close();
             background-color: #fff3e0;
             border: 2px solid #ff9800;
         }
-        .calendar-day.busy {
+        .calendar-day.has-overdue {
             background-color: #ffebee;
             border: 2px solid #f44336;
         }
-        .delivery-count {
-            font-size: 0.7rem;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .calendar-day.busy {
+            background-color: #f3e5f5;
+            border: 2px solid #9c27b0;
+        }
+        .calendar-day.past-date {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+        .delivery-badges {
             position: absolute;
-            top: 2px;
+            bottom: 2px;
+            left: 2px;
             right: 2px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1px;
+            justify-content: center;
+        }
+        .delivery-badge {
+            font-size: 0.6rem;
+            padding: 1px 3px;
+            border-radius: 2px;
             font-weight: bold;
+            min-width: 12px;
+            text-align: center;
+            line-height: 1.2;
         }
         .item-card {
             transition: all 0.3s ease;
@@ -168,12 +193,32 @@ $statsStmt->close();
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 space-y-4 sm:space-y-0">
                 <div class="flex items-center space-x-4">
                     <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
-                        <i class="fas fa-truck text-white text-2xl"></i>
+                        <i class="fas fa-eye text-white text-2xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Logistics Dashboard</h1>
-                        <p class="text-gray-600 mt-1">Manage and track delivery schedules</p>
+                        <h1 class="text-3xl font-bold text-gray-900">Delivery Schedule View</h1>
+                        <p class="text-gray-600 mt-1">View and monitor all delivery schedules</p>
                     </div>
+                </div>
+                
+                <!-- Quick Filter Buttons -->
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="filterDeliveries('all')" 
+                            class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors active">
+                        <i class="fas fa-list mr-1"></i>All
+                    </button>
+                    <button type="button" onclick="filterDeliveries('overdue')" 
+                            class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+                    </button>
+                    <button type="button" onclick="filterDeliveries('today')" 
+                            class="filter-btn bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors">
+                        <i class="fas fa-calendar-day mr-1"></i>Today
+                    </button>
+                    <button type="button" onclick="filterDeliveries('upcoming')" 
+                            class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors">
+                        <i class="fas fa-clock mr-1"></i>Upcoming
+                    </button>
                 </div>
             </div>
         </div>
@@ -182,7 +227,7 @@ $statsStmt->close();
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center">
                     <div class="bg-blue-100 p-3 rounded-lg">
@@ -191,6 +236,18 @@ $statsStmt->close();
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Total Scheduled</p>
                         <p class="text-2xl font-bold text-gray-900"><?php echo $stats['total_scheduled']; ?></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-red-100 p-3 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overdue</p>
+                        <p class="text-2xl font-bold text-red-600"><?php echo $stats['overdue_deliveries']; ?></p>
                     </div>
                 </div>
             </div>
@@ -267,14 +324,18 @@ $statsStmt->close();
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
                     
                     <!-- Legend -->
-                    <div class="mt-6 flex flex-wrap gap-4 text-sm">
+                    <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
                         <div class="flex items-center">
                             <div class="w-4 h-4 bg-orange-100 border-2 border-orange-500 rounded mr-2"></div>
                             <span>Has deliveries</span>
                         </div>
                         <div class="flex items-center">
                             <div class="w-4 h-4 bg-red-100 border-2 border-red-500 rounded mr-2"></div>
-                            <span>Busy (5+ deliveries)</span>
+                            <span>Has overdue</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-purple-100 border-2 border-purple-500 rounded mr-2"></div>
+                            <span>Busy (10+ deliveries)</span>
                         </div>
                         <div class="flex items-center">
                             <div class="w-4 h-4 bg-blue-600 rounded mr-2"></div>
@@ -288,13 +349,25 @@ $statsStmt->close();
             <div class="xl:col-span-1">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-200">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                            <i class="fas fa-list text-purple-600 mr-3"></i>
-                            <span id="details-title">Scheduled Deliveries</span>
-                            <span id="items-count" class="ml-3 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <!-- MODIFICATION 1: Updated header with navigation button -->
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-list text-purple-600 mr-3"></i>
+                                <span id="details-title">All Deliveries</span>
+                            </h3>
+                            <!-- Navigation button - only shows when a date is selected -->
+                            <button type="button" id="navigateBtn" onclick="navigateToDetailedView()" 
+                                    class="hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                View Details
+                            </button>
+                        </div>
+                        <div class="flex items-center mt-2 space-x-4">
+                            <span id="items-count" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
                                 <?php echo count($schedules); ?> items
                             </span>
-                        </h3>
+                            <span id="filter-status" class="text-sm text-gray-500"></span>
+                        </div>
                     </div>
                     
                     <div id="delivery-details-container" class="max-h-[800px] overflow-y-auto">
@@ -312,6 +385,7 @@ $statsStmt->close();
         
         let currentDate = new Date();
         let selectedDate = null;
+        let currentFilter = 'all';
         
         function generateCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
@@ -340,46 +414,74 @@ $statsStmt->close();
                     String(day).padStart(2, '0');
                     
                 const dayElement = document.createElement('div');
-                
                 dayElement.className = 'calendar-day relative p-3 text-center rounded-lg border border-gray-200 bg-white flex flex-col justify-center items-center';
-                dayElement.textContent = day;
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.textContent = day;
+                dayNumber.className = 'font-semibold';
+                dayElement.appendChild(dayNumber);
+                
                 dayElement.dataset.date = dateString;
                 
                 const currentDateOnly = new Date(year, month, day);
                 currentDateOnly.setHours(0, 0, 0, 0);
                 
+                // Check if this date has deliveries
+                const deliveryData = deliveryCounts[dateString];
+                
                 if (currentDateOnly < today) {
-                    dayElement.className += ' text-gray-400 cursor-not-allowed bg-gray-100';
-                } else {
-                    // Check if this date has deliveries
-                    const deliveryData = deliveryCounts[dateString];
+                    dayElement.className += ' past-date';
+                }
+                
+                if (deliveryData) {
+                    const totalCount = deliveryData.count;
+                    const overdueCount = deliveryData.overdue_count;
+                    const completedCount = deliveryData.completed_count;
+                    const pendingCount = deliveryData.pending_count;
                     
-                    if (deliveryData) {
-                        const count = deliveryData.count;
-                        
-                        if (count >= 5) {
-                            dayElement.className += ' busy';
-                        } else {
-                            dayElement.className += ' has-deliveries';
-                        }
-                        
-                        // Add delivery count badge
-                        const countBadge = document.createElement('div');
-                        countBadge.className = 'delivery-count';
-                        countBadge.textContent = count;
-                        
-                        if (count >= 5) {
-                            countBadge.style.backgroundColor = '#ffcdd2';
-                            countBadge.style.color = '#c62828';
-                        } else {
-                            countBadge.style.backgroundColor = '#fff3e0';
-                            countBadge.style.color = '#ef6c00';
-                        }
-                        
-                        dayElement.appendChild(countBadge);
+                    // Create badges container
+                    const badgesContainer = document.createElement('div');
+                    badgesContainer.className = 'delivery-badges';
+                    
+                    if (overdueCount > 0) {
+                        dayElement.className += ' has-overdue';
+                        const overdueBadge = document.createElement('div');
+                        overdueBadge.className = 'delivery-badge bg-red-500 text-white';
+                        overdueBadge.textContent = overdueCount;
+                        overdueBadge.title = `${overdueCount} overdue`;
+                        badgesContainer.appendChild(overdueBadge);
                     }
                     
+                    if (pendingCount > 0) {
+                        const pendingBadge = document.createElement('div');
+                        pendingBadge.className = 'delivery-badge bg-yellow-500 text-white';
+                        pendingBadge.textContent = pendingCount;
+                        pendingBadge.title = `${pendingCount} pending`;
+                        badgesContainer.appendChild(pendingBadge);
+                    }
+                    
+                    if (completedCount > 0) {
+                        const completedBadge = document.createElement('div');
+                        completedBadge.className = 'delivery-badge bg-green-500 text-white';
+                        completedBadge.textContent = completedCount;
+                        completedBadge.title = `${completedCount} completed`;
+                        badgesContainer.appendChild(completedBadge);
+                    }
+                    
+                    if (totalCount >= 10) {
+                        dayElement.className += ' busy';
+                    } else if (!overdueCount) {
+                        dayElement.className += ' has-deliveries';
+                    }
+                    
+                    dayElement.appendChild(badgesContainer);
+                    
                     // Add click event
+                    dayElement.addEventListener('click', function() {
+                        selectDate(dateString, dayElement);
+                    });
+                } else {
+                    // Add click event for dates without deliveries
                     dayElement.addEventListener('click', function() {
                         selectDate(dateString, dayElement);
                     });
@@ -389,6 +491,7 @@ $statsStmt->close();
             }
         }
         
+        // MODIFICATION 2: Updated selectDate function to show/hide navigation button
         function selectDate(dateString, element) {
             // Remove previous selection
             const previousSelected = document.querySelector('.calendar-day.selected');
@@ -400,35 +503,113 @@ $statsStmt->close();
             element.classList.add('selected');
             selectedDate = dateString;
             
+            // Show navigation button when a date is selected
+            const navigateBtn = document.getElementById('navigateBtn');
+            const dateSchedules = schedules.filter(s => s.delivery_date === dateString);
+            
+            if (dateSchedules.length > 0) {
+                navigateBtn.classList.remove('hidden');
+            } else {
+                navigateBtn.classList.add('hidden');
+            }
+            
             // Update delivery details for selected date
             updateDeliveryDetails(dateString);
+        }
+        
+        // MODIFICATION 3: New function to handle navigation
+        function navigateToDetailedView() {
+            if (selectedDate) {
+                // You can change this URL to your target page
+                const targetPage = 'delivery_detailed_view.php';
+                const url = `${targetPage}?date=${selectedDate}`;
+                window.location.href = url;
+            }
+        }
+        
+        function filterDeliveries(filterType) {
+            currentFilter = filterType;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            
+            const activeBtn = event.target.closest('button');
+            activeBtn.classList.remove('bg-gray-100', 'text-gray-700');
+            activeBtn.classList.add('active', 'bg-blue-500', 'text-white');
+            
+            // Clear calendar selection and update details
+            const previousSelected = document.querySelector('.calendar-day.selected');
+            if (previousSelected) {
+                previousSelected.classList.remove('selected');
+            }
+            selectedDate = null;
+            
+            // MODIFICATION 4: Hide navigation button when filtering
+            document.getElementById('navigateBtn').classList.add('hidden');
+            
+            updateDeliveryDetails();
         }
         
         function updateDeliveryDetails(selectedDate = null) {
             const detailsContainer = document.getElementById('delivery-details-container');
             const itemsCountSpan = document.getElementById('items-count');
             const detailsTitle = document.getElementById('details-title');
+            const filterStatus = document.getElementById('filter-status');
             
             let filteredSchedules = schedules;
             
+            // Apply date filter first
             if (selectedDate) {
                 filteredSchedules = schedules.filter(s => s.delivery_date === selectedDate);
                 detailsTitle.textContent = `Deliveries for ${formatDisplayDate(selectedDate)}`;
-                itemsCountSpan.textContent = `${filteredSchedules.length} items`;
+                filterStatus.textContent = '';
             } else {
-                detailsTitle.textContent = 'All Scheduled Deliveries';
-                itemsCountSpan.textContent = `${schedules.length} items`;
+                // Apply status filter
+                if (currentFilter !== 'all') {
+                    if (currentFilter === 'overdue') {
+                        filteredSchedules = schedules.filter(s => s.delivery_status === 'overdue');
+                        detailsTitle.textContent = 'Overdue Deliveries';
+                        filterStatus.textContent = 'Showing overdue items only';
+                    } else if (currentFilter === 'today') {
+                        filteredSchedules = schedules.filter(s => s.delivery_status === 'today_pending' || 
+                            (s.delivery_date === getTodayString() && s.delivery_status === 'completed'));
+                        detailsTitle.textContent = "Today's Deliveries";
+                        filterStatus.textContent = "Showing today's deliveries only";
+                    } else if (currentFilter === 'upcoming') {
+                        filteredSchedules = schedules.filter(s => s.delivery_status === 'upcoming');
+                        detailsTitle.textContent = 'Upcoming Deliveries';
+                        filterStatus.textContent = 'Showing upcoming deliveries only';
+                    }
+                } else {
+                    detailsTitle.textContent = 'All Deliveries';
+                    filterStatus.textContent = '';
+                }
             }
             
+            itemsCountSpan.textContent = `${filteredSchedules.length} items`;
+            
             if (filteredSchedules.length === 0) {
+                let emptyMessage = 'No deliveries found';
+                if (selectedDate) {
+                    emptyMessage = `No deliveries scheduled for ${formatDisplayDate(selectedDate)}`;
+                } else if (currentFilter === 'overdue') {
+                    emptyMessage = 'No overdue deliveries';
+                } else if (currentFilter === 'today') {
+                    emptyMessage = 'No deliveries scheduled for today';
+                } else if (currentFilter === 'upcoming') {
+                    emptyMessage = 'No upcoming deliveries';
+                }
+                
                 detailsContainer.innerHTML = `
                     <div class="p-8 text-center">
                         <div class="text-gray-400 mb-4">
                             <i class="fas fa-calendar-day text-6xl"></i>
                         </div>
-                        <h4 class="text-lg font-medium text-gray-600 mb-2">No Deliveries</h4>
-                        <p class="text-gray-500">${selectedDate ? `No deliveries scheduled for ${formatDisplayDate(selectedDate)}` : 'No deliveries scheduled'}</p>
-                        ${selectedDate ? `
+                        <h4 class="text-lg font-medium text-gray-600 mb-2">${emptyMessage}</h4>
+                        ${selectedDate || currentFilter !== 'all' ? `
                             <button type="button" onclick="showAllDeliveries()" 
                                     class="mt-4 text-blue-600 hover:text-blue-800 font-medium">
                                 <i class="fas fa-list mr-1"></i>
@@ -440,118 +621,221 @@ $statsStmt->close();
                 return;
             }
             
-            // Group schedules by time
-            const schedulesByTime = {};
+            // Group schedules by date, then by time
+            const schedulesByDate = {};
             filteredSchedules.forEach(schedule => {
-                const time = schedule.delivery_time;
-                if (!schedulesByTime[time]) {
-                    schedulesByTime[time] = [];
+                const date = schedule.delivery_date;
+                if (!schedulesByDate[date]) {
+                    schedulesByDate[date] = {};
                 }
-                schedulesByTime[time].push(schedule);
+                const time = schedule.delivery_time;
+                if (!schedulesByDate[date][time]) {
+                    schedulesByDate[date][time] = [];
+                }
+                schedulesByDate[date][time].push(schedule);
             });
             
             let html = '';
             
-            // Sort time slots
-            const sortedTimes = Object.keys(schedulesByTime).sort();
+            // Sort dates (most recent first for overdue, chronological for others)
+            const sortedDates = Object.keys(schedulesByDate).sort((a, b) => {
+                if (currentFilter === 'overdue') {
+                    return new Date(b) - new Date(a); // Most recent overdue first
+                }
+                return new Date(a) - new Date(b); // Chronological order
+            });
             
-            sortedTimes.forEach(time => {
-                const timeSchedules = schedulesByTime[time];
+            sortedDates.forEach(date => {
+                const dateSchedules = schedulesByDate[date];
+                const dateObj = new Date(date + 'T00:00:00');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                let dateClass = '';
+                let dateIcon = 'fa-calendar';
+                
+                if (dateObj < today) {
+                    dateClass = 'bg-red-50 border-red-200';
+                    dateIcon = 'fa-exclamation-triangle text-red-600';
+                } else if (dateObj.getTime() === today.getTime()) {
+                    dateClass = 'bg-blue-50 border-blue-200';
+                    dateIcon = 'fa-calendar-day text-blue-600';
+                } else {
+                    dateClass = 'bg-green-50 border-green-200';
+                    dateIcon = 'fa-calendar text-green-600';
+                }
+                
+                const totalDateItems = Object.values(dateSchedules).reduce((sum, timeItems) => sum + timeItems.length, 0);
                 
                 html += `
-                    <div class="border-b border-gray-100">
-                        <div class="bg-gray-50 px-6 py-3">
-                            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                                <i class="fas fa-clock mr-2 text-gray-500"></i>
-                                ${formatTime(time)} (${timeSchedules.length} items)
+                    <div class="border-b border-gray-200">
+                        <div class="${dateClass} px-6 py-4 border-l-4">
+                            <h4 class="text-lg font-bold text-gray-800 flex items-center">
+                                <i class="fas ${dateIcon} mr-3"></i>
+                                ${formatDisplayDate(date)}
+                                <span class="ml-3 bg-white bg-opacity-70 px-3 py-1 rounded-full text-sm font-medium">
+                                    ${totalDateItems} items
+                                </span>
+                                ${dateObj < today ? `
+                                    <span class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                                        OVERDUE
+                                    </span>
+                                ` : ''}
                             </h4>
                         </div>
-                        <div class="p-4 space-y-4">
                 `;
                 
-                timeSchedules.forEach(schedule => {
-                    const isCompleted = schedule.delivered_at !== null;
-                    const statusClass = isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                    const statusIcon = isCompleted ? 'fa-check-circle' : 'fa-clock';
-                    const statusText = isCompleted ? 'Delivered' : 'Pending';
+                // Sort time slots
+                const sortedTimes = Object.keys(dateSchedules).sort();
+                
+                sortedTimes.forEach(time => {
+                    const timeSchedules = dateSchedules[time];
                     
                     html += `
-                        <div class="item-card bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <h5 class="font-semibold text-gray-900 text-lg mb-1">
-                                        ${escapeHtml(schedule.product_name)}
-                                    </h5>
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <span class="${statusClass} px-2 py-1 rounded-full text-xs font-medium">
-                                            <i class="fas ${statusIcon} mr-1"></i>
-                                            ${statusText}
-                                        </span>
-                                        <span class="text-gray-600 text-sm">
-                                            Order #${schedule.order_id}
-                                        </span>
+                        <div class="bg-gray-50 px-6 py-2">
+                            <h5 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                <i class="fas fa-clock mr-2 text-gray-500"></i>
+                                ${formatTime(time)} (${timeSchedules.length} items)
+                            </h5>
+                        </div>
+                        <div class="p-4 space-y-3">
+                    `;
+                    
+                    timeSchedules.forEach(schedule => {
+                        const isCompleted = schedule.delivered_at !== null;
+                        const isOverdue = schedule.delivery_status === 'overdue';
+                        const isToday = schedule.delivery_status === 'today_pending';
+                        
+                        let statusClass, statusIcon, statusText, statusBg;
+                        
+                        if (isCompleted) {
+                            statusClass = 'bg-green-100 text-green-800 border-green-200';
+                            statusIcon = 'fa-check-circle';
+                            statusText = 'Delivered';
+                            statusBg = 'bg-green-50 border-green-200';
+                        } else if (isOverdue) {
+                            statusClass = 'bg-red-100 text-red-800 border-red-200';
+                            statusIcon = 'fa-exclamation-triangle';
+                            statusText = `Overdue (${schedule.days_overdue} days)`;
+                            statusBg = 'bg-red-50 border-red-200';
+                        } else if (isToday) {
+                            statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
+                            statusIcon = 'fa-clock';
+                            statusText = 'Due Today';
+                            statusBg = 'bg-blue-50 border-blue-200';
+                        } else {
+                            statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                            statusIcon = 'fa-clock';
+                            statusText = 'Scheduled';
+                            statusBg = 'bg-yellow-50 border-yellow-200';
+                        }
+                        
+                        html += `
+                            <div class="item-card ${statusBg} border-2 rounded-lg p-4 hover:shadow-md">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h6 class="font-semibold text-gray-900 text-lg mb-2">
+                                            ${escapeHtml(schedule.product_name)}
+                                        </h6>
+                                        <div class="flex items-center space-x-3 mb-2">
+                                            <span class="${statusClass} border px-3 py-1 rounded-full text-xs font-medium">
+                                                <i class="fas ${statusIcon} mr-1"></i>
+                                                ${statusText}
+                                            </span>
+                                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">
+                                                Order #${schedule.order_id}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+                                
+                                <div class="grid grid-cols-2 gap-3 text-sm text-gray-700 mb-3">
+                                    <div class="bg-white bg-opacity-50 p-2 rounded">
+                                        <span class="font-medium text-gray-600">Quantity:</span> 
+                                        <span class="font-semibold">${schedule.quantity}</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-50 p-2 rounded">
+                                        <span class="font-medium text-gray-600">Price:</span> 
+                                        <span class="font-semibold">₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    </div>
+                                    ${schedule.variant_color ? `
+                                    <div class="bg-white bg-opacity-50 p-2 rounded">
+                                        <span class="font-medium text-gray-600">Color:</span> 
+                                        <span class="font-semibold">${escapeHtml(schedule.variant_color)}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${schedule.size ? `
+                                    <div class="bg-white bg-opacity-50 p-2 rounded">
+                                        <span class="font-medium text-gray-600">Size:</span> 
+                                        <span class="font-semibold">${escapeHtml(schedule.size)}</span>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="bg-white bg-opacity-50 rounded-lg p-3 space-y-2">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user mr-3 text-gray-500 w-4"></i>
+                                        <span class="font-medium text-gray-800">${escapeHtml(schedule.customer_name)}</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fas fa-map-marker-alt mr-3 text-gray-500 w-4 mt-1"></i>
+                                        <span class="text-gray-700 text-sm flex-1">${escapeHtml(schedule.address)}</span>
+                                    </div>
+                                    ${schedule.mobile ? `
+                                    <div class="flex items-center">
+                                        <i class="fas fa-phone mr-3 text-gray-500 w-4"></i>
+                                        <span class="text-gray-700 text-sm">${escapeHtml(schedule.mobile)}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${schedule.assigned_truck ? `
+                                    <div class="flex items-center">
+                                        <i class="fas fa-truck mr-3 text-gray-500 w-4"></i>
+                                        <span class="text-gray-700 text-sm">Truck: ${escapeHtml(schedule.assigned_truck)}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${schedule.delivery_notes ? `
+                                    <div class="mt-2 bg-yellow-100 p-2 rounded border border-yellow-200">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-sticky-note mr-2 text-yellow-600 mt-1"></i>
+                                            <span class="text-gray-700 text-sm flex-1">${escapeHtml(schedule.delivery_notes)}</span>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                    ${isCompleted && schedule.delivered_at ? `
+                                    <div class="mt-2 bg-green-100 p-2 rounded border border-green-200">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-check-double mr-2 text-green-600"></i>
+                                            <span class="text-green-700 text-sm">
+                                                Delivered: ${formatDateTime(schedule.delivered_at)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                </div>
                             </div>
-                            
-                            <div class="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-3">
-                                <div>
-                                    <span class="font-medium">Quantity:</span> ${schedule.quantity}
-                                </div>
-                                <div>
-                                    <span class="font-medium">Price:</span> ₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                </div>
-                                ${schedule.variant_color ? `
-                                <div>
-                                    <span class="font-medium">Color:</span> ${escapeHtml(schedule.variant_color)}
-                                </div>
-                                ` : ''}
-                                ${schedule.size ? `
-                                <div>
-                                    <span class="font-medium">Size:</span> ${escapeHtml(schedule.size)}
-                                </div>
-                                ` : ''}
-                            </div>
-                            
-                            <div class="border-t border-gray-200 pt-3">
-                                <div class="flex items-center mb-2">
-                                    <i class="fas fa-user mr-2 text-gray-500"></i>
-                                    <span class="font-medium text-gray-700">${escapeHtml(schedule.customer_name)}</span>
-                                </div>
-                                <div class="flex items-start mb-2">
-                                    <i class="fas fa-map-marker-alt mr-2 text-gray-500 mt-1"></i>
-                                    <span class="text-gray-600 text-sm">${escapeHtml(schedule.address)}</span>
-                                </div>
-                                ${schedule.mobile ? `
-                                <div class="flex items-center mb-2">
-                                    <i class="fas fa-phone mr-2 text-gray-500"></i>
-                                    <span class="text-gray-600 text-sm">${escapeHtml(schedule.mobile)}</span>
-                                </div>
-                                ` : ''}
-                                ${schedule.assigned_truck ? `
-                                <div class="flex items-center mb-2">
-                                    <i class="fas fa-truck mr-2 text-gray-500"></i>
-                                    <span class="text-gray-600 text-sm">Truck: ${escapeHtml(schedule.assigned_truck)}</span>
-                                </div>
-                                ` : ''}
-                                ${schedule.delivery_notes ? `
-                                <div class="mt-2 bg-yellow-50 p-2 rounded">
-                                    <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>
-                                    <span class="text-gray-700 text-sm">${escapeHtml(schedule.delivery_notes)}</span>
-                                </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
+                        `;
+                    });
+                    
+                    html += '</div>';
                 });
                 
-                html += '</div></div>';
+                html += '</div>';
             });
             
             detailsContainer.innerHTML = html;
         }
         
         function showAllDeliveries() {
+            currentFilter = 'all';
+            
+            // Reset filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            document.querySelector('button[onclick="filterDeliveries(\'all\')"]').classList.remove('bg-gray-100', 'text-gray-700');
+            document.querySelector('button[onclick="filterDeliveries(\'all\')"]').classList.add('active', 'bg-blue-500', 'text-white');
+            
             // Remove calendar selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
@@ -559,18 +843,46 @@ $statsStmt->close();
             }
             selectedDate = null;
             
+            // Hide navigation button
+            document.getElementById('navigateBtn').classList.add('hidden');
+            
             updateDeliveryDetails();
         }
         
         // Helper functions
         function formatDisplayDate(dateString) {
             const date = new Date(dateString + 'T00:00:00');
-            return date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dateOnly = new Date(date);
+            dateOnly.setHours(0, 0, 0, 0);
+            
+            if (dateOnly.getTime() === today.getTime()) {
+                return 'Today - ' + date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            } else if (dateOnly.getTime() === today.getTime() - 86400000) {
+                return 'Yesterday - ' + date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            } else if (dateOnly.getTime() === today.getTime() + 86400000) {
+                return 'Tomorrow - ' + date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            } else {
+                return date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            }
         }
         
         function formatTime(timeString) {
@@ -580,6 +892,25 @@ $statsStmt->close();
                 minute: '2-digit',
                 hour12: true 
             });
+        }
+        
+        function formatDateTime(datetimeString) {
+            const date = new Date(datetimeString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+        
+        function getTodayString() {
+            const today = new Date();
+            return today.getFullYear() + '-' + 
+                   String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(today.getDate()).padStart(2, '0');
         }
         
         function escapeHtml(text) {

@@ -346,11 +346,6 @@ function process_product_images($main_image, $sub_images, $type_image)
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
-        .filter-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid rgba(249, 115, 22, 0.1);
-            backdrop-filter: blur(10px);
-        }
 
         .filter-button {
             transition: all 0.3s ease;
@@ -519,7 +514,7 @@ function process_product_images($main_image, $sub_images, $type_image)
 
         <!-- Filters Section -->
         <section class="max-w-full mx-auto mb-12" data-aos="fade-up" data-aos-delay="300">
-            <div class="filter-card rounded-2xl shadow-lg p-6 mb-8">
+            <div class="filter-card p-6 mb-8">
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
                     <!-- Search Filter -->
@@ -606,7 +601,7 @@ function process_product_images($main_image, $sub_images, $type_image)
                     <!-- Sort Filter -->
                     <div>
                         <label for="sortFilter" class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
-                        <select id="sortFilter" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm">
+                        <select id="sortFilter" class="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm">
                             <option value="default">Default</option>
                             <option value="price-low">Price: Low to High</option>
                             <option value="price-high">Price: High to Low</option>
@@ -635,7 +630,7 @@ function process_product_images($main_image, $sub_images, $type_image)
                         $all_images = process_product_images($row['main_image'], $row['sub_images'], $row['type_image']);
                         $discount = (float)($row['discount'] ?? 0);
                     ?>
-                        <article class="product-item product-card bg-white rounded-3xl shadow-sm hover:shadow-2xl border border-gray-100 p-5 group flex flex-col h-[560px] text-center relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02]"
+                        <article class="product-item product-card  hover:shadow-2xl border border-gray-100 p-5 group flex flex-col h-[560px] text-center relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02]"
                             data-name="<?= safe_output(strtolower($row['namevariant'])) ?>"
                             data-price="<?= $pricing['final'] ?>"
                             data-original-price="<?= $pricing['original'] ?>"
@@ -794,12 +789,9 @@ function process_product_images($main_image, $sub_images, $type_image)
                                     <form action="product_view" method="GET" class="w-full">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
-                                            class="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white text-sm px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                                            class="w-full bg-black hover:from-gray-900 hover:to-black text-white text-sm px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg font-semibold transition-all duration-300 transform hover:scale-105"
                                             aria-label="View product details">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
+                                          <i class="fa-solid fa-bag-shopping"></i>
                                             View Details
                                         </button>
                                     </form>

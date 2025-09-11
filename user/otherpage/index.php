@@ -1737,10 +1737,7 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                         <button type="submit" class="Btn">
                                             <div class="sign">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                                </svg>
+                                                <i class="fa-solid fa-bag-shopping"></i>
                                             </div>
                                             <div class="text">View</div>
                                         </button>
@@ -1994,10 +1991,7 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                         <button type="submit" class="Btn">
                                             <div class="sign">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                                </svg>
+                                                <i class="fa-solid fa-bag-shopping"></i>
                                             </div>
                                             <div class="text">View</div>
                                         </button>
@@ -2390,10 +2384,7 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                         <button type="submit" class="Btn">
                                             <div class="sign">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                                </svg>
+                                                <i class="fa-solid fa-bag-shopping"></i>
                                             </div>
                                             <div class="text">View</div>
                                         </button>
@@ -2582,10 +2573,7 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
                                             class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
+                                            <i class="fa-solid fa-bag-shopping"></i>
                                             view
                                         </button>
                                     </form>
@@ -2785,10 +2773,7 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
                                             class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
+                                            <i class="fa-solid fa-bag-shopping"></i>
                                             view
                                         </button>
                                     </form>
@@ -2926,10 +2911,7 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                         <button type="submit"
                                             class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14l-1.5 9h-11L5 11z" />
-                                            </svg>
+                                            <i class="fa-solid fa-bag-shopping"></i>
                                             view
                                         </button>
                                     </form>

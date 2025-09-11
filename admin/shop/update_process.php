@@ -20,10 +20,11 @@ if (!$product_id) {
 }
 
 // Function to save image as WebP (consistent with insertion)
-function saveImageAsWebP($tmp_name, $target_path) {
+function saveImageAsWebP($tmp_name, $target_path)
+{
     $imageType = mime_content_type($tmp_name);
     $sourceImage = null;
-    
+
     switch ($imageType) {
         case 'image/jpeg':
         case 'image/jpg':
@@ -47,12 +48,12 @@ function saveImageAsWebP($tmp_name, $target_path) {
         default:
             return false; // Unsupported format
     }
-    
+
     if ($sourceImage && imagewebp($sourceImage, $target_path, 80)) {
         imagedestroy($sourceImage);
         return true;
     }
-    
+
     return false;
 }
 
@@ -61,18 +62,18 @@ try {
 
     // Get current product data
     $current_product = $conn->query("SELECT * FROM products WHERE id = $product_id")->fetch_assoc();
-    
+
     if (!$current_product) {
         throw new Exception("Product not found");
     }
 
     // Handle Sub-Images Update and Deletion
     $final_sub_images = [];
-    
-    // Process existing sub-images
+
+    // Process existing sub-images  
     if (isset($_POST['keep_sub_image'])) {
         $keep_sub_images = $_POST['keep_sub_image'];
-        
+
         // Get current sub-images from database
         $current_sub_images = [];
         if (!empty($current_product['sub_images'])) {
@@ -81,91 +82,80 @@ try {
                 $current_sub_images = $decoded_sub_images;
             }
         }
-        
-        // Process deletions and keep remaining images
-        foreach ($current_sub_images as $index => $sub_image_path) {
-            if (isset($keep_sub_images[$index]) && $keep_sub_images[$index] == '1') {
-                // Keep this image
-                $final_sub_images[] = $sub_image_path;
-            } else {
-                // Delete this image file from filesystem
-                
-                // Clean the path - remove any ../ at the beginning and normalize
-                $clean_path = ltrim($sub_image_path, './');
-                
-                // Construct full path - since we're in admin/products/ and need to go to sub_images/
-                $full_path = "../../" . $clean_path;
-                
-                // Actually delete the file
-                if (file_exists($full_path)) {
-                    unlink($full_path);
-                    echo "Deleted sub-image: " . basename($full_path) . "<br>";
-                }
-            }
+
+       foreach ($current_sub_images as $index => $sub_image_path) {
+    if (isset($keep_sub_images[$index]) && $keep_sub_images[$index] == '1') {
+        // Keep original value (already may ../sub_images/)
+        $final_sub_images[] = $sub_image_path;
+    } else {
+        // Delete file
+        $file_to_delete = "../../sub_images/" . basename($sub_image_path);
+        if (file_exists($file_to_delete)) {
+            unlink($file_to_delete);
+            echo "Deleted sub-image: " . basename($file_to_delete) . "<br>";
         }
     }
-    
+}
+
+    }
+
     // Handle new sub-images upload
-    if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name'][0])) {
-        $upload_dir = "../../sub_images/"; // Keep consistent with insertion
-        
-        // Create directory if it doesn't exist
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
-        
-        foreach ($_FILES['new_sub_images']['tmp_name'] as $key => $tmp_name) {
-            if (!empty($tmp_name) && $_FILES['new_sub_images']['error'][$key] == 0) {
-                $file_name = $_FILES['new_sub_images']['name'][$key];
-                $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-                
-                // Validate image
-                $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                if (!in_array(strtolower($file_extension), $allowed_extensions)) {
-                    continue;
-                }
-                
-                // Generate unique filename - match the insertion pattern
-                $new_filename = 'img_' . uniqid('', true) . '.webp';
-                $target_path = $upload_dir . $new_filename;
-                
-                // Convert and save as WebP (consistent with insertion)
-                if (saveImageAsWebP($tmp_name, $target_path)) {
-                    // Store relative path for database (consistent with insertion)
-                    $final_sub_images[] = "sub_images/" . $new_filename;
-                    echo "Uploaded new sub-image: " . $new_filename . "<br>";
-                }
+if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name'][0])) {
+    $upload_dir = "../../sub_images/";
+
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
+
+    foreach ($_FILES['new_sub_images']['tmp_name'] as $key => $tmp_name) {
+        if (!empty($tmp_name) && $_FILES['new_sub_images']['error'][$key] == 0) {
+            $file_name = $_FILES['new_sub_images']['name'][$key];
+            $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
+
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (!in_array(strtolower($file_extension), $allowed_extensions)) {
+                continue;
+            }
+
+            $new_filename = 'img_' . uniqid('', true) . '.webp';
+            $target_path = $upload_dir . $new_filename;
+
+            if (saveImageAsWebP($tmp_name, $target_path)) {
+                // ✅ Save with ../sub_images/ prefix (para tugma lahat)
+                $final_sub_images[] = "../sub_images/" . $new_filename;
+                echo "Uploaded new sub-image: ../sub_images/" . $new_filename . "<br>";
             }
         }
     }
+}
 
     // Handle Main Image Upload
     $main_image_path = $current_product['main_image']; // Keep current if no new upload
-    
+
     if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] == 0) {
         $upload_dir = "../../uploads/";
-        
+
         // Create directory if it doesn't exist
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
-        
+
         $file_name = $_FILES['main_image']['name'];
         $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-        
+
         // Validate image
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (in_array(strtolower($file_extension), $allowed_extensions)) {
             $new_filename = uniqid('img_', true) . '.webp';
             $target_path = $upload_dir . $new_filename;
-            
+
             // Convert and save as WebP
             if (saveImageAsWebP($_FILES['main_image']['tmp_name'], $target_path)) {
                 // Delete old main image if it exists
                 if (!empty($current_product['main_image']) && file_exists("../../" . $current_product['main_image'])) {
                     unlink("../../" . $current_product['main_image']);
                 }
-                
+
                 $main_image_path = "uploads/" . $new_filename;
                 echo "Uploaded new main image: " . $new_filename . "<br>";
             }
@@ -204,7 +194,7 @@ try {
                         unlink("../../" . $color_row['image']);
                     }
                 }
-                
+
                 $conn->query("DELETE FROM product_colors WHERE id = $color_id");
                 echo "Deleted color ID: $color_id<br>";
             }
@@ -223,7 +213,7 @@ try {
 
             // Handle color image upload
             $color_image_path = '';
-            
+
             if ($color_id !== 'new') {
                 // Get existing image path
                 $existing_color = $conn->query("SELECT image FROM product_colors WHERE id = $color_id")->fetch_assoc();
@@ -232,25 +222,25 @@ try {
 
             if (isset($_FILES['color_image']['tmp_name'][$index]) && $_FILES['color_image']['error'][$index] == 0) {
                 $upload_dir = "../../uploads/";
-                
+
                 if (!is_dir($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
-                
+
                 $file_name = $_FILES['color_image']['name'][$index];
                 $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-                
+
                 $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                 if (in_array(strtolower($file_extension), $allowed_extensions)) {
                     $new_filename = uniqid('img_', true) . '_color.webp';
                     $target_path = $upload_dir . $new_filename;
-                    
+
                     if (saveImageAsWebP($_FILES['color_image']['tmp_name'][$index], $target_path)) {
                         // Delete old color image if updating
                         if (!empty($color_image_path) && file_exists("../../" . $color_image_path)) {
                             unlink("../../" . $color_image_path);
                         }
-                        
+
                         $color_image_path = "uploads/" . $new_filename;
                     }
                 }
@@ -260,7 +250,7 @@ try {
                 // Insert new color
                 $insert_color_sql = "INSERT INTO product_colors (product_id, color_name, color_code, image, price) 
                     VALUES ($product_id, '$color_name', '$color_code', '$color_image_path', $color_price)";
-                
+
                 if (!$conn->query($insert_color_sql)) {
                     throw new Exception("Failed to insert color: " . $conn->error);
                 }
@@ -273,7 +263,7 @@ try {
                     image = '$color_image_path',
                     price = $color_price
                     WHERE id = $color_id";
-                
+
                 if (!$conn->query($update_color_sql)) {
                     throw new Exception("Failed to update color: " . $conn->error);
                 }
@@ -289,7 +279,7 @@ try {
             foreach ($_POST['delete_type'] as $type_id) {
                 // Delete variants first
                 $conn->query("DELETE FROM product_variants WHERE type_id = $type_id");
-                
+
                 // Get type image path before deletion
                 $type_result = $conn->query("SELECT type_image FROM product_types WHERE id = $type_id");
                 if ($type_result && $type_row = $type_result->fetch_assoc()) {
@@ -297,7 +287,7 @@ try {
                         unlink("../../" . $type_row['type_image']);
                     }
                 }
-                
+
                 $conn->query("DELETE FROM product_types WHERE id = $type_id");
                 echo "Deleted type ID: $type_id<br>";
             }
@@ -314,7 +304,7 @@ try {
 
             // Handle type image upload
             $type_image_path = '';
-            
+
             if ($type_id !== 'new') {
                 // Get existing image path
                 $existing_type = $conn->query("SELECT type_image FROM product_types WHERE id = $type_id")->fetch_assoc();
@@ -323,41 +313,41 @@ try {
 
             if (isset($_FILES['type_image']['tmp_name'][$index]) && $_FILES['type_image']['error'][$index] == 0) {
                 $upload_dir = "../../uploads/";
-                
+
                 if (!is_dir($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
-                
+
                 $file_name = $_FILES['type_image']['name'][$index];
                 $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-                
+
                 $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                 if (in_array(strtolower($file_extension), $allowed_extensions)) {
                     $new_filename = uniqid('img_', true) . '_type.webp';
                     $target_path = $upload_dir . $new_filename;
-                    
+
                     if (saveImageAsWebP($_FILES['type_image']['tmp_name'][$index], $target_path)) {
                         // Delete old type image if updating
                         if (!empty($type_image_path) && file_exists("../../" . $type_image_path)) {
                             unlink("../../" . $type_image_path);
                         }
-                        
+
                         $type_image_path = "uploads/" . $new_filename;
                     }
                 }
             }
 
             $current_type_id = $type_id;
-            
+
             if ($type_id === 'new') {
                 // Insert new type
                 $insert_type_sql = "INSERT INTO product_types (product_id, type_name, type_image) 
                     VALUES ($product_id, '$type_name', '$type_image_path')";
-                
+
                 if (!$conn->query($insert_type_sql)) {
                     throw new Exception("Failed to insert type: " . $conn->error);
                 }
-                
+
                 $current_type_id = $conn->insert_id;
                 echo "Added new type: $type_name (ID: $current_type_id)<br>";
             } else {
@@ -366,7 +356,7 @@ try {
                     type_name = '$type_name',
                     type_image = '$type_image_path'
                     WHERE id = $type_id";
-                
+
                 if (!$conn->query($update_type_sql)) {
                     throw new Exception("Failed to update type: " . $conn->error);
                 }
@@ -404,7 +394,7 @@ try {
                         // Insert new variant
                         $insert_variant_sql = "INSERT INTO product_variants (type_id, size, price, percent, discount, namevariant) 
                             VALUES ($current_type_id, '$size', $final_price, $percent, $discount, '$namevariant')";
-                        
+
                         if (!$conn->query($insert_variant_sql)) {
                             throw new Exception("Failed to insert variant: " . $conn->error);
                         }
@@ -418,7 +408,7 @@ try {
                             discount = $discount,
                             namevariant = '$namevariant'
                             WHERE id = $variant_id";
-                        
+
                         if (!$conn->query($update_variant_sql)) {
                             throw new Exception("Failed to update variant: " . $conn->error);
                         }
@@ -430,32 +420,30 @@ try {
     }
 
     $conn->commit();
-    
+
     // Success message with sub images count
     $sub_images_count = count($final_sub_images);
     $success_message = "Product updated successfully!";
     if ($sub_images_count > 0) {
         $success_message .= " ($sub_images_count sub images included)";
     }
-    
+
     echo "<div class='bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4'>";
     echo $success_message;
     echo "</div>";
-    
+
     echo "<script>";
     echo "setTimeout(function(){ window.location.href = 'adminupdateshop.php?id=$product_id'; }, 2000);";
     echo "</script>";
-
 } catch (Exception $e) {
     $conn->rollback();
     echo "<div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>";
     echo "Error updating product: " . $e->getMessage();
     echo "</div>";
-    
+
     echo "<script>";
     echo "setTimeout(function(){ window.location.href = 'adminupdateshop.php?id=$product_id'; }, 3000);";
     echo "</script>";
 }
 
 $conn->close();
-?>

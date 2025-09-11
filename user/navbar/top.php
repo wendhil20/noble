@@ -28,6 +28,73 @@ if ($user_id) {
   $count_stmt->close();
 }
 
+
+// Updated function na compatible sa new categories table
+function getNavigationData($conn) {
+    // Updated query to use categories table instead of product_categories
+    $sql = "SELECT 
+        c.id as category_id,
+        c.name as category_name,
+        ps.id as subcategory_id,
+        ps.subcategory_name,
+        ps.subcategory_slug
+    FROM categories c
+    LEFT JOIN product_subcategories ps ON c.id = ps.category_id
+    ORDER BY c.name, ps.subcategory_name";
+    
+    $result = $conn->query($sql);
+    $navigation_data = [];
+    
+    if (!$result) {
+        echo "SQL Error: " . $conn->error;
+        return [];
+    }
+    
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $category_slug = generateSlug($row['category_name']);
+            
+            // Create category if hindi pa exists
+            if (!isset($navigation_data[$category_slug])) {
+                $navigation_data[$category_slug] = [
+                    'id' => $row['category_id'],
+                    'name' => $row['category_name'],
+                    'slug' => $category_slug,
+                    'subcategories' => []
+                ];
+            }
+            
+            // Add subcategory if may value
+            if ($row['subcategory_id']) {
+                // Use the existing subcategory_slug from database or generate if empty
+                $sub_slug = !empty($row['subcategory_slug']) ? 
+                          $row['subcategory_slug'] : 
+                          generateSlug($row['subcategory_name']);
+                          
+                $navigation_data[$category_slug]['subcategories'][] = [
+                    'id' => $row['subcategory_id'],
+                    'name' => $row['subcategory_name'],
+                    'slug' => $sub_slug
+                ];
+            }
+        }
+    }
+    
+    return $navigation_data;
+}
+
+// generateSlug function (same as before)
+function generateSlug($string) {
+    $slug = strtolower(trim($string));
+    $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
+    $slug = preg_replace('/[\s-]+/', '-', $slug);
+    return trim($slug, '-');
+}
+
+// Get navigation data and assign to $display_categories variable
+$display_categories = getNavigationData($conn);
+
+
 ?>
 
 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
@@ -516,180 +583,57 @@ if ($user_id) {
 
         </div>
 
-        <!-- Products Dropdown -->
-        <div class="relative">
-          <button @click="productsOpen = !productsOpen" class="text-black hover:text-orange-500 transition font-mont uppercase">Products</button>
+<!-- Updated Products Dropdown HTML -->
+<div class="relative" 
+     x-data="{ productsOpen: false, selectedCategory: null }">
+  <button @click="productsOpen = !productsOpen" 
+          class="text-black hover:text-orange-500 transition font-mont uppercase">
+    Products
+  </button>
 
-          <div x-show="productsOpen" @click.away="productsOpen = false" x-transition x-cloak
-            class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
-            <div class="w-1/2 border-r p-4 space-y-2 font-mont">
-              <button @mouseenter="selectedCategory = 'materials'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Materials Boards</button>
-              <button @mouseenter="selectedCategory = 'furniture'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Furniture</button>
-              <button @mouseenter="selectedCategory = 'Tiles'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Tiles</button>
-              <button @mouseenter="selectedCategory = 'Bedfurniture'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Bed Furniture</button>
-              <button @mouseenter="selectedCategory = 'BathroomFixtures'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Bathroom Fixtures</button>
-              <button @mouseenter="selectedCategory = 'AccBlock'"
-                class="block w-full text-left hover:text-orange-500 text-sm">AAC Block</button>
-              <button @mouseenter="selectedCategory = 'aircon'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Aircon</button>
-              <button @mouseenter="selectedCategory = 'KitchenFixtures'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Kitchen Fixtures</button>
-              <button @mouseenter="selectedCategory = 'Lightingfixture'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Lighting Fixtures</button>
-              <button @mouseenter="selectedCategory = 'Doors'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Doors</button>
-              <button @mouseenter="selectedCategory = 'windows'"
-                class="block w-full text-left hover:text-orange-500 text-sm">Windows</button>
+  <div x-show="productsOpen" 
+       @click.away="productsOpen = false" 
+       x-transition x-cloak
+       class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
+
+    <!-- Left side: Categories -->
+    <div class="w-1/2 border-r p-4 space-y-2 font-mont">
+      <?php if (!empty($display_categories)): ?>
+        <?php foreach ($display_categories as $catKey => $category): ?>
+          <button 
+            @mouseenter="selectedCategory = 'cat_<?= $category['id'] ?>'" 
+            class="block w-full text-left hover:text-orange-500 text-sm">
+            <?= htmlspecialchars($category['name']) ?>
+          </button>
+        <?php endforeach; ?>
+      <?php else: ?>
+        <p class="text-gray-500 italic text-sm">No categories</p>
+      <?php endif; ?>
+    </div>
+
+    <!-- Right side: Subcategories -->
+    <div class="w-1/2 p-4 font-mont">
+      <?php if (!empty($display_categories)): ?>
+        <?php foreach ($display_categories as $catKey => $category): ?>
+          <template x-if="selectedCategory === 'cat_<?= $category['id'] ?>'">
+            <div class="space-y-1">
+              <?php if (!empty($category['subcategories'])): ?>
+                <?php foreach ($category['subcategories'] as $sub): ?>
+                  <a href="allproduct.php?category=<?= urlencode($category['slug']) ?>&sub=<?= urlencode($sub['slug']) ?>"
+                     class="block hover:text-orange-500 text-sm">
+                    <?= htmlspecialchars($sub['name']) ?>
+                  </a>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <p class="text-gray-500 italic text-sm">No subcategories</p>
+              <?php endif; ?>
             </div>
-
-            <div class="w-1/2 p-4 font-mont">
-              <!-- Materials -->
-              <template x-if="selectedCategory === 'materials'">
-                <div class="space-y-1">
-                  <!-- Panels -->
-                  <a href="allproduct.php?category=materials&sub=wpcpanels" class="block hover:text-orange-500 text-sm">WPC Panels</a>
-                  <a href="allproduct.php?category=materials&sub=pvcpanels" class="block hover:text-orange-500 text-sm">PVC Panels</a>
-                </div>
-              </template>
-
-
-
-              <!-- Furniture -->
-              <template x-if="selectedCategory === 'furniture'">
-                <div class="space-y-1">
-                  <!-- Living Room -->
-                  <a href="allproduct.php?category=furniture&sub=sofas" class="block hover:text-orange-500 text-sm">Sofas</a>
-                  <a href="allproduct.php?category=furniture&sub=table" class="block hover:text-orange-500 text-sm">Coffee Tables</a>
-                  <!-- Dining -->
-                  <a href="allproduct.php?category=furniture&sub=dining-tables" class="block hover:text-orange-500 text-sm">Dining Tables</a>
-                  <a href="allproduct.php?category=furniture&sub=dining-chairs" class="block hover:text-orange-500 text-sm">Dining Chairs</a>
-                </div>
-              </template>
-
-
-              <template x-if="selectedCategory === 'Tiles'">
-                <div class="space-y-1">
-                  <!-- Material -->
-                  <a href="allproduct.php?category=Tiles&sub=polishtiles" class="block hover:text-orange-500 text-sm">Polish Tiles</a>
-                  <a href="allproduct.php?category=Tiles&sub=mattetiles" class="block hover:text-orange-500 text-sm">Matte Tiles</a>
-                </div>
-              </template>
-
-
-              <!-- Bed Furniture -->
-              <template x-if="selectedCategory === 'Bedfurniture'">
-                <div class="space-y-1">
-                  <!-- Beds -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('single-beds')"
-                    class="block hover:text-orange-500 text-sm">Single Beds</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('double-beds')"
-                    class="block hover:text-orange-500 text-sm">Double Beds</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('queen-beds')"
-                    class="block hover:text-orange-500 text-sm">Queen Beds</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('king-beds')"
-                    class="block hover:text-orange-500 text-sm">King Beds</a>
-
-                  <!-- Bed Accessories -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('headboards')"
-                    class="block hover:text-orange-500 text-sm">Headboards</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bedside-tables')"
-                    class="block hover:text-orange-500 text-sm">Bedside Tables</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('mattresses')"
-                    class="block hover:text-orange-500 text-sm">Mattresses</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bed-frames')"
-                    class="block hover:text-orange-500 text-sm">Bed Frames</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('wardrobes')"
-                    class="block hover:text-orange-500 text-sm">Wardrobes</a>
-                </div>
-              </template>
-
-              <!-- Bathroom Fixtures -->
-              <template x-if="selectedCategory === 'BathroomFixtures'">
-                <div class="space-y-1">
-                  <!-- Fixtures -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('toilets')"
-                    class="block hover:text-orange-500 text-sm">Toilets</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('wash-basins')"
-                    class="block hover:text-orange-500 text-sm">Wash Basins</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathtubs')"
-                    class="block hover:text-orange-500 text-sm">Bathtubs</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('showers')"
-                    class="block hover:text-orange-500 text-sm">Showers</a>
-
-                  <!-- Storage & Accessories -->
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-cabinets')"
-                    class="block hover:text-orange-500 text-sm">Bathroom Cabinets</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('mirrors')"
-                    class="block hover:text-orange-500 text-sm">Mirrors</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('towel-racks')"
-                    class="block hover:text-orange-500 text-sm">Towel Racks</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('bathroom-shelves')"
-                    class="block hover:text-orange-500 text-sm">Bathroom Shelves</a>
-                </div>
-              </template>
-
-
-              <template x-if="selectedCategory === 'AccBlock'">
-                <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                </div>
-              </template>
-
-              <template x-if="selectedCategory === 'aircon'">
-                <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                </div>
-              </template>
-
-              <template x-if="selectedCategory === 'KitchenFixtures'">
-                <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                </div>
-              </template>
-
-              <template x-if="selectedCategory === 'Lightingfixture'">
-                <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                </div>
-              </template>
-
-              <template x-if="selectedCategory === 'Doors'">
-                <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                </div>
-              </template>
-
-              <template x-if="selectedCategory === 'windows'">
-                <div class="space-y-1">
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                  <a href="javascript:void(0)" onclick="navigateWithLoading('')"
-                    class="block hover:text-orange-500 text-sm">Not Available</a>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
+          </template>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
 
         <!-- Profile Link -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"

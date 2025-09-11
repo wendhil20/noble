@@ -5,14 +5,10 @@ include '../../connection/connect.php';
 include '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin']);
 
-// Include auto-category functions
-// include 'auto_category_functions.php'; // Uncomment this line if you save the functions in a separate file
-
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();
 }
-
 
 /**
  * Auto-assigns categories for ALL product variants based on codenames
@@ -67,9 +63,16 @@ function autoAssignAllCategories($conn) {
     return $result;
 }
 
+// Get message and error from session (for PRG pattern)
+$sync_message = '';
+if (isset($_SESSION['sync_message'])) {
+    $sync_message = $_SESSION['sync_message'];
+    unset($_SESSION['sync_message']);
+}
+
 // Fetch category and subcategory lists
 $category_result = $conn->query("SELECT * FROM categories");
-$subcategory_result = $conn->query("SELECT * FROM categorysub");
+$subcategory_result = $conn->query("SELECT * FROM product_subcategories ORDER BY subcategory_name");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_POST['bulk_ids'])) {
@@ -96,24 +99,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
 
-        // UPDATED: Handle subcategory by name instead of ID
-        if (!empty($_POST['bulk_subcategory'])) {
-            $subcatName = $_POST['bulk_subcategory'];
-            // First get the ID of the subcategory by name
-            $subcatQuery = $conn->prepare("SELECT id FROM categorysub WHERE name = ?");
-            $subcatQuery->bind_param("s", $subcatName);
-            $subcatQuery->execute();
-            $subcatResult = $subcatQuery->get_result();
-            
-            if ($subcatResult->num_rows > 0) {
-                $subcatData = $subcatResult->fetch_assoc();
-                $subcatId = $subcatData['id'];
-                
-                $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ? WHERE id IN (" . implode(',', $ids) . ")");
-                $stmt->bind_param("i", $subcatId);
-                $stmt->execute();
-            }
-        }
+    // FIXED: Handle subcategory using product_subcategories table
+if (!empty($_POST['bulk_subcategory'])) {
+    $subcatName = $_POST['bulk_subcategory'];
+    // First get the ID of the subcategory by name from product_subcategories
+    $subcatQuery = $conn->prepare("SELECT id FROM product_subcategories WHERE subcategory_name = ?");
+    $subcatQuery->bind_param("s", $subcatName);
+    $subcatQuery->execute();
+    $subcatResult = $subcatQuery->get_result();
+    
+    if ($subcatResult->num_rows > 0) {
+        $subcatData = $subcatResult->fetch_assoc();
+        $subcatId = $subcatData['id'];
+        
+        // Update BOTH subcategory_id AND subcategory_name fields
+        $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id IN (" . implode(',', $ids) . ")");
+        $stmt->bind_param("is", $subcatId, $subcatName);
+        $stmt->execute();
+    }
+}
 
         // NEW: Auto-sync categories based on product codename
         if (isset($_POST['auto_sync_categories'])) {
@@ -129,6 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param(str_repeat('i', count($ids)), ...$ids);
             $stmt->execute();
         }
+        
+        // Redirect to prevent form resubmission
+        $_SESSION['sync_message'] = "Bulk update completed successfully!";
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
     }
 }
 
@@ -137,23 +146,18 @@ if (isset($_POST['auto_sync_all'])) {
     $auto_sync_result = autoAssignAllCategories($conn);
     
     if ($auto_sync_result['success']) {
-        $sync_message = "Successfully updated {$auto_sync_result['updated_count']} product variant categories!";
+        $message = "Successfully updated {$auto_sync_result['updated_count']} product variant categories!";
         if (!empty($auto_sync_result['errors'])) {
-            $sync_message .= " Note: " . count($auto_sync_result['errors']) . " warnings found.";
+            $message .= " Note: " . count($auto_sync_result['errors']) . " warnings found.";
         }
     } else {
-        $sync_message = "Error occurred during synchronization: " . implode(', ', $auto_sync_result['errors']);
+        $message = "Error occurred during synchronization: " . implode(', ', $auto_sync_result['errors']);
     }
     
-    // Redirect to prevent form resubmission
-    header("Location: " . $_SERVER['PHP_SELF'] . "?sync_complete=1&message=" . urlencode($sync_message));
+    // Store message in session and redirect
+    $_SESSION['sync_message'] = $message;
+    header("Location: " . $_SERVER['PHP_SELF']);
     exit();
-}
-
-// Check if we just completed a sync
-$sync_message = '';
-if (isset($_GET['sync_complete']) && isset($_GET['message'])) {
-    $sync_message = urldecode($_GET['message']);
 }
 
 $status_filter = $_GET['status'] ?? '';
@@ -171,6 +175,7 @@ $query = "
         c1.name as current_category_name,
         c2.name as expected_category_name,
         c2.id as expected_category_id,
+        ps.subcategory_name as current_subcategory_name,
         CASE 
             WHEN pv.category_id = c2.id THEN 'matched'
             WHEN c2.id IS NULL THEN 'no_match'
@@ -180,6 +185,7 @@ $query = "
     JOIN products p ON pv.product_id = p.id
     LEFT JOIN categories c1 ON pv.category_id = c1.id
     LEFT JOIN categories c2 ON p.codename = c2.name
+    LEFT JOIN product_subcategories ps ON pv.subcategory_id = ps.id
     WHERE 1=1
 ";
 
@@ -193,10 +199,10 @@ if (is_numeric($category_filter)) {
     $query .= " AND pv.category_id = " . intval($category_filter);
 }
 
-// UPDATED: Update the subcategory filter to work with names
+// UPDATED: Update the subcategory filter to work with product_subcategories
 if (!empty($subcategory_filter)) {
     // Convert name to ID for the query
-    $subcatQuery = $conn->prepare("SELECT id FROM categorysub WHERE name = ?");
+    $subcatQuery = $conn->prepare("SELECT id FROM product_subcategories WHERE subcategory_name = ?");
     $subcatQuery->bind_param("s", $subcategory_filter);
     $subcatQuery->execute();
     $subcatResult = $subcatQuery->get_result();
@@ -352,9 +358,9 @@ $counts = $count_result->fetch_assoc();
   <div class="bg-white rounded-lg shadow-md p-4 mb-6">
     <h3 class="text-lg font-semibold text-gray-800 mb-2">Category Synchronization Status</h3>
     <div class="flex gap-4 text-sm">
-      <span class="text-green-600"> Matched: <?= $counts['matched_count'] ?></span>
-      <span class="text-red-600"> Mismatched: <?= $counts['mismatched_count'] ?></span>
-      <span class="text-yellow-600">No Match: <?= $counts['no_match_count'] ?></span>
+      <span class="text-green-600">✓ Matched: <?= $counts['matched_count'] ?></span>
+      <span class="text-red-600">✗ Mismatched: <?= $counts['mismatched_count'] ?></span>
+      <span class="text-yellow-600">⚠ No Match: <?= $counts['no_match_count'] ?></span>
     </div>
   </div>
 
@@ -392,7 +398,7 @@ $counts = $count_result->fetch_assoc();
       </select>
     </div>
 
-    <!-- UPDATED: Subcategory dropdown now uses names as values -->
+    <!-- UPDATED: Subcategory dropdown now uses product_subcategories -->
     <div>
       <label class="text-sm font-medium text-gray-700">Subcategory:</label>
       <select name="subcategory" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
@@ -400,8 +406,8 @@ $counts = $count_result->fetch_assoc();
         <?php
         $subcategory_result->data_seek(0);
         while ($sub = $subcategory_result->fetch_assoc()): ?>
-          <option value="<?= htmlspecialchars($sub['name']) ?>" <?= $subcategory_filter === $sub['name'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($sub['name']) ?>
+          <option value="<?= htmlspecialchars($sub['subcategory_name']) ?>" <?= $subcategory_filter === $sub['subcategory_name'] ? 'selected' : '' ?>>
+            <?= htmlspecialchars($sub['subcategory_name']) ?>
           </option>
         <?php endwhile; ?>
       </select>
@@ -449,13 +455,13 @@ $counts = $count_result->fetch_assoc();
           <?php endwhile; ?>
         </select>
 
-        <!-- UPDATED: Subcategory dropdown now uses names as values -->
+        <!-- UPDATED: Subcategory dropdown now uses product_subcategories -->
         <select name="bulk_subcategory" class="border rounded px-2 py-1 text-sm">
           <option value="">Change Subcategory</option>
           <?php
           $subcategory_result->data_seek(0);
           while ($sub = $subcategory_result->fetch_assoc()): ?>
-            <option value="<?= htmlspecialchars($sub['name']) ?>"><?= htmlspecialchars($sub['name']) ?></option>
+            <option value="<?= htmlspecialchars($sub['subcategory_name']) ?>"><?= htmlspecialchars($sub['subcategory_name']) ?></option>
           <?php endwhile; ?>
         </select>
 
@@ -470,12 +476,6 @@ $counts = $count_result->fetch_assoc();
     <!-- Variant Cards -->
     <div class="grid gap-3 grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
       <?php while ($row = $result->fetch_assoc()): ?>
-        <?php
-          // Fetch subcategory name
-          $subcatName = '';
-          $subcatRes = $conn->query("SELECT name FROM categorysub WHERE id = " . intval($row['subcategory_id']));
-          if ($subcatRes && $subcatRes->num_rows > 0) $subcatName = $subcatRes->fetch_assoc()['name'];
-        ?>
         <div id="card-<?= $row['id'] ?>" 
              class="bg-white rounded-lg shadow-sm p-2 hover:shadow-md transition cursor-pointer select-none text-xs" 
              onclick="toggleCardSelection(this, 'checkbox-<?= $row['id'] ?>')">
@@ -544,9 +544,9 @@ $counts = $count_result->fetch_assoc();
             </div>
           <?php endif; ?>
           
-          <?php if ($subcatName): ?>
-            <div class="text-xs text-gray-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($subcatName) ?>">
-              Sub: <span class="font-medium"><?= htmlspecialchars($subcatName) ?></span>
+          <?php if ($row['current_subcategory_name']): ?>
+            <div class="text-xs text-gray-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($row['current_subcategory_name']) ?>">
+              Sub: <span class="font-medium"><?= htmlspecialchars($row['current_subcategory_name']) ?></span>
             </div>
           <?php endif; ?>
 
@@ -581,3 +581,5 @@ $counts = $count_result->fetch_assoc();
 
 </body>
 </html>
+
+<?php $conn->close(); ?>

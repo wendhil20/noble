@@ -162,13 +162,13 @@ $products = $conn->query("SELECT id, product_name, codename, quantity, main_imag
 
     <?php if ($products->num_rows > 0): ?>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-6" id="productGrid">
-       <?php while ($product = $products->fetch_assoc()): ?>
+      <?php while ($product = $products->fetch_assoc()): ?>
   <?php
-    $createdAt = strtotime($product['created_at']);
-    $updatedAt = strtotime($product['updated_at']);
- $isFirstTime = $createdAt === $updatedAt;
-$canUpdate = $isFirstTime || ((time() - $updatedAt) >= (7 * 24 * 60 * 60));
-
+   $createdAt = strtotime($product['created_at']);
+   $updatedAt = strtotime($product['updated_at']);
+   
+   // REMOVED: 7-day restriction - now always allow updates
+   $canUpdate = true;  // Always allow updates
   ?>
   <div class="bg-white border rounded-lg p-4 shadow product-card">
     <div class="w-full aspect-square bg-gray-100 rounded mb-3 flex items-center justify-center overflow-hidden">
@@ -195,8 +195,7 @@ $canUpdate = $isFirstTime || ((time() - $updatedAt) >= (7 * 24 * 60 * 60));
     </div>
     <div class="mt-4 flex justify-between">
       <a href="update_product.php?id=<?= $product['id'] ?>"
-         class="<?= $canUpdate ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-400 cursor-not-allowed' ?> text-white px-3 py-1 rounded text-xs transition"
-         <?= $canUpdate ? '' : 'onclick="return false;" title=\'You can only update this product after 1 week from last update.\'' ?>>
+         class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs transition">
         Update
       </a>
       <form method="POST" onsubmit="return confirm('⚠️ This will permanently delete the product and all its images. Continue?');">

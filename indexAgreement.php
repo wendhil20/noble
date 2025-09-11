@@ -71,11 +71,6 @@
             background-clip: text;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
 
         /* Logo Container - Responsive Layout */
         .logo-container {
@@ -371,10 +366,6 @@
                 color: #f9fafb;
             }
 
-            .glass-card {
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
 
             .card-text,
             .cta-text,
@@ -427,7 +418,7 @@
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center py-4 sm:py-8 lg:py-12 px-4">
+<body class="min-h-screen flex items-center justify-center py-4 sm:py-8 lg:py-12 px-4 bg-white">
     <div class="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto w-full">
 
         <!-- Header Section -->

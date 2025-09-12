@@ -97,7 +97,7 @@ $display_categories = getNavigationData($conn);
 
 ?>
 
-<?php $current_page = basename($_SERVER['PHP_SELF']); ?>
+
 
 
 <!-- Tailwind + Alpine CDN -->
@@ -584,25 +584,24 @@ $display_categories = getNavigationData($conn);
         </div>
 
 <!-- Updated Products Dropdown HTML -->
-<div class="relative" 
-     x-data="{ productsOpen: false, selectedCategory: null }">
-  <button @click="productsOpen = !productsOpen" 
-          class="text-black hover:text-orange-500 transition font-mont uppercase">
+<div class="relative" x-data="{ productsOpen: false, selectedCategory: null }">
+  <button @click="productsOpen = !productsOpen"
+           class="text-black hover:text-orange-500 transition font-mont uppercase">
     Products
   </button>
-
-  <div x-show="productsOpen" 
-       @click.away="productsOpen = false" 
-       x-transition x-cloak
+ 
+  <div x-show="productsOpen"
+        @click.away="productsOpen = false"
+        x-transition x-cloak
        class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
-
+     
     <!-- Left side: Categories -->
     <div class="w-1/2 border-r p-4 space-y-2 font-mont">
       <?php if (!empty($display_categories)): ?>
         <?php foreach ($display_categories as $catKey => $category): ?>
           <button 
-            @mouseenter="selectedCategory = 'cat_<?= $category['id'] ?>'" 
-            class="block w-full text-left hover:text-orange-500 text-sm">
+             @mouseenter="selectedCategory = 'cat_<?= $category['id'] ?>'"
+             class="block w-full text-left hover:text-orange-500 text-sm">
             <?= htmlspecialchars($category['name']) ?>
           </button>
         <?php endforeach; ?>
@@ -610,7 +609,7 @@ $display_categories = getNavigationData($conn);
         <p class="text-gray-500 italic text-sm">No categories</p>
       <?php endif; ?>
     </div>
-
+     
     <!-- Right side: Subcategories -->
     <div class="w-1/2 p-4 font-mont">
       <?php if (!empty($display_categories)): ?>
@@ -619,7 +618,7 @@ $display_categories = getNavigationData($conn);
             <div class="space-y-1">
               <?php if (!empty($category['subcategories'])): ?>
                 <?php foreach ($category['subcategories'] as $sub): ?>
-                  <a href="allproduct.php?category=<?= urlencode($category['slug']) ?>&sub=<?= urlencode($sub['slug']) ?>"
+                  <a href="../otherpage/allproductsub_variant.php?subcategory_id=<?= $sub['id'] ?>"
                      class="block hover:text-orange-500 text-sm">
                     <?= htmlspecialchars($sub['name']) ?>
                   </a>
@@ -634,7 +633,6 @@ $display_categories = getNavigationData($conn);
     </div>
   </div>
 </div>
-
         <!-- Profile Link -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
           class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition font-mont">
@@ -717,10 +715,14 @@ $display_categories = getNavigationData($conn);
             </div>
           </div>
         </div>
+
         <?php
+        $current_page = basename($_SERVER['PHP_SELF']);
         $hidden_pages = ['help.php', 'about.php'];
+        
 
         ?>
+
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
           <?php if (!in_array($current_page, $hidden_pages)): ?>
@@ -1800,112 +1802,186 @@ $display_categories = getNavigationData($conn);
   </div>
 </nav>
 
-<?php if (!in_array($current_page, $hidden_pages)): ?>
-  <!-- Enhanced Second Navbar (Subcategories) -->
-  <nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg border-b border-orange-300/20">
-    <div class="max-w-screen-xl mx-auto px-2 relative">
-      <!-- Gradient Overlays for Scroll Indication -->
-      <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
-      <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-orange-500 to-transparent z-10 pointer-events-none md:hidden"></div>
+<?php 
+$current_page_navigation = basename($_SERVER['PHP_SELF']);
+$hidden_pages_navigation = ['help.php', 'about.php'];
 
-      <ul id="categoryNav" class="flex justify-between md:justify-center gap-8 overflow-x-auto no-scrollbar py-4 text-white font-medium scroll-smooth">
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
+  
+  <!-- Navigation Bar with Swiper -->
+  <?php
+  // Get subcategories from database
+  $navigation_query = "SELECT id, subcategory_name FROM product_subcategories ORDER BY subcategory_name LIMIT 8";
+  $navigation_result = $conn->query($navigation_query);
+  $navigation_subcategories = [];
+  if ($navigation_result && $navigation_result->num_rows > 0) {
+      while ($row = $navigation_result->fetch_assoc()) {
+          $navigation_subcategories[] = $row;
+      }
+  }
+  ?>
 
-            <span class="relative">
-              Table
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
+  <nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg p-3">
+      <div class="max-w-screen-xl mx-auto px-4 relative">
+          
+          <!-- Swiper Container -->
+          <div class="swiper navigation-swiper py-4">
+              
+              <!-- Navigation Buttons -->
+              <div class="swiper-button-prev nav-prev"></div>
+              <div class="swiper-button-next nav-next"></div>
+              
+              <!-- Swiper Wrapper -->
+              <div class="swiper-wrapper">
+                  
+                  <!-- All Products Slide -->
+                  <div class="swiper-slide">
+                      <a href="../otherpage/allproductsub.php" 
+                         class="nav-link block px-4 py-2 rounded text-white font-medium text-sm hover:bg-white/20 transition-colors whitespace-nowrap <?php echo (!isset($_GET['subcategory_id'])) ? 'bg-white/20 font-bold' : ''; ?>">
+                          All subcategories
+                      </a>
+                  </div>
 
-            <span class="relative">
-              Chair
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
+                  <!-- Subcategory Slides -->
+                  <?php foreach ($navigation_subcategories as $subcategory_item): ?>
+                  <div class="swiper-slide">
+                      <a href="allproductsub_variant.php?subcategory_id=<?php echo $subcategory_item['id']; ?>" 
+                         class="nav-link block px-4 py-2 rounded text-white font-medium text-sm hover:bg-white/20 transition-colors whitespace-nowrap <?php echo (isset($_GET['subcategory_id']) && $_GET['subcategory_id'] == $subcategory_item['id']) ? 'bg-white/20 font-bold' : ''; ?>"
+                         title="<?php echo htmlspecialchars($subcategory_item['subcategory_name']); ?>">
+                          <?php 
+                          $name = $subcategory_item['subcategory_name'];
+                          echo htmlspecialchars(strlen($name) > 20 ? substr($name, 0, 20) . '...' : $name); 
+                          ?>
+                      </a>
+                  </div>
+                  <?php endforeach; ?>
 
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-
-            <span class="relative">
-              Sofa
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-
-            <span class="relative">
-              Cabinet
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-
-            <span class="relative">
-              Bed
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-
-            <span class="relative">
-              AAC Block
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-
-            <span class="relative">
-              WPC Panels
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link group relative px-3 py-2 transition-all duration-300 whitespace-nowrap flex items-center space-x-2">
-
-            <span class="relative">
-              PVC Panels
-              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white rounded-full group-hover:w-full transition-all duration-300"></span>
-            </span>
-          </a>
-        </li>
-      </ul>
-
-      <!-- Navigation Arrows for Mobile -->
-      <button id="scrollLeftBtn" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      <button id="scrollRightBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-200 md:hidden z-20">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
+              </div>
+          </div>
+      </div>
   </nav>
-<?php endif; ?>
 
+  <!-- Swiper JS -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  
+  <script>
+  // Simple Swiper initialization
+  const swiper = new Swiper('.navigation-swiper', {
+      slidesPerView: 'auto',
+      spaceBetween: 10,
+      freeMode: true,
+      
+      // Navigation arrows
+      navigation: {
+          nextEl: '.nav-next',
+          prevEl: '.nav-prev',
+      },
+      
+      // Responsive breakpoints
+      breakpoints: {
+          320: {
+              slidesPerView: 'auto',
+              spaceBetween: 8
+          },
+          640: {
+              slidesPerView: 'auto',
+              spaceBetween: 12
+          },
+          768: {
+              slidesPerView: 'auto',
+              spaceBetween: 16
+          }
+      }
+  });
+  </script>
+
+  <style>
+  /* Swiper Slides */
+  .navigation-swiper .swiper-slide {
+      width: auto !important;
+      max-width: 200px;
+  }
+  
+  /* Navigation Links */
+  .nav-link {
+      display: block;
+      transition: all 0.2s ease;
+  }
+  
+  .nav-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Active state */
+  .nav-link.bg-white\/20 {
+      background-color: rgba(255, 255, 255, 0.25) !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Swiper Navigation Buttons */
+  .nav-prev,
+  .nav-next {
+      width: 36px !important;
+      height: 36px !important;
+      margin-top: -18px !important;
+      background: rgba(255, 255, 255, 0.2) !important;
+      border-radius: 50% !important;
+      color: white !important;
+      transition: all 0.3s ease !important;
+  }
+  
+  .nav-prev:after,
+  .nav-next:after {
+      font-size: 14px !important;
+      font-weight: bold !important;
+  }
+  
+  .nav-prev {
+      left: 8px !important;
+  }
+  
+  .nav-next {
+      right: 8px !important;
+  }
+  
+  .nav-prev:hover,
+  .nav-next:hover {
+      background: rgba(255, 255, 255, 0.4) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  /* Disabled state */
+  .swiper-button-disabled {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+  }
+  
+  /* Hide arrows on desktop */
+  @media (min-width: 768px) {
+      .nav-prev,
+      .nav-next {
+          display: none !important;
+      }
+  }
+  
+  /* Mobile adjustments */
+  @media (max-width: 640px) {
+      .navigation-swiper .swiper-slide {
+          max-width: 150px;
+      }
+      
+      .nav-link {
+          font-size: 0.75rem !important;
+          padding: 0.5rem 0.75rem !important;
+      }
+  }
+  </style>
+
+<?php endif; ?>
 
 <style>
   /* Enhanced scrollbar hiding */

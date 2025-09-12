@@ -858,8 +858,10 @@ function process_product_images($main_image, $sub_images, $type_image)
             .line-clamp-2 {
                 display: -webkit-box;
                 -webkit-line-clamp: 2;
+                line-clamp: 2;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
+                
             }
 
             .gallery-arrow {

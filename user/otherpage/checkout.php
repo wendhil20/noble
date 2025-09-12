@@ -2115,15 +2115,6 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         }
 
 
-
-
-
-
-
-
-
-
-
         // Function to calculate distance using OSRM (same as map routing)
         async function calculateRoutingDistance(storeLatLng, customerLatLng) {
             try {

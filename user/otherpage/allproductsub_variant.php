@@ -155,16 +155,17 @@ $stmt->close();
     <!-- Add your CSS links here -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen font-mont">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header Section -->
     <div class="bg-black text-white">
         <div class="container mx-auto px-6 py-12">
             <div class="text-center">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 uppercase">
                     <?php echo htmlspecialchars($subcategory_name); ?>
                 </h1>
                 <p class="text-xl text-blue-100 mb-6">
@@ -193,25 +194,26 @@ $stmt->close();
     <!-- Main Content -->
     <div class="container mx-auto px-6 py-12">
         
-        <!-- Product Count and Filter Info -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-sm border p-6">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl font-semibold text-gray-900 mb-2">
-                            <?php echo htmlspecialchars($subcategory_name); ?> Products
-                        </h2>
-                    </div>
-                    
-                    <!-- Back to Categories Button -->
-                    <a href="allproductsub.php?category_id=<?php echo $category_id; ?>" 
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to <?php echo htmlspecialchars($category_name); ?>
-                    </a>
-                </div>
+       <!-- Product Count and Filter Info -->
+<div class="mb-8">
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2 uppercase">
+                    <?php echo htmlspecialchars($subcategory_name); ?> PRODUCTS
+                </h2>
             </div>
+            
+            <!-- Back to Categories Button -->
+            <a href="allproductsub.php?category_id=<?php echo $category_id; ?>" 
+               class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors uppercase">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to <?php echo htmlspecialchars($category_name); ?>
+            </a>
         </div>
+    </div>
+</div>
+
 
         <!-- Products Grid -->
         <?php if (!empty($products)): ?>
@@ -274,8 +276,8 @@ $stmt->close();
                             <!-- View Product Button -->
                             <form action="product_view.php" method="GET" class="mt-4">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
-                                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
-                                    <i class="fas fa-eye mr-2"></i>
+                                <button type="submit" class="w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-orange-400 transition-colors duration-200 font-medium">
+                                  <i class="fa-solid fa-bag-shopping"></i>
                                     View Product
                                 </button>
                             </form>
@@ -294,7 +296,7 @@ $stmt->close();
                     There are no products available in the "<?php echo htmlspecialchars($subcategory_name); ?>" subcategory at the moment.
                 </p>
                 <a href="allproductsub.php?category_id=<?php echo $category_id; ?>" 
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                   class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Browse Other Subcategories
                 </a>

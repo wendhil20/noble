@@ -256,7 +256,7 @@ while ($row = $result->fetch_assoc()) {
     <div class="bg-black/90">
         <div class="container mx-auto px-6 py-10 max-w-7xl">
             <div class="text-center text-white">
-                <h1 class="text-4xl md:text-5xl font-serif font-bold mb-4">
+                <h1 class="text-4xl md:text-5xl font-serif font-bold mb-4 uppercase">
                     <?php echo $category_id > 0 ? htmlspecialchars($category_name) : 'Product Categories'; ?>
                 </h1>
                 <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
@@ -305,7 +305,7 @@ while ($row = $result->fetch_assoc()) {
                             </div>
 
                             <!-- Filter Button -->
-                            <button onclick="showAllCategories()" class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <button onclick="showAllCategories()" class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-orange-400 transition-colors duration-200">
                                 <i class="fas fa-filter mr-2"></i>
                                 All Categories
                             </button>
@@ -509,7 +509,7 @@ while ($row = $result->fetch_assoc()) {
 
                                             <form action="product_view" method="GET" class="mt-4">
                                                 <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-                                                <button type="submit" class="w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+                                                <button type="submit" class="w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-orange-400 transition-colors duration-200 font-medium">
                                                     <i class="fa-solid fa-bag-shopping"></i>
                                                     View Product
                                                 </button>
@@ -689,7 +689,7 @@ while ($row = $result->fetch_assoc()) {
         }
 
         .view-toggle.active {
-            background: #1e40af;
+            background: #000000ff;
             color: white;
         }
 

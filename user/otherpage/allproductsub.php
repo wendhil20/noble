@@ -218,6 +218,7 @@ while ($row = $result->fetch_assoc()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Product Subcategories - <?php echo htmlspecialchars($category_name); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -147,6 +147,7 @@ if ($_POST && isset($_POST['add_address'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Add Delivery Address - Noble Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>

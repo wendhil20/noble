@@ -1835,7 +1835,7 @@ if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
               <div class="swiper-button-next nav-next"></div>
               
               <!-- Swiper Wrapper -->
-              <div class="swiper-wrapper">
+              <div class="swiper-wrapper uppercase ">
                   
                   <!-- All Products Slide -->
                   <div class="swiper-slide">
@@ -1847,7 +1847,7 @@ if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
 
                   <!-- Subcategory Slides -->
                   <?php foreach ($navigation_subcategories as $subcategory_item): ?>
-                  <div class="swiper-slide">
+                  <div class="swiper-slide ">
                       <a href="allproductsub_variant.php?subcategory_id=<?php echo $subcategory_item['id']; ?>" 
                          class="nav-link block px-4 py-2 rounded text-white font-medium text-sm hover:bg-white/20 transition-colors whitespace-nowrap <?php echo (isset($_GET['subcategory_id']) && $_GET['subcategory_id'] == $subcategory_item['id']) ? 'bg-white/20 font-bold' : ''; ?>"
                          title="<?php echo htmlspecialchars($subcategory_item['subcategory_name']); ?>">

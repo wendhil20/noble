@@ -144,6 +144,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title>Shop Products - Noble Home</title>
   <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
 

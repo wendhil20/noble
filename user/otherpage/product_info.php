@@ -123,6 +123,7 @@ if (isset($_GET['variant_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title><?= htmlspecialchars($product['product_name']) ?> - Product Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">

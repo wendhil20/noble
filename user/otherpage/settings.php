@@ -452,6 +452,7 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title><?php echo $show_waiting_message ? 'Verification Pending' : 'Complete Your Profile'; ?> - Step by Step</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <?php if (!$show_waiting_message): ?>

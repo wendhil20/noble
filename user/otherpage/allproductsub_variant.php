@@ -51,7 +51,7 @@ if ($subcategory_id > 0) {
     $stmt->bind_param("i", $subcategory_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $subcategory_data = $result->fetch_assoc();
         $subcategory_name = $subcategory_data['subcategory_name'];
@@ -148,6 +148,7 @@ $stmt->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -155,7 +156,7 @@ $stmt->close();
     <!-- Add your CSS links here -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-gray-50 min-h-screen font-mont">
@@ -171,7 +172,7 @@ $stmt->close();
                 <p class="text-xl text-blue-100 mb-6">
                     Discover our premium collection
                 </p>
-                
+
                 <!-- Breadcrumb -->
                 <nav class="flex justify-center" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-2 text-sm">
@@ -180,8 +181,8 @@ $stmt->close();
                         </li>
                         <li><i class="fas fa-chevron-right text-blue-300 mx-2"></i></li>
                         <li>
-                            <a href="allproductsub.php?category_id=<?php echo $category_id; ?>" 
-                               class="text-blue-200 hover:text-white"><?php echo htmlspecialchars($category_name); ?></a>
+                            <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
+                                class="text-blue-200 hover:text-white"><?php echo htmlspecialchars($category_name); ?></a>
                         </li>
                         <li><i class="fas fa-chevron-right text-blue-300 mx-2"></i></li>
                         <li class="text-blue-100"><?php echo htmlspecialchars($subcategory_name); ?></li>
@@ -193,26 +194,26 @@ $stmt->close();
 
     <!-- Main Content -->
     <div class="container mx-auto px-6 py-12">
-        
-       <!-- Product Count and Filter Info -->
-<div class="mb-8">
-    <div class="bg-white rounded-lg shadow-sm border p-6">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900 mb-2 uppercase">
-                    <?php echo htmlspecialchars($subcategory_name); ?> PRODUCTS
-                </h2>
+
+        <!-- Product Count and Filter Info -->
+        <div class="mb-8">
+            <div class="bg-white rounded-lg shadow-sm border p-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mt-2 uppercase">
+                            <?php echo htmlspecialchars($subcategory_name); ?> PRODUCTS
+                        </h2>
+                    </div>
+
+                    <!-- Back to Categories Button -->
+                    <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
+                        class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors uppercase">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to <?php echo htmlspecialchars($category_name); ?>
+                    </a>
+                </div>
             </div>
-            
-            <!-- Back to Categories Button -->
-            <a href="allproductsub.php?category_id=<?php echo $category_id; ?>" 
-               class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors uppercase">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Back to <?php echo htmlspecialchars($category_name); ?>
-            </a>
         </div>
-    </div>
-</div>
 
 
         <!-- Products Grid -->
@@ -223,9 +224,9 @@ $stmt->close();
                         <!-- Product Image -->
                         <div class="aspect-square overflow-hidden bg-gray-50">
                             <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
-                                 alt="<?php echo htmlspecialchars($product['product_name']); ?>"
-                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                 onerror="this.src='../../uploads/placeholder.jpg'">
+                                alt="<?php echo htmlspecialchars($product['product_name']); ?>"
+                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                onerror="this.src='../../uploads/placeholder.jpg'">
                         </div>
 
                         <!-- Product Details -->
@@ -267,7 +268,7 @@ $stmt->close();
 
                                     <?php if (count($product['variants']) > 1): ?>
                                         <p class="text-xs text-blue-600 mt-1">
-                                            +<?php echo count($product['variants']) - 1; ?> more variants available
+                                            +<?php echo count($product['variants']) - 1; ?> more size available
                                         </p>
                                     <?php endif; ?>
                                 </div>
@@ -277,7 +278,7 @@ $stmt->close();
                             <form action="product_view.php" method="GET" class="mt-4">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
                                 <button type="submit" class="w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-orange-400 transition-colors duration-200 font-medium">
-                                  <i class="fa-solid fa-bag-shopping"></i>
+                                    <i class="fa-solid fa-bag-shopping"></i>
                                     View Product
                                 </button>
                             </form>
@@ -295,8 +296,8 @@ $stmt->close();
                 <p class="text-gray-600 mb-8 max-w-md mx-auto">
                     There are no products available in the "<?php echo htmlspecialchars($subcategory_name); ?>" subcategory at the moment.
                 </p>
-                <a href="allproductsub.php?category_id=<?php echo $category_id; ?>" 
-                   class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
+                    class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Browse Other Subcategories
                 </a>
@@ -305,7 +306,7 @@ $stmt->close();
     </div>
 
     <!-- Add your footer here -->
-    
+
     <style>
         .line-clamp-2 {
             display: -webkit-box;
@@ -316,4 +317,5 @@ $stmt->close();
         }
     </style>
 </body>
+
 </html>

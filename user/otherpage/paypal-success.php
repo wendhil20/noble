@@ -173,7 +173,7 @@ if (!$paypal_order_id) {
         
         // Strategy 3: Find recent pending PayPal order for user (last resort)
         if (!$order_data) {
-            $stmt = $conn->prepare("SELECT * FROM orders WHERE user_id = ? AND payment_status = 'pending_paypal' ORDER BY id DESC LIMIT 1");
+            $stmt = $conn->prepare("SELECT * FROM orders WHERE user_id = ? AND payment_status = 'pending' ORDER BY id DESC LIMIT 1");
             $stmt->bind_param("i", $user_id);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -212,7 +212,7 @@ if (!$paypal_order_id) {
         }
         
         // ✅ Check if order is already completed
-        if ($order_data['payment_status'] === 'completed') {
+        if ($order_data['payment_status'] === 'pending') {
             $success = true;
             $order_id = $pending_order_id;
             $_SESSION['checkout_notice'] = 'Order already completed!';
@@ -249,7 +249,7 @@ if (!$paypal_order_id) {
             }
             
             // ✅ Update order status to completed
-            $stmt = $conn->prepare("UPDATE orders SET payment_status = 'completed', paypal_capture_id = ?, paypal_payer_email = ?, paypal_payer_name = ? WHERE id = ?");
+            $stmt = $conn->prepare("UPDATE orders SET payment_status = 'pending', paypal_capture_id = ?, paypal_payer_email = ?, paypal_payer_name = ? WHERE id = ?");
             $stmt->bind_param("sssi", $capture_id, $payer_email, $payer_name, $pending_order_id);
             
             if (!$stmt->execute()) {

@@ -14,7 +14,6 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 // Add this after: require_role(['accountant', 'superadmin']);
-
 // =============================== 
 // PAYPAL CONFIGURATION 
 // =============================== 
@@ -333,7 +332,8 @@ $orders_result = null;
 $where_condition = "";
 switch ($filter) {
     case 'pending':
-        $where_condition = "WHERE o.payment_status = 'pending' AND o.payment_screenshot IS NOT NULL";
+        // UPDATED: Include PayPal pending orders even without screenshots
+        $where_condition = "WHERE o.payment_status = 'pending' AND (o.payment_screenshot IS NOT NULL OR o.mode_payment = 'PayPal')";
         break;
     case 'verified':
         $where_condition = "WHERE o.payment_status = 'verified'";
@@ -345,7 +345,7 @@ switch ($filter) {
         // This will be handled separately below
         break;
     default:
-        $where_condition = "WHERE o.payment_screenshot IS NOT NULL";
+        $where_condition = "WHERE o.payment_screenshot IS NOT NULL OR o.mode_payment = 'PayPal'";
         break;
 }
 
@@ -594,7 +594,12 @@ $orders_result = $conn->query($orders_query);
                                             <div class="text-sm font-semibold text-gray-900">₱<?php echo number_format((float)$display_amount, 2); ?></div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900"><?php echo htmlspecialchars($order['mode_payment'] ?: 'N/A'); ?></div>
+                                            <div class="text-sm text-gray-900 flex items-center">
+                                                <?php if ($order['mode_payment'] === 'PayPal'): ?>
+                                                    <i class="fab fa-paypal text-blue-600 mr-2"></i>
+                                                <?php endif; ?>
+                                                <?php echo htmlspecialchars($order['mode_payment'] ?: 'N/A'); ?>
+                                            </div>
                                             <?php if ($order['bank_type']): ?>
                                                 <div class="text-sm text-gray-500"><?php echo htmlspecialchars($order['bank_type']); ?></div>
                                             <?php endif; ?>
@@ -660,28 +665,37 @@ $orders_result = $conn->query($orders_query);
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <?php if ($order['payment_status'] === 'pending' && $order['payment_screenshot']): ?>
+                                            <?php if ($order['payment_status'] === 'pending'): ?>
                                                 <div class="flex space-x-2">
-                                                    <?php
-                                                    $screenshot_path = $order['payment_screenshot'];
-                                                    // Improved path handling for both old and new formats
-                                                    if ($screenshot_path) {
-                                                        // If it already contains the full uploads path, use as is
-                                                        if (strpos($screenshot_path, 'uploads/payment_screenshots/') !== false) {
-                                                            $full_screenshot_path = $screenshot_path;
+                                                    <?php if ($order['payment_screenshot']): ?>
+                                                        <?php
+                                                        $screenshot_path = $order['payment_screenshot'];
+                                                        // Improved path handling for both old and new formats
+                                                        if ($screenshot_path) {
+                                                            // If it already contains the full uploads path, use as is
+                                                            if (strpos($screenshot_path, 'uploads/payment_screenshots/') !== false) {
+                                                                $full_screenshot_path = $screenshot_path;
+                                                            } else {
+                                                                // Old format - just filename, add the path prefix
+                                                                $full_screenshot_path = '../../uploads/payment_screenshots/' . $screenshot_path;
+                                                            }
                                                         } else {
-                                                            // Old format - just filename, add the path prefix
-                                                            $full_screenshot_path = '../../uploads/payment_screenshots/' . $screenshot_path;
+                                                            $full_screenshot_path = '';
                                                         }
-                                                    } else {
-                                                        $full_screenshot_path = '';
-                                                    }
-                                                    ?>
-                                                    <button onclick="viewPaymentScreenshot('<?php echo htmlspecialchars($full_screenshot_path); ?>', <?php echo $order['id']; ?>)"
-                                                        class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
-                                                        <i class="fas fa-eye mr-1"></i>
-                                                        View
-                                                    </button>
+                                                        ?>
+                                                        <button onclick="viewPaymentScreenshot('<?php echo htmlspecialchars($full_screenshot_path); ?>', <?php echo $order['id']; ?>)"
+                                                            class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
+                                                            <i class="fas fa-eye mr-1"></i>
+                                                            View
+                                                        </button>
+                                                    <?php elseif ($order['mode_payment'] === 'PayPal'): ?>
+                                                        <!-- PayPal orders don't need screenshot -->
+                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+                                                            <i class="fab fa-paypal mr-1"></i>
+                                                            PayPal Payment
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    
                                                     <button onclick="verifyPayment(<?php echo $order['id']; ?>)"
                                                         class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                                         <i class="fas fa-check mr-1"></i>
@@ -714,6 +728,11 @@ $orders_result = $conn->query($orders_query);
                                                     <i class="fas fa-eye mr-1"></i>
                                                     View
                                                 </button>
+                                            <?php elseif ($order['mode_payment'] === 'PayPal'): ?>
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+                                                    <i class="fab fa-paypal mr-1"></i>
+                                                    PayPal Payment
+                                                </span>
                                             <?php else: ?>
                                                 <span class="text-xs text-gray-400">No screenshot</span>
                                             <?php endif; ?>
@@ -1093,6 +1112,9 @@ $orders_result = $conn->query($orders_query);
                     if (viewButton) {
                         actionsCell.innerHTML = viewButton.outerHTML;
                     }
+                } else if (currentActions.includes('PayPal Payment')) {
+                    // Keep PayPal badge for processed PayPal payments
+                    actionsCell.innerHTML = '<span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full"><i class="fab fa-paypal mr-1"></i>PayPal Payment</span>';
                 } else {
                     actionsCell.innerHTML = '<span class="text-xs text-gray-400">No actions</span>';
                 }
@@ -1107,68 +1129,107 @@ $orders_result = $conn->query($orders_query);
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
-        function showAlert(type, message) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg border ${
-                type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
-            }`;
+  function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `mb-6 px-4 py-3 rounded-lg flex items-center justify-between fixed top-4 right-4 z-50 shadow-lg transform transition-all duration-300 ease-in-out`;
+    
+    if (type === 'success') {
+        alertDiv.classList.add('bg-green-50', 'border', 'border-green-200', 'text-green-800');
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-green-600 hover:text-green-800">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+    } else if (type === 'error') {
+        alertDiv.classList.add('bg-red-50', 'border', 'border-red-200', 'text-red-800');
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span>${message}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+    } else {
+        alertDiv.classList.add('bg-blue-50', 'border', 'border-blue-200', 'text-blue-800');
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+    }
 
-            alertDiv.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} mr-2"></i>
-                        <span>${message}</span>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 ${
-                        type === 'success' ? 'text-green-600 hover:text-green-800' : 'text-red-600 hover:text-red-800'
-                    }">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-
-            document.body.appendChild(alertDiv);
-
-            // Auto remove after 5 seconds
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.classList.add('opacity-0', 'transform', 'translate-x-full');
             setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 5000);
+                alertDiv.remove();
+            }, 300);
         }
+    }, 5000);
+}
 
-        // Close modals when clicking outside
-        document.getElementById('screenshotModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeScreenshotModal();
-            }
-        });
+// Close modal when clicking outside
+document.getElementById('screenshotModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeScreenshotModal();
+    }
+});
 
-        document.getElementById('rejectionModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeRejectModal();
-            }
-        });
+document.getElementById('rejectionModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeRejectModal();
+    }
+});
 
-        // Handle escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeScreenshotModal();
-                closeRejectModal();
-            }
-        });
+// Close modals with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (!document.getElementById('screenshotModal').classList.contains('hidden')) {
+            closeScreenshotModal();
+        }
+        if (!document.getElementById('rejectionModal').classList.contains('hidden')) {
+            closeRejectModal();
+        }
+    }
+});
 
-        // Auto-refresh page every 30 seconds to check for new pending payments
-        <?php if ($filter === 'pending'): ?>
-            setInterval(function() {
-                // Only refresh if no modals are open
-                if (document.getElementById('screenshotModal').classList.contains('hidden') &&
-                    document.getElementById('rejectionModal').classList.contains('hidden')) {
-                    window.location.reload();
-                }
-            }, 30000);
-        <?php endif; ?>
-    </script>
+// Auto-hide existing alerts after page load
+document.addEventListener('DOMContentLoaded', function() {
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert = document.getElementById('errorAlert');
+    
+    if (successAlert) {
+        setTimeout(() => {
+            successAlert.style.opacity = '0';
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 300);
+        }, 5000);
+    }
+    
+    if (errorAlert) {
+        setTimeout(() => {
+            errorAlert.style.opacity = '0';
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 300);
+        }, 5000);
+    }
+});
+
+</script>
 </body>
-
 </html>

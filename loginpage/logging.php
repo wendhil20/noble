@@ -223,7 +223,7 @@ try {
         'accountant' => "../admin/accountant/accountant",
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/adminshop",
-        'logistic' => "../admin/logistic_management/logistics_dashboard",
+        'logistic' => "../admin/logistic_management/main_dashboard",
         'warehouse' => "../admin/warehouse_management/order_list",
         'hr' => "../admin/hr/account",
         default => "../admin/client/dashboard"

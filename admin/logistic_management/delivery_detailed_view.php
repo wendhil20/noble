@@ -63,9 +63,18 @@ if ($_POST && isset($_POST['assign_items_to_truck'])) {
     if (!empty($delivery_ids)) {
         $success_count = 0;
         foreach ($delivery_ids as $delivery_id) {
-            $updateSql = "UPDATE delivery_schedules SET truck_schedule_id = ? WHERE id = ?";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->bind_param("ii", $truck_schedule_id, $delivery_id);
+            // Get truck plate number for this schedule
+            $getTruckSql = "SELECT truck_id FROM truck_schedules WHERE id = ?";
+            $getTruckStmt = $conn->prepare($getTruckSql);
+            $getTruckStmt->bind_param("i", $truck_schedule_id);
+            $getTruckStmt->execute();
+            $truck_result = $getTruckStmt->get_result()->fetch_assoc();
+            $plate_number = $truck_result['truck_id'];
+            $getTruckStmt->close();
+            
+            $updateSql = "UPDATE delivery_schedules SET truck_schedule_id = ?, assigned_truck = ?, delivery_status = 'loading', delivery_type = 'company' WHERE id = ?";
+$updateStmt = $conn->prepare($updateSql);
+$updateStmt->bind_param("isi", $truck_schedule_id, $plate_number, $delivery_id);
             
             if ($updateStmt->execute()) {
                 $success_count++;
@@ -83,7 +92,7 @@ if ($_POST && isset($_POST['assign_items_to_truck'])) {
 if ($_POST && isset($_POST['remove_item_from_truck'])) {
     $delivery_id = $_POST['delivery_id'];
     
-    $removeSql = "UPDATE delivery_schedules SET truck_schedule_id = NULL WHERE id = ?";
+    $removeSql = "UPDATE delivery_schedules SET truck_schedule_id = NULL, assigned_truck = NULL, delivery_status = 'scheduled', delivery_type = NULL WHERE id = ?";
     $removeStmt = $conn->prepare($removeSql);
     $removeStmt->bind_param("i", $delivery_id);
     
@@ -93,6 +102,129 @@ if ($_POST && isset($_POST['remove_item_from_truck'])) {
         $error_message = "Error removing item from truck: " . $conn->error;
     }
     $removeStmt->close();
+}
+
+// Handle assigning delivery to 3rd party
+if ($_POST && isset($_POST['assign_third_party'])) {
+    $delivery_ids = $_POST['delivery_ids'] ?? [];
+    $delivery_type = $_POST['delivery_type'];
+    
+    if (!empty($delivery_ids) && in_array($delivery_type, ['lalamove', 'third_party'])) {
+        $success_count = 0;
+        foreach ($delivery_ids as $delivery_id) {
+            $updateSql = "UPDATE delivery_schedules SET delivery_type = ?, delivery_status = 'third_party_assigned', truck_schedule_id = NULL, assigned_truck = NULL WHERE id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("si", $delivery_type, $delivery_id);
+            
+            if ($updateStmt->execute()) {
+                $success_count++;
+            }
+            $updateStmt->close();
+        }
+        
+        $success_message = "Successfully assigned $success_count items to " . ucfirst($delivery_type) . "!";
+    } else {
+        $error_message = "Please select items and delivery service.";
+    }
+}
+
+// Handle out for delivery
+if ($_POST && isset($_POST['out_for_delivery'])) {
+    $delivery_id = $_POST['delivery_id'];
+    
+    // Get item_id from delivery_schedules
+    $getItemSql = "SELECT item_id FROM delivery_schedules WHERE id = ?";
+    $getItemStmt = $conn->prepare($getItemSql);
+    $getItemStmt->bind_param("i", $delivery_id);
+    $getItemStmt->execute();
+    $item_result = $getItemStmt->get_result()->fetch_assoc();
+    $item_id = $item_result['item_id'];
+    $getItemStmt->close();
+    
+    // Update delivery status
+    $updateDeliverySql = "UPDATE delivery_schedules SET delivery_status = 'out_for_delivery' WHERE id = ?";
+    $updateDeliveryStmt = $conn->prepare($updateDeliverySql);
+    $updateDeliveryStmt->bind_param("i", $delivery_id);
+    
+    // Update order item tracking status
+    $updateOrderItemSql = "UPDATE order_items SET tracking_status = 'out_for_delivery' WHERE id = ?";
+    $updateOrderItemStmt = $conn->prepare($updateOrderItemSql);
+    $updateOrderItemStmt->bind_param("i", $item_id);
+    
+    if ($updateDeliveryStmt->execute() && $updateOrderItemStmt->execute()) {
+        $success_message = "Item marked as out for delivery!";
+    } else {
+        $error_message = "Error updating delivery status: " . $conn->error;
+    }
+    
+    $updateDeliveryStmt->close();
+    $updateOrderItemStmt->close();
+}
+
+// Handle delivery proof upload
+if ($_POST && isset($_POST['upload_delivery_proof'])) {
+    $delivery_id = $_POST['delivery_id'];
+    
+    if (isset($_FILES['proof_image']) && $_FILES['proof_image']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = '../../uploads/delivery_proof/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $file_extension = pathinfo($_FILES['proof_image']['name'], PATHINFO_EXTENSION);
+        $file_name = 'delivery_' . $delivery_id . '_' . time() . '.' . $file_extension;
+        $file_path = $upload_dir . $file_name;
+
+        if (move_uploaded_file($_FILES['proof_image']['tmp_name'], $file_path)) {
+            // Get item_id from delivery_schedules
+            $getItemSql = "SELECT item_id FROM delivery_schedules WHERE id = ?";
+            $getItemStmt = $conn->prepare($getItemSql);
+            $getItemStmt->bind_param("i", $delivery_id);
+            $getItemStmt->execute();
+            $item_result = $getItemStmt->get_result()->fetch_assoc();
+            $item_id = $item_result['item_id'];
+            $getItemStmt->close();
+            
+            // Update delivery with proof and mark as delivered
+            $updateSql = "UPDATE delivery_schedules SET delivery_proof = ?, delivered_at = NOW(), delivery_status = 'delivered' WHERE id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("si", $file_name, $delivery_id);
+            
+            // Update order item tracking status
+            $updateOrderItemSql = "UPDATE order_items SET tracking_status = 'delivered' WHERE id = ?";
+            $updateOrderItemStmt = $conn->prepare($updateOrderItemSql);
+            $updateOrderItemStmt->bind_param("i", $item_id);
+            
+            if ($updateStmt->execute() && $updateOrderItemStmt->execute()) {
+                $success_message = "Delivery completed successfully with proof uploaded!";
+            } else {
+                $error_message = "Error completing delivery: " . $conn->error;
+            }
+            
+            $updateStmt->close();
+            $updateOrderItemStmt->close();
+        } else {
+            $error_message = "Error uploading delivery proof image.";
+        }
+    } else {
+        $error_message = "Please select a valid image file for delivery proof.";
+    }
+}
+
+// Handle canceling 3rd party assignment
+if ($_POST && isset($_POST['cancel_third_party_assignment'])) {
+    $delivery_id = $_POST['delivery_id'];
+    
+    $cancelSql = "UPDATE delivery_schedules SET delivery_type = NULL, delivery_status = 'scheduled' WHERE id = ?";
+    $cancelStmt = $conn->prepare($cancelSql);
+    $cancelStmt->bind_param("i", $delivery_id);
+    
+    if ($cancelStmt->execute()) {
+        $success_message = "3rd party assignment canceled. Item returned to unassigned list.";
+    } else {
+        $error_message = "Error canceling 3rd party assignment: " . $conn->error;
+    }
+    $cancelStmt->close();
 }
 
 // Convert date for display
@@ -142,6 +274,8 @@ $unassignedItemsSql = "SELECT
     ds.delivery_time,
     ds.delivery_notes,
     ds.delivered_at,
+    ds.delivery_status,
+    ds.delivery_type,
     o.customer_name,
     o.email,
     o.mobile,
@@ -152,16 +286,21 @@ $unassignedItemsSql = "SELECT
     oi.variant_color,
     oi.size,
     oi.subtotal,
+    oi.tracking_status,
     CASE 
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date > CURDATE() THEN 'upcoming'
         WHEN ds.delivered_at IS NOT NULL THEN 'completed'
-    END as delivery_status
+    END as priority_status
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
-WHERE ds.delivery_date = ? AND ds.truck_schedule_id IS NULL AND ds.delivered_at IS NULL
+WHERE ds.delivery_date = ? 
+    AND ds.truck_schedule_id IS NULL 
+    AND ds.delivered_at IS NULL 
+    AND (ds.delivery_type IS NULL OR ds.delivery_type = 'company')
+    AND ds.delivery_status NOT IN ('third_party_assigned')
 ORDER BY ds.delivery_time ASC, ds.order_id ASC";
 
 $unassignedItemsStmt = $conn->prepare($unassignedItemsSql);
@@ -181,9 +320,16 @@ $driversSql = "SELECT
     dl.status
 FROM driver_list dl
 WHERE dl.status = 'active'
+    AND dl.id NOT IN (
+        SELECT DISTINCT ts.assigned_driver_id 
+        FROM truck_schedules ts 
+        WHERE ts.scheduled_date = ? 
+        AND ts.assigned_driver_id IS NOT NULL
+    )
 ORDER BY dl.first_name, dl.last_name";
 
 $driversStmt = $conn->prepare($driversSql);
+$driversStmt->bind_param("s", $selected_date);
 $driversStmt->execute();
 $available_drivers = $driversStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $driversStmt->close();
@@ -192,8 +338,9 @@ $driversStmt->close();
 $statsSql = "SELECT 
     COUNT(*) as total_scheduled,
     COUNT(CASE WHEN ds.truck_schedule_id IS NOT NULL THEN 1 END) as assigned_to_trucks,
-    COUNT(CASE WHEN ds.truck_schedule_id IS NULL THEN 1 END) as unassigned_items,
-    COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_deliveries
+    COUNT(CASE WHEN ds.truck_schedule_id IS NULL AND (ds.delivery_type IS NULL OR ds.delivery_type = 'company') AND ds.delivery_status NOT IN ('third_party_assigned') THEN 1 END) as unassigned_items,
+    COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_deliveries,
+    COUNT(CASE WHEN ds.delivery_type IN ('lalamove', 'third_party') THEN 1 END) as third_party_assigned
 FROM delivery_schedules ds
 WHERE ds.delivery_date = ?";
 
@@ -245,6 +392,11 @@ $statsStmt->close();
         .delivery-item:hover {
             transform: translateY(-1px);
         }
+        .status-loading { @apply bg-blue-100 text-blue-800; }
+        .status-out_for_delivery { @apply bg-orange-100 text-orange-800; }
+        .status-delivered { @apply bg-green-100 text-green-800; }
+        .status-third_party_assigned { @apply bg-purple-100 text-purple-800; }
+        .status-scheduled { @apply bg-gray-100 text-gray-800; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -266,12 +418,23 @@ $statsStmt->close();
                 
                 <!-- Action Buttons -->
                 <div class="flex items-center space-x-3">
+                    <button onclick="openThirdPartyModal()" 
+                            class="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200 transition-colors flex items-center">
+                        <i class="fas fa-shipping-fast mr-2"></i>
+                        Assign 3rd Party
+                    </button>
+                    <!-- Add this button after the "Assign 3rd Party" button -->
+<a href="third_party_deliveries.php?date=<?php echo $selected_date; ?>" 
+   class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
+    <i class="fas fa-list-alt mr-2"></i>
+    View 3rd Party Deliveries
+</a>
                     <a href="assign_drivers.php?date=<?php echo $selected_date; ?>" 
                        class="bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors flex items-center">
                         <i class="fas fa-truck mr-2"></i>
                         Schedule Trucks
                     </a>
-                    <a href="logistics_dashboard_view.php" 
+                    <a href="main_dashboard.php" 
                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Dashboard
@@ -303,7 +466,7 @@ $statsStmt->close();
         <?php endif; ?>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="text-center">
                     <div class="bg-blue-100 p-3 rounded-lg mx-auto w-fit mb-2">
@@ -326,6 +489,16 @@ $statsStmt->close();
             
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="text-center">
+                    <div class="bg-purple-100 p-3 rounded-lg mx-auto w-fit mb-2">
+                        <i class="fas fa-shipping-fast text-purple-600 text-lg"></i>
+                    </div>
+                    <p class="text-xs font-medium text-gray-600 mb-1">3rd Party</p>
+                    <p class="text-xl font-bold text-purple-600"><?php echo $stats['third_party_assigned']; ?></p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="text-center">
                     <div class="bg-yellow-100 p-3 rounded-lg mx-auto w-fit mb-2">
                         <i class="fas fa-exclamation-triangle text-yellow-600 text-lg"></i>
                     </div>
@@ -336,11 +509,11 @@ $statsStmt->close();
             
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="text-center">
-                    <div class="bg-purple-100 p-3 rounded-lg mx-auto w-fit mb-2">
-                        <i class="fas fa-truck-loading text-purple-600 text-lg"></i>
+                    <div class="bg-gray-100 p-3 rounded-lg mx-auto w-fit mb-2">
+                        <i class="fas fa-truck-loading text-gray-600 text-lg"></i>
                     </div>
                     <p class="text-xs font-medium text-gray-600 mb-1">Scheduled Trucks</p>
-                    <p class="text-xl font-bold text-purple-600"><?php echo count($scheduled_trucks); ?></p>
+                    <p class="text-xl font-bold text-gray-600"><?php echo count($scheduled_trucks); ?></p>
                 </div>
             </div>
         </div>
@@ -369,8 +542,8 @@ $statsStmt->close();
                             <div class="flex items-center justify-between text-white">
                                 <div class="flex items-center space-x-4">
                                     <div class="w-16 h-12 bg-white bg-opacity-20 rounded-lg overflow-hidden">
-                                        <?php if ($truck['truck_photo'] && file_exists("../uploads/truck_photo_collection/" . $truck['truck_photo'])): ?>
-                                            <img src="../uploads/truck_photo_collection/<?php echo htmlspecialchars($truck['truck_photo']); ?>" 
+                                        <?php if ($truck['truck_photo'] && file_exists("../../uploads/truck_photo_collection/" . $truck['truck_photo'])): ?>
+                                            <img src="../../uploads/truck_photo_collection/<?php echo htmlspecialchars($truck['truck_photo']); ?>" 
                                                  alt="Truck Photo" class="w-full h-full object-cover">
                                         <?php else: ?>
                                             <div class="w-full h-full flex items-center justify-center">
@@ -418,8 +591,8 @@ $statsStmt->close();
                                         
                                         <div class="flex items-center space-x-3">
                                             <div class="w-10 h-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                                                <?php if ($truck['driver_photo'] && file_exists("../uploads/driver_photo_collection/" . $truck['driver_photo'])): ?>
-                                                    <img src="../uploads/driver_photo_collection/<?php echo htmlspecialchars($truck['driver_photo']); ?>" 
+                                                <?php if ($truck['driver_photo'] && file_exists("../../uploads/driver_photo_collection/" . $truck['driver_photo'])): ?>
+                                                    <img src="../../uploads/driver_photo_collection/<?php echo htmlspecialchars($truck['driver_photo']); ?>" 
                                                          alt="Driver Photo" class="w-full h-full object-cover">
                                                 <?php else: ?>
                                                     <div class="w-full h-full flex items-center justify-center">
@@ -449,11 +622,11 @@ $statsStmt->close();
                                                 <i class="fas fa-user-times mr-2"></i>
                                                 No Driver Assigned
                                             </h4>
-                                            <button onclick="openDriverModal(<?php echo $truck['truck_schedule_id']; ?>)" 
-                                                    class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">
-                                                <i class="fas fa-plus mr-1"></i>
-                                                Assign Driver
-                                            </button>
+                                            <button onclick="refreshDriverModal(<?php echo $truck['truck_schedule_id']; ?>)" 
+        class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">
+    <i class="fas fa-plus mr-1"></i>
+    Assign Driver
+</button>
                                         </div>
                                         <p class="text-sm text-yellow-700">Please assign a driver to this truck before deliveries</p>
                                     </div>
@@ -480,24 +653,27 @@ $statsStmt->close();
                                 <?php
                                 // Get items assigned to this truck
                                 $truckItemsSql = "SELECT 
-                                    ds.id as delivery_id,
-                                    ds.order_id,
-                                    ds.delivery_time,
-                                    ds.delivery_notes,
-                                    o.customer_name,
-                                    o.address,
-                                    o.mobile,
-                                    oi.product_name,
-                                    oi.quantity,
-                                    oi.price,
-                                    oi.subtotal,
-                                    oi.variant_color,
-                                    oi.size
-                                FROM delivery_schedules ds
-                                INNER JOIN orders o ON ds.order_id = o.id
-                                INNER JOIN order_items oi ON ds.item_id = oi.id
-                                WHERE ds.truck_schedule_id = ?
-                                ORDER BY ds.delivery_time ASC";
+    ds.id as delivery_id,
+    ds.order_id,
+    ds.delivery_time,
+    ds.delivery_notes,
+    ds.delivery_status,
+    ds.delivery_proof,
+    o.customer_name,
+    o.address,
+    o.mobile,
+    oi.product_name,
+    oi.quantity,
+    oi.price,
+    oi.subtotal,
+    oi.variant_color,
+    oi.size,
+    oi.tracking_status
+FROM delivery_schedules ds
+INNER JOIN orders o ON ds.order_id = o.id
+INNER JOIN order_items oi ON ds.item_id = oi.id
+WHERE ds.truck_schedule_id = ?
+ORDER BY ds.delivery_time ASC";
                                 
                                 $truckItemsStmt = $conn->prepare($truckItemsSql);
                                 $truckItemsStmt->bind_param("i", $truck['truck_schedule_id']);
@@ -528,14 +704,35 @@ $statsStmt->close();
                                                     <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                                                         Order #<?php echo $item['order_id']; ?>
                                                     </span>
-                                                    <form method="POST" class="inline">
-                                                        <input type="hidden" name="delivery_id" value="<?php echo $item['delivery_id']; ?>">
-                                                        <button type="submit" name="remove_item_from_truck" 
-                                                                onclick="return confirm('Remove this item from truck?')"
-                                                                class="text-red-600 hover:text-red-800 text-sm">
-                                                            <i class="fas fa-times"></i>
-                                                        </button>
-                                                    </form>
+                                                    <div class="flex items-center space-x-1">
+                                                        <?php
+$status = $item['delivery_status'] ?? 'loading';
+$statusLabels = [
+    'loading' => 'Loading',
+    'out_for_delivery' => 'Out for Delivery',
+    'delivered' => 'Delivered',
+    'scheduled' => 'Scheduled'
+];
+?>
+<span class="status-<?php echo $status; ?> px-2 py-1 rounded text-xs font-bold">
+    <?php echo $statusLabels[$status] ?? ucfirst($status); ?>
+</span>
+<?php if ($item['tracking_status']): ?>
+<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+    <?php echo ucfirst(str_replace('_', ' ', $item['tracking_status'])); ?>
+</span>
+<?php endif; ?>
+                                                        <?php if ($status !== 'delivered'): ?>
+                                                        <form method="POST" class="inline">
+                                                            <input type="hidden" name="delivery_id" value="<?php echo $item['delivery_id']; ?>">
+                                                            <button type="submit" name="remove_item_from_truck" 
+                                                                    onclick="return confirm('Remove this item from truck?')"
+                                                                    class="text-red-600 hover:text-red-800 text-sm">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </form>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                                 
                                                 <h5 class="font-semibold text-gray-900 mb-2 text-sm">
@@ -562,15 +759,52 @@ $statsStmt->close();
                                                     </div>
                                                 </div>
                                                 
-                                                <div class="bg-white rounded p-2 text-xs">
+                                                <div class="bg-white rounded p-2 text-xs mb-3">
                                                     <div class="font-medium text-gray-800 mb-1">
                                                         <i class="fas fa-user mr-1"></i>
                                                         <?php echo htmlspecialchars($item['customer_name']); ?>
                                                     </div>
                                                     <div class="text-gray-600 text-xs">
-                                                        <i class="fas fa-map-marker-alt mr-1"></i>
-                                                        <?php echo htmlspecialchars(substr($item['address'], 0, 50)) . (strlen($item['address']) > 50 ? '...' : ''); ?>
-                                                    </div>
+    <i class="fas fa-map-marker-alt mr-1"></i>
+    <span class="break-words"><?php echo htmlspecialchars($item['address']); ?></span>
+</div>
+                                                </div>
+                                                
+                                                <!-- Action Buttons -->
+                                                <div class="flex flex-col space-y-2">
+    <?php if ($status === 'loading' && $truck['assigned_driver_id']): ?>
+        <form method="POST">
+            <input type="hidden" name="delivery_id" value="<?php echo $item['delivery_id']; ?>">
+            <button type="submit" name="out_for_delivery" 
+                    class="w-full bg-orange-500 text-white px-3 py-2 rounded text-xs hover:bg-orange-600 transition-colors">
+                <i class="fas fa-truck mr-1"></i>
+                Out for Delivery
+            </button>
+        </form>
+    <?php elseif ($status === 'loading' && !$truck['assigned_driver_id']): ?>
+        <div class="w-full bg-gray-300 text-gray-500 px-3 py-2 rounded text-xs text-center cursor-not-allowed">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            Assign Driver First
+        </div>
+    <?php elseif ($status === 'out_for_delivery'): ?>
+                                                        <button onclick="openProofModal(<?php echo $item['delivery_id']; ?>)" 
+                                                                class="w-full bg-green-500 text-white px-3 py-2 rounded text-xs hover:bg-green-600 transition-colors">
+                                                            <i class="fas fa-camera mr-1"></i>
+                                                            Upload Proof
+                                                        </button>
+                                                        <!-- Add this right after the existing action buttons div -->
+<a href="reschedule_delivery.php?delivery_id=<?php echo $item['delivery_id']; ?>&date=<?php echo $selected_date; ?>" 
+   class="w-full bg-yellow-500 text-white px-3 py-2 rounded text-xs hover:bg-yellow-600 transition-colors text-center block">
+    <i class="fas fa-calendar-alt mr-1"></i>
+    Reschedule
+</a>
+                                                    <?php elseif ($status === 'delivered' && $item['delivery_proof']): ?>
+                                                        <button onclick="viewProof('<?php echo htmlspecialchars($item['delivery_proof']); ?>')" 
+                                                                class="w-full bg-blue-500 text-white px-3 py-2 rounded text-xs hover:bg-blue-600 transition-colors">
+                                                            <i class="fas fa-eye mr-1"></i>
+                                                            View Proof
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         <?php endforeach; ?>
@@ -593,7 +827,7 @@ $statsStmt->close();
                             </div>
                             <div>
                                 <h2 class="text-2xl font-bold">Unassigned Items</h2>
-                                <p class="text-yellow-100"><?php echo count($unassigned_items); ?> items need truck assignment</p>
+                                <p class="text-yellow-100"><?php echo count($unassigned_items); ?> items need assignment</p>
                             </div>
                         </div>
                     </div>
@@ -603,8 +837,8 @@ $statsStmt->close();
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <?php foreach ($unassigned_items as $item): ?>
                             <?php
-                            $isOverdue = $item['delivery_status'] === 'overdue';
-                            $isToday = $item['delivery_status'] === 'today_pending';
+                            $isOverdue = $item['priority_status'] === 'overdue';
+                            $isToday = $item['priority_status'] === 'today_pending';
                             
                             if ($isOverdue) {
                                 $cardClass = 'bg-red-50 border-red-200';
@@ -657,6 +891,10 @@ $statsStmt->close();
                                         <span>Value:</span>
                                         <span class="font-medium">₱<?php echo number_format($item['subtotal'], 2); ?></span>
                                     </div>
+                                    <div class="flex justify-between">
+    <span>Status:</span>
+    <span class="font-medium"><?php echo $item['tracking_status'] ? ucfirst(str_replace('_', ' ', $item['tracking_status'])) : 'N/A'; ?></span>
+</div>
                                 </div>
                                 
                                 <div class="bg-white rounded p-2 text-xs">
@@ -665,9 +903,9 @@ $statsStmt->close();
                                         <?php echo htmlspecialchars($item['customer_name']); ?>
                                     </div>
                                     <div class="text-gray-600 text-xs">
-                                        <i class="fas fa-map-marker-alt mr-1"></i>
-                                        <?php echo htmlspecialchars(substr($item['address'], 0, 50)) . (strlen($item['address']) > 50 ? '...' : ''); ?>
-                                    </div>
+    <i class="fas fa-map-marker-alt mr-1"></i>
+    <span class="break-words"><?php echo htmlspecialchars($item['address']); ?></span>
+</div>
                                     <?php if ($item['mobile']): ?>
                                     <div class="text-gray-600 text-xs mt-1">
                                         <i class="fas fa-phone mr-1"></i>
@@ -724,8 +962,8 @@ $statsStmt->close();
                                             <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors driver-selection-card">
                                                 <div class="flex items-center space-x-4">
                                                     <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                                                        <?php if ($driver['photo_path'] && file_exists("../uploads/driver_photo_collection/" . $driver['photo_path'])): ?>
-                                                            <img src="../uploads/driver_photo_collection/<?php echo htmlspecialchars($driver['photo_path']); ?>" 
+                                                        <?php if ($driver['photo_path'] && file_exists("../../uploads/driver_photo_collection/" . $driver['photo_path'])): ?>
+                                                            <img src="../../uploads/driver_photo_collection/<?php echo htmlspecialchars($driver['photo_path']); ?>" 
                                                                  alt="Driver Photo" class="w-full h-full object-cover">
                                                         <?php else: ?>
                                                             <div class="w-full h-full flex items-center justify-center">
@@ -832,8 +1070,8 @@ $statsStmt->close();
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                                     <?php foreach ($unassigned_items as $item): ?>
                                         <?php
-                                        $isOverdue = $item['delivery_status'] === 'overdue';
-                                        $isToday = $item['delivery_status'] === 'today_pending';
+                                        $isOverdue = $item['priority_status'] === 'overdue';
+                                        $isToday = $item['priority_status'] === 'today_pending';
                                         
                                         if ($isOverdue) {
                                             $cardClass = 'bg-red-50 border-red-200';
@@ -883,9 +1121,9 @@ $statsStmt->close();
                                                         <?php echo htmlspecialchars($item['customer_name']); ?>
                                                     </div>
                                                     <div class="text-gray-600 text-xs">
-                                                        <i class="fas fa-map-marker-alt mr-1"></i>
-                                                        <?php echo htmlspecialchars(substr($item['address'], 0, 40)) . (strlen($item['address']) > 40 ? '...' : ''); ?>
-                                                    </div>
+    <i class="fas fa-map-marker-alt mr-1"></i>
+    <span class="break-words"><?php echo htmlspecialchars($item['address']); ?></span>
+</div>
                                                 </div>
                                             </div>
                                         </label>
@@ -913,8 +1151,225 @@ $statsStmt->close();
         </div>
     </div>
 
+    <!-- Third Party Assignment Modal -->
+    <div id="thirdPartyModal" class="fixed inset-0 bg-black bg-opacity-50 assignment-modal hidden z-50">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-900">Assign Items to 3rd Party Delivery</h3>
+                        <button type="button" onclick="closeThirdPartyModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <form method="POST" id="thirdPartyAssignForm">
+                        <input type="hidden" name="assign_third_party" value="1">
+                        
+                        <!-- Delivery Service Selection -->
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-shipping-fast mr-2 text-purple-500"></i>
+                                Select Delivery Service:
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <label class="service-option cursor-pointer">
+                                    <input type="radio" name="delivery_type" value="lalamove" class="sr-only service-radio" required>
+                                    <div class="service-card border-2 border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                                        <div class="text-center">
+                                            <div class="bg-pink-100 p-3 rounded-lg mx-auto w-fit mb-2">
+                                                <i class="fas fa-motorcycle text-pink-600 text-2xl"></i>
+                                            </div>
+                                            <h5 class="font-semibold text-gray-900 mb-1">Lalamove</h5>
+                                            <p class="text-sm text-gray-600">Fast motorcycle delivery</p>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="service-option cursor-pointer">
+                                    <input type="radio" name="delivery_type" value="third_party" class="sr-only service-radio" required>
+                                    <div class="service-card border-2 border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                                        <div class="text-center">
+                                            <div class="bg-blue-100 p-3 rounded-lg mx-auto w-fit mb-2">
+                                                <i class="fas fa-truck text-blue-600 text-2xl"></i>
+                                            </div>
+                                            <h5 class="font-semibold text-gray-900 mb-1">Other 3rd Party</h5>
+                                            <p class="text-sm text-gray-600">External delivery service</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Item Selection -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                                    <i class="fas fa-boxes mr-2 text-purple-500"></i>
+                                    Select Items to Assign:
+                                </h4>
+                                <div class="flex items-center space-x-3">
+                                    <button type="button" onclick="selectAllThirdPartyItems()" 
+                                            class="text-sm text-blue-600 hover:text-blue-800">
+                                        Select All
+                                    </button>
+                                    <button type="button" onclick="deselectAllThirdPartyItems()" 
+                                            class="text-sm text-gray-600 hover:text-gray-800">
+                                        Deselect All
+                                    </button>
+                                    <span class="text-sm text-gray-600">
+                                        Selected: <span id="selectedThirdPartyCount">0</span>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <?php if (empty($unassigned_items)): ?>
+                                <div class="text-center py-8">
+                                    <div class="text-gray-400 mb-4">
+                                        <i class="fas fa-box-open text-4xl"></i>
+                                    </div>
+                                    <p class="text-gray-600">No unassigned delivery items available</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                                    <?php foreach ($unassigned_items as $item): ?>
+                                        <label class="third-party-item-option cursor-pointer">
+                                            <input type="checkbox" name="delivery_ids[]" value="<?php echo $item['delivery_id']; ?>" 
+                                                   class="sr-only third-party-checkbox">
+                                            <div class="third-party-selection-card bg-gray-50 border-2 border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                                                <div class="flex items-start justify-between mb-2">
+                                                    <div class="text-xs font-medium text-gray-700">
+                                                        Order #<?php echo $item['order_id']; ?>
+                                                    </div>
+                                                    <div class="text-purple-500 opacity-0 third-party-check">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </div>
+                                                </div>
+                                                
+                                                <h5 class="font-semibold text-gray-900 mb-2 text-sm">
+                                                    <?php echo htmlspecialchars($item['product_name']); ?>
+                                                </h5>
+
+                                                <div class="text-xs text-gray-600 space-y-1 mb-2">
+                                                    <div class="flex justify-between">
+                                                        <span>Qty:</span>
+                                                        <span class="font-medium"><?php echo $item['quantity']; ?></span>
+                                                    </div>
+                                                    <div class="flex justify-between">
+                                                        <span>Time:</span>
+                                                        <span class="font-medium">
+                                                            <?php 
+                                                            $timeObj = DateTime::createFromFormat('H:i:s', $item['delivery_time']);
+                                                            echo $timeObj->format('g:i A');
+                                                            ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="bg-white rounded p-2 text-xs">
+                                                    <div class="font-medium text-gray-800">
+                                                        <i class="fas fa-user mr-1"></i>
+                                                        <?php echo htmlspecialchars($item['customer_name']); ?>
+                                                    </div>
+                                                    <div class="text-gray-600 text-xs">
+    <i class="fas fa-map-marker-alt mr-1"></i>
+    <span class="break-words"><?php echo htmlspecialchars($item['address']); ?></span>
+</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <?php if (!empty($unassigned_items)): ?>
+                        <div class="flex items-center justify-end space-x-4 pt-6 border-t">
+                            <button type="button" onclick="closeThirdPartyModal()" 
+                                    class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" id="assignThirdPartyButton" disabled
+                                    class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                <i class="fas fa-check mr-2"></i>
+                                Assign to Service
+                            </button>
+                        </div>
+                        <?php endif; ?>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Proof Upload Modal -->
+    <div id="proofModal" class="fixed inset-0 bg-black bg-opacity-50 assignment-modal hidden z-50">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-900">Upload Delivery Proof</h3>
+                        <button type="button" onclick="closeProofModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <form method="POST" enctype="multipart/form-data" id="proofUploadForm">
+                        <input type="hidden" name="delivery_id" id="proofModalDeliveryId">
+                        <input type="hidden" name="upload_delivery_proof" value="1">
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Select delivery proof image:
+                            </label>
+                            <input type="file" name="proof_image" accept="image/*" required
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">Accepted formats: JPG, PNG, GIF</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-end space-x-4">
+                            <button type="button" onclick="closeProofModal()" 
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium">
+                                <i class="fas fa-upload mr-2"></i>
+                                Upload & Complete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Proof View Modal -->
+    <div id="viewProofModal" class="fixed inset-0 bg-black bg-opacity-50 assignment-modal hidden z-50">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-900">Delivery Proof</h3>
+                        <button type="button" onclick="closeViewProofModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6 text-center">
+                    <img id="proofImage" src="" alt="Delivery Proof" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentTruckId = null;
+        let currentDeliveryId = null;
 
         // Driver Modal Functions
         function openDriverModal(truckId) {
@@ -923,6 +1378,106 @@ $statsStmt->close();
             document.getElementById('driverModal').classList.remove('hidden');
             resetDriverSelection();
         }
+
+        function refreshDriverModal(truckId) {
+    currentTruckId = truckId;
+    
+    // Show loading state
+    document.getElementById('driverModalTruckId').value = truckId;
+    document.getElementById('driverModal').classList.remove('hidden');
+    
+    // Update modal content with fresh driver data
+    fetch('get_available_drivers.php?date=<?php echo $selected_date; ?>&truck_id=' + truckId)
+        .then(response => response.json())
+        .then(data => {
+            updateDriverModalContent(data.drivers, truckId);
+        })
+        .catch(error => {
+            console.error('Error fetching drivers:', error);
+            // Fallback to original modal
+            resetDriverSelection();
+        });
+}
+
+function updateDriverModalContent(drivers, truckId) {
+    const driverContainer = document.querySelector('#driverModal .space-y-3');
+    
+    if (drivers.length === 0) {
+        driverContainer.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-gray-400 mb-4">
+                    <i class="fas fa-user-times text-4xl"></i>
+                </div>
+                <p class="text-gray-600">No available drivers found</p>
+            </div>
+        `;
+        // Hide the submit button
+        document.querySelector('#driverAssignForm .flex.items-center.justify-end').style.display = 'none';
+        return;
+    }
+    
+    // Show the submit button
+    document.querySelector('#driverAssignForm .flex.items-center.justify-end').style.display = 'flex';
+    
+    let html = '';
+    drivers.forEach(driver => {
+        const photoSrc = driver.photo_path ? 
+            `../../uploads/driver_photo_collection/${driver.photo_path}` : 
+            '';
+        
+        html += `
+            <label class="driver-option cursor-pointer">
+                <input type="radio" name="driver_id" value="${driver.driver_id}" 
+                       class="sr-only driver-radio" required>
+                <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors driver-selection-card">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                            ${driver.photo_path ? 
+                                `<img src="${photoSrc}" alt="Driver Photo" class="w-full h-full object-cover">` :
+                                `<div class="w-full h-full flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>`
+                            }
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900">
+                                ${driver.first_name} ${driver.last_name}
+                            </div>
+                            ${driver.contact_number ? 
+                                `<div class="text-sm text-gray-600">
+                                    <i class="fas fa-phone mr-1"></i>
+                                    ${driver.contact_number}
+                                </div>` : ''
+                            }
+                            ${driver.email ? 
+                                `<div class="text-sm text-gray-600">
+                                    <i class="fas fa-envelope mr-1"></i>
+                                    ${driver.email}
+                                </div>` : ''
+                            }
+                        </div>
+                        <div class="text-blue-500 opacity-0 driver-check">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </label>
+        `;
+    });
+    
+    driverContainer.innerHTML = html;
+    
+    // Reattach event listeners
+    attachDriverRadioListeners();
+    resetDriverSelection();
+}
+
+function attachDriverRadioListeners() {
+    // Driver selection - initial load
+attachDriverRadioListeners();
+}
+
+
 
         function closeDriverModal() {
             document.getElementById('driverModal').classList.add('hidden');
@@ -1000,6 +1555,94 @@ $statsStmt->close();
             }
         }
 
+        // Third Party Modal Functions
+        function openThirdPartyModal() {
+            document.getElementById('thirdPartyModal').classList.remove('hidden');
+            resetThirdPartySelection();
+        }
+
+        function closeThirdPartyModal() {
+            document.getElementById('thirdPartyModal').classList.add('hidden');
+            resetThirdPartySelection();
+        }
+
+        function resetThirdPartySelection() {
+            document.querySelectorAll('.service-radio').forEach(radio => {
+                radio.checked = false;
+            });
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('border-purple-500', 'bg-purple-50');
+                card.classList.add('border-gray-200');
+            });
+            document.querySelectorAll('.third-party-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.querySelectorAll('.third-party-selection-card').forEach(card => {
+                card.classList.remove('border-purple-500', 'bg-purple-50');
+            });
+            document.querySelectorAll('.third-party-check').forEach(check => {
+                check.classList.add('opacity-0');
+            });
+            updateSelectedThirdPartyCount();
+        }
+
+        function selectAllThirdPartyItems() {
+            document.querySelectorAll('.third-party-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+                const card = checkbox.closest('.third-party-item-option').querySelector('.third-party-selection-card');
+                const check = checkbox.closest('.third-party-item-option').querySelector('.third-party-check');
+                card.classList.add('border-purple-500', 'bg-purple-50');
+                check.classList.remove('opacity-0');
+            });
+            updateSelectedThirdPartyCount();
+        }
+
+        function deselectAllThirdPartyItems() {
+            document.querySelectorAll('.third-party-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+                const card = checkbox.closest('.third-party-item-option').querySelector('.third-party-selection-card');
+                const check = checkbox.closest('.third-party-item-option').querySelector('.third-party-check');
+                card.classList.remove('border-purple-500', 'bg-purple-50');
+                check.classList.add('opacity-0');
+            });
+            updateSelectedThirdPartyCount();
+        }
+
+        function updateSelectedThirdPartyCount() {
+            const selectedCount = document.querySelectorAll('.third-party-checkbox:checked').length;
+            document.getElementById('selectedThirdPartyCount').textContent = selectedCount;
+            
+            const assignButton = document.getElementById('assignThirdPartyButton');
+            if (selectedCount > 0) {
+                assignButton.disabled = false;
+                assignButton.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            } else {
+                assignButton.disabled = true;
+                assignButton.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            }
+        }
+
+        // Proof Modal Functions
+        function openProofModal(deliveryId) {
+            currentDeliveryId = deliveryId;
+            document.getElementById('proofModalDeliveryId').value = deliveryId;
+            document.getElementById('proofModal').classList.remove('hidden');
+        }
+
+        function closeProofModal() {
+            document.getElementById('proofModal').classList.add('hidden');
+            currentDeliveryId = null;
+        }
+
+        function viewProof(imageName) {
+            document.getElementById('proofImage').src = '../../uploads/delivery_proof/' + imageName;
+            document.getElementById('viewProofModal').classList.remove('hidden');
+        }
+
+        function closeViewProofModal() {
+            document.getElementById('viewProofModal').classList.add('hidden');
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Driver selection
@@ -1042,6 +1685,42 @@ $statsStmt->close();
                     updateSelectedItemsCount();
                 });
             });
+
+            // Service selection
+            document.querySelectorAll('.service-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        // Reset all cards
+                        document.querySelectorAll('.service-card').forEach(card => {
+                            card.classList.remove('border-purple-500', 'bg-purple-50');
+                            card.classList.add('border-gray-200');
+                        });
+                        
+                        // Highlight selected card
+                        const card = this.closest('.service-option').querySelector('.service-card');
+                        card.classList.remove('border-gray-200');
+                        card.classList.add('border-purple-500', 'bg-purple-50');
+                    }
+                });
+            });
+
+            // Third party item selection
+            document.querySelectorAll('.third-party-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const card = this.closest('.third-party-item-option').querySelector('.third-party-selection-card');
+                    const check = this.closest('.third-party-item-option').querySelector('.third-party-check');
+                    
+                    if (this.checked) {
+                        card.classList.add('border-purple-500', 'bg-purple-50');
+                        check.classList.remove('opacity-0');
+                    } else {
+                        card.classList.remove('border-purple-500', 'bg-purple-50');
+                        check.classList.add('opacity-0');
+                    }
+                    
+                    updateSelectedThirdPartyCount();
+                });
+            });
         });
 
         // Close modals on escape key
@@ -1052,6 +1731,15 @@ $statsStmt->close();
                 }
                 if (!document.getElementById('itemsModal').classList.contains('hidden')) {
                     closeItemsModal();
+                }
+                if (!document.getElementById('thirdPartyModal').classList.contains('hidden')) {
+                    closeThirdPartyModal();
+                }
+                if (!document.getElementById('proofModal').classList.contains('hidden')) {
+                    closeProofModal();
+                }
+                if (!document.getElementById('viewProofModal').classList.contains('hidden')) {
+                    closeViewProofModal();
                 }
             }
         });
@@ -1066,6 +1754,24 @@ $statsStmt->close();
         document.getElementById('itemsModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeItemsModal();
+            }
+        });
+
+        document.getElementById('thirdPartyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeThirdPartyModal();
+            }
+        });
+
+        document.getElementById('proofModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProofModal();
+            }
+        });
+
+        document.getElementById('viewProofModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeViewProofModal();
             }
         });
     </script>

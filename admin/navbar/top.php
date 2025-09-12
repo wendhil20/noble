@@ -544,7 +544,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <!-- Logistics Section -->
                                 <div class="px-3 py-2">
                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Logistics</div>
-                                    <a href="../logistic_management/logistics_dashboard"
+                                    <a href="../logistic_management/main_dashboard"
                                         class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

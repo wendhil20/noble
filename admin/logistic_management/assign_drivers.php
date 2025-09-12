@@ -234,7 +234,7 @@ $statsStmt->close();
                         <i class="fas fa-clipboard-list mr-2"></i>
                         Assign Deliveries
                     </a>
-                    <a href="logistics_dashboard_view.php" 
+                    <a href="main_dashboard.php" 
                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Dashboard

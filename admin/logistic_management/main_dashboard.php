@@ -42,10 +42,10 @@ $scheduleSql = "SELECT
     oi.size,
     oi.tracking_status,
     CASE 
+        WHEN ds.delivered_at IS NOT NULL THEN 'completed'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date > CURDATE() THEN 'upcoming'
-        WHEN ds.delivered_at IS NOT NULL THEN 'completed'
     END as delivery_status,
     CASE 
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN DATEDIFF(CURDATE(), ds.delivery_date)
@@ -387,6 +387,33 @@ $statsStmt->close();
         let selectedDate = null;
         let currentFilter = 'all';
         
+        // **NEW CODE 1: Add helper functions for current month filtering**
+        function getCurrentMonthRange() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            
+            const startOfMonth = new Date(year, month, 1);
+            const endOfMonth = new Date(year, month + 1, 0);
+            
+            const startDateString = year + '-' + 
+                String(month + 1).padStart(2, '0') + '-01';
+            const endDateString = year + '-' + 
+                String(month + 1).padStart(2, '0') + '-' + 
+                String(endOfMonth.getDate()).padStart(2, '0');
+                
+            return { startDateString, endDateString };
+        }
+        
+        function filterSchedulesByCurrentMonth(schedules) {
+            const { startDateString, endDateString } = getCurrentMonthRange();
+            return schedules.filter(schedule => 
+                schedule.delivery_date >= startDateString && 
+                schedule.delivery_date <= endDateString
+            );
+        }
+        // **END OF NEW CODE 1**
+        
         function generateCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
@@ -443,6 +470,7 @@ $statsStmt->close();
                     const badgesContainer = document.createElement('div');
                     badgesContainer.className = 'delivery-badges';
                     
+                    // Only show overdue badge if there are actually overdue items (not delivered and past due date)
                     if (overdueCount > 0) {
                         dayElement.className += ' has-overdue';
                         const overdueBadge = document.createElement('div');
@@ -468,9 +496,10 @@ $statsStmt->close();
                         badgesContainer.appendChild(completedBadge);
                     }
                     
+                    // Calendar day styling priority: overdue > busy > has deliveries
                     if (totalCount >= 10) {
                         dayElement.className += ' busy';
-                    } else if (!overdueCount) {
+                    } else if (overdueCount === 0 && (pendingCount > 0 || completedCount > 0)) {
                         dayElement.className += ' has-deliveries';
                     }
                     
@@ -491,7 +520,6 @@ $statsStmt->close();
             }
         }
         
-        // MODIFICATION 2: Updated selectDate function to show/hide navigation button
         function selectDate(dateString, element) {
             // Remove previous selection
             const previousSelected = document.querySelector('.calendar-day.selected');
@@ -517,7 +545,6 @@ $statsStmt->close();
             updateDeliveryDetails(dateString);
         }
         
-        // MODIFICATION 3: New function to handle navigation
         function navigateToDetailedView() {
             if (selectedDate) {
                 // You can change this URL to your target page
@@ -547,7 +574,7 @@ $statsStmt->close();
             }
             selectedDate = null;
             
-            // MODIFICATION 4: Hide navigation button when filtering
+            // Hide navigation button when filtering
             document.getElementById('navigateBtn').classList.add('hidden');
             
             updateDeliveryDetails();
@@ -570,7 +597,10 @@ $statsStmt->close();
                 // Apply status filter
                 if (currentFilter !== 'all') {
                     if (currentFilter === 'overdue') {
-                        filteredSchedules = schedules.filter(s => s.delivery_status === 'overdue');
+                        // Only show items that are actually overdue (not delivered and past due date)
+                        filteredSchedules = schedules.filter(s => 
+                            s.delivery_status === 'overdue' && s.delivered_at === null
+                        );
                         detailsTitle.textContent = 'Overdue Deliveries';
                         filterStatus.textContent = 'Showing overdue items only';
                     } else if (currentFilter === 'today') {
@@ -584,8 +614,12 @@ $statsStmt->close();
                         filterStatus.textContent = 'Showing upcoming deliveries only';
                     }
                 } else {
-                    detailsTitle.textContent = 'All Deliveries';
-                    filterStatus.textContent = '';
+                    // **MODIFIED CODE: Filter by current month when showing "all" deliveries**
+                    filteredSchedules = filterSchedulesByCurrentMonth(schedules);
+                    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                    detailsTitle.textContent = `All Deliveries - ${currentMonthName}`;
+                    filterStatus.textContent = 'Showing current month deliveries only';
+                    // **END OF MODIFIED CODE**
                 }
             }
             
@@ -601,6 +635,11 @@ $statsStmt->close();
                     emptyMessage = 'No deliveries scheduled for today';
                 } else if (currentFilter === 'upcoming') {
                     emptyMessage = 'No upcoming deliveries';
+                } else if (currentFilter === 'all') {
+                    // **NEW CODE 2: Add current month empty message**
+                    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                    emptyMessage = `No deliveries scheduled for ${currentMonthName}`;
+                    // **END OF NEW CODE 2**
                 }
                 
                 detailsContainer.innerHTML = `
@@ -654,7 +693,14 @@ $statsStmt->close();
                 let dateClass = '';
                 let dateIcon = 'fa-calendar';
                 
-                if (dateObj < today) {
+                // Check if there are any actual overdue items (not delivered) for this date
+                const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules => 
+                    timeSchedules.some(schedule => 
+                        schedule.delivery_status === 'overdue' && schedule.delivered_at === null
+                    )
+                );
+                
+                if (hasOverdueItems) {
                     dateClass = 'bg-red-50 border-red-200';
                     dateIcon = 'fa-exclamation-triangle text-red-600';
                 } else if (dateObj.getTime() === today.getTime()) {
@@ -676,7 +722,7 @@ $statsStmt->close();
                                 <span class="ml-3 bg-white bg-opacity-70 px-3 py-1 rounded-full text-sm font-medium">
                                     ${totalDateItems} items
                                 </span>
-                                ${dateObj < today ? `
+                                ${hasOverdueItems ? `
                                     <span class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                                         OVERDUE
                                     </span>
@@ -703,7 +749,8 @@ $statsStmt->close();
                     
                     timeSchedules.forEach(schedule => {
                         const isCompleted = schedule.delivered_at !== null;
-                        const isOverdue = schedule.delivery_status === 'overdue';
+                        // Only consider as overdue if not delivered and past due date
+                        const isOverdue = schedule.delivery_status === 'overdue' && !isCompleted;
                         const isToday = schedule.delivery_status === 'today_pending';
                         
                         let statusClass, statusIcon, statusText, statusBg;

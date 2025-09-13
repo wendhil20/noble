@@ -960,7 +960,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=furniture" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Furniture</span>
@@ -1109,7 +1109,7 @@ handleQueryError($conn, "New Status Query");
                 <!-- Row 1 -->
                 <a href="shop?category[]=furniture" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Furniture</span>
@@ -1118,7 +1118,7 @@ handleQueryError($conn, "New Status Query");
 
                 <a href="shop?category[]=materials" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Material Boards</span>
@@ -1127,7 +1127,7 @@ handleQueryError($conn, "New Status Query");
 
                 <a href="shop?category[]=bedfurniture" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Bedroom </span>
@@ -1136,7 +1136,7 @@ handleQueryError($conn, "New Status Query");
 
                 <a href="shop?category[]=lighting" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Lighting fixture</span>
@@ -1145,7 +1145,7 @@ handleQueryError($conn, "New Status Query");
 
                 <a href="shop?category[]=aircon" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Aircon</span>
@@ -1154,7 +1154,7 @@ handleQueryError($conn, "New Status Query");
 
                 <a href="shop?category[]=doors" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Doors</span>
@@ -1164,7 +1164,7 @@ handleQueryError($conn, "New Status Query");
                 <!-- Row 2 -->
                 <a href="shop?category[]=tiles" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Tiles</span>
@@ -1172,8 +1172,8 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=windows" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Windows</span>
@@ -1181,8 +1181,8 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=bathroom" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Bathroom </span>
@@ -1190,8 +1190,8 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=kitchen" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Kitchen Fixtures</span>
@@ -1199,8 +1199,8 @@ handleQueryError($conn, "New Status Query");
                 </a>
 
                 <a href="shop?category[]=pipes" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">Pipes</span>
@@ -1209,12 +1209,13 @@ handleQueryError($conn, "New Status Query");
 
                 <a href="shop?category[]=aacblock" class="group">
                     <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
+                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
                         <span class="text-sm font-semibold text-gray-700 text-center">AAC BLOCKS</span>
                     </div>
                 </a>
+
             </div>
         </div>
 
@@ -1251,7 +1252,7 @@ handleQueryError($conn, "New Status Query");
                 <div id="carousel" class="flex overflow-x-auto md:overflow-x-hidden scroll-smooth gap-4 md:gap-6 md:px-12 snap-x snap-mandatory">
 
                     <!-- Featured Promotion -->
-                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                    <div class="flex-shrink-0 w-full overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
                         <div class="flex flex-col md:flex-row h-auto md:h-80">
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
@@ -1280,7 +1281,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
 
                     <!-- Weekly Sale -->
-                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                    <div class="flex-shrink-0 w-full  overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
                         <div class="flex flex-col md:flex-row h-auto md:h-80">
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
@@ -1309,7 +1310,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
 
                     <!-- New Arrivals -->
-                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                    <div class="flex-shrink-0 w-full  overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
                         <div class="flex flex-col md:flex-row h-auto md:h-80">
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
@@ -1338,7 +1339,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
 
                     <!-- Hot Deals -->
-                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                    <div class="flex-shrink-0 w-full overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
                         <div class="flex flex-col md:flex-row h-auto md:h-80">
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
@@ -1367,7 +1368,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
 
                     <!-- Bundle Deals -->
-                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                    <div class="flex-shrink-0 w-full overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
                         <div class="flex flex-col md:flex-row h-auto md:h-80">
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
@@ -1396,7 +1397,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
 
                     <!-- Clearance Sale -->
-                    <div class="flex-shrink-0 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
+                    <div class="flex-shrink-0 w-full  overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
                         <div class="flex flex-col md:flex-row h-auto md:h-80">
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
@@ -1570,16 +1571,10 @@ handleQueryError($conn, "New Status Query");
         });
     </script>
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
+    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
-        <div class="text-start mb-8 sm:mb-12 relative">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
-                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
-                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
-                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
-            </div>
-            <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+     
+            <div class="flex items-center gap-2 mb-2 mt-4" data-aos="fade-up">
                 <!-- Details Button (as Title) -->
                 <a href="shop.php"
                     class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
@@ -1595,7 +1590,7 @@ handleQueryError($conn, "New Status Query");
                     <svg xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 24 24"
                         stroke-width="2.5" stroke="currentColor"
-                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
+                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600 ">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
@@ -1605,7 +1600,7 @@ handleQueryError($conn, "New Status Query");
             </div>
 
 
-        </div>
+  
         <style>
             .bubble-bounce {
                 position: absolute;
@@ -1821,16 +1816,8 @@ handleQueryError($conn, "New Status Query");
 
 
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
+    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
-        <div class="text-end mb-8 sm:mb-12 relative">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
-                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
-                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
-                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
-            </div>
-
             <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
                 <!-- Details Button (as Title) -->
                 <a href="shop.php"
@@ -1858,7 +1845,6 @@ handleQueryError($conn, "New Status Query");
 
 
 
-        </div>
 
         <style>
             .bubble-bounce {
@@ -2094,7 +2080,7 @@ handleQueryError($conn, "New Status Query");
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 
                 <!-- Video Item 1 -->
-                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/a.mp4" type="video/mp4">
@@ -2106,7 +2092,7 @@ handleQueryError($conn, "New Status Query");
                         <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Premium waterproof panels designed for contemporary interior applications</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
                                 Premium
                             </span>
                             <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
@@ -2120,7 +2106,7 @@ handleQueryError($conn, "New Status Query");
                 </div>
 
                 <!-- Video Item 2 -->
-                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white  overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/b.mp4" type="video/mp4">
@@ -2132,7 +2118,7 @@ handleQueryError($conn, "New Status Query");
                         <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Professional styling concepts and innovative design solutions</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
                                 Inspiration
                             </span>
                             <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
@@ -2147,7 +2133,7 @@ handleQueryError($conn, "New Status Query");
                 </div>
 
                 <!-- Video Item 3 -->
-                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white  overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/c.mp4" type="video/mp4">
@@ -2159,7 +2145,7 @@ handleQueryError($conn, "New Status Query");
                         <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Featured products showcased in real-world applications</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
                                 Featured
                             </span>
                             <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
@@ -2173,7 +2159,7 @@ handleQueryError($conn, "New Status Query");
                 </div>
 
                 <!-- Video Item 4 -->
-                <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/d.mp4" type="video/mp4">
@@ -2186,7 +2172,7 @@ handleQueryError($conn, "New Status Query");
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Thank You for Visiting Us at WORLDBEX 2025! 🎉🏡
                             We truly appreciate your time, support, and interest in Noblehome Depot at WORLDBEX 2025! Your presence made this event even more special, and we’re excited to help bring your home and construction projects to life.</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-violet-50 border border-violet-200 text-violet-700 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
                                 Event
                             </span>
                             <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
@@ -2207,7 +2193,7 @@ handleQueryError($conn, "New Status Query");
                     <p class="text-lg text-gray-600 leading-relaxed mb-6">
                         Ready to explore our complete product portfolio?
                     </p>
-                    <button class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[200px]">
+                    <button class="bg-black hover:bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[200px]">
                         View All Products
                     </button>
                 </div>
@@ -2216,16 +2202,9 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
+    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
-        <div class="text-center mb-8 sm:mb-12 relative">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
-                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
-                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
-                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
-            </div>
-
+  
             <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
                 <!-- Details Button (as Title) -->
                 <a href="shop.php"
@@ -2251,29 +2230,6 @@ handleQueryError($conn, "New Status Query");
                 </a>
             </div>
 
-        </div>
-        <style>
-            .bubble-bounce {
-                position: absolute;
-                display: inline-block;
-                opacity: 0.18;
-                border-radius: 50%;
-                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
-                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
-            }
-
-            @keyframes bubble-bounce {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1);
-                }
-
-                50% {
-                    transform: translateY(-30px) scale(1.08);
-                }
-            }
-        </style>
 
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
@@ -2470,42 +2426,14 @@ handleQueryError($conn, "New Status Query");
     <section class="px-4 py-10">
         <!-- Header -->
         <div class="text-center mb-10 relative">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
-                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
-                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
-                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
-            </div>
+          
             <h2 class="text-4xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
             <h2 class="text-2xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">
                 Get Up to <span class="text-red-500">30% Discount</span> on Select Items!
             </h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+  
         </div>
-
-        <style>
-            .bubble-bounce {
-                position: absolute;
-                display: inline-block;
-                opacity: 0.18;
-                border-radius: 50%;
-                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
-                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
-            }
-
-            @keyframes bubble-bounce {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1);
-                }
-
-                50% {
-                    transform: translateY(-30px) scale(1.08);
-                }
-            }
-        </style>
-
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
@@ -2666,15 +2594,9 @@ handleQueryError($conn, "New Status Query");
         </div>
     </section>
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 bg-gradient-to-br from-gray-50 via-white to-orange-50">
+    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10">
         <!-- Header -->
         <div class="text-center mb-8 sm:mb-12 relative">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <span class="bubble-bounce" style="left: 20%; top: 30%; width: 90px; height: 90px; background: radial-gradient(circle at 40% 40%, #fbbf24 60%, #f59e42 100%); animation-delay: 0s;"></span>
-                <span class="bubble-bounce" style="left: 60%; top: 50%; width: 60px; height: 60px; background: radial-gradient(circle at 60% 60%, #f97316 60%, #fbbf24 100%); animation-delay: 0.7s;"></span>
-                <span class="bubble-bounce" style="left: 40%; top: 60%; width: 40px; height: 40px; background: radial-gradient(circle at 50% 50%, #f59e42 60%, #fbbf24 100%); animation-delay: 1.2s;"></span>
-                <span class="bubble-bounce" style="left: 70%; top: 20%; width: 70px; height: 70px; background: radial-gradient(circle at 60% 60%, #fbbf24 60%, #f59e42 100%); animation-delay: 1.7s;"></span>
-            </div>
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text mb-4 tracking-tight " data-aos="fade-up">
                 Discount Minimal <span class="text-red-700 drop-shadow-sm">up to 15%</span>
             </h2>
@@ -2683,28 +2605,6 @@ handleQueryError($conn, "New Status Query");
                 Discover amazing deals on premium products with exclusive discounts
             </p>
         </div>
-        <style>
-            .bubble-bounce {
-                position: absolute;
-                display: inline-block;
-                opacity: 0.18;
-                border-radius: 50%;
-                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
-                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
-            }
-
-            @keyframes bubble-bounce {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1);
-                }
-
-                50% {
-                    transform: translateY(-30px) scale(1.08);
-                }
-            }
-        </style>
 
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">

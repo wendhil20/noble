@@ -178,8 +178,9 @@ if (isset($_FILES['csv_file'])) {
                     $result = $stmt->get_result();
                     
                     if ($result->num_rows === 0) {
-                        $stmt2 = $conn->prepare("INSERT INTO product_variants (type_id, color, size, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)");
-                        $stmt2->bind_param("issddds", $type_id, $variant_color, $variant_size, $final_price, $variant_percent, $variant_discount, $variant_namevariant);
+                      // Modify your variant insertion to include product_id
+$stmt2 = $conn->prepare("INSERT INTO product_variants (product_id, type_id, color, size, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)");
+$stmt2->bind_param("iissddds", $product_id, $type_id, $variant_color, $variant_size, $final_price, $variant_percent, $variant_discount, $variant_namevariant);
                         $stmt2->execute();
                         $stmt2->close();
                     }

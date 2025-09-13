@@ -593,7 +593,7 @@ $display_categories = getNavigationData($conn);
   <div x-show="productsOpen"
         @click.away="productsOpen = false"
         x-transition x-cloak
-       class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-80 z-50">
+       class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-[450px] z-50">
      
     <!-- Left side: Categories -->
     <div class="w-1/2 border-r p-4 space-y-2 font-mont">
@@ -601,7 +601,7 @@ $display_categories = getNavigationData($conn);
         <?php foreach ($display_categories as $catKey => $category): ?>
           <button 
              @mouseenter="selectedCategory = 'cat_<?= $category['id'] ?>'"
-             class="block w-full text-left hover:text-orange-500 text-sm">
+             class="block w-full text-left hover:text-orange-500 text-sm uppercase">
             <?= htmlspecialchars($category['name']) ?>
           </button>
         <?php endforeach; ?>

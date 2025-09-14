@@ -13,6 +13,20 @@ if (!isset($_SESSION['noble_user'])) {
 $message = "";
 $error = "";
 
+
+$tables = ['categories','product_subcategories'];
+
+foreach ($tables as $table) {
+    // Get the current highest ID that exists
+    $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
+    $row = $result->fetch_assoc();
+    $max_id = (int)$row['max_id'];
+
+    // Reset AUTO_INCREMENT to max_id + 1
+    $next_id = $max_id > 0 ? $max_id + 1 : 1;
+    $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
+}
+
 // Get message and error from session (for PRG pattern)
 if (isset($_SESSION['message'])) {
     $message = $_SESSION['message'];

@@ -10,8 +10,10 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
+
 /**
  * Auto-assigns categories for ALL product variants based on codenames
+ * Also updates the codename in products table to match category
  */
 function autoAssignAllCategories($conn) {
     $result = [
@@ -22,12 +24,12 @@ function autoAssignAllCategories($conn) {
     ];
     
     try {
-        // Update all variants at once
+        // Update all variants at once - BOTH category_id AND category_name
         $update_query = "
             UPDATE product_variants pv
             JOIN products p ON pv.product_id = p.id
             JOIN categories c ON p.codename = c.name
-            SET pv.category_id = c.id
+            SET pv.category_id = c.id, pv.category_name = c.name
             WHERE p.codename IS NOT NULL AND p.codename != ''
         ";
         
@@ -92,41 +94,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
 
+        // FIXED: Update both product_variants category AND products codename
         if (!empty($_POST['bulk_category'])) {
             $catId = intval($_POST['bulk_category']);
-            $stmt = $conn->prepare("UPDATE product_variants SET category_id = ? WHERE id IN (" . implode(',', $ids) . ")");
-            $stmt->bind_param("i", $catId);
-            $stmt->execute();
+            
+            // First, get the category name from the categories table
+            $catQuery = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+            $catQuery->bind_param("i", $catId);
+            $catQuery->execute();
+            $catResult = $catQuery->get_result();
+            
+            if ($catResult->num_rows > 0) {
+                $catData = $catResult->fetch_assoc();
+                $catName = $catData['name'];
+                
+                // Update BOTH category_id AND category_name fields in product_variants
+                $stmt = $conn->prepare("UPDATE product_variants SET category_id = ?, category_name = ? WHERE id IN (" . implode(',', $ids) . ")");
+                $stmt->bind_param("is", $catId, $catName);
+                $stmt->execute();
+                
+                // NEW: Also update the codename in products table for all affected products
+                $productUpdateQuery = "
+                    UPDATE products p
+                    JOIN product_variants pv ON p.id = pv.product_id
+                    SET p.codename = ?
+                    WHERE pv.id IN (" . implode(',', $ids) . ")
+                ";
+                $stmt2 = $conn->prepare($productUpdateQuery);
+                $stmt2->bind_param("s", $catName);
+                $stmt2->execute();
+            }
         }
 
-    // FIXED: Handle subcategory using product_subcategories table
-if (!empty($_POST['bulk_subcategory'])) {
-    $subcatName = $_POST['bulk_subcategory'];
-    // First get the ID of the subcategory by name from product_subcategories
-    $subcatQuery = $conn->prepare("SELECT id FROM product_subcategories WHERE subcategory_name = ?");
-    $subcatQuery->bind_param("s", $subcatName);
-    $subcatQuery->execute();
-    $subcatResult = $subcatQuery->get_result();
-    
-    if ($subcatResult->num_rows > 0) {
-        $subcatData = $subcatResult->fetch_assoc();
-        $subcatId = $subcatData['id'];
-        
-        // Update BOTH subcategory_id AND subcategory_name fields
-        $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id IN (" . implode(',', $ids) . ")");
-        $stmt->bind_param("is", $subcatId, $subcatName);
-        $stmt->execute();
-    }
-}
+        // FIXED: Handle subcategory using product_subcategories table
+        if (!empty($_POST['bulk_subcategory'])) {
+            $subcatName = $_POST['bulk_subcategory'];
+            // First get the ID of the subcategory by name from product_subcategories
+            $subcatQuery = $conn->prepare("SELECT id FROM product_subcategories WHERE subcategory_name = ?");
+            $subcatQuery->bind_param("s", $subcatName);
+            $subcatQuery->execute();
+            $subcatResult = $subcatQuery->get_result();
+            
+            if ($subcatResult->num_rows > 0) {
+                $subcatData = $subcatResult->fetch_assoc();
+                $subcatId = $subcatData['id'];
+                
+                // Update BOTH subcategory_id AND subcategory_name fields
+                $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id IN (" . implode(',', $ids) . ")");
+                $stmt->bind_param("is", $subcatId, $subcatName);
+                $stmt->execute();
+            }
+        }
 
-        // NEW: Auto-sync categories based on product codename
+        // FIXED: Auto-sync categories based on product codename - update both variants and products
         if (isset($_POST['auto_sync_categories'])) {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            
+            // Update product_variants with category info
             $update_query = "
                 UPDATE product_variants pv
                 JOIN products p ON pv.product_id = p.id
                 JOIN categories c ON p.codename = c.name
-                SET pv.category_id = c.id
+                SET pv.category_id = c.id, pv.category_name = c.name
                 WHERE pv.id IN ($placeholders)
             ";
             $stmt = $conn->prepare($update_query);

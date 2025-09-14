@@ -575,16 +575,16 @@ handleQueryError($conn, "New Status Query");
     <div class="overflow-hidden bg-orange-500 text-white">
         <div class="flex animate-marquee whitespace-nowrap">
             <!-- Unang set -->
-            <span class="mx-10">🔥 Big Sale Coming Soon!</span>
-            <span class="mx-10">🎉 Exclusive Discounts Await!</span>
-            <span class="mx-10">🛒 Shop Now & Save More!</span>
-            <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
+            <span class="mx-10"> Big Sale Coming Soon!</span>
+            <span class="mx-10"> Exclusive Discounts Await!</span>
+            <span class="mx-10"> Shop Now & Save More!</span>
+            <span class="mx-10"> Free Shipping on Selected Items!</span>
 
             <!-- Duplicate set para tuloy-tuloy -->
-            <span class="mx-10">🔥 Big Sale Coming Soon!</span>
-            <span class="mx-10">🎉 Exclusive Discounts Await!</span>
-            <span class="mx-10">🛒 Shop Now & Save More!</span>
-            <span class="mx-10">🚚 Free Shipping on Selected Items!</span>
+            <span class="mx-10"> Big Sale Coming Soon!</span>
+            <span class="mx-10"> Exclusive Discounts Await!</span>
+            <span class="mx-10"> Shop Now & Save More!</span>
+            <span class="mx-10"> Free Shipping on Selected Items!</span>
         </div>
     </div>
 
@@ -811,7 +811,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 1 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 1"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
                                 <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
                             </button>
@@ -820,7 +820,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 2 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 2"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
                                 <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
                             </button>
@@ -829,7 +829,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 3 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 3"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
                                 <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
                             </button>
@@ -838,7 +838,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 4 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 4"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
                                 <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
                             </button>
@@ -847,7 +847,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 5 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 5"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Support</h3>
                                 <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
                             </button>
@@ -859,31 +859,31 @@ handleQueryError($conn, "New Status Query");
             <!-- Desktop View (lg and above) - Grid -->
             <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <!-- Box 1 -->
-                <button @click="currentModal = 1" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                <button @click="currentModal = 1" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
                     <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
                     <p class="text-sm text-gray-700">Send us a question or message.</p>
                 </button>
 
                 <!-- Box 2 -->
-                <button @click="currentModal = 2" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                <button @click="currentModal = 2" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
                     <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
                     <p class="text-sm text-gray-700">Book a consultation now.</p>
                 </button>
 
                 <!-- Box 3 -->
-                <button @click="currentModal = 3" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                <button @click="currentModal = 3" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
                     <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
                     <p class="text-sm text-gray-700">Check your order status.</p>
                 </button>
 
                 <!-- Box 4 -->
-                <button @click="currentModal = 4" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                <button @click="currentModal = 4" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
                     <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
                     <p class="text-sm text-gray-700">Get pricing for your project.</p>
                 </button>
 
                 <!-- Box 5 -->
-                <button @click="currentModal = 5" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center border">
+                <button @click="currentModal = 5" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
                     <h3 class="text-lg font-semibold text-orange-700">Support</h3>
                     <p class="text-sm text-gray-700">We're here to help you.</p>
                 </button>
@@ -975,7 +975,7 @@ handleQueryError($conn, "New Status Query");
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Material Boards</span>
+                                <span class="text-xs font-semibold text-gray-700 text-center">Building Materials</span>
                             </div>
                         </a>
                     </div>
@@ -1108,111 +1108,111 @@ handleQueryError($conn, "New Status Query");
             <div class="grid grid-cols-6 gap-6">
                 <!-- Row 1 -->
                 <a href="shop?category[]=furniture" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class="p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Furniture</span>
+                        <span class="text-sm font-semibold text-black text-center">Furniture</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=materials" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Material Boards</span>
+                        <span class="text-sm font-semibold text-black text-center">Material Boards</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=bedfurniture" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Bedroom </span>
+                        <span class="text-sm font-semibold text-black text-center">Bedroom </span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=lighting" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Lighting fixture</span>
+                        <span class="text-sm font-semibold text-black text-center">Lighting fixture</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=aircon" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Aircon</span>
+                        <span class="text-sm font-semibold text-black text-center">Aircon</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=doors" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Doors</span>
+                        <span class="text-sm font-semibold text-black text-center">Doors</span>
                     </div>
                 </a>
 
                 <!-- Row 2 -->
                 <a href="shop?category[]=tiles" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Tiles</span>
+                        <span class="text-sm font-semibold text-black text-center">Tiles</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=windows" class="group">
-                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Windows</span>
+                        <span class="text-sm font-semibold text-black text-center">Windows</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=bathroom" class="group">
-                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Bathroom </span>
+                        <span class="text-sm font-semibold text-black text-center">Bathroom </span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=kitchen" class="group">
-                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Kitchen Fixtures</span>
+                        <span class="text-sm font-semibold text-black text-center">Kitchen Fixtures</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=pipes" class="group">
-                    <div class="bg-white rounded-full p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">Pipes</span>
+                        <span class="text-sm font-semibold text-black text-center">Pipes</span>
                     </div>
                 </a>
 
                 <a href="shop?category[]=aacblock" class="group">
-                    <div class="bg-white rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 text-center">AAC BLOCKS</span>
+                        <span class="text-sm font-semibold text-black text-center">AAC BLOCKS</span>
                     </div>
                 </a>
 
@@ -1257,7 +1257,7 @@ handleQueryError($conn, "New Status Query");
                             <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
                                 <div class="mb-3 md:mb-4">
                                     <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                        🔥 Featured Deal
+                                         Featured Deal
                                     </span>
                                 </div>
                                 <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
@@ -2211,11 +2211,11 @@ handleQueryError($conn, "New Status Query");
                     class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
                     <span class="relative">
                         <span class="block group-hover:text-orange-600 transition-colors duration-300">
-                            Material Boards
+                            Building Materials
                         </span>
                         <!-- Animated overlay text -->
                         <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
-                            Material Boards
+                            Building Materials
                         </span>
                     </span>
                     <svg xmlns="http://www.w3.org/2000/svg"

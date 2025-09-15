@@ -145,7 +145,7 @@ $avg_stmt->close();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title><?= htmlspecialchars($product['product_name']) ?> - Noble Home</title>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -225,6 +225,7 @@ $avg_stmt->close();
       padding-left: 1rem;
       padding-right: 1rem;
     }
+
     @media (min-width: 768px) {
       .related-swiper {
         padding-left: 4rem;
@@ -234,19 +235,20 @@ $avg_stmt->close();
 
     .related-swiper .swiper-button-next,
     .related-swiper .swiper-button-prev {
-        top: 50%;
-        transform: translateY(-50%);
-        width: 2.5rem;
-        height: 2.5rem;
-        background-color: #f97316;
-        border-radius: 9999px;
-        color: #fff;
-        transition: all 0.3s;
-      }
-      .related-swiper .swiper-button-next:hover,
-      .related-swiper .swiper-button-prev:hover {
-        background-color: #ea580c;
-        transform: scale(1.10);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2.5rem;
+      height: 2.5rem;
+      background-color: #f97316;
+      border-radius: 9999px;
+      color: #fff;
+      transition: all 0.3s;
+    }
+
+    .related-swiper .swiper-button-next:hover,
+    .related-swiper .swiper-button-prev:hover {
+      background-color: #ea580c;
+      transform: scale(1.10);
     }
 
     .related-swiper .swiper-button-next {
@@ -272,7 +274,8 @@ $avg_stmt->close();
     .variant-btn:focus,
     .color-btn:focus {
       outline-width: 2px;
-      outline-color: #f97316; /* Tailwind's orange-500 */
+      outline-color: #f97316;
+      /* Tailwind's orange-500 */
       outline-offset: 2px;
       outline-style: solid;
     }
@@ -414,7 +417,7 @@ $avg_stmt->close();
 
   <!-- Main Content -->
   <div class="container mx-auto px-4 py-6 lg:py-8">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-white rounded-xl overflow-hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
         <!-- Product Image & Info Section -->
@@ -579,7 +582,7 @@ $avg_stmt->close();
           <!-- Type Selection -->
           <?php if (!empty($types_data)): ?>
             <div class="mb-6 lg:mb-8">
-              <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Select</h3>
+              <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Item</h3>
 
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
                 <?php foreach ($types_data as $index => $type): ?>
@@ -668,68 +671,68 @@ $avg_stmt->close();
           <?php endif; ?>
 
 
-<!-- Size/Variant Selection -->
-<div class="mb-6 lg:mb-8">
-  <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Available Sizes</h3>
+          <!-- Size/Variant Selection -->
+          <div class="mb-6 lg:mb-8">
+            <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Available Sizes</h3>
 
-  <div id="variant-container" class="text-gray-500 p-4 bg-white rounded-lg text-center">
-    <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-    <p>Please select a product</p>
-  </div>
+            <div id="variant-container" class="text-gray-500 p-4 bg-white rounded-lg text-center">
+              <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+              <p>Please select a item first</p>
+            </div>
 
-  <?php foreach ($types_data as $type): ?>
-    <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-      <?php if (!empty($type['variants'])): ?>
-        <div class="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-4">
-          <!-- ✅ Responsive uniform grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4">
-            <?php foreach ($type['variants'] as $variant): ?>
-              <?php
-              $price = floatval($variant['variant_price']);
-              $percent = floatval($variant['percent']);
-              $discount = floatval($variant['discount'] ?? 0);
-              $priceWithMarkup = $price + ($price * $percent / 100);
-              $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-              ?>
-              <button type="button"
-                onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
-                class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg 
+            <?php foreach ($types_data as $type): ?>
+              <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+                <?php if (!empty($type['variants'])): ?>
+                  <div class="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-4">
+                    <!-- ✅ Responsive uniform grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4">
+                      <?php foreach ($type['variants'] as $variant): ?>
+                        <?php
+                        $price = floatval($variant['variant_price']);
+                        $percent = floatval($variant['percent']);
+                        $discount = floatval($variant['discount'] ?? 0);
+                        $priceWithMarkup = $price + ($price * $percent / 100);
+                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                        ?>
+                        <button type="button"
+                          onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
+                          class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg 
                        p-2 lg:p-3 text-center transition transform hover:scale-[1.02] 
                        flex flex-col justify-between min-h-[120px] lg:min-h-[140px]"
-                data-price="<?= $price ?>"
-                data-percent="<?= $percent ?>"
-                data-discount="<?= $discount ?>"
-                data-variant-id="<?= $variant['variant_id'] ?>">
+                          data-price="<?= $price ?>"
+                          data-percent="<?= $percent ?>"
+                          data-discount="<?= $discount ?>"
+                          data-variant-id="<?= $variant['variant_id'] ?>">
 
-                <div class="flex flex-col items-center justify-center h-full">
-                  
-                  <div class="text-gray-600 text-[11px] lg:text-xs mb-1">
-                    <?= htmlspecialchars($variant['size']) ?>
-                  </div>
+                          <div class="flex flex-col items-center justify-center h-full">
 
-                  <!-- ✅ Price + Discount below -->
-                  <div class="flex flex-col items-center">
-                    <?php if ($discount > 0): ?>
-                      <div class="text-[11px] text-gray-400 line-through mb-0.5">₱<?= number_format($priceWithMarkup, 2) ?></div>
-                      <div class="text-red-600 font-bold text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
-                      <div class="mt-1 text-[11px] font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
-                        <?= number_format($discount, 0) ?>% OFF
-                      </div>
-                    <?php else: ?>
-                      <div class="font-bold text-green-600 text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
-                    <?php endif; ?>
+                            <div class="text-gray-600 text-[11px] lg:text-xs mb-1">
+                              <?= htmlspecialchars($variant['size']) ?>
+                            </div>
+
+                            <!-- ✅ Price + Discount below -->
+                            <div class="flex flex-col items-center">
+                              <?php if ($discount > 0): ?>
+                                <div class="text-[11px] text-gray-400 line-through mb-0.5">₱<?= number_format($priceWithMarkup, 2) ?></div>
+                                <div class="text-red-600 font-bold text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
+                                <div class="mt-1 text-[11px] font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
+                                  <?= number_format($discount, 0) ?>% OFF
+                                </div>
+                              <?php else: ?>
+                                <div class="font-bold text-green-600 text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
+                              <?php endif; ?>
+                            </div>
+                          </div>
+                        </button>
+                      <?php endforeach; ?>
+                    </div>
                   </div>
-                </div>
-              </button>
+                <?php else: ?>
+                  <p class="text-gray-500 text-center p-4">No variants available for this type.</p>
+                <?php endif; ?>
+              </div>
             <?php endforeach; ?>
           </div>
-        </div>
-      <?php else: ?>
-        <p class="text-gray-500 text-center p-4">No variants available for this type.</p>
-      <?php endif; ?>
-    </div>
-  <?php endforeach; ?>
-</div>
 
 
           <!-- Purchase Section -->
@@ -775,7 +778,7 @@ $avg_stmt->close();
 
     <?php if (!empty($product_specs)): ?>
       <section class="mt-6 lg:mt-8">
-        <div class="bg-white rounded-xl shadow-lg p-4 lg:p-8">
+        <div class="bg-white rounded-xl p-4 lg:p-8">
           <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
             <i class="fas fa-list-alt"></i>
             Product Specifications
@@ -800,78 +803,78 @@ $avg_stmt->close();
       </section>
     <?php endif; ?>
 
-<!-- Related Products -->
-<?php if ($related_products->num_rows > 0): ?>
-<section class="mt-8 bg-gradient-to-br from-slate-50 to-gray-100 py-6 px-4 rounded-xl ">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-6">
+    <!-- Related Products -->
+    <?php if ($related_products->num_rows > 0): ?>
+      <section class="mt-8 bg-gradient-to-br from-slate-50 to-gray-100 py-6 px-4 rounded-xl ">
+        <div class="max-w-6xl mx-auto">
+          <!-- Header -->
+          <div class="text-center mb-6">
             <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Related Products</h2>
             <p class="text-gray-600 text-sm">
-                Similar products you may like
+              Similar products you may like
             </p>
             <div class="w-16 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 mx-auto mt-2 rounded-full"></div>
-        </div>
+          </div>
 
-        <!-- Products Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <!-- Products Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <?php while ($row = $related_products->fetch_assoc()): ?>
-            <div class="group">
-                <a href="product_view.php?id=<?= $row['id'] ?>" 
-                   class="block rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full">
-                    
-                    <!-- Product Image -->
-                    <div class="relative aspect-square  overflow-hidden">
-                        <?php if ($row['main_image']): ?>
-                            <img src="../../<?= $row['main_image'] ?>" 
-                                 loading="lazy"
-                                 class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                 alt="<?= htmlspecialchars($row['product_name']) ?>">
-                        <?php else: ?>
-                            <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                                <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                                <span class="text-xs">No Image</span>
-                            </div>
-                        <?php endif; ?>
+              <div class="group">
+                <a href="product_view.php?id=<?= $row['id'] ?>"
+                  class="block rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full">
+
+                  <!-- Product Image -->
+                  <div class="relative aspect-square  overflow-hidden">
+                    <?php if ($row['main_image']): ?>
+                      <img src="../../<?= $row['main_image'] ?>"
+                        loading="lazy"
+                        class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        alt="<?= htmlspecialchars($row['product_name']) ?>">
+                    <?php else: ?>
+                      <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-xs">No Image</span>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+
+                  <!-- Product Information -->
+                  <div class="p-3 flex flex-col justify-between flex-grow">
+                    <!-- Product Name -->
+                    <h3 class="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 leading-tight">
+                      <?= htmlspecialchars($row['product_name']) ?>
+                    </h3>
+
+                    <!-- Product Description -->
+                    <div class="flex-grow mb-2">
+                      <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                        <?= htmlspecialchars($row['description']) ?>
+                      </p>
+
+                      <?php if (!empty($row['descrip6'])): ?>
+                        <p class="text-gray-500 text-xs line-clamp-1 mb-1">
+                          • <?= htmlspecialchars($row['descrip6']) ?>
+                        </p>
+                      <?php endif; ?>
                     </div>
 
-                    <!-- Product Information -->
-                    <div class="p-3 flex flex-col justify-between flex-grow">
-                        <!-- Product Name -->
-                        <h3 class="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 leading-tight">
-                            <?= htmlspecialchars($row['product_name']) ?>
-                        </h3>
-
-                        <!-- Product Description -->
-                        <div class="flex-grow mb-2">
-                            <p class="text-gray-600 text-xs line-clamp-1 mb-1">
-                                <?= htmlspecialchars($row['description']) ?>
-                            </p>
-                            
-                            <?php if (!empty($row['descrip6'])): ?>
-                                <p class="text-gray-500 text-xs line-clamp-1 mb-1">
-                                    • <?= htmlspecialchars($row['descrip6']) ?>
-                                </p>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Product Code -->
-                        <div class="flex items-center justify-between mt-auto">
-                            <span class="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                                <?= htmlspecialchars($row['codename']) ?>
-                            </span>
-                        </div>
+                    <!-- Product Code -->
+                    <div class="flex items-center justify-between mt-auto">
+                      <span class="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                        <?= htmlspecialchars($row['codename']) ?>
+                      </span>
                     </div>
+                  </div>
                 </a>
-            </div>
+              </div>
             <?php endwhile; ?>
+          </div>
         </div>
-    </div>
-</section>
-<?php endif; ?>
+      </section>
+    <?php endif; ?>
 
   </div>
 
@@ -1418,7 +1421,7 @@ $avg_stmt->close();
         this.elements.variantContainer.innerHTML = `
           <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
             <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-            <p>Please select a product type first</p>
+            <p>Please select a item first</p>
           </div>
         `;
       }
@@ -1595,7 +1598,7 @@ $avg_stmt->close();
 
         if (this.hasTypes) {
           if (!this.selectedTypeId) {
-            errors.push('Please select a product type');
+            errors.push('Please select a product item');
           }
           if (!this.selectedVariantData) {
             errors.push('Please select a variant');

@@ -546,8 +546,13 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <a href="allproduct" class="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-            <i class="fas fa-eye mr-2"></i>
+           
             Explore Products
+          </a>
+
+          <a href="allproductsub" class="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+           
+            View All Products
           </a>
         </div>
       </div>

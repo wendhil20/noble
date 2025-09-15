@@ -858,35 +858,66 @@ handleQueryError($conn, "New Status Query");
 
             <!-- Desktop View (lg and above) - Grid -->
             <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                <!-- Box 1 -->
-                <button @click="currentModal = 1" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
-                    <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
-                    <p class="text-sm text-gray-700">Send us a question or message.</p>
-                </button>
+            <!-- Box 1 -->
+<button @click="currentModal = 1"
+  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
 
-                <!-- Box 2 -->
-                <button @click="currentModal = 2" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
-                    <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
-                    <p class="text-sm text-gray-700">Book a consultation now.</p>
-                </button>
+  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+    Inquire
+    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+  </h3>
 
-                <!-- Box 3 -->
-                <button @click="currentModal = 3" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
-                    <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
-                    <p class="text-sm text-gray-700">Check your order status.</p>
-                </button>
+  <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
+</button>
 
-                <!-- Box 4 -->
-                <button @click="currentModal = 4" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
-                    <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
-                    <p class="text-sm text-gray-700">Get pricing for your project.</p>
-                </button>
+<!-- Box 2 -->
+<button @click="currentModal = 2"
+  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
 
-                <!-- Box 5 -->
-                <button @click="currentModal = 5" class="hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center ">
-                    <h3 class="text-lg font-semibold text-orange-700">Support</h3>
-                    <p class="text-sm text-gray-700">We're here to help you.</p>
-                </button>
+  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+    Appointment
+    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+  </h3>
+
+  <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
+</button>
+
+<!-- Box 3 -->
+<button @click="currentModal = 3"
+  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
+
+  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+    Track Order
+    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+  </h3>
+
+  <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
+</button>
+
+<!-- Box 4 -->
+<button @click="currentModal = 4"
+  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
+
+  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+    Request Quote
+    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+  </h3>
+
+  <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
+</button>
+
+<!-- Box 5 -->
+<button @click="currentModal = 5"
+  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
+
+  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+    Support
+    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+  </h3>
+
+  <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
+</button>
+
             </div>
         </div>
 
@@ -1226,350 +1257,104 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-    <section class="px-4 py-12">
-        <div class="max-w-6xl mx-auto">
-            <!-- Section Header -->
-            <div class="text-center mb-10">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3"> Promotions</h2>
-                <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
+<section class="px-4 py-12">
+    <div class="max-w-full mx-auto">
+        <!-- Section Header -->
+        <div class="text-center mb-10 " data-aos="fade-up">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Smart Savings for Every Project</h2>
+            <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
+        </div>
+
+        <!-- Cards Container -->
+        <div class="flex flex-col sm:flex-row gap-4 md:gap-6">
+            
+            <!-- Featured Promotion -->
+            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                    <img src="../img/promo/a.png" alt="Featured Sale" class="w-full h-full object-contain ">
+                </div>
+                <div class="p-4 md:p-6 text-center">
+                    <div class="mb-3">
+                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                            Featured Deal
+                        </span>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                        Home Renovation Sale
+                    </h3>
+                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                        Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
+                    </p>
+               
+                </div>
             </div>
 
-            <!-- Carousel Container -->
-            <div class="relative">
-                <!-- Navigation Arrows - Hidden on mobile -->
-                <button id="prevBtn" class="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
-                <button id="nextBtn" class="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-
-                <!-- Scrollable Container -->
-                <div id="carousel" class="flex overflow-x-auto md:overflow-x-hidden scroll-smooth gap-4 md:gap-6 md:px-12 snap-x snap-mandatory">
-
-                    <!-- Featured Promotion -->
-                    <div class="flex-shrink-0 w-full overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                        <div class="flex flex-col md:flex-row h-auto md:h-80">
-                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                                <div class="mb-3 md:mb-4">
-                                    <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                         Featured Deal
-                                    </span>
-                                </div>
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                    Home Renovation Sale
-                                </h3>
-                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                    Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
-                                </p>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                    <button class="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                        Shop Sale Items
-                                    </button>
-                                    <span class="text-lg md:text-2xl font-bold text-red-600">Up to 50% OFF</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                                <img src="../img/promo/a.png" alt="Featured Sale"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Weekly Sale -->
-                    <div class="flex-shrink-0 w-full  overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                        <div class="flex flex-col md:flex-row h-auto md:h-80">
-                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                                <div class="mb-3 md:mb-4">
-                                    <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                        🏷️ SALE
-                                    </span>
-                                </div>
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                    Weekly Sale
-                                </h3>
-                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                    Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
-                                </p>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                    <button class="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                        View Sale Items
-                                    </button>
-                                    <span class="text-lg md:text-xl font-bold text-red-600">Weekly Deals</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                                <img src="../img/promo/2.png" alt="Sale Items"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- New Arrivals -->
-                    <div class="flex-shrink-0 w-full  overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                        <div class="flex flex-col md:flex-row h-auto md:h-80">
-                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                                <div class="mb-3 md:mb-4">
-                                    <span class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                        ✨ NEW
-                                    </span>
-                                </div>
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                    New Arrivals
-                                </h3>
-                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                    Fresh inventory just arrived. Be the first to get the latest products and trending items.
-                                </p>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                    <button class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                        See What's New
-                                    </button>
-                                    <span class="text-lg md:text-xl font-bold text-blue-600">Fresh Stock</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                                <img src="../img/promo/3.png" alt="New Arrivals"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Hot Deals -->
-                    <div class="flex-shrink-0 w-full overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                        <div class="flex flex-col md:flex-row h-auto md:h-80">
-                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                                <div class="mb-3 md:mb-4">
-                                    <span class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md animate-pulse">
-                                        🔥 HOT DEAL
-                                    </span>
-                                </div>
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                    Hot Deals
-                                </h3>
-                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                    Limited quantity deals that won't last long. Grab them while supplies last - act fast!
-                                </p>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                    <button class="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                        Shop Hot Deals
-                                    </button>
-                                    <span class="text-lg md:text-xl font-bold text-orange-600">Limited Time</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                                <img src="../img/promo/4.png" alt="Hot Deals"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bundle Deals -->
-                    <div class="flex-shrink-0 w-full overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                        <div class="flex flex-col md:flex-row h-auto md:h-80">
-                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                                <div class="mb-3 md:mb-4">
-                                    <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md">
-                                        💎 SPECIAL OFFER
-                                    </span>
-                                </div>
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                    Bundle Deals
-                                </h3>
-                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                    Save more when you buy multiple items together. Perfect for complete room makeovers.
-                                </p>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                    <button class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                        View Bundles
-                                    </button>
-                                    <span class="text-lg md:text-xl font-bold text-purple-600">Save More</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                                <img src="../img/promo/1.png" alt="Bundle Deals"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Clearance Sale -->
-                    <div class="flex-shrink-0 w-full  overflow-hidden hover:shadow-xl transition-all duration-300 snap-center">
-                        <div class="flex flex-col md:flex-row h-auto md:h-80">
-                            <div class="w-full md:w-1/2 p-4 md:p-8 flex flex-col justify-center">
-                                <div class="mb-3 md:mb-4">
-                                    <span class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-bold shadow-md animate-bounce">
-                                        🎯 70% OFF
-                                    </span>
-                                </div>
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
-                                    Clearance Sale
-                                </h3>
-                                <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                                    Final markdowns on discontinued items. Huge savings on quality products - limited stock.
-                                </p>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-                                    <button class="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-300 shadow-lg">
-                                        Shop Clearance
-                                    </button>
-                                    <span class="text-lg md:text-xl font-bold text-green-600">Final Sale</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
-                                <img src="../img/promo/5.png" alt="Clearance Sale"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                    </div>
-
+            <!-- Weekly Sale -->
+            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                    <img src="../img/promo/2.png" alt="Sale Items" class="w-full h-full object-contain">
                 </div>
-
-                <!-- Dots Indicator -->
-                <div class="flex justify-center mt-6 md:mt-8 space-x-2">
-                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-red-600 transition-all duration-300 cursor-pointer"></div>
-                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
-                    <div class="dot w-2 md:w-3 h-2 md:h-3 rounded-full bg-gray-300 transition-all duration-300 cursor-pointer"></div>
+                <div class="p-4 md:p-6 text-center">
+                    <div class="mb-3">
+                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                            SALE
+                        </span>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                        Weekly Sale
+                    </h3>
+                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                        Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
+                    </p>
+                
                 </div>
+            </div>
 
-                <!-- Mobile Navigation -->
-                <div class="flex justify-center mt-4 space-x-4 md:hidden">
-                    <button id="prevBtnMobile" class="bg-white hover:bg-gray-50 shadow-lg rounded-full p-2 transition-all duration-300">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                    </button>
-                    <button id="nextBtnMobile" class="bg-white hover:bg-gray-50 shadow-lg rounded-full p-2 transition-all duration-300">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
+            <!-- New Arrivals -->
+            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                    <img src="../img/promo/3.png" alt="New Arrivals" class="w-full h-full object-contain ">
+                </div>
+                <div class="p-4 md:p-6 text-center">
+                    <div class="mb-3">
+                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                            NEW
+                        </span>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                        New Arrivals
+                    </h3>
+                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                        Fresh inventory just arrived. Be the first to get the latest products and trending items.
+                    </p>
+             
+                </div>
+            </div>
+
+            <!-- Hot Deals -->
+            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                    <img src="../img/promo/4.png" alt="Hot Deals" class="w-full h-full object-contain ">
+                </div>
+                <div class="p-4 md:p-6 text-center">
+                    <div class="mb-3">
+                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md animate-pulse">
+                            HOT DEAL
+                        </span>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                        Hot Deals
+                    </h3>
+                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                        Limited quantity deals that won't last long. Grab them while supplies last - act fast!
+                    </p>
+                  
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <script>
-        const carousel = document.getElementById('carousel');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const prevBtnMobile = document.getElementById('prevBtnMobile');
-        const nextBtnMobile = document.getElementById('nextBtnMobile');
-        const dots = document.querySelectorAll('.dot');
-
-        let currentSlide = 0;
-        const totalSlides = 6;
-
-        function updateCarousel() {
-            const slideWidth = carousel.children[0].offsetWidth + (window.innerWidth >= 768 ? 24 : 16); // width + gap
-            carousel.scrollTo({
-                left: currentSlide * slideWidth,
-                behavior: 'smooth'
-            });
-
-            // Update dots
-            dots.forEach((dot, index) => {
-                if (index === currentSlide) {
-                    dot.classList.remove('bg-gray-300');
-                    dot.classList.add('bg-red-600');
-                } else {
-                    dot.classList.remove('bg-red-600');
-                    dot.classList.add('bg-gray-300');
-                }
-            });
-        }
-
-        function nextSlide() {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            updateCarousel();
-        }
-
-        function prevSlide() {
-            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-            updateCarousel();
-        }
-
-        // Desktop navigation
-        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
-
-        // Mobile navigation
-        if (nextBtnMobile) nextBtnMobile.addEventListener('click', nextSlide);
-        if (prevBtnMobile) prevBtnMobile.addEventListener('click', prevSlide);
-
-        // Dot click functionality
-        dots.forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                currentSlide = index;
-                updateCarousel();
-            });
-        });
-
-        // Auto-play (optional - disabled on mobile for better UX)
-        let autoPlay;
-        if (window.innerWidth >= 768) {
-            autoPlay = setInterval(nextSlide, 5000);
-
-            // Pause auto-play on hover
-            carousel.addEventListener('mouseenter', () => {
-                clearInterval(autoPlay);
-            });
-
-            carousel.addEventListener('mouseleave', () => {
-                autoPlay = setInterval(nextSlide, 5000);
-            });
-        }
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            updateCarousel();
-        });
-
-        // Touch/swipe support for mobile
-        let startX = 0;
-        let startY = 0;
-        let isScrolling = false;
-
-        carousel.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            isScrolling = false;
-        });
-
-        carousel.addEventListener('touchmove', (e) => {
-            if (!startX || !startY) return;
-
-            const diffX = startX - e.touches[0].clientX;
-            const diffY = startY - e.touches[0].clientY;
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                isScrolling = true;
-            }
-        });
-
-        carousel.addEventListener('touchend', (e) => {
-            if (!startX || !isScrolling) return;
-
-            const diffX = startX - e.changedTouches[0].clientX;
-
-            if (Math.abs(diffX) > 50) { // Minimum swipe distance
-                if (diffX > 0) {
-                    nextSlide();
-                } else {
-                    prevSlide();
-                }
-            }
-
-            startX = 0;
-            startY = 0;
-            isScrolling = false;
-        });
-    </script>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
@@ -2061,7 +1846,7 @@ handleQueryError($conn, "New Status Query");
 
 
     <section class="w-full bg-white py-20 px-6 border-t border-gray-200">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-full mx-auto">
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <div class="inline-block mb-6">
@@ -2080,7 +1865,7 @@ handleQueryError($conn, "New Status Query");
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 
                 <!-- Video Item 1 -->
-                <div class="bg-white overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/a.mp4" type="video/mp4">
@@ -2106,7 +1891,7 @@ handleQueryError($conn, "New Status Query");
                 </div>
 
                 <!-- Video Item 2 -->
-                <div class="bg-white  overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white  overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/b.mp4" type="video/mp4">
@@ -2133,7 +1918,7 @@ handleQueryError($conn, "New Status Query");
                 </div>
 
                 <!-- Video Item 3 -->
-                <div class="bg-white  overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white  overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/c.mp4" type="video/mp4">
@@ -2159,7 +1944,7 @@ handleQueryError($conn, "New Status Query");
                 </div>
 
                 <!-- Video Item 4 -->
-                <div class="bg-white overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
+                <div class="bg-white overflow-hidden  hover:shadow-2xl transition-all duration-500 border border-gray-100 group h-full flex flex-col">
                     <div class="relative overflow-hidden" style="aspect-ratio: 16/9; height: 220px;">
                         <video autoplay muted loop playsinline class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                             <source src="../../video/d.mp4" type="video/mp4">

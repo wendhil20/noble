@@ -72,9 +72,10 @@ if (isset($_SESSION['sync_message'])) {
     unset($_SESSION['sync_message']);
 }
 
-// Fetch category and subcategory lists
+// Fetch category, subcategory, and delivery size lists
 $category_result = $conn->query("SELECT * FROM categories");
 $subcategory_result = $conn->query("SELECT * FROM product_subcategories ORDER BY subcategory_name");
+$delivery_size_result = $conn->query("SELECT * FROM delivery_sizes ORDER BY percentage ASC");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_POST['bulk_ids'])) {
@@ -146,6 +147,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // NEW: Handle delivery size updates
+        if (!empty($_POST['bulk_delivery_size'])) {
+            $deliverySizeId = intval($_POST['bulk_delivery_size']);
+            $stmt = $conn->prepare("UPDATE product_variants SET delivery_size_id = ? WHERE id IN (" . implode(',', $ids) . ")");
+            $stmt->bind_param("i", $deliverySizeId);
+            $stmt->execute();
+        }
+
         // FIXED: Auto-sync categories based on product codename - update both variants and products
         if (isset($_POST['auto_sync_categories'])) {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
@@ -193,8 +202,9 @@ $status_filter = $_GET['status'] ?? '';
 $origin_filter = $_GET['origin'] ?? '';
 $category_filter = $_GET['category'] ?? '';
 $subcategory_filter = $_GET['subcategory'] ?? '';
+$delivery_size_filter = $_GET['delivery_size'] ?? '';
 
-// Enhanced query that shows category mismatch status
+// Enhanced query that shows category mismatch status and includes delivery size info
 $query = "
     SELECT 
         pv.*,
@@ -205,6 +215,8 @@ $query = "
         c2.name as expected_category_name,
         c2.id as expected_category_id,
         ps.subcategory_name as current_subcategory_name,
+        ds.size_name as delivery_size_name,
+        ds.percentage as delivery_size_percentage,
         CASE 
             WHEN pv.category_id = c2.id THEN 'matched'
             WHEN c2.id IS NULL THEN 'no_match'
@@ -215,6 +227,7 @@ $query = "
     LEFT JOIN categories c1 ON pv.category_id = c1.id
     LEFT JOIN categories c2 ON p.codename = c2.name
     LEFT JOIN product_subcategories ps ON pv.subcategory_id = ps.id
+    LEFT JOIN delivery_sizes ds ON pv.delivery_size_id = ds.id
     WHERE 1=1
 ";
 
@@ -240,6 +253,11 @@ if (!empty($subcategory_filter)) {
         $subcatData = $subcatResult->fetch_assoc();
         $query .= " AND pv.subcategory_id = " . intval($subcatData['id']);
     }
+}
+
+// NEW: Add delivery size filter
+if (is_numeric($delivery_size_filter)) {
+    $query .= " AND pv.delivery_size_id = " . intval($delivery_size_filter);
 }
 
 // Add filter for category sync status
@@ -357,7 +375,7 @@ $counts = $count_result->fetch_assoc();
 <body class="bg-gray-100 font-sans">
 <?php include '../navbar/top.php'; ?>
 <div class="max-w-full mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variant Status, Origin, Category</h1>
+  <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variant Status, Origin, Category & Delivery Size</h1>
 
   <?php if ($sync_message): ?>
   <!-- Success Message -->
@@ -442,6 +460,21 @@ $counts = $count_result->fetch_assoc();
       </select>
     </div>
 
+    <!-- NEW: Delivery Size filter -->
+    <div>
+      <label class="text-sm font-medium text-gray-700">Delivery Size:</label>
+      <select name="delivery_size" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
+        <option value="">All</option>
+        <?php
+        $delivery_size_result->data_seek(0);
+        while ($size = $delivery_size_result->fetch_assoc()): ?>
+          <option value="<?= $size['id'] ?>" <?= $delivery_size_filter == $size['id'] ? 'selected' : '' ?>>
+            <?= htmlspecialchars($size['size_name']) ?> (<?= $size['percentage'] ?>%)
+          </option>
+        <?php endwhile; ?>
+      </select>
+    </div>
+
     <div>
       <label class="text-sm font-medium text-gray-700">Category Sync:</label>
       <select name="sync_status" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
@@ -491,6 +524,16 @@ $counts = $count_result->fetch_assoc();
           $subcategory_result->data_seek(0);
           while ($sub = $subcategory_result->fetch_assoc()): ?>
             <option value="<?= htmlspecialchars($sub['subcategory_name']) ?>"><?= htmlspecialchars($sub['subcategory_name']) ?></option>
+          <?php endwhile; ?>
+        </select>
+
+        <!-- NEW: Delivery Size bulk update dropdown -->
+        <select name="bulk_delivery_size" class="border rounded px-2 py-1 text-sm">
+          <option value="">Change Delivery Size</option>
+          <?php
+          $delivery_size_result->data_seek(0);
+          while ($size = $delivery_size_result->fetch_assoc()): ?>
+            <option value="<?= $size['id'] ?>"><?= htmlspecialchars($size['size_name']) ?> (<?= $size['percentage'] ?>%)</option>
           <?php endwhile; ?>
         </select>
 
@@ -576,6 +619,13 @@ $counts = $count_result->fetch_assoc();
           <?php if ($row['current_subcategory_name']): ?>
             <div class="text-xs text-gray-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($row['current_subcategory_name']) ?>">
               Sub: <span class="font-medium"><?= htmlspecialchars($row['current_subcategory_name']) ?></span>
+            </div>
+          <?php endif; ?>
+
+          <!-- NEW: Delivery Size Information -->
+          <?php if ($row['delivery_size_name']): ?>
+            <div class="text-xs text-purple-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($row['delivery_size_name']) ?> - <?= $row['delivery_size_percentage'] ?>%">
+              Size: <span class="font-medium"><?= htmlspecialchars($row['delivery_size_name']) ?></span> (<?= $row['delivery_size_percentage'] ?>%)
             </div>
           <?php endif; ?>
 

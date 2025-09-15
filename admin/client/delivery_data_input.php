@@ -14,11 +14,36 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Handle deletion
+// Table will be created manually in database
+
+// Handle size deletion
+if (isset($_GET['delete_size']) && isset($_GET['size_id'])) {
+    $size_id = mysqli_real_escape_string($conn, $_GET['size_id']);
+    
+    $check_size_query = "SELECT size_name FROM delivery_sizes WHERE id = '$size_id'";
+    $check_size_result = mysqli_query($conn, $check_size_query);
+    
+    if (mysqli_num_rows($check_size_result) > 0) {
+        $size_data = mysqli_fetch_assoc($check_size_result);
+        $delete_size_query = "DELETE FROM delivery_sizes WHERE id = '$size_id'";
+        
+        if (mysqli_query($conn, $delete_size_query)) {
+            $success_message = "Size '{$size_data['size_name']}' deleted successfully!";
+        } else {
+            $error_message = "Error deleting size: " . mysqli_error($conn);
+        }
+    } else {
+        $error_message = "Size not found!";
+    }
+    
+    header("Location: " . strtok($_SERVER["REQUEST_URI"], '?'));
+    exit();
+}
+
+// Handle delivery zone deletion
 if (isset($_GET['delete']) && isset($_GET['zone_id'])) {
     $zone_id = mysqli_real_escape_string($conn, $_GET['zone_id']);
     
-    // Check if zone exists and get zone name for confirmation
     $check_query = "SELECT zone_name FROM delivery_zones WHERE id = '$zone_id'";
     $check_result = mysqli_query($conn, $check_query);
     
@@ -35,81 +60,120 @@ if (isset($_GET['delete']) && isset($_GET['zone_id'])) {
         $error_message = "Zone not found!";
     }
     
-    // Redirect to remove the delete parameter from URL
     header("Location: " . strtok($_SERVER["REQUEST_URI"], '?'));
     exit();
 }
 
-// Get all delivery zones
+// Get all delivery zones and sizes
 $zones_query = "SELECT * FROM delivery_zones ORDER BY id ASC";
 $zones_result = mysqli_query($conn, $zones_query);
 
-// Handle form submission (both insert and update)
+$sizes_query = "SELECT * FROM delivery_sizes ORDER BY percentage ASC";
+$sizes_result = mysqli_query($conn, $sizes_query);
+
+// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $zone_name = mysqli_real_escape_string($conn, $_POST['zone_name']);
-    $zone_code = mysqli_real_escape_string($conn, $_POST['zone_code']);
-    $base_fee = mysqli_real_escape_string($conn, $_POST['base_fee']);
-    $included_km = mysqli_real_escape_string($conn, $_POST['included_km']);
-    $per_km_rate = mysqli_real_escape_string($conn, $_POST['per_km_rate']);
-    $is_free_delivery = isset($_POST['is_free_delivery']) ? 1 : 0;
-    $location_name = mysqli_real_escape_string($conn, $_POST['location_name']);
-    $latitude = mysqli_real_escape_string($conn, $_POST['latitude']);
-    $longitude = mysqli_real_escape_string($conn, $_POST['longitude']);
-    
-    if (isset($_POST['zone_id']) && $_POST['zone_id'] != '') {
-        // Update existing zone
-        $zone_id = mysqli_real_escape_string($conn, $_POST['zone_id']);
+    // Handle delivery size form
+    if (isset($_POST['action']) && $_POST['action'] === 'manage_size') {
+        $size_name = mysqli_real_escape_string($conn, $_POST['size_name']);
+        $percentage = mysqli_real_escape_string($conn, $_POST['percentage']);
         
-        $query = "UPDATE delivery_zones SET 
-                  zone_name = '$zone_name',
-                  zone_code = '$zone_code',
-                  base_fee = '$base_fee', 
-                  included_km = '$included_km', 
-                  per_km_rate = '$per_km_rate', 
-                  is_free_delivery = '$is_free_delivery'
-                  WHERE id = '$zone_id'";
-        
-        $success_msg = "Zone updated successfully!";
-    } else {
-        // Insert new zone
-        // Check if zone code already exists
-        $check_code = "SELECT id FROM delivery_zones WHERE zone_code = '$zone_code'";
-        $code_result = mysqli_query($conn, $check_code);
-        
-        if (mysqli_num_rows($code_result) > 0) {
-            $error_message = "Zone code already exists! Please use a different code.";
-        } else {
-            $query = "INSERT INTO delivery_zones (zone_name, zone_code, base_fee, included_km, per_km_rate, is_free_delivery) 
-                      VALUES ('$zone_name', '$zone_code', '$base_fee', '$included_km', '$per_km_rate', '$is_free_delivery')";
+        if (isset($_POST['size_id']) && $_POST['size_id'] != '') {
+            // Update existing size
+            $size_id = mysqli_real_escape_string($conn, $_POST['size_id']);
             
-            $success_msg = "New zone added successfully!";
+            $query = "UPDATE delivery_sizes SET 
+                      size_name = '$size_name',
+                      percentage = '$percentage'
+                      WHERE id = '$size_id'";
+            
+            $success_msg = "Size updated successfully!";
+        } else {
+            // Insert new size
+            $check_name = "SELECT id FROM delivery_sizes WHERE size_name = '$size_name'";
+            $name_result = mysqli_query($conn, $check_name);
+            
+            if (mysqli_num_rows($name_result) > 0) {
+                $error_message = "Size name already exists! Please use a different name.";
+            } else {
+                $query = "INSERT INTO delivery_sizes (size_name, percentage) 
+                          VALUES ('$size_name', '$percentage')";
+                
+                $success_msg = "New size added successfully!";
+            }
+        }
+        
+        if (!isset($error_message) && mysqli_query($conn, $query)) {
+            $success_message = $success_msg;
+            $sizes_result = mysqli_query($conn, $sizes_query);
+        } else if (!isset($error_message)) {
+            $error_message = "Error: " . mysqli_error($conn);
         }
     }
-    
-    // Execute query if no errors
-    if (!isset($error_message)) {
-        // Also update location in delivery_settings if it exists, or create if it doesn't
-        $location_query = "SELECT * FROM delivery_settings LIMIT 1";
-        $location_result = mysqli_query($conn, $location_query);
+    // Handle delivery zone form
+    else {
+        $zone_name = mysqli_real_escape_string($conn, $_POST['zone_name']);
+        $zone_code = mysqli_real_escape_string($conn, $_POST['zone_code']);
+        $base_fee = mysqli_real_escape_string($conn, $_POST['base_fee']);
+        $included_km = mysqli_real_escape_string($conn, $_POST['included_km']);
+        $per_km_rate = mysqli_real_escape_string($conn, $_POST['per_km_rate']);
+        $is_free_delivery = isset($_POST['is_free_delivery']) ? 1 : 0;
+        $location_name = mysqli_real_escape_string($conn, $_POST['location_name']);
+        $latitude = mysqli_real_escape_string($conn, $_POST['latitude']);
+        $longitude = mysqli_real_escape_string($conn, $_POST['longitude']);
         
-        if (mysqli_num_rows($location_result) > 0) {
-            $location_update = "UPDATE delivery_settings SET 
-                               location_name = '$location_name', 
-                               latitude = '$latitude', 
-                               longitude = '$longitude'";
-            mysqli_query($conn, $location_update);
+        if (isset($_POST['zone_id']) && $_POST['zone_id'] != '') {
+            // Update existing zone
+            $zone_id = mysqli_real_escape_string($conn, $_POST['zone_id']);
+            
+            $query = "UPDATE delivery_zones SET 
+                      zone_name = '$zone_name',
+                      zone_code = '$zone_code',
+                      base_fee = '$base_fee', 
+                      included_km = '$included_km', 
+                      per_km_rate = '$per_km_rate', 
+                      is_free_delivery = '$is_free_delivery'
+                      WHERE id = '$zone_id'";
+            
+            $success_msg = "Zone updated successfully!";
         } else {
-            $location_insert = "INSERT INTO delivery_settings (location_name, latitude, longitude, base_fee, per_km_rate, total_km_base_fee) 
-                               VALUES ('$location_name', '$latitude', '$longitude', 0, 0, 0)";
-            mysqli_query($conn, $location_insert);
+            // Insert new zone
+            $check_code = "SELECT id FROM delivery_zones WHERE zone_code = '$zone_code'";
+            $code_result = mysqli_query($conn, $check_code);
+            
+            if (mysqli_num_rows($code_result) > 0) {
+                $error_message = "Zone code already exists! Please use a different code.";
+            } else {
+                $query = "INSERT INTO delivery_zones (zone_name, zone_code, base_fee, included_km, per_km_rate, is_free_delivery) 
+                          VALUES ('$zone_name', '$zone_code', '$base_fee', '$included_km', '$per_km_rate', '$is_free_delivery')";
+                
+                $success_msg = "New zone added successfully!";
+            }
         }
         
-        if (mysqli_query($conn, $query)) {
-            $success_message = $success_msg;
-            // Refresh zones data
-            $zones_result = mysqli_query($conn, $zones_query);
-        } else {
-            $error_message = "Error: " . mysqli_error($conn);
+        if (!isset($error_message)) {
+            // Also update location in delivery_settings
+            $location_query = "SELECT * FROM delivery_settings LIMIT 1";
+            $location_result = mysqli_query($conn, $location_query);
+            
+            if (mysqli_num_rows($location_result) > 0) {
+                $location_update = "UPDATE delivery_settings SET 
+                                   location_name = '$location_name', 
+                                   latitude = '$latitude', 
+                                   longitude = '$longitude'";
+                mysqli_query($conn, $location_update);
+            } else {
+                $location_insert = "INSERT INTO delivery_settings (location_name, latitude, longitude, base_fee, per_km_rate, total_km_base_fee) 
+                                   VALUES ('$location_name', '$latitude', '$longitude', 0, 0, 0)";
+                mysqli_query($conn, $location_insert);
+            }
+            
+            if (mysqli_query($conn, $query)) {
+                $success_message = $success_msg;
+                $zones_result = mysqli_query($conn, $zones_query);
+            } else {
+                $error_message = "Error: " . mysqli_error($conn);
+            }
         }
     }
 }
@@ -121,7 +185,11 @@ $existing_location = mysqli_fetch_assoc($location_result);
 
 $is_edit_mode = isset($_GET['edit']) && isset($_GET['zone_id']);
 $is_add_mode = isset($_GET['add']);
+$is_size_mode = isset($_GET['sizes']);
+$is_edit_size_mode = isset($_GET['edit_size']) && isset($_GET['size_id']);
+$is_add_size_mode = isset($_GET['add_size']);
 $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
+$edit_size_id = isset($_GET['size_id']) ? $_GET['size_id'] : null;
 ?>
 
 <!DOCTYPE html>
@@ -176,16 +244,6 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
         .search-result-item:hover {
             background-color: #f8f9fa;
         }
-        
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-        
-        .search-loading {
-            padding: 12px 15px;
-            text-align: center;
-            color: #6c757d;
-        }
 
         .zone-card {
             background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
@@ -199,9 +257,21 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
         }
 
+        .size-card {
+            background: linear-gradient(135deg, #6f42c1 0%, #8a63d2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
         .card-header {
             background-color: #ff6b35 !important;
             color: white !important;
+        }
+
+        .card-header.size-header {
+            background-color: #6f42c1 !important;
         }
 
         .zone-details {
@@ -227,6 +297,24 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             background: rgba(220, 53, 69, 0.8);
             color: white;
         }
+
+        .nav-tabs .nav-link {
+            color: #495057;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: #ff6b35;
+            border-color: #ff6b35;
+            color: white;
+        }
+
+        .percentage-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -236,12 +324,7 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>Delivery Zones Management</h2>
-                <?php if (!$is_edit_mode && !$is_add_mode): ?>
-                    <a href="?add=1" class="btn btn-success">
-                        <i class="fas fa-plus"></i> Add New Zone
-                    </a>
-                <?php endif; ?>
+                <h2>Delivery Management System</h2>
             </div>
             
             <?php if (isset($success_message)): ?>
@@ -259,14 +342,155 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="managementTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <?php echo (!$is_size_mode && !$is_add_size_mode && !$is_edit_size_mode) ? 'active' : ''; ?>" 
+                    onclick="window.location.href='?'">
+                <i class="fas fa-map-marked-alt"></i> Delivery Zones
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <?php echo ($is_size_mode || $is_add_size_mode || $is_edit_size_mode) ? 'active' : ''; ?>" 
+                    onclick="window.location.href='?sizes=1'">
+                <i class="fas fa-boxes"></i> Package Sizes
+            </button>
+        </li>
+    </ul>
     
-    <?php if (!$is_edit_mode && !$is_add_mode): ?>
+    <?php if ($is_size_mode && !$is_add_size_mode && !$is_edit_size_mode): ?>
+    <!-- Package Sizes Management -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>📦 Package Size Percentages</h4>
+                <a href="?add_size=1" class="btn btn-purple" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
+                    <i class="fas fa-plus"></i> Add New Size
+                </a>
+            </div>
+            
+            <?php 
+            mysqli_data_seek($sizes_result, 0);
+            if (mysqli_num_rows($sizes_result) == 0): ?>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No package sizes found. <a href="?add_size=1">Add your first size</a>
+                </div>
+            <?php else: ?>
+                <div class="row">
+                    <?php while ($size = mysqli_fetch_assoc($sizes_result)): ?>
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="size-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><?php echo htmlspecialchars($size['size_name']); ?></h5>
+                                <div class="action-buttons">
+                                    <a href="?edit_size=1&size_id=<?php echo $size['id']; ?>" class="btn btn-light btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm delete-btn" 
+                                            onclick="confirmDeleteSize(<?php echo $size['id']; ?>, '<?php echo htmlspecialchars($size['size_name']); ?>')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <div class="percentage-badge">
+                                    <?php 
+                                    // Display percentage without unnecessary decimals
+                                    $displayPercentage = $size['percentage'];
+                                    if ($displayPercentage == intval($displayPercentage)) {
+                                        echo intval($displayPercentage);
+                                    } else {
+                                        echo number_format($displayPercentage, 1);
+                                    }
+                                    ?>%
+                                </div>
+                                <small class="d-block mt-2 opacity-75">Additional delivery fee percentage</small>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endwhile; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <?php elseif ($is_add_size_mode || $is_edit_size_mode): ?>
+    <!-- Add/Edit Size Form -->
+    <?php
+    $edit_size = null;
+    if ($is_edit_size_mode) {
+        $edit_size_query = "SELECT * FROM delivery_sizes WHERE id = '$edit_size_id'";
+        $edit_size_result = mysqli_query($conn, $edit_size_query);
+        $edit_size = mysqli_fetch_assoc($edit_size_result);
+        
+        if (!$edit_size) {
+            echo "<div class='alert alert-danger'>Size not found!</div>";
+            echo "<a href='?sizes=1' class='btn btn-secondary'>Back to Sizes</a>";
+            exit();
+        }
+    }
+    ?>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header size-header d-flex justify-content-between align-items-center">
+                    <h5>
+                        <i class="fas fa-<?php echo $is_add_size_mode ? 'plus' : 'edit'; ?>"></i> 
+                        <?php echo $is_add_size_mode ? 'Add New Package Size' : 'Edit ' . htmlspecialchars($edit_size['size_name']); ?>
+                    </h5>
+                    <a href="?sizes=1" class="btn btn-light btn-sm">Cancel</a>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="manage_size">
+                        <?php if ($is_edit_size_mode): ?>
+                            <input type="hidden" name="size_id" value="<?php echo $edit_size['id']; ?>">
+                        <?php endif; ?>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Size Name: <span class="text-danger">*</span></label>
+                            <input type="text" name="size_name" class="form-control" 
+                                   value="<?php echo $edit_size ? htmlspecialchars($edit_size['size_name']) : ''; ?>"
+                                   placeholder="e.g., Extra Small, Jumbo" required>
+                            <div class="form-text">Enter a descriptive name for this package size</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Percentage: <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" name="percentage" class="form-control" step="0.1" min="0" max="100"
+                                       value="<?php echo $edit_size ? $edit_size['percentage'] : ''; ?>"
+                                       placeholder="0.0" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text">Additional percentage to add to delivery fee (0-100%)</div>
+                        </div>
+                        
+                        <button type="submit" class="btn" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
+                            <i class="fas fa-<?php echo $is_add_size_mode ? 'plus' : 'save'; ?>"></i> 
+                            <?php echo $is_add_size_mode ? 'Add Size' : 'Update Size'; ?>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php elseif (!$is_edit_mode && !$is_add_mode): ?>
     <!-- View Mode - Show all zones -->
     <div class="row mb-4">
         <div class="col-12">
-            <h4>📍 Current Delivery Zones</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>🚚 Current Delivery Zones</h4>
+                <a href="?add=1" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add New Zone
+                </a>
+            </div>
+            
             <?php 
-            // Reset the result pointer
             mysqli_data_seek($zones_result, 0);
             if (mysqli_num_rows($zones_result) == 0): ?>
                 <div class="alert alert-info">
@@ -353,17 +577,24 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
                 .openPopup();
         });
 
-        // Delete confirmation
+        // Delete confirmation for zones
         function confirmDelete(zoneId, zoneName) {
             if (confirm(`Are you sure you want to delete the zone "${zoneName}"?\n\nThis action cannot be undone.`)) {
                 window.location.href = `?delete=1&zone_id=${zoneId}`;
+            }
+        }
+
+        // Delete confirmation for sizes
+        function confirmDeleteSize(sizeId, sizeName) {
+            if (confirm(`Are you sure you want to delete the size "${sizeName}"?\n\nThis action cannot be undone.`)) {
+                window.location.href = `?delete_size=1&size_id=${sizeId}`;
             }
         }
     </script>
     <?php endif; ?>
 
     <?php elseif ($is_add_mode): ?>
-    <!-- Add Mode -->
+    <!-- Add Mode - Rest of your existing add zone code -->
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
@@ -490,7 +721,7 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
     </div>
 
     <?php else: ?>
-    <!-- Edit Mode -->
+    <!-- Edit Mode - Rest of your existing edit zone code -->
     <?php
     // Get the zone being edited
     $edit_zone_query = "SELECT * FROM delivery_zones WHERE id = '$edit_zone_id'";
@@ -629,7 +860,9 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
         </div>
         <?php endif; ?>
     </div>
+    <?php endif; ?>
 
+    <!-- JavaScript for map and forms -->
     <script>
         let map, marker, searchTimeout;
 
@@ -640,8 +873,8 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             const kmInput = document.querySelector('input[name="included_km"]');
             const rateInput = document.querySelector('input[name="per_km_rate"]');
             
-            if (checkbox.checked) {
-                pricingFields.style.display = 'none';
+            if (checkbox && checkbox.checked) {
+                if (pricingFields) pricingFields.style.display = 'none';
                 // Set values to 0 when free delivery is enabled
                 if (feeInput) feeInput.value = '0.00';
                 if (kmInput) kmInput.value = '0.00';
@@ -652,7 +885,7 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
                 if (kmInput) kmInput.removeAttribute('required');
                 if (rateInput) rateInput.removeAttribute('required');
             } else {
-                pricingFields.style.display = 'block';
+                if (pricingFields) pricingFields.style.display = 'block';
                 // Add required attribute back
                 if (feeInput) feeInput.setAttribute('required', 'required');
                 if (kmInput) kmInput.setAttribute('required', 'required');
@@ -697,113 +930,49 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             });
         }
 
-        // Enhanced search functionality with better error handling
-        document.getElementById('map-search').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-            
-            if (query.length < 3) {
-                hideSearchResults();
-                return;
-            }
-            
-            searchTimeout = setTimeout(() => {
-                searchLocation(query);
-            }, 300); // Reduced timeout for better responsiveness
-        });
+        // Enhanced search functionality
+        const mapSearchInput = document.getElementById('map-search');
+        if (mapSearchInput) {
+            mapSearchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (query.length < 3) {
+                    hideSearchResults();
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    searchLocation(query);
+                }, 300);
+            });
+        }
 
         function searchLocation(query) {
             const resultsDiv = document.getElementById('search-results');
+            if (!resultsDiv) return;
             
             // Show loading state
             resultsDiv.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
             resultsDiv.style.display = 'block';
             
-            // Try multiple API endpoints for better reliability
-            const apis = [
-                {
-                    url: `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&osm_tag=place&osm_tag=highway&osm_tag=building&bbox=116.9283,4.5693,126.6043,21.1611`,
-                    name: 'Photon'
-                },
-                {
-                    url: `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&countrycodes=ph&addressdetails=1`,
-                    name: 'Nominatim',
-                    headers: {
-                        'User-Agent': 'DeliveryZoneManager/1.0'
-                    }
-                }
-            ];
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&countrycodes=ph&addressdetails=1`;
             
-            // Try first API (Photon)
-            trySearchAPI(0);
-            
-            function trySearchAPI(apiIndex) {
-                if (apiIndex >= apis.length) {
-                    // If all APIs fail, show predefined Philippine locations
-                    showFallbackLocations(query);
-                    return;
-                }
-                
-                const api = apis[apiIndex];
-                const fetchOptions = {
-                    method: 'GET',
-                    headers: api.headers || {}
-                };
-                
-                fetch(api.url, fetchOptions)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        let results = [];
-                        
-                        if (api.name === 'Photon' && data.features) {
-                            // Convert Photon format to standard format
-                            results = data.features.map(feature => {
-                                const props = feature.properties;
-                                return {
-                                    lat: feature.geometry.coordinates[1],
-                                    lon: feature.geometry.coordinates[0],
-                                    display_name: props.name ? 
-                                        `${props.name}${props.city ? ', ' + props.city : ''}${props.state ? ', ' + props.state : ''}, Philippines` :
-                                        'Unknown Location',
-                                    name: props.name || props.street || 'Location',
-                                    address: {
-                                        road: props.street,
-                                        city: props.city,
-                                        state: props.state,
-                                        country: props.country || 'Philippines'
-                                    }
-                                };
-                            });
-                        } else {
-                            // Nominatim format (already standard)
-                            results = data;
-                        }
-                        
-                        // Filter results to ensure they're in Philippines
-                        results = results.filter(item => {
-                            const isInPhilippines = item.display_name.toLowerCase().includes('philippines') ||
-                                                  item.display_name.toLowerCase().includes('pilipinas') ||
-                                                  (item.lat >= 4.5 && item.lat <= 21.2 && item.lon >= 116.9 && item.lon <= 126.7);
-                            return isInPhilippines;
-                        });
-                        
-                        displaySearchResults(results, query);
-                    })
-                    .catch(error => {
-                        console.warn(`${api.name} API failed:`, error);
-                        // Try next API
-                        trySearchAPI(apiIndex + 1);
-                    });
-            }
+            fetch(url, {
+                headers: { 'User-Agent': 'DeliveryZoneManager/1.0' }
+            })
+            .then(response => response.json())
+            .then(data => displaySearchResults(data, query))
+            .catch(error => {
+                console.error('Search error:', error);
+                showFallbackLocations(query);
+            });
         }
         
         function displaySearchResults(data, originalQuery) {
             const resultsDiv = document.getElementById('search-results');
+            if (!resultsDiv) return;
+            
             resultsDiv.innerHTML = '';
             
             if (data.length === 0) {
@@ -811,52 +980,15 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
                 return;
             }
             
-            data.forEach((item, index) => {
+            data.forEach((item) => {
                 const div = document.createElement('div');
                 div.className = 'search-result-item';
-                
-                // Create a more readable display name
-                let displayName = item.display_name;
-                if (item.address) {
-                    const parts = [];
-                    if (item.address.house_number && item.address.road) {
-                        parts.push(`${item.address.house_number} ${item.address.road}`);
-                    } else if (item.address.road) {
-                        parts.push(item.address.road);
-                    }
-                    if (item.address.suburb || item.address.neighbourhood) {
-                        parts.push(item.address.suburb || item.address.neighbourhood);
-                    }
-                    if (item.address.city || item.address.town || item.address.municipality) {
-                        parts.push(item.address.city || item.address.town || item.address.municipality);
-                    }
-                    if (item.address.state) {
-                        parts.push(item.address.state);
-                    }
-                    
-                    if (parts.length > 0) {
-                        displayName = parts.join(', ');
-                    }
-                }
-                
                 div.innerHTML = `
                     <div class="fw-semibold">${item.name || 'Location'}</div>
-                    <small class="text-muted">${displayName}</small>
+                    <small class="text-muted">${item.display_name}</small>
                 `;
                 
-                div.onclick = () => {
-                    selectSearchResult(item);
-                };
-                
-                // Add keyboard navigation
-                div.setAttribute('tabindex', '0');
-                div.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        selectSearchResult(item);
-                    }
-                });
-                
+                div.onclick = () => selectSearchResult(item);
                 resultsDiv.appendChild(div);
             });
             
@@ -865,45 +997,31 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
         
         function showFallbackLocations(query) {
             const resultsDiv = document.getElementById('search-results');
+            if (!resultsDiv) return;
             
-            // Predefined popular Philippine locations
             const fallbackLocations = [
                 { name: 'Quezon City', lat: 14.6760, lon: 121.0437, display_name: 'Quezon City, Metro Manila, Philippines' },
                 { name: 'Manila', lat: 14.5995, lon: 120.9842, display_name: 'Manila, Metro Manila, Philippines' },
                 { name: 'Makati', lat: 14.5547, lon: 121.0244, display_name: 'Makati, Metro Manila, Philippines' },
                 { name: 'BGC Taguig', lat: 14.5352, lon: 121.0553, display_name: 'Bonifacio Global City, Taguig, Metro Manila, Philippines' },
-                { name: 'Ortigas', lat: 14.5858, lon: 121.0564, display_name: 'Ortigas Center, Pasig, Metro Manila, Philippines' },
-                { name: 'Alabang', lat: 14.4297, lon: 121.0403, display_name: 'Alabang, Muntinlupa, Metro Manila, Philippines' },
-                { name: 'Cebu City', lat: 10.3157, lon: 123.8854, display_name: 'Cebu City, Cebu, Philippines' },
-                { name: 'Davao City', lat: 7.0731, lon: 125.6128, display_name: 'Davao City, Davao del Sur, Philippines' }
             ];
             
-            // Filter based on search query
             const filtered = fallbackLocations.filter(loc => 
                 loc.name.toLowerCase().includes(query.toLowerCase()) ||
                 loc.display_name.toLowerCase().includes(query.toLowerCase())
             );
             
-            if (filtered.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="search-result-item text-muted">
-                        <div>No results found for "${query}"</div>
-                        <small>Try searching for major cities like Manila, Cebu, or Quezon City</small>
-                    </div>
+            resultsDiv.innerHTML = '';
+            filtered.forEach(location => {
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.innerHTML = `
+                    <div class="fw-semibold">${location.name}</div>
+                    <small class="text-muted">${location.display_name}</small>
                 `;
-            } else {
-                resultsDiv.innerHTML = '';
-                filtered.forEach(location => {
-                    const div = document.createElement('div');
-                    div.className = 'search-result-item';
-                    div.innerHTML = `
-                        <div class="fw-semibold">${location.name}</div>
-                        <small class="text-muted">${location.display_name}</small>
-                    `;
-                    div.onclick = () => selectSearchResult(location);
-                    resultsDiv.appendChild(div);
-                });
-            }
+                div.onclick = () => selectSearchResult(location);
+                resultsDiv.appendChild(div);
+            });
             
             resultsDiv.style.display = 'block';
         }
@@ -913,27 +1031,34 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             const lng = parseFloat(item.lon);
             
             // Update map
-            map.setView([lat, lng], 16);
-            
-            // Update marker
-            if (marker) {
-                marker.setLatLng([lat, lng]);
-            } else {
-                marker = L.marker([lat, lng]).addTo(map);
+            if (map) {
+                map.setView([lat, lng], 16);
+                
+                // Update marker
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                }
             }
             
             // Update form
-            document.getElementById('latitude').value = lat.toFixed(8);
-            document.getElementById('longitude').value = lng.toFixed(8);
-            document.getElementById('location_name').value = item.display_name;
+            const latField = document.getElementById('latitude');
+            const lngField = document.getElementById('longitude');
+            const nameField = document.getElementById('location_name');
+            const searchField = document.getElementById('map-search');
             
-            // Hide search results and clear search input
+            if (latField) latField.value = lat.toFixed(8);
+            if (lngField) lngField.value = lng.toFixed(8);
+            if (nameField) nameField.value = item.display_name;
+            if (searchField) searchField.value = '';
+            
             hideSearchResults();
-            document.getElementById('map-search').value = '';
         }
 
         function hideSearchResults() {
-            document.getElementById('search-results').style.display = 'none';
+            const resultsDiv = document.getElementById('search-results');
+            if (resultsDiv) resultsDiv.style.display = 'none';
         }
 
         function reverseGeocode(lat, lng) {
@@ -942,18 +1067,19 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.display_name) {
-                        document.getElementById('location_name').value = data.display_name;
+                    const nameField = document.getElementById('location_name');
+                    if (data.display_name && nameField) {
+                        nameField.value = data.display_name;
                     }
                 })
-                .catch(error => {
-                    console.error('Reverse geocoding error:', error);
-                });
+                .catch(error => console.error('Reverse geocoding error:', error));
         }
 
         // Initialize map when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            initMap();
+            if (document.getElementById('map')) {
+                initMap();
+            }
         });
 
         // Hide search results when clicking outside
@@ -962,136 +1088,163 @@ $edit_zone_id = isset($_GET['zone_id']) ? $_GET['zone_id'] : null;
                 hideSearchResults();
             }
         });
-
-        // Keyboard navigation for search
-        document.getElementById('map-search').addEventListener('keydown', function(e) {
-            const resultsDiv = document.getElementById('search-results');
-            const items = resultsDiv.querySelectorAll('.search-result-item');
-            
-            if (e.key === 'ArrowDown' && items.length > 0) {
-                e.preventDefault();
-                items[0].focus();
-            } else if (e.key === 'Escape') {
-                hideSearchResults();
-                this.blur();
-            }
-        });
         <?php endif; ?>
 
         // Initialize free delivery toggle on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Call toggleFreeDelivery to set initial state
             if (document.getElementById('is_free_delivery')) {
                 toggleFreeDelivery();
             }
         });
-    </script>
-    <?php endif; ?>
-</div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">
-                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this delivery zone?</p>
-                <div class="alert alert-warning">
-                    <strong>Warning:</strong> This action cannot be undone. All data associated with this zone will be permanently deleted.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="fas fa-trash"></i> Delete Zone
-                </button>
-            </div>
-        </div>
-    </div>
+        // Enhanced delete confirmation with modals
+        let deleteZoneId, deleteZoneName, deleteSizeId, deleteSizeName;
+
+        // Zone deletion functions
+        function confirmDelete(zoneId, zoneName) {
+            // Simple confirm dialog as backup
+            if (confirm(`Are you sure you want to delete the zone "${zoneName}"?\n\nThis action cannot be undone.`)) {
+                window.location.href = `?delete=1&zone_id=${zoneId}`;
+                return;
+            }
+            
+            // If Bootstrap is available, use modal
+            if (typeof bootstrap !== 'undefined') {
+                deleteZoneId = zoneId;
+                deleteZoneName = zoneName;
+                
+                // Update modal content
+                const modalBody = document.querySelector('#deleteModal .modal-body p');
+                if (modalBody) {
+                    modalBody.innerHTML = `Are you sure you want to delete the zone <strong>"${zoneName}"</strong>?`;
+                }
+                
+                // Show modal
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                deleteModal.show();
+            }
+        }
+
+        // Size deletion functions
+        function confirmDeleteSize(sizeId, sizeName) {
+            // Simple confirm dialog as backup
+            if (confirm(`Are you sure you want to delete the size "${sizeName}"?\n\nThis action cannot be undone.`)) {
+                window.location.href = `?delete_size=1&size_id=${sizeId}`;
+                return;
+            }
+            
+            // If Bootstrap is available, use modal
+            if (typeof bootstrap !== 'undefined') {
+                deleteSizeId = sizeId;
+                deleteSizeName = sizeName;
+                
+                // Update modal content
+                const modalBody = document.querySelector('#deleteSizeModal .modal-body p');
+                if (modalBody) {
+                    modalBody.innerHTML = `Are you sure you want to delete the size <strong>"${sizeName}"</strong>?`;
+                }
+                
+                // Show modal
+                const deleteSizeModal = new bootstrap.Modal(document.getElementById('deleteSizeModal'));
+                deleteSizeModal.show();
+            }
+        }
+
+        // Handle actual zone deletion
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', function() {
+                    if (deleteZoneId) {
+                        // Show loading state
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                        this.disabled = true;
+                        
+                        // Redirect to delete
+                        window.location.href = `?delete=1&zone_id=${deleteZoneId}`;
+                    }
+                });
+            }
+        });
+
+        // Handle actual size deletion
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmDeleteSizeBtn = document.getElementById('confirmDeleteSizeBtn');
+            if (confirmDeleteSizeBtn) {
+                confirmDeleteSizeBtn.addEventListener('click', function() {
+                    if (deleteSizeId) {
+                        // Show loading state
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                        this.disabled = true;
+                        
+                        // Redirect to delete
+                        window.location.href = `?delete_size=1&size_id=${deleteSizeId}`;
+                    }
+                });
+            }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+
+        // Form validation enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    const zoneCode = form.querySelector('input[name="zone_code"]');
+                    if (zoneCode) {
+                        // Convert to uppercase
+                        zoneCode.value = zoneCode.value.toUpperCase();
+                        
+                        // Check for special characters
+                        if (!/^[A-Z0-9_-]+$/.test(zoneCode.value)) {
+                            e.preventDefault();
+                            alert('Zone code can only contain letters, numbers, hyphens, and underscores.');
+                            zoneCode.focus();
+                            return false;
+                        }
+                    }
+                    
+                    // Validate coordinates if present
+                    const lat = form.querySelector('input[name="latitude"]');
+                    const lng = form.querySelector('input[name="longitude"]');
+                    
+                    if (lat && lng && (lat.value === '' || lng.value === '')) {
+                        e.preventDefault();
+                        alert('Please select a location on the map.');
+                        return false;
+                    }
+                    
+                    // Validate percentage for size forms
+                    const percentage = form.querySelector('input[name="percentage"]');
+                    if (percentage) {
+                        const value = parseFloat(percentage.value);
+                        if (value < 0 || value > 100) {
+                            e.preventDefault();
+                            alert('Percentage must be between 0 and 100.');
+                            percentage.focus();
+                            return false;
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </div>
 
 <!-- JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-
-<script>
-// Enhanced delete confirmation with modal
-let deleteZoneId, deleteZoneName;
-
-function confirmDelete(zoneId, zoneName) {
-    deleteZoneId = zoneId;
-    deleteZoneName = zoneName;
-    
-    // Update modal content
-    document.querySelector('#deleteModal .modal-body p').innerHTML = 
-        `Are you sure you want to delete the zone <strong>"${zoneName}"</strong>?`;
-    
-    // Show modal
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    deleteModal.show();
-}
-
-// Handle actual deletion
-document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-    if (deleteZoneId) {
-        // Show loading state
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-        this.disabled = true;
-        
-        // Redirect to delete
-        window.location.href = `?delete=1&zone_id=${deleteZoneId}`;
-    }
-});
-
-// Auto-hide alerts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    const alerts = document.querySelectorAll('.alert-dismissible');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-    });
-});
-
-// Form validation enhancement
-document.addEventListener('DOMContentLoaded', function() {
-    const forms = document.querySelectorAll('form');
-    forms.forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            const zoneCode = form.querySelector('input[name="zone_code"]');
-            if (zoneCode) {
-                // Convert to uppercase
-                zoneCode.value = zoneCode.value.toUpperCase();
-                
-                // Check for special characters
-                if (!/^[A-Z0-9_-]+$/.test(zoneCode.value)) {
-                    e.preventDefault();
-                    alert('Zone code can only contain letters, numbers, hyphens, and underscores.');
-                    zoneCode.focus();
-                    return false;
-                }
-            }
-            
-            // Validate coordinates if present
-            const lat = form.querySelector('input[name="latitude"]');
-            const lng = form.querySelector('input[name="longitude"]');
-            
-            if (lat && lng && (lat.value === '' || lng.value === '')) {
-                e.preventDefault();
-                alert('Please select a location on the map.');
-                return false;
-            }
-        });
-    });
-});
-</script>
 
 </body>
 </html>

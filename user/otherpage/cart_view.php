@@ -260,6 +260,20 @@ $total_cart_items = count($cart_items);
           radial-gradient(circle at 25% 25%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
           radial-gradient(circle at 75% 75%, rgba(251, 146, 60, 0.05) 0%, transparent 50%);
       }
+
+      /* Quantity Control Styles */
+      .quantity-btn {
+        transition: all 0.2s ease;
+      }
+
+      .quantity-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .quantity-btn:active {
+        transform: scale(0.95);
+      }
     </style>
   </div>
 
@@ -272,10 +286,6 @@ $total_cart_items = count($cart_items);
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>
         <span class="text-gray-600 font-medium">Cart</span>
-        <?php if (!empty($search_keyword)): ?>
-          <i class="fas fa-chevron-right text-gray-400"></i>
-          <span class="text-gray-500">Search: "<?= htmlspecialchars($search_keyword) ?>"</span>
-        <?php endif; ?>
       </div>
     </div>
   </nav>
@@ -337,11 +347,33 @@ $total_cart_items = count($cart_items);
                         <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
                       </td>
                       <td class="py-4 px-4">
-                        <input type="number" name="quantities[<?= $item['id'] ?>]" value="<?= $quantity ?>" min="1"
-                          class="w-16 text-sm border border-gray-300 rounded px-2 py-1 text-center shadow-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-400">
+                        <div class="flex items-center justify-center gap-1">
+                          <!-- Minus Button -->
+                          <button type="button" 
+                                  onclick="updateQuantity(<?= $item['id'] ?>, -1)" 
+                                  class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
+                            <i class="fas fa-minus text-xs"></i>
+                          </button>
+                          
+                          <!-- Quantity Display/Input -->
+                          <input type="number" 
+                                 id="qty_<?= $item['id'] ?>"
+                                 name="quantities[<?= $item['id'] ?>]" 
+                                 value="<?= $quantity ?>" 
+                                 min="1"
+                                 readonly
+                                 class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
+                          
+                          <!-- Plus Button -->
+                          <button type="button" 
+                                  onclick="updateQuantity(<?= $item['id'] ?>, 1)" 
+                                  class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
+                            <i class="fas fa-plus text-xs"></i>
+                          </button>
+                        </div>
                       </td>
                       <td class="py-4 px-4 text-orange-600 font-medium">₱<?= number_format($unit_price, 2) ?></td>
-                      <td class="py-4 px-4 text-green-600 font-bold">₱<?= number_format($subtotal, 2) ?></td>
+                      <td class="py-4 px-4 text-green-600 font-bold" id="subtotal_<?= $item['id'] ?>">₱<?= number_format($subtotal, 2) ?></td>
                       <td class="py-4 px-4">
                         <?php if (!empty($item['type_image'])): ?>
                           <img src="../../<?= ($item['type_image']) ?>" class="w-16 h-16 object-cover rounded-lg shadow-sm" alt="Product Image">
@@ -382,7 +414,7 @@ $total_cart_items = count($cart_items);
               <button type="submit" class="w-full sm:w-auto bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition-colors font-medium">
                 <i class="fas fa-sync-alt mr-2"></i>Update Cart
               </button>
-              <div class="text-xl lg:text-2xl font-bold text-orange-700 bg-orange-50 px-4 py-2 rounded-lg">
+              <div class="text-xl lg:text-2xl font-bold text-orange-700 bg-orange-50 px-4 py-2 rounded-lg" id="cart_total_desktop">
                 Total: ₱<?= number_format($total_price, 2) ?>
               </div>
             </div>
@@ -450,14 +482,35 @@ $total_cart_items = count($cart_items);
                 <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
                   <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                    <input type="number" name="quantities[<?= $item['id'] ?>]" value="<?= $quantity ?>" min="1"
-                      class="w-full text-sm border border-gray-300 rounded px-3 py-2 text-center focus:border-orange-400 focus:ring-1 focus:ring-orange-400">
+                    <div class="flex items-center gap-1">
+                      <!-- Minus Button -->
+                      <button type="button" 
+                              onclick="updateQuantity(<?= $item['id'] ?>, -1)" 
+                              class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
+                        <i class="fas fa-minus text-xs"></i>
+                      </button>
+                      
+                      <!-- Quantity Display/Input -->
+                      <input type="number" 
+                             name="quantities[<?= $item['id'] ?>]" 
+                             value="<?= $quantity ?>" 
+                             min="1"
+                             readonly
+                             class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
+                      
+                      <!-- Plus Button -->
+                      <button type="button" 
+                              onclick="updateQuantity(<?= $item['id'] ?>, 1)" 
+                              class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
+                        <i class="fas fa-plus text-xs"></i>
+                      </button>
+                    </div>
                   </div>
                   <div class="text-right">
                     <div class="text-xs text-gray-600 mb-1">Unit Price</div>
                     <div class="text-sm font-medium text-orange-600">₱<?= number_format($unit_price, 2) ?></div>
                     <div class="text-xs text-gray-600 mt-1">Subtotal</div>
-                    <div class="text-lg font-bold text-green-600">₱<?= number_format($subtotal, 2) ?></div>
+                    <div class="text-lg font-bold text-green-600" id="subtotal_mobile_<?= $item['id'] ?>">₱<?= number_format($subtotal, 2) ?></div>
                   </div>
                 </div>
               </div>
@@ -469,7 +522,7 @@ $total_cart_items = count($cart_items);
                 <button type="submit" class="w-full sm:w-auto bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition-colors font-medium">
                   <i class="fas fa-sync-alt mr-2"></i>Update Cart
                 </button>
-                <div class="text-xl font-bold text-orange-700 bg-orange-50 px-4 py-3 rounded-lg">
+                <div class="text-xl font-bold text-orange-700 bg-orange-50 px-4 py-3 rounded-lg" id="cart_total_mobile">
                   Total: ₱<?= number_format($total_price, 2) ?>
                 </div>
               </div>
@@ -624,6 +677,93 @@ $total_cart_items = count($cart_items);
       </svg>
     </div>
   </footer>
+
+  <!-- JavaScript for Quantity Controls -->
+  <script>
+    // Store unit prices for each item
+    const unitPrices = {};
+    
+    <?php foreach ($cart_items as $item): ?>
+    unitPrices[<?= $item['id'] ?>] = <?= floatval($item['price']) ?>;
+    <?php endforeach; ?>
+
+    function updateQuantity(itemId, change) {
+      const input = document.getElementById('qty_' + itemId);
+      let currentValue = parseInt(input.value) || 1;
+      let newValue = currentValue + change;
+      
+      // Ensure minimum quantity is 1
+      if (newValue < 1) {
+        newValue = 1;
+      }
+      
+      input.value = newValue;
+      
+      // Update all quantity inputs with same item ID
+      const allInputs = document.querySelectorAll('input[name="quantities[' + itemId + ']"]');
+      allInputs.forEach(inp => inp.value = newValue);
+      
+      // Update subtotals
+      updateSubtotal(itemId, newValue);
+      
+      // Update cart total
+      updateCartTotal();
+    }
+
+    function updateSubtotal(itemId, quantity) {
+      const unitPrice = unitPrices[itemId] || 0;
+      const subtotal = unitPrice * quantity;
+      
+      // Update desktop subtotal
+      const desktopSubtotal = document.getElementById('subtotal_' + itemId);
+      if (desktopSubtotal) {
+        desktopSubtotal.textContent = '₱' + subtotal.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+      
+      // Update mobile subtotal
+      const mobileSubtotal = document.getElementById('subtotal_mobile_' + itemId);
+      if (mobileSubtotal) {
+        mobileSubtotal.textContent = '₱' + subtotal.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+    }
+
+    function updateCartTotal() {
+      let total = 0;
+      
+      // Calculate total from unit prices and quantities
+      Object.keys(unitPrices).forEach(itemId => {
+        const input = document.getElementById('qty_' + itemId);
+        if (input) {
+          const quantity = parseInt(input.value) || 0;
+          const unitPrice = unitPrices[itemId] || 0;
+          total += unitPrice * quantity;
+        }
+      });
+      
+      const formattedTotal = 'Total: ₱' + total.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      
+      // Update desktop total
+      const desktopTotal = document.getElementById('cart_total_desktop');
+      if (desktopTotal) {
+        desktopTotal.textContent = formattedTotal;
+      }
+      
+      // Update mobile total
+      const mobileTotal = document.getElementById('cart_total_mobile');
+      if (mobileTotal) {
+        mobileTotal.textContent = formattedTotal;
+      }
+    }
+  </script>
 </body>
 
 </html>

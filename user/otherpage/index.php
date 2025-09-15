@@ -784,9 +784,9 @@ handleQueryError($conn, "New Status Query");
         refreshIndicatorDots();
     </script>
 
-    <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
+   <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
         <div class="max-w-7xl mx-auto">
-            <!-- Mobile View (lg and below) - Swiper -->
+            <!-- Mobile to Tablet View (lg and below) - Swiper -->
             <div class="block lg:hidden">
                 <div class="swiper contact-swiper" x-init="
                     setTimeout(() => {
@@ -802,6 +802,14 @@ handleQueryError($conn, "New Status Query");
                                 640: {
                                     slidesPerView: 2.5,
                                     spaceBetween: 20,
+                                },
+                                768: {
+                                    slidesPerView: 3.2,
+                                    spaceBetween: 24,
+                                },
+                                1024: {
+                                    slidesPerView: 4.5,
+                                    spaceBetween: 24,
                                 }
                             }
                         });
@@ -811,7 +819,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 1 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 1"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
                                 <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
                             </button>
@@ -820,7 +828,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 2 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 2"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
                                 <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
                             </button>
@@ -829,7 +837,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 3 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 3"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
                                 <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
                             </button>
@@ -838,7 +846,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 4 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 4"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
                                 <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
                             </button>
@@ -847,7 +855,7 @@ handleQueryError($conn, "New Status Query");
                         <!-- Slide 5 -->
                         <div class="swiper-slide">
                             <button @click="currentModal = 5"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center  bg-white h-full min-h-[100px]">
+                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
                                 <h3 class="text-lg font-semibold text-orange-700">Support</h3>
                                 <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
                             </button>
@@ -858,66 +866,55 @@ handleQueryError($conn, "New Status Query");
 
             <!-- Desktop View (lg and above) - Grid -->
             <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            <!-- Box 1 -->
-<button @click="currentModal = 1"
-  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
+                <!-- Box 1 -->
+                <button @click="currentModal = 1"
+                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
+                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+                        Inquire
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
+                </button>
 
-  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-    Inquire
-    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-  </h3>
+                <!-- Box 2 -->
+                <button @click="currentModal = 2"
+                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
+                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+                        Appointment
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
+                </button>
 
-  <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
-</button>
+                <!-- Box 3 -->
+                <button @click="currentModal = 3"
+                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
+                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+                        Track Order
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
+                </button>
 
-<!-- Box 2 -->
-<button @click="currentModal = 2"
-  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
+                <!-- Box 4 -->
+                <button @click="currentModal = 4"
+                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
+                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+                        Request Quote
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
+                </button>
 
-  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-    Appointment
-    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-  </h3>
-
-  <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
-</button>
-
-<!-- Box 3 -->
-<button @click="currentModal = 3"
-  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
-
-  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-    Track Order
-    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-  </h3>
-
-  <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
-</button>
-
-<!-- Box 4 -->
-<button @click="currentModal = 4"
-  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
-
-  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-    Request Quote
-    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-  </h3>
-
-  <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
-</button>
-
-<!-- Box 5 -->
-<button @click="currentModal = 5"
-  class="group w-full  transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px]">
-
-  <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-    Support
-    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-  </h3>
-
-  <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
-</button>
-
+                <!-- Box 5 -->
+                <button @click="currentModal = 5"
+                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
+                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
+                        Support
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
+                </button>
             </div>
         </div>
 
@@ -951,8 +948,28 @@ handleQueryError($conn, "New Status Query");
                 </div>
             </div>
         </template>
-    </section>
 
+        <style>
+            .modal-enter {
+                animation: modalEnter 0.3s ease-out;
+            }
+            
+            @keyframes modalEnter {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95) translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+
+            .contact-swiper .swiper-slide {
+                height: auto;
+            }
+        </style>
+    </section>
 
 
     <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
@@ -1261,7 +1278,7 @@ handleQueryError($conn, "New Status Query");
     <div class="max-w-full mx-auto">
         <!-- Section Header -->
         <div class="text-center mb-10 " data-aos="fade-up">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Smart Savings for Every Project</h2>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Best Seller</h2>
             <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
         </div>
 
@@ -2078,9 +2095,6 @@ handleQueryError($conn, "New Status Query");
                                     <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
                                         <?= htmlspecialchars($row['product_name']) ?>
                                     </h3>
-
-
-
                                     <!-- Rating Section -->
                                     <div class="flex items-center justify-between">
                                         <?php if ($total_raters > 0): ?>
@@ -2231,7 +2245,7 @@ handleQueryError($conn, "New Status Query");
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                     ?>
                     <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                        <div class="bg-white p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
@@ -2279,17 +2293,19 @@ handleQueryError($conn, "New Status Query");
                                     <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
                                 <?php endif; ?>
 
-                                <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
-                                    <form action="product_view" method="GET">
+                               <!-- Replace your current View Details Button section with this -->
+                                <div class="flex flex-col gap-2 mt-auto">
+                                    <!-- Animated View Details Button -->
+                                    <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <i class="fa-solid fa-bag-shopping"></i>
-                                            view
+                                        <button type="submit" class="animated-view-btn">
+                                            <div class="btn-sign">
+                                                <i class="fa-solid fa-bag-shopping"></i>
+                                            </div>
+                                            <div class="btn-text">View Details</div>
                                         </button>
                                     </form>
+
 
                                     <!-- Pre-Order Button -->
                                     <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
@@ -2303,14 +2319,84 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="return_url" value="index">
-
-                                        <button type="submit"
-                                            class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
-                                            <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
+                                        <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                            <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
                                             Add to Cart
                                         </button>
                                     </form>
                                 </div>
+                                  <style>
+                                    /* Animated View Details Button Styles */
+                                    .animated-view-btn {
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: flex-start;
+                                        width: 48px;
+                                        height: 45px;
+                                        border: none;
+                                        cursor: pointer;
+                                        position: relative;
+                                        overflow: hidden;
+                                        transition-duration: .3s;
+                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                    }
+
+                                    /* Icon */
+                                    .animated-view-btn .btn-sign {
+                                        width: 100%;
+                                        font-size: 1.2em;
+                                        color: white;
+                                        transition-duration: .3s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+
+                                    /* Text */
+                                    .animated-view-btn .btn-text {
+                                        position: absolute;
+                                        right: 0%;
+                                        width: 0%;
+                                        opacity: 0;
+                                        color: white;
+                                        font-size: 0.9em;
+                                        font-weight: 600;
+                                        transition-duration: .3s;
+                                        white-space: nowrap;
+                                    }
+
+                                    /* Hover effect */
+                                    .animated-view-btn:hover {
+                                        width: 180px;
+                                        transition-duration: .3s;
+                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                    }
+
+                                    .animated-view-btn:hover .btn-sign {
+                                        width: 35%;
+                                        transition-duration: .3s;
+                                        padding-left: 15px;
+                                    }
+
+                                    .animated-view-btn:hover .btn-text {
+                                        opacity: 1;
+                                        width: 65%;
+                                        transition-duration: .3s;
+                                        padding-right: 15px;
+                                    }
+
+                                    /* Click effect */
+                                    .animated-view-btn:active {
+                                        transform: translate(1px, 1px);
+                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                                    }
+
+                                    /* Focus accessibility */
+                                    .animated-view-btn:focus {
+                                        outline: 2px solid #f97316;
+                                        outline-offset: 2px;
+                                    }
+                                </style>
                             </div>
                         </div>
                     </div>
@@ -2403,7 +2489,7 @@ handleQueryError($conn, "New Status Query");
                     $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                     ?>
                     <div class="swiper-slide p-2">
-                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                        <div class=" p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
                             <!-- Triangle Badge -->
                             <div class="absolute top-0 left-0 z-10">
                                 <div class="w-12 h-12 relative">
@@ -2452,16 +2538,18 @@ handleQueryError($conn, "New Status Query");
                                 <?php endif; ?>
 
                                 <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
-                                    <form action="product_view" method="GET">
+                              <div class="flex flex-col gap-2 mt-auto">
+                                    <!-- Animated View Details Button -->
+                                    <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <i class="fa-solid fa-bag-shopping"></i>
-                                            view
+                                        <button type="submit" class="animated-view-btn">
+                                            <div class="btn-sign">
+                                                <i class="fa-solid fa-bag-shopping"></i>
+                                            </div>
+                                            <div class="btn-text">View Details</div>
                                         </button>
                                     </form>
+
 
                                     <!-- Pre-Order Button -->
                                     <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
@@ -2475,14 +2563,84 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="return_url" value="index">
-
-                                        <button type="submit"
-                                            class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
-                                            <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
+                                        <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                            <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
                                             Add to Cart
                                         </button>
                                     </form>
                                 </div>
+                                  <style>
+                                    /* Animated View Details Button Styles */
+                                    .animated-view-btn {
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: flex-start;
+                                        width: 48px;
+                                        height: 45px;
+                                        border: none;
+                                        cursor: pointer;
+                                        position: relative;
+                                        overflow: hidden;
+                                        transition-duration: .3s;
+                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                    }
+
+                                    /* Icon */
+                                    .animated-view-btn .btn-sign {
+                                        width: 100%;
+                                        font-size: 1.2em;
+                                        color: white;
+                                        transition-duration: .3s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+
+                                    /* Text */
+                                    .animated-view-btn .btn-text {
+                                        position: absolute;
+                                        right: 0%;
+                                        width: 0%;
+                                        opacity: 0;
+                                        color: white;
+                                        font-size: 0.9em;
+                                        font-weight: 600;
+                                        transition-duration: .3s;
+                                        white-space: nowrap;
+                                    }
+
+                                    /* Hover effect */
+                                    .animated-view-btn:hover {
+                                        width: 180px;
+                                        transition-duration: .3s;
+                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                    }
+
+                                    .animated-view-btn:hover .btn-sign {
+                                        width: 35%;
+                                        transition-duration: .3s;
+                                        padding-left: 15px;
+                                    }
+
+                                    .animated-view-btn:hover .btn-text {
+                                        opacity: 1;
+                                        width: 65%;
+                                        transition-duration: .3s;
+                                        padding-right: 15px;
+                                    }
+
+                                    /* Click effect */
+                                    .animated-view-btn:active {
+                                        transform: translate(1px, 1px);
+                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                                    }
+
+                                    /* Focus accessibility */
+                                    .animated-view-btn:focus {
+                                        outline: 2px solid #f97316;
+                                        outline-offset: 2px;
+                                    }
+                                </style>
                             </div>
                         </div>
                     </div>
@@ -2536,7 +2694,7 @@ handleQueryError($conn, "New Status Query");
                     $finalPrice = $discount > 0 ? $base_price * (1 - $discount / 100) : $base_price;
                 ?>
                     <div class="swiper-slide h-full p-2">
-                        <div class="bg-white rounded-xl p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
+                        <div class=" p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
 
                             <!-- NEW Badge -->
                             <div class="absolute top-2 right-2 z-10">
@@ -2589,17 +2747,18 @@ handleQueryError($conn, "New Status Query");
                                     <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
                                 <?php endif; ?>
 
-                                <!-- Buttons -->
-                                <div class="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <!-- Buy Button -->
-                                    <form action="product_view" method="GET">
+                                <div class="flex flex-col gap-2 mt-auto">
+                                    <!-- Animated View Details Button -->
+                                    <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                        <button type="submit"
-                                            class="bg-black text-white text-sm px-4 py-1.5 rounded-full hover:bg-red-900 transition flex items-center gap-2 shadow-sm hover:shadow-md border-2 border-white ring-2 ring-black">
-                                            <i class="fa-solid fa-bag-shopping"></i>
-                                            view
+                                        <button type="submit" class="animated-view-btn">
+                                            <div class="btn-sign">
+                                                <i class="fa-solid fa-bag-shopping"></i>
+                                            </div>
+                                            <div class="btn-text">View Details</div>
                                         </button>
                                     </form>
+
 
                                     <!-- Pre-Order Button -->
                                     <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
@@ -2613,14 +2772,86 @@ handleQueryError($conn, "New Status Query");
                                         <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                         <input type="hidden" name="return_url" value="index">
-
-                                        <button type="submit"
-                                            class="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-full hover:bg-orange-600 transition flex items-center gap-2 shadow-sm hover:shadow-md">
-                                            <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
+                                        <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                            <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
                                             Add to Cart
                                         </button>
                                     </form>
                                 </div>
+                                  <style>
+                                    /* Animated View Details Button Styles */
+                                    .animated-view-btn {
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: flex-start;
+                                        width: 48px;
+                                        height: 45px;
+                                        border: none;
+                                        cursor: pointer;
+                                        position: relative;
+                                        overflow: hidden;
+                                        transition-duration: .3s;
+                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                    }
+
+                                    /* Icon */
+                                    .animated-view-btn .btn-sign {
+                                        width: 100%;
+                                        font-size: 1.2em;
+                                        color: white;
+                                        transition-duration: .3s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+
+                                    /* Text */
+                                    .animated-view-btn .btn-text {
+                                        position: absolute;
+                                        right: 0%;
+                                        width: 0%;
+                                        opacity: 0;
+                                        color: white;
+                                        font-size: 0.9em;
+                                        font-weight: 600;
+                                        transition-duration: .3s;
+                                        white-space: nowrap;
+                                    }
+
+                                    /* Hover effect */
+                                    .animated-view-btn:hover {
+                                        width: 180px;
+                                        transition-duration: .3s;
+                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                    }
+
+                                    .animated-view-btn:hover .btn-sign {
+                                        width: 35%;
+                                        transition-duration: .3s;
+                                        padding-left: 15px;
+                                    }
+
+                                    .animated-view-btn:hover .btn-text {
+                                        opacity: 1;
+                                        width: 65%;
+                                        transition-duration: .3s;
+                                        padding-right: 15px;
+                                    }
+
+                                    /* Click effect */
+                                    .animated-view-btn:active {
+                                        transform: translate(1px, 1px);
+                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                                    }
+
+                                    /* Focus accessibility */
+                                    .animated-view-btn:focus {
+                                        outline: 2px solid #f97316;
+                                        outline-offset: 2px;
+                                    }
+                                </style>
+
+
                             </div>
                         </div>
                     </div>

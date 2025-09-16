@@ -17,8 +17,6 @@ if (!isset($_SESSION['noble_user'])) {
   exit();
 }
 
-
-
 // Update last activity time
 $_SESSION['last_activity'] = time();
 $categoryQuery = "SELECT * FROM categories";

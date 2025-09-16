@@ -2,100 +2,117 @@
 session_name("nobleadmin");
 session_start();
 include '../connection/connect.php';
+// ✅ SET TIMEZONE CONSISTENTLY FIRST
+date_default_timezone_set('Asia/Manila');
+// ✅ SET MYSQL TIMEZONE TO MATCH PHP
+$conn->query("SET time_zone = '+08:00'");
+// ✅ FIXED: Optimize database operations and reduce timeout issues
+function updateUserActivity($conn, $email) {
+    $stmt = $conn->prepare("UPDATE nobleaccount SET last_activity = NOW(), is_online = 1, last_login = NOW() WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $result = $stmt->execute();
+    $stmt->close();
+    return $result;
+}
 
-// ✅ AUTO-LOGIN CHECK - Add this before the session check
+function determineRedirect($userLevel) {
+    return match (strtolower($userLevel)) {
+        'superadmin', 'admin' => "../admin/client/dashboard.php",
+        'sales' => "../admin/orders/ordering",
+        'accountant' => "../admin/accountant/accountant",
+        'supplier' => "../admin/suppliermain/suppliercompany",
+        'productspecialist' => "../admin/shop/adminshop",
+        'logistic' => "../admin/logistic_management/main_dashboard",
+        'warehouse' => "../admin/warehouse_management/order_list",
+        'hr' => "../admin/hr/account",
+        default => "../admin/client/dashboard.php"
+    };
+}
+
+// ✅ FIXED: Auto-login check with better error handling
 if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) && isset($_COOKIE['noble_remember_email'])) {
     
     $remember_token = $_COOKIE['noble_remember_token'];
     $remember_email = $_COOKIE['noble_remember_email'];
     
-    // Validate remember token
-    $stmt = $conn->prepare("SELECT id, email, lvl, status, remember_token, remember_expires FROM nobleaccount WHERE email = ? AND remember_token = ? AND remember_expires > NOW() LIMIT 1");
-    $stmt->bind_param("ss", $remember_email, $remember_token);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
+    try {
+        // ✅ Use a single optimized query
+        $stmt = $conn->prepare("SELECT id, email, lvl, status FROM nobleaccount WHERE email = ? AND remember_token = ? AND remember_expires > NOW() AND status = 'active' LIMIT 1");
+        $stmt->bind_param("ss", $remember_email, $remember_token);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        // Valid remember token - auto login
-        if ($user['status'] === 'active') {
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
             
-            // Update user activity
-            $update_stmt = $conn->prepare("UPDATE nobleaccount SET last_activity = NOW(), is_online = 1, last_login = NOW() WHERE email = ?");
-            $update_stmt->bind_param("s", $remember_email);
-            $update_stmt->execute();
-            $update_stmt->close();
-            
-            // Set session data
-            $_SESSION['noble_user'] = $user['email'];
-            $_SESSION['noble_lvl'] = $user['lvl'];
-            $_SESSION['noble_id'] = $user['id'];
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['login_time'] = time();
-            $_SESSION['last_activity'] = time();
-            $_SESSION['last_db_check'] = time();
-            $_SESSION['session_expires'] = time() + 86400;
-            $_SESSION['is_online'] = true;
-            $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
-            $_SESSION['remember_me'] = true;
-            
-            // Determine redirect based on user level
-            $redirect = match (strtolower($user['lvl'])) {
-                'superadmin', 'admin' => "../admin/client/dashboard.php",
-                'sales' => "../admin/orders/ordering",
-                'accountant' => "../admin/accountant/accountant",
-                'supplier' => "../admin/suppliermain/suppliercompany",
-                'productspecialist' => "../admin/shop/adminshop",
-                'logistic' => "../admin/logistic_management/main_dashboard",
-                'warehouse' => "../admin/warehouse_management/order_list",
-                'hr' => "../admin/hr/account",
-                default => "../admin/client/dashboard.php"
-            };
-            
-            // Log auto-login
-            error_log("Auto-login successful for user: " . $remember_email);
-            
-            // Redirect to appropriate dashboard
-            header("Location: " . $redirect);
-            exit();
+            // ✅ FIXED: Update activity without additional queries
+            if (updateUserActivity($conn, $remember_email)) {
+                
+                // Set minimal session data
+                $_SESSION['noble_user'] = $user['email'];
+                $_SESSION['noble_lvl'] = $user['lvl'];
+                $_SESSION['noble_id'] = $user['id'];
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['login_time'] = time();
+                $_SESSION['last_activity'] = time();
+                $_SESSION['session_expires'] = time() + 86400;
+                $_SESSION['is_online'] = true;
+                $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
+                $_SESSION['remember_me'] = true;
+                
+                $redirect = determineRedirect($user['lvl']);
+                
+                error_log("Auto-login successful for user: " . $remember_email);
+                
+                // ✅ Close connection before redirect
+                $stmt->close();
+                $conn->close();
+                
+                header("Location: " . $redirect);
+                exit();
+            }
+        } else {
+            // ✅ Clear invalid cookies
+            setcookie('noble_remember_token', '', time() - 3600, '/');
+            setcookie('noble_remember_email', '', time() - 3600, '/');
         }
-    } else {
-        // Invalid or expired token - clear cookies
+        
+        $stmt->close();
+        
+    } catch (Exception $e) {
+        error_log("Auto-login error: " . $e->getMessage());
+        // Clear cookies on error
         setcookie('noble_remember_token', '', time() - 3600, '/');
         setcookie('noble_remember_email', '', time() - 3600, '/');
     }
-    
-    $stmt->close();
 }
 
-// ✅ Regular session check
+// ✅ FIXED: Regular session check with immediate redirect
 if (isset($_SESSION['noble_user'])) {
     $role = strtolower($_SESSION['noble_lvl'] ?? '');
-
-    $redirect = match ($role) {
-        'superadmin', 'admin' => "../admin/client/dashboard.php",
-        'sales' => "../admin/orders/ordering",
-        'accountant' => "../admin/accountant/accountant",
-        'productspecialist' => "../admin/shop/adminshop",
-        'logistic' => "../admin/logistic_management/logistics_dashboard",
-        'warehouse' => "../admin/warehouse_management/order_list",
-        'hr' => "../admin/hr/account",
-        default => "../admin/client/dashboard.php"
-    };
-
+    $redirect = determineRedirect($role);
+    
+    // ✅ Close connection before redirect
+    $conn->close();
+    
     header("Location: $redirect");
     exit();
 }
 
-// ✅ Clear old sessions periodically
+// ✅ FIXED: Less aggressive cleanup - only run once per day per session
 if (!isset($_SESSION['last_cleanup']) || (time() - $_SESSION['last_cleanup']) > 86400) {
-    $cleanup = $conn->prepare("UPDATE nobleaccount SET is_online = 0 WHERE last_activity < DATE_SUB(NOW(), INTERVAL 2 HOUR)");
-    $cleanup->execute();
-    $cleanup->close();
-    $_SESSION['last_cleanup'] = time();
+    try {
+        // ✅ Increased timeout to 4 hours to reduce interference
+        $cleanup = $conn->prepare("UPDATE nobleaccount SET is_online = 0 WHERE last_activity < DATE_SUB(NOW(), INTERVAL 4 HOUR)");
+        $cleanup->execute();
+        $cleanup->close();
+        $_SESSION['last_cleanup'] = time();
+    } catch (Exception $e) {
+        error_log("Cleanup error: " . $e->getMessage());
+    }
 }
 
+// ✅ Close connection at the end
 $conn->close();
 ?>
 
@@ -299,7 +316,7 @@ $conn->close();
         <!-- Logo and Company Section -->
         <div class="text-center mb-8 fade-in-up">
             <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation bg-white p-1" >
-                <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain" />
+                <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain border" />
             </div>
 
             <h1 class="text-2xl font-semibold text-black mb-1">Admin panel</h1>

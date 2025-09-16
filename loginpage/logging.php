@@ -1,6 +1,9 @@
 <?php
-//logging.php - Enhanced with auto-login options
+//logging.php - FIXED VERSION
 session_name("nobleadmin");
+
+// ✅ SET TIMEZONE CONSISTENTLY
+date_default_timezone_set('Asia/Manila');
 
 // ✅ LOCAL ENVIRONMENT DETECTION
 $is_local = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']) || 
@@ -9,7 +12,7 @@ $is_local = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']) ||
 // Secure session settings - 24 hours (adjusted for local)
 ini_set('session.cookie_httponly', 1);
 if (!$is_local) {
-    ini_set('session.cookie_secure', 1); // Only for production/HTTPS
+    ini_set('session.cookie_secure', 1);
 }
 ini_set('session.use_strict_mode', 1);
 session_start([
@@ -18,6 +21,9 @@ session_start([
 ]);
 
 include '../connection/connect.php';
+
+// ✅ SET MYSQL TIMEZONE TO MATCH PHP
+$conn->query("SET time_zone = '+08:00'");
 
 $response = [];
 
@@ -36,10 +42,8 @@ try {
         global $is_local;
         
         if ($is_local) {
-            // Local environment - HTTP compatible
             setcookie($name, $value, $expire, '/', '', false, true);
         } else {
-            // Production environment - HTTPS required
             setcookie($name, $value, $expire, '/', '', true, true);
         }
     }
@@ -52,11 +56,12 @@ try {
         throw new Exception("Please fill in all required fields.");
     }
 
-    // ✅ SOLUTION 1: More aggressive cleanup - clear old sessions
-    // Clear sessions older than 1 hour (instead of 2 hours)
-    $cleanup_stmt = $conn->prepare("UPDATE nobleaccount SET is_online = 0, remember_token = NULL, remember_expires = NULL WHERE last_activity < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
-    $cleanup_stmt->execute();
-    $cleanup_stmt->close();
+    // ✅ CONSISTENT CLEANUP - Use same 4-hour timeout as roleaccount.php
+    $cleanup_stmt = $conn->prepare("UPDATE nobleaccount SET is_online = 0, remember_token = NULL, remember_expires = NULL WHERE last_activity < DATE_SUB(NOW(), INTERVAL 4 HOUR)");
+    if ($cleanup_stmt) {
+        $cleanup_stmt->execute();
+        $cleanup_stmt->close();
+    }
 
     $stmt = $conn->prepare("SELECT id, email, password, lvl, status, last_login, failed_attempts, locked_until, is_online, remember_token, remember_expires FROM nobleaccount WHERE email = ? LIMIT 1");
 
@@ -79,7 +84,7 @@ try {
         throw new Exception("Your account has been deactivated.");
     }
 
-    // ✅ SOLUTION 2: Check for valid remember token first (auto-login)
+    // ✅ Check for valid remember token first (auto-login)
     if (!empty($user['remember_token']) && !empty($user['remember_expires'])) {
         $remember_expires = new DateTime($user['remember_expires']);
         if ($remember_expires > new DateTime()) {
@@ -88,47 +93,52 @@ try {
         }
     }
 
-    // ✅ SOLUTION 3: Force login option - clear existing session for same user
+    // ✅ Force login option
     $force_login = isset($_POST["force_login"]) && $_POST["force_login"] == "1";
     
     if ($force_login) {
         // Force logout the existing session
         $force_logout = $conn->prepare("UPDATE nobleaccount SET is_online = 0, remember_token = NULL WHERE email = ?");
-        $force_logout->bind_param("s", $email);
-        $force_logout->execute();
-        $force_logout->close();
+        if ($force_logout) {
+            $force_logout->bind_param("s", $email);
+            $force_logout->execute();
+            $force_logout->close();
+        }
     } else {
-        // ✅ SOLUTION 4: More lenient online check - allow login after 30 minutes
+        // ✅ CONSISTENT online check - 4 hours instead of 30 minutes
         $last_activity_query = $conn->prepare("SELECT last_activity FROM nobleaccount WHERE email = ? LIMIT 1");
-        $last_activity_query->bind_param("s", $email);
-        $last_activity_query->execute();
-        $activity_result = $last_activity_query->get_result();
-        
-        if ($activity_result->num_rows > 0) {
-            $activity_data = $activity_result->fetch_assoc();
-            $last_activity = new DateTime($activity_data['last_activity']);
-            $now = new DateTime();
-            $inactive_minutes = $now->diff($last_activity)->i + ($now->diff($last_activity)->h * 60);
+        if ($last_activity_query) {
+            $last_activity_query->bind_param("s", $email);
+            $last_activity_query->execute();
+            $activity_result = $last_activity_query->get_result();
             
-            // ✅ Reduced from 60 to 30 minutes
-            if ((int)$user['is_online'] === 1 && $inactive_minutes < 30) {
-                // ✅ SOLUTION 5: Offer force login option instead of blocking
-                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    $response = [
-                        'success' => false,
-                        'force_login_required' => true,
-                        'message' => 'Account is currently active on another device. Would you like to force login?',
-                        'inactive_minutes' => $inactive_minutes
-                    ];
-                    header('Content-Type: application/json');
-                    echo json_encode($response);
-                    exit;
-                } else {
-                    throw new Exception("This account is already logged in. <a href='#' onclick='forceLogin()'>Click here to force login</a>");
+            if ($activity_result->num_rows > 0) {
+                $activity_data = $activity_result->fetch_assoc();
+                $last_activity = new DateTime($activity_data['last_activity']);
+                $now = new DateTime();
+                $diff = $now->diff($last_activity);
+                $inactive_minutes = ($diff->h * 60) + $diff->i;
+                
+                // ✅ Changed to 4 hours (240 minutes) to match roleaccount.php
+                if ((int)$user['is_online'] === 1 && $inactive_minutes < 240) {
+                    // Offer force login option
+                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        $response = [
+                            'success' => false,
+                            'force_login_required' => true,
+                            'message' => 'Account is currently active on another device. Would you like to force login?',
+                            'inactive_minutes' => $inactive_minutes
+                        ];
+                        header('Content-Type: application/json');
+                        echo json_encode($response);
+                        exit;
+                    } else {
+                        throw new Exception("This account is already logged in.");
+                    }
                 }
             }
+            $last_activity_query->close();
         }
-        $last_activity_query->close();
     }
 
     // Lockout check
@@ -146,16 +156,18 @@ try {
         }
 
         $update = $conn->prepare("UPDATE nobleaccount SET failed_attempts = ?, locked_until = ? WHERE email = ?");
-        $update->bind_param("iss", $failed_attempts, $locked_until, $email);
-        $update->execute();
-        $update->close();
+        if ($update) {
+            $update->bind_param("iss", $failed_attempts, $locked_until, $email);
+            $update->execute();
+            $update->close();
+        }
 
         throw new Exception("Invalid email or password.");
     }
 
     login_success:
 
-    // ✅ SOLUTION 6: Generate remember token if "Remember Me" is checked
+    // ✅ Generate remember token if "Remember Me" is checked
     $remember_token = null;
     $remember_expires = null;
     
@@ -163,54 +175,52 @@ try {
         $remember_token = bin2hex(random_bytes(32));
         $remember_expires = date('Y-m-d H:i:s', strtotime('+30 days'));
         
-        // ✅ Set remember me cookie using compatible function
         setRememberCookie(
             'noble_remember_token', 
             $remember_token, 
-            time() + (30 * 24 * 60 * 60) // 30 days
+            time() + (30 * 24 * 60 * 60)
         );
         setRememberCookie(
             'noble_remember_email',
             $email,
-            time() + (30 * 24 * 60 * 60) // 30 days
+            time() + (30 * 24 * 60 * 60)
         );
     }
 
     // ✅ Update user status with remember token
     if ($remember_me) {
         $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW(), last_activity = NOW(), is_online = 1, remember_token = ?, remember_expires = ? WHERE email = ?");
-        $reset->bind_param("sss", $remember_token, $remember_expires, $email);
+        if ($reset) {
+            $reset->bind_param("sss", $remember_token, $remember_expires, $email);
+        }
     } else {
         $reset = $conn->prepare("UPDATE nobleaccount SET failed_attempts = 0, locked_until = NULL, last_login = NOW(), last_activity = NOW(), is_online = 1, remember_token = NULL, remember_expires = NULL WHERE email = ?");
-        $reset->bind_param("s", $email);
+        if ($reset) {
+            $reset->bind_param("s", $email);
+        }
     }
     
-    if (!$reset->execute()) {
+    if ($reset && $reset->execute()) {
+        error_log("User successfully logged in: " . $email . ($remember_me ? " (with remember me)" : ""));
+        $reset->close();
+    } else {
         error_log("Failed to update user status for: " . $email);
         throw new Exception("Login processing failed. Please try again.");
     }
-    
-    if ($reset->affected_rows === 0) {
-        error_log("Warning: No rows affected when setting user online for email: " . $email);
-    } else {
-        error_log("User successfully logged in: " . $email . ($remember_me ? " (with remember me)" : ""));
-    }
-    
-    $reset->close();
 
     // Session regeneration
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_regenerate_id(true);
     }
 
-    // Set comprehensive session data
+    // ✅ Set comprehensive session data
     $_SESSION['noble_user'] = $user['email'];
     $_SESSION['noble_lvl'] = $user['lvl'];
     $_SESSION['noble_id'] = $user['id'];
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
-    $_SESSION['last_db_check'] = time();
+    $_SESSION['last_db_check'] = time(); // For roleaccount.php validation
     $_SESSION['session_expires'] = time() + 86400;
     $_SESSION['is_online'] = true;
     $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];

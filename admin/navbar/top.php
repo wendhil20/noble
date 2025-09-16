@@ -427,10 +427,11 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                 <?php endif; ?>
             </div>
         </div>
-    </nav>
 
-    <!-- Quick Action Bar -->
-    <div class="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200 py-3">
+
+
+          <!-- Quick Action Bar -->
+    <div class="bg-white border-b border-orange-200 py-3">
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <!-- Left: Quick Actions Dropdown -->
@@ -700,6 +701,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
         </div>
     </div>
 
+    </nav>
+
+  
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const quickActionsBtn = document.getElementById('quickActionsBtn');

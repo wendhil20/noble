@@ -1219,7 +1219,7 @@ $display_categories = getNavigationData($conn);
 
                 <!-- Additional Links -->
                 <div class="text-center text-xs mb-2">
-                  <a href="forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
+                  <a href="../forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
                 </div>
 
                 <div class="text-center text-xs mb-4">
@@ -1710,7 +1710,7 @@ $display_categories = getNavigationData($conn);
 
           <div class="text-center space-y-3 pt-4 border-t border-gray-200">
             <div>
-              <a href="forgot_password" class="text-orange-500 hover:underline text-sm font-medium">Forgot password?</a>
+              <a href="../forgot_password.php" class="text-orange-500 hover:underline text-sm font-medium">Forgot password?</a>
             </div>
             <div>
               <span class="text-sm text-gray-600">Don't have an account?</span>

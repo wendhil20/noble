@@ -129,6 +129,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE products ADD COLUMN sub_images TEXT NULL AFTER main_image");
         }
 
+        // Check if product_variants table has product_id column, if not add it
+        $check_variant_column = $conn->query("SHOW COLUMNS FROM product_variants LIKE 'product_id'");
+        if ($check_variant_column->num_rows == 0) {
+            $conn->query("ALTER TABLE product_variants ADD COLUMN product_id INT NOT NULL AFTER id");
+            // Add foreign key constraint if it doesn't exist
+            $conn->query("ALTER TABLE product_variants ADD CONSTRAINT FK_product_variants_product_id FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE");
+        }
+
         // Insert product with sub images
         $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, sub_images, description) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) throw new Exception("Prepare failed for product insert: " . $conn->error);
@@ -197,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Product variants
+                // Product variants - NOW WITH PRODUCT_ID
                 if (isset($_POST['variant_size'][$type_index]) && is_array($_POST['variant_size'][$type_index])) {
                     foreach ($_POST['variant_size'][$type_index] as $variant_index => $size) {
                         $name_variant = $_POST['variant_namevariant'][$type_index][$variant_index] ?? '';
@@ -220,21 +228,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $variant_image = saveImageToFolder($file);
                             }
 
-                            $stmt = $conn->prepare("INSERT INTO product_variants (type_id, color, size, original_price, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
-            $stmt->bind_param("issddddss",
-                $type_id,
-                $color,
-                $size,
-                $original_price,  // ADD THIS
-                $final_price,
-                $percent,
-                $discount,
-                $name_variant,
-                $variant_image
-            );
-            $stmt->execute();
-            $stmt->close();
+                            // FIXED: Now includes product_id in the insert
+                            $stmt = $conn->prepare("INSERT INTO product_variants (product_id, type_id, color, size, original_price, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                            if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
+                            $stmt->bind_param("iissddddss",
+                                $product_id,      // ADD THIS - the missing product_id
+                                $type_id,
+                                $color,
+                                $size,
+                                $original_price,
+                                $final_price,
+                                $percent,
+                                $discount,
+                                $name_variant,
+                                $variant_image
+                            );
+                            $stmt->execute();
+                            $stmt->close();
                         }
                     }
                 }

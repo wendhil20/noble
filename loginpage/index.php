@@ -298,7 +298,7 @@ $conn->close();
 
         <!-- Logo and Company Section -->
         <div class="text-center mb-8 fade-in-up">
-            <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation bg-white rounded-full p-1" >
+            <div class="inline-flex items-center justify-center w-[130px] h-[60px] logo-animation bg-white p-1" >
                 <img src="../user/img/logo.png" alt="Logo" class="w-full h-full object-contain" />
             </div>
 
@@ -307,7 +307,7 @@ $conn->close();
         </div>
 
         <!-- Login Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 fade-in-up" style="animation-delay: 0.1s">
+        <div class="bg-white p-8 fade-in-up" style="animation-delay: 0.1s">
 
             <!-- Form Header -->
             <div class="mb-6">

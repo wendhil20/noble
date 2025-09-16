@@ -116,7 +116,8 @@ $stmt->execute();
 $related_products = $stmt->get_result();
 
 
-
+// Check if this product is in the "windows" category
+$is_windows_category = strtolower($product['codename']) === 'windows';
 
 // Fetch product specifications directly from products table
 $product_specs = null;
@@ -695,7 +696,7 @@ $avg_stmt->close();
                         $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                         ?>
                         <button type="button"
-                          onclick="selectVariant(this, '<?= addslashes($variant['color']) ?>')"
+                          onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>')"
                           class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg 
                        p-2 lg:p-3 text-center transition transform hover:scale-[1.02] 
                        flex flex-col justify-between min-h-[120px] lg:min-h-[140px]"
@@ -735,43 +736,101 @@ $avg_stmt->close();
           </div>
 
 
-          <!-- Purchase Section -->
-          <div class="mt-auto">
-            <form id="productForm" method="POST" class="space-y-4">
-              <input type="hidden" name="product_id" value="<?= $product_id ?>" />
-              <input type="hidden" name="selected_color_id" id="selected_color_id">
-              <input type="hidden" name="selected_color" id="selected_color">
-              <input type="hidden" name="selected_type" id="selected_type">
-              <input type="hidden" name="selected_variant" id="selected_variant">
-              <input type="hidden" name="variant_id" id="variant_id">
+         <!-- In your HTML, replace the Purchase Section with this: -->
+<div class="mt-auto">
+  <form id="productForm" method="POST" class="space-y-4">
+    <input type="hidden" name="product_id" value="<?= $product_id ?>" />
+    <input type="hidden" name="selected_color_id" id="selected_color_id">
+    <input type="hidden" name="selected_color" id="selected_color">
+    <input type="hidden" name="selected_type" id="selected_type">
+    <input type="hidden" name="selected_variant" id="selected_variant">
+    <input type="hidden" name="variant_id" id="variant_id">
+    <!-- Add this hidden field to track if it's windows category -->
+    <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
 
-              <!-- Total Price Display -->
-              <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                  <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Price</p>
-                    <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
-                  </div>
-                  <div id="selectionStatus" class="text-sm text-gray-500 sm:text-right">
-                    <?= $is_logged_in ? 'Select all options above' : 'Please log in to pre-order' ?>
-                  </div>
-                </div>
-              </div>
+    <!-- Total Price Display -->
+    <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <div>
+          <p class="text-sm text-gray-600 mb-1">Total Price</p>
+          <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
+        </div>
+        <div id="selectionStatus" class="text-sm text-gray-500 sm:text-right">
+          <?php if ($is_windows_category): ?>
+            <?= $is_logged_in ? 'Select all options above' : 'Please log in to contact us' ?>
+          <?php else: ?>
+            <?= $is_logged_in ? 'Select all options above' : 'Please log in to pre-order' ?>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
 
-              <!-- Add to Cart Button -->
-              <button type="submit" id="addToCartBtn"
-                <?= !$is_logged_in ? 'disabled' : '' ?>
-                class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300
-                  <?= $is_logged_in ? 'bg-gray-400 hover:bg-orange-500' : 'bg-red-400' ?> 
-                  text-white disabled:cursor-not-allowed disabled:opacity-75">
-                <span id="btnText" class="flex items-center justify-center gap-2">
-                  <i class="fas fa-shopping-cart"></i>
-                  <?= $is_logged_in ? 'Select Options to Pre-Order' : 'Login to Pre-Order' ?>
-                </span>
-              </button>
+   <?php if ($is_windows_category): ?>
+  <!-- Contact Us Button for Windows Category - DISABLED by default -->
+  <button type="button" id="contactUsBtn" onclick="openContactModal()"
+    disabled
+    class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300  bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
+    <span id="contactBtnText" class="flex items-center justify-center gap-2">
+      <i class="fas fa-phone"></i>
+      <?= $is_logged_in ? 'Select Options to Contact Us' : 'Login to Contact Us' ?>
+    </span>
+  </button>
+<?php else: ?>
+  <!-- Regular Add to Cart Button - DISABLED by default -->
+  <button type="submit" id="addToCartBtn"
+    disabled
+    class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
+    <span id="btnText" class="flex items-center justify-center gap-2">
+      <i class="fas fa-shopping-cart"></i>
+      <?= $is_logged_in ? 'Select Options to Pre-Order' : 'Login to Pre-Order' ?>
+    </span>
+  </button>
+<?php endif; ?>
+  </form>
+</div>
 
-            </form>
-          </div>
+<!-- Add Contact Modal (place this before closing body tag) -->
+<?php if ($is_windows_category): ?>
+<div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl p-6 m-4 max-w-md w-full">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold text-gray-800">Contact Us for Windows</h3>
+      <button onclick="closeContactModal()" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <div class="space-y-4">
+      <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+        <p class="mb-2">Selected Product: <strong><?= htmlspecialchars($product['product_name']) ?></strong></p>
+        <div id="selectedOptionsText" class="text-black"></div>
+        <div id="selectedPriceText" class="text-green-600 font-bold text-lg mt-2"></div>
+      </div>
+      
+      <div class="space-y-3">
+        <a href="tel:09685916536" 
+           class="w-full  text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+          <i class="fas fa-phone"></i>
+          Call: 0968 591 6536
+        </a>
+        
+        <a href="#" id="emailLink"
+           class="w-full text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+          <i class="fas fa-envelope"></i>
+          Email Us
+        </a>
+        
+        <a href="contact" 
+           class="w-full text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+          <i class="fas fa-map-marker-alt"></i>
+          Visit Contact Page
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
         </div>
       </div>
     </div>
@@ -779,7 +838,7 @@ $avg_stmt->close();
     <?php if (!empty($product_specs)): ?>
       <section class="mt-6 lg:mt-8">
         <div class="bg-white rounded-xl p-4 lg:p-8">
-          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700 mb-4 lg:mb-6 flex items-center gap-3">
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-black mb-4 lg:mb-6 flex items-center gap-3">
             <i class="fas fa-list-alt"></i>
             Product Specifications
           </h2>
@@ -1237,6 +1296,94 @@ $avg_stmt->close();
       }
     });
 
+    // Fix for Contact Us button initialization
+document.addEventListener('DOMContentLoaded', function() {
+  const contactBtn = document.getElementById('contactUsBtn');
+  if (contactBtn) {
+    contactBtn.disabled = true;
+    contactBtn.classList.add('bg-gray-400');
+    contactBtn.classList.remove('bg-black', 'hover:bg-blue-600');
+  }
+});
+
+ function openContactModal() {
+  // Get selected options
+  const colorData = productSelector.selectedColorData;
+  const variantData = productSelector.selectedVariantData;
+  const typeData = productSelector.selectedTypeId ? document.getElementById('selected_type').value : null;
+  
+  // Build options text
+  const options = [];
+  if (colorData) {
+    options.push(`Color: ${colorData.name}`);
+  }
+  if (typeData) {
+    options.push(`Type: ${typeData}`);
+  }
+  if (variantData) {
+    options.push(`Size: ${variantData.size}`); // Now correctly shows the size
+  }
+  
+  // Calculate total price
+  const {totalPrice} = productSelector.calculateTotalPrice();
+  
+  // Update modal content
+  const selectedOptionsElement = document.getElementById('selectedOptionsText');
+  const selectedPriceElement = document.getElementById('selectedPriceText');
+  const emailLink = document.getElementById('emailLink');
+  
+  if (selectedOptionsElement) {
+    selectedOptionsElement.innerHTML = options.length > 0 ? 
+      `<strong>Selected:</strong><br>${options.join('<br>')}` : 
+      'No specific options selected';
+  }
+  
+  if (selectedPriceElement) {
+    selectedPriceElement.textContent = totalPrice > 0 ? `Total: ₱${totalPrice.toFixed(2)}` : '';
+  }
+  
+  // Update email link with details
+  if (emailLink) {
+    const productName = '<?= urlencode($product['product_name']) ?>';
+    const subject = `Windows Quote Request - ${decodeURIComponent(productName)}`;
+    let body = `Hi, I'm interested in getting a quote for ${decodeURIComponent(productName)}.`;
+    
+    if (options.length > 0) {
+      body += `\n\nSelected Options:\n${options.join('\n')}`;
+    }
+    
+    if (totalPrice > 0) {
+      body += `\nEstimated Total: ₱${totalPrice.toFixed(2)}`;
+    }
+    
+    body += `\n\nPlease contact me with more details and final pricing.`;
+    
+    emailLink.href = `mailto:noblehomeconst.ph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+  
+  document.getElementById('contactModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeContactModal() {
+  document.getElementById('contactModal').classList.add('hidden');
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.getElementById('contactModal')?.addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeContactModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeContactModal();
+  }
+});
+
     // When navigation is clicked, scroll to show all color swatches on small screens
     document.querySelectorAll('.color-swiper-next, .color-swiper-prev').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -1284,37 +1431,40 @@ $avg_stmt->close();
       }
     });
 
-    // Product Selection State Management
-    class ProductSelector {
-      constructor() {
-        this.selectedTypeId = null;
-        this.selectedVariantData = null;
-        this.selectedColorData = null;
-        this.basePrice = parseFloat(document.querySelector('[name="product_id"]').dataset.basePrice) || 0;
-        this.hasTypes = document.querySelectorAll('.type-btn').length > 0;
+    // Product Selection State Management// Modify the ProductSelector class to handle windows category
+class ProductSelector {
+  constructor() {
+    this.selectedTypeId = null;
+    this.selectedVariantData = null;
+    this.selectedColorData = null;
+    this.basePrice = parseFloat(document.querySelector('[name="product_id"]').dataset.basePrice) || 0;
+    this.hasTypes = document.querySelectorAll('.type-btn').length > 0;
+    this.isWindows = document.querySelector('[name="is_windows"]').value === '1';
 
-        this.initializeElements();
-        this.bindEvents();
-      }
+    this.initializeElements();
+    this.bindEvents();
+  }
 
-      initializeElements() {
-        this.elements = {
-          mainImage: document.getElementById('main-product-image'),
-          colorInfo: document.getElementById('selected-color-info'),
-          variantContainer: document.getElementById('variant-container'),
-          totalPrice: document.getElementById('totalPrice'),
-          selectionStatus: document.getElementById('selectionStatus'),
-          addToCartBtn: document.getElementById('addToCartBtn'),
-          btnText: document.getElementById('btnText'),
-          productForm: document.getElementById('productForm'),
-          // Hidden inputs
-          selectedColorId: document.getElementById('selected_color_id'),
-          selectedColor: document.getElementById('selected_color'),
-          selectedType: document.getElementById('selected_type'),
-          selectedVariant: document.getElementById('selected_variant'),
-          variantId: document.getElementById('variant_id')
-        };
-      }
+  initializeElements() {
+    this.elements = {
+      mainImage: document.getElementById('main-product-image'),
+      colorInfo: document.getElementById('selected-color-info'),
+      variantContainer: document.getElementById('variant-container'),
+      totalPrice: document.getElementById('totalPrice'),
+      selectionStatus: document.getElementById('selectionStatus'),
+      addToCartBtn: document.getElementById('addToCartBtn'),
+      btnText: document.getElementById('btnText'),
+      contactUsBtn: document.getElementById('contactUsBtn'),
+      contactBtnText: document.getElementById('contactBtnText'),
+      productForm: document.getElementById('productForm'),
+      // Hidden inputs
+      selectedColorId: document.getElementById('selected_color_id'),
+      selectedColor: document.getElementById('selected_color'),
+      selectedType: document.getElementById('selected_type'),
+      selectedVariant: document.getElementById('selected_variant'),
+      variantId: document.getElementById('variant_id')
+    };
+  }
 
       bindEvents() {
         // Form submission
@@ -1477,39 +1627,41 @@ $avg_stmt->close();
         this.elements.variantId.value = '';
       }
 
-      setVariantSelection(button, color) {
-        // Remove previous selection indicators
-        document.querySelectorAll('.variant-btn').forEach(btn => {
-          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
-          btn.classList.add('border-gray-200', 'bg-white');
-        });
+   // In the ProductSelector class, update the setVariantSelection method:
+setVariantSelection(button, size, color = null) {
+  // Remove previous selection indicators
+  document.querySelectorAll('.variant-btn').forEach(btn => {
+    btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+    btn.classList.add('border-gray-200', 'bg-white');
+  });
 
-        // Add selection indicators to clicked button
-        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
-        button.classList.remove('border-gray-200', 'bg-white');
+  // Add selection indicators to clicked button
+  button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+  button.classList.remove('border-gray-200', 'bg-white');
 
-        const price = parseFloat(button.dataset.price);
-        const percent = parseFloat(button.dataset.percent);
-        const discount = parseFloat(button.dataset.discount);
-        const variantId = button.dataset.variantId;
+  const price = parseFloat(button.dataset.price);
+  const percent = parseFloat(button.dataset.percent);
+  const discount = parseFloat(button.dataset.discount);
+  const variantId = button.dataset.variantId;
 
-        const priceWithMarkup = price + (price * percent / 100);
-        const finalPrice = priceWithMarkup - (priceWithMarkup * discount / 100);
+  const priceWithMarkup = price + (price * percent / 100);
+  const finalPrice = priceWithMarkup - (priceWithMarkup * discount / 100);
 
-        this.selectedVariantData = {
-          price,
-          percent,
-          discount,
-          finalPrice,
-          priceWithMarkup,
-          variantId,
-          color
-        };
+  this.selectedVariantData = {
+    price,
+    percent,
+    discount,
+    finalPrice,
+    priceWithMarkup,
+    variantId,
+    size: size,        // Now properly stores the size
+    color: color || '' // Optional color parameter
+  };
 
-        // Update hidden fields
-        this.elements.selectedVariant.value = color;
-        this.elements.variantId.value = variantId;
-      }
+  // Update hidden fields
+  this.elements.selectedVariant.value = size; // Now stores the actual size
+  this.elements.variantId.value = variantId;
+}
 
       clearVariantSelection() {
         this.selectedVariantData = null;
@@ -1570,19 +1722,39 @@ $avg_stmt->close();
       }
 
       updatePurchaseButton() {
-        const hasRequiredSelections = this.selectedColorData &&
-          (!this.hasTypes || (this.selectedTypeId && this.selectedVariantData));
+    const hasRequiredSelections = this.selectedColorData &&
+      (!this.hasTypes || (this.selectedTypeId && this.selectedVariantData));
 
-        if (hasRequiredSelections) {
-          this.elements.addToCartBtn.disabled = false;
-          this.elements.addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white';
-          this.elements.btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Pre-Order';
-        } else {
-          this.elements.addToCartBtn.disabled = true;
-          this.elements.addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-          this.elements.btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Select Options to Pre-Order';
-        }
+    if (this.isWindows) {
+      // Handle Contact Us button for windows
+      const contactBtn = this.elements.contactUsBtn;
+      const contactBtnText = this.elements.contactBtnText;
+      
+      if (hasRequiredSelections) {
+        contactBtn.disabled = false;
+        contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg  transition-all duration-300 bg-black hover:bg-blue-600 text-white';
+        contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
+      } else {
+        contactBtn.disabled = true;
+        contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg  transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+        contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Select Options to Contact Us';
       }
+    } else {
+      // Handle regular Add to Cart button
+      const addToCartBtn = this.elements.addToCartBtn;
+      const btnText = this.elements.btnText;
+      
+      if (hasRequiredSelections) {
+        addToCartBtn.disabled = false;
+        addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white';
+        btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Pre-Order';
+      } else {
+        addToCartBtn.disabled = true;
+        addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+        btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Select Options to Pre-Order';
+      }
+    }
+  }
 
       updateDisplay() {
         this.updateTotalPrice();
@@ -1744,9 +1916,9 @@ $avg_stmt->close();
       productSelector.showVariants(typeId, typeName);
     }
 
-    function selectVariant(button, color) {
-      productSelector.selectVariant(button, color);
-    }
+    function selectVariant(button, size, color = null) {
+  productSelector.selectVariant(button, size, color);
+}
 
     function shareProduct() {
       const productName = document.querySelector('h1').textContent;

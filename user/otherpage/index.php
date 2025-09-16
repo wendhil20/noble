@@ -784,192 +784,491 @@ handleQueryError($conn, "New Status Query");
         refreshIndicatorDots();
     </script>
 
-   <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
-        <div class="max-w-7xl mx-auto">
-            <!-- Mobile to Tablet View (lg and below) - Swiper -->
-            <div class="block lg:hidden">
-                <div class="swiper contact-swiper" x-init="
-                    setTimeout(() => {
-                        new Swiper($el, {
-                            slidesPerView: 1.2,
-                            spaceBetween: 16,
-                            centeredSlides: false,
-                            breakpoints: {
-                                480: {
-                                    slidesPerView: 1.8,
-                                    spaceBetween: 20,
-                                },
-                                640: {
-                                    slidesPerView: 2.5,
-                                    spaceBetween: 20,
-                                },
-                                768: {
-                                    slidesPerView: 3.2,
-                                    spaceBetween: 24,
-                                },
-                                1024: {
-                                    slidesPerView: 4.5,
-                                    spaceBetween: 24,
-                                }
+ <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
+    <div class="max-w-7xl mx-auto">
+        <!-- Mobile to Tablet View (lg and below) - Swiper -->
+        <div class="block lg:hidden">
+            <div class="swiper contact-swiper" x-init="
+                setTimeout(() => {
+                    new Swiper($el, {
+                        slidesPerView: 1,
+                        spaceBetween: 12,
+                        centeredSlides: false,
+                        breakpoints: {
+                            375: {
+                                slidesPerView: 1.2,
+                                spaceBetween: 14,
+                            },
+                            425: {
+                                slidesPerView: 1.5,
+                                spaceBetween: 16,
+                            },
+                            480: {
+                                slidesPerView: 1.8,
+                                spaceBetween: 18,
+                            },
+                            640: {
+                                slidesPerView: 2.2,
+                                spaceBetween: 20,
+                            },
+                            768: {
+                                slidesPerView: 2.8,
+                                spaceBetween: 22,
+                            },
+                            1024: {
+                                slidesPerView: 4.5,
+                                spaceBetween: 24,
                             }
-                        });
-                    }, 100);
-                ">
-                    <div class="swiper-wrapper">
-                        <!-- Slide 1 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 1"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
-                                <h3 class="text-lg font-semibold text-orange-700">Inquire</h3>
-                                <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
-                            </button>
-                        </div>
+                        }
+                    });
+                }, 100);
+            ">
+                <div class="swiper-wrapper">
+                    <!-- Slide 1 -->
+                    <div class="swiper-slide">
+                        <button @click="currentModal = 1"
+                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                            <h3 class="contact-title text-orange-700">Inquire</h3>
+                            <p class="contact-desc text-gray-700 mt-1">Send us a question or message.</p>
+                        </button>
+                    </div>
 
-                        <!-- Slide 2 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 2"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
-                                <h3 class="text-lg font-semibold text-orange-700">Appointment</h3>
-                                <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
-                            </button>
-                        </div>
+                    <!-- Slide 2 -->
+                    <div class="swiper-slide">
+                        <button @click="currentModal = 2"
+                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                            <h3 class="contact-title text-orange-700">Appointment</h3>
+                            <p class="contact-desc text-gray-700 mt-1">Book a consultation now.</p>
+                        </button>
+                    </div>
 
-                        <!-- Slide 3 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 3"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
-                                <h3 class="text-lg font-semibold text-orange-700">Track Order</h3>
-                                <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
-                            </button>
-                        </div>
+                    <!-- Slide 3 -->
+                    <div class="swiper-slide">
+                        <button @click="currentModal = 3"
+                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                            <h3 class="contact-title text-orange-700">Track Order</h3>
+                            <p class="contact-desc text-gray-700 mt-1">Check your order status.</p>
+                        </button>
+                    </div>
 
-                        <!-- Slide 4 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 4"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
-                                <h3 class="text-lg font-semibold text-orange-700">Request Quote</h3>
-                                <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
-                            </button>
-                        </div>
+                    <!-- Slide 4 -->
+                    <div class="swiper-slide">
+                        <button @click="currentModal = 4"
+                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                            <h3 class="contact-title text-orange-700">Request Quote</h3>
+                            <p class="contact-desc text-gray-700 mt-1">Get pricing for your project.</p>
+                        </button>
+                    </div>
 
-                        <!-- Slide 5 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 5"
-                                class="w-full hover:bg-orange-100 transition duration-200 rounded-lg p-4 text-center h-full min-h-[100px]">
-                                <h3 class="text-lg font-semibold text-orange-700">Support</h3>
-                                <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
-                            </button>
-                        </div>
+                    <!-- Slide 5 -->
+                    <div class="swiper-slide">
+                        <button @click="currentModal = 5"
+                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                            <h3 class="contact-title text-orange-700">Support</h3>
+                            <p class="contact-desc text-gray-700 mt-1">We're here to help you.</p>
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Desktop View (lg and above) - Grid -->
-            <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                <!-- Box 1 -->
-                <button @click="currentModal = 1"
-                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
-                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-                        Inquire
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="text-sm text-gray-700 mt-1">Send us a question or message.</p>
-                </button>
+        <!-- Desktop View (lg and above) - Grid -->
+        <div class="hidden lg:grid grid-cols-5 gap-4 xl:gap-6">
+            <!-- Box 1 -->
+            <button @click="currentModal = 1"
+                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                <h3 class="desktop-title text-orange-700 relative inline-block">
+                    Inquire
+                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                </h3>
+                <p class="desktop-desc text-gray-700 mt-2">Send us a question or message.</p>
+            </button>
 
-                <!-- Box 2 -->
-                <button @click="currentModal = 2"
-                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
-                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-                        Appointment
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="text-sm text-gray-700 mt-1">Book a consultation now.</p>
-                </button>
+            <!-- Box 2 -->
+            <button @click="currentModal = 2"
+                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                <h3 class="desktop-title text-orange-700 relative inline-block">
+                    Appointment
+                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                </h3>
+                <p class="desktop-desc text-gray-700 mt-2">Book a consultation now.</p>
+            </button>
 
-                <!-- Box 3 -->
-                <button @click="currentModal = 3"
-                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
-                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-                        Track Order
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="text-sm text-gray-700 mt-1">Check your order status.</p>
-                </button>
+            <!-- Box 3 -->
+            <button @click="currentModal = 3"
+                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                <h3 class="desktop-title text-orange-700 relative inline-block">
+                    Track Order
+                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                </h3>
+                <p class="desktop-desc text-gray-700 mt-2">Check your order status.</p>
+            </button>
 
-                <!-- Box 4 -->
-                <button @click="currentModal = 4"
-                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
-                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-                        Request Quote
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="text-sm text-gray-700 mt-1">Get pricing for your project.</p>
-                </button>
+            <!-- Box 4 -->
+            <button @click="currentModal = 4"
+                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                <h3 class="desktop-title text-orange-700 relative inline-block">
+                    Request Quote
+                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                </h3>
+                <p class="desktop-desc text-gray-700 mt-2">Get pricing for your project.</p>
+            </button>
 
-                <!-- Box 5 -->
-                <button @click="currentModal = 5"
-                    class="group w-full transition duration-200 rounded-lg p-4 text-center bg-white h-full min-h-[100px] hover:shadow-md ">
-                    <h3 class="text-lg font-semibold text-orange-700 relative inline-block">
-                        Support
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="text-sm text-gray-700 mt-1">We're here to help you.</p>
+            <!-- Box 5 -->
+            <button @click="currentModal = 5"
+                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                <h3 class="desktop-title text-orange-700 relative inline-block">
+                    Support
+                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                </h3>
+                <p class="desktop-desc text-gray-700 mt-2">We're here to help you.</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <template x-if="currentModal">
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4 py-4">
+            <div class="bg-white w-full modal-container p-4 sm:p-6 rounded-lg shadow-lg relative modal-enter">
+                <!-- Modal Title -->
+                <h2 class="modal-title text-orange-600 mb-2" x-text="{
+                    1: 'Inquire',
+                    2: 'Appointment',
+                    3: 'Track Order',
+                    4: 'Request Quote',
+                    5: 'Support'
+                }[currentModal]"></h2>
+
+                <!-- Modal Description -->
+                <p class="modal-desc text-gray-700 mb-4" x-text="{
+                    1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
+                    2: 'Schedule a face-to-face or virtual consultation with our experts.',
+                    3: 'Enter your order ID to track the delivery progress and timeline.',
+                    4: 'Get a detailed quote based on your construction needs and preferences.',
+                    5: 'Need help? Our support team is always ready to guide you through any issues.'
+                }[currentModal]"></p>
+
+                <!-- Close Button -->
+                <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 close-btn">&times;</button>
+                <button @click="currentModal = null" class="modal-btn mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md transition duration-200">
+                    Close
                 </button>
             </div>
         </div>
+    </template>
 
-        <!-- Modals -->
-        <template x-if="currentModal">
-            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4">
-                <div class="bg-white w-full max-w-md p-6 mt-10 mb-10 rounded-lg shadow-lg relative modal-enter">
-                    <!-- Modal Title -->
-                    <h2 class="text-xl font-bold text-orange-600 mb-2" x-text="{
-                        1: 'Inquire',
-                        2: 'Appointment',
-                        3: 'Track Order',
-                        4: 'Request Quote',
-                        5: 'Support'
-                    }[currentModal]"></h2>
+    <style>
+        /* Mobile First Approach - Base Styles (320px and up) */
+        .contact-button {
+            min-height: 75px;
+        }
+        
+        .contact-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        
+        .contact-desc {
+            font-size: 0.75rem;
+            line-height: 1.25;
+        }
+        
+        .modal-container {
+            max-width: 280px;
+            margin: auto;
+        }
+        
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        
+        .modal-desc {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        
+        .modal-btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .close-btn {
+            font-size: 1.25rem;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-                    <!-- Modal Description -->
-                    <p class="text-sm text-gray-700 mb-4" x-text="{
-                        1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
-                        2: 'Schedule a face-to-face or virtual consultation with our experts.',
-                        3: 'Enter your order ID to track the delivery progress and timeline.',
-                        4: 'Get a detailed quote based on your construction needs and preferences.',
-                        5: 'Need help? Our support team is always ready to guide you through any issues.'
-                    }[currentModal]"></p>
-
-                    <!-- Close Button -->
-                    <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
-                    <button @click="currentModal = null" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-md transition duration-200">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </template>
-
-        <style>
-            .modal-enter {
-                animation: modalEnter 0.3s ease-out;
+        /* Small Mobile (375px and up) */
+        @media (min-width: 375px) {
+            .contact-button {
+                min-height: 80px;
             }
             
-            @keyframes modalEnter {
-                from {
-                    opacity: 0;
-                    transform: scale(0.95) translateY(-20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1) translateY(0);
-                }
+            .contact-title {
+                font-size: 0.9rem;
             }
+            
+            .contact-desc {
+                font-size: 0.8rem;
+            }
+            
+            .modal-container {
+                max-width: 320px;
+            }
+            
+            .modal-title {
+                font-size: 1.125rem;
+            }
+            
+            .modal-desc {
+                font-size: 0.875rem;
+            }
+        }
 
-            .contact-swiper .swiper-slide {
-                height: auto;
+        /* Large Mobile (425px and up) */
+        @media (min-width: 425px) {
+            .contact-button {
+                min-height: 85px;
             }
-        </style>
-    </section>
+            
+            .contact-title {
+                font-size: 1rem;
+            }
+            
+            .contact-desc {
+                font-size: 0.825rem;
+            }
+            
+            .modal-container {
+                max-width: 360px;
+            }
+        }
+
+        /* Small Tablet (640px and up) */
+        @media (min-width: 640px) {
+            .contact-button {
+                min-height: 90px;
+            }
+            
+            .contact-title {
+                font-size: 1.1rem;
+            }
+            
+            .contact-desc {
+                font-size: 0.875rem;
+            }
+            
+            .modal-container {
+                max-width: 400px;
+            }
+            
+            .modal-title {
+                font-size: 1.25rem;
+            }
+            
+            .close-btn {
+                font-size: 1.5rem;
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        /* Medium Tablet (768px and up) */
+        @media (min-width: 768px) {
+            .contact-button {
+                min-height: 95px;
+            }
+            
+            .contact-title {
+                font-size: 1.125rem;
+            }
+            
+            .contact-desc {
+                font-size: 0.9rem;
+            }
+            
+            .modal-container {
+                max-width: 440px;
+            }
+        }
+
+        /* Large Tablet (1024px and up) */
+        @media (min-width: 1024px) {
+            .desktop-button {
+                min-height: 100px;
+            }
+            
+            .desktop-title {
+                font-size: 1.125rem;
+                font-weight: 600;
+            }
+            
+            .desktop-desc {
+                font-size: 0.875rem;
+                line-height: 1.4;
+            }
+            
+            .modal-container {
+                max-width: 480px;
+            }
+            
+            .modal-title {
+                font-size: 1.375rem;
+            }
+            
+            .modal-desc {
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+            
+            .modal-btn {
+                font-size: 1rem;
+                padding: 0.75rem 1.5rem;
+            }
+        }
+
+        /* Desktop (1280px and up) */
+        @media (min-width: 1280px) {
+            .desktop-button {
+                min-height: 110px;
+            }
+            
+            .desktop-title {
+                font-size: 1.25rem;
+            }
+            
+            .desktop-desc {
+                font-size: 1rem;
+            }
+            
+            .modal-container {
+                max-width: 520px;
+            }
+            
+            .close-btn {
+                font-size: 1.75rem;
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* Large Desktop (1536px and up) */
+        @media (min-width: 1536px) {
+            .desktop-button {
+                min-height: 120px;
+            }
+            
+            .desktop-title {
+                font-size: 1.375rem;
+            }
+            
+            .desktop-desc {
+                font-size: 1.125rem;
+            }
+            
+            .modal-container {
+                max-width: 560px;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+            }
+            
+            .modal-desc {
+                font-size: 1.125rem;
+            }
+        }
+
+        /* Animation Styles */
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+        
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .contact-swiper .swiper-slide {
+            height: auto;
+        }
+
+        /* High DPI Displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .contact-title,
+            .desktop-title {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+        }
+
+        /* Landscape Orientation on Mobile */
+        @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) {
+            .contact-button {
+                min-height: 60px;
+            }
+            
+            .contact-title {
+                font-size: 0.8rem;
+            }
+            
+            .contact-desc {
+                font-size: 0.7rem;
+            }
+            
+            .modal-container {
+                max-width: 90vw;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* Touch Device Optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .contact-button,
+            .desktop-button {
+                -webkit-tap-highlight-color: rgba(251, 146, 60, 0.1);
+                touch-action: manipulation;
+            }
+        }
+
+        /* Reduce Motion for Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            .modal-enter {
+                animation: none;
+            }
+            
+            .group-hover\\:w-full,
+            .transition {
+                transition: none;
+            }
+        }
+
+        /* High Contrast Mode */
+        @media (prefers-contrast: high) {
+            .contact-button,
+            .desktop-button {
+                border: 2px solid #ea580c;
+            }
+            
+            .contact-title,
+            .desktop-title {
+                font-weight: 700;
+            }
+        }
+    </style>
+</section>
 
 
     <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">

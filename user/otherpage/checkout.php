@@ -232,11 +232,16 @@ if ($user_id) {
 }
 
 if ($user_id) {
-    // ✅ Fetch cart items with origin from product_variants
+    // ✅ Fetch cart items with origin and delivery size info
     $stmt = $conn->prepare("
-    SELECT uci.*, COALESCE(pv.origin, '') as origin 
+    SELECT uci.*, 
+           COALESCE(pv.origin, '') as origin,
+           pv.delivery_size_id,
+           ds.size_name,
+           ds.percentage as delivery_size_percentage
     FROM user_cart_items uci 
     LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
+    LEFT JOIN delivery_sizes ds ON pv.delivery_size_id = ds.id
     WHERE uci.user_id = ?
 ");
     $stmt->bind_param("i", $user_id);
@@ -321,45 +326,86 @@ function detectZoneByPostalCode($postal_code, $conn)
 }
 
 // ✅ New zone-based delivery calculation
-function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone, $postal_code = null)
+function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone)
 {
     // Check if NCR (free delivery)
     if ($selected_zone['zone_code'] === 'NCR' || $selected_zone['is_free_delivery']) {
+        // Even for free delivery, calculate individual item allocations as 0
+        $item_delivery_details = [];
+        foreach ($cart_items as $item) {
+            $item_delivery_details[] = [
+                'item_id' => $item['id'] ?? $item['variant_id'],
+                'quantity' => (int)$item['quantity'],
+                'delivery_fee_per_item' => 0.00,
+                'item_total_delivery' => 0.00,
+                'delivery_size_percentage' => $item['delivery_size_percentage'] ?? 0
+            ];
+        }
+        
         return [
             'total_delivery_cost' => 0.00,
+            'base_delivery_fee' => 0.00,
+            'additional_fees' => 0.00,
             'delivery_fee_per_item' => 0.00,
             'zone_info' => $selected_zone,
-            'is_free' => true
+            'is_free' => true,
+            'item_delivery_details' => $item_delivery_details
         ];
     }
 
-    // Calculate total items quantity
-    $total_quantity = 0;
-    foreach ($cart_items as $item) {
-        $total_quantity += (int)$item['quantity'];
-    }
-
-    // Calculate zone-based fee
+    // Calculate base delivery fee (distance-based only)
     $base_fee = (float)$selected_zone['base_fee'];
     $included_km = (float)$selected_zone['included_km'];
     $per_km_rate = (float)$selected_zone['per_km_rate'];
 
-    $total_delivery_fee = $base_fee;
+    $base_delivery_fee = $base_fee;
 
     if ($distance_km > $included_km) {
         $extra_km = $distance_km - $included_km;
-        $total_delivery_fee += ($extra_km * $per_km_rate);
+        $base_delivery_fee += ($extra_km * $per_km_rate);
     }
 
-    // Calculate per-item delivery cost
-    $delivery_fee_per_item = $total_quantity > 0 ? $total_delivery_fee / $total_quantity : 0;
+    // Debug logging
+    error_log("DEBUG - Base delivery fee (distance-based): $base_delivery_fee");
+
+    // Calculate additional percentage fees per item
+    $item_delivery_details = [];
+    $total_additional_fees = 0;
+
+    foreach ($cart_items as $item) {
+        $quantity = (int)$item['quantity'];
+        $item_percentage = (float)($item['delivery_size_percentage'] ?? 5.0); // Default 5% if no size
+        
+        // Calculate additional fee per item as percentage of base delivery cost
+        $additional_fee_per_item = ($base_delivery_fee * $item_percentage) / 100;
+        $item_total_additional = $additional_fee_per_item * $quantity;
+        
+        $item_delivery_details[] = [
+            'item_id' => $item['id'] ?? $item['variant_id'],
+            'quantity' => $quantity,
+            'delivery_fee_per_item' => $additional_fee_per_item,
+            'item_total_delivery' => $item_total_additional,
+            'delivery_size_percentage' => $item_percentage
+        ];
+        
+        $total_additional_fees += $item_total_additional;
+        
+        // Debug logging for each item
+        error_log("DEBUG - Item: {$item['variant_name']}, Percentage: {$item_percentage}%, Additional per item: $additional_fee_per_item, Total additional: $item_total_additional");
+    }
+
+    // Calculate final total delivery cost
+    $final_delivery_cost = $base_delivery_fee + $total_additional_fees;
+
+    error_log("DEBUG - Base delivery: $base_delivery_fee, Additional fees: $total_additional_fees, Final total: $final_delivery_cost");
 
     return [
-        'total_delivery_cost' => $total_delivery_fee,
-        'delivery_fee_per_item' => $delivery_fee_per_item,
+        'total_delivery_cost' => $final_delivery_cost,
+        'base_delivery_fee' => $base_delivery_fee,
+        'additional_fees' => $total_additional_fees,
         'zone_info' => $selected_zone,
         'is_free' => false,
-        'total_quantity' => $total_quantity
+        'item_delivery_details' => $item_delivery_details
     ];
 }
 
@@ -703,17 +749,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $order_id = $stmt->insert_id;
             $stmt->close();
 
-            // ✅ Calculate zone-based delivery
-            $delivery_result = calculateZoneBasedDelivery($cart_items, $delivery_distance, $selected_zone, $zipcode);
+            // ✅ Calculate zone-based delivery with size percentages
+            $delivery_result = calculateZoneBasedDelivery($cart_items, $delivery_distance, $selected_zone);
             $delivery_fee = $delivery_result['total_delivery_cost'];
-            $delivery_fee_per_item = $delivery_result['delivery_fee_per_item'];
+            $item_delivery_details = $delivery_result['item_delivery_details'] ?? [];
 
             // ✅ Save each item with individual delivery calculations
             $stmt = $conn->prepare("INSERT INTO order_items (
     order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-            foreach ($cart_items as $item) {
+            foreach ($cart_items as $index => $item) {
                 $subtotal_item = $item['price'] * $item['quantity'];
                 $product_name = $item['product_name'] ?? $item['variant_name'];
                 $codename = $item['codename'] ?? '';
@@ -723,15 +769,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $price = $item['price'];
                 $quantity = $item['quantity'];
 
-                // ✅ Calculate zone-based delivery
-                $delivery_result = calculateZoneBasedDelivery($cart_items, $delivery_distance, $selected_zone, $zipcode);
-                $delivery_fee = $delivery_result['total_delivery_cost'];
-                $delivery_fee_per_item = $delivery_result['delivery_fee_per_item'];
+                // Get delivery details for this specific item
+                $item_delivery_detail = $item_delivery_details[$index] ?? null;
+                
+                if ($item_delivery_detail) {
+                    $delivery_fee_per_item = $item_delivery_detail['delivery_fee_per_item'];
+                    $item_total_delivery = $item_delivery_detail['item_total_delivery'];
+                } else {
+                    // Fallback calculation
+                    $delivery_fee_per_item = 0;
+                    $item_total_delivery = 0;
+                }
 
-                // ✅ Calculate delivery fee per item and total delivery for this item (exactly like sample code)
-                $item_total_delivery = $delivery_fee_per_item * $quantity;
-
-                // ✅ SIMPLIFIED: Get descrip6 and descrip7 directly from cart item
+                // ✅ Get descrip6 and descrip7 directly from cart item
                 $desc6 = $item['descrip6'] ?? '';
                 $desc7 = $item['descrip7'] ?? '';
                 $origin = $item['origin'] ?? '';
@@ -1292,7 +1342,15 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         <!-- Scrollable items -->
                         <div class="max-h-80 overflow-y-auto divide-y divide-gray-200">
                             <?php foreach ($cart_items as $index => $item): ?>
-                                <div class="p-4" id="cartItem<?= $index ?>">
+                                <div class="p-4" id="cartItem<?= $index ?>" 
+                                     data-delivery-size-percentage="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
+                                     data-delivery-size-name="<?= htmlspecialchars($item['size_name'] ?? 'default') ?>"
+                                     data-item-index="<?= $index ?>">
+                                    <!-- Hidden inputs for JavaScript access -->
+                                    <input type="hidden" name="item_<?= $index ?>_delivery_size_percentage" 
+                                           value="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>" 
+                                           data-delivery-percentage="true">
+                                    
                                     <div class="flex justify-between items-start gap-4">
                                         <div class="flex-1">
                                             <h5 class="font-bold text-orange-600 mb-2">
@@ -1314,6 +1372,15 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                                         <strong>Origin:</strong> <?= htmlspecialchars($item['origin']) ?>
                                                     </div>
                                                 <?php endif; ?>
+                                                <!-- NEW: Display delivery size info -->
+                                                <?php if (!empty($item['size_name']) && !empty($item['delivery_size_percentage'])): ?>
+                                                    <div class="text-purple-600">
+                                                        <strong>Delivery Size:</strong> 
+                                                        <span class="delivery-size-percentage">
+                                                            <?= htmlspecialchars($item['size_name']) ?> (<?= number_format($item['delivery_size_percentage'], 1) ?>%)
+                                                        </span>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                             <div class="bg-blue-50 p-2 rounded text-xs">
                                                 <div class="flex justify-between text-blue-700">
@@ -1323,6 +1390,11 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                                 <div class="flex justify-between text-blue-700">
                                                     <span>Total delivery:</span>
                                                     <span class="totalDeliveryForItem font-medium">₱0.00</span>
+                                                </div>
+                                                <!-- NEW: Show size-based allocation info when calculated -->
+                                                <div class="flex justify-between text-purple-600 mt-1 size-allocation-info" style="display: none;">
+                                                    <span>Size allocation:</span>
+                                                    <span class="sizeAllocationPercentage font-medium">0%</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1549,6 +1621,18 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <script src="js/mapModal.js"></script>
     <script src="js/payment.js"></script>
     <script src="js/checkoutForm.js"></script>
+     <script>
+        // Pass cart items data to JavaScript for delivery calculations
+        window.cartItemsData = <?= json_encode(array_values($cart_items), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        
+        // Debug log to verify data is passed correctly
+        console.log('Cart items data loaded:', window.cartItemsData);
+        
+        // Verify delivery size data
+        window.cartItemsData.forEach((item, index) => {
+            console.log(`Item ${index}: ${item.variant_name}, Size: ${item.size_name}, Percentage: ${item.delivery_size_percentage}%`);
+        });
+    </script>
 </body>
 
 </html>

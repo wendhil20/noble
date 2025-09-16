@@ -196,7 +196,7 @@ function displayDetectedZone(zone, detectedRegion, postalCode) {
     }
 }
 
-// Keep your existing setupFreeDelivery function (same functionality)
+// MODIFIED: Updated setupFreeDelivery function to handle new percentage-based calculations
 function setupFreeDelivery() {
     if (!window.selectedZone || (!window.selectedZone.is_free_delivery && window.selectedZone.zone_code !== 'NCR')) {
         return;
@@ -235,16 +235,46 @@ function setupFreeDelivery() {
     }
 
     // Update individual item delivery displays to show free
+    updateIndividualItemDeliveryDisplay([]);
+}
+
+// UPDATED: Update individual item delivery displays with percentage-based additional fees
+function updateIndividualItemDeliveryDisplay(itemDeliveryDetails) {
     const cartItems = document.querySelectorAll('[id^="cartItem"]');
-    cartItems.forEach(cartItem => {
+    
+    cartItems.forEach((cartItem, index) => {
         const deliveryPerItemElement = cartItem.querySelector('.deliveryPerItem');
         const totalDeliveryForItemElement = cartItem.querySelector('.totalDeliveryForItem');
+        const sizeAllocationElement = cartItem.querySelector('.sizeAllocationPercentage');
+        const sizeAllocationInfo = cartItem.querySelector('.size-allocation-info');
+
+        let deliveryPerItem = 0;
+        let totalDeliveryForItem = 0;
+        let allocationPercentage = 0;
+
+        // If we have delivery details, use them
+        if (itemDeliveryDetails && itemDeliveryDetails[index]) {
+            const detail = itemDeliveryDetails[index];
+            deliveryPerItem = detail.deliveryFeePerItem || 0;
+            totalDeliveryForItem = detail.itemTotalDelivery || 0;
+            allocationPercentage = detail.deliverySizePercentage || 0;
+        }
 
         if (deliveryPerItemElement) {
-            deliveryPerItemElement.textContent = '₱0.00';
+            deliveryPerItemElement.textContent = `₱${deliveryPerItem.toFixed(2)}`;
         }
         if (totalDeliveryForItemElement) {
-            totalDeliveryForItemElement.textContent = '₱0.00';
+            totalDeliveryForItemElement.textContent = `₱${totalDeliveryForItem.toFixed(2)}`;
+        }
+
+        // Show percentage info
+        if (sizeAllocationElement && allocationPercentage > 0) {
+            sizeAllocationElement.textContent = `${allocationPercentage.toFixed(1)}% additional`;
+            if (sizeAllocationInfo) {
+                sizeAllocationInfo.style.display = 'flex';
+            }
+        } else if (sizeAllocationInfo) {
+            sizeAllocationInfo.style.display = 'none';
         }
     });
 }
@@ -282,12 +312,9 @@ function selectDeliveryZone(select) {
         if (description) {
             if (selectedZone.is_free_delivery) {
                 description.innerHTML = `<span class="text-green-600 font-medium">🎉 Free delivery for ${selectedZone.zone_name}!</span>`;
-
-                // Auto-setup free delivery when zone is selected
                 setupFreeDelivery();
-
             } else {
-                description.innerHTML = `<span class="text-blue-600">Base fee: ₱${parseFloat(selectedZone.base_fee).toFixed(2)} (includes ${selectedZone.included_km} km), ₱${parseFloat(selectedZone.per_km_rate).toFixed(2)} per additional km</span>`;
+                description.innerHTML = `<span class="text-blue-600">Base fee: ₱${parseFloat(selectedZone.base_fee).toFixed(2)} (includes ${selectedZone.included_km} km), ₱${parseFloat(selectedZone.per_km_rate).toFixed(2)} per additional km. Items have additional percentage-based fees.</span>`;
             }
         }
     } else {

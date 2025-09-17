@@ -1,41 +1,41 @@
-<?php 
-session_name("nobleuser"); 
-session_start(); 
+<?php
+session_name("nobleuser");
+session_start();
 include '../../connection/connect.php';
 
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-    $token = $_COOKIE['remember_token'];
-    
-    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    
-    if ($res->num_rows > 0) {
-        $user = $res->fetch_assoc();
-        
-        // 🔐 Store essential user session info
-        $_SESSION['user_id']    = $user['id'];
-        $_SESSION['user_name']  = $user['name'];
-        $_SESSION['user_email'] = $user['email'] ?? '';
-        $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-        
-        // 👤 Check if it's a Google account (optional)
-        if (!empty($user['google_id'])) {
-            $_SESSION['google_logged_in'] = true;
-            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
-        }
+  $token = $_COOKIE['remember_token'];
+
+  $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+  $stmt->bind_param("s", $token);
+  $stmt->execute();
+  $res = $stmt->get_result();
+
+  if ($res->num_rows > 0) {
+    $user = $res->fetch_assoc();
+
+    // 🔐 Store essential user session info
+    $_SESSION['user_id']    = $user['id'];
+    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_email'] = $user['email'] ?? '';
+    $_SESSION['user_mobile'] = $user['mobile'] ?? '';
+
+    // 👤 Check if it's a Google account (optional)
+    if (!empty($user['google_id'])) {
+      $_SESSION['google_logged_in'] = true;
+      $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
     }
-    
-    $stmt->close();
+  }
+
+  $stmt->close();
 }
 
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-    // Not logged in — redirect to login or Google auth
-    header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
-    exit;
+  // Not logged in — redirect to login or Google auth
+  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+  exit;
 }
 
 // ✅ Retrieve user info
@@ -51,7 +51,7 @@ unset($_SESSION['checkout_notice']);
 
 // ✅ Fetch cart items from database - FIXED: descrip6, descrip7 from products table
 if ($user_id) {
-    $stmt = $conn->prepare("
+  $stmt = $conn->prepare("
         SELECT 
             c.*, 
             t.type_image, 
@@ -73,20 +73,20 @@ if ($user_id) {
         WHERE c.user_id = ?
         ORDER BY c.id DESC
     ");
-    
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    // ✅ FIXED: Calculate total price properly while fetching data
-    while ($row = $result->fetch_assoc()) {
-        $cart_items[] = $row;
-        // Calculate total price correctly - only once here
-        $item_total = floatval($row['price']) * intval($row['quantity']);
-        $total_price += $item_total;
-    }
-    
-    $stmt->close();
+
+  $stmt->bind_param("i", $user_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  // ✅ FIXED: Calculate total price properly while fetching data
+  while ($row = $result->fetch_assoc()) {
+    $cart_items[] = $row;
+    // Calculate total price correctly - only once here
+    $item_total = floatval($row['price']) * intval($row['quantity']);
+    $total_price += $item_total;
+  }
+
+  $stmt->close();
 }
 
 // Calculate total cart items count
@@ -100,7 +100,7 @@ $total_cart_items = count($cart_items);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
   <title>Your Cart</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
@@ -108,8 +108,8 @@ $total_cart_items = count($cart_items);
 </head>
 
 <body class="bg-gray-100">
-    <?php include '../navbar/top.php'; ?>
-  
+  <?php include '../navbar/top.php'; ?>
+
   <!-- Hero Section -->
   <div class="gradient-bg text-white relative overflow-hidden">
     <div class="absolute inset-0 pointer-events-none z-0">
@@ -122,7 +122,7 @@ $total_cart_items = count($cart_items);
         <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
       </svg>
     </div>
-  
+
     <div class="bg-orange-400 text-white py-5 sm:py-8 lg:py-12 z-0">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-2 sm:mb-4">Your Shopping Cart</h1>
@@ -163,6 +163,7 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
+
         100% {
           transform: translateY(-60px) scale(1.08);
         }
@@ -172,6 +173,7 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
+
         100% {
           transform: translateY(-40px) scale(1.12);
         }
@@ -181,6 +183,7 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
+
         100% {
           transform: translateY(-70px) scale(1.05);
         }
@@ -190,6 +193,7 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
+
         100% {
           transform: translateY(-30px) scale(1.15);
         }
@@ -199,6 +203,7 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
+
         100% {
           transform: translateY(-55px) scale(1.09);
         }
@@ -208,6 +213,7 @@ $total_cart_items = count($cart_items);
         0% {
           transform: translateY(0) scale(1);
         }
+
         100% {
           transform: translateY(-35px) scale(1.13);
         }
@@ -222,6 +228,7 @@ $total_cart_items = count($cart_items);
         .cart-table-desktop {
           display: none;
         }
+
         .cart-table-mobile {
           display: block;
         }
@@ -242,8 +249,15 @@ $total_cart_items = count($cart_items);
       }
 
       @keyframes floating {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
+
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+
+        50% {
+          transform: translateY(-10px);
+        }
       }
 
       .social-hover:hover {
@@ -256,7 +270,7 @@ $total_cart_items = count($cart_items);
       }
 
       .pattern-bg {
-        background-image: 
+        background-image:
           radial-gradient(circle at 25% 25%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
           radial-gradient(circle at 75% 75%, rgba(251, 146, 60, 0.05) 0%, transparent 50%);
       }
@@ -292,7 +306,7 @@ $total_cart_items = count($cart_items);
 
   <!-- Cart Content -->
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-    <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 lg:p-8">
+    <div class=" p-4 sm:p-6 lg:p-8">
       <h2 class="text-2xl sm:text-3xl font-bold text-orange-400 mb-4 sm:mb-6 flex items-center gap-2">
         <i class="fas fa-shopping-cart"></i>Your Cart
       </h2>
@@ -349,25 +363,25 @@ $total_cart_items = count($cart_items);
                       <td class="py-4 px-4">
                         <div class="flex items-center justify-center gap-1">
                           <!-- Minus Button -->
-                          <button type="button" 
-                                  onclick="updateQuantity(<?= $item['id'] ?>, -1)" 
-                                  class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
+                          <button type="button"
+                            onclick="updateQuantity(<?= $item['id'] ?>, -1)"
+                            class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
                             <i class="fas fa-minus text-xs"></i>
                           </button>
-                          
+
                           <!-- Quantity Display/Input -->
-                          <input type="number" 
-                                 id="qty_<?= $item['id'] ?>"
-                                 name="quantities[<?= $item['id'] ?>]" 
-                                 value="<?= $quantity ?>" 
-                                 min="1"
-                                 readonly
-                                 class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
-                          
+                          <input type="number"
+                            id="qty_<?= $item['id'] ?>"
+                            name="quantities[<?= $item['id'] ?>]"
+                            value="<?= $quantity ?>"
+                            min="1"
+                            readonly
+                            class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
+
                           <!-- Plus Button -->
-                          <button type="button" 
-                                  onclick="updateQuantity(<?= $item['id'] ?>, 1)" 
-                                  class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
+                          <button type="button"
+                            onclick="updateQuantity(<?= $item['id'] ?>, 1)"
+                            class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
                             <i class="fas fa-plus text-xs"></i>
                           </button>
                         </div>
@@ -411,10 +425,7 @@ $total_cart_items = count($cart_items);
 
             <!-- Desktop Cart Actions -->
             <div class="mt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <button type="submit" class="w-full sm:w-auto bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition-colors font-medium">
-                <i class="fas fa-sync-alt mr-2"></i>Update Cart
-              </button>
-              <div class="text-xl lg:text-2xl font-bold text-orange-700 bg-orange-50 px-4 py-2 rounded-lg" id="cart_total_desktop">
+              <div class="text-xl lg:text-2xl font-bold text-black px-4 py-2 rounded-lg" id="cart_total_desktop">
                 Total: ₱<?= number_format($total_price, 2) ?>
               </div>
             </div>
@@ -437,7 +448,7 @@ $total_cart_items = count($cart_items);
                   <?php else: ?>
                     <div class="w-20 h-20 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg flex-shrink-0">No Image</div>
                   <?php endif; ?>
-                  
+
                   <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-800 uppercase text-sm mb-1"><?= htmlspecialchars($item['codename']) ?></h3>
                     <div class="space-y-1 text-xs text-gray-600">
@@ -453,7 +464,7 @@ $total_cart_items = count($cart_items);
                       <?php endif; ?>
                     </div>
                   </div>
-                  
+
                   <!-- Remove Button -->
                   <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
                     class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-colors" title="Remove">
@@ -484,24 +495,24 @@ $total_cart_items = count($cart_items);
                     <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                     <div class="flex items-center gap-1">
                       <!-- Minus Button -->
-                      <button type="button" 
-                              onclick="updateQuantity(<?= $item['id'] ?>, -1)" 
-                              class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
+                      <button type="button"
+                        onclick="updateQuantity(<?= $item['id'] ?>, -1)"
+                        class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
                         <i class="fas fa-minus text-xs"></i>
                       </button>
-                      
-                      <!-- Quantity Display/Input -->
-                      <input type="number" 
-                             name="quantities[<?= $item['id'] ?>]" 
-                             value="<?= $quantity ?>" 
-                             min="1"
-                             readonly
-                             class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
-                      
+
+                      <input type="number"
+                        id="qty_<?= $item['id'] ?>"
+                        name="quantities[<?= $item['id'] ?>]"
+                        value="<?= $quantity ?>"
+                        min="1"
+                        readonly
+                        class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
+
                       <!-- Plus Button -->
-                      <button type="button" 
-                              onclick="updateQuantity(<?= $item['id'] ?>, 1)" 
-                              class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
+                      <button type="button"
+                        onclick="updateQuantity(<?= $item['id'] ?>, 1)"
+                        class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
                         <i class="fas fa-plus text-xs"></i>
                       </button>
                     </div>
@@ -519,9 +530,6 @@ $total_cart_items = count($cart_items);
             <!-- Mobile Cart Actions -->
             <div class="sticky bottom-0 bg-white border-t border-gray-200 p-4 -mx-4 mt-6">
               <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <button type="submit" class="w-full sm:w-auto bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition-colors font-medium">
-                  <i class="fas fa-sync-alt mr-2"></i>Update Cart
-                </button>
                 <div class="text-xl font-bold text-orange-700 bg-orange-50 px-4 py-3 rounded-lg" id="cart_total_mobile">
                   Total: ₱<?= number_format($total_price, 2) ?>
                 </div>
@@ -543,177 +551,62 @@ $total_cart_items = count($cart_items);
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="bg-black pattern-bg text-white py-16 relative overflow-hidden">
-    <!-- Decorative Elements -->
-    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+ <?php include '../navbar/footer.php'; ?>
 
-    <div class="max-w-7xl mx-auto px-6 relative z-10">
-      <!-- Main Footer Content -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-
-        <!-- Enhanced Branding Section -->
-        <div class="lg:col-span-2">
-          <div class="flex items-center space-x-4 mb-6">
-            <!-- Logo with glow and pulse -->
-            <div class="relative">
-              <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
-              </div>
-              <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
-            </div>
-
-            <!-- Text Branding -->
-            <div>
-              <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-            </div>
-          </div>
-
-          <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
-            Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
-          </p>
-
-          <!-- Contact Info -->
-          <div class="space-y-3">
-            <div class="flex items-center space-x-3 text-sm">
-              <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
-              </div>
-              <span class="text-gray-300">noblehomeconst.ph@gmail.com</span>
-            </div>
-            <div class="flex items-center space-x-3 text-sm">
-              <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                </svg>
-              </div>
-              <span class="text-gray-300">0968 591 6536</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Links -->
-        <div>
-          <h3 class="text-xl font-bold mb-6 text-white relative">
-            Quick Links
-            <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-          </h3>
-          <nav class="space-y-3">
-            <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
-            <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
-            <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
-          </nav>
-        </div>
-
-        <!-- Services -->
-        <div>
-          <h3 class="text-xl font-bold mb-6 text-white relative">
-            Our Services
-            <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-          </h3>
-          <ul class="space-y-3 text-gray-300">
-            <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Divider -->
-      <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
-
-      <!-- Bottom Section -->
-      <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
-        <!-- Copyright -->
-        <div class="text-center lg:text-left">
-          <p class="text-gray-400 text-sm">
-            © 2025 Noble Home Construction. All rights reserved.
-          </p>
-          <p class="text-gray-500 text-xs mt-1">
-            Licensed & Insured | PCAB License No. 12345
-          </p>
-        </div>
-
-        <!-- Enhanced Social Media -->
-        <div class="flex items-center space-x-4">
-          <span class="text-gray-400 text-sm mr-2">Follow us:</span>
-
-          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
-            </svg>
-          </a>
-
-          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
-            </svg>
-          </a>
-
-          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="LinkedIn">
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-            </svg>
-          </a>
-        </div>
-
-        <!-- Back to Top Button -->
-        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-          class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Background Pattern -->
-    <div class="absolute bottom-0 right-0 opacity-5">
-      <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-        <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
-        <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
-        <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
-      </svg>
-    </div>
-  </footer>
 
   <!-- JavaScript for Quantity Controls -->
   <script>
     // Store unit prices for each item
     const unitPrices = {};
-    
+
+    // Track pending updates to avoid multiple requests
+    const pendingUpdates = new Set();
+
     <?php foreach ($cart_items as $item): ?>
-    unitPrices[<?= $item['id'] ?>] = <?= floatval($item['price']) ?>;
+      unitPrices[<?= $item['id'] ?>] = <?= floatval($item['price']) ?>;
     <?php endforeach; ?>
+
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
 
     function updateQuantity(itemId, change) {
       const input = document.getElementById('qty_' + itemId);
       let currentValue = parseInt(input.value) || 1;
       let newValue = currentValue + change;
-      
+
       // Ensure minimum quantity is 1
       if (newValue < 1) {
         newValue = 1;
       }
-      
+
       input.value = newValue;
-      
+
       // Update all quantity inputs with same item ID
       const allInputs = document.querySelectorAll('input[name="quantities[' + itemId + ']"]');
       allInputs.forEach(inp => inp.value = newValue);
-      
-      // Update subtotals
+
+      // Update subtotals immediately for better UX
       updateSubtotal(itemId, newValue);
-      
-      // Update cart total
       updateCartTotal();
+
+      // Auto-save to database (debounced)
+      debouncedAutoSave(itemId, newValue);
     }
 
     function updateSubtotal(itemId, quantity) {
       const unitPrice = unitPrices[itemId] || 0;
       const subtotal = unitPrice * quantity;
-      
+
       // Update desktop subtotal
       const desktopSubtotal = document.getElementById('subtotal_' + itemId);
       if (desktopSubtotal) {
@@ -722,7 +615,7 @@ $total_cart_items = count($cart_items);
           maximumFractionDigits: 2
         });
       }
-      
+
       // Update mobile subtotal
       const mobileSubtotal = document.getElementById('subtotal_mobile_' + itemId);
       if (mobileSubtotal) {
@@ -735,7 +628,7 @@ $total_cart_items = count($cart_items);
 
     function updateCartTotal() {
       let total = 0;
-      
+
       // Calculate total from unit prices and quantities
       Object.keys(unitPrices).forEach(itemId => {
         const input = document.getElementById('qty_' + itemId);
@@ -745,24 +638,156 @@ $total_cart_items = count($cart_items);
           total += unitPrice * quantity;
         }
       });
-      
+
       const formattedTotal = 'Total: ₱' + total.toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-      
+
       // Update desktop total
       const desktopTotal = document.getElementById('cart_total_desktop');
       if (desktopTotal) {
         desktopTotal.textContent = formattedTotal;
       }
-      
+
       // Update mobile total
       const mobileTotal = document.getElementById('cart_total_mobile');
       if (mobileTotal) {
         mobileTotal.textContent = formattedTotal;
       }
     }
+
+    // Auto-save function with corrected fetch URL
+async function autoSaveQuantity(itemId, quantity) {
+  // Prevent multiple simultaneous requests for the same item
+  if (pendingUpdates.has(itemId)) {
+    return;
+  }
+
+  pendingUpdates.add(itemId);
+
+  // Show loading indicator
+  showLoadingIndicator(itemId, true);
+
+  try {
+    const formData = new FormData();
+    formData.append('item_id', itemId);
+    formData.append('quantity', quantity);
+
+    // Updated fetch URL - change this to match your actual file name
+    const response = await fetch('../cart/update_cart.php', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest' // This helps identify AJAX requests
+      }
+    });
+
+    // Check if the response is actually JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server did not return JSON response');
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Show success indicator briefly
+      showSuccessIndicator(itemId);
+
+      // Optionally update cart totals from server response
+      if (data.total_price !== undefined) {
+        updateServerTotal(data.total_price);
+      }
+    } else {
+      console.error('Failed to update quantity:', data.message);
+      showErrorIndicator(itemId);
+    }
+
+  } catch (error) {
+    console.error('Error updating quantity:', error);
+    showErrorIndicator(itemId);
+    
+    // You can add a user-visible error message here
+    console.log('Auto-save failed. Please use manual update button.');
+  } finally {
+    pendingUpdates.delete(itemId);
+    // Hide loading indicator
+    showLoadingIndicator(itemId, false);
+  }
+}
+
+    // Debounced version of auto-save (wait 800ms after last change)
+    const debouncedAutoSave = debounce(autoSaveQuantity, 800);
+
+    // Visual feedback functions
+    function showLoadingIndicator(itemId, show) {
+      const indicator = document.getElementById('loading_' + itemId);
+      if (indicator) {
+        indicator.style.display = show ? 'inline-block' : 'none';
+      } else if (show) {
+        // Create loading indicator if it doesn't exist
+        const qtyContainer = document.getElementById('qty_' + itemId).closest('.flex');
+        const loadingSpinner = document.createElement('div');
+        loadingSpinner.id = 'loading_' + itemId;
+        loadingSpinner.className = 'inline-block ml-2';
+        loadingSpinner.innerHTML = '<i class="fas fa-spinner fa-spin text-orange-500 text-sm"></i>';
+        qtyContainer.appendChild(loadingSpinner);
+      }
+    }
+
+    function showSuccessIndicator(itemId) {
+      const indicator = getOrCreateIndicator(itemId, 'success');
+      indicator.innerHTML = '';
+      indicator.style.display = 'inline-block';
+
+      // Hide after 2 seconds
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 2000);
+    }
+
+    function showErrorIndicator(itemId) {
+      const indicator = getOrCreateIndicator(itemId, 'error');
+      indicator.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 text-sm" title="Failed to save. Please try again."></i>';
+      indicator.style.display = 'inline-block';
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 3000);
+    }
+
+    function getOrCreateIndicator(itemId, type) {
+      const indicatorId = type + '_' + itemId;
+      let indicator = document.getElementById(indicatorId);
+
+      if (!indicator) {
+        const qtyContainer = document.getElementById('qty_' + itemId).closest('.flex');
+        indicator = document.createElement('div');
+        indicator.id = indicatorId;
+        indicator.className = 'inline-block ml-2';
+        indicator.style.display = 'none';
+        qtyContainer.appendChild(indicator);
+      }
+
+      return indicator;
+    }
+
+    function updateServerTotal(serverTotal) {
+      const formattedTotal = 'Total: ₱' + parseFloat(serverTotal).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      // Update both desktop and mobile totals
+      const desktopTotal = document.getElementById('cart_total_desktop');
+      const mobileTotal = document.getElementById('cart_total_mobile');
+
+      if (desktopTotal) desktopTotal.textContent = formattedTotal;
+      if (mobileTotal) mobileTotal.textContent = formattedTotal;
+    }
+
   </script>
 </body>
 

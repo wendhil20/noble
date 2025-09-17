@@ -41,11 +41,13 @@ if (!isset($_SESSION['user_id'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms and Conditions - NobleHome Depot</title>
   <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
@@ -59,8 +61,9 @@ if (!isset($_SESSION['user_id'])) {
     }
   </script>
 </head>
-<body class=" text-white min-h-screen">
-  <?php include '../navbar/top.php'; ?> 
+
+<body class=" text-white min-h-screen font-mont">
+  <?php include '../navbar/top.php'; ?>
   <!-- Header Section -->
   <div class="bg-black border-b border-noble-orange">
     <div class="max-w-6xl mx-auto px-6 py-8">
@@ -89,7 +92,7 @@ if (!isset($_SESSION['user_id'])) {
           </div>
         </div>
         <div>
-          <h2 class="text-xl font-semibold text-black mb-3">Welcome to NobleHome Depot</h2>
+          <h2 class="text-4xl font-bold text-black mb-3">Welcome to NobleHome Depot</h2>
           <p class="text-black leading-relaxed">
             By accessing and using our website, you agree to the following Terms and Conditions. Please read them carefully before using our services.
           </p>
@@ -115,7 +118,9 @@ if (!isset($_SESSION['user_id'])) {
               </svg>
             </div>
             <p class="text-black leading-relaxed">
-              NobleHome Depot is an online store that sells furniture and related products, including imported items from China. We handle deliveries directly through NobleHome Delivery Services.
+              Introduction
+              This website is owned and operated by Noblehome Construction Corporation. By accessing or using this website, including browsing, purchasing, or engaging with our services, the User or Customer agree to be bound by these Terms & Conditions and our Privacy Policy.
+
             </p>
           </div>
         </div>
@@ -126,26 +131,14 @@ if (!isset($_SESSION['user_id'])) {
         <div class=" p-6">
           <h2 class="text-2xl font-bold text-black flex items-center">
             <span class="bg-orange-400 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mr-4">2</span>
-            Accounts
+            Acceptance of Terms
           </h2>
         </div>
         <div class="p-6">
           <ul class="space-y-3">
             <li class="flex items-start space-x-3">
               <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">Users may register using email or sign in through Google redirect</span>
-            </li>
-            <li class="flex items-start space-x-3">
-              <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">You are responsible for maintaining the confidentiality of your account credentials</span>
-            </li>
-            <li class="flex items-start space-x-3">
-              <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">NobleHome Depot reserves the right to verify, suspend, or ban accounts that violate these Terms</span>
-            </li>
-            <li class="flex items-start space-x-3">
-              <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">Accounts may also be terminated or have verification removed if fraudulent or abusive activity is detected</span>
+              <span class="text-black">By using this website, you confirm that you have read, understood, and accepted these Terms & Conditions. If you do not agree, you must stop using our website and services immediately.</span>
             </li>
           </ul>
         </div>
@@ -156,23 +149,21 @@ if (!isset($_SESSION['user_id'])) {
         <div class=" p-6">
           <h2 class="text-2xl font-bold text-black flex items-center">
             <span class="bg-orange-400 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mr-4">3</span>
-            Products and Orders
+            User Responsibilities
           </h2>
         </div>
         <div class="p-6">
           <ul class="space-y-3">
             <li class="flex items-start space-x-3">
               <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">All products are described and displayed to the best of our ability, including dimensions, materials, and origin</span>
+              <span class="text-black">Users agree to use this website in a lawful and responsible manner. You must not:
+                , Post, share, or transmit harmful, offensive, or fraudulent content.
+                , Attempt to hack, disrupt, or misuse the website.
+                , Copy, reproduce, or distribute website content without permission.
+                , Engage in spam, scams, or unauthorized promotions.
+                Violation of these rules may result in suspension or termination of your access.</span>
             </li>
-            <li class="flex items-start space-x-3">
-              <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">Some items are imported; delivery times may vary</span>
-            </li>
-            <li class="flex items-start space-x-3">
-              <div class="w-2 h-2 bg-noble-orange rounded-full mt-2 flex-shrink-0"></div>
-              <span class="text-black">NobleHome Depot is responsible for delivering your order once payment is confirmed via bank transfer</span>
-            </li>
+
           </ul>
         </div>
       </div>
@@ -182,7 +173,7 @@ if (!isset($_SESSION['user_id'])) {
         <div class=" p-6">
           <h2 class="text-2xl font-bold text-black flex items-center">
             <span class="bg-orange-400 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mr-4">4</span>
-            Payments
+            Orders & Payments
           </h2>
         </div>
         <div class="p-6">
@@ -193,7 +184,11 @@ if (!isset($_SESSION['user_id'])) {
               </svg>
             </div>
             <p class="text-black leading-relaxed">
-              Payments must be made via bank transfer to the official NobleHome Depot account. We do not accept cash on delivery. Payment confirmation is required before scheduling delivery.
+              For online orders:
+              , Prices displayed include applicable taxes unless otherwise stated.
+              , Payments must be completed through the available payment channels at checkout.
+              , Shipping and delivery timelines are estimates and may vary depending on courier services.
+              ,Refunds and returns are subject to our Return & Refund Policy, which requires the product to be returned in original condition within 7 days upon receipt.
             </p>
           </div>
         </div>
@@ -204,7 +199,7 @@ if (!isset($_SESSION['user_id'])) {
         <div class=" p-6">
           <h2 class="text-2xl font-bold text-black flex items-center">
             <span class="bg-orange-400 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mr-4">5</span>
-            Damaged or Defective Products
+            Limitations of Liability
           </h2>
         </div>
         <div class="p-6">
@@ -216,9 +211,11 @@ if (!isset($_SESSION['user_id'])) {
                 </svg>
               </div>
               <div>
-                <h3 class="text-black font-semibold mb-2">Replacement Policy</h3>
+
                 <p class="text-black leading-relaxed">
-                  If your product arrives damaged or defective, NobleHome Depot will replace the item and reschedule delivery at no extra cost. Refunds are not offered; only replacement is provided.
+                  Noblehome Depot shall not be liable for any indirect, incidental, or consequential damages arising from the use of this website or products purchased.
+                  ,We are not responsible for any delays, losses, or damages caused by third-party services (e.g., couriers, payment gateways).
+                  ,Product images may differ slightly from actual products due to variations in display and materials. (manage your expectation)
                 </p>
               </div>
             </div>
@@ -281,7 +278,7 @@ if (!isset($_SESSION['user_id'])) {
         <div class=" p-6">
           <h2 class="text-2xl font-bold text-black flex items-center">
             <span class="bg-orange-400 text-white  rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mr-4">8</span>
-            Changes to Terms
+            Governing Law
           </h2>
         </div>
         <div class="p-6">
@@ -292,7 +289,8 @@ if (!isset($_SESSION['user_id'])) {
               </svg>
             </div>
             <p class="text-black leading-relaxed">
-              We may update these Terms and Conditions from time to time. Continued use of our site implies acceptance of the latest version.
+            These Terms & Conditions shall be governed by and interpreted in accordance with the laws of the Republic of the Philippines. Any disputes shall be resolved under the exclusive jurisdiction of the courts in Quezon City, Philippines.
+
             </p>
           </div>
         </div>
@@ -333,10 +331,11 @@ if (!isset($_SESSION['user_id'])) {
   <div class="bg-gray-900 border-t border-gray-800 py-8 mt-16">
     <div class="max-w-5xl mx-auto px-6 text-center">
       <p class="text-gray-400">
-        © <?= date("Y"); ?> NobleHome Depot. All rights reserved. | 
+        © <?= date("Y"); ?> NobleHome Depot. All rights reserved. |
         <span class="text-noble-orange">Terms Updated: <?= date("F j, Y"); ?></span>
       </p>
     </div>
   </div>
 </body>
+
 </html>

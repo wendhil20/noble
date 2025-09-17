@@ -306,6 +306,7 @@ $stmt->close();
     </div>
 
     <!-- Add your footer here -->
+     <?php include '../navbar/footer.php'; ?>
 
     <style>
         .line-clamp-2 {

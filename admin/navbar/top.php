@@ -656,16 +656,13 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
                             
                             <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
-                                <div class="font-bold uppercase">
+                                <div class=" uppercase">
                                 <!-- Supplier Section -->
                                 <div class="px-3 py-2">
                                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Accountant</div>
                                     <a href="../accountant/accountantdashboard.php"
                                         class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
+                                       
                                         <span>Revenue Accountant</span>
                                     </a>
                                 </div>
@@ -674,10 +671,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <div class="px-3 py-2">
                                     <a href="../accountant/accountant.php"
                                         class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
+                                        
                                         <span>Dashboard Accountant</span>
                                     </a>
                                 </div>

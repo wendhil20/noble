@@ -861,7 +861,7 @@ function getUserOnlineStatus($conn, $userId)
       <?php endif; ?>
     </div>
   </div>
-
+<?php include '../navbar/footer.php'; ?>
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('chatSupport', () => ({

@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->bind_param("s", $_COOKIE['remember_token']);
     $stmt->execute();
     $res = $stmt->get_result();
-    
+
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
         $_SESSION = array_merge($_SESSION, [
@@ -18,7 +18,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             'user_email' => $user['email'] ?? '',
             'user_mobile' => $user['mobile'] ?? ''
         ]);
-        
+
         if (!empty($user['google_id'])) {
             $_SESSION['google_logged_in'] = true;
             $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
@@ -89,10 +89,19 @@ $stmt->close();
 $total_pages = ceil($total_products / $per_page);
 
 $all_categories = [
-    'furniture' => 'Furniture', 'material' => 'Materials', 'electrical' => 'Electrical',
-    'lighting' => 'Lighting', 'bedfurniture' => 'Bedroom Furniture', 'aircon' => 'Air Conditioners',
-    'doors' => 'Doors', 'tiles' => 'Tiles', 'windows' => 'Windows', 'bathroom' => 'Bathroom Fixtures',
-    'kitchen' => 'Kitchen Fixtures', 'pipes' => 'Pipes', 'aacblock' => 'AAC BLOCKS'
+    'furniture' => 'Furniture',
+    'material' => 'Materials',
+    'electrical' => 'Electrical',
+    'lighting' => 'Lighting',
+    'bedfurniture' => 'Bedroom Furniture',
+    'aircon' => 'Air Conditioners',
+    'doors' => 'Doors',
+    'tiles' => 'Tiles',
+    'windows' => 'Windows',
+    'bathroom' => 'Bathroom Fixtures',
+    'kitchen' => 'Kitchen Fixtures',
+    'pipes' => 'Pipes',
+    'aacblock' => 'AAC BLOCKS'
 ];
 
 // Get category counts
@@ -108,65 +117,181 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Shop Products - Noble Home</title>
     <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .playfair { font-family: 'Playfair Display', serif; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-hover:hover { transform: translateY(-8px); }
-        
-        .filter-panel { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid rgba(226, 232, 240, 0.8); backdrop-filter: blur(10px); }
-        
-        .category-chip { 
-            transition: all 0.3s ease; 
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .playfair {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-8px);
+        }
+
+        .filter-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .category-chip {
+            transition: all 0.3s ease;
             border: 1px solid rgba(226, 232, 240, 0.6);
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         }
-        .category-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); border-color: rgba(249, 115, 22, 0.3); }
-        .category-chip input:checked + .category-content { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; }
-        
-        .mobile-filter { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); z-index: 50; backdrop-filter: blur(8px); }
-        .mobile-filter.active { display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; }
-        
-        .pagination-btn { transition: all 0.3s ease; border: 1px solid rgba(226, 232, 240, 0.8); }
-        .pagination-btn:hover:not(.disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; }
-        .pagination-btn.active { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-color: #f97316; }
-        .pagination-btn.disabled { opacity: 0.5; cursor: not-allowed; background: #f1f5f9; color: #94a3b8; }
-        
-        .product-image { transition: transform 0.6s ease; }
-        .card-hover:hover .product-image { transform: scale(1.08); }
-        
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @media (max-width: 1023px) { .desktop-filter { display: none; } }
-        @media (min-width: 1024px) { .mobile-filter-toggle { display: none; } .sticky-filter { position: sticky; top: 2rem; } }
+
+        .category-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        .category-chip input:checked+.category-content {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+        }
+
+        .mobile-filter {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            z-index: 50;
+            backdrop-filter: blur(8px);
+        }
+
+        .mobile-filter.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .pagination-btn {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+        }
+
+        .pagination-btn.active {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            border-color: #f97316;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        .product-image {
+            transition: transform 0.6s ease;
+        }
+
+        .card-hover:hover .product-image {
+            transform: scale(1.08);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .desktop-filter {
+                display: none;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .mobile-filter-toggle {
+                display: none;
+            }
+
+            .sticky-filter {
+                position: sticky;
+                top: 2rem;
+            }
+        }
     </style>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { 'inter': ['Inter', 'sans-serif'], 'playfair': ['Playfair Display', 'serif'] },
-                    colors: { 'primary': '#f97316', 'primary-dark': '#ea580c' }
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                        'playfair': ['Playfair Display', 'serif']
+                    },
+                    colors: {
+                        'primary': '#f97316',
+                        'primary-dark': '#ea580c'
+                    }
                 }
             }
         }
 
-        function changePerPage(value) { updateUrl({per_page: value, page: 1}); }
-        function changeSort(value) { updateUrl({sort: value, page: 1}); }
-        function clearAllFilters() { window.location.href = window.location.pathname; }
+        function changePerPage(value) {
+            updateUrl({
+                per_page: value,
+                page: 1
+            });
+        }
+
+        function changeSort(value) {
+            updateUrl({
+                sort: value,
+                page: 1
+            });
+        }
+
+        function clearAllFilters() {
+            window.location.href = window.location.pathname;
+        }
+
         function removeFilter(type, value) {
             const url = new URL(window.location);
             if (type === 'category') {
@@ -176,23 +301,33 @@ foreach ($all_categories as $cat_key => $cat_name) {
             } else if (type === 'search') {
                 url.searchParams.delete('search');
             }
-            updateUrl({page: 1});
+            updateUrl({
+                page: 1
+            });
         }
+
         function updateUrl(params) {
             const url = new URL(window.location);
             Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
             window.location.href = url.toString();
         }
-        function jumpToPage(page) { updateUrl({page: Math.max(1, Math.min(<?= $total_pages ?>, parseInt(page)))}); }
-        
+
+        function jumpToPage(page) {
+            updateUrl({
+                page: Math.max(1, Math.min(<?= $total_pages ?>, parseInt(page)))
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const toggle = document.getElementById('mobileFilterToggle');
             const panel = document.getElementById('mobileFilterPanel');
             const close = document.getElementById('closeMobileFilter');
-            
+
             toggle?.addEventListener('click', () => panel.classList.add('active'));
             close?.addEventListener('click', () => panel.classList.remove('active'));
-            panel?.addEventListener('click', (e) => { if (e.target === panel) panel.classList.remove('active'); });
+            panel?.addEventListener('click', (e) => {
+                if (e.target === panel) panel.classList.remove('active');
+            });
         });
     </script>
 </head>
@@ -202,7 +337,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
     <!-- Hero Section -->
     <section class="bg-white relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-15">
             <div class="text-center" data-aos="fade-up">
                 <h1 class="text-4xl lg:text-6xl font-bold text-orange-400 mb-6">
                     Premium <span class="text-black">Collections</span>
@@ -210,17 +345,13 @@ foreach ($all_categories as $cat_key => $cat_name) {
                 <p class="text-xl text-black max-w-3xl mx-auto mb-8 leading-relaxed">
                     Discover exceptional furniture and materials crafted with precision and designed for modern living
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="allproduct" class="btn-primary">Explore Products</a>
-                    <a href="allproductsub" class="btn-primary">View All Products</a>
-                </div>
             </div>
         </div>
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        
+    <main class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 ">
+
         <!-- Mobile Filter Toggle -->
         <div class="mobile-filter-toggle mb-8">
             <button id="mobileFilterToggle" class="w-full bg-primary hover:bg-primary-dark text-white px-6 py-4 rounded-xl font-semibold flex items-center justify-center shadow-lg transition-all">
@@ -302,7 +433,13 @@ foreach ($all_categories as $cat_key => $cat_name) {
                                 <option value="oldest" <?= $sort_by === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
                             </select>
                         </div>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href="allproduct" class="btn-primary">Explore Products</a>
+                            <a href="allproductsub" class="btn-primary">View All Products</a>
+                        </div>
                     </div>
+
+
                 </div>
 
                 <!-- Product Grid -->
@@ -388,7 +525,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
                         <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
                             <!-- Previous -->
                             <a href="?<?= http_build_query(array_merge($_GET, ['page' => max(1, $page - 1)])) ?>"
-                               class="pagination-btn px-6 py-3 text-sm font-semibold rounded-xl bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
+                                class="pagination-btn px-6 py-3 text-sm font-semibold rounded-xl bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
                                 <i class="fas fa-chevron-left mr-2"></i>Previous
                             </a>
 
@@ -397,7 +534,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
                                 <?php
                                 $start = max(1, $page - 2);
                                 $end = min($total_pages, $page + 2);
-                                
+
                                 for ($i = $start; $i <= $end; $i++) {
                                     $classes = $i == $page ? 'pagination-btn active' : 'pagination-btn bg-white text-gray-700';
                                     echo '<a href="?' . http_build_query(array_merge($_GET, ['page' => $i])) . '" class="' . $classes . ' w-12 h-12 flex items-center justify-center text-sm font-semibold rounded-xl shadow-sm">' . $i . '</a>';
@@ -407,7 +544,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
                             <!-- Next -->
                             <a href="?<?= http_build_query(array_merge($_GET, ['page' => min($total_pages, $page + 1)])) ?>"
-                               class="pagination-btn px-6 py-3 text-sm font-semibold rounded-xl bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                                class="pagination-btn px-6 py-3 text-sm font-semibold rounded-xl bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
                                 Next<i class="fas fa-chevron-right ml-2"></i>
                             </a>
                         </div>
@@ -416,11 +553,11 @@ foreach ($all_categories as $cat_key => $cat_name) {
                         <div class="mt-6 text-center">
                             <div class="inline-flex items-center gap-3 bg-gray-50 rounded-xl p-3">
                                 <label class="text-sm font-medium text-gray-700">Jump to page:</label>
-                                <input type="number" min="1" max="<?= $total_pages ?>" value="<?= $page ?>" 
-                                       class="w-20 px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-center"
-                                       onchange="jumpToPage(this.value)">
+                                <input type="number" min="1" max="<?= $total_pages ?>" value="<?= $page ?>"
+                                    class="w-20 px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-center"
+                                    onchange="jumpToPage(this.value)">
                                 <button onclick="jumpToPage(document.querySelector('input[type=number]').value)"
-                                        class="px-4 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark">Go</button>
+                                    class="px-4 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark">Go</button>
                             </div>
                         </div>
                     </div>
@@ -443,226 +580,121 @@ foreach ($all_categories as $cat_key => $cat_name) {
                 <?php endif; ?>
             </div>
 
-            <!-- Desktop Filter -->
-            <div class="w-full lg:w-80 lg:order-2 desktop-filter">
-                <div class="filter-panel sticky-filter">
-                    <div class="p-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-8 playfair flex items-center">
-                            <i class="fas fa-sliders-h mr-3 text-primary"></i>Filter Products
-                        </h2>
 
-                        <form method="GET" class="space-y-8">
-                            <!-- Categories -->
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-6">Categories</h3>
-                                <div class="space-y-3 max-h-80 overflow-y-auto">
+
+
+
+            <!-- Sidebar Filter Component -->
+            <div class="w-80 bg-white">
+                <!-- Filter Header -->
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-sliders-h mr-2 text-gray-600"></i>
+                        Filter Products
+                    </h2>
+                </div>
+
+                <!-- Filter Content -->
+                <div class="p-6">
+                    <form method="GET" class="space-y-6">
+                        <!-- Search Section -->
+                        <div class="border-b border-gray-100 pb-6">
+                            <div class="flex items-center justify-between cursor-pointer py-2 hover:bg-gray-50 rounded-md px-2 -mx-2" onclick="toggleSection('search')">
+                                <div class="flex items-center">
+                                    <i class="fas fa-search mr-2 text-gray-600"></i>
+                                    <span class="font-medium text-gray-700">Search Products</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" id="search-chevron"></i>
+                            </div>
+                            <div class="mt-4 transition-all duration-300 ease-in-out" id="search-content">
+                                <input type="text" name="search" value="<?= htmlspecialchars($search_keyword) ?>"
+                                    placeholder="Search by name or description..."
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Categories Section -->
+                        <div class="border-b border-gray-100 pb-6">
+                            <div class="flex items-center justify-between cursor-pointer py-2 hover:bg-gray-50 rounded-md px-2 -mx-2" onclick="toggleSection('categories')">
+                                <div class="flex items-center">
+                                    <i class="fas fa-th-large mr-2 text-gray-600"></i>
+                                    <span class="font-medium text-gray-700">Categories</span>
+                                    <span class="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                        <?= count($all_categories) ?>
+                                    </span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" id="categories-chevron"></i>
+                            </div>
+                            <div class="mt-4 space-y-2 max-h-96 overflow-y-auto transition-all duration-300 ease-in-out" id="categories-content">
+                                <div class="pr-2">
                                     <?php foreach ($all_categories as $cat_key => $cat_name): ?>
-                                        <label class="category-chip flex items-center justify-between p-4 rounded-xl cursor-pointer">
-                                            <div class="flex items-center space-x-3 category-content">
-                                                <input type="checkbox" name="category[]" value="<?= $cat_key ?>" 
-                                                       <?= in_array($cat_key, $selected_categories) ? 'checked' : '' ?>
-                                                       class="text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary">
-                                                <span class="font-medium"><?= htmlspecialchars($cat_name) ?></span>
+                                        <label class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all duration-200 mb-1 <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'opacity-50' : '' ?>">
+                                            <div class="flex items-center flex-1 min-w-0">
+                                                <input type="checkbox" name="category[]" value="<?= $cat_key ?>"
+                                                    <?= in_array($cat_key, $selected_categories) ? 'checked' : '' ?>
+                                                    <?= ($category_counts[$cat_key] ?? 0) == 0 ? 'disabled' : '' ?>
+                                                    class="mr-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded w-4 h-4">
+                                                <span class="text-sm text-gray-700 truncate font-medium"><?= htmlspecialchars($cat_name) ?></span>
                                             </div>
-                                            <span class="text-xs bg-gray-100 px-2.5 py-1 rounded-full font-medium"><?= $category_counts[$cat_key] ?></span>
+                                            <span class="text-xs <?= ($category_counts[$cat_key] ?? 0) > 0 ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400' ?> px-3 py-1.5 rounded-full ml-3 flex-shrink-0 font-semibold">
+                                                <?= $category_counts[$cat_key] ?? 0 ?>
+                                            </span>
                                         </label>
                                     <?php endforeach; ?>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Search -->
-                            <div>
-                                <label class="block text-lg font-semibold text-gray-900 mb-4">Search Products</label>
-                                <div class="relative">
-                                    <input type="text" name="search" value="<?= htmlspecialchars($search_keyword) ?>"
-                                           placeholder="Search by name or description..."
-                                           class="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary">
-                                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                </div>
-                            </div>
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <button type="submit" class="w-full bg-black text-white px-4 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-colors duration-200">
+                                <i class="fas fa-search mr-2"></i>Apply Filters
+                            </button>
+                            <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 font-medium transition-colors duration-200">
+                                <i class="fas fa-times mr-2"></i>Clear All Filters
+                            </button>
+                        </div>
+                    </form>
 
-                            <!-- Actions -->
-                            <div class="space-y-4">
-                                <button type="submit" class="w-full bg-primary text-white px-6 py-4 rounded-xl hover:bg-primary-dark font-semibold shadow-lg">
-                                    <i class="fas fa-search mr-2"></i>Apply Filters
-                                </button>
-                                <button type="button" onclick="clearAllFilters()" class="w-full px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium">
-                                    Clear All Filters
-                                </button>
-                            </div>
-                        </form>
+                    <!-- Active Filters Display -->
+                    <?php if (!empty($selected_categories) || !empty($search_keyword)): ?>
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <h4 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                                <i class="fas fa-tags mr-2 text-gray-600"></i>Active Filters
+                            </h4>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <?php foreach ($selected_categories as $cat): ?>
+                                    <span class="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1.5 rounded-full font-medium">
+                                        <i class="fas fa-tag mr-1 text-xs"></i>
+                                        <?= htmlspecialchars($all_categories[$cat] ?? $cat) ?>
+                                        <button type="button" onclick="removeFilter('category', '<?= $cat ?>')" class="ml-2 text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                                            <i class="fas fa-times text-xs"></i>
+                                        </button>
+                                    </span>
+                                <?php endforeach; ?>
 
-                        <!-- Active Filters -->
-                        <?php if (!empty($selected_categories) || !empty($search_keyword)): ?>
-                            <div class="mt-8 pt-8 border-t border-gray-200">
-                                <h4 class="text-lg font-semibold text-gray-900 mb-4">Active Filters</h4>
-                                <div class="flex flex-wrap gap-2">
-                                    <?php foreach ($selected_categories as $cat): ?>
-                                        <span class="inline-flex items-center bg-gradient-to-r from-primary to-primary-dark text-white px-4 py-2 rounded-full text-sm font-medium">
-                                            <?= htmlspecialchars($all_categories[$cat] ?? $cat) ?>
-                                            <button type="button" onclick="removeFilter('category', '<?= $cat ?>')" class="ml-2 text-white hover:text-gray-200">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </span>
-                                    <?php endforeach; ?>
-                                    
-                                    <?php if (!empty($search_keyword)): ?>
-                                        <span class="inline-flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                                            "<?= htmlspecialchars($search_keyword) ?>"
-                                            <button type="button" onclick="removeFilter('search', '')" class="ml-2 text-white hover:text-gray-200">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
+                                <?php if (!empty($search_keyword)): ?>
+                                    <span class="inline-flex items-center bg-green-100 text-green-800 text-xs px-3 py-1.5 rounded-full font-medium">
+                                        <i class="fas fa-search mr-1 text-xs"></i>
+                                        "<?= htmlspecialchars($search_keyword) ?>"
+                                        <button type="button" onclick="removeFilter('search', '')" class="ml-2 text-green-600 hover:text-green-800 transition-colors duration-200">
+                                            <i class="fas fa-times text-xs"></i>
+                                        </button>
+                                    </span>
+                                <?php endif; ?>
                             </div>
-                        <?php endif; ?>
-                    </div>
+                            <button onclick="clearAllFilters()" class="text-xs text-gray-500 hover:text-red-600 font-medium transition-colors duration-200">
+                                <i class="fas fa-trash-alt mr-1"></i>Clear All Filters
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
+
         </div>
     </main>
 
-      <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
-        <!-- Decorative Elements -->
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
-
-        <div class="max-w-7xl mx-auto px-6 relative z-10">
-            <!-- Main Footer Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-
-                <!-- Enhanced Branding Section -->
-                <div class="lg:col-span-2">
-                    <div class="flex items-center space-x-4 mb-6">
-                        <!-- Logo with glow and pulse -->
-                        <div class="relative">
-                            <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
-                            </div>
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
-                        </div>
-
-                        <!-- Text Branding -->
-                        <div>
-                            <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-
-                        </div>
-                    </div>
-
-
-                    <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
-                        Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
-                    </p>
-
-                    <!-- Contact Info -->
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                    <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">noblehomeconst.ph@gmail.com</span>
-                        </div>
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">0968 591 6536</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
-                        Quick Links
-                        <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </h3>
-                    <nav class="space-y-3">
-                        <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
-                        <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
-                        <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
-                    </nav>
-                </div>
-
-                <!-- Services -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
-                        Our Services
-                        <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </h3>
-                    <ul class="space-y-3 text-gray-300">
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Divider -->
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
-
-            <!-- Bottom Section -->
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
-                <!-- Copyright -->
-                <div class="text-center lg:text-left">
-                    <p class="text-gray-400 text-sm">
-                        © 2025 Noble Home Construction. All rights reserved.
-                    </p>
-                    <p class="text-gray-500 text-xs mt-1">
-                        Licensed & Insured | PCAB License No. 12345
-                    </p>
-                </div>
-
-                <!-- Enhanced Social Media -->
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-400 text-sm mr-2">Follow us:</span>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="LinkedIn">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                        </svg>
-                    </a>
-                </div>
-
-                <!-- Back to Top Button -->
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-                    class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Background Pattern -->
-        <div class="absolute bottom-0 right-0 opacity-5">
-            <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-                <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
-                <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
-                <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
-            </svg>
-        </div>
-    </footer>
-
+    <?php include '../navbar/footer.php'; ?>
 
 
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
@@ -673,6 +705,35 @@ foreach ($all_categories as $cat_key => $cat_name) {
             once: true,
             offset: 100
         });
+
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const chevron = document.getElementById(sectionId + '-chevron');
+
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        function removeFilter(type, value) {
+            if (type === 'category') {
+                const checkbox = document.querySelector(`input[name="category[]"][value="${value}"]`);
+                if (checkbox) checkbox.checked = false;
+            } else if (type === 'search') {
+                const searchInput = document.querySelector('input[name="search"]');
+                if (searchInput) searchInput.value = '';
+            }
+
+            document.querySelector('form').submit();
+        }
+
+        function clearAllFilters() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) searchInput.value = '';
+
+            document.querySelector('form').submit();
+        }
     </script>
 
     <style>
@@ -687,6 +748,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
             transition: all 0.3s ease;
             text-decoration: none;
         }
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4);
@@ -694,4 +756,5 @@ foreach ($all_categories as $cat_key => $cat_name) {
         }
     </style>
 </body>
+
 </html>

@@ -501,6 +501,9 @@ $display_categories = getNavigationData($conn);
               <div class="py-2 px-3 text-sm text-gray-700 border-b">
                 <span class="block truncate"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
               </div>
+              <a href="../otherpage/profilepersonal.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                Profile
+              </a>
               <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Logout
               </a>
@@ -633,19 +636,18 @@ $display_categories = getNavigationData($conn);
     </div>
   </div>
 </div>
-        <!-- Profile Link -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
-          class="<?= $current_page == 'profile' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition font-mont">
-          Profile
-        </a>
+      <!-- Profile Link -->
+<a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
+   class="<?= strpos($_SERVER['REQUEST_URI'], 'profile') !== false ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition font-mont">
+   Orders
+</a>
 
-        <!-- Shop Link -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
-          class="<?= $current_page == 'shop' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
-          <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
-          Shop
-        </a>
-
+       <!-- Shop Link -->
+<a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
+   class="<?= basename($_SERVER['PHP_SELF']) == 'shop.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
+   <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
+   Shop
+</a>
         <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
 
           <div x-data="chatNotif" x-init="init()" class="relative">
@@ -1088,9 +1090,13 @@ $display_categories = getNavigationData($conn);
               <div class="py-2 px-2 text-sm text-gray-700 border-b max-w-full overflow-x-auto whitespace-nowrap">
                 <span class="block w-max"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
               </div>
+              <a href="../otherpage/profilepersonal.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                profile
+              </a>
               <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Logout
               </a>
+             
             </div>
           </div>
         <?php else: ?>
@@ -1303,7 +1309,7 @@ $display_categories = getNavigationData($conn);
       <!-- Mobile Links -->
       <div class="space-y-1 px-4">
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
-          class="block py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont">Profile</a>
+          class="block py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont">Orders</a>
 
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
           class="flex items-center gap-3 py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont">
@@ -1383,197 +1389,56 @@ $display_categories = getNavigationData($conn);
 
         <!-- Mobile Products -->
         <div class="py-2">
-          <button @click="productsOpen = !productsOpen"
-            class="w-full text-left py-3 px-2 text-gray-700 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition font-mont flex items-center justify-between">
-            <span>Products</span>
-            <svg class="w-4 h-4 transform transition-transform" :class="{ 'rotate-180': productsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
+         <!-- Updated Products Dropdown HTML -->
+<div class="relative" x-data="{ productsOpen: false, selectedCategory: null }">
+  <button @click="productsOpen = !productsOpen"
+           class="text-black hover:text-orange-500 transition font-mont uppercase">
+    Products
+  </button>
+ 
+  <div x-show="productsOpen"
+        @click.away="productsOpen = false"
+        x-transition x-cloak
+       class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-[450px] z-50">
+     
+    <!-- Left side: Categories -->
+    <div class="w-1/2 border-r p-4 space-y-2 font-mont">
+      <?php if (!empty($display_categories)): ?>
+        <?php foreach ($display_categories as $catKey => $category): ?>
+          <button 
+             @mouseenter="selectedCategory = 'cat_<?= $category['id'] ?>'"
+             class="block w-full text-left hover:text-orange-500 text-sm uppercase">
+            <?= htmlspecialchars($category['name']) ?>
           </button>
-
-          <div x-show="productsOpen" x-cloak x-transition
-            class="mt-2 ml-4 space-y-2 max-h-64 overflow-y-auto pr-2">
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'materials' ? null : 'materials'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Materials</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'materials' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'materials'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">WPC Panels</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">PVC Panels</a>
-              </div>
-
+        <?php endforeach; ?>
+      <?php else: ?>
+        <p class="text-gray-500 italic text-sm">No categories</p>
+      <?php endif; ?>
+    </div>
+     
+    <!-- Right side: Subcategories -->
+    <div class="w-1/2 p-4 font-mont">
+      <?php if (!empty($display_categories)): ?>
+        <?php foreach ($display_categories as $catKey => $category): ?>
+          <template x-if="selectedCategory === 'cat_<?= $category['id'] ?>'">
+            <div class="space-y-1">
+              <?php if (!empty($category['subcategories'])): ?>
+                <?php foreach ($category['subcategories'] as $sub): ?>
+                  <a href="../otherpage/allproductsub_variant.php?subcategory_id=<?= $sub['id'] ?>"
+                     class="block hover:text-orange-500 text-sm">
+                    <?= htmlspecialchars($sub['name']) ?>
+                  </a>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <p class="text-gray-500 italic text-sm">No subcategories</p>
+              <?php endif; ?>
             </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'furniture' ? null : 'furniture'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Furniture</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'furniture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'furniture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'Tiles' ? null : 'Tiles'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Tiles</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'Tiles' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'Tiles'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'Bedfurniture' ? null : 'Bedfurniture'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Bed Furniture</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'Bedfurniture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'Bedfurniture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'BathroomFixture' ? null : 'BathroomFixture'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Bathroom Fixture</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'BathroomFixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'BathroomFixture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'AccBlock' ? null : 'AccBlock'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>AAC Block</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'AccBlock' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'AccBlock'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'aircon' ? null : 'aircon'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Aircon</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'aircon' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'aircon'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'KitchenFixture' ? null : 'KitchenFixture'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Kitchen Fixtures</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'KitchenFixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'KitchenFixture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'lightingfixture' ? null : 'lightingfixture'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>lighting fixture</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'lightingfixture' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'lightingfixture'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'Doors' ? null : 'Doors'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Doors</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'Doors' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'Doors'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-
-            </div>
-
-            <div>
-              <button @click="selectedCategory = selectedCategory === 'windows' ? null : 'windows'"
-                class="flex items-center justify-between w-full text-left py-2 px-3 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded">
-                <span>Windows</span>
-                <svg class="w-3 h-3 transform transition-transform" :class="{ 'rotate-180': selectedCategory === 'windows' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-
-              <div x-show="selectedCategory === 'windows'" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Chairs</a>
-                <a href="#" class="block py-2 px-3 text-xs text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded">Tables</a>
-              </div>
-            </div>
-
-          </div>
+          </template>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
         </div>
       </div>
 

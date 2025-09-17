@@ -341,7 +341,7 @@ function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone)
                 'delivery_size_percentage' => $item['delivery_size_percentage'] ?? 0
             ];
         }
-        
+
         return [
             'total_delivery_cost' => 0.00,
             'base_delivery_fee' => 0.00,
@@ -375,11 +375,11 @@ function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone)
     foreach ($cart_items as $item) {
         $quantity = (int)$item['quantity'];
         $item_percentage = (float)($item['delivery_size_percentage'] ?? 5.0); // Default 5% if no size
-        
+
         // Calculate additional fee per item as percentage of base delivery cost
         $additional_fee_per_item = ($base_delivery_fee * $item_percentage) / 100;
         $item_total_additional = $additional_fee_per_item * $quantity;
-        
+
         $item_delivery_details[] = [
             'item_id' => $item['id'] ?? $item['variant_id'],
             'quantity' => $quantity,
@@ -387,9 +387,9 @@ function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone)
             'item_total_delivery' => $item_total_additional,
             'delivery_size_percentage' => $item_percentage
         ];
-        
+
         $total_additional_fees += $item_total_additional;
-        
+
         // Debug logging for each item
         error_log("DEBUG - Item: {$item['variant_name']}, Percentage: {$item_percentage}%, Additional per item: $additional_fee_per_item, Total additional: $item_total_additional");
     }
@@ -771,7 +771,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Get delivery details for this specific item
                 $item_delivery_detail = $item_delivery_details[$index] ?? null;
-                
+
                 if ($item_delivery_detail) {
                     $delivery_fee_per_item = $item_delivery_detail['delivery_fee_per_item'];
                     $item_total_delivery = $item_delivery_detail['item_total_delivery'];
@@ -914,21 +914,25 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
 <head>
     <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta name="permissions-policy" content="geolocation=()">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Checkout - Step by Step</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet JS -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AZoPuOxAvAMZP9BaTJqQIq7fAHrJDsf73EeOqOeCER4w_U7q5qCVOKoWbdhzJynHtBpsWX8j1NuTa83T&currency=PHP&intent=capture"></script>
+
+    <!-- Replace your current script tag with this: -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AT1LmhSbRH3yOGHNRFYZb_WhRkFIUlsdUEIQcNNr_0BXnb6LapA61CTycE7xq0c5W6XrHMpetIfpP-Kd&currency=PHP&intent=capture&enable-funding=venmo,card&disable-funding=credit,bancontact,eps,giropay,ideal,mybank,p24,sepa,sofort&locale=en_PH"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 </head>
 
 <body class="bg-gray-100 font-sans">
 
-<script>
+    <script>
         // Initialize global configuration object with PHP data
         window.checkoutConfig = {
             deliverySettings: <?= $delivery_settings ? json_encode($delivery_settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : 'null' ?>,
@@ -1330,6 +1334,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     </div>
                                 </div>
                             </div>
+
+                            <div id="paypal-button-container" class="mt-4"></div>
                         </div>
                     </div>
 
@@ -1342,15 +1348,15 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         <!-- Scrollable items -->
                         <div class="max-h-80 overflow-y-auto divide-y divide-gray-200">
                             <?php foreach ($cart_items as $index => $item): ?>
-                                <div class="p-4" id="cartItem<?= $index ?>" 
-                                     data-delivery-size-percentage="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
-                                     data-delivery-size-name="<?= htmlspecialchars($item['size_name'] ?? 'default') ?>"
-                                     data-item-index="<?= $index ?>">
+                                <div class="p-4" id="cartItem<?= $index ?>"
+                                    data-delivery-size-percentage="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
+                                    data-delivery-size-name="<?= htmlspecialchars($item['size_name'] ?? 'default') ?>"
+                                    data-item-index="<?= $index ?>">
                                     <!-- Hidden inputs for JavaScript access -->
-                                    <input type="hidden" name="item_<?= $index ?>_delivery_size_percentage" 
-                                           value="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>" 
-                                           data-delivery-percentage="true">
-                                    
+                                    <input type="hidden" name="item_<?= $index ?>_delivery_size_percentage"
+                                        value="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
+                                        data-delivery-percentage="true">
+
                                     <div class="flex justify-between items-start gap-4">
                                         <div class="flex-1">
                                             <h5 class="font-bold text-orange-600 mb-2">
@@ -1375,7 +1381,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                                 <!-- NEW: Display delivery size info -->
                                                 <?php if (!empty($item['size_name']) && !empty($item['delivery_size_percentage'])): ?>
                                                     <div class="text-purple-600">
-                                                        <strong>Delivery Size:</strong> 
+                                                        <strong>Delivery Size:</strong>
                                                         <span class="delivery-size-percentage">
                                                             <?= htmlspecialchars($item['size_name']) ?> (<?= number_format($item['delivery_size_percentage'], 1) ?>%)
                                                         </span>
@@ -1611,8 +1617,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     </footer>
 
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <!-- Include all JavaScript modules in the correct order -->
     <script src="js/main.js"></script>
     <script src="js/stepNavigation.js"></script>
@@ -1621,13 +1627,13 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <script src="js/mapModal.js"></script>
     <script src="js/payment.js"></script>
     <script src="js/checkoutForm.js"></script>
-     <script>
+    <script>
         // Pass cart items data to JavaScript for delivery calculations
         window.cartItemsData = <?= json_encode(array_values($cart_items), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
-        
+
         // Debug log to verify data is passed correctly
         console.log('Cart items data loaded:', window.cartItemsData);
-        
+
         // Verify delivery size data
         window.cartItemsData.forEach((item, index) => {
             console.log(`Item ${index}: ${item.variant_name}, Size: ${item.size_name}, Percentage: ${item.delivery_size_percentage}%`);

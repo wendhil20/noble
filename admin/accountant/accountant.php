@@ -499,7 +499,7 @@ $orders_result = $conn->query($orders_query);
             <!-- Add this after the existing 4 cards -->
             <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 transform hover:scale-105 transition-transform">
                 <div class="flex items-center">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 flex items-center justify-center">
                         <i class="fab fa-paypal text-blue-600 text-xl"></i>
                     </div>
                     <div class="ml-4">

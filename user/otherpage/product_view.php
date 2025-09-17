@@ -811,7 +811,7 @@ $avg_stmt->close();
         <a href="tel:09685916536" 
            class="w-full  text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
           <i class="fas fa-phone"></i>
-          Call: 0968 591 6536
+          Call: (02) 8822-1295 / +63992-239-4563
         </a>
         
         <a href="#" id="emailLink"

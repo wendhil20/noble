@@ -115,7 +115,7 @@ $statusDefinitions = [
         'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 50],
         'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 75],
         'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Customer received the item', 'progress' => 100],
-        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Cancelled/Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
+        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
     ],
     'international' => [
         'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed, supplier preparing', 'progress' => 15],
@@ -125,7 +125,7 @@ $statusDefinitions = [
         'in_local_warehouse' => ['icon' => 'fa-warehouse', 'color' => 'teal', 'label' => 'In Local Warehouse', 'description' => 'Item arrived and ready for dispatch', 'progress' => 75],
         'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 90],
         'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Customer received the item', 'progress' => 100],
-        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Cancelled/Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
+        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
     ]
 ];
 

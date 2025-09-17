@@ -122,7 +122,7 @@ function getInternationalStatusSteps() {
             'description' => 'Supplier preparing',
             'icon' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4'
         ],
-        'shipped_   overseas' => [
+        'shipped_overseas' => [
             'name' => 'Shipped Overseas',
             'description' => 'Left supplier',
             'icon' => 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8'
@@ -169,6 +169,36 @@ function getOrderStepIndex($status) {
     $steps = ['pending', 'ongoing', 'processing', 'completed']; // Updated to include all 4 statuses
     $index = array_search($status, $steps);
     return $index !== false ? $index : 0;
+}
+
+// Function to check if item is eligible for replacement
+function isEligibleForReplacement($item, $order) {
+    $item_status = strtolower($item['tracking_status'] ?? 'processing');
+    
+    // Check if item is delivered - that's the only requirement
+    if ($item_status === 'delivered') {
+        // Optional: Add time window check if needed (7 days)
+        $delivery_date = $item['delivered_at'] ?? null;
+        if ($delivery_date) {
+            $days_since_delivery = (time() - strtotime($delivery_date)) / (60 * 60 * 24);
+            return $days_since_delivery <= 7; // 7 days replacement window
+        }
+        // If no delivery date, still allow replacement for delivered items
+        return true;
+    }
+    
+    return false;
+}
+
+// Function to check if replacement was already requested
+function hasReplacementRequest($item_id, $conn) {
+    $stmt = $conn->prepare("SELECT id FROM replacement_requests WHERE order_item_id = ?");
+    $stmt->bind_param("i", $item_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $has_request = $result->num_rows > 0;
+    $stmt->close();
+    return $has_request;
 }
 
 // Check if order status allows showing item tracking - FIXED
@@ -530,10 +560,6 @@ $show_map = $delivery_settings &&
                             ?>">
                             <?php if ($is_completed && !$is_current): ?>
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            <?php else: ?>
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $step_data['icon'] ?>"/>
                                 </svg>
                             <?php endif; ?>
@@ -598,6 +624,10 @@ $show_map = $delivery_settings &&
                     $origin = strtolower($item['origin'] ?? 'local');
                     $current_status = $item['tracking_status'] ?? 'processing';
                     
+                    // Check replacement eligibility
+                    $is_eligible_for_replacement = isEligibleForReplacement($item, $order);
+                    $has_replacement_request = hasReplacementRequest($item['id'], $conn);
+                    
                     if ($origin === 'local') {
                         $steps = getLocalStatusSteps();
                         $origin_icon = '🏠';
@@ -628,9 +658,23 @@ $show_map = $delivery_settings &&
                             </div>
                             
                             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full <?= $origin_color ?> w-fit">
-                                    <?= $origin_icon ?> <?= $origin_label ?>
-                                </span>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full <?= $origin_color ?> w-fit">
+                                        <?= $origin_icon ?> <?= $origin_label ?>
+                                    </span>
+                                    
+                                    <!-- Replacement Button/Status -->
+                                    <?php if ($has_replacement_request): ?>
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 w-fit">
+                                            🔄 Replacement Requested
+                                        </span>
+                                    <?php elseif ($is_eligible_for_replacement): ?>
+                                        <a href="replacement_request.php?order_id=<?= $order_id ?>&item_id=<?= $item['id'] ?>" 
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer w-fit">
+                                            🔄 Request Replacement
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
                                 <span class="text-base sm:text-lg font-bold text-gray-900">₱<?= number_format($item['subtotal'], 2) ?></span>
                             </div>
                         </div>

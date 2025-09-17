@@ -150,21 +150,40 @@ if (!isset($_SESSION['noble_user'])) {
     </div>
 
     <!-- Filter Section -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      <div class="flex flex-wrap items-center gap-4">
-        <div class="flex items-center space-x-2">
-          <i class="fas fa-filter text-gray-400"></i>
-          <span class="text-gray-700 font-medium">Filter by Status:</span>
-        </div>
-        <div class="flex space-x-2">
-          <button onclick="filterOrders('all')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 active" data-filter="all">All</button>
-          <button onclick="filterOrders('pending')" class="filter-btn bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 transition-colors duration-200" data-filter="pending">Pending</button>
-          <button onclick="filterOrders('ongoing')" class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors duration-200" data-filter="ongoing">Ongoing</button>
-          <button onclick="filterOrders('verified')" class="filter-btn bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors duration-200" data-filter="verified">Verified</button>
-          <button onclick="filterOrders('rejected')" class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors duration-200" data-filter="rejected">Rejected</button>
-        </div>
-      </div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+  <div class="flex flex-wrap items-center gap-4 mb-4">
+    <div class="flex items-center space-x-2">
+      <i class="fas fa-filter text-gray-400"></i>
+      <span class="text-gray-700 font-medium">Filter by Status:</span>
     </div>
+    <div class="flex space-x-2">
+      <button onclick="filterOrders('all')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 active" data-filter="all">All</button>
+      <button onclick="filterOrders('pending')" class="filter-btn bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 transition-colors duration-200" data-filter="pending">Pending</button>
+      <button onclick="filterOrders('ongoing')" class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors duration-200" data-filter="ongoing">Ongoing</button>
+      <button onclick="filterOrders('verified')" class="filter-btn bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors duration-200" data-filter="verified">Verified</button>
+      <button onclick="filterOrders('rejected')" class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors duration-200" data-filter="rejected">Rejected</button>
+    </div>
+  </div>
+  
+  <!-- New Replacement Filter Section -->
+  <div class="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-200">
+    <div class="flex items-center space-x-2">
+      <i class="fas fa-exchange-alt text-gray-400"></i>
+      <span class="text-gray-700 font-medium">Filter by Replacements:</span>
+    </div>
+    <div class="flex space-x-2">
+      <button onclick="filterByReplacement('all')" class="replacement-filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 active" data-replacement-filter="all">
+        <i class="fas fa-list mr-1"></i>All Orders
+      </button>
+      <button onclick="filterByReplacement('with_replacements')" class="replacement-filter-btn bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors duration-200" data-replacement-filter="with_replacements">
+        <i class="fas fa-exclamation-triangle mr-1"></i>Has Replacements
+      </button>
+      <button onclick="filterByReplacement('no_replacements')" class="replacement-filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors duration-200" data-replacement-filter="no_replacements">
+        <i class="fas fa-check-circle mr-1"></i>No Issues
+      </button>
+    </div>
+  </div>
+</div>
 
     <!-- Search Box -->
     <div class="mb-6">
@@ -195,7 +214,8 @@ if (!isset($_SESSION['noble_user'])) {
 
   <script>
     let allOrders = [];
-    let currentFilter = 'all';
+let currentFilter = 'all';
+let currentReplacementFilter = 'all';
 
     // VAT rate constant (12% for Philippines)
     const VAT_RATE = 0.12;
@@ -379,18 +399,32 @@ if (!isset($_SESSION['noble_user'])) {
     }
 
     // Filter orders - now includes all statuses including rejected
-    function filterOrders(status) {
-      currentFilter = status;
+function filterOrders(status) {
+  currentFilter = status;
 
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active', 'bg-primary-100', 'text-primary-700', 'border-primary-200');
-        if (btn.dataset.filter === status) {
-          btn.classList.add('active', 'bg-primary-100', 'text-primary-700', 'border-primary-200');
-        }
-      });
-
-      renderOrders();
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active', 'bg-primary-100', 'text-primary-700', 'border-primary-200');
+    if (btn.dataset.filter === status) {
+      btn.classList.add('active', 'bg-primary-100', 'text-primary-700', 'border-primary-200');
     }
+  });
+
+  renderOrders();
+}
+
+// New function to filter by replacement requests
+function filterByReplacement(replacementStatus) {
+  currentReplacementFilter = replacementStatus;
+
+  document.querySelectorAll('.replacement-filter-btn').forEach(btn => {
+    btn.classList.remove('active', 'bg-orange-100', 'text-orange-700', 'border-orange-200');
+    if (btn.dataset.replacementFilter === replacementStatus) {
+      btn.classList.add('active', 'bg-orange-100', 'text-orange-700', 'border-orange-200');
+    }
+  });
+
+  renderOrders();
+}
 
     // Load orders - now includes all orders
     function loadOrders() {
@@ -421,19 +455,20 @@ if (!isset($_SESSION['noble_user'])) {
 
     // Update order count - includes all statuses
     function updateOrderCount() {
-      const orderCount = document.getElementById('orderCount');
-      const total = allOrders.length;
-      const pending = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'pending').length;
-      const ongoing = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'ongoing').length;
-      const verified = allOrders.filter(o => (o.payment_status || '').toLowerCase() === 'verified').length;
-      // Count both order status rejected AND payment status rejected
-      const rejected = allOrders.filter(o => 
-        (o.status || '').toLowerCase() === 'rejected' || 
-        (o.payment_status || '').toLowerCase() === 'rejected'
-      ).length;
+  const orderCount = document.getElementById('orderCount');
+  const total = allOrders.length;
+  const pending = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'pending').length;
+  const ongoing = allOrders.filter(o => (o.status || 'pending').toLowerCase() === 'ongoing').length;
+  const verified = allOrders.filter(o => (o.payment_status || '').toLowerCase() === 'verified').length;
+  // Count both order status rejected AND payment status rejected
+  const rejected = allOrders.filter(o => 
+    (o.status || '').toLowerCase() === 'rejected' || 
+    (o.payment_status || '').toLowerCase() === 'rejected'
+  ).length;
+  const withReplacements = allOrders.filter(o => o.has_replacement_requests === true).length;
 
-      orderCount.innerHTML = `${total} Total • ${pending} Pending • ${ongoing} Ongoing • ${verified} Verified • ${rejected} Rejected`;
-    }
+  orderCount.innerHTML = `${total} Total • ${pending} Pending • ${ongoing} Ongoing • ${verified} Verified • ${rejected} Rejected • ${withReplacements} With Replacements`;
+}
 
     // Render orders with payment status logic
     function renderOrders() {
@@ -441,23 +476,34 @@ if (!isset($_SESSION['noble_user'])) {
       const emptyState = document.getElementById('emptyState');
 
       let filteredOrders = allOrders;
-      if (currentFilter !== 'all') {
-        if (currentFilter === 'verified') {
-          filteredOrders = allOrders.filter(order =>
-            (order.payment_status || '').toLowerCase() === 'verified'
-          );
-        } else if (currentFilter === 'rejected') {
-          // Show both order status rejected AND payment status rejected
-          filteredOrders = allOrders.filter(order =>
-            (order.status || '').toLowerCase() === 'rejected' || 
-            (order.payment_status || '').toLowerCase() === 'rejected'
-          );
-        } else {
-          filteredOrders = allOrders.filter(order =>
-            (order.status || 'pending').toLowerCase() === currentFilter
-          );
-        }
-      }
+
+// Apply status filter first
+if (currentFilter !== 'all') {
+  if (currentFilter === 'verified') {
+    filteredOrders = filteredOrders.filter(order =>
+      (order.payment_status || '').toLowerCase() === 'verified'
+    );
+  } else if (currentFilter === 'rejected') {
+    // Show both order status rejected AND payment status rejected
+    filteredOrders = filteredOrders.filter(order =>
+      (order.status || '').toLowerCase() === 'rejected' || 
+      (order.payment_status || '').toLowerCase() === 'rejected'
+    );
+  } else {
+    filteredOrders = filteredOrders.filter(order =>
+      (order.status || 'pending').toLowerCase() === currentFilter
+    );
+  }
+}
+
+// Apply replacement filter second
+if (currentReplacementFilter !== 'all') {
+  if (currentReplacementFilter === 'with_replacements') {
+    filteredOrders = filteredOrders.filter(order => order.has_replacement_requests === true);
+  } else if (currentReplacementFilter === 'no_replacements') {
+    filteredOrders = filteredOrders.filter(order => order.has_replacement_requests !== true);
+  }
+}
 
       if (filteredOrders.length === 0) {
         container.innerHTML = '';
@@ -670,17 +716,26 @@ if (!isset($_SESSION['noble_user'])) {
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                  <a href="export_excel.php?order_id=${order.id}" 
-                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
-                     target="_blank">
-                    <i class="fas fa-file-excel"></i>
-                    <span>Export Excel</span>
-                  </a>
-                  <div class="flex space-x-2">
-                    ${actionButtons}
-                  </div>
-                </div>
+<div class="flex justify-between items-center pt-4 border-t border-gray-200">
+  <div class="flex space-x-2">
+    <a href="export_excel.php?order_id=${order.id}" 
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
+       target="_blank">
+      <i class="fas fa-file-excel"></i>
+      <span>Export Excel</span>
+    </a>
+    ${order.has_replacement_requests ? `
+    <a href="replacement_requests.php?order_id=${order.id}" 
+       class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-sm text-sm" 
+       target="_blank">
+      <i class="fas fa-exchange-alt"></i>
+      <span>View Replacements (${order.replacement_count})</span>
+    </a>` : ''}
+  </div>
+  <div class="flex space-x-2">
+    ${actionButtons}
+  </div>
+</div>
               </div>
             </div>
           </div>`;

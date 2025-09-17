@@ -56,6 +56,16 @@ while ($order = $orders_result->fetch_assoc()) {
     // format the date exactly as your front-end expects
     $order['created_at'] = date('M j, Y g:i A', strtotime($order['created_at']));
 
+    // Check if this order has any replacement requests
+    $replaceStmt = $conn->prepare("SELECT COUNT(*) as request_count FROM replacement_requests WHERE order_id = ?");
+    $replaceStmt->bind_param("i", $order['id']);
+    $replaceStmt->execute();
+    $replaceResult = $replaceStmt->get_result();
+    $replaceData = $replaceResult->fetch_assoc();
+    $order['has_replacement_requests'] = ($replaceData['request_count'] > 0);
+    $order['replacement_count'] = $replaceData['request_count'];
+    $replaceStmt->close();
+
     // 4. For each order, fetch its items WITH SUPPLIER INFO (hybrid supplier system)
     $itemStmt = $conn->prepare("
         SELECT 

@@ -122,6 +122,7 @@
     $search_query  = isset($_GET['search']) ? trim($_GET['search']) : '';
     $date_from     = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
     $date_to       = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
+    $show_replacements = isset($_GET['replacements']) ? (bool)$_GET['replacements'] : false;
 
     // --- Build WHERE conditions ---
     // IMPORTANT: We ALWAYS restrict by warehouse_employee_id = logged in user
@@ -154,6 +155,11 @@
         $types .= 's';
     }
 
+    // Add replacement requests filter
+    if ($show_replacements) {
+        $whereParts[] = "EXISTS (SELECT 1 FROM replacement_requests rr WHERE rr.order_id = o.id AND rr.status = 'approved')";
+    }
+
     $whereClause = 'WHERE ' . implode(' AND ', $whereParts);
 
     // --- Helper to bind params dynamically (call_user_func_array with references) ---
@@ -170,7 +176,7 @@
     }
 
     // --- Orders query (only orders assigned to this user) ---
-    // Updated to include P.O. attachment count
+    // Updated to include P.O. attachment count and replacement requests count
     $ordersSql = "
         SELECT 
             o.id,
@@ -179,17 +185,19 @@
             o.created_at,
             o.status,
             o.total,
-            COUNT(oi.id) as item_count,
+            COUNT(DISTINCT oi.id) as item_count,
             SUM(CASE 
                 WHEN (oi.supplier_id IS NOT NULL AND oi.supplier_id > 0) 
                   OR (oi.supplier_id = 0 AND oi.manual_supplier_name IS NOT NULL AND oi.manual_supplier_name != '') 
                 THEN 1 
                 ELSE 0 
             END) as assigned_count,
-            COUNT(DISTINCT poa.id) as po_attachment_count
+            COUNT(DISTINCT poa.id) as po_attachment_count,
+            COUNT(DISTINCT CASE WHEN rr.status = 'approved' THEN rr.id END) as approved_replacements_count
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN po_attachments poa ON o.id = poa.order_id
+        LEFT JOIN replacement_requests rr ON o.id = rr.order_id
         $whereClause
         GROUP BY o.id, o.customer_name, o.email, o.created_at, o.status, o.total
         ORDER BY o.created_at DESC
@@ -215,6 +223,8 @@
     // --- Status counts: only counts for this user's assigned orders ---
     $statusCounts = [];
     $totalOrders = 0;
+    $replacementOrdersCount = 0;
+    
     $statusSql = "SELECT status, COUNT(*) as count FROM orders WHERE warehouse_employee_id = ? GROUP BY status";
     if ($stmt2 = $conn->prepare($statusSql)) {
         $stmt2->bind_param("i", $user_id);
@@ -222,6 +232,24 @@
         $r2 = $stmt2->get_result();
         if ($r2) $statusCounts = $r2->fetch_all(MYSQLI_ASSOC);
         $stmt2->close();
+    }
+
+    // Count orders with approved replacement requests
+    $replacementSql = "
+        SELECT COUNT(DISTINCT o.id) as count 
+        FROM orders o 
+        WHERE o.warehouse_employee_id = ? 
+        AND EXISTS (SELECT 1 FROM replacement_requests rr WHERE rr.order_id = o.id AND rr.status = 'approved')
+    ";
+    if ($stmt3 = $conn->prepare($replacementSql)) {
+        $stmt3->bind_param("i", $user_id);
+        $stmt3->execute();
+        $r3 = $stmt3->get_result();
+        if ($r3) {
+            $replacementResult = $r3->fetch_assoc();
+            $replacementOrdersCount = (int)$replacementResult['count'];
+        }
+        $stmt3->close();
     }
 
     $statusCountsArray = [];
@@ -261,6 +289,17 @@
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.5);
         }
+        .pulse-notification {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
     </style>
     </head>
     <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -299,15 +338,28 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
                 <form method="GET" class="space-y-4">
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '') ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
+                        <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '' && !$show_replacements) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
                             My Orders (<?php echo $totalOrders; ?>)
                         </a>
                         <?php foreach ($statusCountsArray as $status => $count): ?>
                             <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === $status) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === $status && !$show_replacements) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
                                 <?php echo htmlspecialchars(ucfirst($status)); ?> (<?php echo (int)$count; ?>)
                             </a>
                         <?php endforeach; ?>
+                        
+                        <!-- Replacement Requests Filter -->
+                        <?php if ($replacementOrdersCount > 0): ?>
+                            <a href="?replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_replacements ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Replacements (<?php echo $replacementOrdersCount; ?>)
+                                <?php if (!$show_replacements): ?>
+                                    <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
+                                    <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></span>
+                                <?php endif; ?>
+                            </a>
+                        <?php endif; ?>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -329,6 +381,11 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Hidden field to preserve replacement filter -->
+                    <?php if ($show_replacements): ?>
+                        <input type="hidden" name="replacements" value="1">
+                    <?php endif; ?>
                 </form>
             </div>
 
@@ -339,18 +396,33 @@
                     $assignedItems = (int)$order['assigned_count'];
                     $item_count = (int)$order['item_count'];
                     $po_attachment_count = (int)$order['po_attachment_count'];
+                    $approved_replacements_count = (int)$order['approved_replacements_count'];
                     $assignmentPercentage = $item_count > 0 ? round(($assignedItems / $item_count) * 100) : 0;
                     $hasPOFiles = $po_attachment_count > 0;
+                    $hasReplacements = $approved_replacements_count > 0;
                 ?>
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 <?php echo $hasReplacements ? 'border-l-4 border-l-red-500' : ''; ?>">
                         <div class="p-6">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-start space-x-4">
-                                    <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-2 rounded-lg">
+                                    <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-2 rounded-lg relative">
                                         <i class="fas fa-receipt text-white"></i>
+                                        <?php if ($hasReplacements): ?>
+                                            <span class="absolute -top-2 -right-2 h-4 w-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center">
+                                                <i class="fas fa-exclamation text-white text-xs"></i>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                     <div>
-                                        <h3 class="text-lg font-bold text-gray-900 mb-1">Order #<?php echo htmlspecialchars($order['id']); ?></h3>
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <h3 class="text-lg font-bold text-gray-900">Order #<?php echo htmlspecialchars($order['id']); ?></h3>
+                                            <?php if ($hasReplacements): ?>
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 pulse-notification">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                    <?php echo $approved_replacements_count; ?> Replacement<?php echo $approved_replacements_count > 1 ? 's' : ''; ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                         <div class="text-sm text-gray-600 space-y-1">
                                             <div class="flex items-center"><i class="fas fa-user mr-2"></i><span><?php echo htmlspecialchars($order['customer_name']); ?></span></div>
                                             <div class="flex items-center"><i class="fas fa-envelope mr-2"></i><span><?php echo htmlspecialchars($order['email']); ?></span></div>
@@ -405,6 +477,13 @@
                                             <i class="fas fa-route"></i><span>Track Items</span>
                                         </a>
                                     <?php endif; ?>
+                                    
+                                    <!-- Replacement Request Button -->
+                                    <?php if ($hasReplacements): ?>
+                                        <a href="replacement_management.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm pulse-notification">
+                                            <i class="fas fa-exclamation-triangle"></i><span>Handle Replacements</span>
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -417,7 +496,11 @@
                         <i class="fas fa-inbox text-6xl mb-4"></i>
                         <h3 class="text-lg font-medium mb-2">No Orders Found</h3>
                         <p class="text-sm">
-                            You don't have any assigned orders right now.
+                            <?php if ($show_replacements): ?>
+                                You don't have any orders with approved replacement requests.
+                            <?php else: ?>
+                                You don't have any assigned orders right now.
+                            <?php endif; ?>
                         </p>
                     </div>
                 </div>

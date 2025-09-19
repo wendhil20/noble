@@ -21,6 +21,55 @@ if (!$selected_date || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $selected_date)) {
     exit();
 }
 
+// Handle creating replacement delivery schedules
+if ($_POST && isset($_POST['schedule_replacement_delivery'])) {
+    $replacement_id = $_POST['replacement_id'];
+    $delivery_date = $_POST['delivery_date'];
+    $delivery_time = $_POST['delivery_time'];
+    $delivery_notes = $_POST['delivery_notes'] ?? '';
+    
+    // Get replacement request details
+    $getReplacementSql = "SELECT order_id, order_item_id FROM replacement_requests WHERE id = ?";
+    $getReplacementStmt = $conn->prepare($getReplacementSql);
+    $getReplacementStmt->bind_param("i", $replacement_id);
+    $getReplacementStmt->execute();
+    $replacement_result = $getReplacementStmt->get_result()->fetch_assoc();
+    
+    if ($replacement_result) {
+        // Insert delivery schedule for replacement
+        $insertDeliverySql = "INSERT INTO delivery_schedules 
+            (order_id, item_id, delivery_date, delivery_time, delivery_notes, created_by, 
+             item_type, replacement_id, delivery_status) 
+            VALUES (?, ?, ?, ?, ?, ?, 'replacement', ?, 'scheduled')";
+        
+        $insertDeliveryStmt = $conn->prepare($insertDeliverySql);
+        $insertDeliveryStmt->bind_param("iissssi", 
+            $replacement_result['order_id'], 
+            $replacement_result['order_item_id'], 
+            $delivery_date, 
+            $delivery_time, 
+            $delivery_notes, 
+            $_SESSION['noble_user'], 
+            $replacement_id
+        );
+        
+        if ($insertDeliveryStmt->execute()) {
+            // Update replacement status
+            $updateReplacementSql = "UPDATE replacement_requests SET status = 'out_for_delivery' WHERE id = ?";
+            $updateReplacementStmt = $conn->prepare($updateReplacementSql);
+            $updateReplacementStmt->bind_param("i", $replacement_id);
+            $updateReplacementStmt->execute();
+            $updateReplacementStmt->close();
+            
+            $success_message = "Replacement delivery scheduled successfully!";
+        } else {
+            $error_message = "Error scheduling replacement delivery: " . $conn->error;
+        }
+        $insertDeliveryStmt->close();
+    }
+    $getReplacementStmt->close();
+}
+
 // Handle truck driver assignment
 if ($_POST && isset($_POST['assign_driver_to_truck'])) {
     $truck_schedule_id = $_POST['truck_schedule_id'];
@@ -265,7 +314,7 @@ $scheduledTrucksStmt->execute();
 $scheduled_trucks = $scheduledTrucksStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $scheduledTrucksStmt->close();
 
-// Get unassigned delivery items
+// Get unassigned delivery items (including replacements)
 $unassignedItemsSql = "SELECT 
     ds.id as delivery_id,
     ds.order_id,
@@ -276,17 +325,24 @@ $unassignedItemsSql = "SELECT
     ds.delivered_at,
     ds.delivery_status,
     ds.delivery_type,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
     o.address,
-    oi.product_name,
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN CONCAT('[REPLACEMENT] ', oi.product_name)
+        ELSE oi.product_name
+    END as product_name,
     oi.quantity,
     oi.price,
     oi.variant_color,
     oi.size,
     oi.subtotal,
     oi.tracking_status,
+    rr.reason as replacement_reason,
+    rr.status as replacement_status,
     CASE 
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
@@ -296,12 +352,13 @@ $unassignedItemsSql = "SELECT
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
+LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
 WHERE ds.delivery_date = ? 
     AND ds.truck_schedule_id IS NULL 
     AND ds.delivered_at IS NULL 
     AND (ds.delivery_type IS NULL OR ds.delivery_type = 'company')
     AND ds.delivery_status NOT IN ('third_party_assigned')
-ORDER BY ds.delivery_time ASC, ds.order_id ASC";
+ORDER BY ds.item_type DESC, ds.delivery_time ASC, ds.order_id ASC";
 
 $unassignedItemsStmt = $conn->prepare($unassignedItemsSql);
 $unassignedItemsStmt->bind_param("s", $selected_date);
@@ -344,11 +401,55 @@ $statsSql = "SELECT
 FROM delivery_schedules ds
 WHERE ds.delivery_date = ?";
 
+// Get replacement-specific statistics
+$replacementStatsSql = "SELECT 
+    COUNT(CASE WHEN ds.item_type = 'replacement' THEN 1 END) as total_replacements,
+    COUNT(CASE WHEN ds.item_type = 'replacement' AND ds.truck_schedule_id IS NOT NULL THEN 1 END) as assigned_replacements,
+    COUNT(CASE WHEN ds.item_type = 'replacement' AND ds.delivered_at IS NOT NULL THEN 1 END) as completed_replacements
+FROM delivery_schedules ds
+WHERE ds.delivery_date = ?";
+
+$replacementStatsStmt = $conn->prepare($replacementStatsSql);
+$replacementStatsStmt->bind_param("s", $selected_date);
+$replacementStatsStmt->execute();
+$replacement_stats = $replacementStatsStmt->get_result()->fetch_assoc();
+$replacementStatsStmt->close();
+
 $statsStmt = $conn->prepare($statsSql);
 $statsStmt->bind_param("s", $selected_date);
 $statsStmt->execute();
 $stats = $statsStmt->get_result()->fetch_assoc();
 $statsStmt->close();
+
+// Get pending replacement requests that need delivery scheduling
+$pendingReplacementsSql = "SELECT 
+    rr.id as replacement_id,
+    rr.order_id,
+    rr.order_item_id,
+    rr.reason,
+    rr.replacement_quantity,
+    rr.created_at,
+    o.customer_name,
+    o.address,
+    o.mobile,
+    oi.product_name,
+    oi.variant_color,
+    oi.size
+FROM replacement_requests rr
+INNER JOIN orders o ON rr.order_id = o.id
+INNER JOIN order_items oi ON rr.order_item_id = oi.id
+WHERE rr.status = 'ready_for_pickup' 
+    AND rr.id NOT IN (
+        SELECT replacement_id 
+        FROM delivery_schedules 
+        WHERE replacement_id IS NOT NULL
+    )
+ORDER BY rr.created_at ASC";
+
+$pendingReplacementsStmt = $conn->prepare($pendingReplacementsSql);
+$pendingReplacementsStmt->execute();
+$pending_replacements = $pendingReplacementsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$pendingReplacementsStmt->close();
 
 ?>
 
@@ -397,6 +498,32 @@ $statsStmt->close();
         .status-delivered { @apply bg-green-100 text-green-800; }
         .status-third_party_assigned { @apply bg-purple-100 text-purple-800; }
         .status-scheduled { @apply bg-gray-100 text-gray-800; }
+
+        .status-scheduled { @apply bg-gray-100 text-gray-800; }
+        
+        .replacement-item {
+            border-left: 4px solid #ef4444;
+            position: relative;
+        }
+
+        .replacement-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .replacement-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -516,6 +643,40 @@ $statsStmt->close();
                     <p class="text-xl font-bold text-gray-600"><?php echo count($scheduled_trucks); ?></p>
                 </div>
             </div>
+
+            <!-- ADD THIS REPLACEMENT STATISTICS SECTION HERE -->
+        <?php if ($replacement_stats['total_replacements'] > 0): ?>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-red-100 p-3 rounded-lg">
+                        <i class="fas fa-exchange-alt text-red-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Replacement Deliveries</h3>
+                        <p class="text-sm text-gray-600"><?php echo $replacement_stats['total_replacements']; ?> total, <?php echo $replacement_stats['completed_replacements']; ?> completed</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-red-600"><?php echo $replacement_stats['assigned_replacements']; ?></div>
+                    <div class="text-xs text-gray-500">Assigned</div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+
+
+            <!-- Add this after the existing 5 statistics cards -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <div class="text-center">
+        <div class="bg-red-100 p-3 rounded-lg mx-auto w-fit mb-2">
+            <i class="fas fa-exchange-alt text-red-600 text-lg"></i>
+        </div>
+        <p class="text-xs font-medium text-gray-600 mb-1">Replacements</p>
+        <p class="text-xl font-bold text-red-600"><?php echo $replacement_stats['total_replacements']; ?></p>
+    </div>
+</div>
         </div>
 
         <?php if (empty($scheduled_trucks)): ?>
@@ -659,21 +820,29 @@ $statsStmt->close();
     ds.delivery_notes,
     ds.delivery_status,
     ds.delivery_proof,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.address,
     o.mobile,
-    oi.product_name,
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN CONCAT('[REPLACEMENT] ', oi.product_name)
+        ELSE oi.product_name
+    END as product_name,
     oi.quantity,
     oi.price,
     oi.subtotal,
     oi.variant_color,
     oi.size,
-    oi.tracking_status
+    oi.tracking_status,
+    rr.reason as replacement_reason,
+    rr.status as replacement_status
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
+LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
 WHERE ds.truck_schedule_id = ?
-ORDER BY ds.delivery_time ASC";
+ORDER BY ds.item_type DESC, ds.delivery_time ASC";
                                 
                                 $truckItemsStmt = $conn->prepare($truckItemsSql);
                                 $truckItemsStmt->bind_param("i", $truck['truck_schedule_id']);
@@ -701,9 +870,17 @@ ORDER BY ds.delivery_time ASC";
                                         <?php foreach ($truck_items as $item): ?>
                                             <div class="delivery-item bg-gray-50 border border-gray-200 rounded-lg p-4">
                                                 <div class="flex items-center justify-between mb-2">
-                                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                                                        Order #<?php echo $item['order_id']; ?>
-                                                    </span>
+                                                    <div class="flex items-center space-x-2">
+                                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                                                            Order #<?php echo $item['order_id']; ?>
+                                                        </span>
+                                                        <?php if ($item['item_type'] === 'replacement'): ?>
+                                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                                                            <i class="fas fa-exchange-alt mr-1"></i>
+                                                            REPLACEMENT
+                                                        </span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                     <div class="flex items-center space-x-1">
                                                         <?php
 $status = $item['delivery_status'] ?? 'loading';
@@ -858,7 +1035,22 @@ $statusLabels = [
                             }
                             ?>
                             
-                            <div class="delivery-item <?php echo $cardClass; ?> border-2 rounded-lg p-4">
+                            <?php
+                            $itemCardClass = $cardClass;
+                            if ($item['item_type'] === 'replacement') {
+                                $itemCardClass .= ' replacement-item';
+                            }
+                            ?>
+                            <div class="delivery-item <?php echo $itemCardClass; ?> border-2 rounded-lg p-4 relative">
+                                <!-- Add replacement indicator -->
+                                <?php if ($item['item_type'] === 'replacement'): ?>
+                                <div class="replacement-indicator">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <?php endif; ?>
+
+                                
+
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="<?php echo $statusClass; ?> px-2 py-1 rounded text-xs font-bold">
                                         <i class="fas <?php echo $statusIcon; ?> mr-1"></i>

@@ -26,6 +26,8 @@ $scheduleSql = "SELECT
     ds.delivered_at,
     ds.created_by,
     ds.created_at,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
@@ -41,6 +43,10 @@ $scheduleSql = "SELECT
     oi.subtotal,
     oi.size,
     oi.tracking_status,
+    rr.reason as replacement_reason,
+    rr.details as replacement_details,
+    rr.replacement_quantity,
+    rr.status as replacement_status,
     CASE 
         WHEN ds.delivered_at IS NOT NULL THEN 'completed'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
@@ -54,6 +60,7 @@ $scheduleSql = "SELECT
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
+LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
 ORDER BY ds.delivery_date DESC, ds.delivery_time ASC";
@@ -92,7 +99,8 @@ $statsSql = "SELECT
     COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date >= CURDATE() THEN 1 END) as pending_deliveries,
     COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_deliveries,
     COUNT(CASE WHEN ds.delivery_date = CURDATE() AND ds.delivered_at IS NULL THEN 1 END) as today_deliveries,
-    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_deliveries
+    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_deliveries,
+    COUNT(CASE WHEN ds.item_type = 'replacement' THEN 1 END) as replacement_deliveries
 FROM delivery_schedules ds
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
 
@@ -219,15 +227,19 @@ $statsStmt->close();
                             class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors">
                         <i class="fas fa-clock mr-1"></i>Upcoming
                     </button>
+                    <button type="button" onclick="filterDeliveries('replacement')" 
+                            class="filter-btn bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors">
+                        <i class="fas fa-exchange-alt mr-1"></i>Replacements
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center">
                     <div class="bg-blue-100 p-3 rounded-lg">
@@ -287,12 +299,24 @@ $statsStmt->close();
                     </div>
                 </div>
             </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-orange-100 p-3 rounded-lg">
+                        <i class="fas fa-exchange-alt text-orange-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Replacements</p>
+                        <p class="text-2xl font-bold text-gray-900"><?php echo $stats['replacement_deliveries']; ?></p>
+                    </div>
+                </div>
+            </div>
         </div>
+        
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
             
             <!-- Calendar Section -->
-            <div class="xl:col-span-2">
+            <div class="xl:col-span-3">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
                         <i class="fas fa-calendar text-blue-600 mr-3"></i>
@@ -346,7 +370,7 @@ $statsStmt->close();
             </div>
 
             <!-- Delivery Details Section -->
-            <div class="xl:col-span-1">
+            <div class="xl:col-span-2">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="p-6 border-b border-gray-200">
                         <!-- MODIFICATION 1: Updated header with navigation button -->
@@ -595,32 +619,32 @@ $statsStmt->close();
                 filterStatus.textContent = '';
             } else {
                 // Apply status filter
-                if (currentFilter !== 'all') {
-                    if (currentFilter === 'overdue') {
-                        // Only show items that are actually overdue (not delivered and past due date)
-                        filteredSchedules = schedules.filter(s => 
-                            s.delivery_status === 'overdue' && s.delivered_at === null
-                        );
-                        detailsTitle.textContent = 'Overdue Deliveries';
-                        filterStatus.textContent = 'Showing overdue items only';
-                    } else if (currentFilter === 'today') {
-                        filteredSchedules = schedules.filter(s => s.delivery_status === 'today_pending' || 
-                            (s.delivery_date === getTodayString() && s.delivery_status === 'completed'));
-                        detailsTitle.textContent = "Today's Deliveries";
-                        filterStatus.textContent = "Showing today's deliveries only";
-                    } else if (currentFilter === 'upcoming') {
-                        filteredSchedules = schedules.filter(s => s.delivery_status === 'upcoming');
-                        detailsTitle.textContent = 'Upcoming Deliveries';
-                        filterStatus.textContent = 'Showing upcoming deliveries only';
-                    }
-                } else {
-                    // **MODIFIED CODE: Filter by current month when showing "all" deliveries**
-                    filteredSchedules = filterSchedulesByCurrentMonth(schedules);
-                    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
-                    detailsTitle.textContent = `All Deliveries - ${currentMonthName}`;
-                    filterStatus.textContent = 'Showing current month deliveries only';
-                    // **END OF MODIFIED CODE**
-                }
+                if (currentFilter === 'overdue') {
+    filteredSchedules = schedules.filter(s => 
+        s.delivery_status === 'overdue' && s.delivered_at === null
+    );
+    detailsTitle.textContent = 'Overdue Deliveries';
+    filterStatus.textContent = 'Showing overdue items only';
+} else if (currentFilter === 'today') {
+    filteredSchedules = schedules.filter(s => s.delivery_status === 'today_pending' || 
+        (s.delivery_date === getTodayString() && s.delivery_status === 'completed'));
+    detailsTitle.textContent = "Today's Deliveries";
+    filterStatus.textContent = "Showing today's deliveries only";
+} else if (currentFilter === 'upcoming') {
+    filteredSchedules = schedules.filter(s => s.delivery_status === 'upcoming');
+    detailsTitle.textContent = 'Upcoming Deliveries';
+    filterStatus.textContent = 'Showing upcoming deliveries only';
+} else if (currentFilter === 'replacement') {
+    filteredSchedules = schedules.filter(s => s.item_type === 'replacement');
+    detailsTitle.textContent = 'Replacement Deliveries';
+    filterStatus.textContent = 'Showing replacement deliveries only';
+} else {
+    // Filter by current month when showing "all" deliveries
+    filteredSchedules = filterSchedulesByCurrentMonth(schedules);
+    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    detailsTitle.textContent = `All Deliveries - ${currentMonthName}`;
+    filterStatus.textContent = 'Showing current month deliveries only';
+}
             }
             
             itemsCountSpan.textContent = `${filteredSchedules.length} items`;
@@ -635,6 +659,9 @@ $statsStmt->close();
                     emptyMessage = 'No deliveries scheduled for today';
                 } else if (currentFilter === 'upcoming') {
                     emptyMessage = 'No upcoming deliveries';
+                } else if (currentFilter === 'all') {
+                } else if (currentFilter === 'replacement') {
+                    emptyMessage = 'No replacement deliveries';
                 } else if (currentFilter === 'all') {
                     // **NEW CODE 2: Add current month empty message**
                     const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
@@ -781,7 +808,12 @@ $statsStmt->close();
                             <div class="item-card ${statusBg} border-2 rounded-lg p-4 hover:shadow-md">
                                 <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
-                                        <h6 class="font-semibold text-gray-900 text-lg mb-2">
+                                        <h6 class="font-semibold text-gray-900 text-lg mb-2 flex items-center">
+                                            ${schedule.item_type === 'replacement' ? `
+                                                <span class="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold mr-2">
+                                                    <i class="fas fa-exchange-alt mr-1"></i>REPLACEMENT
+                                                </span>
+                                            ` : ''}
                                             ${escapeHtml(schedule.product_name)}
                                         </h6>
                                         <div class="flex items-center space-x-3 mb-2">
@@ -855,6 +887,19 @@ $statsStmt->close();
                                             <span class="text-green-700 text-sm">
                                                 Delivered: ${formatDateTime(schedule.delivered_at)}
                                             </span>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                    ${schedule.item_type === 'replacement' && schedule.replacement_reason ? `
+                                    <div class="mt-3 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                        <h6 class="font-semibold text-orange-800 mb-2 flex items-center">
+                                            <i class="fas fa-info-circle mr-2"></i>Replacement Details
+                                        </h6>
+                                        <div class="space-y-1 text-sm text-gray-700">
+                                            <div><span class="font-medium">Reason:</span> ${escapeHtml(schedule.replacement_reason)}</div>
+                                            ${schedule.replacement_details ? `<div><span class="font-medium">Details:</span> ${escapeHtml(schedule.replacement_details)}</div>` : ''}
+                                            <div><span class="font-medium">Quantity:</span> ${schedule.replacement_quantity || schedule.quantity}</div>
+                                            ${schedule.replacement_status ? `<div><span class="font-medium">Status:</span> <span class="capitalize">${schedule.replacement_status.replace('_', ' ')}</span></div>` : ''}
                                         </div>
                                     </div>
                                     ` : ''}

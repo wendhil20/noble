@@ -169,7 +169,7 @@ $avg_stmt->close();
     .color-selected {
       border-color: #f97316;
       /* Tailwind's orange-500 */
-      border-width: 4px;
+      border-width: 2px;
       box-shadow: 0 10px 15px -3px rgba(251, 146, 60, 0.2), 0 4px 6px -4px rgba(251, 146, 60, 0.2);
       transform: scale(1.10);
     }
@@ -274,11 +274,10 @@ $avg_stmt->close();
     .type-btn:focus,
     .variant-btn:focus,
     .color-btn:focus {
-      outline-width: 2px;
+      outline-width: 1px;
       outline-color: #f97316;
       /* Tailwind's orange-500 */
-      outline-offset: 2px;
-      outline-style: solid;
+      outline-offset: 1px;
     }
 
     /* Mobile Swiper Hide Navigation */
@@ -289,10 +288,363 @@ $avg_stmt->close();
         display: none;
       }
     }
+
+    /* ==== COLOR SELECTION SECTION SPACING ==== */
+
+    /* Section Header Spacing */
+    .color-section-header {
+      margin-bottom: 1.5rem;
+      /* 24px */
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    /* Color Grid Container */
+    .color-grid-container {
+      background-color: #f9fafb;
+      /* gray-50 */
+      border-radius: 0.75rem;
+      /* 12px */
+      padding: 1rem;
+      /* 16px on mobile */
+      margin-bottom: 1rem;
+      /* 16px */
+      border: 1px solid #e5e7eb;
+      /* gray-200 */
+    }
+
+    @media (min-width: 1024px) {
+      .color-grid-container {
+        padding: 1.5rem;
+        /* 24px on desktop */
+      }
+    }
+
+    /* Individual Color Box Spacing */
+    .color-selection-box {
+      padding: 1rem;
+      /* 16px internal padding */
+      margin-bottom: 0.75rem;
+      /* 12px between boxes */
+      border: 2px solid #e5e7eb;
+      /* gray-200 */
+      border-radius: 0.5rem;
+      /* 8px */
+      background-color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .color-selection-box:hover {
+      border-color: #fed7aa;
+      /* orange-200 */
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+
+    /* Color Square Section */
+    .color-square {
+      width: 3.5rem;
+      /* 56px */
+      height: 3.5rem;
+      /* 56px */
+      border-radius: 0.5rem;
+      /* 8px */
+      border: 2px solid #e5e7eb;
+      margin-right: 1rem;
+      /* 16px gap between color and text */
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (min-width: 1024px) {
+      .color-square {
+        width: 4rem;
+        /* 64px */
+        height: 4rem;
+        /* 64px */
+      }
+    }
+
+    /* Color Details Section */
+    .color-details {
+      flex: 1;
+      min-width: 0;
+      padding-right: 0.75rem;
+      /* 12px gap between details and indicator */
+    }
+
+    .color-name {
+      font-size: 0.875rem;
+      /* 14px */
+      font-weight: 600;
+      color: #374151;
+      /* gray-700 */
+      margin-bottom: 0.25rem;
+      /* 4px */
+      line-height: 1.25;
+    }
+
+    @media (min-width: 1024px) {
+      .color-name {
+        font-size: 1rem;
+        /* 16px */
+      }
+    }
+
+    .color-price {
+      font-size: 0.75rem;
+      /* 12px */
+      font-weight: 600;
+    }
+
+    @media (min-width: 1024px) {
+      .color-price {
+        font-size: 0.875rem;
+        /* 14px */
+      }
+    }
+
+    /* Selection Indicator Section */
+    .selection-indicator {
+      width: 1.5rem;
+      /* 24px */
+      height: 1.5rem;
+      /* 24px */
+      background-color: #f97316;
+      /* orange-500 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    /* Selected State */
+    .color-selected {
+
+      background-color: #fff7ed;
+      /* orange-50 */
+      box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.1), 0 4px 6px -4px rgba(249, 115, 22, 0.1);
+    }
+
+    .color-selected .selection-indicator {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .color-selected .color-square {
+      border-color: #f97316;
+      /* orange-500 */
+      box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.2);
+    }
+
+    /* Info Box Section */
+    .color-info-box {
+      margin-top: 1rem;
+      /* 16px */
+      padding: 1rem;
+      /* 16px */
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      /* gray-200 */
+      border-radius: 0.5rem;
+      /* 8px */
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ==== MAIN ISSUES AND FIXES ==== */
+
+    /* 1. SWIPER SLIDE OVERLAP FIX */
+    .colorSwiper .swiper-slide {
+      width: auto;
+      min-width: 280px;
+      /* Was causing overlap - reduce this */
+      margin-right: 0.75rem;
+      /* Reduce margin */
+      flex-shrink: 0;
+      /* Prevent shrinking */
+    }
+
+    /* Better responsive widths */
+    @media (max-width: 640px) {
+      .colorSwiper .swiper-slide {
+        min-width: 260px;
+        /* Smaller on mobile */
+        margin-right: 0.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .colorSwiper .swiper-slide {
+        min-width: 240px;
+        /* Even smaller on tiny screens */
+        margin-right: 0.25rem;
+      }
+    }
+
+    /* 2. COLOR BUTTON CLICKABILITY FIX */
+    .color-btn {
+      /* Ensure proper button behavior */
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      outline: none;
+      /* Remove conflicting transforms and positioning */
+      position: relative;
+      z-index: 10;
+      /* Ensure adequate touch target */
+      min-height: 80px;
+      padding: 1rem;
+      /* Fix border radius and transitions */
+      border-radius: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .color-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 3. COLOR SELECTION BOX FIX */
+    .color-selection-box {
+      /* Remove conflicting styling */
+      padding: 0;
+      /* Remove padding from container */
+      margin-bottom: 0;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.75rem;
+      background-color: #ffffff;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      /* Prevent content overflow */
+    }
+
+    /* 4. SWIPER CONTAINER FIXES */
+    .colorSwiper {
+      padding: 0.5rem 0;
+      overflow: visible;
+      /* Allow content to be clickable */
+    }
+
+    /* Ensure swiper wrapper doesn't block clicks */
+    .colorSwiper .swiper-wrapper {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 5. NAVIGATION BUTTON POSITIONING FIX */
+    .color-swiper-prev,
+    .color-swiper-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+      /* Higher than content */
+      pointer-events: auto;
+      width: 32px;
+      height: 32px;
+    }
+
+    .color-swiper-prev {
+      left: 0.5rem;
+    }
+
+    .color-swiper-next {
+      right: 0.5rem;
+    }
+
+    /* 6. SELECTION STATE FIXES */
+    .color-selected {
+      border-color: #f97316 !important;
+      background-color: #fff7ed !important;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2) !important;
+      transform: scale(1.02) !important;
+    }
+
+    .color-selected .selection-indicator {
+      opacity: 1 !important;
+      transform: scale(1.1) !important;
+    }
+
+    /* 7. TOUCH TARGET IMPROVEMENTS */
+    @media (max-width: 768px) {
+      .color-btn {
+        min-height: 90px;
+        /* Larger touch target on mobile */
+        padding: 1.25rem;
+      }
+
+      .color-square {
+        width: 3rem;
+        height: 3rem;
+        margin-right: 0.75rem;
+      }
+    }
+
+    /* 8. PREVENT DOUBLE-TAP ZOOM ON MOBILE */
+    .color-btn {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 9. ENSURE PROPER LAYERING */
+    .color-grid-container {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 10. FIX FLEX LAYOUT ISSUES */
+    .color-btn>div {
+      pointer-events: none;
+      /* Let clicks pass through to button */
+    }
+
+    .color-details,
+    .color-square,
+    .selection-indicator {
+      pointer-events: none;
+      /* Ensure clicks go to parent button */
+    }
+
+    /* ==== ADDITIONAL IMPROVEMENTS ==== */
+
+    /* Better visual feedback */
+    .color-btn:focus {
+      outline: 2px solid #f97316;
+      outline-offset: 2px;
+    }
+
+    /* Ensure content doesn't overflow on small screens */
+    .color-name {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* Improve selection indicator visibility */
+    .selection-indicator {
+      background-color: #f97316;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Better hover states for desktop */
+    @media (min-width: 1024px) {
+      .color-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      }
+    }
   </style>
 </head>
 
-<body class="bg-gray-50 ">
+<body class="">
   <?php include '../navbar/top.php'; ?>
 
   <!-- Hero Section with Bouncing Bubbles Background -->
@@ -580,18 +932,21 @@ $avg_stmt->close();
         <!-- Product Options Section -->
         <div class="p-4 lg:p-8 bg-gray-50 flex flex-col">
 
-          <!-- Type Selection -->
+          <!-- STEP 1: TYPE SELECTION FIRST -->
           <?php if (!empty($types_data)): ?>
-            <div class="mb-6 lg:mb-8">
-              <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Item</h3>
+            <div class="mb-8 lg:mb-10">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Step 1: Click Here </h3>
+                <div class="text-sm text-gray-500">Required</div>
+              </div>
 
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
                 <?php foreach ($types_data as $index => $type): ?>
                   <button type="button"
                     onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
-                    class="type-btn border-2 border-gray-200 p-3 lg:p-4 rounded-lg hover:border-orange-300 transition-all bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300">
+                    class="type-btn border-2 border-gray-200 p-3 lg:p-4  hover:border-orange-300 transition-all bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300">
 
-                    <div class="aspect-square rounded-lg mb-2 overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                    <div class="aspect-square  mb-2 overflow-hidden bg-gray-100 flex items-center justify-center relative">
                       <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
                         <img src="../../<?= htmlspecialchars($type['image']) ?>"
                           class="w-full h-full object-contain"
@@ -617,68 +972,96 @@ $avg_stmt->close();
             </div>
           <?php endif; ?>
 
-          <!-- Color Selection -->
+          <!-- STEP 2: COLOR SELECTION SECOND -->
           <?php if (!empty($product_colors)): ?>
-            <div class="mb-6 lg:mb-8">
-              <!-- Section Header -->
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Available Colors</h3>
-                <span class="text-sm text-gray-500 italic block sm:hidden">Swipe to explore →</span>
+            <div class="mb-8 lg:mb-10" id="color-selection-section">
+              <!-- SECTION HEADER -->
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Step 2: Choose Color</h3>
+                <div class="text-sm text-gray-500">Required</div>
               </div>
 
-              <!-- Swiper Container -->
-              <div class="relative">
-                <!-- Swiper Navigation Buttons (hidden on md and up) -->
-                <div class="swiper-button-prev color-swiper-prev !left-0 !z-10 !w-6 !h-6 md:!hidden" style="width:1.5rem;height:1.5rem;min-width:unset;min-height:unset;font-size:1rem;"></div>
-                <div class="swiper-button-next color-swiper-next !right-0 !z-10 !w-6 !h-6 md:!hidden" style="width:1.5rem;height:1.5rem;min-width:unset;min-height:unset;font-size:1rem;"></div>
+              <!-- Initially disabled until type is selected -->
+              <div id="color-selection-container" class="opacity-50 pointer-events-none">
+                <!-- COLOR DROPDOWN CONTAINER -->
+                <div class="relative bg-gray-50 rounded-xl p-4 lg:p-6">
 
-                <div class="swiper colorSwiper">
-                  <div class="swiper-wrapper pb-2">
-                    <?php foreach ($product_colors as $color): ?>
-                      <div class="swiper-slide w-16 p-3">
-                        <div class="flex flex-col items-center gap-2 p-6">
-                          <!-- Color Button -->
-                          <button
-                            type="button"
-                            onclick="selectColor(this, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, <?= $color['id'] ?>)"
-                            class="color-btn color-swatch w-12 h-12 lg:w-14 lg:h-14 rounded-full border-2 border-gray-300 overflow-hidden relative"
-                            style="background-color: <?= htmlspecialchars($color['color_code']) ?>;"
-                            title="<?= htmlspecialchars($color['color_name']) ?>">
-                            <?php if (!empty($color['image'])): ?>
-                              <img
-                                src="../../<?= htmlspecialchars($color['image']) ?>"
-                                alt="<?= htmlspecialchars($color['color_name']) ?>"
-                                class="p-1 w-full h-full object-contain rounded-full">
-                            <?php endif; ?>
-                          </button>
+                  <!-- DROPDOWN SELECT -->
+                  <div class="relative">
+                    <select
+                      id="color-dropdown"
+                      onchange="selectColorFromDropdown(this)"
+                      class="w-full p-4 pr-10 bg-white border border-gray-300  focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 appearance-none cursor-pointer">
 
-                          <!-- Color Name -->
-                          <span class="text-xs text-gray-700 font-medium text-center leading-tight">
-                            <?= htmlspecialchars($color['color_name']) ?>
-                          </span>
-                        </div>
-                      </div>
-                    <?php endforeach; ?>
+                      <option value="">Select a color...</option>
+
+                      <?php foreach ($product_colors as $color): ?>
+                        <option
+                          value="<?= $color['id'] ?>"
+                          data-color-name="<?= addslashes($color['color_name']) ?>"
+                          data-price="<?= $color['price'] ?>"
+                          data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
+                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>">
+                          <?= htmlspecialchars($color['color_name']) ?>
+                          <?php if ($color['price'] > 0): ?>
+                            (+₱<?= number_format($color['price'], 2) ?>)
+                          <?php else: ?>
+                            (No extra cost)
+                          <?php endif; ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+
+                    <!-- DROPDOWN ARROW -->
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </div>
                   </div>
+
+                  <!-- COLOR PREVIEW (appears when color is selected) -->
+                  <div id="color-preview" class="mt-4 p-4 bg-white  border border-gray-200 hidden">
+                    <div class="flex items-center gap-4">
+                      <!-- COLOR SQUARE -->
+                      <div id="preview-color-square" class="w-16 h-16  overflow-hidden shadow-sm border border-gray-200">
+                        <!-- Color background or image will be set via JavaScript -->
+                      </div>
+
+                      <!-- COLOR INFO -->
+                      <div class="flex-1">
+                        <div id="preview-color-name" class="font-semibold text-gray-800 text-base mb-1"></div>
+                        <div id="preview-color-price" class="text-sm"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- INFO/STATUS BOX -->
+                <div id="selected-color-info" class="mt-4 text-sm text-gray-600 p-4 bg-white  border border-gray-200 shadow-sm">
+                  <i class="fas fa-info-circle text-orange-500 mr-2"></i>
+                  Select a color to see pricing
                 </div>
               </div>
 
-              <!-- Info Box -->
-              <div id="selected-color-info" class="text-sm text-gray-600 mt-3 p-3 bg-white rounded-lg shadow-sm">
-                <i class="fas fa-info-circle text-orange-500 mr-2"></i>
-                Select a color to see pricing
+              <!-- Message when type not selected -->
+              <div id="color-disabled-message" class="text-center p-6 bg-white border-2 border-dashed border-gray-300">
+                <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+                <p class="text-gray-500">Please select an item type first</p>
               </div>
             </div>
           <?php endif; ?>
 
+          <!-- STEP 3: SIZE/VARIANT SELECTION THIRD -->
+          <div class="mb-6 lg:mb-8" id="size-selection-section">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg lg:text-xl font-bold text-gray-800">Step 3: Choose Size</h3>
+              <div class="text-sm text-gray-500">Required</div>
+            </div>
 
-          <!-- Size/Variant Selection -->
-          <div class="mb-6 lg:mb-8">
-            <h3 class="text-lg lg:text-xl font-bold mb-4 text-gray-800">Available Sizes</h3>
-
-            <div id="variant-container" class="text-gray-500 p-4 bg-white rounded-lg text-center">
+            <div id="variant-container" class="text-gray-500 p-4 bg-white  text-center">
               <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-              <p>Please select a item first</p>
+              <p>Please select a color first</p>
             </div>
 
             <?php foreach ($types_data as $type): ?>
@@ -697,7 +1080,7 @@ $avg_stmt->close();
                         ?>
                         <button type="button"
                           onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>')"
-                          class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg 
+                          class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white 
                        p-2 lg:p-3 text-center transition transform hover:scale-[1.02] 
                        flex flex-col justify-between min-h-[120px] lg:min-h-[140px]"
                           data-price="<?= $price ?>"
@@ -735,105 +1118,164 @@ $avg_stmt->close();
             <?php endforeach; ?>
           </div>
 
+          <!-- PURCHASE SECTION -->
+          <div class="mt-auto">
+            <form id="productForm" method="POST" class="space-y-4">
+              <!-- Hidden inputs remain the same -->
+              <input type="hidden" name="product_id" value="<?= $product_id ?>" />
+              <input type="hidden" name="selected_color_id" id="selected_color_id">
+              <input type="hidden" name="selected_color" id="selected_color">
+              <input type="hidden" name="selected_type" id="selected_type">
+              <input type="hidden" name="selected_variant" id="selected_variant">
+              <input type="hidden" name="variant_id" id="variant_id">
+              <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
 
-         <!-- In your HTML, replace the Purchase Section with this: -->
-<div class="mt-auto">
-  <form id="productForm" method="POST" class="space-y-4">
-    <input type="hidden" name="product_id" value="<?= $product_id ?>" />
-    <input type="hidden" name="selected_color_id" id="selected_color_id">
-    <input type="hidden" name="selected_color" id="selected_color">
-    <input type="hidden" name="selected_type" id="selected_type">
-    <input type="hidden" name="selected_variant" id="selected_variant">
-    <input type="hidden" name="variant_id" id="variant_id">
-    <!-- Add this hidden field to track if it's windows category -->
-    <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
+              <!-- Total Price Display -->
+              <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Price</p>
+                    <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
+                  </div>
+                  <div id="selectionStatus" class="text-sm text-gray-500 sm:text-right">
+                    Follow steps 1-3 to see total price
+                  </div>
+                </div>
+              </div>
 
-    <!-- Total Price Display -->
-    <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-        <div>
-          <p class="text-sm text-gray-600 mb-1">Total Price</p>
-          <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
-        </div>
-        <div id="selectionStatus" class="text-sm text-gray-500 sm:text-right">
-          <?php if ($is_windows_category): ?>
-            <?= $is_logged_in ? 'Select all options above' : 'Please log in to contact us' ?>
-          <?php else: ?>
-            <?= $is_logged_in ? 'Select all options above' : 'Please log in to pre-order' ?>
-          <?php endif; ?>
+              <?php if ($is_windows_category): ?>
+                <!-- Contact Us Button -->
+                <button type="button" id="contactUsBtn" onclick="openContactModal()"
+                  disabled
+                  class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
+                  <span id="contactBtnText" class="flex items-center justify-center gap-2">
+                    <i class="fas fa-phone"></i>
+                    Complete Steps 1-3 to Contact Us
+                  </span>
+                </button>
+              <?php else: ?>
+                <!-- Add to Cart Button -->
+                <button type="submit" id="addToCartBtn"
+                  disabled
+                  class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
+                  <span id="btnText" class="flex items-center justify-center gap-2">
+                    <i class="fas fa-shopping-cart"></i>
+                    Complete Steps 1-3 to Pre-Order
+                  </span>
+                </button>
+              <?php endif; ?>
+            </form>
+          </div>
         </div>
       </div>
     </div>
 
-   <?php if ($is_windows_category): ?>
-  <!-- Contact Us Button for Windows Category - DISABLED by default -->
-  <button type="button" id="contactUsBtn" onclick="openContactModal()"
-    disabled
-    class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300  bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
-    <span id="contactBtnText" class="flex items-center justify-center gap-2">
-      <i class="fas fa-phone"></i>
-      <?= $is_logged_in ? 'Select Options to Contact Us' : 'Login to Contact Us' ?>
-    </span>
-  </button>
-<?php else: ?>
-  <!-- Regular Add to Cart Button - DISABLED by default -->
-  <button type="submit" id="addToCartBtn"
-    disabled
-    class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
-    <span id="btnText" class="flex items-center justify-center gap-2">
-      <i class="fas fa-shopping-cart"></i>
-      <?= $is_logged_in ? 'Select Options to Pre-Order' : 'Login to Pre-Order' ?>
-    </span>
-  </button>
-<?php endif; ?>
-  </form>
-</div>
-
-<!-- Add Contact Modal (place this before closing body tag) -->
-<?php if ($is_windows_category): ?>
+    <!-- Contact Modal (Add this before the closing </body> tag) -->
 <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl p-6 m-4 max-w-md w-full">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-xl font-bold text-gray-800">Contact Us for Windows</h3>
-      <button onclick="closeContactModal()" class="text-gray-500 hover:text-gray-700">
-        <i class="fas fa-times text-xl"></i>
-      </button>
+  <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
+    <!-- Close Button -->
+    <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <!-- Modal Header -->
+    <div class="mb-6">
+      <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
+      <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
     </div>
-    
-    <div class="space-y-4">
-      <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-        <p class="mb-2">Selected Product: <strong><?= htmlspecialchars($product['product_name']) ?></strong></p>
-        <div id="selectedOptionsText" class="text-black"></div>
-        <div id="selectedPriceText" class="text-green-600 font-bold text-lg mt-2"></div>
+
+    <!-- Product Info -->
+    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+      <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
+      
+      <!-- Selected Options Display -->
+      <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">
+        No specific options selected
       </div>
       
-      <div class="space-y-3">
-        <a href="tel:09685916536" 
-           class="w-full  text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
-          <i class="fas fa-phone"></i>
-          Call: (02) 8822-1295 / +63992-239-4563
-        </a>
-        
-        <a href="#" id="emailLink"
-           class="w-full text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
-          <i class="fas fa-envelope"></i>
-          Email Us
-        </a>
-        
-        <a href="contact" 
-           class="w-full text-black py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
-          <i class="fas fa-map-marker-alt"></i>
-          Visit Contact Page
+      <!-- Price Display -->
+      <div id="selectedPriceText" class="text-lg font-bold text-green-600">
+        <!-- Price will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Contact Methods -->
+    <div class="space-y-4">
+      <!-- Email Contact -->
+      <a id="emailLink" 
+         href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
+         class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+        <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
+      </a>
+
+      <!-- Phone Contact -->
+      <div class="text-center">
+        <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
+        <a href="tel:+1234567890" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
+          <i class="fas fa-phone mr-2"></i>(02) 8822-1295/ +63992-239-4563
         </a>
       </div>
+
+      <!-- WhatsApp Contact (optional) -->
+      <a href="https://wa.me/1234567890" target="_blank" 
+         class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+        <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
+      </a>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="mt-6 text-center text-sm text-gray-500">
+      <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
     </div>
   </div>
 </div>
-<?php endif; ?>
 
-        </div>
-      </div>
-    </div>
+<style>
+/* Modal Animation Styles */
+#contactModal {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+#contactModal.hidden {
+  animation: modalFadeOut 0.3s ease-in;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Ensure modal content animates */
+#contactModal > div {
+  transform: translateY(-20px);
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  to {
+    transform: translateY(0);
+  }
+}
+</style>
 
     <?php if (!empty($product_specs)): ?>
       <section class="mt-6 lg:mt-8">
@@ -937,146 +1379,7 @@ $avg_stmt->close();
 
   </div>
 
-
-  <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
-    <!-- Decorative Elements -->
-    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
-
-    <div class="max-w-7xl mx-auto px-6 relative z-10">
-      <!-- Main Footer Content -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-
-        <!-- Enhanced Branding Section -->
-        <div class="lg:col-span-2">
-          <div class="flex items-center space-x-4 mb-6">
-            <!-- Logo with glow and pulse -->
-            <div class="relative">
-              <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
-              </div>
-              <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
-            </div>
-
-            <!-- Text Branding -->
-            <div>
-              <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-
-            </div>
-          </div>
-
-
-          <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
-            Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
-          </p>
-
-          <!-- Contact Info -->
-          <div class="space-y-3">
-            <div class="flex items-center space-x-3 text-sm">
-              <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
-              </div>
-              <span class="text-gray-300">noblehomeconst.ph@gmail.com</span>
-            </div>
-            <div class="flex items-center space-x-3 text-sm">
-              <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                </svg>
-              </div>
-              <span class="text-gray-300">0968 591 6536</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Links -->
-        <div>
-          <h3 class="text-xl font-bold mb-6 text-white relative">
-            Quick Links
-            <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-          </h3>
-          <nav class="space-y-3">
-            <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
-            <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
-            <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
-          </nav>
-        </div>
-
-        <!-- Services -->
-        <div>
-          <h3 class="text-xl font-bold mb-6 text-white relative">
-            Our Services
-            <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-          </h3>
-          <ul class="space-y-3 text-gray-300">
-            <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-            <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Divider -->
-      <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
-
-      <!-- Bottom Section -->
-      <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
-        <!-- Copyright -->
-        <div class="text-center lg:text-left">
-          <p class="text-gray-400 text-sm">
-            © 2025 Noble Home Construction. All rights reserved.
-          </p>
-          <p class="text-gray-500 text-xs mt-1">
-            Licensed & Insured | PCAB License No. 12345
-          </p>
-        </div>
-
-        <!-- Enhanced Social Media -->
-        <div class="flex items-center space-x-4">
-          <span class="text-gray-400 text-sm mr-2">Follow us:</span>
-
-          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
-            </svg>
-          </a>
-
-          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
-            </svg>
-          </a>
-
-          <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="LinkedIn">
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-            </svg>
-          </a>
-        </div>
-
-        <!-- Back to Top Button -->
-        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-          class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Background Pattern -->
-    <div class="absolute bottom-0 right-0 opacity-5">
-      <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-        <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
-        <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
-        <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
-      </svg>
-    </div>
-  </footer>
+  <?php include '../navbar/footer.php'; ?>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1208,22 +1511,6 @@ $avg_stmt->close();
         }
       });
 
-      // Show navigation arrows on hover (if sub images exist)
-      <?php if (!empty($sub_images)): ?>
-        const imageGallery = document.querySelector('.product-image-gallery');
-        if (imageGallery) {
-          imageGallery.addEventListener('mouseenter', function() {
-            if (prevBtn) prevBtn.style.opacity = '1';
-            if (nextBtn) nextBtn.style.opacity = '1';
-          });
-
-          imageGallery.addEventListener('mouseleave', function() {
-            if (prevBtn) prevBtn.style.opacity = '0';
-            if (nextBtn) nextBtn.style.opacity = '0';
-          });
-        }
-      <?php endif; ?>
-
       // Image zoom functionality (optional enhancement)
       mainImage.addEventListener('click', function() {
         // Create modal for full-size image view
@@ -1249,153 +1536,94 @@ $avg_stmt->close();
       });
     });
 
-    // Re-initialize Swiper for colorSwiper with navigation
-    if (window.colorSwiper) window.colorSwiper.destroy(true, true);
-    window.colorSwiper = new Swiper(".colorSwiper", {
-      slidesPerView: 2,
-      grid: {
-        rows: 2,
-        fill: 'row'
-      },
-      spaceBetween: 10,
-      freeMode: true,
-      grabCursor: true,
-      navigation: {
-        nextEl: '.color-swiper-next',
-        prevEl: '.color-swiper-prev',
-      },
-      breakpoints: {
-        0: {
-          slidesPerView: 'auto', // Show all slides in view on small screens
-          spaceBetween: 8,
-          grid: {
-            rows: 1
-          }
-        },
-        640: {
-          slidesPerView: 6,
-          spaceBetween: 15,
-          grid: {
-            rows: 2
-          }
-        },
-        768: {
-          slidesPerView: 8,
-          spaceBetween: 20,
-          grid: {
-            rows: 2
-          }
-        },
-        1024: {
-          slidesPerView: 10,
-          spaceBetween: 25,
-          grid: {
-            rows: 2
-          }
-        }
+    // Fix for Contact Us button initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      const contactBtn = document.getElementById('contactUsBtn');
+      if (contactBtn) {
+        contactBtn.disabled = true;
+        contactBtn.classList.add('bg-gray-400');
+        contactBtn.classList.remove('bg-black', 'hover:bg-blue-600');
       }
     });
 
-    // Fix for Contact Us button initialization
-document.addEventListener('DOMContentLoaded', function() {
-  const contactBtn = document.getElementById('contactUsBtn');
-  if (contactBtn) {
-    contactBtn.disabled = true;
-    contactBtn.classList.add('bg-gray-400');
-    contactBtn.classList.remove('bg-black', 'hover:bg-blue-600');
-  }
-});
+    function openContactModal() {
+      // Get selected options
+      const colorData = productSelector.selectedColorData;
+      const variantData = productSelector.selectedVariantData;
+      const typeData = productSelector.selectedTypeId ? document.getElementById('selected_type').value : null;
 
- function openContactModal() {
-  // Get selected options
-  const colorData = productSelector.selectedColorData;
-  const variantData = productSelector.selectedVariantData;
-  const typeData = productSelector.selectedTypeId ? document.getElementById('selected_type').value : null;
-  
-  // Build options text
-  const options = [];
-  if (colorData) {
-    options.push(`Color: ${colorData.name}`);
-  }
-  if (typeData) {
-    options.push(`Type: ${typeData}`);
-  }
-  if (variantData) {
-    options.push(`Size: ${variantData.size}`); // Now correctly shows the size
-  }
-  
-  // Calculate total price
-  const {totalPrice} = productSelector.calculateTotalPrice();
-  
-  // Update modal content
-  const selectedOptionsElement = document.getElementById('selectedOptionsText');
-  const selectedPriceElement = document.getElementById('selectedPriceText');
-  const emailLink = document.getElementById('emailLink');
-  
-  if (selectedOptionsElement) {
-    selectedOptionsElement.innerHTML = options.length > 0 ? 
-      `<strong>Selected:</strong><br>${options.join('<br>')}` : 
-      'No specific options selected';
-  }
-  
-  if (selectedPriceElement) {
-    selectedPriceElement.textContent = totalPrice > 0 ? `Total: ₱${totalPrice.toFixed(2)}` : '';
-  }
-  
-  // Update email link with details
-  if (emailLink) {
-    const productName = '<?= urlencode($product['product_name']) ?>';
-    const subject = `Windows Quote Request - ${decodeURIComponent(productName)}`;
-    let body = `Hi, I'm interested in getting a quote for ${decodeURIComponent(productName)}.`;
-    
-    if (options.length > 0) {
-      body += `\n\nSelected Options:\n${options.join('\n')}`;
-    }
-    
-    if (totalPrice > 0) {
-      body += `\nEstimated Total: ₱${totalPrice.toFixed(2)}`;
-    }
-    
-    body += `\n\nPlease contact me with more details and final pricing.`;
-    
-    emailLink.href = `mailto:noblehomeconst.ph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }
-  
-  document.getElementById('contactModal').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
+      // Build options text
+      const options = [];
+      if (typeData) {
+        options.push(`Type: ${typeData}`);
+      }
+      if (colorData) {
+        options.push(`Color: ${colorData.name}`);
+      }
+      if (variantData) {
+        options.push(`Size: ${variantData.size}`);
+      }
 
-function closeContactModal() {
-  document.getElementById('contactModal').classList.add('hidden');
-  document.body.style.overflow = 'auto';
-}
+      // Calculate total price
+      const {
+        totalPrice
+      } = productSelector.calculateTotalPrice();
 
-// Close modal when clicking outside
-document.getElementById('contactModal')?.addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeContactModal();
-  }
-});
+      // Update modal content
+      const selectedOptionsElement = document.getElementById('selectedOptionsText');
+      const selectedPriceElement = document.getElementById('selectedPriceText');
+      const emailLink = document.getElementById('emailLink');
 
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeContactModal();
-  }
-});
+      if (selectedOptionsElement) {
+        selectedOptionsElement.innerHTML = options.length > 0 ?
+          `<strong>Selected:</strong><br>${options.join('<br>')}` :
+          'No specific options selected';
+      }
 
-    // When navigation is clicked, scroll to show all color swatches on small screens
-    document.querySelectorAll('.color-swiper-next, .color-swiper-prev').forEach(btn => {
-      btn.addEventListener('click', function() {
-        if (window.innerWidth < 640) {
-          setTimeout(() => {
-            document.querySelector('.colorSwiper').scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-          }, 200);
+      if (selectedPriceElement) {
+        selectedPriceElement.textContent = totalPrice > 0 ? `Total: ₱${totalPrice.toFixed(2)}` : '';
+      }
+
+      // Update email link with details
+      if (emailLink) {
+        const productName = '<?= urlencode($product['product_name']) ?>';
+        const subject = `Windows Quote Request - ${decodeURIComponent(productName)}`;
+        let body = `Hi, I'm interested in getting a quote for ${decodeURIComponent(productName)}.`;
+
+        if (options.length > 0) {
+          body += `\n\nSelected Options:\n${options.join('\n')}`;
         }
-      });
+
+        if (totalPrice > 0) {
+          body += `\nEstimated Total: ₱${totalPrice.toFixed(2)}`;
+        }
+
+        body += `\n\nPlease contact me with more details and final pricing.`;
+
+        emailLink.href = `mailto:noblehomeconst.ph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      }
+
+      document.getElementById('contactModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeContactModal() {
+      document.getElementById('contactModal').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('contactModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeContactModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeContactModal();
+      }
     });
 
     // Initialize Swiper for related products
@@ -1431,40 +1659,43 @@ document.addEventListener('keydown', function(e) {
       }
     });
 
-    // Product Selection State Management// Modify the ProductSelector class to handle windows category
-class ProductSelector {
-  constructor() {
-    this.selectedTypeId = null;
-    this.selectedVariantData = null;
-    this.selectedColorData = null;
-    this.basePrice = parseFloat(document.querySelector('[name="product_id"]').dataset.basePrice) || 0;
-    this.hasTypes = document.querySelectorAll('.type-btn').length > 0;
-    this.isWindows = document.querySelector('[name="is_windows"]').value === '1';
+    // Product Selection State Management - Type → Color → Size Flow
+    class ProductSelector {
+      constructor() {
+        this.selectedTypeId = null;
+        this.selectedVariantData = null;
+        this.selectedColorData = null;
+        this.basePrice = parseFloat(document.querySelector('[name="product_id"]').dataset.basePrice) || 0;
+        this.hasTypes = document.querySelectorAll('.type-btn').length > 0;
+        this.isWindows = document.querySelector('[name="is_windows"]').value === '1';
 
-    this.initializeElements();
-    this.bindEvents();
-  }
+        this.initializeElements();
+        this.bindEvents();
 
-  initializeElements() {
-    this.elements = {
-      mainImage: document.getElementById('main-product-image'),
-      colorInfo: document.getElementById('selected-color-info'),
-      variantContainer: document.getElementById('variant-container'),
-      totalPrice: document.getElementById('totalPrice'),
-      selectionStatus: document.getElementById('selectionStatus'),
-      addToCartBtn: document.getElementById('addToCartBtn'),
-      btnText: document.getElementById('btnText'),
-      contactUsBtn: document.getElementById('contactUsBtn'),
-      contactBtnText: document.getElementById('contactBtnText'),
-      productForm: document.getElementById('productForm'),
-      // Hidden inputs
-      selectedColorId: document.getElementById('selected_color_id'),
-      selectedColor: document.getElementById('selected_color'),
-      selectedType: document.getElementById('selected_type'),
-      selectedVariant: document.getElementById('selected_variant'),
-      variantId: document.getElementById('variant_id')
-    };
-  }
+        // Set initial states for step flow
+        this.initializeStepFlow();
+      }
+
+      initializeElements() {
+        this.elements = {
+          mainImage: document.getElementById('main-product-image'),
+          colorInfo: document.getElementById('selected-color-info'),
+          variantContainer: document.getElementById('variant-container'),
+          totalPrice: document.getElementById('totalPrice'),
+          selectionStatus: document.getElementById('selectionStatus'),
+          addToCartBtn: document.getElementById('addToCartBtn'),
+          btnText: document.getElementById('btnText'),
+          contactUsBtn: document.getElementById('contactUsBtn'),
+          contactBtnText: document.getElementById('contactBtnText'),
+          productForm: document.getElementById('productForm'),
+          // Hidden inputs
+          selectedColorId: document.getElementById('selected_color_id'),
+          selectedColor: document.getElementById('selected_color'),
+          selectedType: document.getElementById('selected_type'),
+          selectedVariant: document.getElementById('selected_variant'),
+          variantId: document.getElementById('variant_id')
+        };
+      }
 
       bindEvents() {
         // Form submission
@@ -1481,62 +1712,16 @@ class ProductSelector {
         });
       }
 
-      selectColor(button, colorName, colorPrice, colorId) {
-        const isCurrentlySelected = button.classList.contains('color-selected');
+      // Initialize step flow states
+      initializeStepFlow() {
+        // Initially disable color selection (until type is selected)
+        this.disableColorSelection();
 
-        if (isCurrentlySelected) {
-          this.unselectColor(button);
-        } else {
-          this.setColorSelection(button, colorName, colorPrice, colorId);
-        }
-
-        this.updateDisplay();
+        // Hide size variants initially
+        this.hideSizeVariants();
       }
 
-      unselectColor(button) {
-        // Remove selection indicator
-        button.classList.remove('color-selected', 'ring-2', 'ring-orange-500', 'scale-110');
-        this.selectedColorData = null;
-
-        // Clear hidden fields
-        this.elements.selectedColorId.value = '';
-        this.elements.selectedColor.value = '';
-
-        // Reset to original product image
-        this.elements.mainImage.src = this.elements.mainImage.dataset.originalSrc || this.elements.mainImage.src;
-        this.elements.colorInfo.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to see pricing';
-      }
-
-      setColorSelection(button, colorName, colorPrice, colorId) {
-        // Remove previous selection indicators
-        document.querySelectorAll('.color-btn').forEach(btn => {
-          btn.classList.remove('color-selected', 'ring-2', 'ring-orange-500', 'scale-110');
-        });
-
-        // Add selection indicators to clicked button
-        button.classList.add('color-selected', 'ring-2', 'ring-orange-500', 'scale-110');
-
-        this.selectedColorData = {
-          id: colorId,
-          name: colorName,
-          price: parseFloat(colorPrice)
-        };
-
-        // Update hidden fields
-        this.elements.selectedColorId.value = colorId;
-        this.elements.selectedColor.value = colorName;
-
-        // Update display
-        this.elements.colorInfo.innerHTML =
-          `<i class="fas fa-check-circle text-green-500 mr-2"></i>Selected: <strong>${colorName}</strong> - Additional ₱${parseFloat(colorPrice).toFixed(2)}`;
-
-        // Update image if available
-        const colorImage = button.querySelector('img');
-        if (colorImage && colorImage.src && !colorImage.src.includes('opacity-0')) {
-          this.elements.mainImage.src = colorImage.src;
-        }
-      }
-
+      // STEP 1: Type Selection Methods
       showVariants(typeId, typeName) {
         const clickedButton = event.currentTarget;
         const isCurrentlySelected = clickedButton.classList.contains('selected');
@@ -1550,46 +1735,7 @@ class ProductSelector {
         this.updateDisplay();
       }
 
-      unselectType(button) {
-        // Remove selection indicators
-        button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
-        button.classList.add('border-gray-200', 'bg-white');
-
-        this.selectedTypeId = null;
-        this.elements.selectedType.value = '';
-
-        // Hide all variant groups
-        document.querySelectorAll('.variant-group').forEach(group => {
-          group.classList.add('hidden');
-        });
-
-        // Clear variant selection
-        this.clearVariantSelection();
-
-        // Show default message
-        this.elements.variantContainer.style.display = 'block';
-        this.elements.variantContainer.innerHTML = `
-          <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
-            <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-            <p>Please select a item first</p>
-          </div>
-        `;
-      }
-
       setTypeSelection(button, typeId, typeName) {
-        // Hide all variant groups
-        document.querySelectorAll('.variant-group').forEach(group => {
-          group.classList.add('hidden');
-        });
-
-        // Show selected variant group
-        const variantGroup = document.getElementById(`variants-${typeId}`);
-        if (variantGroup) {
-          variantGroup.classList.remove('hidden');
-          variantGroup.classList.add('fade-in');
-          this.elements.variantContainer.style.display = 'none';
-        }
-
         // Update type selection indicators
         document.querySelectorAll('.type-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
@@ -1601,20 +1747,208 @@ class ProductSelector {
         this.selectedTypeId = typeId;
         this.elements.selectedType.value = typeName;
 
-        // Clear previous variant selection
+        // Enable color selection after type is selected
+        this.enableColorSelection();
+
+        // Clear previous color and variant selections
+        this.clearColorSelection(false); // Don't disable color selection
         this.clearVariantSelection();
+
+        // Reset variant container message
+        this.elements.variantContainer.innerHTML = `
+      <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
+        <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+        <p>Please select a color first</p>
+      </div>
+    `;
+        this.elements.variantContainer.style.display = 'block';
       }
 
-      selectVariant(button, color) {
+      unselectType(button) {
+        // Remove selection indicators
+        button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.add('border-gray-200', 'bg-white');
+
+        this.selectedTypeId = null;
+        this.elements.selectedType.value = '';
+
+        // Disable color selection when no type is selected
+        this.disableColorSelection();
+
+        // Clear color and variant selections
+        this.clearColorSelection(false); // Don't disable since we're doing it above
+        this.clearVariantSelection();
+
+        // Hide all variant groups
+        document.querySelectorAll('.variant-group').forEach(group => {
+          group.classList.add('hidden');
+        });
+      }
+
+      // STEP 2: Color Selection Methods
+      setColorFromDropdown(colorId, colorName, price, image, colorCode) {
+        this.selectedColorData = {
+          id: colorId,
+          name: colorName,
+          price: parseFloat(price)
+        };
+
+        // Update hidden fields
+        this.elements.selectedColorId.value = colorId;
+        this.elements.selectedColor.value = colorName;
+
+        // Update main image if color has an image
+        if (image) {
+          this.elements.mainImage.src = `../../${image}`;
+        }
+
+        // Show size/variant options for the selected type
+        if (this.selectedTypeId) {
+          this.showSizeVariants(this.selectedTypeId);
+        }
+
+        // Update display and button state
+        this.updateDisplay();
+      }
+
+      clearColorSelection(shouldDisable = true) {
+        this.selectedColorData = null;
+
+        // Clear hidden fields
+        this.elements.selectedColorId.value = '';
+        this.elements.selectedColor.value = '';
+
+        // Reset dropdown
+        const dropdown = document.getElementById('color-dropdown');
+        if (dropdown) {
+          dropdown.value = '';
+        }
+
+        // Reset color preview
+        const preview = document.getElementById('color-preview');
+        if (preview) {
+          preview.classList.add('hidden');
+        }
+
+        // Reset color info
+        const colorInfo = document.getElementById('selected-color-info');
+        if (colorInfo) {
+          colorInfo.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to see pricing';
+        }
+
+        // Reset to original image
+        this.elements.mainImage.src = this.elements.mainImage.dataset.originalSrc || this.elements.mainImage.src;
+
+        // Optionally disable color selection
+        if (shouldDisable) {
+          this.disableColorSelection();
+        }
+
+        // Clear variant selection and hide variants
+        this.clearVariantSelection();
+        this.hideSizeVariants();
+
+        // Update display
+        this.updateDisplay();
+      }
+
+      enableColorSelection() {
+        const container = document.getElementById('color-selection-container');
+        const message = document.getElementById('color-disabled-message');
+
+        if (container && message) {
+          container.classList.remove('opacity-50', 'pointer-events-none');
+          message.style.display = 'none';
+        }
+      }
+
+      disableColorSelection() {
+        const container = document.getElementById('color-selection-container');
+        const message = document.getElementById('color-disabled-message');
+
+        if (container && message) {
+          container.classList.add('opacity-50', 'pointer-events-none');
+          message.style.display = 'block';
+        }
+      }
+
+      // STEP 3: Size/Variant Selection Methods
+      showSizeVariants(typeId) {
+        // Hide all variant groups first
+        document.querySelectorAll('.variant-group').forEach(group => {
+          group.classList.add('hidden');
+        });
+
+        // Show selected variant group
+        const variantGroup = document.getElementById(`variants-${typeId}`);
+        if (variantGroup) {
+          variantGroup.classList.remove('hidden');
+          variantGroup.classList.add('fade-in');
+          this.elements.variantContainer.style.display = 'none';
+        }
+      }
+
+      hideSizeVariants() {
+        // Hide all variant groups
+        document.querySelectorAll('.variant-group').forEach(group => {
+          group.classList.add('hidden');
+        });
+
+        // Show default message
+        this.elements.variantContainer.innerHTML = `
+      <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
+        <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
+        <p>Please select a color first</p>
+      </div>
+    `;
+        this.elements.variantContainer.style.display = 'block';
+      }
+
+      selectVariant(button, size, color = null) {
         const isCurrentlySelected = button.classList.contains('selected');
 
         if (isCurrentlySelected) {
           this.unselectVariant(button);
         } else {
-          this.setVariantSelection(button, color);
+          this.setVariantSelection(button, size, color);
         }
 
         this.updateDisplay();
+      }
+
+      setVariantSelection(button, size, color = null) {
+        // Remove previous selection indicators
+        document.querySelectorAll('.variant-btn').forEach(btn => {
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.add('border-gray-200', 'bg-white');
+        });
+
+        // Add selection indicators to clicked button
+        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.remove('border-gray-200', 'bg-white');
+
+        const price = parseFloat(button.dataset.price);
+        const percent = parseFloat(button.dataset.percent);
+        const discount = parseFloat(button.dataset.discount);
+        const variantId = button.dataset.variantId;
+
+        const priceWithMarkup = price + (price * percent / 100);
+        const finalPrice = priceWithMarkup - (priceWithMarkup * discount / 100);
+
+        this.selectedVariantData = {
+          price,
+          percent,
+          discount,
+          finalPrice,
+          priceWithMarkup,
+          variantId,
+          size: size,
+          color: color || ''
+        };
+
+        // Update hidden fields
+        this.elements.selectedVariant.value = size;
+        this.elements.variantId.value = variantId;
       }
 
       unselectVariant(button) {
@@ -1627,42 +1961,6 @@ class ProductSelector {
         this.elements.variantId.value = '';
       }
 
-   // In the ProductSelector class, update the setVariantSelection method:
-setVariantSelection(button, size, color = null) {
-  // Remove previous selection indicators
-  document.querySelectorAll('.variant-btn').forEach(btn => {
-    btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
-    btn.classList.add('border-gray-200', 'bg-white');
-  });
-
-  // Add selection indicators to clicked button
-  button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
-  button.classList.remove('border-gray-200', 'bg-white');
-
-  const price = parseFloat(button.dataset.price);
-  const percent = parseFloat(button.dataset.percent);
-  const discount = parseFloat(button.dataset.discount);
-  const variantId = button.dataset.variantId;
-
-  const priceWithMarkup = price + (price * percent / 100);
-  const finalPrice = priceWithMarkup - (priceWithMarkup * discount / 100);
-
-  this.selectedVariantData = {
-    price,
-    percent,
-    discount,
-    finalPrice,
-    priceWithMarkup,
-    variantId,
-    size: size,        // Now properly stores the size
-    color: color || '' // Optional color parameter
-  };
-
-  // Update hidden fields
-  this.elements.selectedVariant.value = size; // Now stores the actual size
-  this.elements.variantId.value = variantId;
-}
-
       clearVariantSelection() {
         this.selectedVariantData = null;
         this.elements.selectedVariant.value = '';
@@ -1673,6 +1971,7 @@ setVariantSelection(button, size, color = null) {
         });
       }
 
+      // Price and Display Methods
       calculateTotalPrice() {
         let totalPrice = 0;
         const hasSelections = this.selectedColorData || this.selectedVariantData;
@@ -1714,67 +2013,67 @@ setVariantSelection(button, size, color = null) {
 
         // Update selection status
         const status = [];
+        if (this.selectedTypeId) status.push(`Type: ${this.elements.selectedType.value}`);
         if (this.selectedColorData) status.push(`Color: ${this.selectedColorData.name}`);
-        if (this.selectedVariantData) status.push(`Variant: ${this.selectedVariantData.color}`);
+        if (this.selectedVariantData) status.push(`Size: ${this.selectedVariantData.size}`);
 
         this.elements.selectionStatus.textContent =
-          status.length > 0 ? status.join(', ') : 'Select all options above';
+          status.length > 0 ? status.join(', ') : 'Follow steps 1-3 to see total price';
       }
 
       updatePurchaseButton() {
-    const hasRequiredSelections = this.selectedColorData &&
-      (!this.hasTypes || (this.selectedTypeId && this.selectedVariantData));
+        const hasRequiredSelections = this.selectedTypeId && this.selectedColorData && this.selectedVariantData;
 
-    if (this.isWindows) {
-      // Handle Contact Us button for windows
-      const contactBtn = this.elements.contactUsBtn;
-      const contactBtnText = this.elements.contactBtnText;
-      
-      if (hasRequiredSelections) {
-        contactBtn.disabled = false;
-        contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg  transition-all duration-300 bg-black hover:bg-blue-600 text-white';
-        contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
-      } else {
-        contactBtn.disabled = true;
-        contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg  transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-        contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Select Options to Contact Us';
+        if (this.isWindows) {
+          // Handle Contact Us button for windows
+          const contactBtn = this.elements.contactUsBtn;
+          const contactBtnText = this.elements.contactBtnText;
+
+          if (hasRequiredSelections) {
+            contactBtn.disabled = false;
+            contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white';
+            contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
+          } else {
+            contactBtn.disabled = true;
+            contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+            contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Complete Steps 1-3 to Contact Us';
+          }
+        } else {
+          // Handle regular Add to Cart button
+          const addToCartBtn = this.elements.addToCartBtn;
+          const btnText = this.elements.btnText;
+
+          if (hasRequiredSelections) {
+            addToCartBtn.disabled = false;
+            addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white';
+            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Pre-Order';
+          } else {
+            addToCartBtn.disabled = true;
+            addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Complete Steps 1-3 to Pre-Order';
+          }
+        }
       }
-    } else {
-      // Handle regular Add to Cart button
-      const addToCartBtn = this.elements.addToCartBtn;
-      const btnText = this.elements.btnText;
-      
-      if (hasRequiredSelections) {
-        addToCartBtn.disabled = false;
-        addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white';
-        btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Pre-Order';
-      } else {
-        addToCartBtn.disabled = true;
-        addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-        btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Select Options to Pre-Order';
-      }
-    }
-  }
 
       updateDisplay() {
         this.updateTotalPrice();
         this.updatePurchaseButton();
       }
 
+      // Form Submission Methods
       validateSelections() {
         const errors = [];
+
+        if (!this.selectedTypeId) {
+          errors.push('Please select an item type');
+        }
 
         if (!this.selectedColorData) {
           errors.push('Please select a color');
         }
 
-        if (this.hasTypes) {
-          if (!this.selectedTypeId) {
-            errors.push('Please select a product item');
-          }
-          if (!this.selectedVariantData) {
-            errors.push('Please select a variant');
-          }
+        if (!this.selectedVariantData) {
+          errors.push('Please select a size');
         }
 
         return errors;
@@ -1864,6 +2163,7 @@ setVariantSelection(button, size, color = null) {
         return formData;
       }
 
+      // Utility Methods
       showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         const bgColor = {
@@ -1907,6 +2207,65 @@ setVariantSelection(button, size, color = null) {
     // Initialize the product selector
     const productSelector = new ProductSelector();
 
+    // Color dropdown function - connects to ProductSelector
+    function selectColorFromDropdown(selectElement) {
+      const selectedOption = selectElement.options[selectElement.selectedIndex];
+
+      if (selectedOption.value === "") {
+        // No color selected - clear selection
+        productSelector.clearColorSelection();
+        document.getElementById('color-preview').classList.add('hidden');
+        document.getElementById('selected-color-info').innerHTML =
+          '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to see pricing';
+        return;
+      }
+
+      const colorId = selectedOption.value;
+      const colorName = selectedOption.dataset.colorName;
+      const price = parseFloat(selectedOption.dataset.price);
+      const colorCode = selectedOption.dataset.colorCode;
+      const image = selectedOption.dataset.image;
+
+      // Update ProductSelector with selected color
+      productSelector.setColorFromDropdown(colorId, colorName, price, image, colorCode);
+
+      // Update preview display
+      const preview = document.getElementById('color-preview');
+      const colorSquare = document.getElementById('preview-color-square');
+      const nameElement = document.getElementById('preview-color-name');
+      const priceElement = document.getElementById('preview-color-price');
+
+      // Set color square
+      if (image) {
+        colorSquare.style.backgroundColor = '';
+        colorSquare.innerHTML = `<img src="../../${image}" alt="${colorName}" class="w-full h-full object-contain">`;
+      } else {
+        colorSquare.style.backgroundColor = colorCode;
+        colorSquare.innerHTML = '';
+      }
+
+      // Set color info
+      nameElement.textContent = colorName;
+      if (price > 0) {
+        priceElement.innerHTML = '<span class="text-orange-600 font-semibold">+₱' + price.toLocaleString('en-US', {
+          minimumFractionDigits: 2
+        }) + '</span>';
+      } else {
+        priceElement.innerHTML = '<span class="text-green-600 font-semibold">No extra cost</span>';
+      }
+
+      // Show preview
+      preview.classList.remove('hidden');
+
+      // Update info box
+      const infoText = price > 0 ?
+        `Selected: ${colorName} (+₱${price.toLocaleString('en-US', {minimumFractionDigits: 2})})` :
+        `Selected: ${colorName} (No extra cost)`;
+
+      document.getElementById('selected-color-info').innerHTML =
+        '<i class="fas fa-check-circle text-green-500 mr-2"></i>' + infoText;
+    }
+
     // Global functions for onclick handlers
     function selectColor(button, colorName, colorPrice, colorId) {
       productSelector.selectColor(button, colorName, colorPrice, colorId);
@@ -1917,8 +2276,8 @@ setVariantSelection(button, size, color = null) {
     }
 
     function selectVariant(button, size, color = null) {
-  productSelector.selectVariant(button, size, color);
-}
+      productSelector.selectVariant(button, size, color);
+    }
 
     function shareProduct() {
       const productName = document.querySelector('h1').textContent;

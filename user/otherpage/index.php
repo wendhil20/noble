@@ -1322,7 +1322,7 @@ handleQueryError($conn, "New Status Query");
 
                     <!-- Materials -->
                     <div class="swiper-slide">
-                        <a href="shop?category[]=materials" class="group block">
+                        <a href="shop?category[]=buildingmaterials" class="group block">
                             <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
@@ -1468,7 +1468,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
                 </a>
 
-                <a href="shop?category[]=materials" class="group">
+                <a href="shop?category[]=buildingmaterials" class="group">
                     <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">

@@ -90,7 +90,7 @@ $total_pages = ceil($total_products / $per_page);
 
 $all_categories = [
     'furniture' => 'Furniture',
-    'material' => 'Materials',
+    'buildingmaterial' => 'Materials',
     'electrical' => 'Electrical',
     'lighting' => 'Lighting',
     'bedfurniture' => 'Bedroom Furniture',

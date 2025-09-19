@@ -136,16 +136,23 @@ $lalamoveSql = "SELECT
     ds.delivery_status,
     ds.delivery_type,
     ds.delivery_proof,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
     o.address,
-    oi.product_name,
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN CONCAT('[REPLACEMENT] ', oi.product_name)
+        ELSE oi.product_name
+    END as product_name,
     oi.quantity,
     oi.price,
     oi.variant_color,
     oi.size,
     oi.subtotal,
+    rr.reason as replacement_reason,
+    rr.status as replacement_status,
     CASE 
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
@@ -155,8 +162,9 @@ $lalamoveSql = "SELECT
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
+LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
 WHERE ds.delivery_date = ? AND ds.delivery_type = 'lalamove'
-ORDER BY ds.delivery_time ASC, ds.order_id ASC";
+ORDER BY ds.item_type DESC, ds.delivery_time ASC, ds.order_id ASC";
 
 $lalamoveStmt = $conn->prepare($lalamoveSql);
 $lalamoveStmt->bind_param("s", $selected_date);
@@ -176,16 +184,23 @@ $thirdPartySql = "SELECT
     ds.delivery_status,
     ds.delivery_type,
     ds.delivery_proof,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
     o.address,
-    oi.product_name,
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN CONCAT('[REPLACEMENT] ', oi.product_name)
+        ELSE oi.product_name
+    END as product_name,
     oi.quantity,
     oi.price,
     oi.variant_color,
     oi.size,
     oi.subtotal,
+    rr.reason as replacement_reason,
+    rr.status as replacement_status,
     CASE 
         WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
         WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
@@ -195,8 +210,9 @@ $thirdPartySql = "SELECT
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 INNER JOIN order_items oi ON ds.item_id = oi.id
+LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
 WHERE ds.delivery_date = ? AND ds.delivery_type = 'third_party'
-ORDER BY ds.delivery_time ASC, ds.order_id ASC";
+ORDER BY ds.item_type DESC, ds.delivery_time ASC, ds.order_id ASC";
 
 $thirdPartyStmt = $conn->prepare($thirdPartySql);
 $thirdPartyStmt->bind_param("s", $selected_date);
@@ -211,7 +227,10 @@ $statsSql = "SELECT
     COUNT(CASE WHEN ds.delivery_type = 'lalamove' AND ds.delivered_at IS NOT NULL THEN 1 END) as completed_lalamove,
     COUNT(CASE WHEN ds.delivery_type = 'third_party' AND ds.delivered_at IS NOT NULL THEN 1 END) as completed_third_party,
     COUNT(CASE WHEN ds.delivery_type IN ('lalamove', 'third_party') AND ds.delivery_status = 'out_for_delivery' THEN 1 END) as out_for_delivery,
-    COUNT(CASE WHEN ds.delivery_type IN ('lalamove', 'third_party') AND ds.delivery_status = 'third_party_assigned' THEN 1 END) as pending_pickup
+    COUNT(CASE WHEN ds.delivery_type IN ('lalamove', 'third_party') AND ds.delivery_status = 'third_party_assigned' THEN 1 END) as pending_pickup,
+    COUNT(CASE WHEN ds.delivery_type = 'lalamove' AND ds.item_type = 'replacement' THEN 1 END) as lalamove_replacements,
+    COUNT(CASE WHEN ds.delivery_type = 'third_party' AND ds.item_type = 'replacement' THEN 1 END) as third_party_replacements,
+    COUNT(CASE WHEN ds.delivery_type IN ('lalamove', 'third_party') AND ds.item_type = 'replacement' THEN 1 END) as total_replacements
 FROM delivery_schedules ds
 WHERE ds.delivery_date = ? AND ds.delivery_type IN ('lalamove', 'third_party')";
 
@@ -258,6 +277,31 @@ $statsStmt->close();
         .status-delivered { @apply bg-green-100 text-green-800; }
         .modal-backdrop {
             backdrop-filter: blur(5px);
+        }
+
+        .modal-backdrop {
+            backdrop-filter: blur(5px);
+        }
+        
+        .replacement-item {
+            border-left: 4px solid #ef4444 !important;
+            position: relative;
+        }
+        
+        .replacement-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            z-index: 10;
         }
     </style>
 </head>
@@ -317,7 +361,7 @@ $statsStmt->close();
         <?php endif; ?>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-7 gap-4 mb-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="text-center">
                     <div class="bg-pink-100 p-3 rounded-lg mx-auto w-fit mb-2">
@@ -377,6 +421,16 @@ $statsStmt->close();
                     <p class="text-xl font-bold text-emerald-600"><?php echo $stats['completed_third_party']; ?></p>
                 </div>
             </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="text-center">
+                    <div class="bg-red-100 p-3 rounded-lg mx-auto w-fit mb-2">
+                        <i class="fas fa-exchange-alt text-red-600 text-lg"></i>
+                    </div>
+                    <p class="text-xs font-medium text-gray-600 mb-1">Total Replacements</p>
+                    <p class="text-xl font-bold text-red-600"><?php echo $stats['total_replacements']; ?></p>
+                </div>
+            </div>
         </div>
 
         <!-- Lalamove Section -->
@@ -416,11 +470,30 @@ $statsStmt->close();
                             ];
                             ?>
                             
-                            <div class="delivery-item bg-pink-50 border-2 border-pink-200 rounded-lg p-4">
+                            <?php
+                            $cardClass = "delivery-item bg-pink-50 border-2 border-pink-200 rounded-lg p-4";
+                            if ($item['item_type'] === 'replacement') {
+                                $cardClass .= " replacement-item";
+                            }
+                            ?>
+                            <div class="<?php echo $cardClass; ?>">
+                                <?php if ($item['item_type'] === 'replacement'): ?>
+                                <div class="replacement-indicator">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <?php endif; ?>
                                 <div class="flex items-center justify-between mb-3">
-                                    <span class="bg-pink-100 text-pink-800 px-2 py-1 rounded text-xs font-medium">
-                                        Order #<?php echo $item['order_id']; ?>
-                                    </span>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="bg-pink-100 text-pink-800 px-2 py-1 rounded text-xs font-medium">
+                                            Order #<?php echo $item['order_id']; ?>
+                                        </span>
+                                        <?php if ($item['item_type'] === 'replacement'): ?>
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                                            <i class="fas fa-exchange-alt mr-1"></i>
+                                            REPLACEMENT
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="flex items-center space-x-2">
                                         <span class="status-<?php echo $status; ?> px-2 py-1 rounded text-xs font-bold">
                                             <?php echo $statusLabels[$status] ?? ucfirst($status); ?>
@@ -441,6 +514,14 @@ $statsStmt->close();
                                 <h5 class="font-semibold text-gray-900 mb-2">
                                     <?php echo htmlspecialchars($item['product_name']); ?>
                                 </h5>
+                                
+                                <?php if ($item['replacement_reason']): ?>
+                                <div class="text-xs text-red-600 mb-2 bg-red-50 p-2 rounded">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    <strong>Replacement Reason:</strong> <?php echo ucfirst(str_replace('_', ' ', $item['replacement_reason'])); ?>
+                                </div>
+                                <?php endif; ?>
+                                
                                 
                                 <div class="text-sm text-gray-600 space-y-1 mb-3">
                                     <div class="flex justify-between">
@@ -566,11 +647,30 @@ $statsStmt->close();
                             ];
                             ?>
                             
-                            <div class="delivery-item bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                            <?php
+                            $cardClass = "delivery-item bg-blue-50 border-2 border-blue-200 rounded-lg p-4";
+                            if ($item['item_type'] === 'replacement') {
+                                $cardClass .= " replacement-item";
+                            }
+                            ?>
+                            <div class="<?php echo $cardClass; ?>">
+                                <?php if ($item['item_type'] === 'replacement'): ?>
+                                <div class="replacement-indicator">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <?php endif; ?>
                                 <div class="flex items-center justify-between mb-3">
-                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                                        Order #<?php echo $item['order_id']; ?>
-                                    </span>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                                            Order #<?php echo $item['order_id']; ?>
+                                        </span>
+                                        <?php if ($item['item_type'] === 'replacement'): ?>
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                                            <i class="fas fa-exchange-alt mr-1"></i>
+                                            REPLACEMENT
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="flex items-center space-x-2">
                                         <span class="status-<?php echo $status; ?> px-2 py-1 rounded text-xs font-bold">
                                             <?php echo $statusLabels[$status] ?? ucfirst($status); ?>
@@ -591,6 +691,13 @@ $statsStmt->close();
                                 <h5 class="font-semibold text-gray-900 mb-2">
                                     <?php echo htmlspecialchars($item['product_name']); ?>
                                 </h5>
+                                
+                                <?php if ($item['replacement_reason']): ?>
+                                <div class="text-xs text-red-600 mb-2 bg-red-50 p-2 rounded">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    <strong>Replacement Reason:</strong> <?php echo ucfirst(str_replace('_', ' ', $item['replacement_reason'])); ?>
+                                </div>
+                                <?php endif; ?>
                                 
                                 <div class="text-sm text-gray-600 space-y-1 mb-3">
                                     <div class="flex justify-between">

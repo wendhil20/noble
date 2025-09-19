@@ -47,11 +47,22 @@ $stmt->execute();
 $delivery_settings = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// Get order items with tracking status
+// Get order items with tracking status and replacement info
 $stmt = $conn->prepare("
-    SELECT * FROM order_items 
-    WHERE order_id = ?
-    ORDER BY id
+    SELECT oi.*,
+           rr.id as replacement_request_id,
+           rr.status as replacement_status,
+           rr.reason as replacement_reason,
+           rr.created_at as replacement_requested_at,
+           ds.id as replacement_delivery_id,
+           ds.delivery_status as replacement_delivery_status,
+           ds.delivered_at as replacement_delivered_at,
+           ds.delivery_proof as replacement_delivery_proof
+    FROM order_items oi
+    LEFT JOIN replacement_requests rr ON oi.id = rr.order_item_id
+    LEFT JOIN delivery_schedules ds ON rr.id = ds.replacement_id
+    WHERE oi.order_id = ?
+    ORDER BY oi.id
 ");
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
@@ -155,6 +166,42 @@ function getInternationalStatusSteps() {
     ];
 }
 
+// Function to get replacement status steps
+function getReplacementStatusSteps() {
+    return [
+        'pending' => [
+            'name' => 'Request Pending',
+            'description' => 'Replacement request submitted',
+            'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+        ],
+        'approved' => [
+            'name' => 'Request Approved',
+            'description' => 'Replacement approved',
+            'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+        ],
+        'processing' => [
+            'name' => 'Processing',
+            'description' => 'Preparing replacement',
+            'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+        ],
+        'ready_for_pickup' => [
+            'name' => 'Ready for Delivery',
+            'description' => 'Ready for pickup',
+            'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+        ],
+        'out_for_delivery' => [
+            'name' => 'Out for Delivery',
+            'description' => 'Replacement being delivered',
+            'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
+        ],
+        'delivered' => [
+            'name' => 'Replacement Delivered',
+            'description' => 'Replacement received',
+            'icon' => 'M5 13l4 4L19 7'
+        ]
+    ];
+}
+
 // Function to get current step index
 function getCurrentStepIndex($status, $steps) {
     $status = strtolower(str_replace(' ', '_', $status));
@@ -192,13 +239,13 @@ function isEligibleForReplacement($item, $order) {
 
 // Function to check if replacement was already requested
 function hasReplacementRequest($item_id, $conn) {
-    $stmt = $conn->prepare("SELECT id FROM replacement_requests WHERE order_item_id = ?");
+    $stmt = $conn->prepare("SELECT id, status FROM replacement_requests WHERE order_item_id = ?");
     $stmt->bind_param("i", $item_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    $has_request = $result->num_rows > 0;
+    $replacement = $result->fetch_assoc();
     $stmt->close();
-    return $has_request;
+    return $replacement;
 }
 
 // Check if order status allows showing item tracking - FIXED
@@ -624,9 +671,15 @@ $show_map = $delivery_settings &&
                     $origin = strtolower($item['origin'] ?? 'local');
                     $current_status = $item['tracking_status'] ?? 'processing';
                     
-                    // Check replacement eligibility
+                    // Check replacement eligibility and status
                     $is_eligible_for_replacement = isEligibleForReplacement($item, $order);
-                    $has_replacement_request = hasReplacementRequest($item['id'], $conn);
+                    $replacement_info = hasReplacementRequest($item['id'], $conn);
+                    $has_replacement_request = !empty($replacement_info);
+                    
+                    // Determine if we should show replacement tracking
+                    $show_replacement_tracking = $has_replacement_request && 
+                                               $item['replacement_delivery_id'] && 
+                                               in_array($item['replacement_status'], ['approved', 'processing', 'ready_for_pickup', 'out_for_delivery', 'delivered']);
                     
                     if ($origin === 'local') {
                         $steps = getLocalStatusSteps();
@@ -664,7 +717,36 @@ $show_map = $delivery_settings &&
                                     </span>
                                     
                                     <!-- Replacement Button/Status -->
-                                    <?php if ($has_replacement_request): ?>
+                                    <?php if ($show_replacement_tracking): ?>
+                                        <?php
+                                        $replacement_status = $item['replacement_status'];
+                                        $replacement_delivery_status = $item['replacement_delivery_status'] ?? 'scheduled';
+                                        
+                                        // Determine current replacement status for display
+                                        if ($replacement_delivery_status === 'delivered') {
+                                            $status_color = 'bg-green-100 text-green-800';
+                                            $status_text = '✅ Replacement Delivered';
+                                        } elseif ($replacement_delivery_status === 'out_for_delivery') {
+                                            $status_color = 'bg-blue-100 text-blue-800';
+                                            $status_text = '🚚 Replacement Out for Delivery';
+                                        } elseif ($replacement_status === 'ready_for_pickup') {
+                                            $status_color = 'bg-purple-100 text-purple-800';
+                                            $status_text = '📦 Replacement Ready';
+                                        } elseif ($replacement_status === 'processing') {
+                                            $status_color = 'bg-yellow-100 text-yellow-800';
+                                            $status_text = '⚙️ Processing Replacement';
+                                        } elseif ($replacement_status === 'approved') {
+                                            $status_color = 'bg-indigo-100 text-indigo-800';
+                                            $status_text = '✓ Replacement Approved';
+                                        } else {
+                                            $status_color = 'bg-orange-100 text-orange-800';
+                                            $status_text = '🔄 Replacement Requested';
+                                        }
+                                        ?>
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full <?= $status_color ?> w-fit">
+                                            <?= $status_text ?>
+                                        </span>
+                                    <?php elseif ($has_replacement_request): ?>
                                         <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 w-fit">
                                             🔄 Replacement Requested
                                         </span>
@@ -678,6 +760,142 @@ $show_map = $delivery_settings &&
                                 <span class="text-base sm:text-lg font-bold text-gray-900">₱<?= number_format($item['subtotal'], 2) ?></span>
                             </div>
                         </div>
+
+                        <!-- Replacement Tracking Section -->
+                        <?php if ($show_replacement_tracking): ?>
+                            <div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-sm font-semibold text-orange-800">Replacement Progress</h5>
+                                    <?php if ($item['replacement_reason']): ?>
+                                    <span class="text-xs text-orange-600">
+                                        Reason: <?= ucfirst(str_replace('_', ' ', $item['replacement_reason'])) ?>
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <?php
+                                // Determine replacement tracking status
+                                $replacement_tracking_status = 'pending';
+                                if ($item['replacement_delivery_status'] === 'delivered') {
+                                    $replacement_tracking_status = 'delivered';
+                                } elseif ($item['replacement_delivery_status'] === 'out_for_delivery') {
+                                    $replacement_tracking_status = 'out_for_delivery';
+                                } elseif ($item['replacement_status'] === 'ready_for_pickup') {
+                                    $replacement_tracking_status = 'ready_for_pickup';
+                                } elseif ($item['replacement_status'] === 'processing') {
+                                    $replacement_tracking_status = 'processing';
+                                } elseif ($item['replacement_status'] === 'approved') {
+                                    $replacement_tracking_status = 'approved';
+                                }
+                                
+                                $replacement_steps = getReplacementStatusSteps();
+                                $replacement_current_index = getCurrentStepIndex($replacement_tracking_status, $replacement_steps);
+                                ?>
+                                
+                                <!-- Desktop Replacement Steps -->
+                                <div class="hidden sm:flex items-center justify-between">
+                                    <?php 
+                                    $step_count = 0;
+                                    $total_replacement_steps = count($replacement_steps);
+                                    
+                                    foreach ($replacement_steps as $step_key => $step_data): 
+                                        $is_completed = $step_count <= $replacement_current_index;
+                                        $is_current = $step_count === $replacement_current_index;
+                                        $is_last = $step_count === $total_replacement_steps - 1;
+                                    ?>
+                                        <div class="flex flex-col items-center flex-1">
+                                            <div class="w-6 h-6 rounded-full flex items-center justify-center mb-1
+                                                <?php 
+                                                if ($is_completed) {
+                                                    echo $is_current ? 'bg-orange-500 text-white animate-pulse-slow' : 'bg-green-500 text-white';
+                                                } else {
+                                                    echo 'bg-gray-300 text-gray-500';
+                                                }
+                                                ?>">
+                                                <?php if ($is_completed && !$is_current): ?>
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                <?php else: ?>
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $step_data['icon'] ?>"/>
+                                                    </svg>
+                                                <?php endif; ?>
+                                            </div>
+                                            <p class="text-xs font-medium <?= $is_completed ? 'text-orange-800' : 'text-gray-500' ?> text-center leading-tight">
+                                                <?= $step_data['name'] ?>
+                                            </p>
+                                        </div>
+                                        
+                                        <?php if (!$is_last): ?>
+                                            <div class="flex-1 h-0.5 mx-2 <?= $is_completed && $step_count < $replacement_current_index ? 'bg-green-500' : 'bg-gray-300' ?>"></div>
+                                        <?php endif; ?>
+                                        
+                                    <?php 
+                                        $step_count++;
+                                    endforeach; 
+                                    ?>
+                                </div>
+                                
+                                <!-- Mobile Replacement Steps -->
+                                <div class="sm:hidden mobile-item-steps">
+                                    <div class="flex items-center space-x-3 pb-2" style="min-width: max-content;">
+                                        <?php 
+                                        $step_count = 0;
+                                        $total_replacement_steps = count($replacement_steps);
+                                        
+                                        foreach ($replacement_steps as $step_key => $step_data): 
+                                            $is_completed = $step_count <= $replacement_current_index;
+                                            $is_current = $step_count === $replacement_current_index;
+                                            $is_last = $step_count === $total_replacement_steps - 1;
+                                        ?>
+                                            <div class="flex flex-col items-center flex-shrink-0 w-14">
+                                                <div class="w-6 h-6 rounded-full flex items-center justify-center mb-1
+                                                    <?php 
+                                                    if ($is_completed) {
+                                                        echo $is_current ? 'bg-orange-500 text-white animate-pulse-slow' : 'bg-green-500 text-white';
+                                                    } else {
+                                                        echo 'bg-gray-300 text-gray-500';
+                                                    }
+                                                    ?>">
+                                                    <?php if ($is_completed && !$is_current): ?>
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                    <?php else: ?>
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $step_data['icon'] ?>"/>
+                                                        </svg>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <p class="text-xs font-medium <?= $is_completed ? 'text-orange-800' : 'text-gray-500' ?> text-center leading-tight">
+                                                    <?= $step_data['name'] ?>
+                                                </p>
+                                            </div>
+                                            
+                                            <?php if (!$is_last): ?>
+                                                <div class="h-0.5 w-6 flex-shrink-0 <?= $is_completed && $step_count < $replacement_current_index ? 'bg-green-500' : 'bg-gray-300' ?> mt-3"></div>
+                                            <?php endif; ?>
+                                            
+                                        <?php 
+                                            $step_count++;
+                                        endforeach; 
+                                        ?>
+                                    </div>
+                                </div>
+                                
+                                <!-- Replacement Details -->
+                                <?php if ($item['replacement_delivered_at']): ?>
+                                <div class="mt-2 text-xs text-green-700">
+                                    <strong>Delivered:</strong> <?= date('M j, Y g:i A', strtotime($item['replacement_delivered_at'])) ?>
+                                </div>
+                                <?php elseif ($item['replacement_requested_at']): ?>
+                                <div class="mt-2 text-xs text-orange-700">
+                                    <strong>Requested:</strong> <?= date('M j, Y g:i A', strtotime($item['replacement_requested_at'])) ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                         
                         <!-- Show tracking steps only if order is not pending -->
                         <?php if ($show_item_tracking): ?>

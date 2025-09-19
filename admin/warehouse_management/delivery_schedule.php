@@ -15,19 +15,42 @@ if (!isset($_SESSION['noble_user'])) {
 $order_id = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
 $item_id = isset($_GET['item_id']) ? (int)$_GET['item_id'] : 0;
 $origin = isset($_GET['origin']) ? $_GET['origin'] : '';
+$replacement_id = isset($_GET['replacement_id']) ? (int)$_GET['replacement_id'] : 0;
 
-if ($order_id <= 0 || $item_id <= 0 || !in_array($origin, ['local', 'international'])) {
+// Validate input parameters
+if ($order_id <= 0 || $item_id <= 0 || !in_array($origin, ['local', 'international', 'replacement'])) {
     header("Location: order_list.php");
     exit();
 }
 
+// If it's a replacement request, validate replacement_id
+if ($origin === 'replacement' && $replacement_id <= 0) {
+    header("Location: order_tracking.php?order_id=$order_id");
+    exit();
+}
+
 // Get order and item details
-$itemSql = "SELECT oi.*, o.customer_name, o.address, o.mobile 
-            FROM order_items oi 
-            JOIN orders o ON oi.order_id = o.id 
-            WHERE oi.id = ? AND oi.order_id = ? LIMIT 1";
-$itemStmt = $conn->prepare($itemSql);
-$itemStmt->bind_param("ii", $item_id, $order_id);
+if ($origin === 'replacement') {
+    // Get replacement request details with original item info
+    $itemSql = "SELECT rr.*, 
+                       oi.product_name, oi.price, oi.origin,
+                       o.customer_name, o.address, o.mobile 
+                FROM replacement_requests rr
+                JOIN order_items oi ON rr.order_item_id = oi.id
+                JOIN orders o ON rr.order_id = o.id 
+                WHERE rr.id = ? AND rr.order_id = ? AND rr.order_item_id = ? LIMIT 1";
+    $itemStmt = $conn->prepare($itemSql);
+    $itemStmt->bind_param("iii", $replacement_id, $order_id, $item_id);
+} else {
+    // Get original order item details
+    $itemSql = "SELECT oi.*, o.customer_name, o.address, o.mobile 
+                FROM order_items oi 
+                JOIN orders o ON oi.order_id = o.id 
+                WHERE oi.id = ? AND oi.order_id = ? LIMIT 1";
+    $itemStmt = $conn->prepare($itemSql);
+    $itemStmt->bind_param("ii", $item_id, $order_id);
+}
+
 $itemStmt->execute();
 $item = $itemStmt->get_result()->fetch_assoc();
 $itemStmt->close();
@@ -46,24 +69,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
     try {
         $conn->begin_transaction();
         
-        // Insert delivery schedule (simplified - no vehicle/driver assignment)
-        $scheduleSql = "INSERT INTO delivery_schedules (order_id, item_id, delivery_date, delivery_time, delivery_notes, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())";
-        $scheduleStmt = $conn->prepare($scheduleSql);
-        $scheduleStmt->bind_param("iissss", $order_id, $item_id, $delivery_date, $delivery_time, $delivery_notes, $_SESSION['noble_user']);
-        $scheduleStmt->execute();
-        $scheduleStmt->close();
-        
-        // Update item status based on origin
-        $new_status = ($origin === 'local') ? 'ready_for_pickup' : 'in_local_warehouse';
-        $updateSql = "UPDATE order_items SET tracking_status = ? WHERE id = ? AND order_id = ?";
-        $updateStmt = $conn->prepare($updateSql);
-        $updateStmt->bind_param("sii", $new_status, $item_id, $order_id);
-        $updateStmt->execute();
-        $updateStmt->close();
+        if ($origin === 'replacement') {
+            // Insert replacement delivery schedule
+            $scheduleSql = "INSERT INTO delivery_schedules (order_id, item_id, replacement_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 'replacement', ?, NOW())";
+            $scheduleStmt = $conn->prepare($scheduleSql);
+            $scheduleStmt->bind_param("iiissss", $order_id, $item_id, $replacement_id, $delivery_date, $delivery_time, $delivery_notes, $_SESSION['noble_user']);
+            $scheduleStmt->execute();
+            $scheduleStmt->close();
+            
+            // Update replacement request status
+            $new_status = 'ready_for_pickup';
+            $updateSql = "UPDATE replacement_requests SET status = ? WHERE id = ? AND order_id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("sii", $new_status, $replacement_id, $order_id);
+            $updateStmt->execute();
+            $updateStmt->close();
+        } else {
+            // Insert original item delivery schedule
+            $scheduleSql = "INSERT INTO delivery_schedules (order_id, item_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) VALUES (?, ?, ?, ?, ?, 'original', ?, NOW())";
+            $scheduleStmt = $conn->prepare($scheduleSql);
+            $scheduleStmt->bind_param("iissss", $order_id, $item_id, $delivery_date, $delivery_time, $delivery_notes, $_SESSION['noble_user']);
+            $scheduleStmt->execute();
+            $scheduleStmt->close();
+            
+            // Update original item status based on origin
+            $new_status = ($origin === 'local') ? 'ready_for_pickup' : 'in_local_warehouse';
+            $updateSql = "UPDATE order_items SET tracking_status = ? WHERE id = ? AND order_id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("sii", $new_status, $item_id, $order_id);
+            $updateStmt->execute();
+            $updateStmt->close();
+        }
         
         $conn->commit();
         
-        $success_message = "Item scheduled for delivery successfully!";
+        $success_message = ($origin === 'replacement') ? 
+            "Replacement item scheduled for delivery successfully!" : 
+            "Item scheduled for delivery successfully!";
         
         // Redirect after 2 seconds
         echo "<script>
@@ -78,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
     }
 }
 
-// Get scheduled deliveries for the next 60 days for calendar
+// Get scheduled deliveries for the next 60 days for calendar (including replacements)
 $calendarSql = "SELECT DATE(ds.delivery_date) as date, COUNT(*) as count
                 FROM delivery_schedules ds
                 WHERE ds.delivery_date >= CURDATE() AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
@@ -94,11 +136,25 @@ foreach ($calendarData as $data) {
     $deliveryCountsByDate[$data['date']] = $data['count'];
 }
 
-// Get scheduled deliveries for the next 30 days
-$scheduleSql = "SELECT ds.*, oi.product_name, oi.quantity, oi.price, o.customer_name, o.address
+// Get scheduled deliveries for the next 30 days (including replacements)
+$scheduleSql = "SELECT ds.*, 
+                       CASE 
+                           WHEN ds.item_type = 'replacement' THEN CONCAT(oi.product_name, ' (REPLACEMENT)')
+                           ELSE oi.product_name
+                       END as product_name,
+                       CASE 
+                           WHEN ds.item_type = 'replacement' THEN rr.replacement_quantity
+                           ELSE oi.quantity
+                       END as quantity,
+                       oi.price, o.customer_name, o.address,
+                       CASE 
+                           WHEN ds.item_type = 'replacement' THEN rr.reason
+                           ELSE NULL
+                       END as replacement_reason
                 FROM delivery_schedules ds
                 JOIN order_items oi ON ds.item_id = oi.id
                 JOIN orders o ON ds.order_id = o.id
+                LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id AND ds.item_type = 'replacement'
                 WHERE ds.delivery_date >= CURDATE() AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
                 ORDER BY ds.delivery_date, ds.delivery_time";
 $scheduleStmt = $conn->prepare($scheduleSql);
@@ -115,6 +171,14 @@ foreach ($schedules as $schedule) {
     }
     $schedulesByDate[$date][] = $schedule;
 }
+
+// Determine display values based on item type
+$isReplacement = ($origin === 'replacement');
+$displayProductName = $isReplacement ? 
+    htmlspecialchars($item['product_name']) . ' (REPLACEMENT)' : 
+    htmlspecialchars($item['product_name']);
+$displayQuantity = $isReplacement ? $item['replacement_quantity'] : $item['quantity'];
+$displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['reason'])) : '';
 ?>
 
 <!DOCTYPE html>
@@ -185,6 +249,15 @@ foreach ($schedules as $schedule) {
             right: 2px;
             font-weight: bold;
         }
+        .replacement-item {
+            border-left: 4px solid #ef4444;
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+        .replacement-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -198,12 +271,21 @@ foreach ($schedules as $schedule) {
                     <a href="order_tracking.php?order_id=<?php echo $order_id; ?>" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left text-gray-600"></i>
                     </a>
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
-                        <i class="fas fa-calendar-plus text-white text-2xl"></i>
+                    <div class="bg-gradient-to-r <?php echo $isReplacement ? 'from-red-500 to-red-600' : 'from-blue-500 to-blue-600'; ?> p-3 rounded-xl shadow-lg">
+                        <i class="fas <?php echo $isReplacement ? 'fa-exchange-alt' : 'fa-calendar-plus'; ?> text-white text-2xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Schedule Item for Delivery</h1>
-                        <p class="text-gray-600 mt-1"><?php echo htmlspecialchars($item['product_name']); ?></p>
+                        <h1 class="text-3xl font-bold text-gray-900">
+                            Schedule <?php echo $isReplacement ? 'Replacement' : 'Item'; ?> for Delivery
+                        </h1>
+                        <p class="text-gray-600 mt-1">
+                            <?php echo $displayProductName; ?>
+                            <?php if ($isReplacement): ?>
+                                <span class="replacement-badge px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>REPLACEMENT
+                                </span>
+                            <?php endif; ?>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -236,11 +318,22 @@ foreach ($schedules as $schedule) {
             <!-- Left Column: Item Details & Schedule Form -->
             <div class="xl:col-span-1">
                 <!-- Item Information -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 <?php echo $isReplacement ? 'replacement-item' : ''; ?>">
                     <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-box text-blue-600 mr-3"></i>
-                        Item Details
+                        <i class="fas <?php echo $isReplacement ? 'fa-exchange-alt text-red-600' : 'fa-box text-blue-600'; ?> mr-3"></i>
+                        <?php echo $isReplacement ? 'Replacement' : 'Item'; ?> Details
                     </h3>
+                    
+                    <?php if ($isReplacement): ?>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                            <div class="flex items-center text-red-800">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <span class="font-medium">Replacement Request</span>
+                            </div>
+                            <p class="text-red-700 text-sm mt-1"><?php echo $displayReason; ?></p>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Product:</span>
@@ -248,7 +341,7 @@ foreach ($schedules as $schedule) {
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Quantity:</span>
-                            <span class="font-medium"><?php echo $item['quantity']; ?></span>
+                            <span class="font-medium"><?php echo $displayQuantity; ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Price:</span>
@@ -258,6 +351,12 @@ foreach ($schedules as $schedule) {
                             <span class="text-gray-600">Customer:</span>
                             <span class="font-medium"><?php echo htmlspecialchars($item['customer_name']); ?></span>
                         </div>
+                        <?php if ($isReplacement): ?>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Request Date:</span>
+                                <span class="font-medium"><?php echo date('M j, Y', strtotime($item['created_at'])); ?></span>
+                            </div>
+                        <?php endif; ?>
                         <div class="pt-2 border-t">
                             <span class="text-gray-600">Address:</span>
                             <p class="font-medium mt-1"><?php echo htmlspecialchars($item['address']); ?></p>
@@ -268,8 +367,8 @@ foreach ($schedules as $schedule) {
                 <!-- Schedule Form -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <i class="fas fa-calendar-plus text-green-600 mr-3"></i>
-                        Schedule Delivery
+                        <i class="fas fa-calendar-plus <?php echo $isReplacement ? 'text-red-600' : 'text-green-600'; ?> mr-3"></i>
+                        Schedule <?php echo $isReplacement ? 'Replacement' : ''; ?> Delivery
                     </h3>
                     
                     <form method="POST" class="space-y-4">
@@ -280,7 +379,7 @@ foreach ($schedules as $schedule) {
                             </label>
                             <input type="date" name="delivery_date" id="delivery_date" required 
                                    min="<?php echo date('Y-m-d'); ?>"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg">
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 text-lg">
                             <p class="text-sm text-gray-500 mt-1">Click on calendar days to select dates</p>
                         </div>
                         
@@ -290,7 +389,7 @@ foreach ($schedules as $schedule) {
                                 Delivery Time
                             </label>
                             <select name="delivery_time" required 
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 text-lg">
                                 <option value="">Select time slot</option>
                                 <option value="08:00">8:00 AM - 9:00 AM</option>
                                 <option value="09:00">9:00 AM - 10:00 AM</option>
@@ -309,15 +408,15 @@ foreach ($schedules as $schedule) {
                                 Delivery Notes (Optional)
                             </label>
                             <textarea name="delivery_notes" rows="3" 
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                      placeholder="Special instructions, contact details, or delivery preferences..."></textarea>
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500" 
+                                      placeholder="Special instructions, contact details, or delivery preferences...<?php echo $isReplacement ? ' (Replacement delivery)' : ''; ?>"></textarea>
                         </div>
                         
                         <div class="pt-4">
                             <button type="submit" name="schedule_delivery" 
-                                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] text-lg">
+                                    class="w-full bg-gradient-to-r <?php echo $isReplacement ? 'from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' : 'from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'; ?> text-white font-medium py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] text-lg">
                                 <i class="fas fa-calendar-plus mr-3"></i>
-                                Schedule This Item for Delivery
+                                Schedule This <?php echo $isReplacement ? 'Replacement' : 'Item'; ?> for Delivery
                             </button>
                         </div>
                     </form>
@@ -388,11 +487,7 @@ foreach ($schedules as $schedule) {
                     </div>
                     
                     <div id="scheduled-items-container" class="max-h-[700px] overflow-y-auto">
-                        <?php if (empty($schedulesByDate)): ?>
-                            <!-- This will be handled by JavaScript -->
-                        <?php else: ?>
-                            <!-- This will be handled by JavaScript -->
-                        <?php endif; ?>
+                        <!-- Items will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -403,6 +498,7 @@ foreach ($schedules as $schedule) {
         // Calendar and scheduling data
         const deliveryCounts = <?php echo json_encode($deliveryCountsByDate); ?>;
         const schedules = <?php echo json_encode($schedules); ?>;
+        const isReplacement = <?php echo $isReplacement ? 'true' : 'false'; ?>;
         
         let currentDate = new Date();
         let selectedDate = null;
@@ -425,11 +521,10 @@ foreach ($schedules as $schedule) {
             
             // Add days of the month
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Reset time to avoid timezone issues
+            today.setHours(0, 0, 0, 0);
             
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                // Use local date string format to avoid timezone conversion
                 const dateString = year + '-' + 
                     String(month + 1).padStart(2, '0') + '-' + 
                     String(day).padStart(2, '0');
@@ -440,14 +535,12 @@ foreach ($schedules as $schedule) {
                 dayElement.textContent = day;
                 dayElement.dataset.date = dateString;
                 
-                // Disable past dates
                 const currentDateOnly = new Date(year, month, day);
                 currentDateOnly.setHours(0, 0, 0, 0);
                 
                 if (currentDateOnly < today) {
                     dayElement.className += ' text-gray-400 cursor-not-allowed bg-gray-100';
                 } else {
-                    // Check if this date has deliveries
                     const deliveryCount = deliveryCounts[dateString] || 0;
                     
                     if (deliveryCount > 0) {
@@ -457,7 +550,6 @@ foreach ($schedules as $schedule) {
                             dayElement.className += ' has-deliveries';
                         }
                         
-                        // Add delivery count badge
                         const countBadge = document.createElement('div');
                         countBadge.className = 'delivery-count';
                         countBadge.textContent = deliveryCount;
@@ -473,7 +565,6 @@ foreach ($schedules as $schedule) {
                         dayElement.appendChild(countBadge);
                     }
                     
-                    // Add click event
                     dayElement.addEventListener('click', function() {
                         if (currentDateOnly >= today) {
                             selectDate(dateString, dayElement);
@@ -486,23 +577,16 @@ foreach ($schedules as $schedule) {
         }
         
         function selectDate(dateString, element) {
-            // Remove previous selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
             
-            // Add selection to clicked element
             element.classList.add('selected');
             selectedDate = dateString;
             
-            // Update the date input - make sure we use the exact dateString
             document.getElementById('delivery_date').value = dateString;
-            
-            // Filter and display scheduled items for selected date
             updateScheduledItemsDisplay(dateString);
-            
-            // Trigger availability check
             checkTimeSlotAvailability();
         }
         
@@ -511,15 +595,12 @@ foreach ($schedules as $schedule) {
             const itemsCountSpan = document.getElementById('items-count');
             
             if (!selectedDate) {
-                // Show all items
                 showAllScheduledItems();
                 return;
             }
             
-            // Filter schedules for selected date
             const selectedDateSchedules = schedules.filter(s => s.delivery_date === selectedDate);
             
-            // Update count
             itemsCountSpan.textContent = selectedDate ? 
                 `${selectedDateSchedules.length} items on ${formatDisplayDate(selectedDate)}` : 
                 `${schedules.length} items`;
@@ -542,7 +623,6 @@ foreach ($schedules as $schedule) {
                 return;
             }
             
-            // Group schedules by date (should only be one date in this case)
             const schedulesByDate = {};
             selectedDateSchedules.forEach(schedule => {
                 const date = schedule.delivery_date;
@@ -573,55 +653,12 @@ foreach ($schedules as $schedule) {
                             </div>
                         </div>
                     </div>
-                    
                     <div class="p-4 space-y-3">
                 `;
                 
                 daySchedules.forEach(schedule => {
-                    html += `
-                        <div class="item-card bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <h5 class="font-semibold text-gray-900 text-lg mb-1">
-                                        ${escapeHtml(schedule.product_name)}
-                                    </h5>
-                                    <p class="text-blue-600 font-medium mb-2">
-                                        <i class="fas fa-clock mr-1"></i>
-                                        ${formatTime(schedule.delivery_time)}
-                                    </p>
-                                </div>
-                                <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
-                                    Order #${schedule.order_id}
-                                </span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                                <div>
-                                    <span class="font-medium">Quantity:</span> ${schedule.quantity}
-                                </div>
-                                <div>
-                                    <span class="font-medium">Price:</span> ₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                </div>
-                            </div>
-                            
-                            <div class="border-t border-gray-200 pt-3">
-                                <p class="text-gray-700 font-medium mb-1">
-                                    <i class="fas fa-user mr-2 text-gray-500"></i>
-                                    ${escapeHtml(schedule.customer_name)}
-                                </p>
-                                <p class="text-gray-600 text-sm">
-                                    <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
-                                    ${escapeHtml(schedule.address)}
-                                </p>
-                                ${schedule.delivery_notes ? `
-                                    <p class="text-gray-600 text-sm mt-2 bg-yellow-50 p-2 rounded">
-                                        <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>
-                                        ${escapeHtml(schedule.delivery_notes)}
-                                    </p>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
+                    const isReplacementItem = schedule.item_type === 'replacement';
+                    html += renderScheduleItem(schedule, isReplacementItem);
                 });
                 
                 html += '</div>';
@@ -634,14 +671,12 @@ foreach ($schedules as $schedule) {
             const scheduledItemsContainer = document.getElementById('scheduled-items-container');
             const itemsCountSpan = document.getElementById('items-count');
             
-            // Remove calendar selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
             selectedDate = null;
             
-            // Reset count
             itemsCountSpan.textContent = `${schedules.length} items`;
             
             if (schedules.length === 0) {
@@ -657,7 +692,6 @@ foreach ($schedules as $schedule) {
                 return;
             }
             
-            // Group schedules by date
             const schedulesByDate = {};
             schedules.forEach(schedule => {
                 const date = schedule.delivery_date;
@@ -681,55 +715,12 @@ foreach ($schedules as $schedule) {
                             </span>
                         </div>
                     </div>
-                    
                     <div class="p-4 space-y-3">
                 `;
                 
                 daySchedules.forEach(schedule => {
-                    html += `
-                        <div class="item-card bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <h5 class="font-semibold text-gray-900 text-lg mb-1">
-                                        ${escapeHtml(schedule.product_name)}
-                                    </h5>
-                                    <p class="text-blue-600 font-medium mb-2">
-                                        <i class="fas fa-clock mr-1"></i>
-                                        ${formatTime(schedule.delivery_time)}
-                                    </p>
-                                </div>
-                                <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
-                                    Order #${schedule.order_id}
-                                </span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                                <div>
-                                    <span class="font-medium">Quantity:</span> ${schedule.quantity}
-                                </div>
-                                <div>
-                                    <span class="font-medium">Price:</span> ₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                                </div>
-                            </div>
-                            
-                            <div class="border-t border-gray-200 pt-3">
-                                <p class="text-gray-700 font-medium mb-1">
-                                    <i class="fas fa-user mr-2 text-gray-500"></i>
-                                    ${escapeHtml(schedule.customer_name)}
-                                </p>
-                                <p class="text-gray-600 text-sm">
-                                    <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
-                                    ${escapeHtml(schedule.address)}
-                                </p>
-                                ${schedule.delivery_notes ? `
-                                    <p class="text-gray-600 text-sm mt-2 bg-yellow-50 p-2 rounded">
-                                        <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>
-                                        ${escapeHtml(schedule.delivery_notes)}
-                                    </p>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
+                    const isReplacementItem = schedule.item_type === 'replacement';
+                    html += renderScheduleItem(schedule, isReplacementItem);
                 });
                 
                 html += '</div>';
@@ -738,7 +729,65 @@ foreach ($schedules as $schedule) {
             scheduledItemsContainer.innerHTML = html;
         }
         
-        // Helper functions
+        function renderScheduleItem(schedule, isReplacementItem) {
+            const itemClass = isReplacementItem ? 'replacement-item' : 'bg-gray-50';
+            const badgeClass = isReplacementItem ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-700';
+            const reasonText = isReplacementItem && schedule.replacement_reason ? 
+                `<p class="text-red-600 text-sm mt-1 bg-red-50 p-2 rounded">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Replacement reason: ${escapeHtml(schedule.replacement_reason)}
+                </p>` : '';
+            
+            return `
+                <div class="item-card ${itemClass} border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-1">
+                                <h5 class="font-semibold text-gray-900 text-lg">
+                                    ${escapeHtml(schedule.product_name)}
+                                </h5>
+                                ${isReplacementItem ? '<span class="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium"><i class="fas fa-exchange-alt mr-1"></i>REPLACEMENT</span>' : ''}
+                            </div>
+                            <p class="text-blue-600 font-medium mb-2">
+                                <i class="fas fa-clock mr-1"></i>
+                                ${formatTime(schedule.delivery_time)}
+                            </p>
+                            ${reasonText}
+                        </div>
+                        <span class="${badgeClass} px-3 py-1 rounded-full text-sm font-medium">
+                            Order #${schedule.order_id}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                        <div>
+                            <span class="font-medium">Quantity:</span> ${schedule.quantity}
+                        </div>
+                        <div>
+                            <span class="font-medium">Price:</span> ₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-3">
+                        <p class="text-gray-700 font-medium mb-1">
+                            <i class="fas fa-user mr-2 text-gray-500"></i>
+                            ${escapeHtml(schedule.customer_name)}
+                        </p>
+                        <p class="text-gray-600 text-sm">
+                            <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
+                            ${escapeHtml(schedule.address)}
+                        </p>
+                        ${schedule.delivery_notes ? `
+                            <p class="text-gray-600 text-sm mt-2 bg-yellow-50 p-2 rounded">
+                                <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>
+                                ${escapeHtml(schedule.delivery_notes)}
+                            </p>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
         function formatDisplayDate(dateString) {
             const date = new Date(dateString + 'T00:00:00');
             return date.toLocaleDateString('en-US', { 
@@ -778,7 +827,6 @@ foreach ($schedules as $schedule) {
             updateCalendarHeader();
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             
-            // Navigation event listeners
             document.getElementById('prevMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() - 1);
                 updateCalendarHeader();
@@ -814,23 +862,19 @@ foreach ($schedules as $schedule) {
             }
         }
         
-        // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initializeCalendar();
-            showAllScheduledItems(); // Initialize with all items
+            showAllScheduledItems();
         });
 
-        // Event listeners for form inputs
         document.getElementById('delivery_date').addEventListener('change', function() {
             const selectedDateValue = this.value;
             
-            // Update calendar selection
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
             
-            // Find and select the corresponding calendar day
             const calendarDay = document.querySelector(`[data-date="${selectedDateValue}"]`);
             if (calendarDay) {
                 calendarDay.classList.add('selected');
@@ -839,7 +883,6 @@ foreach ($schedules as $schedule) {
             
             checkTimeSlotAvailability();
         });
-        
     </script>
 </body>
 </html>

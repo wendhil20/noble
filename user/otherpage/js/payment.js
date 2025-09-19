@@ -1,5 +1,4 @@
-// Complete PayPal integration - add this to your payment.js file
-
+// ONLY MODIFY: showPayPalOption function - add this single line
 function showPayPalOption() {
     // Hide bank transfer fields
     const bankTransferFields = document.getElementById('bankTransferFields');
@@ -13,14 +12,16 @@ function showPayPalOption() {
         paypalFields.classList.remove('hidden');
     }
     
+// ADD THESE 5 LINES sa showPayPalOption function mo
+const placeOrderBtn = document.getElementById('placeOrderBtn');
+if (placeOrderBtn) {
+    placeOrderBtn.style.display = 'none';
+}
     // Update PayPal amount
     updatePayPalAmount();
     
     // Initialize simplified PayPal buttons
     initializeSimplifiedPayPalButtons();
-    
-    // Enable place order button
-    enablePlaceOrderButton();
 }
 
 // Fixed PayPal integration to handle window closing issues
@@ -378,7 +379,7 @@ function enablePlaceOrderButton() {
     }
 }
 
-// Bank Transfer Functions
+// FIXED: showBankSelection function - add the missing Place Order button show logic
 function showBankSelection() {
     const bankTransferFields = document.getElementById('bankTransferFields');
     const bankSelectionArea = document.getElementById('bankSelectionArea');
@@ -391,6 +392,12 @@ function showBankSelection() {
 
     if (bankTransferFields) {
         bankTransferFields.classList.remove('hidden');
+    }
+
+    // ADD THESE LINES - Show the Place Order button for Bank Transfer
+    if (placeOrderBtn) {
+        placeOrderBtn.style.display = 'inline-block';  // Show the button
+        placeOrderBtn.disabled = true;  // Keep disabled until all requirements are met
     }
 
     if (bankSelectionArea) {
@@ -446,6 +453,28 @@ function showBankSelection() {
         `;
     }
 }
+
+// ADD THIS: Function to initialize the button state when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initially hide the place order button
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.style.display = 'none';
+        placeOrderBtn.disabled = true;
+    }
+    
+    // Add event listeners to payment method radio buttons
+    const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'PayPal') {
+                showPayPalOption();
+            } else if (this.value === 'Bank Transfer') {
+                showBankSelection();
+            }
+        });
+    });
+});
 
 function selectBank(bankType) {
     const selectedBankInput = document.getElementById('selectedBank');

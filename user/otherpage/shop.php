@@ -340,7 +340,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-15">
             <div class="text-center" data-aos="fade-up">
                 <h1 class="text-4xl lg:text-6xl font-bold text-orange-400 mb-6">
-                    Premium <span class="text-black">Collections</span>
+                    Premium <span class="text-black ">Collections</span>
                 </h1>
                 <p class="text-xl text-black max-w-3xl mx-auto mb-8 leading-relaxed">
                     Discover exceptional furniture and materials crafted with precision and designed for modern living
@@ -511,15 +511,8 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
                 <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
-                    <div class="bg-white rounded-2xl shadow-lg p-8" data-aos="fade-up">
-                        <!-- Info -->
-                        <div class="text-center mb-6 p-4 bg-orange-50 rounded-xl border border-orange-200">
-                            <div class="text-sm text-gray-700">
-                                Showing <span class="font-semibold text-primary"><?= ($page - 1) * $per_page + 1 ?></span> to
-                                <span class="font-semibold text-primary"><?= min($page * $per_page, $total_products) ?></span> of
-                                <span class="font-semibold text-primary"><?= number_format($total_products) ?></span> products
-                            </div>
-                        </div>
+                    <div class=" p-8" data-aos="fade-up">
+               
 
                         <!-- Controls -->
                         <div class="flex flex-col sm:flex-row items-center justify-between gap-6">

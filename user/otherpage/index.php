@@ -784,11 +784,11 @@ handleQueryError($conn, "New Status Query");
         refreshIndicatorDots();
     </script>
 
- <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
-    <div class="max-w-7xl mx-auto">
-        <!-- Mobile to Tablet View (lg and below) - Swiper -->
-        <div class="block lg:hidden">
-            <div class="swiper contact-swiper" x-init="
+    <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
+        <div class="max-w-7xl mx-auto">
+            <!-- Mobile to Tablet View (lg and below) - Swiper -->
+            <div class="block lg:hidden">
+                <div class="swiper contact-swiper" x-init="
                 setTimeout(() => {
                     new Swiper($el, {
                         slidesPerView: 1,
@@ -823,115 +823,115 @@ handleQueryError($conn, "New Status Query");
                     });
                 }, 100);
             ">
-                <div class="swiper-wrapper">
-                    <!-- Slide 1 -->
-                    <div class="swiper-slide">
-                        <button @click="currentModal = 1"
-                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                            <h3 class="contact-title text-orange-700">Inquire</h3>
-                            <p class="contact-desc text-gray-700 mt-1">Send us a question or message.</p>
-                        </button>
-                    </div>
+                    <div class="swiper-wrapper">
+                        <!-- Slide 1 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 1"
+                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                                <h3 class="contact-title text-orange-700">Inquire</h3>
+                                <p class="contact-desc text-gray-700 mt-1">Send us a question or message.</p>
+                            </button>
+                        </div>
 
-                    <!-- Slide 2 -->
-                    <div class="swiper-slide">
-                        <button @click="currentModal = 2"
-                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                            <h3 class="contact-title text-orange-700">Appointment</h3>
-                            <p class="contact-desc text-gray-700 mt-1">Book a consultation now.</p>
-                        </button>
-                    </div>
+                        <!-- Slide 2 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 2"
+                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                                <h3 class="contact-title text-orange-700">Appointment</h3>
+                                <p class="contact-desc text-gray-700 mt-1">Book a consultation now.</p>
+                            </button>
+                        </div>
 
-                    <!-- Slide 3 -->
-                    <div class="swiper-slide">
-                        <button @click="currentModal = 3"
-                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                            <h3 class="contact-title text-orange-700">Track Order</h3>
-                            <p class="contact-desc text-gray-700 mt-1">Check your order status.</p>
-                        </button>
-                    </div>
+                        <!-- Slide 3 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 3"
+                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                                <h3 class="contact-title text-orange-700">Track Order</h3>
+                                <p class="contact-desc text-gray-700 mt-1">Check your order status.</p>
+                            </button>
+                        </div>
 
-                    <!-- Slide 4 -->
-                    <div class="swiper-slide">
-                        <button @click="currentModal = 4"
-                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                            <h3 class="contact-title text-orange-700">Request Quote</h3>
-                            <p class="contact-desc text-gray-700 mt-1">Get pricing for your project.</p>
-                        </button>
-                    </div>
+                        <!-- Slide 4 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 4"
+                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                                <h3 class="contact-title text-orange-700">Request Quote</h3>
+                                <p class="contact-desc text-gray-700 mt-1">Get pricing for your project.</p>
+                            </button>
+                        </div>
 
-                    <!-- Slide 5 -->
-                    <div class="swiper-slide">
-                        <button @click="currentModal = 5"
-                            class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                            <h3 class="contact-title text-orange-700">Support</h3>
-                            <p class="contact-desc text-gray-700 mt-1">We're here to help you.</p>
-                        </button>
+                        <!-- Slide 5 -->
+                        <div class="swiper-slide">
+                            <button @click="currentModal = 5"
+                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
+                                <h3 class="contact-title text-orange-700">Support</h3>
+                                <p class="contact-desc text-gray-700 mt-1">We're here to help you.</p>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Desktop View (lg and above) - Grid -->
+            <div class="hidden lg:grid grid-cols-5 gap-4 xl:gap-6">
+                <!-- Box 1 -->
+                <button @click="currentModal = 1"
+                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                    <h3 class="desktop-title text-orange-700 relative inline-block">
+                        Inquire
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="desktop-desc text-gray-700 mt-2">Send us a question or message.</p>
+                </button>
+
+                <!-- Box 2 -->
+                <button @click="currentModal = 2"
+                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                    <h3 class="desktop-title text-orange-700 relative inline-block">
+                        Appointment
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="desktop-desc text-gray-700 mt-2">Book a consultation now.</p>
+                </button>
+
+                <!-- Box 3 -->
+                <button @click="currentModal = 3"
+                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                    <h3 class="desktop-title text-orange-700 relative inline-block">
+                        Track Order
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="desktop-desc text-gray-700 mt-2">Check your order status.</p>
+                </button>
+
+                <!-- Box 4 -->
+                <button @click="currentModal = 4"
+                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                    <h3 class="desktop-title text-orange-700 relative inline-block">
+                        Request Quote
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="desktop-desc text-gray-700 mt-2">Get pricing for your project.</p>
+                </button>
+
+                <!-- Box 5 -->
+                <button @click="currentModal = 5"
+                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
+                    <h3 class="desktop-title text-orange-700 relative inline-block">
+                        Support
+                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
+                    </h3>
+                    <p class="desktop-desc text-gray-700 mt-2">We're here to help you.</p>
+                </button>
+            </div>
         </div>
 
-        <!-- Desktop View (lg and above) - Grid -->
-        <div class="hidden lg:grid grid-cols-5 gap-4 xl:gap-6">
-            <!-- Box 1 -->
-            <button @click="currentModal = 1"
-                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                <h3 class="desktop-title text-orange-700 relative inline-block">
-                    Inquire
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                </h3>
-                <p class="desktop-desc text-gray-700 mt-2">Send us a question or message.</p>
-            </button>
-
-            <!-- Box 2 -->
-            <button @click="currentModal = 2"
-                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                <h3 class="desktop-title text-orange-700 relative inline-block">
-                    Appointment
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                </h3>
-                <p class="desktop-desc text-gray-700 mt-2">Book a consultation now.</p>
-            </button>
-
-            <!-- Box 3 -->
-            <button @click="currentModal = 3"
-                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                <h3 class="desktop-title text-orange-700 relative inline-block">
-                    Track Order
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                </h3>
-                <p class="desktop-desc text-gray-700 mt-2">Check your order status.</p>
-            </button>
-
-            <!-- Box 4 -->
-            <button @click="currentModal = 4"
-                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                <h3 class="desktop-title text-orange-700 relative inline-block">
-                    Request Quote
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                </h3>
-                <p class="desktop-desc text-gray-700 mt-2">Get pricing for your project.</p>
-            </button>
-
-            <!-- Box 5 -->
-            <button @click="currentModal = 5"
-                class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                <h3 class="desktop-title text-orange-700 relative inline-block">
-                    Support
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                </h3>
-                <p class="desktop-desc text-gray-700 mt-2">We're here to help you.</p>
-            </button>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <template x-if="currentModal">
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4 py-4">
-            <div class="bg-white w-full modal-container p-4 sm:p-6 rounded-lg shadow-lg relative modal-enter">
-                <!-- Modal Title -->
-                <h2 class="modal-title text-orange-600 mb-2" x-text="{
+        <!-- Modals -->
+        <template x-if="currentModal">
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4 py-4">
+                <div class="bg-white w-full modal-container p-4 sm:p-6 rounded-lg shadow-lg relative modal-enter">
+                    <!-- Modal Title -->
+                    <h2 class="modal-title text-orange-600 mb-2" x-text="{
                     1: 'Inquire',
                     2: 'Appointment',
                     3: 'Track Order',
@@ -939,8 +939,8 @@ handleQueryError($conn, "New Status Query");
                     5: 'Support'
                 }[currentModal]"></h2>
 
-                <!-- Modal Description -->
-                <p class="modal-desc text-gray-700 mb-4" x-text="{
+                    <!-- Modal Description -->
+                    <p class="modal-desc text-gray-700 mb-4" x-text="{
                     1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
                     2: 'Schedule a face-to-face or virtual consultation with our experts.',
                     3: 'Enter your order ID to track the delivery progress and timeline.',
@@ -948,327 +948,332 @@ handleQueryError($conn, "New Status Query");
                     5: 'Need help? Our support team is always ready to guide you through any issues.'
                 }[currentModal]"></p>
 
-                <!-- Close Button -->
-                <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 close-btn">&times;</button>
-                <button @click="currentModal = null" class="modal-btn mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md transition duration-200">
-                    Close
-                </button>
+                    <!-- Close Button -->
+                    <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 close-btn">&times;</button>
+                    <button @click="currentModal = null" class="modal-btn mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md transition duration-200">
+                        Close
+                    </button>
+                </div>
             </div>
-        </div>
-    </template>
+        </template>
 
-    <style>
-        /* Mobile First Approach - Base Styles (320px and up) */
-        .contact-button {
-            min-height: 75px;
-        }
-        
-        .contact-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-        
-        .contact-desc {
-            font-size: 0.75rem;
-            line-height: 1.25;
-        }
-        
-        .modal-container {
-            max-width: 280px;
-            margin: auto;
-        }
-        
-        .modal-title {
-            font-size: 1rem;
-            font-weight: 700;
-        }
-        
-        .modal-desc {
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-        
-        .modal-btn {
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-        }
-        
-        .close-btn {
-            font-size: 1.25rem;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Small Mobile (375px and up) */
-        @media (min-width: 375px) {
+        <style>
+            /* Mobile First Approach - Base Styles (320px and up) */
             .contact-button {
-                min-height: 80px;
+                min-height: 75px;
             }
-            
+
             .contact-title {
-                font-size: 0.9rem;
-            }
-            
-            .contact-desc {
-                font-size: 0.8rem;
-            }
-            
-            .modal-container {
-                max-width: 320px;
-            }
-            
-            .modal-title {
-                font-size: 1.125rem;
-            }
-            
-            .modal-desc {
                 font-size: 0.875rem;
-            }
-        }
-
-        /* Large Mobile (425px and up) */
-        @media (min-width: 425px) {
-            .contact-button {
-                min-height: 85px;
-            }
-            
-            .contact-title {
-                font-size: 1rem;
-            }
-            
-            .contact-desc {
-                font-size: 0.825rem;
-            }
-            
-            .modal-container {
-                max-width: 360px;
-            }
-        }
-
-        /* Small Tablet (640px and up) */
-        @media (min-width: 640px) {
-            .contact-button {
-                min-height: 90px;
-            }
-            
-            .contact-title {
-                font-size: 1.1rem;
-            }
-            
-            .contact-desc {
-                font-size: 0.875rem;
-            }
-            
-            .modal-container {
-                max-width: 400px;
-            }
-            
-            .modal-title {
-                font-size: 1.25rem;
-            }
-            
-            .close-btn {
-                font-size: 1.5rem;
-                width: 28px;
-                height: 28px;
-            }
-        }
-
-        /* Medium Tablet (768px and up) */
-        @media (min-width: 768px) {
-            .contact-button {
-                min-height: 95px;
-            }
-            
-            .contact-title {
-                font-size: 1.125rem;
-            }
-            
-            .contact-desc {
-                font-size: 0.9rem;
-            }
-            
-            .modal-container {
-                max-width: 440px;
-            }
-        }
-
-        /* Large Tablet (1024px and up) */
-        @media (min-width: 1024px) {
-            .desktop-button {
-                min-height: 100px;
-            }
-            
-            .desktop-title {
-                font-size: 1.125rem;
                 font-weight: 600;
+                line-height: 1.25;
             }
-            
-            .desktop-desc {
-                font-size: 0.875rem;
-                line-height: 1.4;
-            }
-            
-            .modal-container {
-                max-width: 480px;
-            }
-            
-            .modal-title {
-                font-size: 1.375rem;
-            }
-            
-            .modal-desc {
-                font-size: 1rem;
-                line-height: 1.5;
-            }
-            
-            .modal-btn {
-                font-size: 1rem;
-                padding: 0.75rem 1.5rem;
-            }
-        }
 
-        /* Desktop (1280px and up) */
-        @media (min-width: 1280px) {
-            .desktop-button {
-                min-height: 110px;
-            }
-            
-            .desktop-title {
-                font-size: 1.25rem;
-            }
-            
-            .desktop-desc {
-                font-size: 1rem;
-            }
-            
-            .modal-container {
-                max-width: 520px;
-            }
-            
-            .close-btn {
-                font-size: 1.75rem;
-                width: 32px;
-                height: 32px;
-            }
-        }
-
-        /* Large Desktop (1536px and up) */
-        @media (min-width: 1536px) {
-            .desktop-button {
-                min-height: 120px;
-            }
-            
-            .desktop-title {
-                font-size: 1.375rem;
-            }
-            
-            .desktop-desc {
-                font-size: 1.125rem;
-            }
-            
-            .modal-container {
-                max-width: 560px;
-            }
-            
-            .modal-title {
-                font-size: 1.5rem;
-            }
-            
-            .modal-desc {
-                font-size: 1.125rem;
-            }
-        }
-
-        /* Animation Styles */
-        .modal-enter {
-            animation: modalEnter 0.3s ease-out;
-        }
-        
-        @keyframes modalEnter {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .contact-swiper .swiper-slide {
-            height: auto;
-        }
-
-        /* High DPI Displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .contact-title,
-            .desktop-title {
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
-            }
-        }
-
-        /* Landscape Orientation on Mobile */
-        @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) {
-            .contact-button {
-                min-height: 60px;
-            }
-            
-            .contact-title {
-                font-size: 0.8rem;
-            }
-            
             .contact-desc {
-                font-size: 0.7rem;
+                font-size: 0.75rem;
+                line-height: 1.25;
             }
-            
+
             .modal-container {
-                max-width: 90vw;
-                max-height: 80vh;
-                overflow-y: auto;
+                max-width: 280px;
+                margin: auto;
             }
-        }
 
-        /* Touch Device Optimizations */
-        @media (hover: none) and (pointer: coarse) {
-            .contact-button,
-            .desktop-button {
-                -webkit-tap-highlight-color: rgba(251, 146, 60, 0.1);
-                touch-action: manipulation;
-            }
-        }
-
-        /* Reduce Motion for Accessibility */
-        @media (prefers-reduced-motion: reduce) {
-            .modal-enter {
-                animation: none;
-            }
-            
-            .group-hover\\:w-full,
-            .transition {
-                transition: none;
-            }
-        }
-
-        /* High Contrast Mode */
-        @media (prefers-contrast: high) {
-            .contact-button,
-            .desktop-button {
-                border: 2px solid #ea580c;
-            }
-            
-            .contact-title,
-            .desktop-title {
+            .modal-title {
+                font-size: 1rem;
                 font-weight: 700;
             }
-        }
-    </style>
-</section>
+
+            .modal-desc {
+                font-size: 0.8rem;
+                line-height: 1.4;
+            }
+
+            .modal-btn {
+                font-size: 0.875rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .close-btn {
+                font-size: 1.25rem;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Small Mobile (375px and up) */
+            @media (min-width: 375px) {
+                .contact-button {
+                    min-height: 80px;
+                }
+
+                .contact-title {
+                    font-size: 0.9rem;
+                }
+
+                .contact-desc {
+                    font-size: 0.8rem;
+                }
+
+                .modal-container {
+                    max-width: 320px;
+                }
+
+                .modal-title {
+                    font-size: 1.125rem;
+                }
+
+                .modal-desc {
+                    font-size: 0.875rem;
+                }
+            }
+
+            /* Large Mobile (425px and up) */
+            @media (min-width: 425px) {
+                .contact-button {
+                    min-height: 85px;
+                }
+
+                .contact-title {
+                    font-size: 1rem;
+                }
+
+                .contact-desc {
+                    font-size: 0.825rem;
+                }
+
+                .modal-container {
+                    max-width: 360px;
+                }
+            }
+
+            /* Small Tablet (640px and up) */
+            @media (min-width: 640px) {
+                .contact-button {
+                    min-height: 90px;
+                }
+
+                .contact-title {
+                    font-size: 1.1rem;
+                }
+
+                .contact-desc {
+                    font-size: 0.875rem;
+                }
+
+                .modal-container {
+                    max-width: 400px;
+                }
+
+                .modal-title {
+                    font-size: 1.25rem;
+                }
+
+                .close-btn {
+                    font-size: 1.5rem;
+                    width: 28px;
+                    height: 28px;
+                }
+            }
+
+            /* Medium Tablet (768px and up) */
+            @media (min-width: 768px) {
+                .contact-button {
+                    min-height: 95px;
+                }
+
+                .contact-title {
+                    font-size: 1.125rem;
+                }
+
+                .contact-desc {
+                    font-size: 0.9rem;
+                }
+
+                .modal-container {
+                    max-width: 440px;
+                }
+            }
+
+            /* Large Tablet (1024px and up) */
+            @media (min-width: 1024px) {
+                .desktop-button {
+                    min-height: 100px;
+                }
+
+                .desktop-title {
+                    font-size: 1.125rem;
+                    font-weight: 600;
+                }
+
+                .desktop-desc {
+                    font-size: 0.875rem;
+                    line-height: 1.4;
+                }
+
+                .modal-container {
+                    max-width: 480px;
+                }
+
+                .modal-title {
+                    font-size: 1.375rem;
+                }
+
+                .modal-desc {
+                    font-size: 1rem;
+                    line-height: 1.5;
+                }
+
+                .modal-btn {
+                    font-size: 1rem;
+                    padding: 0.75rem 1.5rem;
+                }
+            }
+
+            /* Desktop (1280px and up) */
+            @media (min-width: 1280px) {
+                .desktop-button {
+                    min-height: 110px;
+                }
+
+                .desktop-title {
+                    font-size: 1.25rem;
+                }
+
+                .desktop-desc {
+                    font-size: 1rem;
+                }
+
+                .modal-container {
+                    max-width: 520px;
+                }
+
+                .close-btn {
+                    font-size: 1.75rem;
+                    width: 32px;
+                    height: 32px;
+                }
+            }
+
+            /* Large Desktop (1536px and up) */
+            @media (min-width: 1536px) {
+                .desktop-button {
+                    min-height: 120px;
+                }
+
+                .desktop-title {
+                    font-size: 1.375rem;
+                }
+
+                .desktop-desc {
+                    font-size: 1.125rem;
+                }
+
+                .modal-container {
+                    max-width: 560px;
+                }
+
+                .modal-title {
+                    font-size: 1.5rem;
+                }
+
+                .modal-desc {
+                    font-size: 1.125rem;
+                }
+            }
+
+            /* Animation Styles */
+            .modal-enter {
+                animation: modalEnter 0.3s ease-out;
+            }
+
+            @keyframes modalEnter {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95) translateY(-20px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+
+            .contact-swiper .swiper-slide {
+                height: auto;
+            }
+
+            /* High DPI Displays */
+            @media (-webkit-min-device-pixel-ratio: 2),
+            (min-resolution: 192dpi) {
+
+                .contact-title,
+                .desktop-title {
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
+            }
+
+            /* Landscape Orientation on Mobile */
+            @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) {
+                .contact-button {
+                    min-height: 60px;
+                }
+
+                .contact-title {
+                    font-size: 0.8rem;
+                }
+
+                .contact-desc {
+                    font-size: 0.7rem;
+                }
+
+                .modal-container {
+                    max-width: 90vw;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+            }
+
+            /* Touch Device Optimizations */
+            @media (hover: none) and (pointer: coarse) {
+
+                .contact-button,
+                .desktop-button {
+                    -webkit-tap-highlight-color: rgba(251, 146, 60, 0.1);
+                    touch-action: manipulation;
+                }
+            }
+
+            /* Reduce Motion for Accessibility */
+            @media (prefers-reduced-motion: reduce) {
+                .modal-enter {
+                    animation: none;
+                }
+
+                .group-hover\\:w-full,
+                .transition {
+                    transition: none;
+                }
+            }
+
+            /* High Contrast Mode */
+            @media (prefers-contrast: high) {
+
+                .contact-button,
+                .desktop-button {
+                    border: 2px solid #ea580c;
+                }
+
+                .contact-title,
+                .desktop-title {
+                    font-weight: 700;
+                }
+            }
+        </style>
+    </section>
 
 
     <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
@@ -1573,135 +1578,135 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-<section class="px-4 py-12">
-    <div class="max-w-full mx-auto">
-        <!-- Section Header -->
-        <div class="text-center mb-10 " data-aos="fade-up">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Best Seller</h2>
-            <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
+    <section class="px-4 py-12">
+        <div class="max-w-full mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-10 " data-aos="fade-up">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3 ">Best Seller</h2>
+                <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
+            </div>
+
+            <!-- Cards Container -->
+            <div class="flex flex-col sm:flex-row gap-4 md:gap-6">
+
+                <!-- Featured Promotion -->
+                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                        <img src="../img/promo/a.png" alt="Featured Sale" class="w-full h-full object-contain ">
+                    </div>
+                    <div class="p-4 md:p-6 text-center">
+                        <div class="mb-3">
+                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                                Featured Deal
+                            </span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                            Home Renovation Sale
+                        </h3>
+                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                            Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
+                        </p>
+
+                    </div>
+                </div>
+
+                <!-- Weekly Sale -->
+                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                        <img src="../img/promo/2.png" alt="Sale Items" class="w-full h-full object-contain">
+                    </div>
+                    <div class="p-4 md:p-6 text-center">
+                        <div class="mb-3">
+                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                                SALE
+                            </span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                            Weekly Sale
+                        </h3>
+                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                            Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
+                        </p>
+
+                    </div>
+                </div>
+
+                <!-- New Arrivals -->
+                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                        <img src="../img/promo/3.png" alt="New Arrivals" class="w-full h-full object-contain ">
+                    </div>
+                    <div class="p-4 md:p-6 text-center">
+                        <div class="mb-3">
+                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                                NEW
+                            </span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                            New Arrivals
+                        </h3>
+                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                            Fresh inventory just arrived. Be the first to get the latest products and trending items.
+                        </p>
+
+                    </div>
+                </div>
+
+                <!-- Hot Deals -->
+                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
+                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
+                        <img src="../img/promo/4.png" alt="Hot Deals" class="w-full h-full object-contain ">
+                    </div>
+                    <div class="p-4 md:p-6 text-center">
+                        <div class="mb-3">
+                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md animate-pulse">
+                                HOT DEAL
+                            </span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                            Hot Deals
+                        </h3>
+                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+                            Limited quantity deals that won't last long. Grab them while supplies last - act fast!
+                        </p>
+
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Cards Container -->
-        <div class="flex flex-col sm:flex-row gap-4 md:gap-6">
-            
-            <!-- Featured Promotion -->
-            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                    <img src="../img/promo/a.png" alt="Featured Sale" class="w-full h-full object-contain ">
-                </div>
-                <div class="p-4 md:p-6 text-center">
-                    <div class="mb-3">
-                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                            Featured Deal
-                        </span>
-                    </div>
-                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                        Home Renovation Sale
-                    </h3>
-                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                        Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
-                    </p>
-               
-                </div>
-            </div>
-
-            <!-- Weekly Sale -->
-            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                    <img src="../img/promo/2.png" alt="Sale Items" class="w-full h-full object-contain">
-                </div>
-                <div class="p-4 md:p-6 text-center">
-                    <div class="mb-3">
-                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                            SALE
-                        </span>
-                    </div>
-                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                        Weekly Sale
-                    </h3>
-                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                        Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
-                    </p>
-                
-                </div>
-            </div>
-
-            <!-- New Arrivals -->
-            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                    <img src="../img/promo/3.png" alt="New Arrivals" class="w-full h-full object-contain ">
-                </div>
-                <div class="p-4 md:p-6 text-center">
-                    <div class="mb-3">
-                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                            NEW
-                        </span>
-                    </div>
-                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                        New Arrivals
-                    </h3>
-                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                        Fresh inventory just arrived. Be the first to get the latest products and trending items.
-                    </p>
-             
-                </div>
-            </div>
-
-            <!-- Hot Deals -->
-            <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                    <img src="../img/promo/4.png" alt="Hot Deals" class="w-full h-full object-contain ">
-                </div>
-                <div class="p-4 md:p-6 text-center">
-                    <div class="mb-3">
-                        <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md animate-pulse">
-                            HOT DEAL
-                        </span>
-                    </div>
-                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                        Hot Deals
-                    </h3>
-                    <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                        Limited quantity deals that won't last long. Grab them while supplies last - act fast!
-                    </p>
-                  
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+    </section>
 
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
-     
-            <div class="flex items-center gap-2 mb-2 mt-4" data-aos="fade-up">
-                <!-- Details Button (as Title) -->
-                <a href="shop.php"
-                    class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
-                    <span class="relative">
-                        <span class="block group-hover:text-orange-600 transition-colors duration-300">
-                            Bed Furniture
-                        </span>
-                        <!-- Animated overlay text -->
-                        <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
-                            Bed Furniture
-                        </span>
+
+        <div class="flex items-center gap-2 mb-2 mt-4" data-aos="fade-up">
+            <!-- Details Button (as Title) -->
+            <a href="shop.php"
+                class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                <span class="relative">
+                    <span class="block group-hover:text-orange-600 transition-colors duration-300">
+                        Bed Furniture
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24"
-                        stroke-width="2.5" stroke="currentColor"
-                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600 ">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                    <!-- underline -->
-                    <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
-                </a>
-            </div>
+                    <!-- Animated overlay text -->
+                    <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
+                        Bed Furniture
+                    </span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24"
+                    stroke-width="2.5" stroke="currentColor"
+                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600 ">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                <!-- underline -->
+                <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
+            </a>
+        </div>
 
 
-  
+
         <style>
             .bubble-bounce {
                 position: absolute;
@@ -1919,30 +1924,30 @@ handleQueryError($conn, "New Status Query");
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
-            <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
-                <!-- Details Button (as Title) -->
-                <a href="shop.php"
-                    class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
-                    <span class="relative">
-                        <span class="block group-hover:text-orange-600 transition-colors duration-300">
-                            Furniture
-                        </span>
-                        <!-- Animated overlay text -->
-                        <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
-                            Furniture
-                        </span>
+        <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+            <!-- Details Button (as Title) -->
+            <a href="shop.php"
+                class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                <span class="relative">
+                    <span class="block group-hover:text-orange-600 transition-colors duration-300">
+                        Furniture
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24"
-                        stroke-width="2.5" stroke="currentColor"
-                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                    <!-- underline -->
-                    <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
-                </a>
-            </div>
+                    <!-- Animated overlay text -->
+                    <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
+                        Furniture
+                    </span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24"
+                    stroke-width="2.5" stroke="currentColor"
+                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                <!-- underline -->
+                <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
+            </a>
+        </div>
 
 
 
@@ -2305,31 +2310,31 @@ handleQueryError($conn, "New Status Query");
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
-  
-            <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
-                <!-- Details Button (as Title) -->
-                <a href="shop.php"
-                    class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
-                    <span class="relative">
-                        <span class="block group-hover:text-orange-600 transition-colors duration-300">
-                            Building Materials
-                        </span>
-                        <!-- Animated overlay text -->
-                        <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
-                            Building Materials
-                        </span>
+
+        <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+            <!-- Details Button (as Title) -->
+            <a href="shop.php"
+                class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                <span class="relative">
+                    <span class="block group-hover:text-orange-600 transition-colors duration-300">
+                        Building Materials
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24"
-                        stroke-width="2.5" stroke="currentColor"
-                        class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                    <!-- underline -->
-                    <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
-                </a>
-            </div>
+                    <!-- Animated overlay text -->
+                    <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
+                        Building Materials
+                    </span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24"
+                    stroke-width="2.5" stroke="currentColor"
+                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                <!-- underline -->
+                <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
+            </a>
+        </div>
 
 
         <!-- Swiper Container -->
@@ -2524,13 +2529,13 @@ handleQueryError($conn, "New Status Query");
     <section class="px-4 py-10">
         <!-- Header -->
         <div class="text-center mb-10 relative">
-          
+
             <h2 class="text-4xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
             <h2 class="text-2xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">
                 Get Up to <span class="text-red-500">30% Discount</span> on Select Items!
             </h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-  
+
         </div>
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
@@ -2592,7 +2597,7 @@ handleQueryError($conn, "New Status Query");
                                     <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
                                 <?php endif; ?>
 
-                               <!-- Replace your current View Details Button section with this -->
+                                <!-- Replace your current View Details Button section with this -->
                                 <div class="flex flex-col gap-2 mt-auto">
                                     <!-- Animated View Details Button -->
                                     <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
@@ -2624,7 +2629,7 @@ handleQueryError($conn, "New Status Query");
                                         </button>
                                     </form>
                                 </div>
-                                  <style>
+                                <style>
                                     /* Animated View Details Button Styles */
                                     .animated-view-btn {
                                         display: flex;
@@ -2837,7 +2842,7 @@ handleQueryError($conn, "New Status Query");
                                 <?php endif; ?>
 
                                 <!-- Buttons -->
-                              <div class="flex flex-col gap-2 mt-auto">
+                                <div class="flex flex-col gap-2 mt-auto">
                                     <!-- Animated View Details Button -->
                                     <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
                                         <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
@@ -2868,7 +2873,7 @@ handleQueryError($conn, "New Status Query");
                                         </button>
                                     </form>
                                 </div>
-                                  <style>
+                                <style>
                                     /* Animated View Details Button Styles */
                                     .animated-view-btn {
                                         display: flex;
@@ -3077,7 +3082,7 @@ handleQueryError($conn, "New Status Query");
                                         </button>
                                     </form>
                                 </div>
-                                  <style>
+                                <style>
                                     /* Animated View Details Button Styles */
                                     .animated-view-btn {
                                         display: flex;
@@ -3650,8 +3655,8 @@ handleQueryError($conn, "New Status Query");
         });
     </script>
 
-  
-<?php include '../navbar/footer.php'; ?>
+
+    <?php include '../navbar/footer.php'; ?>
 
 
     <script>

@@ -284,8 +284,6 @@ $is_verified = $user['is_verified'] ?? null;
         #orderList::-webkit-scrollbar-thumb:hover {
             background: #94A3B8;
         }
-
-        
     </style>
 </head>
 
@@ -306,190 +304,190 @@ $is_verified = $user['is_verified'] ?? null;
 
     <div class="container mx-auto px-6 py-8 max-w-full">
         <!-- Professional Profile Section -->
-       <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
-    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+        <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
+            <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
 
-        <!-- Profile Information -->
-        <div class="flex-1">
-            <div class="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-                <!-- Professional Avatar -->
-                <div class="relative mx-auto sm:mx-0">
-                    <?php if ($user_picture): ?>
-                        <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-xl overflow-hidden border-2 border-gray-200 shadow-md">
-                            <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+                <!-- Profile Information -->
+                <div class="flex-1">
+                    <div class="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                        <!-- Professional Avatar -->
+                        <div class="relative mx-auto sm:mx-0">
+                            <?php if ($user_picture): ?>
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-xl overflow-hidden border-2 border-gray-200 shadow-md">
+                                    <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+                                </div>
+                            <?php else: ?>
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-md">
+                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                                <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-success rounded-full border-2 sm:border-4 border-white flex items-center justify-center shadow-sm">
+                                    <i class="fas fa-check text-white text-xs sm:text-sm"></i>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    <?php else: ?>
-                        <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-md">
-                            <?= strtoupper(substr($user_name, 0, 1)); ?>
-                        </div>
-                    <?php endif; ?>
 
-                    <?php if (!empty($is_verified) && $is_verified == 1): ?>
-                        <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-success rounded-full border-2 sm:border-4 border-white flex items-center justify-center shadow-sm">
-                            <i class="fas fa-check text-white text-xs sm:text-sm"></i>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- User Details -->
-                <div class="flex-1 text-center sm:text-left w-full">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                        <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 font-inter"><?= htmlspecialchars($user_name); ?></h2>
-                        <?php if (!empty($is_verified) && $is_verified == 1): ?>
-                            <span class="px-2 sm:px-3 py-1 bg-green-100 text-green-800 text-xs sm:text-sm font-medium rounded-full border border-green-200 whitespace-nowrap mx-auto sm:mx-0 w-fit">
-                                <i class="fas fa-shield-alt mr-1"></i>Verified Account
-                            </span>
-                        <?php else: ?>
-                            <span class="px-2 sm:px-3 py-1 bg-red-100 text-red-800 text-xs sm:text-sm font-medium rounded-full border border-red-200 whitespace-nowrap mx-auto sm:mx-0 w-fit">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>Pending Verification
-                            </span>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="space-y-2 text-gray-600 mb-4 sm:mb-6">
-                        <div class="flex items-center justify-center sm:justify-start gap-3">
-                            <i class="fas fa-envelope text-gray-400 w-4 flex-shrink-0"></i>
-                            <span class="font-medium text-sm sm:text-base break-all"><?= htmlspecialchars($user_email); ?></span>
-                        </div>
-                    </div>
-
-                    <!-- Action Button -->
-                    <div class="mb-4 sm:mb-6">
-                        <?php if ($is_verified == 1): ?>
-                            <button disabled class="w-full sm:w-auto flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-green-50 text-green-700 font-semibold rounded-lg border border-green-200 cursor-not-allowed text-sm sm:text-base">
-                                <i class="fas fa-check-circle"></i>
-                                Account Verified
-                            </button>
-                        <?php else: ?>
-                            <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
-                                <i class="fas fa-user-cog"></i>
-                                Complete Verification
-                            </a>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Feedback Form -->
-                    <div class="mt-4 sm:mt-6 p-3 sm:p-4 border rounded-lg bg-gray-50">
-                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3">Comment on this Website</h3>
-                        <form action="profilerate.php" method="POST" class="space-y-3">
-                            <input type="hidden" name="user_id" value="<?= $user_id; ?>">
-
-                            <!-- Rating -->
-                            <div class="flex items-center justify-center sm:justify-start gap-1">
-                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <label>
-                                        <input type="radio" name="rating" value="<?= $i ?>" required class="hidden peer">
-                                        <i class="fas fa-star text-gray-300 peer-checked:text-yellow-500 cursor-pointer text-lg sm:text-xl"></i>
-                                    </label>
-                                <?php endfor; ?>
+                        <!-- User Details -->
+                        <div class="flex-1 text-center sm:text-left w-full">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 font-inter"><?= htmlspecialchars($user_name); ?></h2>
+                                <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                                    <span class="px-2 sm:px-3 py-1 bg-green-100 text-green-800 text-xs sm:text-sm font-medium rounded-full border border-green-200 whitespace-nowrap mx-auto sm:mx-0 w-fit">
+                                        <i class="fas fa-shield-alt mr-1"></i>Verified Account
+                                    </span>
+                                <?php else: ?>
+                                    <span class="px-2 sm:px-3 py-1 bg-red-100 text-red-800 text-xs sm:text-sm font-medium rounded-full border border-red-200 whitespace-nowrap mx-auto sm:mx-0 w-fit">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>Pending Verification
+                                    </span>
+                                <?php endif; ?>
                             </div>
 
-                            <!-- Comment -->
-                            <textarea name="comment" rows="3" class="w-full border rounded-lg p-2 text-sm sm:text-base" placeholder="Write your feedback..."></textarea>
+                            <div class="space-y-2 text-gray-600 mb-4 sm:mb-6">
+                                <div class="flex items-center justify-center sm:justify-start gap-3">
+                                    <i class="fas fa-envelope text-gray-400 w-4 flex-shrink-0"></i>
+                                    <span class="font-medium text-sm sm:text-base break-all"><?= htmlspecialchars($user_email); ?></span>
+                                </div>
+                            </div>
 
-                            <!-- Submit -->
-                            <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base font-medium">
-                                Submit Feedback
-                            </button>
-                        </form>
+                            <!-- Action Button -->
+                            <div class="mb-4 sm:mb-6">
+                                <?php if ($is_verified == 1): ?>
+                                    <button disabled class="w-full sm:w-auto flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-green-50 text-green-700 font-semibold rounded-lg border border-green-200 cursor-not-allowed text-sm sm:text-base">
+                                        <i class="fas fa-check-circle"></i>
+                                        Account Verified
+                                    </button>
+                                <?php else: ?>
+                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+                                        <i class="fas fa-user-cog"></i>
+                                        Complete Verification
+                                    </a>
+                                <?php endif; ?>
+                            </div>
 
-                        <?php
-                        // Kunin yung huling feedback na ginawa ng naka-login user para sa profile na ito
-                        $current_feedback = $conn->query("
-        SELECT * FROM user_feedback 
-        WHERE user_id = $user_id AND author_id = {$_SESSION['user_id']}
-        ORDER BY created_at DESC LIMIT 1
-    ");
-                        ?>
+                            <!-- Feedback Form -->
+                            <div class="mt-4 sm:mt-6 p-3 sm:p-4 border rounded-lg bg-gray-50">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3">Comment on this Website</h3>
+                                <form action="profilerate.php" method="POST" class="space-y-3">
+                                    <input type="hidden" name="user_id" value="<?= $user_id; ?>">
 
-                        <?php if ($current_feedback && $current_feedback->num_rows > 0):
-                            $fb = $current_feedback->fetch_assoc(); ?>
-
-                            <details class="mt-4 border rounded-lg bg-white shadow-sm">
-                                <summary class="cursor-pointer px-3 sm:px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 rounded-t-lg">
-                                    Your Latest Review
-                                </summary>
-                                <div class="p-3 sm:p-4 border-t">
                                     <!-- Rating -->
-                                    <div class="flex items-center gap-1 mb-2">
+                                    <div class="flex items-center justify-center sm:justify-start gap-1">
                                         <?php for ($i = 1; $i <= 5; $i++): ?>
-                                            <i class="fas fa-star text-sm sm:text-base <?= $i <= $fb['rating'] ? 'text-yellow-500' : 'text-gray-300' ?>"></i>
+                                            <label>
+                                                <input type="radio" name="rating" value="<?= $i ?>" required class="hidden peer">
+                                                <i class="fas fa-star text-gray-300 peer-checked:text-yellow-500 cursor-pointer text-lg sm:text-xl"></i>
+                                            </label>
                                         <?php endfor; ?>
                                     </div>
 
                                     <!-- Comment -->
-                                    <p class="text-gray-700 text-sm mb-2"><?= htmlspecialchars($fb['comment']); ?></p>
-                                    <span class="text-xs text-gray-500">Submitted on <?= date('M j, Y g:i A', strtotime($fb['created_at'])); ?></span>
+                                    <textarea name="comment" rows="3" class="w-full border rounded-lg p-2 text-sm sm:text-base" placeholder="Write your feedback..."></textarea>
+
+                                    <!-- Submit -->
+                                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base font-medium">
+                                        Submit Feedback
+                                    </button>
+                                </form>
+
+                                <?php
+                                // Kunin yung huling feedback na ginawa ng naka-login user para sa profile na ito
+                                $current_feedback = $conn->query("
+        SELECT * FROM user_feedback 
+        WHERE user_id = $user_id AND author_id = {$_SESSION['user_id']}
+        ORDER BY created_at DESC LIMIT 1
+    ");
+                                ?>
+
+                                <?php if ($current_feedback && $current_feedback->num_rows > 0):
+                                    $fb = $current_feedback->fetch_assoc(); ?>
+
+                                    <details class="mt-4 border rounded-lg bg-white shadow-sm">
+                                        <summary class="cursor-pointer px-3 sm:px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 rounded-t-lg">
+                                            Your Latest Review
+                                        </summary>
+                                        <div class="p-3 sm:p-4 border-t">
+                                            <!-- Rating -->
+                                            <div class="flex items-center gap-1 mb-2">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <i class="fas fa-star text-sm sm:text-base <?= $i <= $fb['rating'] ? 'text-yellow-500' : 'text-gray-300' ?>"></i>
+                                                <?php endfor; ?>
+                                            </div>
+
+                                            <!-- Comment -->
+                                            <p class="text-gray-700 text-sm mb-2"><?= htmlspecialchars($fb['comment']); ?></p>
+                                            <span class="text-xs text-gray-500">Submitted on <?= date('M j, Y g:i A', strtotime($fb['created_at'])); ?></span>
+                                        </div>
+                                    </details>
+
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="w-full lg:w-96 xl:w-80 2xl:w-96">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <!-- Total Orders -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total Orders</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-gray-900"><?= count($all_orders); ?></p>
                                 </div>
-                            </details>
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-shopping-bag text-blue-600 text-sm sm:text-base"></i>
+                                </div>
+                            </div>
+                        </div>
 
-                        <?php endif; ?>
+                        <!-- Pending Orders -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Pending</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-warning"><?= count($pending_orders); ?></p>
+                                </div>
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-clock text-orange-600 text-sm sm:text-base"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Addresses Card -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm mb-3 sm:mb-4">
+                        <div class="flex items-center justify-between mb-3 sm:mb-4">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-map-marker-alt text-green-600 text-sm sm:text-base"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-500">Delivery Addresses</p>
+                                    <p class="text-sm sm:text-base font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
+                                </div>
+                            </div>
+                            <button onclick="openBillingModal()" class="px-2 sm:px-3 py-1 sm:py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-xs sm:text-sm font-medium whitespace-nowrap">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </button>
+                        </div>
+
+                        <button onclick="window.location.href='update_billing_add.php'" class="w-full px-3 sm:px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
+                            <i class="fas fa-plus mr-2"></i>Add New Address
+                        </button>
+                    </div>
+
+                    <!-- Order History Button -->
+                    <div>
+                        <a href="order_history.php" class="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base font-medium">
+                            <i class="fas fa-history mr-2"></i>View Order History
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Statistics Cards -->
-        <div class="w-full lg:w-96 xl:w-80 2xl:w-96">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                <!-- Total Orders -->
-                <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total Orders</p>
-                            <p class="text-xl sm:text-2xl font-bold text-gray-900"><?= count($all_orders); ?></p>
-                        </div>
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-shopping-bag text-blue-600 text-sm sm:text-base"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Orders -->
-                <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Pending</p>
-                            <p class="text-xl sm:text-2xl font-bold text-warning"><?= count($pending_orders); ?></p>
-                        </div>
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-clock text-orange-600 text-sm sm:text-base"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Addresses Card -->
-            <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm mb-3 sm:mb-4">
-                <div class="flex items-center justify-between mb-3 sm:mb-4">
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-map-marker-alt text-green-600 text-sm sm:text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs sm:text-sm font-medium text-gray-500">Delivery Addresses</p>
-                            <p class="text-sm sm:text-base font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
-                        </div>
-                    </div>
-                    <button onclick="openBillingModal()" class="px-2 sm:px-3 py-1 sm:py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-xs sm:text-sm font-medium whitespace-nowrap">
-                        <i class="fas fa-eye mr-1"></i>View
-                    </button>
-                </div>
-
-                <button onclick="window.location.href='update_billing_add.php'" class="w-full px-3 sm:px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
-                    <i class="fas fa-plus mr-2"></i>Add New Address
-                </button>
-            </div>
-
-            <!-- Order History Button -->
-            <div>
-                <a href="order_history.php" class="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base font-medium">
-                    <i class="fas fa-history mr-2"></i>View Order History
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Orders History - LEFT (2 columns) -->

@@ -922,15 +922,13 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet JS -->
-
-    <!-- Replace your current script tag with this: -->
+ <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.paypal.com/sdk/js?client-id=AT1LmhSbRH3yOGHNRFYZb_WhRkFIUlsdUEIQcNNr_0BXnb6LapA61CTycE7xq0c5W6XrHMpetIfpP-Kd&currency=PHP&intent=capture&enable-funding=venmo,card&disable-funding=credit,bancontact,eps,giropay,ideal,mybank,p24,sepa,sofort&locale=en_PH"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-mont">
 
     <script>
         // Initialize global configuration object with PHP data
@@ -944,7 +942,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
     <?php include '../navbar/top.php'; ?>
 
-    <div class="bg-white p-6 rounded shadow mt-3 max-w-6xl mx-auto">
+    <div class="bg-white p-6 rounded shadow mt-3 max-w-7xl mx-auto">
         <h2 class="text-3xl font-bold text-orange-700 mb-8">Checkout Process</h2>
 
         <?php if (!empty($error)): ?>
@@ -1009,16 +1007,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <!-- STEP 1: Customer Information -->
             <div class="step-content" id="step1">
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                <div class=" p-4 mb-6">
                     <div class="flex items-center">
-                        <div class="text-blue-600 mr-3">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                        </div>
+                    
                         <div>
-                            <h3 class="text-lg font-bold text-blue-800">Step 1: Customer Information</h3>
-                            <p class="text-blue-700 text-sm">Verify your basic details</p>
+                            <h3 class="text-lg font-bold text-black">Step 1: Customer Information</h3>
+                            <p class="text-black text-sm">Verify your basic details</p>
                         </div>
                     </div>
                 </div>
@@ -1048,17 +1042,12 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <!-- STEP 2: Delivery Address -->
             <div class="step-content hidden" id="step2">
-                <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+                <div class=" p-4 mb-6">
                     <div class="flex items-center">
-                        <div class="text-green-600 mr-3">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </div>
+                     
                         <div>
-                            <h3 class="text-lg font-bold text-green-800">Step 2: Delivery Address</h3>
-                            <p class="text-green-700 text-sm">Choose where to deliver your order</p>
+                            <h3 class="text-lg font-bold text-black">Step 2: Delivery Address</h3>
+                            <p class="text-black text-sm">Choose where to deliver your order</p>
                         </div>
                     </div>
                 </div>
@@ -1170,22 +1159,18 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <!-- STEP 3: Delivery Fee Calculation -->
             <div class="step-content hidden" id="step3">
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <div class=" p-4 mb-6">
                     <div class="flex items-center">
-                        <div class="text-yellow-600 mr-3">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
+                     
                         <div>
-                            <h3 class="text-lg font-bold text-yellow-800">Step 3: Calculate Delivery Fee</h3>
-                            <p class="text-yellow-700 text-sm">Determine delivery costs based on distance</p>
+                            <h3 class="text-lg font-bold text-black">Step 3: Calculate Delivery Fee</h3>
+                            <p class="text-black text-sm">Determine delivery costs based on distance</p>
                         </div>
                     </div>
                 </div>
 
                 <?php if ($delivery_settings && $has_billing_addresses): ?>
-                    <div class="bg-white border-2 border-yellow-300 rounded-lg p-6">
+                    <div class="bg-white rounded-lg p-6">
                         <h4 class="font-bold text-gray-800 mb-4">Delivery Distance Calculator</h4>
 
                         <div class="grid md:grid-cols-2 gap-6 mb-6">
@@ -1240,13 +1225,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
             <!-- STEP 4: Payment & Order Summary -->
             <div class="step-content hidden" id="step4">
-                <div class="bg-purple-50 border-l-4 border-purple-400 p-4 mb-6">
+                <div class=" p-4 mb-6">
                     <div class="flex items-center">
-                        <div class="text-purple-600 mr-3">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                            </svg>
-                        </div>
                         <div>
                             <h3 class="text-lg font-bold text-purple-800">Step 4: Payment & Final Review</h3>
                             <p class="text-purple-700 text-sm">Choose payment method and complete your order</p>
@@ -1261,7 +1241,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
                         <div class="space-y-4">
                             <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-purple-300 transition">
-                                <input type="radio" name="payment_method" value="Bank Transfer" required class="mr-4" onclick="showBankSelection()" />
+                              <input type="radio" name="payment_method" value="Bank Transfer" required class="mr-4" onchange="showBankSelection()" />
+
                                 <div class="flex items-center">
                                     <div class="text-purple-600 mr-3">
                                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -1276,7 +1257,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             </label>
 
                             <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
-                                <input type="radio" name="payment_method" value="PayPal" required class="mr-4" onclick="showPayPalOption()" />
+                               <input type="radio" name="payment_method" value="PayPal" required class="mr-4" onchange="showPayPalOption()" />
                                 <div class="flex items-center">
                                     <div class="mr-3">
                                         <!-- Official PayPal Logo SVG -->
@@ -1465,9 +1446,9 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         <button type="button" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition font-medium" onclick="goToStep(3)">
                             Back to Delivery
                         </button>
-                        <button type="submit" id="placeOrderBtn" class="bg-green-600 text-white px-12 py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg" disabled>
-                            Place Order
-                        </button>
+                      <button type="submit" id="placeOrderBtn" class="bg-green-600 text-white px-12 py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg" style="display: none;" disabled>
+    Place Order
+</button>
                     </div>
                 </div>
 
@@ -1476,147 +1457,8 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
         </form>
     </div>
 
-    <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
-        <!-- Decorative Elements -->
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
-
-        <div class="max-w-7xl mx-auto px-6 relative z-10">
-            <!-- Main Footer Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-
-                <!-- Enhanced Branding Section -->
-                <div class="lg:col-span-2">
-                    <div class="flex items-center space-x-4 mb-6">
-                        <!-- Logo with glow and pulse -->
-                        <div class="relative">
-                            <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
-                            </div>
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
-                        </div>
-
-                        <!-- Text Branding -->
-                        <div>
-                            <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-
-                        </div>
-                    </div>
-
-
-                    <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
-                        Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
-                    </p>
-
-                    <!-- Contact Info -->
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                    <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">noblehomeconst.ph@gmail.com</span>
-                        </div>
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">0968 591 6536</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
-                        Quick Links
-                        <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </h3>
-                    <nav class="space-y-3">
-                        <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
-                        <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
-                        <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
-                    </nav>
-                </div>
-
-                <!-- Services -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
-                        Our Services
-                        <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </h3>
-                    <ul class="space-y-3 text-gray-300">
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Divider -->
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
-
-            <!-- Bottom Section -->
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
-                <!-- Copyright -->
-                <div class="text-center lg:text-left">
-                    <p class="text-gray-400 text-sm">
-                        © 2025 Noble Home Construction. All rights reserved.
-                    </p>
-                    <p class="text-gray-500 text-xs mt-1">
-                        Licensed & Insured | PCAB License No. 12345
-                    </p>
-                </div>
-
-                <!-- Enhanced Social Media -->
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-400 text-sm mr-2">Follow us:</span>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="LinkedIn">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                        </svg>
-                    </a>
-                </div>
-
-                <!-- Back to Top Button -->
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-                    class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Background Pattern -->
-        <div class="absolute bottom-0 right-0 opacity-5">
-            <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-                <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
-                <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
-                <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
-            </svg>
-        </div>
-    </footer>
-
-
+   
+   <?php include '../navbar/footer.php'; ?>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- Include all JavaScript modules in the correct order -->

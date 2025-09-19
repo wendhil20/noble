@@ -1844,12 +1844,8 @@ if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
           padding: 0.5rem 0.75rem !important;
       }
   }
-  </style>
 
-<?php endif; ?>
-
-<style>
-  /* Enhanced scrollbar hiding */
+    /* Enhanced scrollbar hiding */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -1937,113 +1933,13 @@ if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
       font-size: 0.875rem;
     }
   }
-</style>
+  </style>
 
-<script>
-  // Enhanced scroll functionality
-  document.addEventListener('DOMContentLoaded', function() {
-    const categoryNav = document.getElementById('categoryNav');
-    const scrollLeftBtn = document.getElementById('scrollLeftBtn');
-    const scrollRightBtn = document.getElementById('scrollRightBtn');
-
-    // Scroll navigation
-    scrollLeftBtn.addEventListener('click', () => {
-      categoryNav.scrollBy({
-        left: -200,
-        behavior: 'smooth'
-      });
-    });
-
-    scrollRightBtn.addEventListener('click', () => {
-      categoryNav.scrollBy({
-        left: 200,
-        behavior: 'smooth'
-      });
-    });
-
-    // Active state management
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    navLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-
-        // Remove active class from all links
-        navLinks.forEach(l => l.classList.remove('active'));
-
-        // Add active class to clicked link
-        this.classList.add('active');
-
-        // Add ripple effect
-        createRipple(e, this);
-      });
-    });
-
-    // Ripple effect function
-    function createRipple(event, element) {
-      const ripple = document.createElement('span');
-      const rect = element.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height);
-      const x = event.clientX - rect.left - size / 2;
-      const y = event.clientY - rect.top - size / 2;
-
-      ripple.style.cssText = `
-      position: absolute;
-      width: ${size}px;
-      height: ${size}px;
-      left: ${x}px;
-      top: ${y}px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: scale(0);
-      animation: ripple 0.6s ease-out;
-      pointer-events: none;
-      z-index: 1;
-    `;
-
-      element.style.position = 'relative';
-      element.style.overflow = 'hidden';
-      element.appendChild(ripple);
-
-      setTimeout(() => {
-        ripple.remove();
-      }, 600);
-    }
-
-    // Add ripple animation CSS
-    const style = document.createElement('style');
-    style.textContent = `
-    @keyframes ripple {
-      to {
-        transform: scale(2);
-        opacity: 0;
-      }
-    }
-  `;
-    document.head.appendChild(style);
-
-    // Update scroll button visibility
-    function updateScrollButtons() {
-      const isScrollable = categoryNav.scrollWidth > categoryNav.clientWidth;
-      const isAtStart = categoryNav.scrollLeft <= 0;
-      const isAtEnd = categoryNav.scrollLeft >= categoryNav.scrollWidth - categoryNav.clientWidth;
-
-      scrollLeftBtn.style.opacity = isAtStart ? '0.5' : '1';
-      scrollRightBtn.style.opacity = isAtEnd ? '0.5' : '1';
-      scrollLeftBtn.disabled = isAtStart;
-      scrollRightBtn.disabled = isAtEnd;
-    }
-
-    categoryNav.addEventListener('scroll', updateScrollButtons);
-    window.addEventListener('resize', updateScrollButtons);
-    updateScrollButtons();
-  });
-</script>
+<?php endif; ?>
 
 <script src="../navbar/top-obf.js"></script>
-
-<script>
-  document.addEventListener("alpine:init", () => {
+<script> 
+    document.addEventListener("alpine:init", () => {
     Alpine.data("notificationSystem", () => ({
       notifOpen: false,
       notifications: [],
@@ -2189,3 +2085,5 @@ if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
     }));
   });
 </script>
+
+

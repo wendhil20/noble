@@ -546,29 +546,36 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-
-    <section class="bg-orange-400 text-white py-1 px-2 shadow-md">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-
-            <!-- Discount Text -->
-            <div class="flex items-center gap-3">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 14l6-6M15 14l-6-6M9 10h6v4H9z" />
-                </svg>
-                <p class="text-lg font-semibold">
-                    Exclusive Deals! <span class="underline font-bold">Discounted Items Available</span>
+<section class="bg-orange-400 text-white shadow-lg rounded-lg p-2 ">     
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 lg:gap-6">          
+        <!-- Discount Text -->         
+        <div class="flex items-center gap-2 sm:gap-3 text-center sm:text-left w-full sm:w-auto">             
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">                 
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />             
+            </svg>             
+            <div class="min-w-0 flex-1">
+                <p class="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-tight">                 
+                    <span class="block xs:inline">Exclusive Deals!</span> 
+                    <span class="block xs:inline underline font-bold mt-1 xs:mt-0 xs:ml-1">Discounted Items Available</span>             
                 </p>
             </div>
+        </div>          
 
-            <!-- Action Button -->
-            <a href="allproduct.php?discount=all"
-                class="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-5 py-1 rounded-lg shadow transition">
-                Shop Now
-            </a>
-        </div>
-    </section>
+        <!-- Action Button -->         
+        <a href="allproduct.php?discount=all"             
+            class="bg-white text-orange-600 hover:bg-orange-50 active:bg-gray-100 font-semibold 
+                   px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 
+                   text-sm sm:text-base
+                   rounded-lg shadow-md hover:shadow-lg 
+                   transition-all duration-200 ease-in-out
+                   w-full sm:w-auto text-center
+                   flex-shrink-0
+                   transform hover:scale-105 active:scale-95">             
+            Shop Now         
+        </a>     
+    </div> 
+</section>
+
 
 
     <!-- Scrolling Text -->

@@ -256,6 +256,53 @@ foreach ($all_categories as $cat_key => $cat_name) {
                 top: 2rem;
             }
         }
+        /* Add this CSS to properly hide the sidebar filter on mobile */
+
+/* Desktop Sidebar Filter - Hidden on mobile */
+.desktop-sidebar-filter {
+    display: none;
+}
+
+/* Show desktop sidebar only on large screens */
+@media (min-width: 1024px) {
+    .desktop-sidebar-filter {
+        display: block;
+    }
+    
+    /* Hide mobile filter toggle on desktop */
+    .mobile-filter-toggle {
+        display: none;
+    }
+}
+
+/* Mobile specific styles */
+@media (max-width: 1023px) {
+    /* Ensure sidebar is completely hidden on mobile */
+    .desktop-sidebar-filter {
+        display: none !important;
+    }
+    
+    /* Make sure mobile filter toggle shows */
+    .mobile-filter-toggle {
+        display: block;
+    }
+    
+    /* Adjust main content to full width on mobile */
+    .main-content-mobile {
+        width: 100%;
+    }
+}
+
+/* Additional mobile layout fixes */
+@media (max-width: 768px) {
+    .flex.flex-col.lg\\:flex-row {
+        flex-direction: column;
+    }
+    
+    .w-80 {
+        display: none;
+    }
+}
     </style>
 
     <script>
@@ -419,8 +466,8 @@ foreach ($all_categories as $cat_key => $cat_name) {
         </div>
 
         <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Products Section -->
-            <div class="flex-1 lg:order-1">
+          <!-- Products Section -->
+<div class="flex-1 lg:order-1 main-content-mobile">
                 <!-- Controls -->
                 <div class=" p-6 mb-8 shadow-sm">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -578,7 +625,7 @@ foreach ($all_categories as $cat_key => $cat_name) {
 
 
             <!-- Sidebar Filter Component -->
-            <div class="w-80 bg-white">
+            <div class="w-80 bg-white desktop-sidebar-filter">
                 <!-- Filter Header -->
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-900 flex items-center">

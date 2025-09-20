@@ -33,8 +33,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
 // ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-    // Not logged in — redirect to login or Google auth
-    header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+    header('Location: ../google-callback.php');
     exit;
 }
 
@@ -43,17 +42,22 @@ $product_id = $_GET['id'] ?? null;
 
 // Debug: Show what ID we're trying to fetch
 if (isset($_GET['debug'])) {
-    echo "<div class='bg-amber-50 border border-amber-200 p-3 text-center text-amber-800 rounded-lg mb-4'>Trying to fetch Product ID: " . htmlspecialchars($product_id) . "</div>";
+    echo "<div class='bg-amber-50 border border-amber-200 p-4 text-center text-amber-800 rounded-lg mb-6'>
+            <i class='fas fa-bug mr-2'></i>
+            Debug: Fetching Product ID: " . htmlspecialchars($product_id) . "
+          </div>";
 }
 
 if (!$product_id || !is_numeric($product_id)) {
-    echo "<div class='max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-sm border mt-8'>";
+    echo "<div class='min-h-screen flex items-center justify-center bg-gray-50'>";
+    echo "<div class='max-w-md w-full bg-white p-8 rounded-lg shadow-lg border'>";
     echo "<div class='text-center'>";
     echo "<i class='fas fa-exclamation-triangle text-red-500 text-4xl mb-4'></i>";
-    echo "<p class='text-red-600 text-lg font-medium mb-4'>Invalid or missing Product ID: " . htmlspecialchars($product_id ?? 'NULL') . "</p>";
-    echo "<a href='product_view.php' class='inline-flex items-center px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors duration-200'>";
+    echo "<h2 class='text-xl font-semibold text-gray-900 mb-2'>Invalid Product ID</h2>";
+    echo "<p class='text-red-600 mb-6'>Product ID: " . htmlspecialchars($product_id ?? 'NULL') . "</p>";
+    echo "<a href='product_view.php' class='inline-flex items-center px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors'>";
     echo "<i class='fas fa-arrow-left mr-2'></i>Back to Products</a>";
-    echo "</div></div>";
+    echo "</div></div></div>";
     exit;
 }
 
@@ -66,11 +70,15 @@ $product = $product_result->fetch_assoc();
 $stmt->close();
 
 if (!$product) {
-    echo "<div class='max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-sm border mt-8'>";
+    echo "<div class='min-h-screen flex items-center justify-center bg-gray-50'>";
+    echo "<div class='max-w-md w-full bg-white p-8 rounded-lg shadow-lg'>";
     echo "<div class='text-center'>";
-    echo "<i class='fas fa-box-open text-gray-400 text-5xl mb-4'></i>";
-    echo "<p class='text-red-600 text-lg font-medium'>Product not found</p>";
-    echo "</div></div>";
+    echo "<i class='fas fa-box-open text-gray-400 text-4xl mb-4'></i>";
+    echo "<h2 class='text-xl font-semibold text-gray-900 mb-2'>Product Not Found</h2>";
+    echo "<p class='text-gray-500 mb-6'>The requested product could not be found.</p>";
+    echo "<a href='product_view.php' class='inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'>";
+    echo "<i class='fas fa-arrow-left mr-2'></i>Back to Products</a>";
+    echo "</div></div></div>";
     exit;
 }
 
@@ -93,11 +101,15 @@ $stmt->close();
 
 // If no variants found, show error
 if (empty($variants)) {
-    echo "<div class='max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-sm border mt-8'>";
+    echo "<div class='min-h-screen flex items-center justify-center bg-gray-50'>";
+    echo "<div class='max-w-md w-full bg-white p-8 rounded-lg shadow-lg'>";
     echo "<div class='text-center'>";
-    echo "<i class='fas fa-tags text-gray-400 text-5xl mb-4'></i>";
-    echo "<p class='text-red-600 text-lg font-medium'>No variants found for this product</p>";
-    echo "</div></div>";
+    echo "<i class='fas fa-tags text-gray-400 text-4xl mb-4'></i>";
+    echo "<h2 class='text-xl font-semibold text-gray-900 mb-2'>No Variants Available</h2>";
+    echo "<p class='text-gray-500 mb-6'>This product has no available variants.</p>";
+    echo "<a href='product_view.php' class='inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors'>";
+    echo "<i class='fas fa-arrow-left mr-2'></i>Back to Products</a>";
+    echo "</div></div></div>";
     exit;
 }
 
@@ -123,82 +135,64 @@ if (isset($_GET['variant_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title><?= htmlspecialchars($product['product_name']) ?> - Product Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .hover-lift {
+        .card-hover {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .hover-lift:hover {
+        .card-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
 
-        .image-zoom {
-            transition: transform 0.3s ease;
+        .image-hover {
+            transition: transform 0.2s ease;
+            cursor: pointer;
         }
 
-        .image-zoom:hover {
-            transform: scale(1.05);
-        }
-
-        .variant-card {
-            transition: all 0.2s ease;
-        }
-
-        .variant-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .price-badge {
-            background: linear-gradient(135deg, #059669, #10b981);
+        .image-hover:hover {
+            transform: scale(1.02);
         }
     </style>
 </head>
 
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
-    <!-- Navigation Breadcrumb -->
-    <div class="bg-white border-b border-slate-200">
-        <div class=" px-4 py-3">
-            <nav class="flex items-center space-x-2 text-sm text-slate-600">
-                <a href="product_view.php?id=<?= $product['id'] ?>" class="hover:text-slate-900 flex items-center">
+    
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <nav class="flex items-center space-x-2 text-sm text-gray-600">
+                <a href="product_view.php" class="hover:text-blue-600 transition-colors">
                     <i class="fas fa-home mr-1"></i>
                     Products
                 </a>
-                <i class="fas fa-chevron-right text-slate-400 text-xs"></i>
-                <span class="text-slate-900 font-medium"><?= htmlspecialchars($product['product_name']) ?></span>
+                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+                <span class="text-gray-900 font-medium"><?= htmlspecialchars($product['product_name']) ?></span>
             </nav>
         </div>
     </div>
 
-    <div class="">
+    <div class="max-w-7xl mx-auto px-6 py-8">
         <!-- Main Product Card -->
-        <div class="bg-white shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-lg shadow-lg border overflow-hidden">
             <!-- Product Header -->
-            <div class="bg-orange-600 text-white p-8">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class=" text-black p-8">
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                        <h1 class="text-3xl font-bold mb-3">
+                        <h1 class="text-3xl font-bold mb-4">
                             <?= htmlspecialchars($product['product_name']) ?>
                         </h1>
-                        <div class="flex flex-wrap gap-4 text-white">
-                            <div class="flex items-center">
-                                <i class="fas fa-tag mr-2"></i>
-                                <span>ID: <?= $product['id'] ?></span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-code mr-2"></i>
-                                <span><?= htmlspecialchars($product['codename'] ?? 'N/A') ?></span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-cube mr-2"></i>
-                                <span><?= htmlspecialchars($variant['namevariant']) ?></span>
-                            </div>
+                     
+                    </div>
+                    <div class="mt-6 lg:mt-0">
+                        <div class="bg-green-600 text-white px-6 py-3 rounded-lg">
+                            <div class="text-sm opacity-90">Price</div>
+                            <div class="text-2xl font-bold">₱<?= number_format($variant['price'], 2) ?></div>
                         </div>
                     </div>
                 </div>
@@ -208,25 +202,31 @@ if (isset($_GET['variant_id'])) {
                 <!-- Variant Selection -->
                 <?php if (count($variants) > 1): ?>
                     <div class="mb-8">
-                        <h3 class="text-xl font-semibold text-slate-800 mb-4 flex items-center">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">
                             <i class="fas fa-layer-group mr-2 text-blue-600"></i>
                             Available Variants
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <?php foreach ($variants as $v): ?>
                                 <a href="?id=<?= $product_id ?>&variant_id=<?= $v['id'] ?>"
-                                    class="variant-card block p-5 border-2 rounded-xl <?= ($v['id'] == $variant['id']) ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-slate-200 bg-white hover:border-slate-300' ?>">
+                                   class="card-hover block p-5 border-2 rounded-lg <?= ($v['id'] == $variant['id']) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300' ?>">
                                     <div class="flex items-start justify-between mb-3">
-                                        <h4 class="font-semibold text-slate-800"><?= htmlspecialchars($v['namevariant']) ?></h4>
+                                        <h4 class="font-semibold text-gray-800"><?= htmlspecialchars($v['namevariant']) ?></h4>
                                         <?php if ($v['id'] == $variant['id']): ?>
                                             <i class="fas fa-check-circle text-blue-500"></i>
                                         <?php endif; ?>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <span class="text-lg font-bold text-green-600">₱<?= number_format($v['price'], 2) ?></span>
-                                        <div class="text-right text-sm text-slate-500">
-                                            <div><?= htmlspecialchars($v['color'] ?? 'N/A') ?></div>
-                                            <div><?= htmlspecialchars($v['size'] ?? 'N/A') ?></div>
+                                        <div class="text-right text-sm text-gray-500">
+                                            <div class="flex items-center mb-1">
+                                                <i class="fas fa-palette w-3 mr-1"></i>
+                                                <?= htmlspecialchars($v['color'] ?? 'N/A') ?>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-ruler w-3 mr-1"></i>
+                                                <?= htmlspecialchars($v['size'] ?? 'N/A') ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
@@ -235,36 +235,41 @@ if (isset($_GET['variant_id'])) {
                     </div>
                 <?php endif; ?>
 
-                <!-- Compact Centered Bintana-Style Description Image Viewer -->
-                <div class="mb-6 flex justify-center">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-3 text-center">Product Description</h3>
-
-                        <div class="grid grid-cols-2 gap-1 border-2 border-slate-300 rounded-lg overflow-hidden shadow-sm w-[550px] h-[550px] bg-white">
+                <!-- Product Images -->
+                <div class="mb-8">
+             
+                    <div class="flex justify-center">
+                        <div class="grid grid-cols-2 gap-3 border border-gray-300 rounded-lg p-4 bg-white shadow-sm" style="width: 500px; height: 500px;">
                             <?php
                             $imageFields = [
-                                'imagedescription' => 'Top Left',
-                                'imagedescriptiontwo' => 'Top Right',
-                                'imagedescriptiontree' => 'Bottom Left',
-                                'imagedescriptionfour' => 'Bottom Right'
+                                'imagedescription' => 'Image 1',
+                                'imagedescriptiontwo' => 'Image 2',
+                                'imagedescriptiontree' => 'Image 3',
+                                'imagedescriptionfour' => 'Image 4'
                             ];
 
-                            foreach ($imageFields as $field => $position):
+                            foreach ($imageFields as $field => $label):
                             ?>
-                                <div class="relative group overflow-hidden">
+                                <div class="relative overflow-hidden rounded border border-gray-200">
                                     <?php if (!empty($variant[$field])): ?>
                                         <img
                                             src="../<?= htmlspecialchars($variant[$field]) ?>"
-                                            alt="<?= $position ?>"
-                                            class="w-full h-full object-cover transition duration-200 group-hover:scale-105 cursor-pointer"
+                                            alt="<?= $label ?>"
+                                            class="w-full h-full object-cover image-hover"
                                             onclick="openImageModal(this.src)"
                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <div class="hidden absolute inset-0 items-center justify-center text-red-500 bg-white text-xs">
-                                            <i class="fas fa-times-circle mr-1"></i> Not found
+                                        <div class="hidden absolute inset-0 items-center justify-center text-red-500 bg-red-50 text-sm">
+                                            <div class="text-center">
+                                                <i class="fas fa-exclamation-triangle mb-1"></i>
+                                                <div>Image not found</div>
+                                            </div>
                                         </div>
                                     <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100 text-xs">
-                                            <i class="fas fa-image text-base mr-1"></i> No image
+                                        <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 text-sm">
+                                            <div class="text-center">
+                                                <i class="fas fa-image text-xl mb-1"></i>
+                                                <div>No image</div>
+                                            </div>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -273,28 +278,19 @@ if (isset($_GET['variant_id'])) {
                     </div>
                 </div>
 
-                <script>
-                    function openImageModal(src) {
-                        const win = window.open("");
-                        win.document.write('<img src="' + src + '" style="width:100%">');
-                    }
-                </script>
-
                 <!-- Product Description -->
                 <div class="mb-8">
-                    <h3 class="text-xl font-semibold text-slate-800 mb-4 flex items-center">
-                        <i class="fas fa-align-left mr-2 text-orange-600"></i>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-align-left mr-2 text-blue-600"></i>
                         Product Description
                     </h3>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
                         <?php if (!empty($variant['descriptionpic'])): ?>
-                            <div class="prose prose-slate max-w-none">
-                                <p class="text-slate-700 leading-relaxed whitespace-pre-wrap"><?= htmlspecialchars($variant['descriptionpic']) ?></p>
-                            </div>
+                            <p class="text-gray-700 leading-relaxed whitespace-pre-wrap"><?= htmlspecialchars($variant['descriptionpic']) ?></p>
                         <?php else: ?>
                             <div class="text-center py-8">
-                                <i class="fas fa-file-alt text-slate-300 text-4xl mb-3"></i>
-                                <p class="text-slate-400 italic">No description available for this product.</p>
+                                <i class="fas fa-file-alt text-gray-300 text-3xl mb-3"></i>
+                                <p class="text-gray-400">No description available for this product.</p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -302,12 +298,13 @@ if (isset($_GET['variant_id'])) {
 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="product_view.php?id=<?= $product['id'] ?>"
-                        class="inline-flex items-center justify-center px-6 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200">
+                    <a href="product_view.php"
+                       class="inline-flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Products
                     </a>
-                    <button class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200">
+                    <button onclick="shareProduct()"
+                            class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-share-alt mr-2"></i>
                         Share Product
                     </button>
@@ -316,19 +313,15 @@ if (isset($_GET['variant_id'])) {
         </div>
     </div>
 
-    <section></section>
-    
-
-    <!-- Enhanced Image Modal -->
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
-        <div class="relative max-w-5xl max-h-full">
-            <button onclick="closeImageModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl">
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-4xl max-h-full">
+            <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white hover:text-gray-300 text-2xl">
                 <i class="fas fa-times"></i>
             </button>
-            <img id="modalImage" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <img id="modalImage" src="" class="max-w-full max-h-full object-contain rounded-lg">
         </div>
     </div>
-
 
     <script>
         function openImageModal(src) {
@@ -342,21 +335,25 @@ if (isset($_GET['variant_id'])) {
             document.body.style.overflow = 'auto';
         }
 
+        function shareProduct() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '<?= htmlspecialchars($product['product_name']) ?>',
+                    text: 'Check out this product!',
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+
         // Close modal with escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeImageModal();
             }
-        });
-
-        // Add smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
         });
     </script>
 </body>

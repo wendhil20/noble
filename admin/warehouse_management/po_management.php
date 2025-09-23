@@ -88,14 +88,26 @@ foreach ($allItems as $item) {
     $newOrderTotal += $item['calculated_subtotal'];
 }
 
+// Count unassigned items and items with primary suppliers available
+$unassignedCount = 0;
+$primaryAvailableCount = 0;
+
 // For each item, get available suppliers from supp_link_products
 for ($i = 0; $i < count($allItems); $i++) {
     // Initialize arrays to prevent undefined key errors
     $allItems[$i]['linked_suppliers'] = [];
+    $allItems[$i]['primary_supplier'] = null;
 
-    // Get linked suppliers
+    // Check if item is unassigned
+    $isUnassigned = (is_null($allItems[$i]['supplier_id']) || 
+                    ($allItems[$i]['supplier_id'] == 0 && empty($allItems[$i]['manual_supplier_name'])));
+    
+    if ($isUnassigned) {
+        $unassignedCount++;
+    }
+
+    // Get linked suppliers with proper JOIN
     if ($allItems[$i]['product_id']) {
-        // Get linked suppliers with proper JOIN
         $linkedSuppStmt = $conn->prepare("
             SELECT 
                 slp.supplier_id,
@@ -124,6 +136,17 @@ for ($i = 0; $i < count($allItems); $i++) {
         $linkedResult = $linkedSuppStmt->get_result();
         $allItems[$i]['linked_suppliers'] = $linkedResult->fetch_all(MYSQLI_ASSOC);
         $linkedSuppStmt->close();
+
+        // Find primary supplier
+        foreach ($allItems[$i]['linked_suppliers'] as $supplier) {
+            if ($supplier['supplier_type'] === 'primary') {
+                $allItems[$i]['primary_supplier'] = $supplier;
+                if ($isUnassigned) {
+                    $primaryAvailableCount++;
+                }
+                break;
+            }
+        }
     }
 }
 ?>
@@ -180,6 +203,15 @@ for ($i = 0; $i < count($allItems); $i++) {
             border-radius: 4px;
             border: 1px solid #f59e0b;
         }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 
@@ -214,6 +246,68 @@ for ($i = 0; $i < count($allItems); $i++) {
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="alertContainer" class="mb-6"></div>
+
+        <!-- Bulk Assignment Section -->
+        <?php if ($unassignedCount > 0 && $primaryAvailableCount > 0): ?>
+        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <i class="fas fa-magic text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-900">Bulk Assignment Available</h3>
+                        <p class="text-blue-700 text-sm">
+                            <?php echo $primaryAvailableCount; ?> unassigned items can be automatically assigned to their primary suppliers
+                        </p>
+                    </div>
+                </div>
+                <button onclick="assignAllToPrimarySuppliers()" 
+                        id="bulkAssignBtn"
+                        class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span class="font-medium">Assign All to Primary Suppliers</span>
+                </button>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Assignment Status Summary -->
+        <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="bg-green-100 p-2 rounded-lg mr-3">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Assigned Items</p>
+                        <p class="text-2xl font-bold text-green-600"><?php echo count($allItems) - $unassignedCount; ?></p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="bg-yellow-100 p-2 rounded-lg mr-3">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Unassigned Items</p>
+                        <p class="text-2xl font-bold text-yellow-600"><?php echo $unassignedCount; ?></p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                        <i class="fas fa-star text-blue-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Primary Suppliers Available</p>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo $primaryAvailableCount; ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Single Order Display -->
         <div class="mb-8">
@@ -279,7 +373,7 @@ for ($i = 0; $i < count($allItems); $i++) {
             <?php if (!empty($allItems)): ?>
                 <div class="space-y-4 bg-gray-50 rounded-b-xl border-x border-b border-gray-200 p-4">
                     <?php foreach ($allItems as $itemIndex => $item): ?>
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6" id="item-<?php echo $item['item_id']; ?>">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex-1">
                                     <h3 class="text-lg font-bold text-gray-900 mb-2"><?php echo htmlspecialchars($item['product_name']); ?></h3>
@@ -669,6 +763,58 @@ for ($i = 0; $i < count($allItems); $i++) {
                 })
                 .catch(error => {
                     showAlert('An error occurred: ' + error.message, 'error');
+                });
+        }
+
+        // New function for bulk assignment to primary suppliers
+        function assignAllToPrimarySuppliers() {
+            if (!confirm('Are you sure you want to assign all unassigned items to their primary suppliers? This action cannot be undone.')) {
+                return;
+            }
+
+            const btn = document.getElementById('bulkAssignBtn');
+            const originalContent = btn.innerHTML;
+            
+            // Show loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            btn.disabled = true;
+
+            fetch('bulk_assign_suppliers.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({  
+                        order_id: <?php echo $order['id']; ?>,
+                        type: 'primary_only'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert(`Successfully assigned ${data.assigned_count} items to their primary suppliers!`, 'success');
+                        
+                        // Add visual feedback for assigned items
+                        if (data.assigned_items) {
+                            data.assigned_items.forEach(itemId => {
+                                const itemElement = document.getElementById(`item-${itemId}`);
+                                if (itemElement) {
+                                    itemElement.classList.add('pulse-animation');
+                                }
+                            });
+                        }
+                        
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        showAlert(data.error || 'Failed to assign suppliers', 'error');
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    showAlert('An error occurred: ' + error.message, 'error');
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
                 });
         }
     </script>

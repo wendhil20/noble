@@ -4,7 +4,7 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
-// Check login notification
+// Check login notification                     
 if (isset($_SESSION['login_needed'])) {
     $notification_message = $_SESSION['login_needed'];
     unset($_SESSION['login_needed']);
@@ -546,37 +546,42 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-<section class="bg-orange-400 text-white shadow-lg rounded-lg p-2 ">     
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 lg:gap-6">          
-        <!-- Discount Text -->         
-        <div class="flex items-center gap-2 sm:gap-3 text-center sm:text-left w-full sm:w-auto">             
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">                 
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />             
-            </svg>             
-            <div class="min-w-0 flex-1">
-                <p class="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-tight">                 
-                    <span class="block xs:inline">Exclusive Deals!</span> 
-                    <span class="block xs:inline underline font-bold mt-1 xs:mt-0 xs:ml-1">Discounted Items Available</span>             
+   <section class="bg-orange-400 text-white p-3 sm:p-4">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+        
+        <!-- Discount Text with better mobile layout -->
+        <div class="flex items-start sm:items-center gap-3 text-center sm:text-left w-full sm:flex-1">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0 mt-0.5 sm:mt-0" 
+                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" 
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            
+            <div class="flex-1 min-w-0">
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-tight">
+                    <span class="block sm:inline">Exclusive Deals!</span>
+                    <span class="block sm:inline underline font-bold mt-1 sm:mt-0 sm:ml-1">
+                        Discounted Items Available
+                    </span>
                 </p>
             </div>
-        </div>          
+        </div>
 
-        <!-- Action Button -->         
-        <a href="allproduct.php?discount=all"             
-            class="bg-white text-orange-600 hover:bg-orange-50 active:bg-gray-100 font-semibold 
-                   px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 
-                   text-sm sm:text-base
-                   rounded-lg shadow-md hover:shadow-lg 
-                   transition-all duration-200 ease-in-out
-                   w-full sm:w-auto text-center
-                   flex-shrink-0
-                   transform hover:scale-105 active:scale-95">             
-            Shop Now         
-        </a>     
-    </div> 
+        <!-- Action Button with better responsive sizing -->
+        <div class="w-full sm:w-auto flex-shrink-0">
+            <a href="allproduct.php?discount=all"
+               class="bg-white text-orange-600 hover:bg-orange-50 active:bg-gray-100 
+                      font-semibold px-4 py-2.5 sm:px-6 sm:py-3 
+                      text-sm sm:text-base hover:shadow-lg
+                      transition-all duration-200 ease-in-out
+                      w-full sm:w-auto text-center inline-block
+                      transform hover:scale-105 active:scale-95
+                      focus:outline-none focus:ring-2 focus:ring-orange-300">
+                Shop Now
+            </a>
+        </div>
+    </div>
 </section>
-
-
 
     <!-- Scrolling Text -->
     <div class="overflow-hidden bg-orange-500 text-white">
@@ -1318,7 +1323,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Furniture -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=furniture" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1330,7 +1335,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Materials -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=buildingmaterials" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1342,7 +1347,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bedroom Furniture -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bedfurniture" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1354,7 +1359,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Lighting -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=lighting" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1366,7 +1371,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Aircon -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aircon" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1378,7 +1383,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Doors -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=doors" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1390,7 +1395,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Tiles -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=tiles" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1402,7 +1407,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Windows -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=windows" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1414,7 +1419,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bathroom -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bathroom" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1426,7 +1431,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Kitchen -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=kitchen" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1438,7 +1443,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- Pipes -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=pipes" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
@@ -1450,7 +1455,7 @@ handleQueryError($conn, "New Status Query");
                     <!-- AAC Blocks -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aacblock" class="group block">
-                            <div class="bg-white border-2 border-orange-200 rounded-xl p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-md">
+                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
                                 <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>

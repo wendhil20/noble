@@ -360,32 +360,38 @@ $total_cart_items = count($cart_items);
                         <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip6'] ?? '—') ?></div>
                         <div><span class="font-semibold"></span> <?= htmlspecialchars($item['descrip7'] ?? '—') ?></div>
                       </td>
-                      <td class="py-4 px-4">
-                        <div class="flex items-center justify-center gap-1">
-                          <!-- Minus Button -->
-                          <button type="button"
-                            onclick="updateQuantity(<?= $item['id'] ?>, -1)"
-                            class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
-                            <i class="fas fa-minus text-xs"></i>
-                          </button>
+             <td class="py-4 px-4">
+  <div class="flex items-center justify-center gap-1">
+    <!-- Minus Button -->
+    <button type="button"
+      onclick="updateQuantity(<?= $item['id'] ?>, -1)"
+      class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
+      <i class="fas fa-minus text-xs"></i>
+    </button>
 
-                          <!-- Quantity Display/Input -->
-                          <input type="number"
-                            id="qty_<?= $item['id'] ?>"
-                            name="quantities[<?= $item['id'] ?>]"
-                            value="<?= $quantity ?>"
-                            min="1"
-                            readonly
-                            class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
+    <!-- Quantity Display/Input - MADE EDITABLE -->
+    <input type="number"
+      id="qty_<?= $item['id'] ?>"
+      name="quantities[<?= $item['id'] ?>]"
+      value="<?= $quantity ?>"
+      min="1"
+      max="9999"
+      class="w-20 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+      onchange="handleManualQuantityChange(<?= $item['id'] ?>)"
+      onkeypress="handleQuantityKeypress(event, <?= $item['id'] ?>)"
+      onfocus="this.select()">
 
-                          <!-- Plus Button -->
-                          <button type="button"
-                            onclick="updateQuantity(<?= $item['id'] ?>, 1)"
-                            class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
-                            <i class="fas fa-plus text-xs"></i>
-                          </button>
-                        </div>
-                      </td>
+    <!-- Plus Button -->
+    <button type="button"
+      onclick="updateQuantity(<?= $item['id'] ?>, 1)"
+      class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
+      <i class="fas fa-plus text-xs"></i>
+    </button>
+  </div>
+  
+  <!-- Status indicator container -->
+  <div id="qty_status_<?= $item['id'] ?>" class="text-center mt-1 text-xs h-4"></div>
+</td>
                       <td class="py-4 px-4 text-orange-600 font-medium">₱<?= number_format($unit_price, 2) ?></td>
                       <td class="py-4 px-4 text-green-600 font-bold" id="subtotal_<?= $item['id'] ?>">₱<?= number_format($subtotal, 2) ?></td>
                       <td class="py-4 px-4">
@@ -491,32 +497,39 @@ $total_cart_items = count($cart_items);
 
                 <!-- Price and Quantity -->
                 <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                    <div class="flex items-center gap-1">
-                      <!-- Minus Button -->
-                      <button type="button"
-                        onclick="updateQuantity(<?= $item['id'] ?>, -1)"
-                        class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
-                        <i class="fas fa-minus text-xs"></i>
-                      </button>
+                 <div>
+  <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+  <div class="flex items-center gap-1">
+    <!-- Minus Button -->
+    <button type="button"
+      onclick="updateQuantity(<?= $item['id'] ?>, -1)"
+      class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-l-lg flex items-center justify-center transition-colors border border-gray-300">
+      <i class="fas fa-minus text-xs"></i>
+    </button>
 
-                      <input type="number"
-                        id="qty_<?= $item['id'] ?>"
-                        name="quantities[<?= $item['id'] ?>]"
-                        value="<?= $quantity ?>"
-                        min="1"
-                        readonly
-                        class="w-16 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none">
+    <!-- Editable Quantity Input -->
+    <input type="number"
+      id="qty_mobile_<?= $item['id'] ?>"
+      name="quantities[<?= $item['id'] ?>]"
+      value="<?= $quantity ?>"
+      min="1"
+      max="9999"
+      class="w-20 h-8 text-sm border-t border-b border-gray-300 text-center bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+      onchange="handleManualQuantityChange(<?= $item['id'] ?>)"
+      onkeypress="handleQuantityKeypress(event, <?= $item['id'] ?>)"
+      onfocus="this.select()">
 
-                      <!-- Plus Button -->
-                      <button type="button"
-                        onclick="updateQuantity(<?= $item['id'] ?>, 1)"
-                        class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
-                        <i class="fas fa-plus text-xs"></i>
-                      </button>
-                    </div>
-                  </div>
+    <!-- Plus Button -->
+    <button type="button"
+      onclick="updateQuantity(<?= $item['id'] ?>, 1)"
+      class="quantity-btn w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-r-lg flex items-center justify-center transition-colors border border-gray-300">
+      <i class="fas fa-plus text-xs"></i>
+    </button>
+  </div>
+  
+  <!-- Status indicator for mobile -->
+  <div id="qty_status_mobile_<?= $item['id'] ?>" class="text-xs h-4 mt-1"></div>
+</div>
                   <div class="text-right">
                     <div class="text-xs text-gray-600 mb-1">Unit Price</div>
                     <div class="text-sm font-medium text-orange-600">₱<?= number_format($unit_price, 2) ?></div>
@@ -556,108 +569,235 @@ $total_cart_items = count($cart_items);
 
   <!-- JavaScript for Quantity Controls -->
   <script>
-    // Store unit prices for each item
-    const unitPrices = {};
+   // Complete Enhanced JavaScript for Cart Quantity Controls with Manual Input
 
-    // Track pending updates to avoid multiple requests
-    const pendingUpdates = new Set();
+// Store unit prices for each item
+const unitPrices = {};
 
-    <?php foreach ($cart_items as $item): ?>
-      unitPrices[<?= $item['id'] ?>] = <?= floatval($item['price']) ?>;
-    <?php endforeach; ?>
+// Track pending updates to avoid multiple requests
+const pendingUpdates = new Set();
 
-    // Debounce function to limit API calls
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
+// Initialize unit prices from PHP - replace this section with your PHP loop
+<?php foreach ($cart_items as $item): ?>
+  unitPrices[<?= $item['id'] ?>] = <?= floatval($item['price']) ?>;
+<?php endforeach; ?>
 
-    function updateQuantity(itemId, change) {
-      const input = document.getElementById('qty_' + itemId);
-      let currentValue = parseInt(input.value) || 1;
-      let newValue = currentValue + change;
+// Debounce function to limit API calls
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
-      // Ensure minimum quantity is 1
-      if (newValue < 1) {
-        newValue = 1;
-      }
+// Enhanced update quantity function (works with plus/minus buttons)
+function updateQuantity(itemId, change) {
+  const desktopInput = document.getElementById('qty_' + itemId);
+  const mobileInput = document.getElementById('qty_mobile_' + itemId);
+  
+  // Get current value from either desktop or mobile input
+  let currentValue = parseInt(desktopInput?.value || mobileInput?.value) || 1;
+  let newValue = currentValue + change;
 
-      input.value = newValue;
+  // Ensure minimum quantity is 1 and maximum is 9999
+  newValue = Math.max(1, Math.min(9999, newValue));
 
-      // Update all quantity inputs with same item ID
-      const allInputs = document.querySelectorAll('input[name="quantities[' + itemId + ']"]');
-      allInputs.forEach(inp => inp.value = newValue);
+  // Update both desktop and mobile inputs
+  if (desktopInput) desktopInput.value = newValue;
+  if (mobileInput) mobileInput.value = newValue;
 
-      // Update subtotals immediately for better UX
-      updateSubtotal(itemId, newValue);
-      updateCartTotal();
+  // Update all form inputs with same item ID for consistency
+  const allInputs = document.querySelectorAll('input[name="quantities[' + itemId + ']"]');
+  allInputs.forEach(inp => inp.value = newValue);
 
-      // Auto-save to database (debounced)
-      debouncedAutoSave(itemId, newValue);
-    }
+  // Update display and save
+  updateSubtotal(itemId, newValue);
+  updateCartTotal();
+  debouncedAutoSave(itemId, newValue);
+  
+  // Show brief feedback
+  showValidationMessage(itemId, `Updated to ${newValue}`, "success");
+}
 
-    function updateSubtotal(itemId, quantity) {
-      const unitPrice = unitPrices[itemId] || 0;
-      const subtotal = unitPrice * quantity;
+// Handle manual quantity input changes (when user types directly)
+function handleManualQuantityChange(itemId) {
+  const desktopInput = document.getElementById('qty_' + itemId);
+  const mobileInput = document.getElementById('qty_mobile_' + itemId);
+  
+  // Get the value from whichever input triggered the change
+  let inputValue = parseInt(desktopInput?.value || mobileInput?.value) || 1;
+  let originalValue = inputValue;
+  
+  // Validate and constrain the value
+  if (inputValue < 1) {
+    inputValue = 1;
+    showValidationMessage(itemId, "Minimum quantity is 1", "warning");
+  } else if (inputValue > 9999) {
+    inputValue = 9999;
+    showValidationMessage(itemId, "Maximum quantity is 9999", "warning");
+  } else if (inputValue > 100) {
+    showValidationMessage(itemId, "Large quantity - please confirm", "info");
+  } else if (inputValue !== originalValue) {
+    showValidationMessage(itemId, `Quantity updated to ${inputValue}`, "success");
+  }
 
-      // Update desktop subtotal
-      const desktopSubtotal = document.getElementById('subtotal_' + itemId);
-      if (desktopSubtotal) {
-        desktopSubtotal.textContent = '₱' + subtotal.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
+  // Update both inputs to ensure consistency
+  if (desktopInput) desktopInput.value = inputValue;
+  if (mobileInput) mobileInput.value = inputValue;
 
-      // Update mobile subtotal
-      const mobileSubtotal = document.getElementById('subtotal_mobile_' + itemId);
-      if (mobileSubtotal) {
-        mobileSubtotal.textContent = '₱' + subtotal.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
-    }
+  // Update all form inputs
+  const allInputs = document.querySelectorAll('input[name="quantities[' + itemId + ']"]');
+  allInputs.forEach(inp => inp.value = inputValue);
 
-    function updateCartTotal() {
-      let total = 0;
+  // Update display and save
+  updateSubtotal(itemId, inputValue);
+  updateCartTotal();
+  debouncedAutoSave(itemId, inputValue);
+}
 
-      // Calculate total from unit prices and quantities
-      Object.keys(unitPrices).forEach(itemId => {
-        const input = document.getElementById('qty_' + itemId);
-        if (input) {
-          const quantity = parseInt(input.value) || 0;
-          const unitPrice = unitPrices[itemId] || 0;
-          total += unitPrice * quantity;
-        }
-      });
+// Handle Enter key press and other key events in quantity input
+function handleQuantityKeypress(event, itemId) {
+  // Handle Enter key - confirm the input
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    handleManualQuantityChange(itemId);
+    event.target.blur(); // Remove focus to trigger change event
+    return;
+  }
+  
+  // Only allow numeric keys, backspace, delete, arrow keys, tab
+  const allowedKeys = [
+    '0','1','2','3','4','5','6','7','8','9',
+    'Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter'
+  ];
+  
+  if (!allowedKeys.includes(event.key)) {
+    event.preventDefault();
+    showValidationMessage(itemId, "Numbers only", "warning");
+  }
+}
 
-      const formattedTotal = 'Total: ₱' + total.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+// Handle input events for real-time validation while typing
+function handleQuantityInput(event, itemId) {
+  let value = event.target.value;
+  
+  // Remove any non-numeric characters except for temporary empty state
+  if (value !== '' && (isNaN(value) || value < 0)) {
+    event.target.value = Math.abs(parseInt(value)) || 1;
+  }
+  
+  // Enforce maximum limit during typing
+  if (parseInt(value) > 9999) {
+    event.target.value = 9999;
+    showValidationMessage(itemId, "Maximum quantity is 9999", "warning");
+  }
+}
 
-      // Update desktop total
-      const desktopTotal = document.getElementById('cart_total_desktop');
-      if (desktopTotal) {
-        desktopTotal.textContent = formattedTotal;
-      }
+// Show validation/status messages
+function showValidationMessage(itemId, message, type = "info") {
+  const desktopStatus = document.getElementById('qty_status_' + itemId);
+  const mobileStatus = document.getElementById('qty_status_mobile_' + itemId);
+  
+  let className = "text-blue-500"; // info
+  let icon = "fas fa-info-circle";
+  
+  switch(type) {
+    case "warning":
+      className = "text-yellow-600";
+      icon = "fas fa-exclamation-triangle";
+      break;
+    case "error":
+      className = "text-red-500";
+      icon = "fas fa-times-circle";
+      break;
+    case "success":
+      className = "text-green-500";
+      icon = "fas fa-check-circle";
+      break;
+    case "saving":
+      className = "text-orange-500";
+      icon = "fas fa-spinner fa-spin";
+      break;
+  }
+  
+  const statusHTML = `<i class="${icon}"></i> ${message}`;
+  
+  // Update desktop status
+  if (desktopStatus) {
+    desktopStatus.innerHTML = statusHTML;
+    desktopStatus.className = `text-center mt-1 text-xs h-4 ${className}`;
+  }
+  
+  // Update mobile status  
+  if (mobileStatus) {
+    mobileStatus.innerHTML = statusHTML;
+    mobileStatus.className = `text-xs h-4 mt-1 ${className}`;
+  }
+  
+  // Clear message after delay (except for saving status)
+  if (type !== "saving") {
+    setTimeout(() => {
+      if (desktopStatus) desktopStatus.innerHTML = '';
+      if (mobileStatus) mobileStatus.innerHTML = '';
+    }, 3000);
+  }
+}
 
-      // Update mobile total
-      const mobileTotal = document.getElementById('cart_total_mobile');
-      if (mobileTotal) {
-        mobileTotal.textContent = formattedTotal;
-      }
-    }
+// Update subtotal display for a specific item
+function updateSubtotal(itemId, quantity) {
+  const unitPrice = unitPrices[itemId] || 0;
+  const subtotal = unitPrice * quantity;
 
-    // Auto-save function with corrected fetch URL
+  const formattedSubtotal = '₱' + subtotal.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  // Update desktop subtotal
+  const desktopSubtotal = document.getElementById('subtotal_' + itemId);
+  if (desktopSubtotal) {
+    desktopSubtotal.textContent = formattedSubtotal;
+  }
+
+  // Update mobile subtotal
+  const mobileSubtotal = document.getElementById('subtotal_mobile_' + itemId);
+  if (mobileSubtotal) {
+    mobileSubtotal.textContent = formattedSubtotal;
+  }
+}
+
+// Update cart total by summing all items
+function updateCartTotal() {
+  let total = 0;
+
+  // Calculate total from all items
+  Object.keys(unitPrices).forEach(itemId => {
+    const desktopInput = document.getElementById('qty_' + itemId);
+    const mobileInput = document.getElementById('qty_mobile_' + itemId);
+    const quantity = parseInt(desktopInput?.value || mobileInput?.value) || 0;
+    const unitPrice = unitPrices[itemId] || 0;
+    total += unitPrice * quantity;
+  });
+
+  const formattedTotal = 'Total: ₱' + total.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  // Update both desktop and mobile totals
+  const desktopTotal = document.getElementById('cart_total_desktop');
+  const mobileTotal = document.getElementById('cart_total_mobile');
+  
+  if (desktopTotal) desktopTotal.textContent = formattedTotal;
+  if (mobileTotal) mobileTotal.textContent = formattedTotal;
+}
+
+// Auto-save quantity to database with enhanced error handling
 async function autoSaveQuantity(itemId, quantity) {
   // Prevent multiple simultaneous requests for the same item
   if (pendingUpdates.has(itemId)) {
@@ -665,21 +805,19 @@ async function autoSaveQuantity(itemId, quantity) {
   }
 
   pendingUpdates.add(itemId);
-
-  // Show loading indicator
-  showLoadingIndicator(itemId, true);
+  showValidationMessage(itemId, 'Saving...', 'saving');
 
   try {
     const formData = new FormData();
     formData.append('item_id', itemId);
     formData.append('quantity', quantity);
 
-    // Updated fetch URL - change this to match your actual file name
+    // Make the API call
     const response = await fetch('../cart/update_cart.php', {
       method: 'POST',
       body: formData,
       headers: {
-        'X-Requested-With': 'XMLHttpRequest' // This helps identify AJAX requests
+        'X-Requested-With': 'XMLHttpRequest'
       }
     });
 
@@ -692,101 +830,169 @@ async function autoSaveQuantity(itemId, quantity) {
     const data = await response.json();
 
     if (data.success) {
-      // Show success indicator briefly
-      showSuccessIndicator(itemId);
-
-      // Optionally update cart totals from server response
+      // Show success message briefly
+      showValidationMessage(itemId, 'Saved ✓', 'success');
+      
+      // Update cart totals from server response if provided
       if (data.total_price !== undefined) {
         updateServerTotal(data.total_price);
       }
+      
+      // Clear success message after shorter delay
+      setTimeout(() => {
+        const desktopStatus = document.getElementById('qty_status_' + itemId);
+        const mobileStatus = document.getElementById('qty_status_mobile_' + itemId);
+        if (desktopStatus) desktopStatus.innerHTML = '';
+        if (mobileStatus) mobileStatus.innerHTML = '';
+      }, 1500);
+      
     } else {
       console.error('Failed to update quantity:', data.message);
-      showErrorIndicator(itemId);
+      showValidationMessage(itemId, 'Save failed', 'error');
     }
 
   } catch (error) {
     console.error('Error updating quantity:', error);
-    showErrorIndicator(itemId);
+    showValidationMessage(itemId, 'Connection error', 'error');
     
-    // You can add a user-visible error message here
-    console.log('Auto-save failed. Please use manual update button.');
+    // You can add a retry mechanism here if desired
+    console.log('Auto-save failed for item', itemId, '. Please try again manually.');
+    
   } finally {
     pendingUpdates.delete(itemId);
-    // Hide loading indicator
-    showLoadingIndicator(itemId, false);
   }
 }
 
-    // Debounced version of auto-save (wait 800ms after last change)
-    const debouncedAutoSave = debounce(autoSaveQuantity, 800);
+// Update total from server response
+function updateServerTotal(serverTotal) {
+  const formattedTotal = 'Total: ₱' + parseFloat(serverTotal).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 
-    // Visual feedback functions
-    function showLoadingIndicator(itemId, show) {
-      const indicator = document.getElementById('loading_' + itemId);
-      if (indicator) {
-        indicator.style.display = show ? 'inline-block' : 'none';
-      } else if (show) {
-        // Create loading indicator if it doesn't exist
-        const qtyContainer = document.getElementById('qty_' + itemId).closest('.flex');
-        const loadingSpinner = document.createElement('div');
-        loadingSpinner.id = 'loading_' + itemId;
-        loadingSpinner.className = 'inline-block ml-2';
-        loadingSpinner.innerHTML = '<i class="fas fa-spinner fa-spin text-orange-500 text-sm"></i>';
-        qtyContainer.appendChild(loadingSpinner);
-      }
-    }
+  const desktopTotal = document.getElementById('cart_total_desktop');
+  const mobileTotal = document.getElementById('cart_total_mobile');
 
-    function showSuccessIndicator(itemId) {
-      const indicator = getOrCreateIndicator(itemId, 'success');
-      indicator.innerHTML = '';
-      indicator.style.display = 'inline-block';
+  if (desktopTotal) desktopTotal.textContent = formattedTotal;
+  if (mobileTotal) mobileTotal.textContent = formattedTotal;
+}
 
-      // Hide after 2 seconds
-      setTimeout(() => {
-        indicator.style.display = 'none';
-      }, 2000);
-    }
+// Debounced version of auto-save (wait 1 second after last change)
+const debouncedAutoSave = debounce(autoSaveQuantity, 1000);
 
-    function showErrorIndicator(itemId) {
-      const indicator = getOrCreateIndicator(itemId, 'error');
-      indicator.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 text-sm" title="Failed to save. Please try again."></i>';
-      indicator.style.display = 'inline-block';
+// Batch update function (for manual update button if you want to keep it)
+function updateCartManually() {
+  const form = document.querySelector('form[action="../cart/update_cart.php"]');
+  if (form) {
+    form.submit();
+  }
+}
 
-      // Hide after 3 seconds
-      setTimeout(() => {
-        indicator.style.display = 'none';
-      }, 3000);
-    }
-
-    function getOrCreateIndicator(itemId, type) {
-      const indicatorId = type + '_' + itemId;
-      let indicator = document.getElementById(indicatorId);
-
-      if (!indicator) {
-        const qtyContainer = document.getElementById('qty_' + itemId).closest('.flex');
-        indicator = document.createElement('div');
-        indicator.id = indicatorId;
-        indicator.className = 'inline-block ml-2';
-        indicator.style.display = 'none';
-        qtyContainer.appendChild(indicator);
-      }
-
-      return indicator;
-    }
-
-    function updateServerTotal(serverTotal) {
-      const formattedTotal = 'Total: ₱' + parseFloat(serverTotal).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+// Initialize enhanced functionality on page load
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Initializing enhanced quantity controls...');
+  
+  // Add enhanced event listeners to all quantity inputs
+  Object.keys(unitPrices).forEach(itemId => {
+    const desktopInput = document.getElementById('qty_' + itemId);
+    const mobileInput = document.getElementById('qty_mobile_' + itemId);
+    
+    // Desktop input events
+    if (desktopInput) {
+      // Real-time input validation
+      desktopInput.addEventListener('input', function(e) {
+        handleQuantityInput(e, itemId);
       });
-
-      // Update both desktop and mobile totals
-      const desktopTotal = document.getElementById('cart_total_desktop');
-      const mobileTotal = document.getElementById('cart_total_mobile');
-
-      if (desktopTotal) desktopTotal.textContent = formattedTotal;
-      if (mobileTotal) mobileTotal.textContent = formattedTotal;
+      
+      // Focus event - select all text for easy editing
+      desktopInput.addEventListener('focus', function() {
+        this.select();
+      });
+      
+      // Blur event - validate final value
+      desktopInput.addEventListener('blur', function() {
+        if (this.value === '' || this.value < 1) {
+          this.value = 1;
+          handleManualQuantityChange(itemId);
+        }
+      });
     }
+    
+    // Mobile input events (same as desktop)
+    if (mobileInput) {
+      mobileInput.addEventListener('input', function(e) {
+        handleQuantityInput(e, itemId);
+      });
+      
+      mobileInput.addEventListener('focus', function() {
+        this.select();
+      });
+      
+      mobileInput.addEventListener('blur', function() {
+        if (this.value === '' || this.value < 1) {
+          this.value = 1;
+          handleManualQuantityChange(itemId);
+        }
+      });
+    }
+  });
+  
+  // Add keyboard shortcuts
+  document.addEventListener('keydown', function(event) {
+    // Ctrl/Cmd + Enter to proceed to checkout (if on cart page)
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      const checkoutBtn = document.querySelector('a[href*="checkout"]');
+      if (checkoutBtn) {
+        window.location.href = checkoutBtn.href;
+      }
+    }
+  });
+  
+  console.log('Enhanced quantity controls initialized successfully');
+});
+
+// Utility function to get all cart item IDs (useful for bulk operations)
+function getAllCartItemIds() {
+  return Object.keys(unitPrices).map(id => parseInt(id));
+}
+
+// Utility function to get total items in cart
+function getTotalItemsInCart() {
+  let totalItems = 0;
+  Object.keys(unitPrices).forEach(itemId => {
+    const desktopInput = document.getElementById('qty_' + itemId);
+    const mobileInput = document.getElementById('qty_mobile_' + itemId);
+    const quantity = parseInt(desktopInput?.value || mobileInput?.value) || 0;
+    totalItems += quantity;
+  });
+  return totalItems;
+}
+
+// Utility function to validate all quantities
+function validateAllQuantities() {
+  let isValid = true;
+  Object.keys(unitPrices).forEach(itemId => {
+    const desktopInput = document.getElementById('qty_' + itemId);
+    const mobileInput = document.getElementById('qty_mobile_' + itemId);
+    const quantity = parseInt(desktopInput?.value || mobileInput?.value) || 0;
+    
+    if (quantity < 1 || quantity > 9999) {
+      isValid = false;
+      showValidationMessage(itemId, 'Invalid quantity', 'error');
+    }
+  });
+  return isValid;
+}
+
+// Export functions for external use if needed
+window.cartQuantityControls = {
+  updateQuantity,
+  handleManualQuantityChange,
+  updateCartTotal,
+  validateAllQuantities,
+  getTotalItemsInCart,
+  getAllCartItemIds
+};
 
   </script>
 </body>

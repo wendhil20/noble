@@ -1,8 +1,16 @@
 <?php
 session_name("nobleadmin");
 session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
+// CRITICAL FIX: Turn off error display for AJAX requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
+
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['accountant', 'superadmin']);
@@ -153,127 +161,159 @@ $success_message = $_SESSION['success_message'] ?? '';
 $error_message = $_SESSION['error_message'] ?? '';
 unset($_SESSION['success_message'], $_SESSION['error_message']);
 
-// Handle AJAX requests for order verification
+// FIXED: Handle AJAX requests for order verification with proper error handling
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Clean output buffer to prevent any HTML from contaminating JSON response
+    if (ob_get_level()) {
+        ob_clean();
+    }
+    
     header('Content-Type: application/json');
+    
+    try {
+        if ($_POST['action'] === 'verify_payment') {
+            $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
 
-    if ($_POST['action'] === 'verify_payment') {
-        $order_id = intval($_POST['order_id']);
-
-        if (!$order_id) {
-            echo json_encode(['success' => false, 'message' => 'Invalid order ID provided.']);
-            exit();
-        }
-
-        // Begin transaction
-        $conn->begin_transaction();
-
-        // Get order details for notification and the total amount
-        $order_query = $conn->prepare("SELECT user_id, customer_name, total, payment_status FROM orders WHERE id = ? LIMIT 1");
-        $order_query->bind_param("i", $order_id);
-        $order_query->execute();
-        $order_result = $order_query->get_result();
-        $order_data = $order_result->fetch_assoc();
-        $order_query->close();
-
-        if (!$order_data) {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Order not found.']);
-            exit();
-        }
-
-        if ($order_data['payment_status'] === 'verified') {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Order is already verified.']);
-            exit();
-        }
-
-        $total_amount = isset($order_data['total']) ? (float)$order_data['total'] : 0.00;
-
-        // Update order with verification details and set final_total to the order's total
-        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'verified', confirmed_at = CURRENT_TIMESTAMP, verified_by = ?, final_total = ? WHERE id = ?");
-        $stmt->bind_param("idi", $current_user_id, $total_amount, $order_id);
-        $stmt->execute();
-        $stmt->close();
-
-        // Send notification to customer
-        if (!empty($order_data) && !empty($order_data['user_id'])) {
-            $notification_message = "Your payment for Order #" . $order_id . " has been verified and confirmed by " . $current_user['name'] . ". Amount: ₱" . number_format($total_amount, 2);
-            $notification_stmt = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message, created_at) VALUES (?, ?, 'payment_verified', ?, NOW())");
-            if ($notification_stmt) {
-                $notification_stmt->bind_param("iis", $order_data['user_id'], $current_user_id, $notification_message);
-                $notification_stmt->execute();
-                $notification_stmt->close();
+            if (!$order_id || $order_id <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid order ID provided.']);
+                exit();
             }
-        }
 
-        $conn->commit();
-        echo json_encode([
-            'success' => true,
-            'message' => 'Payment verified successfully',
-            'verified_by' => $current_user['name']
-        ]);
-    } elseif ($_POST['action'] === 'reject_payment') {
-        $order_id = intval($_POST['order_id']);
-        $rejection_reason = trim($_POST['rejection_reason'] ?? '');
+            // Begin transaction
+            $conn->begin_transaction();
 
-        if (!$order_id) {
-            echo json_encode(['success' => false, 'message' => 'Invalid order ID provided.']);
-            exit();
-        }
+            try {
+                // Get order details for notification and the total amount
+                $order_query = $conn->prepare("SELECT user_id, customer_name, total, payment_status FROM orders WHERE id = ? LIMIT 1");
+                if (!$order_query) {
+                    throw new Exception("Database prepare failed");
+                }
+                
+                $order_query->bind_param("i", $order_id);
+                $order_query->execute();
+                $order_result = $order_query->get_result();
+                $order_data = $order_result->fetch_assoc();
+                $order_query->close();
 
-        if ($rejection_reason === '') {
-            echo json_encode(['success' => false, 'message' => 'Rejection reason is required.']);
-            exit();
-        }
+                if (!$order_data) {
+                    throw new Exception("Order not found");
+                }
 
-        // Begin transaction
-        $conn->begin_transaction();
+                if ($order_data['payment_status'] === 'verified') {
+                    throw new Exception("Order is already verified");
+                }
 
-        // Get order details for notification
-        $order_query = $conn->prepare("SELECT user_id, customer_name, total, payment_status FROM orders WHERE id = ? LIMIT 1");
-        $order_query->bind_param("i", $order_id);
-        $order_query->execute();
-        $order_result = $order_query->get_result();
-        $order_data = $order_result->fetch_assoc();
-        $order_query->close();
+                $total_amount = isset($order_data['total']) ? (float)$order_data['total'] : 0.00;
 
-        if (!$order_data) {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Order not found.']);
-            exit();
-        }
+                // Update order with verification details and set final_total to the order's total
+                $stmt = $conn->prepare("UPDATE orders SET payment_status = 'verified', confirmed_at = CURRENT_TIMESTAMP, verified_by = ?, final_total = ? WHERE id = ?");
+                if (!$stmt) {
+                    throw new Exception("Database prepare failed for update");
+                }
+                
+                $stmt->bind_param("idi", $current_user_id, $total_amount, $order_id);
+                $stmt->execute();
+                $stmt->close();
 
-        if ($order_data['payment_status'] === 'rejected') {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Order is already rejected.']);
-            exit();
-        }
+                // Send notification to customer
+                if (!empty($order_data) && !empty($order_data['user_id'])) {
+                    $notification_message = "Your payment for Order #" . $order_id . " has been verified and confirmed by " . $current_user['name'] . ". Amount: ₱" . number_format($total_amount, 2);
+                    $notification_stmt = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message, created_at) VALUES (?, ?, 'payment_verified', ?, NOW())");
+                    if ($notification_stmt) {
+                        $notification_stmt->bind_param("iis", $order_data['user_id'], $current_user_id, $notification_message);
+                        $notification_stmt->execute();
+                        $notification_stmt->close();
+                    }
+                }
 
-        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'rejected', rejection_reason = ?, rejection_date = CURRENT_TIMESTAMP, rejected_at = CURRENT_TIMESTAMP, rejected_by = ? WHERE id = ?");
-        $stmt->bind_param("sii", $rejection_reason, $current_user_id, $order_id);
-        $stmt->execute();
-        $stmt->close();
-
-        // Send notification to customer
-        if (!empty($order_data) && !empty($order_data['user_id'])) {
-            $notification_message = "Your payment for Order #" . $order_id . " has been rejected by " . $current_user['name'] . ". Reason: " . $rejection_reason . ". Please submit a new payment screenshot.";
-            $notification_stmt = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message, created_at) VALUES (?, ?, 'payment_rejected', ?, NOW())");
-            if ($notification_stmt) {
-                $notification_stmt->bind_param("iis", $order_data['user_id'], $current_user_id, $notification_message);
-                $notification_stmt->execute();
-                $notification_stmt->close();
+                $conn->commit();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Payment verified successfully',
+                    'verified_by' => $current_user['name']
+                ]);
+                
+            } catch (Exception $e) {
+                $conn->rollback();
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             }
-        }
+            
+        } elseif ($_POST['action'] === 'reject_payment') {
+            $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
+            $rejection_reason = trim($_POST['rejection_reason'] ?? '');
 
-        $conn->commit();
-        echo json_encode([
-            'success' => true,
-            'message' => 'Payment rejected successfully',
-            'rejected_by' => $current_user['name']
-        ]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Invalid action specified.']);
+            if (!$order_id || $order_id <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid order ID provided.']);
+                exit();
+            }
+
+            if ($rejection_reason === '') {
+                echo json_encode(['success' => false, 'message' => 'Rejection reason is required.']);
+                exit();
+            }
+
+            // Begin transaction
+            $conn->begin_transaction();
+
+            try {
+                // Get order details for notification
+                $order_query = $conn->prepare("SELECT user_id, customer_name, total, payment_status FROM orders WHERE id = ? LIMIT 1");
+                if (!$order_query) {
+                    throw new Exception("Database prepare failed");
+                }
+                
+                $order_query->bind_param("i", $order_id);
+                $order_query->execute();
+                $order_result = $order_query->get_result();
+                $order_data = $order_result->fetch_assoc();
+                $order_query->close();
+
+                if (!$order_data) {
+                    throw new Exception("Order not found");
+                }
+
+                if ($order_data['payment_status'] === 'rejected') {
+                    throw new Exception("Order is already rejected");
+                }
+
+                $stmt = $conn->prepare("UPDATE orders SET payment_status = 'rejected', rejection_reason = ?, rejection_date = CURRENT_TIMESTAMP, rejected_at = CURRENT_TIMESTAMP, rejected_by = ? WHERE id = ?");
+                if (!$stmt) {
+                    throw new Exception("Database prepare failed for rejection");
+                }
+                
+                $stmt->bind_param("sii", $rejection_reason, $current_user_id, $order_id);
+                $stmt->execute();
+                $stmt->close();
+
+                // Send notification to customer
+                if (!empty($order_data) && !empty($order_data['user_id'])) {
+                    $notification_message = "Your payment for Order #" . $order_id . " has been rejected by " . $current_user['name'] . ". Reason: " . $rejection_reason . ". Please submit a new payment screenshot.";
+                    $notification_stmt = $conn->prepare("INSERT INTO notifications (user_id, actor_id, type, message, created_at) VALUES (?, ?, 'payment_rejected', ?, NOW())");
+                    if ($notification_stmt) {
+                        $notification_stmt->bind_param("iis", $order_data['user_id'], $current_user_id, $notification_message);
+                        $notification_stmt->execute();
+                        $notification_stmt->close();
+                    }
+                }
+
+                $conn->commit();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Payment rejected successfully',
+                    'rejected_by' => $current_user['name']
+                ]);
+                
+            } catch (Exception $e) {
+                $conn->rollback();
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            }
+            
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid action specified.']);
+        }
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
     }
 
     exit();
@@ -378,7 +418,8 @@ $orders_result = $conn->query($orders_query);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accountant Dashboard - Noble Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- FIXED: Updated Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script>
         tailwind.config = {
             theme: {
@@ -932,25 +973,35 @@ $orders_result = $conn->query($orders_query);
         </div>
     </div>
 
+    <!-- FIXED: Improved JavaScript with better error handling -->
     <script>
         let currentOrderId = null;
 
+        // FIXED: Better error handling for screenshot viewing
         function viewPaymentScreenshot(screenshotPath, orderId) {
-            document.getElementById('modalOrderId').textContent = orderId;
+            try {
+                document.getElementById('modalOrderId').textContent = orderId;
 
-            let fullPath;
+                let fullPath;
+                // Check if the path already contains the full uploads path
+                if (screenshotPath.includes('uploads/payment_screenshots/')) {
+                    fullPath = screenshotPath;
+                } else {
+                    fullPath = '../../uploads/payment_screenshots/' + screenshotPath;
+                }
 
-            // Check if the path already contains the full uploads path
-            if (screenshotPath.includes('uploads/payment_screenshots/')) {
-                // New format: already has full path, just use it as is
-                fullPath = screenshotPath;
-            } else {
-                // Old format: just filename, need to add the path prefix
-                fullPath = '../../uploads/payment_screenshots/' + screenshotPath;
+                const img = document.getElementById('screenshotImage');
+                img.onerror = function() {
+                    showAlert('error', 'Failed to load payment screenshot');
+                    closeScreenshotModal();
+                };
+                
+                img.src = fullPath;
+                document.getElementById('screenshotModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error viewing screenshot:', error);
+                showAlert('error', 'Error opening screenshot viewer');
             }
-
-            document.getElementById('screenshotImage').src = fullPath;
-            document.getElementById('screenshotModal').classList.remove('hidden');
         }
 
         function closeScreenshotModal() {
@@ -976,48 +1027,67 @@ $orders_result = $conn->query($orders_query);
             document.getElementById('reasonCharCount').textContent = count;
         });
 
+        // FIXED: Enhanced payment verification with better error handling
         function verifyPayment(orderId) {
             if (!confirm('Are you sure you want to verify this payment? This action cannot be undone.')) {
                 return;
             }
 
+            if (!orderId || orderId <= 0) {
+                showAlert('error', 'Invalid order ID');
+                return;
+            }
+
             showLoading();
 
-            fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'action=verify_payment&order_id=' + orderId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    if (data.success) {
-                        showAlert('success', data.message);
-                        // Update the row to reflect the new status
-                        updateOrderRow(orderId, 'verified', data.verified_by);
-                    } else {
-                        showAlert('error', data.message || 'Failed to verify payment');
+            const formData = new FormData();
+            formData.append('action', 'verify_payment');
+            formData.append('order_id', orderId);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', text);
+                        throw new Error('Invalid server response format');
                     }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error('Error:', error);
-                    showAlert('error', 'An error occurred while verifying the payment');
                 });
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showAlert('success', data.message);
+                    updateOrderRow(orderId, 'verified', data.verified_by);
+                } else {
+                    showAlert('error', data.message || 'Failed to verify payment');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                showAlert('error', 'Network error occurred while verifying payment');
+            });
         }
 
+        // FIXED: Enhanced rejection submission with better error handling
         function submitRejection() {
             const reason = document.getElementById('rejectionReason').value.trim();
 
             if (!reason) {
-                alert('Please provide a rejection reason.');
+                showAlert('error', 'Please provide a rejection reason');
                 return;
             }
 
-            if (!currentOrderId) {
-                alert('Invalid order ID.');
+            if (!currentOrderId || currentOrderId <= 0) {
+                showAlert('error', 'Invalid order ID');
                 return;
             }
 
@@ -1025,99 +1095,120 @@ $orders_result = $conn->query($orders_query);
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rejecting...';
 
-            fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'action=reject_payment&order_id=' + currentOrderId + '&rejection_reason=' + encodeURIComponent(reason)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('success', data.message);
-                        updateOrderRow(currentOrderId, 'rejected', data.rejected_by, reason);
-                        closeRejectModal();
-                    } else {
-                        showAlert('error', data.message || 'Failed to reject payment');
+            const formData = new FormData();
+            formData.append('action', 'reject_payment');
+            formData.append('order_id', currentOrderId);
+            formData.append('rejection_reason', reason);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', text);
+                        throw new Error('Invalid server response format');
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('error', 'An error occurred while rejecting the payment');
-                })
-                .finally(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Reject Payment';
                 });
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    updateOrderRow(currentOrderId, 'rejected', data.rejected_by, reason);
+                    closeRejectModal();
+                } else {
+                    showAlert('error', data.message || 'Failed to reject payment');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Network error occurred while rejecting payment');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Reject Payment';
+            });
         }
 
         function updateOrderRow(orderId, newStatus, processedBy, rejectionReason = null) {
             const row = document.getElementById('order-row-' + orderId);
             if (!row) return;
 
-            // Update status cell
-            const statusCell = row.cells[5]; // Status column (6th column, 0-indexed)
-            let statusHTML = '';
-            let statusClass = '';
-            let statusIcon = '';
+            try {
+                // Update status cell
+                const statusCell = row.cells[5];
+                let statusHTML = '';
+                let statusClass = '';
+                let statusIcon = '';
 
-            switch (newStatus) {
-                case 'verified':
-                    statusClass = 'bg-green-100 text-green-800 border-green-200';
-                    statusIcon = 'fas fa-check-circle';
-                    break;
-                case 'rejected':
-                    statusClass = 'bg-red-100 text-red-800 border-red-200';
-                    statusIcon = 'fas fa-times-circle';
-                    break;
-            }
-
-            statusHTML = `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${statusClass}">
+                switch (newStatus) {
+                  case 'verified':
+                        statusClass = 'bg-green-100 text-green-800 border-green-200';
+                        statusIcon = 'fas fa-check-circle';
+                        statusHTML = `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${statusClass}">
                             <i class="${statusIcon} mr-1"></i>
-                            ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}
-                         </span>`;
-
-            if (newStatus === 'rejected' && rejectionReason) {
-                statusHTML += `<div class="text-xs text-red-600 mt-1 cursor-pointer" title="${rejectionReason}">
+                            Verified
+                        </span>`;
+                        break;
+                    case 'rejected':
+                        statusClass = 'bg-red-100 text-red-800 border-red-200';
+                        statusIcon = 'fas fa-times-circle';
+                        statusHTML = `<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border ${statusClass}">
+                            <i class="${statusIcon} mr-1"></i>
+                            Rejected
+                        </span>`;
+                        if (rejectionReason) {
+                            statusHTML += `<div class="text-xs text-red-600 mt-1 cursor-pointer" title="${rejectionReason}">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                Reason: ${rejectionReason.length > 20 ? rejectionReason.substring(0, 20) + '...' : rejectionReason}
-                               </div>`;
-            }
+                                Reason: ${rejectionReason.substring(0, 20)}${rejectionReason.length > 20 ? '...' : ''}
+                            </div>`;
+                        }
+                        break;
+                }
+                statusCell.innerHTML = statusHTML;
 
-            statusCell.innerHTML = statusHTML;
+                // Update processed by cell
+                const processedByCell = row.cells[6];
+                const currentTime = new Date().toLocaleString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                
+                processedByCell.innerHTML = `
+                    <div class="text-sm text-gray-900">${processedBy}</div>
+                    <div class="text-xs text-gray-500">${currentTime}</div>
+                `;
 
-            // Update processed by cell
-            const processedByCell = row.cells[6]; // Processed By column (7th column, 0-indexed)
-            const currentDate = new Date();
-            const timeString = currentDate.toLocaleString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-
-            processedByCell.innerHTML = `<div class="text-sm text-gray-900">${processedBy}</div>
-                                        <div class="text-xs text-gray-500">${timeString}</div>`;
-
-            // Update actions cell
-            const actionsCell = row.cells[8]; // Actions column (9th column, 0-indexed)
-            if (newStatus === 'verified' || newStatus === 'rejected') {
-                // Find if there's a payment screenshot to show view button
-                const currentActions = actionsCell.innerHTML;
-                if (currentActions.includes('viewPaymentScreenshot')) {
-                    // Extract the screenshot path from the current view button
+                // Update actions cell - remove action buttons for processed orders
+                const actionsCell = row.cells[8];
+                if (newStatus === 'verified' || newStatus === 'rejected') {
+                    // Keep only the view screenshot button if it exists
                     const viewButton = actionsCell.querySelector('button[onclick*="viewPaymentScreenshot"]');
                     if (viewButton) {
-                        actionsCell.innerHTML = viewButton.outerHTML;
+                        actionsCell.innerHTML = '';
+                        actionsCell.appendChild(viewButton);
+                    } else {
+                        actionsCell.innerHTML = '<span class="text-xs text-gray-400">Processed</span>';
                     }
-                } else if (currentActions.includes('PayPal Payment')) {
-                    // Keep PayPal badge for processed PayPal payments
-                    actionsCell.innerHTML = '<span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full"><i class="fab fa-paypal mr-1"></i>PayPal Payment</span>';
-                } else {
-                    actionsCell.innerHTML = '<span class="text-xs text-gray-400">No actions</span>';
                 }
+
+                // Add a subtle animation to highlight the change
+                row.classList.add('bg-yellow-50');
+                setTimeout(() => {
+                    row.classList.remove('bg-yellow-50');
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error updating order row:', error);
             }
         }
 
@@ -1129,107 +1220,146 @@ $orders_result = $conn->query($orders_query);
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
-  function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `mb-6 px-4 py-3 rounded-lg flex items-center justify-between fixed top-4 right-4 z-50 shadow-lg transform transition-all duration-300 ease-in-out`;
-    
-    if (type === 'success') {
-        alertDiv.classList.add('bg-green-50', 'border', 'border-green-200', 'text-green-800');
-        alertDiv.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-check-circle mr-2"></i>
-                <span>${message}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-green-600 hover:text-green-800">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-    } else if (type === 'error') {
-        alertDiv.classList.add('bg-red-50', 'border', 'border-red-200', 'text-red-800');
-        alertDiv.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <span>${message}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-    } else {
-        alertDiv.classList.add('bg-blue-50', 'border', 'border-blue-200', 'text-blue-800');
-        alertDiv.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-info-circle mr-2"></i>
-                <span>${message}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-blue-600 hover:text-blue-800">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-    }
+        function showAlert(type, message) {
+            // Remove any existing alerts
+            const existingAlerts = document.querySelectorAll('.alert-message');
+            existingAlerts.forEach(alert => alert.remove());
 
-    document.body.appendChild(alertDiv);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentElement) {
-            alertDiv.classList.add('opacity-0', 'transform', 'translate-x-full');
+            const alertColors = {
+                'success': 'bg-green-50 border-green-200 text-green-800',
+                'error': 'bg-red-50 border-red-200 text-red-800',
+                'warning': 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            };
+
+            const alertIcons = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-triangle',
+                'warning': 'fas fa-exclamation-circle'
+            };
+
+            const alertHTML = `
+                <div class="alert-message mb-6 ${alertColors[type]} border px-4 py-3 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="${alertIcons[type]} mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="hover:opacity-75">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            // Insert at the top of main content
+            const mainContent = document.querySelector('main');
+            mainContent.insertAdjacentHTML('afterbegin', alertHTML);
+
+            // Auto-hide after 5 seconds
             setTimeout(() => {
-                alertDiv.remove();
-            }, 300);
+                const alert = document.querySelector('.alert-message');
+                if (alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            }, 5000);
         }
-    }, 5000);
-}
 
-// Close modal when clicking outside
-document.getElementById('screenshotModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeScreenshotModal();
-    }
-});
+        // Close modals on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeScreenshotModal();
+                closeRejectModal();
+            }
+        });
 
-document.getElementById('rejectionModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeRejectModal();
-    }
-});
+        // Close modals when clicking outside
+        document.addEventListener('click', function(event) {
+            const screenshotModal = document.getElementById('screenshotModal');
+            const rejectionModal = document.getElementById('rejectionModal');
+            
+            if (event.target === screenshotModal) {
+                closeScreenshotModal();
+            }
+            if (event.target === rejectionModal) {
+                closeRejectModal();
+            }
+        });
 
-// Close modals with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        if (!document.getElementById('screenshotModal').classList.contains('hidden')) {
-            closeScreenshotModal();
+        // Auto-refresh page every 5 minutes to show new orders
+        let autoRefreshInterval = setInterval(() => {
+            // Only refresh if no modals are open
+            const modalsOpen = !document.getElementById('screenshotModal').classList.contains('hidden') ||
+                              !document.getElementById('rejectionModal').classList.contains('hidden');
+            
+            if (!modalsOpen) {
+                // Check if there are new pending orders by making a quick AJAX call
+                fetch(window.location.href + '&check_new=1')
+                    .then(response => response.text())
+                    .then(data => {
+                        // Simple check - you might want to implement a more sophisticated check
+                        if (data.includes('new-orders-available')) {
+                            showAlert('warning', 'New orders are available. Page will refresh in 5 seconds...');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 5000);
+                        }
+                    })
+                    .catch(error => {
+                        console.log('Auto-refresh check failed:', error);
+                    });
+            }
+        }, 300000); // 5 minutes
+
+        // Clear interval when page is being unloaded
+        window.addEventListener('beforeunload', function() {
+            clearInterval(autoRefreshInterval);
+        });
+
+        // Initialize tooltips for rejection reasons (if any exist)
+        document.addEventListener('DOMContentLoaded', function() {
+            const rejectionTooltips = document.querySelectorAll('[title]');
+            rejectionTooltips.forEach(element => {
+                element.addEventListener('mouseenter', function() {
+                    // You could implement a custom tooltip here if needed
+                });
+            });
+        });
+
+        // Prevent form submission on enter key in textarea
+        document.getElementById('rejectionReason').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                submitRejection();
+            }
+        });
+
+        console.log('Accountant Dashboard JavaScript loaded successfully');
+        
+        </script>
+
+    <!-- Additional Features: Quick Stats Refresh -->
+    <script>
+        // Quick stats refresh without full page reload
+        function refreshStats() {
+            fetch('?ajax_stats=1')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update stat cards
+                        document.querySelector('.pending-count').textContent = data.pending_payments;
+                        document.querySelector('.verified-count').textContent = data.verified_today;
+                        document.querySelector('.revenue-amount').textContent = '₱' + data.total_revenue_today;
+                        document.querySelector('.rejected-count').textContent = data.rejected_payments;
+                        document.querySelector('.paypal-revenue').textContent = '₱' + data.paypal_revenue_today;
+                    }
+                })
+                .catch(error => console.log('Stats refresh failed:', error));
         }
-        if (!document.getElementById('rejectionModal').classList.contains('hidden')) {
-            closeRejectModal();
-        }
-    }
-});
 
-// Auto-hide existing alerts after page load
-document.addEventListener('DOMContentLoaded', function() {
-    const successAlert = document.getElementById('successAlert');
-    const errorAlert = document.getElementById('errorAlert');
-    
-    if (successAlert) {
-        setTimeout(() => {
-            successAlert.style.opacity = '0';
-            setTimeout(() => {
-                successAlert.style.display = 'none';
-            }, 300);
-        }, 5000);
-    }
-    
-    if (errorAlert) {
-        setTimeout(() => {
-            errorAlert.style.opacity = '0';
-            setTimeout(() => {
-                errorAlert.style.display = 'none';
-            }, 300);
-        }, 5000);
-    }
-});
+        // Refresh stats every 2 minutes
+        setInterval(refreshStats, 120000);
+    </script>
 
-</script>
+
 </body>
 </html>

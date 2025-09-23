@@ -776,7 +776,8 @@ $avg_stmt->close();
         <!-- Product Image & Info Section -->
         <div class="p-4 lg:p-8">
           <!-- Product Image -->
-          <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden shadow-lg">
+          <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
+              w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0">
             <img id="main-product-image"
               src="../../<?= htmlspecialchars($product['main_image']) ?>"
               class="w-full h-full object-contain transition-all duration-300 hover:scale-105"
@@ -784,34 +785,33 @@ $avg_stmt->close();
 
             <!-- Image Navigation Arrows (if sub images exist) -->
             <?php if (!empty($sub_images)): ?>
-              <button id="prev-image" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button id="prev-image" class="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 sm:p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
               </button>
-              <button id="next-image" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button id="next-image" class="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 sm:p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
               </button>
 
               <!-- Image Counter -->
-              <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+              <div class="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                 <span id="current-image-index">1</span> / <span id="total-images"><?= count($sub_images) + 1 ?></span>
               </div>
             <?php endif; ?>
           </div>
 
-
           <?php if (!empty($sub_images)): ?>
             <div class="thumbnail-gallery mt-3">
               <!-- Scrollable Container -->
               <div class="thumbnail-container overflow-x-auto scrollbar-hide">
-                <div class="flex gap-1 sm:gap-2 pb-2">
+                <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
                   <!-- Main Image Thumbnail -->
                   <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
                     <img src="../../<?= htmlspecialchars($product['main_image']) ?>" loading="lazy"
-                      class="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
+                      class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
                       alt="Main Image">
                   </div>
 
@@ -819,7 +819,7 @@ $avg_stmt->close();
                   <?php foreach ($sub_images as $index => $sub_image): ?>
                     <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
                       <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
-                        class="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
                         alt="Sub Image <?= $index + 1 ?>">
                     </div>
                   <?php endforeach; ?>
@@ -829,7 +829,16 @@ $avg_stmt->close();
           <?php endif; ?>
 
           <style>
-            * Hide scrollbar but keep functionality */ .scrollbar-hide {
+            /* Mobile-specific adjustments */
+            @media (max-width: 640px) {
+              .thumbnail-gallery {
+                max-width: 300px;
+                margin: 0 auto;
+              }
+            }
+
+            /* Hide scrollbar but keep functionality */
+            .scrollbar-hide {
               -ms-overflow-style: none;
               /* IE and Edge */
               scrollbar-width: none;
@@ -904,7 +913,6 @@ $avg_stmt->close();
                 <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
                   <?= htmlspecialchars($product['codename']) ?>
                 </span>
-
               </div>
             </div>
 
@@ -936,7 +944,7 @@ $avg_stmt->close();
           <?php if (!empty($types_data)): ?>
             <div class="mb-8 lg:mb-10">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Step 1: Click Here </h3>
+                <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Item </h3>
                 <div class="text-sm text-gray-500">Required</div>
               </div>
 
@@ -977,7 +985,7 @@ $avg_stmt->close();
             <div class="mb-8 lg:mb-10" id="color-selection-section">
               <!-- SECTION HEADER -->
               <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Step 2: Choose Color</h3>
+                <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Choose Color</h3>
                 <div class="text-sm text-gray-500">Required</div>
               </div>
 
@@ -1055,7 +1063,7 @@ $avg_stmt->close();
           <!-- STEP 3: SIZE/VARIANT SELECTION THIRD -->
           <div class="mb-6 lg:mb-8" id="size-selection-section">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg lg:text-xl font-bold text-gray-800">Step 3: Choose Size</h3>
+              <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Choose Size</h3>
               <div class="text-sm text-gray-500">Required</div>
             </div>
 
@@ -1154,15 +1162,27 @@ $avg_stmt->close();
                   </span>
                 </button>
               <?php else: ?>
-                <!-- Add to Cart Button -->
-                <button type="submit" id="addToCartBtn"
-                  disabled
-                  class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
-                  <span id="btnText" class="flex items-center justify-center gap-2">
-                    <i class="fas fa-shopping-cart"></i>
-                    Complete Steps 1-3 to Pre-Order
-                  </span>
-                </button>
+                <div class="flex gap-3 w-full">
+                  <!-- Add to Cart Button -->
+                  <button type="submit" id="addToCartBtn"
+                    disabled
+                    class="flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
+                    <span id="btnText" class="flex items-center justify-center gap-2">
+                      <i class="fas fa-shopping-cart"></i>
+                      Add to Cart
+                    </span>
+                  </button>
+
+                  <!-- Another Button -->
+                  <button type="button" onclick="window.location.href='cart_view.php'"
+                    class="flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
+                    <span class="flex items-center justify-center gap-2">
+                      <i class="fas fa-shopping-cart"></i>
+                      View Cart & QTY
+                    </span>
+                  </button>
+                </div>
+
               <?php endif; ?>
             </form>
           </div>
@@ -1171,111 +1191,113 @@ $avg_stmt->close();
     </div>
 
     <!-- Contact Modal (Add this before the closing </body> tag) -->
-<div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
-    <!-- Close Button -->
-    <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-      </svg>
-    </button>
+    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
+        <!-- Close Button -->
+        <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
 
-    <!-- Modal Header -->
-    <div class="mb-6">
-      <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
-      <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
-    </div>
+        <!-- Modal Header -->
+        <div class="mb-6">
+          <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
+          <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
+        </div>
 
-    <!-- Product Info -->
-    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-      <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
-      
-      <!-- Selected Options Display -->
-      <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">
-        No specific options selected
+        <!-- Product Info -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
+
+          <!-- Selected Options Display -->
+          <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">
+            No specific options selected
+          </div>
+
+          <!-- Price Display -->
+          <div id="selectedPriceText" class="text-lg font-bold text-green-600">
+            <!-- Price will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Contact Methods -->
+        <div class="space-y-4">
+          <!-- Email Contact -->
+          <a id="emailLink"
+            href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
+            class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+            <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
+          </a>
+
+          <!-- Phone Contact -->
+          <div class="text-center">
+            <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
+            <a href="tel:+1234567890" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
+              <i class="fas fa-phone mr-2"></i>(02) 8822-1295/ +63992-239-4563
+            </a>
+          </div>
+
+          <!-- WhatsApp Contact (optional) -->
+          <a href="https://wa.me/1234567890" target="_blank"
+            class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+            <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
+          </a>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="mt-6 text-center text-sm text-gray-500">
+          <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
+        </div>
       </div>
-      
-      <!-- Price Display -->
-      <div id="selectedPriceText" class="text-lg font-bold text-green-600">
-        <!-- Price will be populated by JavaScript -->
-      </div>
     </div>
 
-    <!-- Contact Methods -->
-    <div class="space-y-4">
-      <!-- Email Contact -->
-      <a id="emailLink" 
-         href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
-         class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-        <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
-      </a>
+    <style>
+      /* Modal Animation Styles */
+      #contactModal {
+        animation: modalFadeIn 0.3s ease-out;
+      }
 
-      <!-- Phone Contact -->
-      <div class="text-center">
-        <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
-        <a href="tel:+1234567890" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
-          <i class="fas fa-phone mr-2"></i>(02) 8822-1295/ +63992-239-4563
-        </a>
-      </div>
+      #contactModal.hidden {
+        animation: modalFadeOut 0.3s ease-in;
+      }
 
-      <!-- WhatsApp Contact (optional) -->
-      <a href="https://wa.me/1234567890" target="_blank" 
-         class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-        <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
-      </a>
-    </div>
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
 
-    <!-- Additional Info -->
-    <div class="mt-6 text-center text-sm text-gray-500">
-      <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
-    </div>
-  </div>
-</div>
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
 
-<style>
-/* Modal Animation Styles */
-#contactModal {
-  animation: modalFadeIn 0.3s ease-out;
-}
+      @keyframes modalFadeOut {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
 
-#contactModal.hidden {
-  animation: modalFadeOut 0.3s ease-in;
-}
+        to {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+      }
 
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+      /* Ensure modal content animates */
+      #contactModal>div {
+        transform: translateY(-20px);
+        animation: slideUp 0.3s ease-out forwards;
+      }
 
-@keyframes modalFadeOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-/* Ensure modal content animates */
-#contactModal > div {
-  transform: translateY(-20px);
-  animation: slideUp 0.3s ease-out forwards;
-}
-
-@keyframes slideUp {
-  to {
-    transform: translateY(0);
-  }
-}
-</style>
+      @keyframes slideUp {
+        to {
+          transform: translateY(0);
+        }
+      }
+    </style>
 
     <?php if (!empty($product_specs)): ?>
       <section class="mt-6 lg:mt-8">
@@ -2045,12 +2067,12 @@ $avg_stmt->close();
 
           if (hasRequiredSelections) {
             addToCartBtn.disabled = false;
-            addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white';
-            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Pre-Order';
+            addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
+            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
           } else {
             addToCartBtn.disabled = true;
-            addToCartBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg rounded-xl transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Complete Steps 1-3 to Pre-Order';
+            addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black text-white disabled:cursor-not-allowed disabled:opacity-75';
+            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
           }
         }
       }

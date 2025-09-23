@@ -135,10 +135,11 @@ $category_names = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Order Receipt - <?= htmlspecialchars($order['reference_no']) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+     <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         @media print {
             .no-print {
@@ -165,12 +166,12 @@ $category_names = [
 
         .rating-section {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        
+
         }
     </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen font-mont">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Enhanced Breadcrumb -->
@@ -248,185 +249,185 @@ $category_names = [
                     </svg>
                     Order Details
                 </h3>
- <div class="max-h-96 overflow-y-auto overflow-x-hidden">
-                <div class="space-y-6 ">
-                    <?php foreach ($order_items as $index => $item):
-                        $product_id = $item['product_id'] ?? 0;
-                        $category = $item['product_category'] ?? 'general';
-                        $user_rating = getUserRating($conn, $user_id, $product_id);
-                        $rating_data = getAverageRating($conn, $product_id);
-                        $avg_rating = $rating_data['avg_rating'];
-                        $total_ratings = $rating_data['total_ratings'];
-                        $category_display = $category_names[$category] ?? ucfirst($category);
-                    ?>
-                        <div class="bg-gray-50 rounded-lg p-4 border">
-                            <!-- Product Details -->
-                            <div class="grid md:grid-cols-5 gap-4 items-start mb-4">
-                                <div class="md:col-span-2">
-                                    <div class="font-medium text-gray-900 text-lg"><?= htmlspecialchars($item['product_name']) ?></div>
-                                    <?php if (!empty($item['codename'])): ?>
-                                        <div class="text-xs text-gray-500 mb-1">Code: <?= htmlspecialchars($item['codename']) ?></div>
-                                    <?php endif; ?>
-                                    <div class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                        <?= $category_display ?>
-                                    </div>
-                                    <?php if ($product_id): ?>
-                                        <div class="text-xs text-gray-400 mt-1">Product ID: <?= $product_id ?></div>
-                                    <?php else: ?>
-                                        <div class="text-xs text-red-400 mt-1">⚠️ Product not found in catalog</div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="text-gray-600 text-sm">
-                                    <div class="space-y-1">
-                                        <?php if (!empty($item['type_name'])): ?>
-                                            <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name']) ?></div>
+                <div class="max-h-96 overflow-y-auto overflow-x-hidden">
+                    <div class="space-y-6 ">
+                        <?php foreach ($order_items as $index => $item):
+                            $product_id = $item['product_id'] ?? 0;
+                            $category = $item['product_category'] ?? 'general';
+                            $user_rating = getUserRating($conn, $user_id, $product_id);
+                            $rating_data = getAverageRating($conn, $product_id);
+                            $avg_rating = $rating_data['avg_rating'];
+                            $total_ratings = $rating_data['total_ratings'];
+                            $category_display = $category_names[$category] ?? ucfirst($category);
+                        ?>
+                            <div class="bg-gray-50 rounded-lg p-4 border">
+                                <!-- Product Details -->
+                                <div class="grid md:grid-cols-5 gap-4 items-start mb-4">
+                                    <div class="md:col-span-2">
+                                        <div class="font-medium text-gray-900 text-lg"><?= htmlspecialchars($item['product_name']) ?></div>
+                                        <?php if (!empty($item['codename'])): ?>
+                                            <div class="text-xs text-gray-500 mb-1">Code: <?= htmlspecialchars($item['codename']) ?></div>
                                         <?php endif; ?>
-                                        <?php if (!empty($item['variant_color'])): ?>
-                                            <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['variant_color']) ?></div>
-                                        <?php endif; ?>
-                                        <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
-                                            <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size']) ?></div>
-                                        <?php endif; ?>
-                                        <?php if (!empty($item['origin'])): ?>
-                                            <?php
-                                            $is_local = stripos($item['origin'], 'local') !== false;
-                                            $origin_class = $is_local ? 'text-blue-600' : 'text-red-600';
-                                            ?>
-                                            <div class="<?= $origin_class ?> font-medium">
-                                                <span class="text-gray-600">Origin:</span> <?= htmlspecialchars($item['origin']) ?>
-                                            </div>
+                                        <div class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                            <?= $category_display ?>
+                                        </div>
+                                        <?php if ($product_id): ?>
+                                            <div class="text-xs text-gray-400 mt-1">Product ID: <?= $product_id ?></div>
+                                        <?php else: ?>
+                                            <div class="text-xs text-red-400 mt-1">⚠️ Product not found in catalog</div>
                                         <?php endif; ?>
                                     </div>
-                                </div>
 
-                                <div class="text-center">
-                                    <div class="text-sm text-gray-600">Quantity</div>
-                                    <div class="text-xl font-bold"><?= $item['quantity'] ?></div>
-                                </div>
-
-                                <div class="text-right">
-                                    <div class="text-sm text-gray-600">Unit Price</div>
-                                    <div class="text-lg">₱<?= number_format($item['price'], 2) ?></div>
-                                    <hr class="my-1">
-                                    <div class="text-xl font-bold text-green-700">₱<?= number_format($item['subtotal'], 2) ?></div>
-                                </div>
-                            </div>
-
-                            <?php if ($product_id > 0): ?>
-                                <?php
-                                // Check if order is completed/delivered to allow ratings
-                                $order_status = strtolower($order['status'] ?? 'pending');
-                                $can_rate = in_array($order_status, ['delivered', 'completed', 'received']);
-                                ?>
-
-                                <div class="rating-section p-4 rounded-lg no-print">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <div>
-                                            <h4 class="font-semibold text-gray-800 flex items-center gap-2">
-                                                <i class="fas fa-star text-yellow-500"></i>
-                                                Rate this <?= $category_display ?> item
-                                            </h4>
-                                            <?php if ($can_rate): ?>
-                                                <p class="text-sm text-gray-600">Help others by sharing your experience</p>
-                                            <?php else: ?>
-                                                <p class="text-sm text-orange-600">Rating will be available once your order is delivered</p>
+                                    <div class="text-gray-600 text-sm">
+                                        <div class="space-y-1">
+                                            <?php if (!empty($item['type_name'])): ?>
+                                                <div><span class="font-medium">Type:</span> <?= htmlspecialchars($item['type_name']) ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['variant_color'])): ?>
+                                                <div><span class="font-medium">Color:</span> <?= htmlspecialchars($item['variant_color']) ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
+                                                <div><span class="font-medium">Size:</span> <?= htmlspecialchars($item['size']) ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['origin'])): ?>
+                                                <?php
+                                                $is_local = stripos($item['origin'], 'local') !== false;
+                                                $origin_class = $is_local ? 'text-blue-600' : 'text-red-600';
+                                                ?>
+                                                <div class="<?= $origin_class ?> font-medium">
+                                                    <span class="text-gray-600">Origin:</span> <?= htmlspecialchars($item['origin']) ?>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
-                                        <div class="text-right text-sm text-gray-600">
-                                            <div>Average: <?= $avg_rating ?>/5</div>
-                                            <div><?= $total_ratings ?> ratings</div>
+                                    </div>
+
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">Quantity</div>
+                                        <div class="text-xl font-bold"><?= $item['quantity'] ?></div>
+                                    </div>
+
+                                    <div class="text-right">
+                                        <div class="text-sm text-gray-600">Unit Price</div>
+                                        <div class="text-lg">₱<?= number_format($item['price'], 2) ?></div>
+                                        <hr class="my-1">
+                                        <div class="text-xl font-bold text-green-700">₱<?= number_format($item['subtotal'], 2) ?></div>
+                                    </div>
+                                </div>
+
+                                <?php if ($product_id > 0): ?>
+                                    <?php
+                                    // Check if order is completed/delivered to allow ratings
+                                    $order_status = strtolower($order['status'] ?? 'pending');
+                                    $can_rate = in_array($order_status, ['delivered', 'completed', 'received']);
+                                    ?>
+
+                                    <div class="rating-section p-4 rounded-lg no-print">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div>
+                                                <h4 class="font-semibold text-gray-800 flex items-center gap-2">
+                                                    <i class="fas fa-star text-yellow-500"></i>
+                                                    Rate this <?= $category_display ?> item
+                                                </h4>
+                                                <?php if ($can_rate): ?>
+                                                    <p class="text-sm text-gray-600">Help others by sharing your experience</p>
+                                                <?php else: ?>
+                                                    <p class="text-sm text-orange-600">Rating will be available once your order is delivered</p>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="text-right text-sm text-gray-600">
+                                                <div>Average: <?= $avg_rating ?>/5</div>
+                                                <div><?= $total_ratings ?> ratings</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-4">
+                                            <?php if ($can_rate): ?>
+                                                <!-- Interactive Rating Stars - Only if order is completed -->
+                                                <div class="rate-stars flex items-center gap-1"
+                                                    data-product-id="<?= $product_id ?>"
+                                                    data-category="<?= htmlspecialchars($category) ?>"
+                                                    data-current-rating="<?= $user_rating ?>">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <button type="button" class="star-button" data-rating="<?= $i ?>">
+                                                            <?php if ($i <= $user_rating): ?>
+                                                                <i class="fas fa-star text-yellow-400 text-xl"></i>
+                                                            <?php else: ?>
+                                                                <i class="far fa-star text-gray-400 hover:text-yellow-400 text-xl"></i>
+                                                            <?php endif; ?>
+                                                        </button>
+                                                    <?php endfor; ?>
+
+                                                    <?php if ($user_rating > 0): ?>
+                                                        <span class="ml-2 text-sm text-green-600 font-medium">
+                                                            You rated: <?= $user_rating ?>/5
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="ml-2 text-sm text-gray-500">
+                                                            Click to rate
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <!-- Disabled Stars - Show current rating but no interaction -->
+                                                <div class="flex items-center gap-1 opacity-50">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <div>
+                                                            <?php if ($i <= $user_rating): ?>
+                                                                <i class="fas fa-star text-yellow-400 text-xl"></i>
+                                                            <?php else: ?>
+                                                                <i class="far fa-star text-gray-400 text-xl"></i>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endfor; ?>
+
+                                                    <?php if ($user_rating > 0): ?>
+                                                        <span class="ml-2 text-sm text-gray-600">
+                                                            You rated: <?= $user_rating ?>/5 (Order Status: <?= ucfirst($order_status) ?>)
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="ml-2 text-sm text-gray-600">
+                                                            Rating available when delivered (Current: <?= ucfirst($order_status) ?>)
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- Status Notice -->
+                                                <div class="ml-4 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+                                                    <div class="flex items-center text-orange-700 text-sm">
+                                                        <i class="fas fa-clock mr-2"></i>
+                                                        <span>Complete your order to unlock product rating</span>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-
-                                    <div class="flex items-center gap-4">
-                                        <?php if ($can_rate): ?>
-                                            <!-- Interactive Rating Stars - Only if order is completed -->
-                                            <div class="rate-stars flex items-center gap-1"
-                                                data-product-id="<?= $product_id ?>"
-                                                data-category="<?= htmlspecialchars($category) ?>"
-                                                data-current-rating="<?= $user_rating ?>">
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <button type="button" class="star-button" data-rating="<?= $i ?>">
-                                                        <?php if ($i <= $user_rating): ?>
-                                                            <i class="fas fa-star text-yellow-400 text-xl"></i>
-                                                        <?php else: ?>
-                                                            <i class="far fa-star text-gray-400 hover:text-yellow-400 text-xl"></i>
-                                                        <?php endif; ?>
-                                                    </button>
-                                                <?php endfor; ?>
-
-                                                <?php if ($user_rating > 0): ?>
-                                                    <span class="ml-2 text-sm text-green-600 font-medium">
-                                                        You rated: <?= $user_rating ?>/5
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="ml-2 text-sm text-gray-500">
-                                                        Click to rate
-                                                    </span>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <!-- Disabled Stars - Show current rating but no interaction -->
-                                            <div class="flex items-center gap-1 opacity-50">
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <div>
-                                                        <?php if ($i <= $user_rating): ?>
-                                                            <i class="fas fa-star text-yellow-400 text-xl"></i>
-                                                        <?php else: ?>
-                                                            <i class="far fa-star text-gray-400 text-xl"></i>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endfor; ?>
-
-                                                <?php if ($user_rating > 0): ?>
-                                                    <span class="ml-2 text-sm text-gray-600">
-                                                        You rated: <?= $user_rating ?>/5 (Order Status: <?= ucfirst($order_status) ?>)
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="ml-2 text-sm text-gray-600">
-                                                        Rating available when delivered (Current: <?= ucfirst($order_status) ?>)
-                                                    </span>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <!-- Status Notice -->
-                                            <div class="ml-4 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
-                                                <div class="flex items-center text-orange-700 text-sm">
-                                                    <i class="fas fa-clock mr-2"></i>
-                                                    <span>Complete your order to unlock product rating</span>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
+                                <?php else: ?>
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded p-3 no-print">
+                                        <div class="flex items-center text-yellow-700">
+                                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                                            <span class="text-sm">Rating not available </span>
+                                        </div>
                                     </div>
-                                </div>
-                            <?php else: ?>
-                                <div class="bg-yellow-50 border border-yellow-200 rounded p-3 no-print">
-                                    <div class="flex items-center text-yellow-700">
-                                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                                        <span class="text-sm">Rating not available </span>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
 
-                            <!-- Additional Details -->
-                            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                                <div class="mt-3 pt-3 border-t border-gray-200">
-                                    <div class="text-xs text-gray-500 italic">
-                                        <?php if (!empty($item['descrip6'])): ?>
-                                            <div><?= htmlspecialchars($item['descrip6']) ?></div>
-                                        <?php endif; ?>
-                                        <?php if (!empty($item['descrip7'])): ?>
-                                            <div><?= htmlspecialchars($item['descrip7']) ?></div>
-                                        <?php endif; ?>
+                                <!-- Additional Details -->
+                                <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                                    <div class="mt-3 pt-3 border-t border-gray-200">
+                                        <div class="text-xs text-gray-500 italic">
+                                            <?php if (!empty($item['descrip6'])): ?>
+                                                <div><?= htmlspecialchars($item['descrip6']) ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['descrip7'])): ?>
+                                                <div><?= htmlspecialchars($item['descrip7']) ?></div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
-  </div>
 
             <!-- Order Summary -->
             <div class="p-6 bg-gray-50 border-t">

@@ -13,8 +13,6 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-
-
 // ➤ Helper: save image to uploads/ and convert to WebP
 function saveImageToFolder($file, $targetDir = '../../uploads/') {
     if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
@@ -55,28 +53,47 @@ function saveImageToFolder($file, $targetDir = '../../uploads/') {
 // ➤ SUCCESS / ERROR messages
 $success = $error = '';
 
-// ➤ Handle deletion of an existing image
-if (isset($_GET['id'], $_GET['delete_image'])) {
+// ➤ Handle deletion of a specific image from the combined field
+if (isset($_GET['id'], $_GET['delete_image_index'])) {
     $id = (int)$_GET['id'];
-    $field = $_GET['delete_image'];
-    $allowed = ['imagedescription','imagedescriptiontwo','imagedescriptiontree','imagedescriptionfour'];
+    $deleteIndex = (int)$_GET['delete_image_index'];
 
-    if (in_array($field, $allowed)) {
-        $stmt = $conn->prepare("SELECT $field FROM product_variants WHERE id=?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->bind_result($path); $stmt->fetch();
-        $stmt->close();
+    // Get current images
+    $stmt = $conn->prepare("SELECT product_images FROM products WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->bind_result($currentImages); 
+    $stmt->fetch();
+    $stmt->close();
 
-        if ($path && file_exists("../../$path")) unlink("../../$path");
-
-        $stmt = $conn->prepare("UPDATE product_variants SET $field=NULL WHERE id=?");
-        $stmt->bind_param("i", $id);
-        if ($stmt->execute()) $success = 'Image deleted successfully.';
-        else $error = 'Error deleting image.';
-        $stmt->close();
-    } else {
-        $error = 'Invalid image field.';
+    if ($currentImages) {
+        $imageArray = json_decode($currentImages, true) ?: [];
+        
+        // Check if index exists and delete the file
+        if (isset($imageArray[$deleteIndex])) {
+            $imagePath = $imageArray[$deleteIndex];
+            if (file_exists("../../$imagePath")) {
+                unlink("../../$imagePath");
+            }
+            
+            // Remove from array and reindex
+            unset($imageArray[$deleteIndex]);
+            $imageArray = array_values($imageArray);
+            
+            // Update database
+            $updatedImages = empty($imageArray) ? NULL : json_encode($imageArray);
+            $stmt = $conn->prepare("UPDATE products SET product_images=? WHERE id=?");
+            $stmt->bind_param("si", $updatedImages, $id);
+            
+            if ($stmt->execute()) {
+                $success = 'Image deleted successfully.';
+            } else {
+                $error = 'Error deleting image.';
+            }
+            $stmt->close();
+        } else {
+            $error = 'Image not found.';
+        }
     }
 }
 
@@ -84,51 +101,67 @@ if (isset($_GET['id'], $_GET['delete_image'])) {
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $id = (int)$_POST['id'];
     $descPic = trim($_POST['descriptionpic'] ?? '');
-    $fields = ['imagedescription','imagedescriptiontwo','imagedescriptiontree','imagedescriptionfour'];
 
-    $sql = "UPDATE product_variants SET descriptionpic=?";
-    $types = "s"; $params = [$descPic];
+    // Get existing images
+    $stmt = $conn->prepare("SELECT product_images FROM products WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->bind_result($existingImages);
+    $stmt->fetch();
+    $stmt->close();
 
+    // Parse existing images
+    $imageArray = [];
+    if ($existingImages) {
+        $imageArray = json_decode($existingImages, true) ?: [];
+    }
+
+    // Process new uploaded images
+    $fields = ['image1', 'image2', 'image3', 'image4'];
     foreach ($fields as $field) {
-        if (isset($_FILES[$field]) && $_FILES[$field]['error']===UPLOAD_ERR_OK) {
+        if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
             $path = saveImageToFolder($_FILES[$field]);
             if ($path) {
-                $sql .= ", $field=?";
-                $types .= "s";
-                $params[] = $path;
+                $imageArray[] = $path; // Add new image to array
             }
         }
     }
-    $sql .= " WHERE id=?";
-    $types .= "i";
-    $params[] = $id;
 
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) $error = "Prepare failed: ".$conn->error;
-    else {
-        $stmt->bind_param($types, ...$params);
-        if ($stmt->execute()) $success = 'Variant updated successfully.';
-        else $error = 'Execute failed: '.$stmt->error;
+    // Convert array to JSON (or NULL if empty)
+    $finalImages = empty($imageArray) ? NULL : json_encode($imageArray);
+
+    // Update database
+    $stmt = $conn->prepare("UPDATE products SET descriptionpic=?, product_images=? WHERE id=?");
+    if (!$stmt) {
+        $error = "Prepare failed: " . $conn->error;
+    } else {
+        $stmt->bind_param("ssi", $descPic, $finalImages, $id);
+        if ($stmt->execute()) {
+            $success = 'Product updated successfully.';
+        } else {
+            $error = 'Execute failed: ' . $stmt->error;
+        }
         $stmt->close();
     }
 }
 
-// ➤ Fetch variant with product info to display/update
+// ➤ Fetch product to display/update
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$stmt = $conn->prepare("
-    SELECT pv.*, p.product_name 
-    FROM product_variants pv 
-    LEFT JOIN products p ON pv.product_id = p.id 
-    WHERE pv.id=?
-");
+$stmt = $conn->prepare("SELECT * FROM products WHERE id=?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
-$variant = $stmt->get_result()->fetch_assoc() ?: null;
+$product = $stmt->get_result()->fetch_assoc() ?: null;
 $stmt->close();
 
-if (!$variant) {
-    echo "<p class='text-center p-4'>Variant not found.</p>";
+if (!$product) {
+    echo "<p class='text-center p-4'>Product not found.</p>";
     exit;
+}
+
+// Parse images for display
+$productImages = [];
+if ($product['product_images']) {
+    $productImages = json_decode($product['product_images'], true) ?: [];
 }
 ?>
 
@@ -136,7 +169,7 @@ if (!$variant) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit Variant Images</title>
+  <title>Edit Product Images</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -144,11 +177,10 @@ if (!$variant) {
 
 <div class="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
   <h1 class="text-3xl font-bold text-gray-800 mb-2 border-b pb-2">
-     Edit Variant: <span class="text-orange-600"><?= htmlspecialchars($variant['namevariant'] ?? '') ?></span>
+     Edit Product: <span class="text-orange-600"><?= htmlspecialchars($product['product_name'] ?? '') ?></span>
   </h1>
   <p class="text-gray-600 mb-6">
-    Product: <span class="font-semibold"><?= htmlspecialchars($variant['product_name'] ?? '') ?></span> | 
-    Variant ID: <span class="font-semibold"><?= $variant['id'] ?></span>
+    Product ID: <span class="font-semibold"><?= $product['id'] ?></span>
   </p>
 
   <?php if ($success): ?>
@@ -168,36 +200,45 @@ if (!$variant) {
 
     <!-- Text Description -->
     <div>
-      <label class="block font-semibold text-gray-700 mb-1"> Text Description</label>
-      <textarea name="descriptionpic" class="w-full border rounded-md p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400" rows="4"><?= htmlspecialchars($variant['descriptionpic'] ?? '') ?></textarea>
+      <label class="block font-semibold text-gray-700 mb-1">Description</label>
+      <textarea name="descriptionpic" class="w-full border rounded-md p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400" rows="4"><?= htmlspecialchars($product['descriptionpic'] ?? '') ?></textarea>
     </div>
 
-    <!-- Images Upload -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <?php
-      $labels = [
-        'imagedescription'     => 'Image 1',
-        'imagedescriptiontwo'  => 'Image 2',
-        'imagedescriptiontree' => 'Image 3',
-        'imagedescriptionfour' => 'Image 4'
-      ];
-      foreach ($labels as $field => $label):
-      ?>
-      <div>
-        <label class="block font-medium text-gray-700 mb-1"><?= htmlspecialchars($label) ?></label>
-        <?php if (!empty($variant[$field]) && file_exists("../../" . $variant[$field])): ?>
-          <div class="relative group w-fit mb-2">
-            <img src="../../<?= htmlspecialchars($variant[$field]) ?>" class="w-32 h-32 object-contain border rounded-md shadow-sm" alt="">
-            <a href="?id=<?= $id ?>&delete_image=<?= $field ?>" onclick="return confirm('Delete this image?')" class="absolute top-0 right-0 bg-red-600 text-white text-xs px-2 py-1 rounded-full opacity-90 group-hover:opacity-100 transition">✖</a>
+    <!-- Current Images Display -->
+    <?php if (!empty($productImages)): ?>
+    <div>
+      <label class="block font-semibold text-gray-700 mb-2">Current Images</label>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+        <?php foreach ($productImages as $index => $imagePath): ?>
+          <?php if (file_exists("../../$imagePath")): ?>
+          <div class="relative group">
+            <img src="../../<?= htmlspecialchars($imagePath) ?>" class="w-full h-24 object-cover border rounded-md shadow-sm" alt="Product Image <?= $index + 1 ?>">
+            <a href="?id=<?= $id ?>&delete_image_index=<?= $index ?>" 
+               onclick="return confirm('Delete this image?')" 
+               class="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100 transition">✖</a>
           </div>
-        <?php endif; ?>
-        <input type="file" name="<?= $field ?>" accept="image/jpeg,image/png,image/gif,image/webp" class="block w-full text-sm mt-1 text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200" />
+          <?php endif; ?>
+        <?php endforeach; ?>
       </div>
-      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <!-- New Images Upload -->
+    <div>
+      <label class="block font-semibold text-gray-700 mb-2">Add New Images</label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <?php for ($i = 1; $i <= 4; $i++): ?>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Image <?= $i ?></label>
+          <input type="file" name="image<?= $i ?>" accept="image/jpeg,image/png,image/gif,image/webp" 
+                 class="block w-full text-sm text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200" />
+        </div>
+        <?php endfor; ?>
+      </div>
     </div>
 
     <div class="pt-4">
-      <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition"> Save Changes</button>
+      <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition">Save Changes</button>
     </div>
   </form>
 
@@ -205,5 +246,12 @@ if (!$variant) {
     <a href="qrcodeitem.php" class="inline-block text-sm text-blue-600 hover:underline">&larr; Back to Products</a>
   </div>
 </div>
+
+<!-- Display JSON structure for debugging -->
+<div class="max-w-3xl mx-auto mt-4 p-4 bg-gray-50 rounded-lg">
+  <h3 class="font-semibold text-gray-700 mb-2">Current Image Data Structure:</h3>
+  <pre class="text-xs text-gray-600 bg-white p-2 rounded border"><?= htmlspecialchars($product['product_images'] ?? 'No images') ?></pre>
+</div>
+
 </body>
 </html>

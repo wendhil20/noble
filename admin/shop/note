@@ -1,3 +1,4 @@
+
 <?php while ($product = $products->fetch_assoc()): ?>
   <?php
    $createdAt = strtotime($product['created_at']);

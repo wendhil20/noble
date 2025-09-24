@@ -430,274 +430,282 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
 
 
-          <!-- Quick Action Bar -->
-    <div class="bg-white border-b border-orange-200 py-3">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <!-- Left: Quick Actions Dropdown -->
-                <div class="relative">
-                    <button id="quickActionsBtn"
-                        class="inline-flex items-center space-x-2 px-4 py-2 bg-white rounded-lg text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm border border-gray-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <span>Quick Actions</span>
-                        <svg class="w-4 h-4 transform transition-transform duration-200" id="dropdownIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
+        <!-- Quick Action Bar -->
+        <div class="bg-white border-b border-orange-200 py-3">
+            <div class="px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <!-- Left: Quick Actions Dropdown -->
+                    <div class="relative">
+                        <button id="quickActionsBtn"
+                            class="inline-flex items-center space-x-2 px-4 py-2 bg-white rounded-lg text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 shadow-sm border border-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Quick Actions</span>
+                            <svg class="w-4 h-4 transform transition-transform duration-200" id="dropdownIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
 
-                    <!-- Dropdown Menu -->
-                    <div id="quickActionsDropdown"
-                        class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 opacity-0 invisible transform scale-95 transition-all duration-200 origin-top-left">
-                        <div class="py-2 max-h-96 overflow-y-auto">
+                        <!-- Dropdown Menu -->
+                        <div id="quickActionsDropdown"
+                            class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 opacity-0 invisible transform scale-95 transition-all duration-200 origin-top-left">
+                            <div class="py-2 max-h-96 overflow-y-auto">
 
-                            <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
-                                <!-- Product Management Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Product Management</div>
-                                    <a href="../shop/adminshop.php"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                        <span>Add Product</span>
-                                    </a>
-                                    <a href="../shop/adminupdateshop.php"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        <span>Update Product</span>
-                                    </a>
-                                    <a href="../Specification/variants_list"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        <span>Specification Products</span>
-                                    </a>
-                                    <a href="../Specification/banner"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
-                                        </svg>
-                                        <span>Banner Discount</span>
-                                    </a>
-                                    <a href="../supplier_management/suppliers_list"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        <span>Supplier Management</span>
-                                    </a>
-                                      <a href="../shop/navbar.php"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        <span>Category Management</span>
-                                    </a>
-                                </div>
-                                <hr class="my-2 border-gray-200">
-                            <?php endif; ?>
+                                <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
+                                    <!-- Product Management Section -->
+                                    <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Product Management</div>
+                                        <a href="../shop/adminshop.php"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            <span>Add Product</span>
+                                        </a>
+                                        <a href="../shop/adminupdateshop.php"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            <span>Update Product</span>
+                                        </a>
+                                        <a href="../Specification/variants_list"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span>Specification Products</span>
+                                        </a>
+                                        <a href="../Specification/banner"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
+                                            </svg>
+                                            <span>Banner Discount</span>
+                                        </a>
+                                        <a href="../supplier_management/suppliers_list"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <span>Supplier Management</span>
+                                        </a>
+                                        <a href="../shop/navbar.php"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <span>Category Management</span>
+                                        </a>
+                                    </div>
+                                    <hr class="my-2 border-gray-200">
+                                <?php endif; ?>
 
-                            <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
-                                <!-- Sales Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sales</div>
-                                    <a href="../orders/unassigned_orders.php"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        <span>Client List</span>
-                                    </a>
-                                    <a href="../orders/ordering"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                        <span>Orders</span>
-                                    </a>
-                                       <a href="../orders/dashboardorder"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                        <span>Dashboard Sales</span>
-                                    </a>
-                                </div>
-                                <hr class="my-2 border-gray-200">
-                            <?php endif; ?>
+                                <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
+                                    <!-- Sales Section -->
+                                    <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sales</div>
+                                        <a href="../orders/unassigned_orders.php"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <span>Client List</span>
+                                        </a>
+                                        <a href="../orders/ordering"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            <span>Orders</span>
+                                        </a>
+                                        <a href="../orders/dashboardorder"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            <span>Dashboard Sales</span>
+                                        </a>
+                                            <a href="../orders/add_tiercard"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            <span>TierCard Management</span>
+                                        </a>
+                                    </div>
+                                    <hr class="my-2 border-gray-200">
+                                <?php endif; ?>
 
-                            <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
-                                <!-- Logistics Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Logistics</div>
-                                    <a href="../logistic_management/main_dashboard"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Dashboard</span>
-                                    </a>
-                                  
-                                    <a href="../client/driver_management"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        <span>Add Driver</span>
-                                    </a>
-                                    <a href="../client/add_tracking"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        </svg>
-                                        <span>Add Tracking</span>
-                                    </a>
-                                    
-                                    <a href="../client/monitortracking"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4" />
-                                        </svg>
-                                        <span>Monitor Tracking</span>
-                                    </a>
-                                    <a href="../client/delivery_data_input"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M7 2H14L20 8V20C20 20.552 19.552 21 19 21H5C4.448 21 4 20.552 4 20V4C4 3.448 4.448 3 5 3H7ZM14 2V8H20M12 12H12.01M12 16H12.01" />
-                                        </svg>
-                                        <span>Delivery Info Management</span>
-                                    </a>
+                                <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
+                                    <!-- Logistics Section -->
+                                    <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Logistics</div>
+                                        <a href="../logistic_management/main_dashboard"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>Dashboard</span>
+                                        </a>
 
+                                        <a href="../client/driver_management"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Add Driver</span>
+                                        </a>
+                                        <a href="../client/add_tracking"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            </svg>
+                                            <span>Add Tracking</span>
+                                        </a>
 
-
-                                </div>
-                                <hr class="my-2 border-gray-200">
-                            <?php endif; ?>
-
-                                   <?php if (hasAnyRole(['superadmin', 'hr'])): ?>
-                                <!-- Supplier Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Human Resources</div>
-                                    <a href="../hr/assign_head"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        <span>Head Management</span>
-                                    </a>
-                                </div>
-
-                                   <!-- Supplier Section -->
-                                <div class="px-3 py-2">
-                                  
-                                    <a href="../hr/account"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        <span>Account Management</span>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (hasAnyRole(['superadmin', 'supplier'])): ?>
-                                <!-- Supplier Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Supplier</div>
-                                    <a href="../suppliermain/suppliers"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        <span>Profile</span>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
+                                        <a href="../client/monitortracking"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4" />
+                                            </svg>
+                                            <span>Monitor Tracking</span>
+                                        </a>
+                                        <a href="../client/delivery_data_input"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 2H14L20 8V20C20 20.552 19.552 21 19 21H5C4.448 21 4 20.552 4 20V4C4 3.448 4.448 3 5 3H7ZM14 2V8H20M12 12H12.01M12 16H12.01" />
+                                            </svg>
+                                            <span>Delivery Info Management</span>
+                                        </a>
 
 
-                            <?php if (hasAnyRole(['superadmin', 'warehouse'])): ?>
-                                <!-- Supplier Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Warehouse</div>
-                                    <a href="../warehouse_management/order_list"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        <span>Assign Orders</span>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
+
+                                    </div>
+                                    <hr class="my-2 border-gray-200">
+                                <?php endif; ?>
+
+                                <?php if (hasAnyRole(['superadmin', 'hr'])): ?>
+                                    <!-- Supplier Section -->
+                                    <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Human Resources</div>
+                                        <a href="../hr/assign_head"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Head Management</span>
+                                        </a>
+                                    </div>
+
+                                    <!-- Supplier Section -->
+                                    <div class="px-3 py-2">
+
+                                        <a href="../hr/account"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Account Management</span>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (hasAnyRole(['superadmin', 'supplier'])): ?>
+                                    <!-- Supplier Section -->
+                                    <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Supplier</div>
+                                        <a href="../suppliermain/suppliers"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Profile</span>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
 
 
-                            
-                            <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
-                                <div class=" uppercase">
-                                <!-- Supplier Section -->
-                                <div class="px-3 py-2">
-                                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Accountant</div>
-                                    <a href="../accountant/accountantdashboard.php"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                       
-                                        <span>Revenue Accountant</span>
-                                    </a>
-                                </div>
+                                <?php if (hasAnyRole(['superadmin', 'warehouse'])): ?>
+                                    <!-- Supplier Section -->
+                                    <div class="px-3 py-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Warehouse</div>
+                                        <a href="../warehouse_management/order_list"
+                                            class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Assign Orders</span>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
 
-                                 <!-- Supplier Section -->
-                                <div class="px-3 py-2">
-                                    <a href="../accountant/accountant.php"
-                                        class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
-                                        
-                                        <span>Dashboard Accountant</span>
-                                    </a>
-                                </div>
-                                </div>
-                            <?php endif; ?>
+
+
+                                <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
+                                    <div class=" uppercase">
+                                        <!-- Supplier Section -->
+                                        <div class="px-3 py-2">
+                                            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Accountant</div>
+                                            <a href="../accountant/accountantdashboard.php"
+                                                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+
+                                                <span>Revenue Accountant</span>
+                                            </a>
+                                        </div>
+
+                                        <!-- Supplier Section -->
+                                        <div class="px-3 py-2">
+                                            <a href="../accountant/accountant.php"
+                                                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+
+                                                <span>Dashboard Accountant</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Right: User Info -->
-                <div class="flex items-center space-x-2 text-sm">
-                    <?php if (isset($_SESSION['noble_lvl'])): ?>
-                        <span class="text-gray-600">(<?= htmlspecialchars($_SESSION['noble_lvl']) ?>)</span>
-                    <?php endif; ?>
-                    <?php if (isset($_SESSION['noble_name'])): ?>
-                        <span class="font-semibold text-gray-800"><?= htmlspecialchars($_SESSION['noble_name']) ?></span>
-                    <?php endif; ?>
-                    <div class="w-3 h-2 bg-green-400 rounded-full"></div>
+                    <!-- Right: User Info -->
+                    <div class="flex items-center space-x-2 text-sm">
+                        <?php if (isset($_SESSION['noble_lvl'])): ?>
+                            <span class="text-gray-600">(<?= htmlspecialchars($_SESSION['noble_lvl']) ?>)</span>
+                        <?php endif; ?>
+                        <?php if (isset($_SESSION['noble_name'])): ?>
+                            <span class="font-semibold text-gray-800"><?= htmlspecialchars($_SESSION['noble_name']) ?></span>
+                        <?php endif; ?>
+                        <div class="w-3 h-2 bg-green-400 rounded-full"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
     </nav>
 
-  
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const quickActionsBtn = document.getElementById('quickActionsBtn');

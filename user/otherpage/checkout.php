@@ -57,118 +57,6 @@ $paypal_config = [
     'currency' => 'PHP'
 ];
 
-// Function to get PayPal access token
-function getPayPalAccessToken($config)
-{
-    $url = $config['mode'] === 'sandbox'
-        ? 'https://api-m.sandbox.paypal.com/v1/oauth2/token'
-        : 'https://api-m.paypal.com/v1/oauth2/token';
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Accept: application/json',
-        'Accept-Language: en_US',
-    ]);
-    curl_setopt($ch, CURLOPT_USERPWD, $config['client_id'] . ':' . $config['client_secret']);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Add this for localhost testing
-
-    $response = curl_exec($ch);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    if ($error) {
-        error_log("PayPal cURL Error: " . $error);
-        return null;
-    }
-
-    $data = json_decode($response, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log("PayPal JSON decode error: " . json_last_error_msg());
-        return null;
-    }
-
-    return $data['access_token'] ?? null;
-}
-
-// Function to create PayPal order
-function createPayPalOrder($amount, $order_id, $config)
-{
-    $url = $config['mode'] === 'sandbox'
-        ? 'https://api-m.sandbox.paypal.com/v2/checkout/orders'
-        : 'https://api-m.paypal.com/v2/checkout/orders';
-
-    $access_token = getPayPalAccessToken($config);
-    if (!$access_token) {
-        error_log("PayPal: Failed to get access token");
-        return false;
-    }
-
-    // Ensure amount is properly formatted
-    $formatted_amount = number_format((float)$amount, 2, '.', '');
-
-    $order_data = [
-        'intent' => 'CAPTURE',
-        'purchase_units' => [[
-            'reference_id' => (string)$order_id,
-            'amount' => [
-                'currency_code' => $config['currency'],
-                'value' => $formatted_amount
-            ],
-            'description' => 'Order from Noble Home - Order #' . $order_id
-        ]],
-        'application_context' => [
-            'return_url' => 'http://localhost/noble/user/otherpage/paypal-success.php',
-            'cancel_url' => 'http://localhost/noble/user/otherpage/checkout.php',
-            'shipping_preference' => 'NO_SHIPPING',
-            'user_action' => 'PAY_NOW',
-            'brand_name' => 'Noble Home Construction'
-        ]
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $access_token,
-        'Prefer: return=representation'
-    ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($order_data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Add this for localhost testing
-
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-
-    // Enhanced debugging
-    error_log("PayPal Order Creation Request: " . json_encode($order_data));
-    error_log("PayPal API Response: " . $response);
-    error_log("PayPal HTTP Code: " . $http_code);
-
-    if ($error) {
-        error_log("PayPal cURL Error: " . $error);
-    }
-
-    curl_close($ch);
-
-    if ($http_code === 201) {
-        $decoded_response = json_decode($response, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return $decoded_response;
-        } else {
-            error_log("PayPal JSON decode error: " . json_last_error_msg());
-        }
-    }
-
-    error_log("PayPal Order Creation Failed. HTTP Code: " . $http_code);
-    return false;
-}
-
 
 
 $userName = $_SESSION['user_name'] ?? '';
@@ -429,150 +317,252 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reference_number = null;
     $screenshot_filename = null;
 
-    // In your main processing code:
-    if ($payment_method === 'PayPal') {
-        try {
-            // Validate required variables exist
-            if (!isset($total_price, $delivery_fee)) {
-                throw new Exception("Missing required pricing data");
-            }
+    // ADD BACK the PayPal configuration at the top of checkout.php:
+$paypal_config = [
+    'mode' => 'sandbox', // Change to 'live' for production
+    'client_id' => 'AT1LmhSbRH3yOGHNRFYZb_WhRkFIUlsdUEIQcNNr_0BXnb6LapA61CTycE7xq0c5W6XrHMpetIfpP-Kd',
+    'client_secret' => 'EHkB3XnpMB-mjaw8VeOmWR9dmDoDoIZwLwBoEvWdabiGfgd2kTb6VYfOq4WvuJVEUfVaOmm3rBMfS-QT',
+    'currency' => 'PHP'
+];
 
-            // Calculate grand total
-            $subtotal = (float)$total_price;
-            $delivery_fee = (float)$delivery_fee;
-            $vat_amount = $subtotal * 0.12;
-            $grand_total = $subtotal + $vat_amount + $delivery_fee;
+// ADD BACK the PayPal functions:
+function getPayPalAccessToken($config)
+{
+    $url = $config['mode'] === 'sandbox'
+        ? 'https://api-m.sandbox.paypal.com/v1/oauth2/token'
+        : 'https://api-m.paypal.com/v1/oauth2/token';
 
-            // Validate grand total is reasonable
-            if ($grand_total <= 0) {
-                throw new Exception("Invalid order total: " . $grand_total);
-            }
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Accept: application/json',
+        'Accept-Language: en_US',
+    ]);
+    curl_setopt($ch, CURLOPT_USERPWD, $config['client_id'] . ':' . $config['client_secret']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-            // Generate reference number
-            $reference_no = generateReferenceNumber();
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
 
-            // Create PayPal order
-            $paypal_order = createPayPalOrder($grand_total, $reference_no, $paypal_config);
+    if ($error) {
+        error_log("PayPal cURL Error: " . $error);
+        return null;
+    }
 
-            if ($paypal_order && isset($paypal_order['links'])) {
-                // Save order as pending first
-                $payment_status = 'pending_paypal';
-                $paypal_order_id = $paypal_order['id'];
+    $data = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("PayPal JSON decode error: " . json_last_error_msg());
+        return null;
+    }
 
-                // FIXED: Prepare SQL statement with correct number of placeholders (17 placeholders)
-                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    return $data['access_token'] ?? null;
+}
 
-                if (!$stmt) {
-                    throw new Exception("Database prepare failed: " . $conn->error);
-                }
+function createPayPalOrder($amount, $order_id, $config)
+{
+    $url = $config['mode'] === 'sandbox'
+        ? 'https://api-m.sandbox.paypal.com/v2/checkout/orders'
+        : 'https://api-m.paypal.com/v2/checkout/orders';
 
-                // FIXED: Bind exactly 17 parameters (matching the placeholders)
-                $stmt->bind_param(
-                    "ssssssdsiddiddsss",
-                    $name,              // s
-                    $email,             // s
-                    $mobile,            // s
-                    $address,           // s
-                    $zipcode,           // s
-                    $payment_method,    // s
-                    $grand_total,       // d
-                    $reference_no,      // s
-                    $billing_address_id, // i
-                    $latitude,          // d
-                    $longitude,         // d
-                    $user_id,           // i
-                    $delivery_distance, // d
-                    $delivery_fee,      // d
-                    $subtotal,          // d
-                    $payment_status,    // s
-                    $paypal_order_id    // s
-                );
+    $access_token = getPayPalAccessToken($config);
+    if (!$access_token) {
+        error_log("PayPal: Failed to get access token");
+        return false;
+    }
 
-                if ($stmt->execute()) {
-                    $order_id = $stmt->insert_id;
+    $formatted_amount = number_format((float)$amount, 2, '.', '');
 
-                    // Store order_id in session for later use
-                    $_SESSION['pending_paypal_order'] = $order_id;
+    $order_data = [
+        'intent' => 'CAPTURE',
+        'purchase_units' => [[
+            'reference_id' => (string)$order_id,
+            'amount' => [
+                'currency_code' => $config['currency'],
+                'value' => $formatted_amount
+            ],
+            'description' => 'Order from Noble Home - Order #' . $order_id
+        ]],
+        'application_context' => [
+            'return_url' => 'http://localhost/noble/user/otherpage/paypal-success.php',
+            'cancel_url' => 'http://localhost/noble/user/otherpage/checkout.php',
+            'shipping_preference' => 'NO_SHIPPING',
+            'user_action' => 'PAY_NOW',
+            'brand_name' => 'Noble Home Construction'
+        ]
+    ];
 
-                    // Add order items
-                    $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $access_token,
+        'Prefer: return=representation'
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($order_data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-                    if (!$stmt2) {
-                        throw new Exception("Database prepare failed for order items: " . $conn->error);
-                    }
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
 
-                    foreach ($cart_items as $item) {
-                        $subtotal_item = (float)$item['price'] * (int)$item['quantity'];
-                        $product_name = $item['product_name'] ?? $item['variant_name'];
+    error_log("PayPal Order Creation Request: " . json_encode($order_data));
+    error_log("PayPal API Response: " . $response);
+    error_log("PayPal HTTP Code: " . $http_code);
 
-                        // Set default values for missing fields
-                        $codename = $item['codename'] ?? '';
-                        $type_name = $item['type_name'] ?? '';
-                        $variant_color = $item['variant_color'] ?? '';
-                        $size = $item['size'] ?? '';
-                        $desc6 = $item['descrip6'] ?? '';
-                        $desc7 = $item['descrip7'] ?? '';
-                        $origin = $item['origin'] ?? '';
-                        $delivery_fee_per_item = 0; // Calculate as needed
-                        $item_total_delivery = 0; // Calculate as needed
+    if ($error) {
+        error_log("PayPal cURL Error: " . $error);
+    }
 
-                        $stmt2->bind_param(
-                            "iisssssdiisssdd",
-                            $order_id,
-                            $item['product_id'],
-                            $product_name,
-                            $codename,
-                            $type_name,
-                            $variant_color,
-                            $size,
-                            $item['price'],
-                            $item['quantity'],
-                            $subtotal_item,
-                            $desc6,
-                            $desc7,
-                            $origin,
-                            $delivery_fee_per_item,
-                            $item_total_delivery
-                        );
+    curl_close($ch);
 
-                        if (!$stmt2->execute()) {
-                            error_log("Failed to insert order item: " . $stmt2->error);
-                        }
-                    }
-
-                    // Get approval URL
-                    $approval_url = null;
-                    foreach ($paypal_order['links'] as $link) {
-                        if ($link['rel'] === 'approve') {
-                            $approval_url = $link['href'];
-                            break;
-                        }
-                    }
-
-                    if ($approval_url) {
-                        // Clear any output buffer to prevent header issues
-                        if (ob_get_level()) {
-                            ob_end_clean();
-                        }
-
-                        // Redirect to PayPal
-                        header('Location: ' . $approval_url);
-                        exit;
-                    } else {
-                        throw new Exception("PayPal approval URL not found");
-                    }
-                } else {
-                    throw new Exception("Failed to insert order: " . $stmt->error);
-                }
-            } else {
-                throw new Exception("Failed to create PayPal order");
-            }
-        } catch (Exception $e) {
-            $error = "PayPal payment error: " . $e->getMessage();
-            error_log("PayPal error: " . $e->getMessage());
-            error_log("PayPal error trace: " . $e->getTraceAsString());
+    if ($http_code === 201) {
+        $decoded_response = json_decode($response, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded_response;
+        } else {
+            error_log("PayPal JSON decode error: " . json_last_error_msg());
         }
     }
+
+    error_log("PayPal Order Creation Failed. HTTP Code: " . $http_code);
+    return false;
+}
+
+// ADD BACK the main PayPal processing in the POST section:
+if ($payment_method === 'PayPal') {
+    try {
+        if (!isset($total_price, $delivery_fee)) {
+            throw new Exception("Missing required pricing data");
+        }
+
+        $subtotal = (float)$total_price;
+        $delivery_fee = (float)$delivery_fee;
+        $vat_amount = $subtotal * 0.12;
+        $grand_total = $subtotal + $vat_amount + $delivery_fee;
+
+        if ($grand_total <= 0) {
+            throw new Exception("Invalid order total: " . $grand_total);
+        }
+
+        $reference_no = generateReferenceNumber();
+        $paypal_order = createPayPalOrder($grand_total, $reference_no, $paypal_config);
+
+        if ($paypal_order && isset($paypal_order['links'])) {
+            $payment_status = 'pending_paypal';
+            $paypal_order_id = $paypal_order['id'];
+
+            // Insert order with PayPal data
+            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+            if (!$stmt) {
+                throw new Exception("Database prepare failed: " . $conn->error);
+            }
+
+            $stmt->bind_param(
+                "ssssssdsiddiddsss",
+                $name,              
+                $email,             
+                $mobile,            
+                $address,           
+                $zipcode,           
+                $payment_method,    
+                $grand_total,       
+                $reference_no,      
+                $billing_address_id,
+                $latitude,          
+                $longitude,         
+                $user_id,           
+                $delivery_distance, 
+                $delivery_fee,      
+                $subtotal,          
+                $payment_status,    
+                $paypal_order_id    
+            );
+
+            if ($stmt->execute()) {
+                $order_id = $stmt->insert_id;
+                $_SESSION['pending_paypal_order'] = $order_id;
+
+                // Add order items (your existing code)
+                $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+                if (!$stmt2) {
+                    throw new Exception("Database prepare failed for order items: " . $conn->error);
+                }
+
+                foreach ($cart_items as $item) {
+                    $subtotal_item = (float)$item['price'] * (int)$item['quantity'];
+                    $product_name = $item['product_name'] ?? $item['variant_name'];
+                    $codename = $item['codename'] ?? '';
+                    $type_name = $item['type_name'] ?? '';
+                    $variant_color = $item['variant_color'] ?? '';
+                    $size = $item['size'] ?? '';
+                    $desc6 = $item['descrip6'] ?? '';
+                    $desc7 = $item['descrip7'] ?? '';
+                    $origin = $item['origin'] ?? '';
+                    $delivery_fee_per_item = 0;
+                    $item_total_delivery = 0;
+
+                    $stmt2->bind_param(
+                        "iisssssdiisssdd",
+                        $order_id,
+                        $item['product_id'],
+                        $product_name,
+                        $codename,
+                        $type_name,
+                        $variant_color,
+                        $size,
+                        $item['price'],
+                        $item['quantity'],
+                        $subtotal_item,
+                        $desc6,
+                        $desc7,
+                        $origin,
+                        $delivery_fee_per_item,
+                        $item_total_delivery
+                    );
+
+                    if (!$stmt2->execute()) {
+                        error_log("Failed to insert order item: " . $stmt2->error);
+                    }
+                }
+
+                // Get approval URL and redirect
+                $approval_url = null;
+                foreach ($paypal_order['links'] as $link) {
+                    if ($link['rel'] === 'approve') {
+                        $approval_url = $link['href'];
+                        break;
+                    }
+                }
+
+                if ($approval_url) {
+                    if (ob_get_level()) {
+                        ob_end_clean();
+                    }
+                    header('Location: ' . $approval_url);
+                    exit;
+                } else {
+                    throw new Exception("PayPal approval URL not found");
+                }
+            } else {
+                throw new Exception("Failed to insert order: " . $stmt->error);
+            }
+        } else {
+            throw new Exception("Failed to create PayPal order");
+        }
+    } catch (Exception $e) {
+        $error = "PayPal payment error: " . $e->getMessage();
+        error_log("PayPal error: " . $e->getMessage());
+        error_log("PayPal error trace: " . $e->getTraceAsString());
+    }
+}
 
     // Handle Bank Transfer specific data
     if ($payment_method === 'Bank Transfer') {

@@ -980,85 +980,224 @@ $avg_stmt->close();
             </div>
           <?php endif; ?>
 
-          <!-- STEP 2: COLOR SELECTION SECOND -->
+          <!-- STEP 2: COLOR SELECTION SECOND - MODIFIED TO SHOW ALL COLORS IN GRID -->
           <?php if (!empty($product_colors)): ?>
             <div class="mb-8 lg:mb-10" id="color-selection-section">
               <!-- SECTION HEADER -->
               <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Choose Color</h3>
+                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Choose Color</h3>
                 <div class="text-sm text-gray-500">Required</div>
               </div>
 
               <!-- Initially disabled until type is selected -->
               <div id="color-selection-container" class="opacity-50 pointer-events-none">
-                <!-- COLOR DROPDOWN CONTAINER -->
-                <div class="relative bg-gray-50 rounded-xl p-4 lg:p-6">
+                <!-- COLOR GRID CONTAINER -->
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                  <div class="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
+                    <!-- Grid container for all colors -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2  gap-3 lg:gap-4 p-4" id="all-colors-grid">
 
-                  <!-- DROPDOWN SELECT -->
-                  <div class="relative">
-                    <select
-                      id="color-dropdown"
-                      onchange="selectColorFromDropdown(this)"
-                      class="w-full p-4 pr-10 bg-white border border-gray-300  focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 appearance-none cursor-pointer">
-
-                      <option value="">Select a color...</option>
-
+                      <!-- Generate all colors -->
                       <?php foreach ($product_colors as $color): ?>
-                        <option
-                          value="<?= $color['id'] ?>"
+                        <button type="button"
+                          onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
+                          class="color-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg
+                       p-4 lg:p-5 text-left transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md
+                       flex items-center gap-4 min-h-[80px] lg:min-h-[90px]
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-color-id="<?= $color['id'] ?>"
                           data-color-name="<?= addslashes($color['color_name']) ?>"
                           data-price="<?= $color['price'] ?>"
                           data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
-                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>">
-                          <?= htmlspecialchars($color['color_name']) ?>
-                          <?php if ($color['price'] > 0): ?>
-                            (+₱<?= number_format($color['price'], 2) ?>)
-                          <?php else: ?>
-                            (No extra cost)
-                          <?php endif; ?>
-                        </option>
+                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
+                          disabled>
+
+                          <!-- COLOR SQUARE/IMAGE -->
+                          <div class="flex-shrink-0">
+                            <?php if (!empty($color['image'])): ?>
+                              <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-lg overflow-hidden">
+                                <img src="../../<?= htmlspecialchars($color['image']) ?>"
+                                  alt="<?= htmlspecialchars($color['color_name']) ?>"
+                                  class="w-full h-full object-contain"
+                                  loading="lazy">
+                              </div>
+                            <?php else: ?>
+                              <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-lg shadow-sm border border-gray-200"
+                                style="background-color: <?= htmlspecialchars($color['color_code']) ?>;">
+                              </div>
+                            <?php endif; ?>
+                          </div>
+
+                          <!-- COLOR INFO -->
+                          <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-gray-800 text-sm lg:text-base mb-1 truncate">
+                              <?= htmlspecialchars($color['color_name']) ?>
+                            </div>
+                            <div class="text-xs lg:text-sm">
+                              <?php if ($color['price'] > 0): ?>
+                               
+                              <?php else: ?>
+                                <span class="text-green-600 font-semibold">No extra cost</span>
+                              <?php endif; ?>
+                            </div>
+                          </div>
+
+                          <!-- SELECTION INDICATOR -->
+                          <div class="selection-indicator w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center opacity-0 transition-all duration-300">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        </button>
                       <?php endforeach; ?>
-                    </select>
 
-                    <!-- DROPDOWN ARROW -->
-                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                      </svg>
+                      <!-- If no colors available -->
+                      <?php if (empty($product_colors)): ?>
+                        <div class="col-span-full text-center py-8">
+                          <i class="fas fa-palette text-gray-300 text-4xl mb-2"></i>
+                          <p class="text-gray-500">No color options available</p>
+                        </div>
+                      <?php endif; ?>
                     </div>
                   </div>
 
-                  <!-- COLOR PREVIEW (appears when color is selected) -->
-                  <div id="color-preview" class="mt-4 p-4 bg-white  border border-gray-200 hidden">
-                    <div class="flex items-center gap-4">
-                      <!-- COLOR SQUARE -->
-                      <div id="preview-color-square" class="w-16 h-16  overflow-hidden shadow-sm border border-gray-200">
-                        <!-- Color background or image will be set via JavaScript -->
-                      </div>
-
-                      <!-- COLOR INFO -->
-                      <div class="flex-1">
-                        <div id="preview-color-name" class="font-semibold text-gray-800 text-base mb-1"></div>
-                        <div id="preview-color-price" class="text-sm"></div>
-                      </div>
+                  <!-- Selection info -->
+                  <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div id="color-selection-info" class="text-sm text-gray-600">
+                      <i class="fas fa-info-circle text-orange-500 mr-2"></i>
+                      Select a color to continue
                     </div>
                   </div>
-                </div>
-
-                <!-- INFO/STATUS BOX -->
-                <div id="selected-color-info" class="mt-4 text-sm text-gray-600 p-4 bg-white  border border-gray-200 shadow-sm">
-                  <i class="fas fa-info-circle text-orange-500 mr-2"></i>
-                  Select a color to see pricing
                 </div>
               </div>
 
               <!-- Message when type not selected -->
-              <div id="color-disabled-message" class="text-center p-6 bg-white border-2 border-dashed border-gray-300">
+              <div id="color-disabled-message" class="text-center p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg">
                 <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
                 <p class="text-gray-500">Please select an item type first</p>
               </div>
             </div>
           <?php endif; ?>
+
+          <style>
+            /* Enhanced color selection styles */
+            .color-btn {
+              position: relative;
+              overflow: hidden;
+            }
+
+            .color-btn::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: -100%;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.1), transparent);
+              transition: left 0.5s;
+            }
+
+            .color-btn:hover::before {
+              left: 100%;
+            }
+
+            /* Selection state */
+            .color-btn.selected {
+              border-color: #f97316 !important;
+              background-color: #fff7ed !important;
+              box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2) !important;
+              transform: scale(1.02) !important;
+            }
+
+            .color-btn.selected .selection-indicator {
+              opacity: 1 !important;
+              transform: scale(1.1) !important;
+            }
+
+            /* Disabled state styling */
+            .color-btn:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+              transform: none !important;
+            }
+
+            .color-btn:disabled:hover {
+              border-color: #e5e7eb !important;
+              box-shadow: none !important;
+            }
+
+            .color-btn:disabled:hover::before {
+              left: -100%;
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 640px) {
+              #all-colors-grid {
+                grid-template-columns: repeat(1, 1fr);
+              }
+            }
+
+            @media (max-width: 480px) {
+              .color-btn {
+                min-height: 70px;
+                padding: 1rem;
+              }
+
+              .color-btn .w-12 {
+                width: 2.5rem;
+                height: 2.5rem;
+              }
+            }
+
+            /* Custom scrollbar styling */
+            .scrollbar-thin {
+              scrollbar-width: thin;
+              scrollbar-color: #d1d5db #f9fafb;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar {
+              width: 6px;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar-track {
+              background: #f9fafb;
+              border-radius: 3px;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar-thumb {
+              background: #d1d5db;
+              border-radius: 3px;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+              background: #9ca3af;
+            }
+
+            /* Focus states for accessibility */
+            .color-btn:focus {
+              outline: 2px solid #f97316;
+              outline-offset: 2px;
+            }
+
+            /* Animation for selection indicator */
+            .selection-indicator {
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* Hover effects for enabled buttons */
+            .color-btn:not(:disabled):hover .selection-indicator {
+              opacity: 0.3;
+              transform: scale(1.05);
+            }
+
+            /* Color square hover effect */
+            .color-btn:not(:disabled):hover .w-12,
+            .color-btn:not(:disabled):hover .w-14 {
+              transform: scale(1.1);
+              transition: transform 0.2s ease;
+            }
+          </style>
+
 
           <!-- STEP 3: SIZE/VARIANT SELECTION THIRD -->
           <div class="mb-6 lg:mb-8" id="size-selection-section">
@@ -1164,23 +1303,25 @@ $avg_stmt->close();
               <?php else: ?>
                 <div class="flex gap-3 w-full">
                   <!-- Add to Cart Button -->
-                  <button type="submit" id="addToCartBtn"
-                    disabled
-                    class="flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
-                    <span id="btnText" class="flex items-center justify-center gap-2">
-                      <i class="fas fa-shopping-cart"></i>
-                      Add to Cart
-                    </span>
-                  </button>
+<button type="submit" id="addToCartBtn"
+  disabled
+  class="flex-1 py-2 sm:py-3 lg:py-4 font-bold text-xs sm:text-sm md:text-base lg:text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
+  <span id="btnText" class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
+    <i class="fas fa-shopping-cart text-xs sm:text-sm md:text-base lg:text-lg"></i>
+    Add to Cart
+  </span>
+</button>
 
-                  <!-- Another Button -->
-                  <button type="button" onclick="window.location.href='cart_view.php'"
-                    class="flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
-                    <span class="flex items-center justify-center gap-2">
-                      <i class="fas fa-shopping-cart"></i>
-                      View Cart & QTY
-                    </span>
-                  </button>
+<!-- Another Button -->
+<button type="button" onclick="window.location.href='cart_view.php'"
+  class="flex-1 py-2 sm:py-3 lg:py-4 font-bold text-xs sm:text-sm md:text-base lg:text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white">
+  <span class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
+    <i class="fas fa-shopping-cart text-xs sm:text-sm md:text-base lg:text-lg"></i>
+    View Cart & QTY
+  </span>
+</button>
+
+
                 </div>
 
               <?php endif; ?>
@@ -1471,11 +1612,10 @@ $avg_stmt->close();
       const nextBtn = document.getElementById('next-image');
       const currentIndexSpan = document.getElementById('current-image-index');
 
-      // All image sources (main + sub images)
+      // All image sources (main + sub images) - You'll need to populate this with actual PHP data
       const allImages = [
-        '../../<?= htmlspecialchars($product['main_image']) ?>',
-        <?php foreach ($sub_images as $sub_image): ?> '../<?= htmlspecialchars($sub_image) ?>',
-        <?php endforeach; ?>
+        // Main image first, then sub images
+        // This needs to be populated with actual image paths from PHP
       ];
 
       let currentImageIndex = 0;
@@ -1525,37 +1665,39 @@ $avg_stmt->close();
         if (allImages.length > 1) {
           if (e.key === 'ArrowLeft') {
             e.preventDefault();
-            prevBtn.click();
+            if (prevBtn) prevBtn.click();
           } else if (e.key === 'ArrowRight') {
             e.preventDefault();
-            nextBtn.click();
+            if (nextBtn) nextBtn.click();
           }
         }
       });
 
       // Image zoom functionality (optional enhancement)
-      mainImage.addEventListener('click', function() {
-        // Create modal for full-size image view
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer';
-        modal.innerHTML = `
-      <div class="relative max-w-4xl max-h-full p-4">
-        <img src="${this.src}" loading="lazy" class="max-w-full max-h-full object-contain" alt="Full size image">
-        <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-    `;
+      if (mainImage) {
+        mainImage.addEventListener('click', function() {
+          // Create modal for full-size image view
+          const modal = document.createElement('div');
+          modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer';
+          modal.innerHTML = `
+        <div class="relative max-w-4xl max-h-full p-4">
+          <img src="${this.src}" loading="lazy" class="max-w-full max-h-full object-contain" alt="Full size image">
+          <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      `;
 
-        document.body.appendChild(modal);
+          document.body.appendChild(modal);
 
-        // Close modal on click
-        modal.addEventListener('click', function() {
-          document.body.removeChild(modal);
+          // Close modal on click
+          modal.addEventListener('click', function() {
+            document.body.removeChild(modal);
+          });
         });
-      });
+      }
     });
 
     // Fix for Contact Us button initialization
@@ -1570,9 +1712,10 @@ $avg_stmt->close();
 
     function openContactModal() {
       // Get selected options
-      const colorData = productSelector.selectedColorData;
-      const variantData = productSelector.selectedVariantData;
-      const typeData = productSelector.selectedTypeId ? document.getElementById('selected_type').value : null;
+      const colorData = window.productSelector ? window.productSelector.selectedColorData : null;
+      const variantData = window.productSelector ? window.productSelector.selectedVariantData : null;
+      const typeData = window.productSelector && window.productSelector.selectedTypeId ?
+        document.getElementById('selected_type')?.value : null;
 
       // Build options text
       const options = [];
@@ -1587,9 +1730,7 @@ $avg_stmt->close();
       }
 
       // Calculate total price
-      const {
-        totalPrice
-      } = productSelector.calculateTotalPrice();
+      const totalPrice = window.productSelector ? window.productSelector.calculateTotalPrice().totalPrice : 0;
 
       // Update modal content
       const selectedOptionsElement = document.getElementById('selectedOptionsText');
@@ -1608,9 +1749,9 @@ $avg_stmt->close();
 
       // Update email link with details
       if (emailLink) {
-        const productName = '<?= urlencode($product['product_name']) ?>';
-        const subject = `Windows Quote Request - ${decodeURIComponent(productName)}`;
-        let body = `Hi, I'm interested in getting a quote for ${decodeURIComponent(productName)}.`;
+        const productName = document.querySelector('h1')?.textContent || 'Product';
+        const subject = `Windows Quote Request - ${productName}`;
+        let body = `Hi, I'm interested in getting a quote for ${productName}.`;
 
         if (options.length > 0) {
           body += `\n\nSelected Options:\n${options.join('\n')}`;
@@ -1625,19 +1766,30 @@ $avg_stmt->close();
         emailLink.href = `mailto:noblehomeconst.ph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       }
 
-      document.getElementById('contactModal').classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+      const modal = document.getElementById('contactModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
     }
 
     function closeContactModal() {
-      document.getElementById('contactModal').classList.add('hidden');
-      document.body.style.overflow = 'auto';
+      const modal = document.getElementById('contactModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
     }
 
     // Close modal when clicking outside
-    document.getElementById('contactModal')?.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeContactModal();
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('contactModal');
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === this) {
+            closeContactModal();
+          }
+        });
       }
     });
 
@@ -1649,47 +1801,54 @@ $avg_stmt->close();
     });
 
     // Initialize Swiper for related products
-    const relatedSwiper = new Swiper('.related-swiper', {
-      slidesPerView: 2,
-      spaceBetween: 10,
-      loop: true,
-      autoplay: {
-        delay: 2500,
-        disableOnInteraction: false,
-      },
-      navigation: {
-        nextEl: '.swiper-button-next',
-        prevEl: '.swiper-button-prev',
-      },
-      breakpoints: {
-        640: {
-          slidesPerView: 2,
-          spaceBetween: 15,
-        },
-        768: {
-          slidesPerView: 3,
-          spaceBetween: 20,
-        },
-        1024: {
-          slidesPerView: 4,
-          spaceBetween: 25,
-        },
-        1280: {
-          slidesPerView: 5,
-          spaceBetween: 30,
-        },
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof Swiper !== 'undefined') {
+        const relatedSwiperElement = document.querySelector('.related-swiper');
+        if (relatedSwiperElement) {
+          const relatedSwiper = new Swiper('.related-swiper', {
+            slidesPerView: 2,
+            spaceBetween: 10,
+            loop: true,
+            autoplay: {
+              delay: 2500,
+              disableOnInteraction: false,
+            },
+            navigation: {
+              nextEl: '.swiper-button-next',
+              prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+              640: {
+                slidesPerView: 2,
+                spaceBetween: 15,
+              },
+              768: {
+                slidesPerView: 3,
+                spaceBetween: 20,
+              },
+              1024: {
+                slidesPerView: 4,
+                spaceBetween: 25,
+              },
+              1280: {
+                slidesPerView: 5,
+                spaceBetween: 30,
+              },
+            }
+          });
+        }
       }
     });
 
-    // Product Selection State Management - Type → Color → Size Flow
+    // Product Selection State Management - Fixed for your HTML structure
     class ProductSelector {
       constructor() {
         this.selectedTypeId = null;
         this.selectedVariantData = null;
         this.selectedColorData = null;
-        this.basePrice = parseFloat(document.querySelector('[name="product_id"]').dataset.basePrice) || 0;
+        this.basePrice = parseFloat(document.querySelector('[name="product_id"]')?.dataset?.basePrice) || 0;
         this.hasTypes = document.querySelectorAll('.type-btn').length > 0;
-        this.isWindows = document.querySelector('[name="is_windows"]').value === '1';
+        this.isWindows = document.querySelector('[name="is_windows"]')?.value === '1';
 
         this.initializeElements();
         this.bindEvents();
@@ -1721,7 +1880,9 @@ $avg_stmt->close();
 
       bindEvents() {
         // Form submission
-        this.elements.productForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        if (this.elements.productForm) {
+          this.elements.productForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        }
 
         // Touch event handling for mobile
         document.addEventListener('DOMContentLoaded', () => {
@@ -1739,8 +1900,8 @@ $avg_stmt->close();
         // Initially disable color selection (until type is selected)
         this.disableColorSelection();
 
-        // Hide size variants initially
-        this.hideSizeVariants();
+        // Initially hide variant container
+        this.hideVariantContainer();
       }
 
       // STEP 1: Type Selection Methods
@@ -1767,7 +1928,9 @@ $avg_stmt->close();
         button.classList.remove('border-gray-200', 'bg-white');
 
         this.selectedTypeId = typeId;
-        this.elements.selectedType.value = typeName;
+        if (this.elements.selectedType) {
+          this.elements.selectedType.value = typeName;
+        }
 
         // Enable color selection after type is selected
         this.enableColorSelection();
@@ -1775,15 +1938,9 @@ $avg_stmt->close();
         // Clear previous color and variant selections
         this.clearColorSelection(false); // Don't disable color selection
         this.clearVariantSelection();
+        this.hideVariantContainer();
 
-        // Reset variant container message
-        this.elements.variantContainer.innerHTML = `
-      <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
-        <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-        <p>Please select a color first</p>
-      </div>
-    `;
-        this.elements.variantContainer.style.display = 'block';
+        this.updateDisplay();
       }
 
       unselectType(button) {
@@ -1792,88 +1949,22 @@ $avg_stmt->close();
         button.classList.add('border-gray-200', 'bg-white');
 
         this.selectedTypeId = null;
-        this.elements.selectedType.value = '';
+        if (this.elements.selectedType) {
+          this.elements.selectedType.value = '';
+        }
 
-        // Disable color selection when no type is selected
+        // Disable color and variant selection when no type is selected
         this.disableColorSelection();
+        this.hideVariantContainer();
 
         // Clear color and variant selections
-        this.clearColorSelection(false); // Don't disable since we're doing it above
+        this.clearColorSelection(false);
         this.clearVariantSelection();
 
-        // Hide all variant groups
-        document.querySelectorAll('.variant-group').forEach(group => {
-          group.classList.add('hidden');
-        });
+        this.updateDisplay();
       }
 
       // STEP 2: Color Selection Methods
-      setColorFromDropdown(colorId, colorName, price, image, colorCode) {
-        this.selectedColorData = {
-          id: colorId,
-          name: colorName,
-          price: parseFloat(price)
-        };
-
-        // Update hidden fields
-        this.elements.selectedColorId.value = colorId;
-        this.elements.selectedColor.value = colorName;
-
-        // Update main image if color has an image
-        if (image) {
-          this.elements.mainImage.src = `../../${image}`;
-        }
-
-        // Show size/variant options for the selected type
-        if (this.selectedTypeId) {
-          this.showSizeVariants(this.selectedTypeId);
-        }
-
-        // Update display and button state
-        this.updateDisplay();
-      }
-
-      clearColorSelection(shouldDisable = true) {
-        this.selectedColorData = null;
-
-        // Clear hidden fields
-        this.elements.selectedColorId.value = '';
-        this.elements.selectedColor.value = '';
-
-        // Reset dropdown
-        const dropdown = document.getElementById('color-dropdown');
-        if (dropdown) {
-          dropdown.value = '';
-        }
-
-        // Reset color preview
-        const preview = document.getElementById('color-preview');
-        if (preview) {
-          preview.classList.add('hidden');
-        }
-
-        // Reset color info
-        const colorInfo = document.getElementById('selected-color-info');
-        if (colorInfo) {
-          colorInfo.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to see pricing';
-        }
-
-        // Reset to original image
-        this.elements.mainImage.src = this.elements.mainImage.dataset.originalSrc || this.elements.mainImage.src;
-
-        // Optionally disable color selection
-        if (shouldDisable) {
-          this.disableColorSelection();
-        }
-
-        // Clear variant selection and hide variants
-        this.clearVariantSelection();
-        this.hideSizeVariants();
-
-        // Update display
-        this.updateDisplay();
-      }
-
       enableColorSelection() {
         const container = document.getElementById('color-selection-container');
         const message = document.getElementById('color-disabled-message');
@@ -1881,6 +1972,18 @@ $avg_stmt->close();
         if (container && message) {
           container.classList.remove('opacity-50', 'pointer-events-none');
           message.style.display = 'none';
+        }
+
+        // Enable all color buttons
+        document.querySelectorAll('.color-btn').forEach(btn => {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50');
+        });
+
+        // Update info message
+        const infoElement = document.getElementById('color-selection-info');
+        if (infoElement) {
+          infoElement.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to continue';
         }
       }
 
@@ -1892,38 +1995,155 @@ $avg_stmt->close();
           container.classList.add('opacity-50', 'pointer-events-none');
           message.style.display = 'block';
         }
+
+        // Disable all color buttons
+        document.querySelectorAll('.color-btn').forEach(btn => {
+          btn.disabled = true;
+          btn.classList.add('opacity-50');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
+          btn.classList.add('border-gray-200', 'bg-white');
+        });
+
+        // Update info message
+        const infoElement = document.getElementById('color-selection-info');
+        if (infoElement) {
+          infoElement.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select an item type first';
+        }
       }
 
-      // STEP 3: Size/Variant Selection Methods
-      showSizeVariants(typeId) {
+      setColorFromGrid(colorId, colorName, price, image, colorCode) {
+        this.selectedColorData = {
+          id: colorId,
+          name: colorName,
+          price: parseFloat(price)
+        };
+
+        // Update hidden fields
+        if (this.elements.selectedColorId) {
+          this.elements.selectedColorId.value = colorId;
+        }
+        if (this.elements.selectedColor) {
+          this.elements.selectedColor.value = colorName;
+        }
+
+        // Update main image if color has an image
+        if (image && this.elements.mainImage) {
+          let imagePath;
+
+          // Check if path already starts with ../../
+          if (image.startsWith('../../')) {
+            imagePath = image;
+          } else {
+            // Add the prefix only if needed
+            imagePath = `../../${image}`;
+          }
+
+          console.log('Setting image path:', imagePath);
+          this.elements.mainImage.src = imagePath;
+        }
+
+        // Enable variant selection if type is also selected
+        if (this.selectedTypeId) {
+          this.showVariantGroup(this.selectedTypeId);
+        }
+
+        // Update display and button state
+        this.updateDisplay();
+      }
+
+      clearColorSelection(shouldDisable = true) {
+        this.selectedColorData = null;
+
+        // Clear hidden fields
+        if (this.elements.selectedColorId) {
+          this.elements.selectedColorId.value = '';
+        }
+        if (this.elements.selectedColor) {
+          this.elements.selectedColor.value = '';
+        }
+
+        // Remove selection from all color buttons
+        document.querySelectorAll('.color-btn').forEach(btn => {
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
+          btn.classList.add('border-gray-200', 'bg-white');
+        });
+
+        // Reset to original image
+        if (this.elements.mainImage) {
+          const originalSrc = this.elements.mainImage.dataset.originalSrc ||
+            this.elements.mainImage.src.split('?')[0]; // Remove any query params
+          this.elements.mainImage.src = originalSrc;
+        }
+
+        // Optionally disable color selection
+        if (shouldDisable) {
+          this.disableColorSelection();
+        }
+
+        // Clear variant selection and hide variants
+        this.clearVariantSelection();
+        this.hideVariantContainer();
+
+        // Update display
+        this.updateDisplay();
+      }
+
+      // STEP 3: Variant Selection Methods
+      showVariantGroup(typeId) {
         // Hide all variant groups first
         document.querySelectorAll('.variant-group').forEach(group => {
           group.classList.add('hidden');
         });
 
-        // Show selected variant group
-        const variantGroup = document.getElementById(`variants-${typeId}`);
-        if (variantGroup) {
-          variantGroup.classList.remove('hidden');
-          variantGroup.classList.add('fade-in');
+        // Hide the default variant container message
+        if (this.elements.variantContainer) {
           this.elements.variantContainer.style.display = 'none';
         }
+
+        // Show the specific variant group for the selected type
+        const targetGroup = document.getElementById(`variants-${typeId}`);
+        if (targetGroup) {
+          targetGroup.classList.remove('hidden');
+        }
+
+        // Update variant buttons to enable only those for selected type
+        this.updateVariantAvailability(typeId);
       }
 
-      hideSizeVariants() {
+      hideVariantContainer() {
         // Hide all variant groups
         document.querySelectorAll('.variant-group').forEach(group => {
           group.classList.add('hidden');
         });
 
         // Show default message
-        this.elements.variantContainer.innerHTML = `
-      <div class="text-gray-500 p-4 bg-white rounded-lg text-center">
+        if (this.elements.variantContainer) {
+          this.elements.variantContainer.style.display = 'block';
+          this.elements.variantContainer.innerHTML = `
         <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
         <p>Please select a color first</p>
-      </div>
-    `;
-        this.elements.variantContainer.style.display = 'block';
+      `;
+        }
+
+        // Disable all variant buttons
+        document.querySelectorAll('.variant-btn').forEach(btn => {
+          btn.disabled = true;
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
+          btn.classList.add('border-gray-200', 'bg-white', 'opacity-50');
+        });
+      }
+
+      updateVariantAvailability(selectedTypeId) {
+        // This method enables only variants that belong to the selected type
+        // Since your PHP generates separate variant groups, we just need to enable buttons in the visible group
+        const activeGroup = document.getElementById(`variants-${selectedTypeId}`);
+        if (activeGroup) {
+          const variantButtons = activeGroup.querySelectorAll('.variant-btn');
+          variantButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+          });
+        }
       }
 
       selectVariant(button, size, color = null) {
@@ -1939,7 +2159,7 @@ $avg_stmt->close();
       }
 
       setVariantSelection(button, size, color = null) {
-        // Remove previous selection indicators
+        // Remove previous selection indicators from all variant buttons
         document.querySelectorAll('.variant-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
@@ -1969,8 +2189,12 @@ $avg_stmt->close();
         };
 
         // Update hidden fields
-        this.elements.selectedVariant.value = size;
-        this.elements.variantId.value = variantId;
+        if (this.elements.selectedVariant) {
+          this.elements.selectedVariant.value = size;
+        }
+        if (this.elements.variantId) {
+          this.elements.variantId.value = variantId;
+        }
       }
 
       unselectVariant(button) {
@@ -1979,14 +2203,22 @@ $avg_stmt->close();
         button.classList.add('border-gray-200', 'bg-white');
 
         this.selectedVariantData = null;
-        this.elements.selectedVariant.value = '';
-        this.elements.variantId.value = '';
+        if (this.elements.selectedVariant) {
+          this.elements.selectedVariant.value = '';
+        }
+        if (this.elements.variantId) {
+          this.elements.variantId.value = '';
+        }
       }
 
       clearVariantSelection() {
         this.selectedVariantData = null;
-        this.elements.selectedVariant.value = '';
-        this.elements.variantId.value = '';
+        if (this.elements.selectedVariant) {
+          this.elements.selectedVariant.value = '';
+        }
+        if (this.elements.variantId) {
+          this.elements.variantId.value = '';
+        }
         document.querySelectorAll('.variant-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
@@ -2027,20 +2259,24 @@ $avg_stmt->close();
           hasSelections
         } = this.calculateTotalPrice();
 
-        if (hasSelections) {
-          this.elements.totalPrice.textContent = `₱${totalPrice.toFixed(2)}`;
-        } else {
-          this.elements.totalPrice.textContent = '₱0.00';
+        if (this.elements.totalPrice) {
+          if (hasSelections) {
+            this.elements.totalPrice.textContent = `₱${totalPrice.toFixed(2)}`;
+          } else {
+            this.elements.totalPrice.textContent = '₱0.00';
+          }
         }
 
         // Update selection status
         const status = [];
-        if (this.selectedTypeId) status.push(`Type: ${this.elements.selectedType.value}`);
+        if (this.selectedTypeId && this.elements.selectedType) status.push(`Type: ${this.elements.selectedType.value}`);
         if (this.selectedColorData) status.push(`Color: ${this.selectedColorData.name}`);
         if (this.selectedVariantData) status.push(`Size: ${this.selectedVariantData.size}`);
 
-        this.elements.selectionStatus.textContent =
-          status.length > 0 ? status.join(', ') : 'Follow steps 1-3 to see total price';
+        if (this.elements.selectionStatus) {
+          this.elements.selectionStatus.textContent =
+            status.length > 0 ? status.join(', ') : 'Follow steps 1-3 to see total price';
+        }
       }
 
       updatePurchaseButton() {
@@ -2051,28 +2287,32 @@ $avg_stmt->close();
           const contactBtn = this.elements.contactUsBtn;
           const contactBtnText = this.elements.contactBtnText;
 
-          if (hasRequiredSelections) {
-            contactBtn.disabled = false;
-            contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white';
-            contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
-          } else {
-            contactBtn.disabled = true;
-            contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-            contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Complete Steps 1-3 to Contact Us';
+          if (contactBtn && contactBtnText) {
+            if (hasRequiredSelections) {
+              contactBtn.disabled = false;
+              contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white';
+              contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
+            } else {
+              contactBtn.disabled = true;
+              contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+              contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Complete Steps 1-3 to Contact Us';
+            }
           }
         } else {
           // Handle regular Add to Cart button
           const addToCartBtn = this.elements.addToCartBtn;
           const btnText = this.elements.btnText;
 
-          if (hasRequiredSelections) {
-            addToCartBtn.disabled = false;
-            addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
-            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
-          } else {
-            addToCartBtn.disabled = true;
-            addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black text-white disabled:cursor-not-allowed disabled:opacity-75';
-            btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
+          if (addToCartBtn && btnText) {
+            if (hasRequiredSelections) {
+              addToCartBtn.disabled = false;
+              addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
+              btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
+            } else {
+              addToCartBtn.disabled = true;
+              addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+              btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Complete Steps 1-3 to Add';
+            }
           }
         }
       }
@@ -2160,184 +2400,317 @@ $avg_stmt->close();
 
       buildFormData() {
         const formData = new FormData();
-        const productId = document.querySelector('[name="product_id"]').value;
+        const productId = document.querySelector('[name="product_id"]')?.value;
 
-        formData.append('product_id', productId);
+        if (productId) {
+          formData.append('product_id', productId);
+        }
 
         if (this.selectedVariantData) {
           formData.append('variant_id', this.selectedVariantData.variantId);
-          formData.append('selected_type', this.elements.selectedType.value);
-          formData.append('selected_variant', this.elements.selectedVariant.value);
-          formData.append('variant_price', this.selectedVariantData.finalPrice);
+          if (this.elements.selectedType) {
+            formData.append('selected_type', this.elements.selectedType.value);
+          }
+          if (this.elements.selectedVariant) {
+            formData.append('selected_variant', this.elements.selectedVariant.value);
+          }
         }
 
         if (this.selectedColorData) {
           formData.append('selected_color_id', this.selectedColorData.id);
-          formData.append('selected_color_name', this.selectedColorData.name);
-          formData.append('color_price', this.selectedColorData.price);
+          formData.append('selected_color', this.selectedColorData.name);
         }
 
-        const {
-          totalPrice
-        } = this.calculateTotalPrice();
-        formData.append('total_price', totalPrice);
+        // Add quantity (default to 1 if not specified)
+        const quantity = document.querySelector('[name="quantity"]')?.value || '1';
+        formData.append('quantity', quantity);
+
+        // Add any additional form fields
+        const additionalFields = ['is_windows', 'base_price'];
+        additionalFields.forEach(fieldName => {
+          const field = document.querySelector(`[name="${fieldName}"]`);
+          if (field) {
+            formData.append(fieldName, field.value);
+          }
+        });
 
         return formData;
       }
 
-      // Utility Methods
-      showNotification(message, type = 'info') {
+      // Notification Methods
+      showNotification(message, type = 'success') {
+        // Remove existing notifications
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(notification => notification.remove());
+
+        // Create notification element
         const notification = document.createElement('div');
-        const bgColor = {
-          success: 'bg-green-500',
-          error: 'bg-red-500',
-          info: 'bg-blue-500'
-        } [type] || 'bg-blue-500';
+        notification.className = `notification-toast fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
 
-        notification.className = `fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg z-50 ${bgColor} text-white shadow-lg transform transition-all duration-300`;
-        notification.textContent = message;
+        // Set colors based on type
+        if (type === 'success') {
+          notification.classList.add('bg-green-500', 'text-white');
+        } else if (type === 'error') {
+          notification.classList.add('bg-red-500', 'text-white');
+        } else {
+          notification.classList.add('bg-blue-500', 'text-white');
+        }
 
+        // Add icon based on type
+        const iconClass = type === 'success' ? 'fas fa-check-circle' :
+          type === 'error' ? 'fas fa-exclamation-circle' :
+          'fas fa-info-circle';
+
+        notification.innerHTML = `
+      <div class="flex items-center">
+        <i class="${iconClass} mr-3"></i>
+        <span class="font-medium">${message}</span>
+        <button class="ml-4 text-white hover:text-gray-200 focus:outline-none" onclick="this.parentElement.parentElement.remove()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+
+        // Add to document
         document.body.appendChild(notification);
 
+        // Animate in
         setTimeout(() => {
-          if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-          }
-        }, 3000);
+          notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          notification.classList.add('translate-x-full');
+          setTimeout(() => {
+            if (notification.parentElement) {
+              notification.remove();
+            }
+          }, 300);
+        }, 5000);
       }
 
-      updateCartCount(count) {
-        const cartCountElements = document.querySelectorAll('.cart-count, #cart-count, [data-cart-count]');
+      // Cart count update method
+      updateCartCount(newCount) {
+        const cartCountElements = document.querySelectorAll('.cart-count, #cartCount');
         cartCountElements.forEach(element => {
-          element.textContent = count;
-          element.style.display = count > 0 ? 'inline' : 'none';
+          if (element) {
+            element.textContent = newCount;
+
+            // Add animation effect
+            element.classList.add('animate-bounce');
+            setTimeout(() => {
+              element.classList.remove('animate-bounce');
+            }, 1000);
+          }
         });
 
-        const cartBubble = document.getElementById('cart-count-bubble');
-        if (cartBubble) {
-          if (count > 0) {
-            cartBubble.classList.remove('hidden');
-            cartBubble.style.display = 'inline';
+        // Update cart badge visibility
+        const cartBadges = document.querySelectorAll('.cart-badge');
+        cartBadges.forEach(badge => {
+          if (newCount > 0) {
+            badge.classList.remove('hidden');
           } else {
-            cartBubble.classList.add('hidden');
-            cartBubble.style.display = 'none';
+            badge.classList.add('hidden');
           }
-        }
+        });
+      }
+
+      // Utility method to reset all selections
+      resetAllSelections() {
+        this.selectedTypeId = null;
+        this.selectedColorData = null;
+        this.selectedVariantData = null;
+
+        // Clear all visual selections
+        document.querySelectorAll('.type-btn, .color-btn, .variant-btn').forEach(btn => {
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.add('border-gray-200', 'bg-white');
+        });
+
+        // Clear hidden fields
+        Object.values(this.elements).forEach(element => {
+          if (element && element.tagName === 'INPUT' && element.type === 'hidden') {
+            element.value = '';
+          }
+        });
+
+        // Reset step flow
+        this.initializeStepFlow();
+        this.updateDisplay();
+      }
+
+      // Method to get current selection summary
+      getSelectionSummary() {
+        return {
+          hasType: !!this.selectedTypeId,
+          hasColor: !!this.selectedColorData,
+          hasVariant: !!this.selectedVariantData,
+          isComplete: !!(this.selectedTypeId && this.selectedColorData && this.selectedVariantData),
+          typeId: this.selectedTypeId,
+          typeName: this.elements.selectedType?.value || null,
+          colorData: this.selectedColorData,
+          variantData: this.selectedVariantData,
+          totalPrice: this.calculateTotalPrice().totalPrice
+        };
       }
     }
 
-    // Initialize the product selector
-    const productSelector = new ProductSelector();
-
-    // Color dropdown function - connects to ProductSelector
-    function selectColorFromDropdown(selectElement) {
-      const selectedOption = selectElement.options[selectElement.selectedIndex];
-
-      if (selectedOption.value === "") {
-        // No color selected - clear selection
-        productSelector.clearColorSelection();
-        document.getElementById('color-preview').classList.add('hidden');
-        document.getElementById('selected-color-info').innerHTML =
-          '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to see pricing';
-        return;
-      }
-
-      const colorId = selectedOption.value;
-      const colorName = selectedOption.dataset.colorName;
-      const price = parseFloat(selectedOption.dataset.price);
-      const colorCode = selectedOption.dataset.colorCode;
-      const image = selectedOption.dataset.image;
-
-      // Update ProductSelector with selected color
-      productSelector.setColorFromDropdown(colorId, colorName, price, image, colorCode);
-
-      // Update preview display
-      const preview = document.getElementById('color-preview');
-      const colorSquare = document.getElementById('preview-color-square');
-      const nameElement = document.getElementById('preview-color-name');
-      const priceElement = document.getElementById('preview-color-price');
-
-      // Set color square
-      if (image) {
-        colorSquare.style.backgroundColor = '';
-        colorSquare.innerHTML = `<img src="../../${image}" alt="${colorName}" class="w-full h-full object-contain">`;
-      } else {
-        colorSquare.style.backgroundColor = colorCode;
-        colorSquare.innerHTML = '';
-      }
-
-      // Set color info
-      nameElement.textContent = colorName;
-      if (price > 0) {
-        priceElement.innerHTML = '<span class="text-orange-600 font-semibold">+₱' + price.toLocaleString('en-US', {
-          minimumFractionDigits: 2
-        }) + '</span>';
-      } else {
-        priceElement.innerHTML = '<span class="text-green-600 font-semibold">No extra cost</span>';
-      }
-
-      // Show preview
-      preview.classList.remove('hidden');
-
-      // Update info box
-      const infoText = price > 0 ?
-        `Selected: ${colorName} (+₱${price.toLocaleString('en-US', {minimumFractionDigits: 2})})` :
-        `Selected: ${colorName} (No extra cost)`;
-
-      document.getElementById('selected-color-info').innerHTML =
-        '<i class="fas fa-check-circle text-green-500 mr-2"></i>' + infoText;
-    }
-
-    // Global functions for onclick handlers
-    function selectColor(button, colorName, colorPrice, colorId) {
-      productSelector.selectColor(button, colorName, colorPrice, colorId);
-    }
-
+    // Global functions for HTML onclick handlers
     function showVariants(typeId, typeName) {
-      productSelector.showVariants(typeId, typeName);
+      if (window.productSelector) {
+        window.productSelector.showVariants(typeId, typeName);
+      }
     }
 
     function selectVariant(button, size, color = null) {
-      productSelector.selectVariant(button, size, color);
+      if (window.productSelector) {
+        window.productSelector.selectVariant(button, size, color);
+      }
     }
 
+    function selectColorFromGrid(colorId, colorName, price, image, colorCode) {
+      // Remove selection from all color buttons
+      document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
+        btn.classList.add('border-gray-200', 'bg-white');
+      });
+
+      // Add selection to clicked button
+      const clickedButton = event.currentTarget;
+      clickedButton.classList.add('selected', 'border-orange-500', 'bg-orange-50');
+      clickedButton.classList.remove('border-gray-200', 'bg-white');
+
+      // Update product selector
+      if (window.productSelector) {
+        window.productSelector.setColorFromGrid(colorId, colorName, price, image, colorCode);
+      }
+    }
+
+    // Share product function
     function shareProduct() {
-      const productName = document.querySelector('h1').textContent;
+      const productName = document.querySelector('h1')?.textContent || 'Product';
+      const currentUrl = window.location.href;
 
       if (navigator.share) {
+        // Use native sharing if available
         navigator.share({
           title: productName,
-          url: window.location.href
+          text: `Check out this product: ${productName}`,
+          url: currentUrl
+        }).catch(err => console.log('Error sharing:', err));
+      } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(currentUrl).then(() => {
+          // Show notification that link was copied
+          if (window.productSelector) {
+            window.productSelector.showNotification('Product link copied to clipboard!', 'success');
+          } else {
+            alert('Product link copied to clipboard!');
+          }
         }).catch(err => {
-          console.log('Error sharing:', err);
-          fallbackShare();
+          console.error('Failed to copy: ', err);
+          alert('Could not copy link. Please copy manually: ' + currentUrl);
         });
-      } else {
-        fallbackShare();
       }
     }
 
-    function fallbackShare() {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(window.location.href)
-          .then(() => {
-            productSelector.showNotification('Link copied to clipboard!', 'success');
-          })
-          .catch(() => {
-            productSelector.showNotification('Could not copy link', 'error');
-          });
-      } else {
-        productSelector.showNotification('Sharing not supported', 'error');
-      }
-    }
-
-    // Store original image src for reset functionality
+    // Initialize ProductSelector when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-      const mainImage = document.getElementById('main-product-image');
-      if (mainImage) {
-        mainImage.dataset.originalSrc = mainImage.src;
+      // Initialize the product selector
+      if (typeof ProductSelector !== 'undefined') {
+        window.productSelector = new ProductSelector();
+
+        // Store original image src for reset functionality
+        const mainImage = document.getElementById('main-product-image');
+        if (mainImage) {
+          mainImage.dataset.originalSrc = mainImage.src;
+        }
+
+        console.log('ProductSelector initialized');
+      } else {
+        console.error('ProductSelector class not found');
       }
     });
+
+    // Keyboard shortcuts for better UX
+    document.addEventListener('keydown', function(e) {
+      // ESC key to close modals
+      if (e.key === 'Escape') {
+        closeContactModal();
+      }
+
+      // Number keys to select variants quickly (1-9)
+      if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
+        const index = parseInt(e.key) - 1;
+        if (variantButtons[index]) {
+          variantButtons[index].click();
+        }
+      }
+    });
+
+    // Touch and mobile optimizations
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add touch feedback for buttons
+      const buttons = document.querySelectorAll('.type-btn, .color-btn, .variant-btn');
+      buttons.forEach(button => {
+        button.addEventListener('touchstart', function() {
+          this.style.transform = 'scale(0.95)';
+        });
+
+        button.addEventListener('touchend', function() {
+          this.style.transform = 'scale(1)';
+          this.blur(); // Remove focus outline on mobile
+        });
+
+        button.addEventListener('touchcancel', function() {
+          this.style.transform = 'scale(1)';
+        });
+      });
+    });
+
+    // Performance optimization: Debounce rapid button clicks
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Add loading states for async operations
+    function setLoadingState(button, isLoading = true) {
+      if (!button) return;
+
+      if (isLoading) {
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.dataset.originalText = originalText;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+      } else {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalText || button.innerHTML;
+      }
+    }
+
+    // Error handling for missing elements
+    window.addEventListener('error', function(e) {
+      console.error('JavaScript Error:', e.error);
+    });
+
+    // Debug function to check selector state (remove in production)
+    window.debugProductSelector = function() {
+      if (window.productSelector) {
+        console.log('ProductSelector State:', window.productSelector.getSelectionSummary());
+      } else {
+        console.log('ProductSelector not initialized');
+      }
+    };
   </script>
 </body>
 

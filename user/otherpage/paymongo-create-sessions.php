@@ -47,6 +47,13 @@ try {
     $customer_name = $order_details['customer_name'] ?? '';
     $email = $order_details['email'] ?? '';
     $mobile = $order_details['mobile'] ?? '';
+    
+    // Get additional form data
+    $address = $order_details['address'] ?? '';
+    $zipcode = $order_details['zipcode'] ?? '';
+    $billing_address_id = $order_details['billing_address_id'] ?? null;
+    $latitude = $order_details['latitude'] ?? null;
+    $longitude = $order_details['longitude'] ?? null;
 
     // Calculate breakdown
     $delivery_fee = floatval($input['delivery_fee'] ?? 0);
@@ -56,22 +63,28 @@ try {
 
     // ✅ SAVE ORDER TO DATABASE FIRST
     $stmt = $conn->prepare("INSERT INTO orders (
-        user_id, customer_name, email, mobile, 
+        user_id, customer_name, email, mobile, address, zipcode,
         subtotal, delivery_fee, vat_amount, total, 
         mode_payment, payment_status, reference_no, 
+        billing_address_id, latitude, longitude,
         created_at, paymongo_session_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PayMongo', 'pending_paymongo', ?, NOW(), '')");
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PayMongo', 'pending_paymongo', ?, ?, ?, ?, NOW(), '')");
 
-    $stmt->bind_param("isssdddds", 
+    $stmt->bind_param("isssssdddsiddd", 
         $user_id, 
         $customer_name, 
         $email, 
         $mobile, 
+        $address,
+        $zipcode,
         $items_without_vat,
         $delivery_fee,
         $vat_amount,
         $amount, 
-        $reference_no
+        $reference_no,
+        $billing_address_id,
+        $latitude,
+        $longitude
     );
 
     if (!$stmt->execute()) {

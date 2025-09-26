@@ -341,14 +341,42 @@ class PaymentSystem {
                 throw new Error('Invalid amount: ' + totalText);
             }
 
-            console.log('Creating PayMongo session for amount:', amount);
+            // ✅ FIXED: Get ALL required form data properly
+            const checkoutForm = document.getElementById('checkoutForm');
+            if (!checkoutForm) {
+                throw new Error('Checkout form not found');
+            }
 
-            // Test the endpoint first with correct path
-            const testResponse = await fetch('test-paymongo.php');
-            const testData = await testResponse.text();
-            console.log('Test endpoint response:', testData);
+            // Extract all required form fields
+            const formData = new FormData(checkoutForm);
+            
+            // Create proper order details object
+            const orderDetails = {
+                customer_name: formData.get('customer_name') || '',
+                email: formData.get('email') || '',
+                mobile: formData.get('mobile') || '',
+                address: formData.get('address') || '',
+                zipcode: formData.get('zipcode') || '',
+                billing_address_id: formData.get('billing_address_id') || null,
+                delivery_distance: parseFloat(formData.get('delivery_distance')) || 0,
+                delivery_fee: parseFloat(formData.get('delivery_fee')) || 0,
+                zone_id: formData.get('zone_id') || null
+            };
 
-            // Make the actual PayMongo request
+            // ✅ VALIDATION: Check required fields
+            const requiredFields = ['customer_name', 'email', 'mobile', 'address', 'zipcode'];
+            const missingFields = requiredFields.filter(field => !orderDetails[field]);
+            
+            if (missingFields.length > 0) {
+                throw new Error('Missing required fields: ' + missingFields.join(', '));
+            }
+
+            console.log('Creating PayMongo session with data:', {
+                amount: amount,
+                order_details: orderDetails
+            });
+
+            // ✅ FIXED: Send complete data to PHP
             const response = await fetch('paymongo-create-sessions.php', {
                 method: 'POST',
                 headers: { 
@@ -356,23 +384,19 @@ class PaymentSystem {
                 },
                 body: JSON.stringify({ 
                     amount: amount,
-                    order_details: {
-                        customer_name: document.getElementById('customer_name')?.value || '',
-                        email: document.getElementById('email')?.value || '',
-                        mobile: document.getElementById('mobile')?.value || ''
-                    }
+                    delivery_fee: orderDetails.delivery_fee,
+                    order_details: orderDetails
                 })
             });
 
             console.log('PayMongo response status:', response.status);
-            console.log('PayMongo response headers:', Object.fromEntries(response.headers.entries()));
 
             const responseText = await response.text();
             console.log('Raw PayMongo response:', responseText.substring(0, 500));
 
             // Check if it's HTML (error page)
             if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-                throw new Error('PHP returned HTML instead of JSON. Check your paymongo-create-sessions.php file for syntax errors.');
+                throw new Error('Server error: Check paymongo-create-sessions.php file for syntax errors.');
             }
 
             const data = JSON.parse(responseText);
@@ -396,6 +420,15 @@ class PaymentSystem {
             placeOrderBtn.disabled = false;
             placeOrderBtn.textContent = 'Pay with PayMongo';
             this.isSubmitting = false;
+        }
+    }
+
+    // ✅ FIXED: Update PayMongo amount display
+    updatePayMongoAmount() {
+        const paymongoAmount = document.getElementById('paymongoAmount');
+        const grandTotal = document.getElementById('grandTotalDisplay');
+        if (paymongoAmount && grandTotal) {
+            paymongoAmount.textContent = grandTotal.textContent;
         }
     }
 }

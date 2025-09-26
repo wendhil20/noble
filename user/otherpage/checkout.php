@@ -564,6 +564,222 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    
+// PayMongo configuration
+$paymongo_config = [
+    'mode' => 'test', // Change to 'live' for production
+    'secret_key' => 'sk_test_AJdRkkXWfGW9W5DHV6UNNECZ', // Replace with your actual secret key
+    'public_key' => 'pk_test_r4XYBug7KMzvamWvUzjAGAyC', // Replace with your actual public key
+    'currency' => 'PHP',
+    'success_url' => 'http://localhost/noble/user/otherpage/paymongo-success.php',
+    'cancel_url' => 'http://localhost/noble/user/otherpage/checkout.php'
+];
+
+// PayMongo helper functions
+function createPayMongoCheckoutSession($amount, $order_id, $config, $line_items = []) {
+    $url = 'https://api.paymongo.com/v1/checkout_sessions';
+    
+    // Convert amount to centavos (PayMongo uses centavos)
+    $amount_centavos = (int)($amount * 100);
+    
+    // Default line item if none provided
+    if (empty($line_items)) {
+        $line_items = [[
+            'name' => 'Order from Noble Home - #' . $order_id,
+            'quantity' => 1,
+            'amount' => $amount_centavos,
+            'currency' => $config['currency']
+        ]];
+    }
+    
+    $checkout_data = [
+        'data' => [
+            'attributes' => [
+                'amount' => $amount_centavos,
+                'currency' => $config['currency'],
+                'line_items' => $line_items,
+                'payment_method_types' => ['gcash', 'paymaya', 'card', 'grab_pay'],
+                'success_url' => $config['success_url'] . '?order_id=' . $order_id,
+                'cancel_url' => $config['cancel_url'],
+                'description' => 'Noble Home Construction - Order #' . $order_id,
+                'reference_number' => (string)$order_id
+            ]
+        ]
+    ];
+    
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Basic ' . base64_encode($config['secret_key'] . ':')
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($checkout_data));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    
+    // Debug logging
+    error_log("PayMongo Checkout Session Request: " . json_encode($checkout_data));
+    error_log("PayMongo API Response: " . $response);
+    error_log("PayMongo HTTP Code: " . $http_code);
+    
+    if ($error) {
+        error_log("PayMongo cURL Error: " . $error);
+        return false;
+    }
+    
+    curl_close($ch);
+    
+    if ($http_code === 200) {
+        $decoded_response = json_decode($response, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded_response;
+        } else {
+            error_log("PayMongo JSON decode error: " . json_last_error_msg());
+        }
+    }
+    
+    error_log("PayMongo Checkout Session Creation Failed. HTTP Code: " . $http_code);
+    return false;
+}
+
+    // Add PayMongo processing in the POST section (add this after the PayPal processing block)
+ if ($_POST['payment_method'] === 'PayMongo') {
+        // Handle PayMongo payment
+        
+        // Get form data
+        $customer_name = $_POST['customer_name'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $mobile = $_POST['mobile'] ?? '';
+        $address = $_POST['address'] ?? '';
+        $zipcode = $_POST['zipcode'] ?? '';
+        
+        // Calculate total amount
+        $subtotal = floatval($_POST['subtotal'] ?? 0);
+        $delivery_fee = floatval($_POST['delivery_fee'] ?? 0);
+        $vat_amount = $subtotal * 0.12;
+        $grand_total = $subtotal + $vat_amount + $delivery_fee;
+        
+        if ($grand_total <= 0) {
+            die('Invalid order amount');
+        }
+        
+        // PayMongo configuration
+        $paymongo_config = [
+            'secret_key' => 'sk_test_AJdRkkXWfGW9W5DHV6UNNECZ',
+            'currency' => 'PHP'
+        ];
+        
+        // Create order reference
+        $reference_no = 'PM' . time() . rand(1000, 9999);
+        
+        // Convert to centavos
+        $amount_in_centavos = intval($grand_total * 100);
+        
+        // Prepare PayMongo checkout data
+        $checkout_data = [
+            "data" => [
+                "attributes" => [
+                    "amount" => $amount_in_centavos,
+                    "currency" => "PHP",
+                    "line_items" => [
+                        [
+                            "name" => "Noble Home Order #" . $reference_no,
+                            "quantity" => 1,
+                            "amount" => $amount_in_centavos,
+                            "currency" => "PHP",
+                            "description" => "Order from Noble Home Construction"
+                        ]
+                    ],
+                    "payment_method_types" => ["gcash", "paymaya", "card", "grab_pay"],
+                    "success_url" => "http://localhost/noble/user/otherpage/paymongo-success.php?ref=" . $reference_no,
+                    "cancel_url" => "http://localhost/noble/user/otherpage/checkout.php?payment_cancelled=1",
+                    "description" => "Noble Home Order Payment",
+                    "metadata" => [
+                        "user_id" => $_SESSION['user_id'],
+                        "reference_no" => $reference_no,
+                        "customer_name" => $customer_name,
+                        "customer_email" => $email
+                    ]
+                ]
+            ]
+        ];
+        
+        // Create PayMongo checkout session
+        $ch = curl_init("https://api.paymongo.com/v1/checkout_sessions");
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Authorization: Basic " . base64_encode($paymongo_config['secret_key'] . ":")
+            ],
+            CURLOPT_POSTFIELDS => json_encode($checkout_data),
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_TIMEOUT => 30
+        ]);
+        
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+        
+        if ($response === false) {
+            die('PayMongo connection failed: ' . $curl_error);
+        }
+        
+        if ($http_code !== 200) {
+            die('PayMongo API error: HTTP ' . $http_code);
+        }
+        
+        $paymongo_data = json_decode($response, true);
+        
+        if (!$paymongo_data || !isset($paymongo_data['data']['attributes']['checkout_url'])) {
+            die('Invalid PayMongo response');
+        }
+        
+        // Store order in database with pending_paymongo status
+        $stmt = $conn->prepare("
+            INSERT INTO orders 
+            (user_id, customer_name, email, mobile, address, zipcode, subtotal, delivery_fee, grand_total, payment_method, payment_status, reference_no, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PayMongo', 'pending_paymongo', ?, NOW())
+        ");
+        
+        $stmt->bind_param("isssssddds", 
+            $_SESSION['user_id'], 
+            $customer_name, 
+            $email, 
+            $mobile, 
+            $address, 
+            $zipcode, 
+            $subtotal, 
+            $delivery_fee, 
+            $grand_total, 
+            $reference_no
+        );
+        
+        if (!$stmt->execute()) {
+            die('Failed to create order');
+        }
+        
+        $order_id = $conn->insert_id;
+        $stmt->close();
+        
+        // Store PayMongo session info
+        $_SESSION['pending_paymongo_order'] = [
+            'order_id' => $order_id,
+            'session_id' => $paymongo_data['data']['id'],
+            'reference_no' => $reference_no
+        ];
+        
+        // Redirect to PayMongo checkout
+        header('Location: ' . $paymongo_data['data']['attributes']['checkout_url']);
+        exit;
+    }
+
     // Handle Bank Transfer specific data
     if ($payment_method === 'Bank Transfer') {
         $bank_type = trim($_POST['bank_type'] ?? '');
@@ -1262,6 +1478,22 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                                     </div>
                                 </div>
                             </label>
+                            <!-- NEW: PayMongo Option -->
+    <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-green-300 transition">
+        <input type="radio" name="payment_method" value="PayMongo" required class="mr-4" />
+        <div class="flex items-center">
+            <div class="text-green-600 mr-3">
+                <!-- PayMongo-style icon -->
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-medium">PayMongo</div>
+                <div class="text-sm text-gray-600">GCash, Maya, Credit Card, GrabPay</div>
+            </div>
+        </div>
+    </label>
 
                         </div>
 
@@ -1308,6 +1540,83 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
                             <div id="paypal-button-container" class="mt-4"></div>
                         </div>
+
+                        <!-- PayMongo Fields (add this after the existing payment fields) -->
+<div id="paymongoFields" class="hidden mt-6 p-4 bg-green-50 rounded-lg">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="text-green-600">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </div>
+        <div>
+            <h5 class="font-bold text-green-800">PayMongo Payment</h5>
+            <p class="text-sm text-green-600">You will be redirected to PayMongo to complete your payment securely.</p>
+        </div>
+    </div>
+
+    <div class="bg-green-100 border border-green-200 rounded-lg p-4 mb-4">
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-600">Total Amount:</span>
+                <span class="font-bold text-green-800" id="paymongoAmount">₱0.00</span>
+            </div>
+            <div class="text-xs text-green-600 mt-2">
+                <h6 class="font-semibold mb-2">Available Payment Methods:</h6>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong>GCash</strong> - Pay using your GCash wallet</li>
+                    <li><strong>Maya (PayMaya)</strong> - Use your Maya account</li>
+                    <li><strong>Credit/Debit Cards</strong> - Visa, Mastercard, JCB</li>
+                    <li><strong>GrabPay</strong> - Pay with GrabPay wallet</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-green-200 rounded-lg p-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                    <span class="text-blue-600 font-bold text-xs">GCash</span>
+                </div>
+                <span class="text-xs text-gray-600">GCash Wallet</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+                    <span class="text-green-600 font-bold text-xs">Maya</span>
+                </div>
+                <span class="text-xs text-gray-600">Maya Account</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-2">
+                    <span class="text-purple-600 font-bold text-xs">CARD</span>
+                </div>
+                <span class="text-xs text-gray-600">Credit/Debit</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
+                    <span class="text-orange-600 font-bold text-xs">Grab</span>
+                </div>
+                <span class="text-xs text-gray-600">GrabPay</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-semibold">Secure Payment Powered by PayMongo</span>
+        </div>
+        <ul class="mt-2 space-y-1 ml-6">
+            <li>✓ Bank-level security and encryption</li>
+            <li>✓ Instant payment confirmation</li>
+            <li>✓ No need to share card details with us</li>
+            <li>✓ PCI DSS compliant payment processing</li>
+        </ul>
+    </div>
+</div>
                     </div>
 
                     <!-- Order Summary -->
@@ -1458,7 +1767,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <script src="js/distanceCalculation.js"></script>
     <script src="js/mapModal.js"></script>
     <script src="js/checkoutForm.js"></script>
-    <script src="js/paymentquickFixPayment.js"></script> 
+    <script src="js/paymentquickFixPayment.js"></script>
     <script>
         // Pass cart items data to JavaScript for delivery calculations
         window.cartItemsData = <?= json_encode(array_values($cart_items), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -1471,6 +1780,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             console.log(`Item ${index}: ${item.variant_name}, Size: ${item.size_name}, Percentage: ${item.delivery_size_percentage}%`);
         });
     </script>
+
 </body>
 
 </html>

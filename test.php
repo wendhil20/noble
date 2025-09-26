@@ -1,35 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Esri Leaflet Geosearch Example</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder@3.1.6/dist/esri-leaflet-geocoder.css" crossorigin="">
-  <style>
-    #map { height: 400px; }
-  </style>
+  <meta charset="UTF-8">
+  <title>PayMongo Checkout Sample</title>
 </head>
 <body>
-  <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="https://unpkg.com/esri-leaflet@3.0.19/dist/esri-leaflet.js" crossorigin=""></script>
-  <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.6/dist/esri-leaflet-geocoder.js" crossorigin=""></script>
+  <h2>PayMongo Checkout</h2>
+  <input type="number" id="amount" placeholder="Enter Amount (₱)">
+  <button id="payBtn">Pay Now</button>
+
   <script>
-    var map = L.map('map').setView([14.6, 121.0], 12);
+    document.getElementById('payBtn').addEventListener('click', async () => {
+      const amount = document.getElementById('amount').value;
 
-    // Add basemap
-    L.esri.basemapLayer('Topographic').addTo(map);
-
-    // Add geosearch control
-    var searchControl = L.esri.Geocoding.geosearch().addTo(map);
-
-    var results = L.layerGroup().addTo(map);
-
-    searchControl.on('results', function(data) {
-      results.clearLayers();
-      data.results.forEach(function(result) {
-        results.addLayer(L.marker(result.latlng));
+      const res = await fetch("paymongo-create-session.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount })
       });
+
+      const data = await res.json();
+      console.log(data);
+
+      if (data.data && data.data.attributes.checkout_url) {
+        window.location.href = data.data.attributes.checkout_url;
+      } else {
+        alert("Failed to create checkout session.");
+      }
     });
   </script>
 </body>

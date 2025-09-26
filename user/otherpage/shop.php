@@ -90,16 +90,15 @@ $total_pages = ceil($total_products / $per_page);
 
 $all_categories = [
     'furniture' => 'Furniture',
-    'buildingmaterial' => 'Materials',
-    'electrical' => 'Electrical',
-    'lighting' => 'Lighting',
+    'buildingmaterials' => 'Materials',
+    'lightingfixture' => 'Lighting',
     'bedfurniture' => 'Bedroom Furniture',
     'aircon' => 'Air Conditioners',
     'doors' => 'Doors',
-    'tiles' => 'Tiles',
+    'Tiles' => 'Tiles',
     'windows' => 'Windows',
-    'bathroom' => 'Bathroom Fixtures',
-    'kitchen' => 'Kitchen Fixtures',
+    'bathroomFixtures' => 'Bathroom Fixtures',
+    'kitchenFixture' => 'Kitchen Fixtures',
     'pipes' => 'Pipes',
     'aacblock' => 'AAC BLOCKS'
 ];

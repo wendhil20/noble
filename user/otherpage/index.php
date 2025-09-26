@@ -26,6 +26,8 @@ $result_variants = mysqli_query($conn, $query_variants1);
 $SYCJ_query = "SELECT * FROM products WHERE codename = 'furniture' ORDER BY id DESC";
 $SYCJ_result = mysqli_query($conn, $SYCJ_query);
 
+
+
 // 3. Discount 30% materials - FIXED: descrip6, descrip7 from products table
 $material_querys = "
     SELECT 
@@ -546,42 +548,42 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-   <section class="bg-orange-400 text-white p-3 sm:p-4">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
-        
-        <!-- Discount Text with better mobile layout -->
-        <div class="flex items-start sm:items-center gap-3 text-center sm:text-left w-full sm:flex-1">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0 mt-0.5 sm:mt-0" 
-                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" 
-                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-            
-            <div class="flex-1 min-w-0">
-                <p class="text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-tight">
-                    <span class="block sm:inline">Exclusive Deals!</span>
-                    <span class="block sm:inline underline font-bold mt-1 sm:mt-0 sm:ml-1">
-                        Discounted Items Available
-                    </span>
-                </p>
-            </div>
-        </div>
+    <section class="bg-orange-400 text-white p-3 sm:p-4">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
 
-        <!-- Action Button with better responsive sizing -->
-        <div class="w-full sm:w-auto flex-shrink-0">
-            <a href="allproduct.php?discount=all"
-               class="bg-white text-orange-600 hover:bg-orange-50 active:bg-gray-100 
+            <!-- Discount Text with better mobile layout -->
+            <div class="flex items-start sm:items-center gap-3 text-center sm:text-left w-full sm:flex-1">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0 mt-0.5 sm:mt-0"
+                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-tight">
+                        <span class="block sm:inline">Exclusive Deals!</span>
+                        <span class="block sm:inline underline font-bold mt-1 sm:mt-0 sm:ml-1">
+                            Discounted Items Available
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Button with better responsive sizing -->
+            <div class="w-full sm:w-auto flex-shrink-0">
+                <a href="allproduct.php?discount=all"
+                    class="bg-white text-orange-600 hover:bg-orange-50 active:bg-gray-100 
                       font-semibold px-4 py-2.5 sm:px-6 sm:py-3 
                       text-sm sm:text-base hover:shadow-lg
                       transition-all duration-200 ease-in-out
                       w-full sm:w-auto text-center inline-block
                       transform hover:scale-105 active:scale-95
                       focus:outline-none focus:ring-2 focus:ring-orange-300">
-                Shop Now
-            </a>
+                    Shop Now
+                </a>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- Scrolling Text -->
     <div class="overflow-hidden bg-orange-500 text-white">
@@ -1485,7 +1487,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Material Boards</span>
+                        <span class="text-sm font-semibold text-black text-center">Building materials</span>
                     </div>
                 </a>
 
@@ -1688,6 +1690,373 @@ handleQueryError($conn, "New Status Query");
         </div>
     </section>
 
+
+
+<section>
+<?php
+
+// Separate query to get only new products for the sidebar panel
+$newProductsQuery = "
+    SELECT 
+        p.id,
+        p.product_name AS name,
+        p.codename,
+        p.quantity,
+        p.price,
+        p.description,
+        p.main_image,
+        p.category_id,
+        COALESCE(c.name, 'Uncategorized') AS category_name,
+        p.created_at,
+        CASE 
+            WHEN p.quantity > 0 THEN 'In Stock'
+            WHEN p.quantity = 0 THEN 'Out of Stock'
+            ELSE 'Unknown'
+        END AS stock_status
+    FROM products p
+    LEFT JOIN categories c ON c.id = p.category_id
+    WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
+    AND p.quantity >= 0
+    ORDER BY p.created_at DESC
+    LIMIT 50
+";
+
+$newProductsResult = $conn->query($newProductsQuery);
+$newProducts = [];
+if ($newProductsResult && $newProductsResult->num_rows > 0) {
+    while ($row = $newProductsResult->fetch_assoc()) {
+        $newProducts[] = $row;
+    }
+}
+
+if ($results->num_rows === 0) {
+    echo '<div class="col-span-full text-center py-8 text-gray-500">No products found.</div>';
+} else {
+?>
+
+    <!-- Only show button and sidebar if there are new products -->
+    <?php if (count($newProducts) > 0): ?>
+        <!-- Sidebar Toggle Button -->
+        <div class="notif-wrapper">
+            <button onclick="toggleSidebar()" class="sidebar-toggle-btn">
+                New Products!
+            </button>
+            <span class="notif-badge"><?php echo count($newProducts); ?></span>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebarOverlay" 
+            class="fixed inset-0 bg-black bg-opacity-50 z-40 opacity-0 invisible transition-all duration-300"
+            onclick="toggleSidebar()">
+        </div>
+
+        <!-- Gate-style Sidebar -->
+        <div id="newProductsSidebar"
+            class="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
+
+            <!-- Sidebar Header -->
+            <div class="flex justify-between items-center p-4 border-b bg-orange-500 text-white">
+                <h2 class="text-lg font-bold">New Products</h2>
+                <button onclick="toggleSidebar()"
+                    class="text-white hover:text-orange-200 text-xl font-bold">
+                    ×
+                </button>
+            </div>
+
+            <!-- Sidebar Content -->
+            <div class="overflow-y-auto h-full pb-20">
+                <div class="p-4 space-y-3">
+                    <?php foreach ($newProducts as $product): ?>
+                        <div class="p-3 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-start space-x-3">
+                                <?php if (!empty($product['main_image'])): ?>
+                                    <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                                        alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                        class="w-12 h-12 object-cover rounded"
+                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500" style="display:none;">
+                                        No Image
+                                    </div>
+                                <?php else: ?>
+                                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-medium text-sm text-gray-900 truncate">
+                                        <?php echo htmlspecialchars($product['name']); ?>
+                                    </h3>
+
+                                    <?php if (!empty($product['description'])): ?>
+                                        <p class="text-xs text-gray-600 truncate mt-1">
+                                            <?php echo htmlspecialchars(substr($product['description'], 0, 50)) . (strlen($product['description']) > 50 ? '...' : ''); ?>
+                                        </p>
+                                    <?php endif; ?>
+
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="text-xs text-gray-400">
+                                            <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                                        </span>
+                                    </div>
+
+                                    <!-- Action Button -->
+                                    <div class="mt-3 flex justify-start">
+                                        <form action="product_view" method="GET">
+                                            <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                                            <button type="submit" class="Btn">
+                                                <div class="sign">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                </div>
+                                                <div class="text">View</div>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+       <!-- Sidebar Footer -->
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
+    <button onclick="window.location.href='allproduct'"
+        class="w-full px-3 py-2 bg-black text-white rounded hover:bg-blue-600 text-sm">
+        View All New Products
+    </button>
+</div>
+
+        </div>
+
+        <script>
+            function toggleSidebar() {
+                const sidebar = document.getElementById("newProductsSidebar");
+                const overlay = document.getElementById("sidebarOverlay");
+                const notifWrapper = document.querySelector(".notif-wrapper");
+                const isOpen = !sidebar.classList.contains("-translate-x-full");
+
+                if (isOpen) {
+                    // Close sidebar (slide out to left)
+                    sidebar.classList.add("-translate-x-full");
+                    overlay.classList.add("opacity-0", "invisible");
+                    overlay.classList.remove("opacity-100", "visible");
+                    document.body.style.overflow = "auto";
+                    
+                    // Show the button again
+                    if (notifWrapper) {
+                        notifWrapper.style.display = "inline-block";
+                    }
+                } else {
+                    // Open sidebar (slide in from left)
+                    sidebar.classList.remove("-translate-x-full");
+                    overlay.classList.remove("opacity-0", "invisible");
+                    overlay.classList.add("opacity-100", "visible");
+                    document.body.style.overflow = "hidden";
+                    
+                    // Hide the button when sidebar is open
+                    if (notifWrapper) {
+                        notifWrapper.style.display = "none";
+                    }
+                }
+            }
+
+            function viewAllNewProducts() {
+                // Close sidebar first
+                toggleSidebar();
+                // Redirect to a page that shows all new products
+                setTimeout(() => {
+                    window.location.href = "?filter=new_products";
+                }, 300);
+            }
+
+            // Close sidebar when pressing Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    const sidebar = document.getElementById("newProductsSidebar");
+                    if (!sidebar.classList.contains("-translate-x-full")) {
+                        toggleSidebar();
+                    }
+                }
+            });
+
+            // Auto-refresh new products count every 30 seconds
+            setInterval(function() {
+                fetch(window.location.pathname + '?action=get_new_products_count')
+                    .then(response => response.json())
+                    .then(data => {
+                        const notifWrapper = document.querySelector('.notif-wrapper');
+                        const badge = document.querySelector('.notif-badge');
+                        
+                        if (data.count !== undefined) {
+                            if (data.count > 0) {
+                                // Show button if there are new products
+                                if (notifWrapper) {
+                                    notifWrapper.style.display = 'inline-block';
+                                }
+                                if (badge) {
+                                    badge.textContent = data.count;
+                                }
+                            } else {
+                                // Hide button if no new products
+                                if (notifWrapper) {
+                                    notifWrapper.style.display = 'none';
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => console.log('Auto-refresh error:', error));
+            }, 30000);
+        </script>
+
+        <style>
+            /* Button wrapper - fixed positioning */
+            .notif-wrapper {
+                position: fixed !important;
+                top: 50% !important;
+                left: 0 !important;
+                transform: translateY(-50%) !important;
+                z-index: 9999 !important;
+                display: inline-block;
+            }
+
+            /* Main sidebar toggle button */
+            .sidebar-toggle-btn {
+                width: 130px;
+                height: 60px;
+                border-radius: 0 30px 30px 0;
+                background: #000000ff;
+                color: white;
+                border: none;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                font-weight: 500;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+
+            .sidebar-toggle-btn:hover {
+                background: #000000ff;
+            }
+
+            /* Notification badge */
+            .notif-badge {
+                position: absolute;
+                top: -8px;
+                right: 3px;
+                background: #dc2626;
+                color: white;
+                border-radius: 50%;
+                padding: 4px 8px;
+                font-size: 12px;
+                font-weight: bold;
+                line-height: 1;
+                min-width: 20px;
+                text-align: center;
+                z-index: 1;
+            }
+
+            /* Sidebar styling */
+            #newProductsSidebar {
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Custom scrollbar for the sidebar */
+            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 2px;
+            }
+
+            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 2px;
+            }
+
+            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+                background: #a1a1a1;
+            }
+
+            /* Hover effect for product cards */
+            #newProductsSidebar .hover\:bg-gray-50:hover {
+                background-color: #f9fafb;
+                cursor: pointer;
+            }
+
+            /* Mobile responsive */
+            @media (max-width: 768px) {
+                #newProductsSidebar {
+                    width: 100%;
+                }
+                
+                .sidebar-toggle-btn {
+                    width: 90px;
+                    height: 50px;
+                    font-size: 14px;
+                }
+            }
+
+            /* View Button Styling */
+            .Btn {
+                width: 120px;
+                height: 35px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 10px;
+                background: linear-gradient(105deg, #000000ff, #000000ff);
+                border-radius: 30px;
+                color: #fff;
+                font-weight: 600;
+                border: none;
+                position: relative;
+                cursor: pointer;
+                transition-duration: .2s;
+                background-size: 200%;
+                background-position: 0%;
+                font-size: 12px;
+            }
+
+            .Btn:hover {
+                background-position: 100%;
+                transform: scale(1.05);
+            }
+
+            .Btn:active {
+                transform: scale(0.95);
+            }
+
+            .sign {
+                width: 25px;
+                height: 25px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #000000ff;
+                font-size: 10px;
+                margin-left: 2px;
+            }
+
+            .text {
+                font-size: 11px;
+                font-weight: 500;
+            }
+        </style>
+    <?php endif; ?>
+
+<?php
+} // End of main if statement
+?>
+</section>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->

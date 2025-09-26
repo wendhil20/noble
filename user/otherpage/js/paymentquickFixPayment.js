@@ -1,15 +1,10 @@
-// quickFixPayment.js - Immediate fix for your current errors
+// Single Payment Solution - Replace ALL your payment JS files with just this one
+console.log('Loading Complete Payment System...');
 
-// This file combines the essential payment functionality to resolve the loading errors
-// Replace all your payment JS files with just this one file for now
-
-console.log('Loading QuickFix Payment System...');
-
-// 1. NOTIFICATION SYSTEM (simplified)
+// Notification system
 function showNotification(message, type = 'info', duration = 5000) {
     console.log(`${type.toUpperCase()}: ${message}`);
     
-    // Create simple notification
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed; top: 20px; right: 20px; z-index: 9999;
@@ -37,45 +32,130 @@ function showNotification(message, type = 'info', duration = 5000) {
     }
 }
 
-// Make it global
 window.showNotification = showNotification;
 
-// 2. BASE PAYMENT HANDLER CLASS
-class PaymentHandler {
-    constructor(methodName) {
-        this.methodName = methodName;
-    }
-
-    show() {
-        console.warn(`show() method not implemented for ${this.methodName}`);
-    }
-
-    hide() {
-        console.warn(`hide() method not implemented for ${this.methodName}`);
-    }
-
-    validatePaymentMethod() {
-        console.warn(`validatePaymentMethod() method not implemented for ${this.methodName}`);
-        return false;
-    }
-
-    processPayment(event) {
-        console.warn(`processPayment() method not implemented for ${this.methodName}`);
-    }
-
-    updateTotalAmount() {
-        const grandTotalElement = document.getElementById('grandTotalDisplay');
-        return grandTotalElement ? grandTotalElement.textContent : '₱0.00';
-    }
-}
-
-// 3. BANK TRANSFER HANDLER
-class BankTransferHandler extends PaymentHandler {
+// Payment Management Class
+class PaymentSystem {
     constructor() {
-        super('Bank Transfer');
-        this.selectedBank = null;
-        this.screenshotUploaded = false;
-        this.bankAccounts = {
+        this.initialized = false;
+        this.isSubmitting = false;
+    }
+
+    initialize() {
+        if (this.initialized) return;
+        
+        console.log('Initializing Complete Payment System...');
+        
+        this.setupPaymentMethodSwitching();
+        this.setupFormSubmission();
+        this.initialized = true;
+        
+        showNotification('Payment system ready', 'success', 2000);
+    }
+
+    setupPaymentMethodSwitching() {
+        const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+        
+        paymentRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.switchPaymentMethod(e.target.value);
+            });
+        });
+    }
+
+    switchPaymentMethod(method) {
+        console.log('Switching to payment method:', method);
+        
+        // Hide all payment fields
+        const bankFields = document.getElementById('bankTransferFields');
+        const paypalFields = document.getElementById('paypalFields'); 
+        const paymongoFields = document.getElementById('paymongoFields');
+        
+        if (bankFields) bankFields.classList.add('hidden');
+        if (paypalFields) paypalFields.classList.add('hidden');
+        if (paymongoFields) paymongoFields.classList.add('hidden');
+
+        const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+        // Show relevant fields based on method
+        if (method === 'Bank Transfer') {
+            if (bankFields) {
+                bankFields.classList.remove('hidden');
+                this.renderBankTransferInterface();
+            }
+            this.showPlaceOrderButton('Place Order');
+            
+        } else if (method === 'PayPal') {
+            if (paypalFields) {
+                paypalFields.classList.remove('hidden');
+                this.renderPayPalInterface();
+            }
+            this.showPlaceOrderButton('Continue to PayPal');
+            
+        } else if (method === 'PayMongo') {
+            if (paymongoFields) {
+                paymongoFields.classList.remove('hidden');
+                this.renderPayMongoInterface();
+            }
+            this.showPlaceOrderButton('Pay with PayMongo');
+            this.updatePayMongoAmount();
+        }
+    }
+
+    showPlaceOrderButton(text) {
+        const placeOrderBtn = document.getElementById('placeOrderBtn');
+        if (placeOrderBtn) {
+            placeOrderBtn.style.display = 'inline-block';
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.textContent = text;
+        }
+    }
+
+    updatePayMongoAmount() {
+        const paymongoAmount = document.getElementById('paymongoAmount');
+        const grandTotal = document.getElementById('grandTotalDisplay');
+        if (paymongoAmount && grandTotal) {
+            paymongoAmount.textContent = grandTotal.textContent;
+        }
+    }
+
+    renderPayMongoInterface() {
+        const paymongoFields = document.getElementById('paymongoFields');
+        if (!paymongoFields || paymongoFields.innerHTML.trim() !== '') return;
+
+        paymongoFields.innerHTML = `
+            <div class="bg-green-100 border border-green-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="text-green-600">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-green-800">PayMongo Payment</h5>
+                        <p class="text-sm text-green-600">Secure payment with GCash, Maya, Cards & more</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Amount:</span>
+                        <span class="font-bold text-green-800" id="paymongoAmount">₱0.00</span>
+                    </div>
+                    <div class="text-xs text-green-600 mt-2">
+                        Available: GCash, Maya, Credit/Debit Cards, GrabPay
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderBankTransferInterface() {
+        const bankFields = document.getElementById('bankTransferFields');
+        const bankSelectionArea = document.getElementById('bankSelectionArea');
+        if (!bankSelectionArea) return;
+
+        const bankAccounts = {
             'BPI': {
                 name: 'Bank of the Philippine Islands',
                 accountName: 'Noble Home Construction',
@@ -95,35 +175,14 @@ class BankTransferHandler extends PaymentHandler {
                 color: 'yellow'
             }
         };
-    }
-
-    show() {
-        console.log('Showing Bank Transfer payment method');
-        
-        const paypalFields = document.getElementById('paypalFields');
-        const bankTransferFields = document.getElementById('bankTransferFields');
-        
-        if (paypalFields) paypalFields.classList.add('hidden');
-        if (bankTransferFields) {
-            bankTransferFields.classList.remove('hidden');
-            this.renderBankSelection();
-        }
-    }
-
-    renderBankSelection() {
-        const bankSelectionArea = document.getElementById('bankSelectionArea');
-        if (!bankSelectionArea) {
-            console.warn('bankSelectionArea not found');
-            return;
-        }
 
         bankSelectionArea.innerHTML = `
             <div class="space-y-4">
                 <h5 class="font-bold text-blue-800 mb-3">Select Bank for Transfer</h5>
                 <div class="grid gap-3">
-                    ${Object.entries(this.bankAccounts).map(([bankCode, bankInfo]) => `
+                    ${Object.entries(bankAccounts).map(([bankCode, bankInfo]) => `
                         <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
-                            <input type="radio" name="bank_selection" value="${bankCode}" class="mr-3" onchange="window.bankHandler.selectBank('${bankCode}')" />
+                            <input type="radio" name="bank_selection" value="${bankCode}" class="mr-3" onchange="window.paymentSystem.selectBank('${bankCode}', ${JSON.stringify(bankInfo).replace(/"/g, '&quot;')})" />
                             <div class="flex items-center">
                                 <div class="w-8 h-8 bg-${bankInfo.color}-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
                                     ${bankCode}
@@ -141,20 +200,19 @@ class BankTransferHandler extends PaymentHandler {
         `;
     }
 
-    selectBank(bankCode) {
-        this.selectedBank = bankCode;
-        const bankInfo = this.bankAccounts[bankCode];
-        
+    selectBank(bankCode, bankInfo) {
         const selectedBankInput = document.getElementById('selectedBank');
         if (selectedBankInput) selectedBankInput.value = bankCode;
 
         this.showBankDetails(bankInfo);
-        this.updateButtonState();
     }
 
     showBankDetails(bankInfo) {
         const bankDetailsArea = document.getElementById('bankDetailsArea');
         if (!bankDetailsArea) return;
+
+        const grandTotalElement = document.getElementById('grandTotalDisplay');
+        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
 
         bankDetailsArea.classList.remove('hidden');
         bankDetailsArea.innerHTML = `
@@ -171,15 +229,14 @@ class BankTransferHandler extends PaymentHandler {
                     </div>
                     <div class="flex justify-between border-t pt-2">
                         <span>Amount:</span>
-                        <span class="font-bold text-green-600">${this.updateTotalAmount()}</span>
+                        <span class="font-bold text-green-600">${totalAmount}</span>
                     </div>
                 </div>
                 
                 <div class="mt-4">
                     <label class="block font-medium mb-2">Payment Screenshot *</label>
                     <input type="file" name="payment_screenshot" accept="image/*" required 
-                           class="w-full border border-gray-300 px-3 py-2 rounded-lg" 
-                           onchange="window.bankHandler.handleFileUpload(event)" />
+                           class="w-full border border-gray-300 px-3 py-2 rounded-lg" />
                 </div>
                 
                 <div class="mt-4">
@@ -191,73 +248,13 @@ class BankTransferHandler extends PaymentHandler {
         `;
     }
 
-    handleFileUpload(event) {
-        const file = event.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                showNotification('File too large. Maximum 5MB allowed.', 'error');
-                event.target.value = '';
-                return;
-            }
-            this.screenshotUploaded = true;
-            showNotification('Screenshot uploaded successfully!', 'success');
-        } else {
-            this.screenshotUploaded = false;
-        }
-        this.updateButtonState();
-    }
-
-    validatePaymentMethod() {
-        return this.selectedBank && this.screenshotUploaded;
-    }
-
-    updateButtonState() {
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-        if (placeOrderBtn) {
-            if (this.validatePaymentMethod()) {
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.style.display = 'inline-block';
-            } else {
-                placeOrderBtn.disabled = true;
-            }
-        }
-    }
-
-    processPayment(event) {
-        if (!this.validatePaymentMethod()) {
-            event.preventDefault();
-            showNotification('Please complete bank transfer requirements', 'error');
-            return;
-        }
-        
-        showNotification('Processing bank transfer order...', 'info');
-    }
-}
-
-// 4. PAYPAL HANDLER
-class PayPalHandler extends PaymentHandler {
-    constructor() {
-        super('PayPal');
-    }
-
-    show() {
-        console.log('Showing PayPal payment method');
-        
-        const bankTransferFields = document.getElementById('bankTransferFields');
-        const paypalFields = document.getElementById('paypalFields');
-        
-        if (bankTransferFields) bankTransferFields.classList.add('hidden');
-        if (paypalFields) {
-            paypalFields.classList.remove('hidden');
-            this.initializePayPal();
-        }
-    }
-
-    initializePayPal() {
+    renderPayPalInterface() {
         const paypalFields = document.getElementById('paypalFields');
         if (!paypalFields) return;
 
-        // Simple PayPal interface
+        const grandTotalElement = document.getElementById('grandTotalDisplay');
+        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
+
         paypalFields.innerHTML = `
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="flex items-center gap-3 mb-3">
@@ -274,70 +271,166 @@ class PayPalHandler extends PaymentHandler {
                 </div>
                 
                 <div class="text-center p-4">
-                    <div class="text-lg font-bold text-blue-800 mb-2">Total: ${this.updateTotalAmount()}</div>
-                    <p class="text-sm text-blue-600">Click "Place Order" to proceed to PayPal</p>
+                    <div class="text-lg font-bold text-blue-800 mb-2">Total: ${totalAmount}</div>
+                    <p class="text-sm text-blue-600">Click "Continue to PayPal" to proceed with payment</p>
                 </div>
             </div>
         `;
-        
-        this.updateButtonState();
     }
 
-    validatePaymentMethod() {
-        return typeof paypal !== 'undefined';
-    }
-
-    updateButtonState() {
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-        if (placeOrderBtn) {
-            placeOrderBtn.disabled = false;
-            placeOrderBtn.style.display = 'inline-block';
+    setupFormSubmission() {
+        const checkoutForm = document.getElementById('checkoutForm');
+        if (!checkoutForm) {
+            console.warn('Checkout form not found');
+            return;
         }
+
+        checkoutForm.addEventListener('submit', (e) => {
+            if (this.isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+
+            const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+            
+            if (!selectedMethod) {
+                e.preventDefault();
+                showNotification('Please select a payment method', 'error');
+                return false;
+            }
+
+            console.log('Form submitting with method:', selectedMethod.value);
+
+            // Handle PayMongo with AJAX
+            if (selectedMethod.value === 'PayMongo') {
+                e.preventDefault();
+                this.handlePayMongoPayment();
+                return false;
+            }
+
+            // Let other payment methods submit normally
+            this.isSubmitting = true;
+            showNotification(`Processing ${selectedMethod.value} payment...`, 'info');
+        });
     }
 
-    processPayment(event) {
-        showNotification('Redirecting to PayPal...', 'info');
-        // Let form submit normally for PayPal
+    async handlePayMongoPayment() {
+        if (this.isSubmitting) return;
+        this.isSubmitting = true;
+
+        const placeOrderBtn = document.getElementById('placeOrderBtn');
+        if (!placeOrderBtn) {
+            this.isSubmitting = false;
+            return;
+        }
+
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.textContent = 'Creating PayMongo session...';
+
+        try {
+            // Get total amount
+            const grandTotalElement = document.getElementById('grandTotalDisplay');
+            if (!grandTotalElement) {
+                throw new Error('Cannot find total amount');
+            }
+            
+            const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '');
+            const amount = parseFloat(totalText);
+            
+            if (isNaN(amount) || amount <= 0) {
+                throw new Error('Invalid amount: ' + totalText);
+            }
+
+            console.log('Creating PayMongo session for amount:', amount);
+
+            // Test the endpoint first with correct path
+            const testResponse = await fetch('test-paymongo.php');
+            const testData = await testResponse.text();
+            console.log('Test endpoint response:', testData);
+
+            // Make the actual PayMongo request
+            const response = await fetch('paymongo-create-sessions.php', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    amount: amount,
+                    order_details: {
+                        customer_name: document.getElementById('customer_name')?.value || '',
+                        email: document.getElementById('email')?.value || '',
+                        mobile: document.getElementById('mobile')?.value || ''
+                    }
+                })
+            });
+
+            console.log('PayMongo response status:', response.status);
+            console.log('PayMongo response headers:', Object.fromEntries(response.headers.entries()));
+
+            const responseText = await response.text();
+            console.log('Raw PayMongo response:', responseText.substring(0, 500));
+
+            // Check if it's HTML (error page)
+            if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+                throw new Error('PHP returned HTML instead of JSON. Check your paymongo-create-sessions.php file for syntax errors.');
+            }
+
+            const data = JSON.parse(responseText);
+            console.log('Parsed PayMongo data:', data);
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
+                console.log('Redirecting to PayMongo...');
+                window.location.href = data.data.attributes.checkout_url;
+            } else {
+                throw new Error('Invalid PayMongo response - no checkout URL');
+            }
+
+        } catch (error) {
+            console.error('PayMongo error:', error);
+            showNotification('PayMongo payment failed: ' + error.message, 'error');
+            
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.textContent = 'Pay with PayMongo';
+            this.isSubmitting = false;
+        }
     }
 }
 
-// 5. PAYMENT MANAGER
-class PaymentManager {
-    constructor() {
-        this.handlers = {};
-        this.currentMethod = null;
-        this.isInitialized = false;
+// Backward compatibility functions
+function showBankSelection() {
+    if (window.paymentSystem) {
+        window.paymentSystem.switchPaymentMethod('Bank Transfer');
     }
+}
 
-    initialize() {
-        if (this.isInitialized) return;
-
-        console.log('Initializing PaymentManager...');
-        
-        // Register handlers
-        this.handlers['Bank Transfer'] = new BankTransferHandler();
-        this.handlers['PayPal'] = new PayPalHandler();
-        
-        // Make handlers globally accessible for onclick events
-        window.bankHandler = this.handlers['Bank Transfer'];
-        window.paypalHandler = this.handlers['PayPal'];
-        
-        this.setupEventListeners();
-        this.isInitialized = true;
-        
-        console.log('PaymentManager initialized successfully');
-        showNotification('Payment system loaded', 'success', 2000);
+function showPayPalOption() {
+    if (window.paymentSystem) {
+        window.paymentSystem.switchPaymentMethod('PayPal');
     }
+}
 
-    setupEventListeners() {
-        const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+function showPayMongoOption() {
+    if (window.paymentSystem) {
+        window.paymentSystem.switchPaymentMethod('PayMongo');
+    }
+}
+
+window.showBankSelection = showBankSelection;
+window.showPayPalOption = showPayPalOption;
+window.showPayMongoOption = showPayMongoOption;
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing payment system...');
+    
+    if (!window.paymentSystem) {
+        window.paymentSystem = new PaymentSystem();
+        window.paymentSystem.initialize();
         
-        paymentRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.switchPaymentMethod(e.target.value);
-            });
-        });
-
         // Hide place order button initially
         const placeOrderBtn = document.getElementById('placeOrderBtn');
         if (placeOrderBtn) {
@@ -345,89 +438,13 @@ class PaymentManager {
             placeOrderBtn.disabled = true;
         }
     }
-
-    switchPaymentMethod(method) {
-        console.log('Switching to payment method:', method);
-        
-        this.currentMethod = method;
-        const handler = this.handlers[method];
-        
-        if (handler) {
-            // Hide all payment fields first
-            Object.values(this.handlers).forEach(h => h.hide && h.hide());
-            
-            // Show the selected payment method
-            handler.show();
-        } else {
-            console.error('No handler found for payment method:', method);
-        }
-    }
-}
-
-// 6. BACKWARD COMPATIBILITY FUNCTIONS
-// These maintain compatibility with your existing HTML
-function showBankSelection() {
-    console.log('showBankSelection called (compatibility mode)');
-    if (window.paymentManager && window.paymentManager.isInitialized) {
-        window.paymentManager.switchPaymentMethod('Bank Transfer');
-    }
-}
-
-function showPayPalOption() {
-    console.log('showPayPalOption called (compatibility mode)');
-    if (window.paymentManager && window.paymentManager.isInitialized) {
-        window.paymentManager.switchPaymentMethod('PayPal');
-    }
-}
-
-// Make functions globally available
-window.showBankSelection = showBankSelection;
-window.showPayPalOption = showPayPalOption;
-
-// 7. INITIALIZE EVERYTHING
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing payment system...');
-    
-    // Initialize payment manager
-    if (!window.paymentManager) {
-        window.paymentManager = new PaymentManager();
-        window.paymentManager.initialize();
-    }
-    
-    // Set up form submission
-    const checkoutForm = document.getElementById('checkoutForm');
-    const placeOrderBtn = document.getElementById('placeOrderBtn');
-    
-    if (checkoutForm && placeOrderBtn) {
-        checkoutForm.addEventListener('submit', function(e) {
-            const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
-            
-            if (!selectedMethod) {
-                e.preventDefault();
-                showNotification('Please select a payment method', 'error');
-                return;
-            }
-            
-            const handler = window.paymentManager.handlers[selectedMethod.value];
-            if (handler) {
-                if (!handler.validatePaymentMethod()) {
-                    e.preventDefault();
-                    showNotification('Please complete all payment requirements', 'error');
-                    return;
-                }
-                
-                handler.processPayment(e);
-            }
-        });
-    }
 });
 
-// Also initialize immediately if DOM is already loaded
 if (document.readyState !== 'loading') {
     setTimeout(() => {
-        if (!window.paymentManager) {
-            window.paymentManager = new PaymentManager();
-            window.paymentManager.initialize();
+        if (!window.paymentSystem) {
+            window.paymentSystem = new PaymentSystem();
+            window.paymentSystem.initialize();
         }
     }, 100);
 }

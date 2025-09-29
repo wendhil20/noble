@@ -162,14 +162,14 @@ $avg_stmt->close();
     .selected {
       border-color: #f97316;
       /* Tailwind's orange-500 */
-      border-width: 2px;
+      border-width: 1px;
       box-shadow: 0 10px 15px -3px rgba(251, 146, 60, 0.2), 0 4px 6px -4px rgba(251, 146, 60, 0.2);
     }
 
     .color-selected {
       border-color: #f97316;
       /* Tailwind's orange-500 */
-      border-width: 2px;
+      border-width: 1px;
       box-shadow: 0 10px 15px -3px rgba(251, 146, 60, 0.2), 0 4px 6px -4px rgba(251, 146, 60, 0.2);
       transform: scale(1.10);
     }
@@ -407,11 +407,8 @@ $avg_stmt->close();
     /* Selection Indicator Section */
     .selection-indicator {
       width: 1.5rem;
-      /* 24px */
       height: 1.5rem;
-      /* 24px */
       background-color: #f97316;
-      /* orange-500 */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -470,7 +467,6 @@ $avg_stmt->close();
     @media (max-width: 640px) {
       .colorSwiper .swiper-slide {
         min-width: 260px;
-        /* Smaller on mobile */
         margin-right: 0.5rem;
       }
     }
@@ -478,7 +474,6 @@ $avg_stmt->close();
     @media (max-width: 480px) {
       .colorSwiper .swiper-slide {
         min-width: 240px;
-        /* Even smaller on tiny screens */
         margin-right: 0.25rem;
       }
     }
@@ -489,16 +484,12 @@ $avg_stmt->close();
       display: block;
       width: 100%;
       background: transparent;
-      border: none;
       cursor: pointer;
       outline: none;
-      /* Remove conflicting transforms and positioning */
       position: relative;
       z-index: 10;
-      /* Ensure adequate touch target */
       min-height: 80px;
       padding: 1rem;
-      /* Fix border radius and transitions */
       border-radius: 0.75rem;
       transition: all 0.2s ease;
     }
@@ -514,11 +505,9 @@ $avg_stmt->close();
 
     /* 3. COLOR SELECTION BOX FIX */
     .color-selection-box {
-      /* Remove conflicting styling */
-      padding: 0;
-      /* Remove padding from container */
+      padding: 0;  
       margin-bottom: 0;
-      border: 2px solid #e5e7eb;
+      border: 1px solid #e5e7eb;
       border-radius: 0.75rem;
       background-color: #ffffff;
       transition: all 0.2s ease;
@@ -546,7 +535,6 @@ $avg_stmt->close();
       top: 50%;
       transform: translateY(-50%);
       z-index: 20;
-      /* Higher than content */
       pointer-events: auto;
       width: 32px;
       height: 32px;
@@ -610,15 +598,13 @@ $avg_stmt->close();
     .color-square,
     .selection-indicator {
       pointer-events: none;
-      /* Ensure clicks go to parent button */
-    }
 
-    /* ==== ADDITIONAL IMPROVEMENTS ==== */
+    }
 
     /* Better visual feedback */
     .color-btn:focus {
-      outline: 2px solid #f97316;
-      outline-offset: 2px;
+      outline: 1px solid #f97316;
+      outline-offset: 1px;
     }
 
     /* Ensure content doesn't overflow on small screens */
@@ -926,11 +912,11 @@ $avg_stmt->close();
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-3 pt-4">
               <a href="product_info.php?id=<?= $product['id'] ?>"
-                class="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+                class="flex-1 bg-black hover:bg-orange-600 text-white text-center px-4 py-3 font-medium transition-colors">
                 <i class="fas fa-info-circle mr-2"></i>View Details
               </a>
               <button onclick="shareProduct()"
-                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                class="flex-1 bg-black hover:bg-gray-600 text-white px-4 py-3 font-medium transition-colors">
                 <i class="fas fa-share-alt mr-2"></i>Share
               </button>
             </div>
@@ -940,7 +926,7 @@ $avg_stmt->close();
         <!-- Product Options Section -->
         <div class="p-4 lg:p-8 bg-gray-50 flex flex-col">
 
-          <!-- STEP 1: TYPE SELECTION FIRST -->
+         <!-- STEP 1: TYPE SELECTION FIRST -->
           <?php if (!empty($types_data)): ?>
             <div class="mb-8 lg:mb-10">
               <div class="flex items-center justify-between mb-4">
@@ -948,30 +934,30 @@ $avg_stmt->close();
                 <div class="text-sm text-gray-500">Required</div>
               </div>
 
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+              <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
                 <?php foreach ($types_data as $index => $type): ?>
                   <button type="button"
                     onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
-                    class="type-btn border-2 border-gray-200 p-3 lg:p-4  hover:border-orange-300 transition-all bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300">
+                    class="type-btn border border-gray-300 p-2 hover:border-orange-500 transition-all duration-200 bg-white rounded focus:outline-none focus:ring-2 focus:ring-orange-300">
 
-                    <div class="aspect-square  mb-2 overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                    <div class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
                       <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
                         <img src="../../<?= htmlspecialchars($type['image']) ?>"
                           class="w-full h-full object-contain"
                           alt="<?= htmlspecialchars($type['name']) ?>"
                           loading="lazy"
                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="w-full h-full flex items-center justify-center text-gray-400" style="display: none;">
-                          <i class="fas fa-image text-2xl"></i>
+                        <div class="w-full h-full flex items-center justify-center text-gray-300" style="display: none;">
+                          <i class="fas fa-image text-lg"></i>
                         </div>
                       <?php else: ?>
-                        <div class="w-full h-full flex items-center justify-center text-gray-400">
-                          <i class="fas fa-image text-2xl"></i>
+                        <div class="w-full h-full flex items-center justify-center text-gray-300">
+                          <i class="fas fa-image text-lg"></i>
                         </div>
                       <?php endif; ?>
                     </div>
 
-                    <span class="text-sm font-semibold text-orange-600 block truncate">
+                    <span class="text-[10px] font-medium text-gray-700 block truncate leading-tight uppercase text-center">
                       <?= htmlspecialchars($type['name']) ?>
                     </span>
                   </button>
@@ -980,8 +966,37 @@ $avg_stmt->close();
             </div>
           <?php endif; ?>
 
+          <style>
+            /* Compact type button styles */
+            .type-btn {
+              position: relative;
+            }
+
+            /* Hover effects */
+            .type-btn:hover {
+              transform: translateY(-1px);
+            }
+
+            .type-btn:active {
+              transform: translateY(0);
+            }
+
+            /* Focus states */
+            .type-btn:focus {
+              outline: 1px solid #f97316;
+              outline-offset: 1px;
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 640px) {
+              .type-btn {
+                padding: 0.5rem;
+              }
+            }
+          </style>
+
           <!-- STEP 2: COLOR SELECTION SECOND - MODIFIED TO SHOW ALL COLORS IN GRID -->
-          <?php if (!empty($product_colors)): ?>
+ <?php if (!empty($product_colors)): ?>
             <div class="mb-8 lg:mb-10" id="color-selection-section">
               <!-- SECTION HEADER -->
               <div class="flex items-center justify-between mb-6">
@@ -992,80 +1007,35 @@ $avg_stmt->close();
               <!-- Initially disabled until type is selected -->
               <div id="color-selection-container" class="opacity-50 pointer-events-none">
                 <!-- COLOR GRID CONTAINER -->
-                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <div class=" p-4">
                   <div class="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
-                    <!-- Grid container for all colors -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2  gap-3 lg:gap-4 p-4" id="all-colors-grid">
+                    <!-- Grid container for compact buttons -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 p-1" id="all-colors-grid">
 
-                      <!-- Generate all colors -->
+                      <!-- Generate all colors as compact buttons -->
                       <?php foreach ($product_colors as $color): ?>
                         <button type="button"
                           onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
-                          class="color-btn border-2 border-gray-200 hover:border-orange-400 bg-white rounded-lg
-                       p-4 lg:p-5 text-left transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md
-                       flex items-center gap-4 min-h-[80px] lg:min-h-[90px]
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="color-btn border border-black hover:border-orange-500 bg-white rounded
+                       px-2 py-1 text-xs transition-all duration-200 text-left
+                       disabled:opacity-50 disabled:cursor-not-allowed w-full min-h-[28px]"
                           data-color-id="<?= $color['id'] ?>"
                           data-color-name="<?= addslashes($color['color_name']) ?>"
                           data-price="<?= $color['price'] ?>"
                           data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
                           data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
                           disabled>
-
-                          <!-- COLOR SQUARE/IMAGE -->
-                          <div class="flex-shrink-0">
-                            <?php if (!empty($color['image'])): ?>
-                              <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-lg overflow-hidden">
-                                <img src="../../<?= htmlspecialchars($color['image']) ?>"
-                                  alt="<?= htmlspecialchars($color['color_name']) ?>"
-                                  class="w-full h-full object-contain"
-                                  loading="lazy">
-                              </div>
-                            <?php else: ?>
-                              <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-lg shadow-sm border border-gray-200"
-                                style="background-color: <?= htmlspecialchars($color['color_code']) ?>;">
-                              </div>
-                            <?php endif; ?>
-                          </div>
-
-                          <!-- COLOR INFO -->
-                          <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-gray-800 text-sm lg:text-base mb-1 truncate">
-                              <?= htmlspecialchars($color['color_name']) ?>
-                            </div>
-                            <div class="text-xs lg:text-sm">
-                              <?php if ($color['price'] > 0): ?>
-                               
-                              <?php else: ?>
-                                <span class="text-green-600 font-semibold">No extra cost</span>
-                              <?php endif; ?>
-                            </div>
-                          </div>
-
-                          <!-- SELECTION INDICATOR -->
-                          <div class="selection-indicator w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center opacity-0 transition-all duration-300">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                          </div>
+                          <span class="text-black block truncate text-[11px] leading-tight text-center uppercase"><?= htmlspecialchars($color['color_name']) ?></span>
                         </button>
                       <?php endforeach; ?>
 
                       <!-- If no colors available -->
                       <?php if (empty($product_colors)): ?>
-                        <div class="col-span-full text-center py-8">
+                        <div class="w-full text-center py-8">
                           <i class="fas fa-palette text-gray-300 text-4xl mb-2"></i>
                           <p class="text-gray-500">No color options available</p>
                         </div>
                       <?php endif; ?>
-                    </div>
-                  </div>
-
-                  <!-- Selection info -->
-                  <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div id="color-selection-info" class="text-sm text-gray-600">
-                      <i class="fas fa-info-circle text-orange-500 mr-2"></i>
-                      Select a color to continue
                     </div>
                   </div>
                 </div>
@@ -1080,73 +1050,25 @@ $avg_stmt->close();
           <?php endif; ?>
 
           <style>
-            /* Enhanced color selection styles */
+            /* Shopee-style compact color buttons */
             .color-btn {
               position: relative;
-              overflow: hidden;
+              white-space: nowrap;
             }
 
-            .color-btn::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: -100%;
-              width: 100%;
-              height: 100%;
-              background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.1), transparent);
-              transition: left 0.5s;
-            }
-
-            .color-btn:hover::before {
-              left: 100%;
-            }
-
-            /* Selection state */
-            .color-btn.selected {
-              border-color: #f97316 !important;
-              background-color: #fff7ed !important;
-              box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2) !important;
-              transform: scale(1.02) !important;
-            }
-
-            .color-btn.selected .selection-indicator {
-              opacity: 1 !important;
-              transform: scale(1.1) !important;
+            .color-btn.selected span {
+              color: #000000ff !important;
+              font-weight: 100;
             }
 
             /* Disabled state styling */
             .color-btn:disabled {
               opacity: 0.5;
               cursor: not-allowed;
-              transform: none !important;
             }
 
             .color-btn:disabled:hover {
-              border-color: #e5e7eb !important;
-              box-shadow: none !important;
-            }
-
-            .color-btn:disabled:hover::before {
-              left: -100%;
-            }
-
-            /* Responsive adjustments */
-            @media (max-width: 640px) {
-              #all-colors-grid {
-                grid-template-columns: repeat(1, 1fr);
-              }
-            }
-
-            @media (max-width: 480px) {
-              .color-btn {
-                min-height: 70px;
-                padding: 1rem;
-              }
-
-              .color-btn .w-12 {
-                width: 2.5rem;
-                height: 2.5rem;
-              }
+              border-color: #d1d5db !important;
             }
 
             /* Custom scrollbar styling */
@@ -1173,40 +1095,17 @@ $avg_stmt->close();
               background: #9ca3af;
             }
 
-            /* Focus states for accessibility */
-            .color-btn:focus {
-              outline: 2px solid #f97316;
-              outline-offset: 2px;
-            }
-
-            /* Animation for selection indicator */
-            .selection-indicator {
-              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            /* Hover effects for enabled buttons */
-            .color-btn:not(:disabled):hover .selection-indicator {
-              opacity: 0.3;
-              transform: scale(1.05);
-            }
-
-            /* Color square hover effect */
-            .color-btn:not(:disabled):hover .w-12,
-            .color-btn:not(:disabled):hover .w-14 {
-              transform: scale(1.1);
-              transition: transform 0.2s ease;
-            }
+    
           </style>
 
-
-          <!-- STEP 3: SIZE/VARIANT SELECTION THIRD -->
+        <!-- STEP 3: SIZE/VARIANT SELECTION THIRD -->
           <div class="mb-6 lg:mb-8" id="size-selection-section">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Choose Size</h3>
               <div class="text-sm text-gray-500">Required</div>
             </div>
 
-            <div id="variant-container" class="text-gray-500 p-4 bg-white  text-center">
+            <div id="variant-container" class="text-gray-500 p-4 bg-white text-center">
               <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
               <p>Please select a color first</p>
             </div>
@@ -1215,8 +1114,8 @@ $avg_stmt->close();
               <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
                 <?php if (!empty($type['variants'])): ?>
                   <div class="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-4">
-                    <!-- ✅ Responsive uniform grid -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 lg:gap-4">
+                    <!-- Compact grid layout -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       <?php foreach ($type['variants'] as $variant): ?>
                         <?php
                         $price = floatval($variant['variant_price']);
@@ -1227,33 +1126,20 @@ $avg_stmt->close();
                         ?>
                         <button type="button"
                           onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>')"
-                          class="variant-btn border-2 border-gray-200 hover:border-orange-400 bg-white 
-                       p-2 lg:p-3 text-center transition transform hover:scale-[1.02] 
-                       flex flex-col justify-between min-h-[120px] lg:min-h-[140px]"
+                          class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
+                       px-2 py-1.5 text-center transition-all duration-200 min-h-[36px] flex items-center justify-center"
                           data-price="<?= $price ?>"
                           data-percent="<?= $percent ?>"
                           data-discount="<?= $discount ?>"
                           data-variant-id="<?= $variant['variant_id'] ?>">
 
-                          <div class="flex flex-col items-center justify-center h-full">
-
-                            <div class="text-gray-600 text-[11px] lg:text-xs mb-1">
-                              <?= htmlspecialchars($variant['size']) ?>
-                            </div>
-
-                            <!-- ✅ Price + Discount below -->
-                            <div class="flex flex-col items-center">
-                              <?php if ($discount > 0): ?>
-                                <div class="text-[11px] text-gray-400 line-through mb-0.5">₱<?= number_format($priceWithMarkup, 2) ?></div>
-                                <div class="text-red-600 font-bold text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
-                                <div class="mt-1 text-[11px] font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
-                                  <?= number_format($discount, 0) ?>% OFF
-                                </div>
-                              <?php else: ?>
-                                <div class="font-bold text-green-600 text-xs lg:text-sm">₱<?= number_format($finalPrice, 2) ?></div>
-                              <?php endif; ?>
-                            </div>
+                          <!-- Size label only -->
+                          <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                            <?= htmlspecialchars($variant['size']) ?>
                           </div>
+
+                          <!-- Hidden price data (for calculations) -->
+                          <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
                         </button>
                       <?php endforeach; ?>
                     </div>
@@ -1265,8 +1151,63 @@ $avg_stmt->close();
             <?php endforeach; ?>
           </div>
 
+          <style>
+            /* Compact size button styles */
+            .variant-btn {
+              position: relative;
+            }
+
+            /* Selection state */
+            .variant-btn.selected {
+              border-color: #f97316 !important;
+              border-width: 1px !important;
+              background-color: #fff7ed !important;
+            }
+
+            .variant-btn.selected .text-gray-700 {
+              color: #000000ff !important;
+              font-weight: 600;
+            }
+
+            /* Disabled state */
+            .variant-btn:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+
+            .variant-btn:disabled:hover {
+              border-color: #d1d5db !important;
+            }
+
+            /* Custom scrollbar */
+            .scrollbar-thin {
+              scrollbar-width: thin;
+              scrollbar-color: #d1d5db #f9fafb;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar {
+              width: 6px;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar-track {
+              background: #f9fafb;
+              border-radius: 3px;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar-thumb {
+              background: #d1d5db;
+              border-radius: 3px;
+            }
+
+            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+              background: #9ca3af;
+            }
+
+            /* Focus states */
+     
+          </style>
           <!-- PURCHASE SECTION -->
-          <div class="mt-auto">
+          <div class="mt-2">
             <form id="productForm" method="POST" class="space-y-4">
               <!-- Hidden inputs remain the same -->
               <input type="hidden" name="product_id" value="<?= $product_id ?>" />
@@ -1921,10 +1862,10 @@ $avg_stmt->close();
       setTypeSelection(button, typeId, typeName) {
         // Update type selection indicators
         document.querySelectorAll('.type-btn').forEach(btn => {
-          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
         });
-        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
         button.classList.remove('border-gray-200', 'bg-white');
 
         this.selectedTypeId = typeId;
@@ -2161,12 +2102,12 @@ $avg_stmt->close();
       setVariantSelection(button, size, color = null) {
         // Remove previous selection indicators from all variant buttons
         document.querySelectorAll('.variant-btn').forEach(btn => {
-          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
         });
 
         // Add selection indicators to clicked button
-        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
         button.classList.remove('border-gray-200', 'bg-white');
 
         const price = parseFloat(button.dataset.price);
@@ -2199,7 +2140,7 @@ $avg_stmt->close();
 
       unselectVariant(button) {
         // Remove selection indicators
-        button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+        button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
         button.classList.add('border-gray-200', 'bg-white');
 
         this.selectedVariantData = null;
@@ -2220,7 +2161,7 @@ $avg_stmt->close();
           this.elements.variantId.value = '';
         }
         document.querySelectorAll('.variant-btn').forEach(btn => {
-          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
+          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
         });
       }
@@ -2311,7 +2252,7 @@ $avg_stmt->close();
             } else {
               addToCartBtn.disabled = true;
               addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-              btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Complete Steps 1-3 to Add';
+              btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to cart';
             }
           }
         }

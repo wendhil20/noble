@@ -13,21 +13,16 @@ if (!isset($_SESSION['noble_user'])) {
 $message = "";
 $error = "";
 
-
 $tables = ['categories','product_subcategories'];
 
 foreach ($tables as $table) {
-    // Get the current highest ID that exists
     $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
     $row = $result->fetch_assoc();
     $max_id = (int)$row['max_id'];
-
-    // Reset AUTO_INCREMENT to max_id + 1
     $next_id = $max_id > 0 ? $max_id + 1 : 1;
     $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
 }
 
-// Get message and error from session (for PRG pattern)
 if (isset($_SESSION['message'])) {
     $message = $_SESSION['message'];
     unset($_SESSION['message']);
@@ -37,7 +32,6 @@ if (isset($_SESSION['error'])) {
     unset($_SESSION['error']);
 }
 
-// Function to create directory if it doesn't exist
 function createDirectory($path) {
     if (!file_exists($path)) {
         return mkdir($path, 0755, true);
@@ -45,7 +39,6 @@ function createDirectory($path) {
     return true;
 }
 
-// Function to delete directory and its contents
 function deleteDirectory($dir) {
     if (!file_exists($dir)) {
         return true;
@@ -68,7 +61,6 @@ function deleteDirectory($dir) {
     return rmdir($dir);
 }
 
-// Reset auto-increment if needed
 $tables = ['categories','product_subcategories'];
 foreach ($tables as $table) {
     $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
@@ -86,27 +78,116 @@ foreach ($tables as $table) {
     }
 }
 
-// Handle form submissions
 if ($_POST) {
     if (isset($_POST['add_category'])) {
         $category_name = trim($_POST['category_name']);
         
         if (!empty($category_name)) {
-            $sql = "INSERT INTO categories (name) VALUES (?)";
+            $category_dir = "../../uploads/categories/";
+            createDirectory($category_dir);
+            
+            $image_path = null;
+            
+            if (isset($_FILES['category_image']) && $_FILES['category_image']['error'] == 0) {
+                $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $file_type = $_FILES['category_image']['type'];
+                
+                if (in_array($file_type, $allowed_types)) {
+                    $file_extension = pathinfo($_FILES['category_image']['name'], PATHINFO_EXTENSION);
+                    $safe_name = preg_replace('/[^a-z0-9_-]/', '_', strtolower($category_name));
+                    $new_filename = $safe_name . '_' . time() . '.' . $file_extension;
+                    $upload_path = $category_dir . $new_filename;
+                    
+                    if (move_uploaded_file($_FILES['category_image']['tmp_name'], $upload_path)) {
+                        chmod($upload_path, 0644);
+                        $image_path = $new_filename;
+                    } else {
+                        $_SESSION['error'] = "Error uploading category image.";
+                        header("Location: " . $_SERVER['PHP_SELF']);
+                        exit();
+                    }
+                } else {
+                    $_SESSION['error'] = "Invalid image type for category.";
+                    header("Location: " . $_SERVER['PHP_SELF']);
+                    exit();
+                }
+            }
+            
+            $sql = "INSERT INTO categories (name, image_path) VALUES (?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("s", $category_name);
+            $stmt->bind_param("ss", $category_name, $image_path);
             
             if ($stmt->execute()) {
-                $_SESSION['message'] = "Category '$category_name' added successfully!";
+                $_SESSION['message'] = "Category '$category_name' added successfully!" . ($image_path ? " Image uploaded." : "");
             } else {
                 $_SESSION['error'] = "Error adding category: " . $conn->error;
+                if ($image_path && file_exists($category_dir . $image_path)) {
+                    unlink($category_dir . $image_path);
+                }
             }
             $stmt->close();
         } else {
             $_SESSION['error'] = "Category name cannot be empty!";
         }
         
-        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+    
+    if (isset($_POST['update_category_image'])) {
+        $category_id = $_POST['category_id'];
+        
+        $get_cat_sql = "SELECT name, image_path FROM categories WHERE id = ?";
+        $get_cat_stmt = $conn->prepare($get_cat_sql);
+        $get_cat_stmt->bind_param("i", $category_id);
+        $get_cat_stmt->execute();
+        $cat_result = $get_cat_stmt->get_result();
+        $cat_data = $cat_result->fetch_assoc();
+        $get_cat_stmt->close();
+        
+        if ($cat_data) {
+            $current_image = $cat_data['image_path'];
+            $category_dir = "../../uploads/categories/";
+            createDirectory($category_dir);
+            
+            if (isset($_FILES['new_category_image']) && $_FILES['new_category_image']['error'] == 0) {
+                $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $file_type = $_FILES['new_category_image']['type'];
+                
+                if (in_array($file_type, $allowed_types)) {
+                    if ($current_image && file_exists($category_dir . $current_image)) {
+                        unlink($category_dir . $current_image);
+                    }
+                    
+                    $file_extension = strtolower(pathinfo($_FILES['new_category_image']['name'], PATHINFO_EXTENSION));
+                    $safe_name = preg_replace('/[^a-z0-9_-]/', '_', strtolower($cat_data['name']));
+                    $new_filename = $safe_name . '_' . time() . '.' . $file_extension;
+                    $upload_path = $category_dir . $new_filename;
+                    
+                    if (move_uploaded_file($_FILES['new_category_image']['tmp_name'], $upload_path)) {
+                        chmod($upload_path, 0644);
+                        
+                        $update_sql = "UPDATE categories SET image_path = ? WHERE id = ?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("si", $new_filename, $category_id);
+                        
+                        if ($update_stmt->execute()) {
+                            $_SESSION['message'] = "Category image updated successfully!";
+                        } else {
+                            $_SESSION['error'] = "Error updating category image: " . $conn->error;
+                        }
+                        $update_stmt->close();
+                    } else {
+                        $_SESSION['error'] = "Error uploading category image.";
+                    }
+                } else {
+                    $_SESSION['error'] = "Invalid image type for category.";
+                }
+            } else {
+                $_SESSION['error'] = "No image file selected.";
+            }
+        }
+        
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
@@ -117,7 +198,6 @@ if ($_POST) {
         $subcategory_slug = trim($_POST['subcategory_slug']);
         
         if (!empty($subcategory_name) && !empty($subcategory_slug) && !empty($category_id)) {
-            // Check if slug already exists
             $check_sql = "SELECT id FROM product_subcategories WHERE subcategory_slug = ?";
             $check_stmt = $conn->prepare($check_sql);
             $check_stmt->bind_param("s", $subcategory_slug);
@@ -125,24 +205,22 @@ if ($_POST) {
             $check_result = $check_stmt->get_result();
             
             if ($check_result->num_rows > 0) {
-                $_SESSION['error'] = "Slug '$subcategory_slug' already exists! Please use a different slug.";
+                $_SESSION['error'] = "Slug '$subcategory_slug' already exists!";
                 $check_stmt->close();
                 header("Location: " . $_SERVER['PHP_SELF']);
                 exit();
             }
             $check_stmt->close();
             
-            // Create directory for the slug
             $upload_dir = "../../uploads/" . $subcategory_slug . "/";
             if (!createDirectory($upload_dir)) {
-                $_SESSION['error'] = "Error creating upload directory for slug '$subcategory_slug'";
+                $_SESSION['error'] = "Error creating upload directory.";
                 header("Location: " . $_SERVER['PHP_SELF']);
                 exit();
             }
             
             $image_path = null;
             
-            // Handle image upload
             if (isset($_FILES['subcategory_image']) && $_FILES['subcategory_image']['error'] == 0) {
                 $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                 $file_type = $_FILES['subcategory_image']['type'];
@@ -155,12 +233,12 @@ if ($_POST) {
                     if (move_uploaded_file($_FILES['subcategory_image']['tmp_name'], $upload_path)) {
                         $image_path = $new_filename;
                     } else {
-                        $_SESSION['error'] = "Error uploading image file.";
+                        $_SESSION['error'] = "Error uploading image.";
                         header("Location: " . $_SERVER['PHP_SELF']);
                         exit();
                     }
                 } else {
-                    $_SESSION['error'] = "Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.";
+                    $_SESSION['error'] = "Invalid image type.";
                     header("Location: " . $_SERVER['PHP_SELF']);
                     exit();
                 }
@@ -171,18 +249,16 @@ if ($_POST) {
             $stmt->bind_param("isss", $category_id, $subcategory_name, $subcategory_slug, $image_path);
             
             if ($stmt->execute()) {
-                $_SESSION['message'] = "Subcategory '$subcategory_name' added successfully!" . ($image_path ? " Image uploaded." : "");
+                $_SESSION['message'] = "Subcategory '$subcategory_name' added successfully!";
             } else {
                 $_SESSION['error'] = "Error adding subcategory: " . $conn->error;
-                // Clean up directory if database insert failed
                 deleteDirectory($upload_dir);
             }
             $stmt->close();
         } else {
-            $_SESSION['error'] = "All fields are required for subcategory!";
+            $_SESSION['error'] = "All fields are required!";
         }
         
-        // Redirect to prevent form resubmission
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
@@ -190,7 +266,15 @@ if ($_POST) {
     if (isset($_POST['delete_category'])) {
         $category_id = $_POST['delete_category_id'];
         
-        // Get all subcategories for this category to delete their directories
+        $get_cat_sql = "SELECT image_path FROM categories WHERE id = ?";
+        $get_cat_stmt = $conn->prepare($get_cat_sql);
+        $get_cat_stmt->bind_param("i", $category_id);
+        $get_cat_stmt->execute();
+        $cat_result = $get_cat_stmt->get_result();
+        $cat_data = $cat_result->fetch_assoc();
+        $category_image = $cat_data ? $cat_data['image_path'] : null;
+        $get_cat_stmt->close();
+        
         $get_subs_sql = "SELECT subcategory_slug FROM product_subcategories WHERE category_id = ?";
         $get_subs_stmt = $conn->prepare($get_subs_sql);
         $get_subs_stmt->bind_param("i", $category_id);
@@ -203,24 +287,25 @@ if ($_POST) {
         }
         $get_subs_stmt->close();
         
-        // Since we have CASCADE DELETE, deleting category will automatically delete subcategories
         $sql = "DELETE FROM categories WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $category_id);
         
         if ($stmt->execute()) {
-            // Delete all slug directories
+            if ($category_image && file_exists("../../uploads/categories/" . $category_image)) {
+                unlink("../../uploads/categories/" . $category_image);
+            }
+            
             foreach ($slugs_to_delete as $slug) {
                 $dir_to_delete = "../../uploads/" . $slug . "/";
                 deleteDirectory($dir_to_delete);
             }
-            $_SESSION['message'] = "Category and all its subcategories deleted successfully!";
+            $_SESSION['message'] = "Category deleted successfully!";
         } else {
             $_SESSION['error'] = "Error deleting category: " . $conn->error;
         }
         $stmt->close();
         
-        // Redirect to prevent form resubmission
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
@@ -228,7 +313,6 @@ if ($_POST) {
     if (isset($_POST['delete_subcategory'])) {
         $subcategory_id = $_POST['delete_subcategory_id'];
         
-        // Get the slug before deleting to remove the directory
         $get_slug_sql = "SELECT subcategory_slug FROM product_subcategories WHERE id = ?";
         $get_slug_stmt = $conn->prepare($get_slug_sql);
         $get_slug_stmt->bind_param("i", $subcategory_id);
@@ -243,7 +327,6 @@ if ($_POST) {
         $stmt->bind_param("i", $subcategory_id);
         
         if ($stmt->execute()) {
-            // Delete the slug directory
             if ($slug_to_delete) {
                 $dir_to_delete = "../../uploads/" . $slug_to_delete . "/";
                 deleteDirectory($dir_to_delete);
@@ -254,7 +337,6 @@ if ($_POST) {
         }
         $stmt->close();
         
-        // Redirect to prevent form resubmission
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
@@ -262,7 +344,6 @@ if ($_POST) {
     if (isset($_POST['update_subcategory_image'])) {
         $subcategory_id = $_POST['subcategory_id'];
         
-        // Get current subcategory details
         $get_sub_sql = "SELECT subcategory_slug, image_path FROM product_subcategories WHERE id = ?";
         $get_sub_stmt = $conn->prepare($get_sub_sql);
         $get_sub_stmt->bind_param("i", $subcategory_id);
@@ -276,57 +357,28 @@ if ($_POST) {
             $current_image = $sub_data['image_path'];
             $upload_dir = "../../uploads/" . $slug . "/";
             
-            // Handle image upload
             if (isset($_FILES['new_image']) && $_FILES['new_image']['error'] == 0) {
                 $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                 $file_type = $_FILES['new_image']['type'];
                 
                 if (in_array($file_type, $allowed_types)) {
-                    // Ensure directory exists and is writable
                     if (!createDirectory($upload_dir)) {
-                        $_SESSION['error'] = "Error creating upload directory. Check permissions for: " . $upload_dir;
+                        $_SESSION['error'] = "Error creating upload directory.";
                         header("Location: " . $_SERVER['PHP_SELF']);
                         exit();
                     }
                     
-                    // Check if directory is writable
-                    if (!is_writable($upload_dir)) {
-                        $_SESSION['error'] = "Upload directory is not writable: " . $upload_dir . ". Please check folder permissions.";
-                        header("Location: " . $_SERVER['PHP_SELF']);
-                        exit();
-                    }
-                    
-                    // Delete old image if exists
                     if ($current_image && file_exists($upload_dir . $current_image)) {
-                        if (!unlink($upload_dir . $current_image)) {
-                            $_SESSION['error'] = "Warning: Could not delete old image file.";
-                        }
+                        unlink($upload_dir . $current_image);
                     }
                     
                     $file_extension = strtolower(pathinfo($_FILES['new_image']['name'], PATHINFO_EXTENSION));
                     $new_filename = $slug . '_main.' . $file_extension;
                     $upload_path = $upload_dir . $new_filename;
                     
-                    // Additional file validation
-                    $max_file_size = 5 * 1024 * 1024; // 5MB
-                    if ($_FILES['new_image']['size'] > $max_file_size) {
-                        $_SESSION['error'] = "File too large. Maximum size is 5MB.";
-                        header("Location: " . $_SERVER['PHP_SELF']);
-                        exit();
-                    }
-                    
-                    // Check if temp file exists and is readable
-                    if (!file_exists($_FILES['new_image']['tmp_name']) || !is_readable($_FILES['new_image']['tmp_name'])) {
-                        $_SESSION['error'] = "Error reading uploaded file. Please try again.";
-                        header("Location: " . $_SERVER['PHP_SELF']);
-                        exit();
-                    }
-                    
                     if (move_uploaded_file($_FILES['new_image']['tmp_name'], $upload_path)) {
-                        // Set proper permissions on uploaded file
                         chmod($upload_path, 0644);
                         
-                        // Update database
                         $update_sql = "UPDATE product_subcategories SET image_path = ? WHERE id = ?";
                         $update_stmt = $conn->prepare($update_sql);
                         $update_stmt->bind_param("si", $new_filename, $subcategory_id);
@@ -334,47 +386,17 @@ if ($_POST) {
                         if ($update_stmt->execute()) {
                             $_SESSION['message'] = "Image updated successfully!";
                         } else {
-                            $_SESSION['error'] = "Error updating image in database: " . $conn->error;
+                            $_SESSION['error'] = "Error updating image: " . $conn->error;
                         }
                         $update_stmt->close();
                     } else {
-                        // More detailed error message
-                        $error_details = "";
-                        $upload_errors = [
-                            UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize directive',
-                            UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive',
-                            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-                            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-                            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-                            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-                            UPLOAD_ERR_EXTENSION => 'Upload stopped by extension'
-                        ];
-                        
-                        if (isset($upload_errors[$_FILES['new_image']['error']])) {
-                            $error_details = $upload_errors[$_FILES['new_image']['error']];
-                        }
-                        
-                        $_SESSION['error'] = "Error uploading image file. " . $error_details . " Upload path: " . $upload_path;
+                        $_SESSION['error'] = "Error uploading image.";
                     }
                 } else {
-                    $_SESSION['error'] = "Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed. Detected type: " . $file_type;
+                    $_SESSION['error'] = "Invalid image type.";
                 }
             } else {
-                $upload_errors = [
-                    UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize directive',
-                    UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive', 
-                    UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-                    UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-                    UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-                    UPLOAD_ERR_EXTENSION => 'Upload stopped by extension'
-                ];
-                
-                $error_msg = "Upload error";
-                if (isset($_FILES['new_image']['error']) && isset($upload_errors[$_FILES['new_image']['error']])) {
-                    $error_msg = $upload_errors[$_FILES['new_image']['error']];
-                }
-                $_SESSION['error'] = "No image file selected or upload error: " . $error_msg;
+                $_SESSION['error'] = "No image file selected.";
             }
         }
         
@@ -383,17 +405,16 @@ if ($_POST) {
     }
 }
 
-// Get all categories for dropdown and display
 $categories_result = $conn->query("SELECT * FROM categories ORDER BY name");
 $categories = [];
 while ($row = $categories_result->fetch_assoc()) {
     $categories[] = $row;
 }
 
-// Get all categories with subcategories for display
 $display_sql = "SELECT 
     c.id as category_id,
     c.name as category_name,
+    c.image_path as category_image,
     ps.id as subcategory_id,
     ps.subcategory_name,
     ps.subcategory_slug,
@@ -410,6 +431,7 @@ while ($row = $display_result->fetch_assoc()) {
         $display_categories[$category_name] = [
             'id' => $row['category_id'],
             'name' => $category_name,
+            'image_path' => $row['category_image'],
             'subcategories' => []
         ];
     }
@@ -463,12 +485,10 @@ while ($row = $display_result->fetch_assoc()) {
                 </div>
             <?php endif; ?>
 
-            <!-- Grid Layout for Forms -->
             <div class="grid md:grid-cols-2 gap-6 mb-8">
-                <!-- Add Category Form -->
                 <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-primary">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Category</h2>
-                    <form method="POST" class="space-y-4">
+                    <form method="POST" enctype="multipart/form-data" class="space-y-4">
                         <div>
                             <label for="category_name" class="block text-sm font-medium text-gray-700 mb-2">
                                 Category Name
@@ -482,6 +502,19 @@ while ($row = $display_result->fetch_assoc()) {
                                 required
                             >
                         </div>
+                        <div>
+                            <label for="category_image" class="block text-sm font-medium text-gray-700 mb-2">
+                                Category Image (Optional)
+                            </label>
+                            <input 
+                                type="file" 
+                                id="category_image" 
+                                name="category_image" 
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                            <p class="text-xs text-gray-500 mt-1">Supported: JPEG, PNG, GIF, WebP</p>
+                        </div>
                         <button 
                             type="submit" 
                             name="add_category"
@@ -492,7 +525,6 @@ while ($row = $display_result->fetch_assoc()) {
                     </form>
                 </div>
 
-                <!-- Add Subcategory Form -->
                 <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-primary">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Add New Subcategory</h2>
                     <form method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -527,7 +559,7 @@ while ($row = $display_result->fetch_assoc()) {
                         </div>
                         <div>
                             <label for="subcategory_slug" class="block text-sm font-medium text-gray-700 mb-2">
-                                Subcategory Slug (URL-friendly)
+                                Subcategory Slug
                             </label>
                             <input 
                                 type="text" 
@@ -537,7 +569,7 @@ while ($row = $display_result->fetch_assoc()) {
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                 required
                             >
-                            <p class="text-xs text-gray-500 mt-1">Use lowercase letters, numbers, and hyphens only</p>
+                            <p class="text-xs text-gray-500 mt-1">Lowercase, numbers, hyphens only</p>
                         </div>
                         <div>
                             <label for="subcategory_image" class="block text-sm font-medium text-gray-700 mb-2">
@@ -550,7 +582,6 @@ while ($row = $display_result->fetch_assoc()) {
                                 accept="image/jpeg,image/png,image/gif,image/webp"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                             >
-                            <p class="text-xs text-gray-500 mt-1">Supported formats: JPEG, PNG, GIF, WebP</p>
                         </div>
                         <button 
                             type="submit" 
@@ -563,30 +594,75 @@ while ($row = $display_result->fetch_assoc()) {
                 </div>
             </div>
 
-            <!-- Display Categories and Subcategories -->
             <div class="space-y-4">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-6">Current Categories & Subcategories</h2>
                 
                 <?php if (empty($display_categories)): ?>
                     <div class="text-center py-12">
-                        <div class="text-gray-400 text-lg">No categories found. Add some categories first!</div>
+                        <div class="text-gray-400 text-lg">No categories found.</div>
                     </div>
                 <?php else: ?>
                     <div class="space-y-4">
                         <?php foreach ($display_categories as $category): ?>
                             <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                                <div class="bg-primary text-white px-6 py-4 flex justify-between items-center">
-                                    <h3 class="text-lg font-semibold"><?= htmlspecialchars($category['name']) ?></h3>
-                                    <form method="POST" class="inline" onsubmit="return confirm('Are you sure? This will delete all subcategories and their images too!')">
-                                        <input type="hidden" name="delete_category_id" value="<?= $category['id'] ?>">
-                                        <button 
-                                            type="submit" 
-                                            name="delete_category" 
-                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition duration-200"
-                                        >
-                                            Delete Category
-                                        </button>
-                                    </form>
+                                <div class="bg-primary text-white px-6 py-4">
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center space-x-4">
+                                            <?php if ($category['image_path']): ?>
+                                                <img 
+                                                    src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>" 
+                                                    alt="<?= htmlspecialchars($category['name']) ?>"
+                                                    class="w-12 h-12 object-cover rounded"
+                                                >
+                                            <?php endif; ?>
+                                            <h3 class="text-lg font-semibold"><?= htmlspecialchars($category['name']) ?></h3>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button 
+                                                onclick="toggleCategoryImageUpload(<?= $category['id'] ?>)" 
+                                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                                            >
+                                                <?= $category['image_path'] ? 'Update Image' : 'Add Image' ?>
+                                            </button>
+                                            <form method="POST" class="inline" onsubmit="return confirm('Delete category and all subcategories?')">
+                                                <input type="hidden" name="delete_category_id" value="<?= $category['id'] ?>">
+                                                <button 
+                                                    type="submit" 
+                                                    name="delete_category" 
+                                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="category-image-upload-<?= $category['id'] ?>" class="hidden mt-4">
+                                        <form method="POST" enctype="multipart/form-data" class="flex items-center space-x-4">
+                                            <input type="hidden" name="category_id" value="<?= $category['id'] ?>">
+                                            <input 
+                                                type="file" 
+                                                name="new_category_image" 
+                                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                                class="flex-1 px-3 py-2 border border-white rounded text-sm bg-white"
+                                                required
+                                            >
+                                            <button 
+                                                type="submit" 
+                                                name="update_category_image"
+                                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                                            >
+                                                Upload
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                onclick="toggleCategoryImageUpload(<?= $category['id'] ?>)"
+                                                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                                 
                                 <div class="p-6">
@@ -594,8 +670,7 @@ while ($row = $display_result->fetch_assoc()) {
                                         <div class="space-y-3">
                                             <?php foreach ($category['subcategories'] as $sub): ?>
                                                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                                    <div class="flex items-center space-x-4 flex-1">
-                                                        <!-- Image thumbnail -->
+                                                  <div class="flex items-center space-x-4 flex-1">
                                                         <div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                                                             <?php if ($sub['image_path']): ?>
                                                                 <img 
@@ -613,7 +688,6 @@ while ($row = $display_result->fetch_assoc()) {
                                                             <?php endif; ?>
                                                         </div>
                                                         
-                                                        <!-- Subcategory info -->
                                                         <div class="flex-1 min-w-0">
                                                             <div class="font-medium text-gray-900 truncate"><?= htmlspecialchars($sub['name']) ?></div>
                                                             <div class="text-sm text-gray-500">Slug: <?= htmlspecialchars($sub['slug']) ?></div>
@@ -623,9 +697,7 @@ while ($row = $display_result->fetch_assoc()) {
                                                         </div>
                                                     </div>
                                                     
-                                                    <!-- Action buttons -->
                                                     <div class="flex items-center space-x-2 flex-shrink-0">
-                                                        <!-- Update image button -->
                                                         <button 
                                                             onclick="toggleImageUpload(<?= $sub['id'] ?>)" 
                                                             class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition duration-200"
@@ -633,8 +705,7 @@ while ($row = $display_result->fetch_assoc()) {
                                                             <?= $sub['image_path'] ? 'Update Image' : 'Add Image' ?>
                                                         </button>
                                                         
-                                                        <!-- Delete subcategory button -->
-                                                        <form method="POST" class="inline" onsubmit="return confirm('Are you sure? This will delete the subcategory and all its images!')">
+                                                        <form method="POST" class="inline" onsubmit="return confirm('Delete subcategory and all images?')">
                                                             <input type="hidden" name="delete_subcategory_id" value="<?= $sub['id'] ?>">
                                                             <button 
                                                                 type="submit" 
@@ -647,7 +718,6 @@ while ($row = $display_result->fetch_assoc()) {
                                                     </div>
                                                 </div>
                                                 
-                                                <!-- Hidden image upload form -->
                                                 <div id="image-upload-<?= $sub['id'] ?>" class="hidden mt-4 p-4 bg-blue-50 rounded-lg">
                                                     <form method="POST" enctype="multipart/form-data" class="flex items-center space-x-4">
                                                         <input type="hidden" name="subcategory_id" value="<?= $sub['id'] ?>">
@@ -693,7 +763,6 @@ while ($row = $display_result->fetch_assoc()) {
     </div>
 
     <script>
-        // Auto-generate slug from subcategory name
         document.getElementById('subcategory_name').addEventListener('input', function() {
             const name = this.value;
             const slug = name.toLowerCase()
@@ -704,9 +773,17 @@ while ($row = $display_result->fetch_assoc()) {
             document.getElementById('subcategory_slug').value = slug;
         });
 
-        // Toggle image upload form
         function toggleImageUpload(subcategoryId) {
             const uploadForm = document.getElementById('image-upload-' + subcategoryId);
+            if (uploadForm.classList.contains('hidden')) {
+                uploadForm.classList.remove('hidden');
+            } else {
+                uploadForm.classList.add('hidden');
+            }
+        }
+
+        function toggleCategoryImageUpload(categoryId) {
+            const uploadForm = document.getElementById('category-image-upload-' + categoryId);
             if (uploadForm.classList.contains('hidden')) {
                 uploadForm.classList.remove('hidden');
             } else {

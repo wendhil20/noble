@@ -259,10 +259,7 @@ handleQueryError($conn, "New Status Query");
 
 ?>
 
-
-
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -279,7 +276,6 @@ handleQueryError($conn, "New Status Query");
     <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet" />
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <!-- Alpine.js CDN -->
     <script src="https://cdn.tailwindcss.com?plugins=aspect-ratio"></script>
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
@@ -409,9 +405,11 @@ handleQueryError($conn, "New Status Query");
             opacity: .3
         }
 
-        .swiper,
-        .swiper-wrapper {
-            height: 100%
+        .mySwiper .swiper-slide img {
+            width: 100vw !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            object-position: center !important;
         }
 
         .swiper-button-next,
@@ -468,7 +466,7 @@ handleQueryError($conn, "New Status Query");
     </style>
 </head>
 
-<body class="font-mont">
+<body class="font-roboto">
 
     <?php include '../navbar/top.php'; ?>
     <?php include 'flash_notification.php'; ?>
@@ -529,40 +527,36 @@ handleQueryError($conn, "New Status Query");
     <?php endif; ?>
 
 
-
-    <section class="w-full bg-gray-100 overflow-hidden">
+    <section class="w-full overflow-hidden relative">
         <div class="mySwiper relative w-full">
             <div class="swiper-wrapper">
                 <?php while ($row = $slideresult->fetch_assoc()): ?>
-                    <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px]">
-                        <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>" alt="Discount"
-                            class="w-full h-full object-cover rounded" />
+                    <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative bg-white">
+                        <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
+                            alt="Discount"
+                            class="w-full h-full object-cover object-center" />
                     </div>
                 <?php endwhile; ?>
             </div>
-
-            <!-- Swiper Buttons -->
-            <div class="swiper-button-next absolute top-1/2 -translate-y-1/2 right-2 sm:right-4 md:right-6 z-10 w-8 h-8 bg-white bg-opacity-70 rounded-full flex items-center justify-center shadow-md mt-3"></div>
-            <div class="swiper-button-prev absolute top-1/2 -translate-y-1/2 left-2 sm:left-4 md:left-6 z-10 w-8 h-8 bg-white bg-opacity-70 rounded-full flex items-center justify-center shadow-md mt-3"></div>
+            <!-- buttons same as before -->
         </div>
     </section>
+    <section class="bg-black text-white p-2">
 
-
-    <section class="bg-orange-400 text-white p-3 sm:p-4">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-6">
 
             <!-- Discount Text with better mobile layout -->
-            <div class="flex items-start sm:items-center gap-3 text-center sm:text-left w-full sm:flex-1">
-                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0 mt-0.5 sm:mt-0"
+            <div class="flex items-center gap-2 text-center sm:text-left w-full sm:flex-1">
+                <svg class="w-4 h-4 sm:w-6 sm:h-6 text-white flex-shrink-0"
                     fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
 
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm sm:text-base md:text-lg lg:text-xl font-semibold leading-tight">
-                        <span class="block sm:inline">Exclusive Deals!</span>
-                        <span class="block sm:inline underline font-bold mt-1 sm:mt-0 sm:ml-1">
+                    <p class="text-xs sm:text-base md:text-lg lg:text-xl leading-tight">
+                        <span class="inline">Exclusive Deals!</span>
+                        <span class="inline underline font-semibold ml-1">
                             Discounted Items Available
                         </span>
                     </p>
@@ -572,54 +566,19 @@ handleQueryError($conn, "New Status Query");
             <!-- Action Button with better responsive sizing -->
             <div class="w-full sm:w-auto flex-shrink-0">
                 <a href="allproduct.php?discount=all"
-                    class="bg-white text-orange-600 hover:bg-orange-50 active:bg-gray-100 
-                      font-semibold px-4 py-2.5 sm:px-6 sm:py-3 
-                      text-sm sm:text-base hover:shadow-lg
+                    class="underline text-white hover:text-red-50 active:bg-gray-100 
+                      font-semibold px-3 py-1.5 sm:px-6 sm:py-3 
+                      text-xs sm:text-base hover:shadow-lg
                       transition-all duration-200 ease-in-out
                       w-full sm:w-auto text-center inline-block
                       transform hover:scale-105 active:scale-95
                       focus:outline-none focus:ring-2 focus:ring-orange-300">
-                    Shop Now
+                    Shop Now!
                 </a>
             </div>
         </div>
+
     </section>
-
-    <!-- Scrolling Text -->
-    <div class="overflow-hidden bg-orange-500 text-white">
-        <div class="flex animate-marquee whitespace-nowrap">
-            <!-- Unang set -->
-            <span class="mx-10"> Big Sale Coming Soon!</span>
-            <span class="mx-10"> Exclusive Discounts Await!</span>
-            <span class="mx-10"> Shop Now & Save More!</span>
-            <span class="mx-10"> Free Shipping on Selected Items!</span>
-
-            <!-- Duplicate set para tuloy-tuloy -->
-            <span class="mx-10"> Big Sale Coming Soon!</span>
-            <span class="mx-10"> Exclusive Discounts Await!</span>
-            <span class="mx-10"> Shop Now & Save More!</span>
-            <span class="mx-10"> Free Shipping on Selected Items!</span>
-        </div>
-    </div>
-
-    <style>
-        @keyframes marquee {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        .animate-marquee {
-            display: inline-flex;
-            min-width: 200%;
-            /* para may continuous na kopya */
-            animation: marquee 20s linear infinite;
-        }
-    </style>
 
     <!-- POPUP MODAL -->
     <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
@@ -798,502 +757,12 @@ handleQueryError($conn, "New Status Query");
         refreshIndicatorDots();
     </script>
 
-    <section class="bg-white shadow-md py-2 px-4 sm:px-6 rounded-lg" x-data="{ currentModal: null }">
-        <div class="max-w-7xl mx-auto">
-            <!-- Mobile to Tablet View (lg and below) - Swiper -->
-            <div class="block lg:hidden">
-                <div class="swiper contact-swiper" x-init="
-                setTimeout(() => {
-                    new Swiper($el, {
-                        slidesPerView: 1,
-                        spaceBetween: 12,
-                        centeredSlides: false,
-                        breakpoints: {
-                            375: {
-                                slidesPerView: 1.2,
-                                spaceBetween: 14,
-                            },
-                            425: {
-                                slidesPerView: 1.5,
-                                spaceBetween: 16,
-                            },
-                            480: {
-                                slidesPerView: 1.8,
-                                spaceBetween: 18,
-                            },
-                            640: {
-                                slidesPerView: 2.2,
-                                spaceBetween: 20,
-                            },
-                            768: {
-                                slidesPerView: 2.8,
-                                spaceBetween: 22,
-                            },
-                            1024: {
-                                slidesPerView: 4.5,
-                                spaceBetween: 24,
-                            }
-                        }
-                    });
-                }, 100);
-            ">
-                    <div class="swiper-wrapper">
-                        <!-- Slide 1 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 1"
-                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                                <h3 class="contact-title text-orange-700">Inquire</h3>
-                                <p class="contact-desc text-gray-700 mt-1">Send us a question or message.</p>
-                            </button>
-                        </div>
-
-                        <!-- Slide 2 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 2"
-                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                                <h3 class="contact-title text-orange-700">Appointment</h3>
-                                <p class="contact-desc text-gray-700 mt-1">Book a consultation now.</p>
-                            </button>
-                        </div>
-
-                        <!-- Slide 3 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 3"
-                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                                <h3 class="contact-title text-orange-700">Track Order</h3>
-                                <p class="contact-desc text-gray-700 mt-1">Check your order status.</p>
-                            </button>
-                        </div>
-
-                        <!-- Slide 4 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 4"
-                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                                <h3 class="contact-title text-orange-700">Request Quote</h3>
-                                <p class="contact-desc text-gray-700 mt-1">Get pricing for your project.</p>
-                            </button>
-                        </div>
-
-                        <!-- Slide 5 -->
-                        <div class="swiper-slide">
-                            <button @click="currentModal = 5"
-                                class="contact-button w-full hover:bg-orange-100 transition duration-200 rounded-lg p-3 sm:p-4 text-center h-full">
-                                <h3 class="contact-title text-orange-700">Support</h3>
-                                <p class="contact-desc text-gray-700 mt-1">We're here to help you.</p>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Desktop View (lg and above) - Grid -->
-            <div class="hidden lg:grid grid-cols-5 gap-4 xl:gap-6">
-                <!-- Box 1 -->
-                <button @click="currentModal = 1"
-                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                    <h3 class="desktop-title text-orange-700 relative inline-block">
-                        Inquire
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="desktop-desc text-gray-700 mt-2">Send us a question or message.</p>
-                </button>
-
-                <!-- Box 2 -->
-                <button @click="currentModal = 2"
-                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                    <h3 class="desktop-title text-orange-700 relative inline-block">
-                        Appointment
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="desktop-desc text-gray-700 mt-2">Book a consultation now.</p>
-                </button>
-
-                <!-- Box 3 -->
-                <button @click="currentModal = 3"
-                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                    <h3 class="desktop-title text-orange-700 relative inline-block">
-                        Track Order
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="desktop-desc text-gray-700 mt-2">Check your order status.</p>
-                </button>
-
-                <!-- Box 4 -->
-                <button @click="currentModal = 4"
-                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                    <h3 class="desktop-title text-orange-700 relative inline-block">
-                        Request Quote
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="desktop-desc text-gray-700 mt-2">Get pricing for your project.</p>
-                </button>
-
-                <!-- Box 5 -->
-                <button @click="currentModal = 5"
-                    class="group w-full transition duration-200 rounded-lg p-4 xl:p-6 text-center bg-white h-full hover:shadow-md desktop-button">
-                    <h3 class="desktop-title text-orange-700 relative inline-block">
-                        Support
-                        <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-orange-700 transition-all duration-300 group-hover:w-full"></span>
-                    </h3>
-                    <p class="desktop-desc text-gray-700 mt-2">We're here to help you.</p>
-                </button>
-            </div>
-        </div>
-
-        <!-- Modals -->
-        <template x-if="currentModal">
-            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto px-4 py-4">
-                <div class="bg-white w-full modal-container p-4 sm:p-6 rounded-lg shadow-lg relative modal-enter">
-                    <!-- Modal Title -->
-                    <h2 class="modal-title text-orange-600 mb-2" x-text="{
-                    1: 'Inquire',
-                    2: 'Appointment',
-                    3: 'Track Order',
-                    4: 'Request Quote',
-                    5: 'Support'
-                }[currentModal]"></h2>
-
-                    <!-- Modal Description -->
-                    <p class="modal-desc text-gray-700 mb-4" x-text="{
-                    1: 'Send us your questions, concerns, or feedback. Our team is ready to assist you anytime.',
-                    2: 'Schedule a face-to-face or virtual consultation with our experts.',
-                    3: 'Enter your order ID to track the delivery progress and timeline.',
-                    4: 'Get a detailed quote based on your construction needs and preferences.',
-                    5: 'Need help? Our support team is always ready to guide you through any issues.'
-                }[currentModal]"></p>
-
-                    <!-- Close Button -->
-                    <button @click="currentModal = null" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 close-btn">&times;</button>
-                    <button @click="currentModal = null" class="modal-btn mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md transition duration-200">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </template>
-
-        <style>
-            /* Mobile First Approach - Base Styles (320px and up) */
-            .contact-button {
-                min-height: 75px;
-            }
-
-            .contact-title {
-                font-size: 0.875rem;
-                font-weight: 600;
-                line-height: 1.25;
-            }
-
-            .contact-desc {
-                font-size: 0.75rem;
-                line-height: 1.25;
-            }
-
-            .modal-container {
-                max-width: 280px;
-                margin: auto;
-            }
-
-            .modal-title {
-                font-size: 1rem;
-                font-weight: 700;
-            }
-
-            .modal-desc {
-                font-size: 0.8rem;
-                line-height: 1.4;
-            }
-
-            .modal-btn {
-                font-size: 0.875rem;
-                padding: 0.5rem 1rem;
-            }
-
-            .close-btn {
-                font-size: 1.25rem;
-                width: 24px;
-                height: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            /* Small Mobile (375px and up) */
-            @media (min-width: 375px) {
-                .contact-button {
-                    min-height: 80px;
-                }
-
-                .contact-title {
-                    font-size: 0.9rem;
-                }
-
-                .contact-desc {
-                    font-size: 0.8rem;
-                }
-
-                .modal-container {
-                    max-width: 320px;
-                }
-
-                .modal-title {
-                    font-size: 1.125rem;
-                }
-
-                .modal-desc {
-                    font-size: 0.875rem;
-                }
-            }
-
-            /* Large Mobile (425px and up) */
-            @media (min-width: 425px) {
-                .contact-button {
-                    min-height: 85px;
-                }
-
-                .contact-title {
-                    font-size: 1rem;
-                }
-
-                .contact-desc {
-                    font-size: 0.825rem;
-                }
-
-                .modal-container {
-                    max-width: 360px;
-                }
-            }
-
-            /* Small Tablet (640px and up) */
-            @media (min-width: 640px) {
-                .contact-button {
-                    min-height: 90px;
-                }
-
-                .contact-title {
-                    font-size: 1.1rem;
-                }
-
-                .contact-desc {
-                    font-size: 0.875rem;
-                }
-
-                .modal-container {
-                    max-width: 400px;
-                }
-
-                .modal-title {
-                    font-size: 1.25rem;
-                }
-
-                .close-btn {
-                    font-size: 1.5rem;
-                    width: 28px;
-                    height: 28px;
-                }
-            }
-
-            /* Medium Tablet (768px and up) */
-            @media (min-width: 768px) {
-                .contact-button {
-                    min-height: 95px;
-                }
-
-                .contact-title {
-                    font-size: 1.125rem;
-                }
-
-                .contact-desc {
-                    font-size: 0.9rem;
-                }
-
-                .modal-container {
-                    max-width: 440px;
-                }
-            }
-
-            /* Large Tablet (1024px and up) */
-            @media (min-width: 1024px) {
-                .desktop-button {
-                    min-height: 100px;
-                }
-
-                .desktop-title {
-                    font-size: 1.125rem;
-                    font-weight: 600;
-                }
-
-                .desktop-desc {
-                    font-size: 0.875rem;
-                    line-height: 1.4;
-                }
-
-                .modal-container {
-                    max-width: 480px;
-                }
-
-                .modal-title {
-                    font-size: 1.375rem;
-                }
-
-                .modal-desc {
-                    font-size: 1rem;
-                    line-height: 1.5;
-                }
-
-                .modal-btn {
-                    font-size: 1rem;
-                    padding: 0.75rem 1.5rem;
-                }
-            }
-
-            /* Desktop (1280px and up) */
-            @media (min-width: 1280px) {
-                .desktop-button {
-                    min-height: 110px;
-                }
-
-                .desktop-title {
-                    font-size: 1.25rem;
-                }
-
-                .desktop-desc {
-                    font-size: 1rem;
-                }
-
-                .modal-container {
-                    max-width: 520px;
-                }
-
-                .close-btn {
-                    font-size: 1.75rem;
-                    width: 32px;
-                    height: 32px;
-                }
-            }
-
-            /* Large Desktop (1536px and up) */
-            @media (min-width: 1536px) {
-                .desktop-button {
-                    min-height: 120px;
-                }
-
-                .desktop-title {
-                    font-size: 1.375rem;
-                }
-
-                .desktop-desc {
-                    font-size: 1.125rem;
-                }
-
-                .modal-container {
-                    max-width: 560px;
-                }
-
-                .modal-title {
-                    font-size: 1.5rem;
-                }
-
-                .modal-desc {
-                    font-size: 1.125rem;
-                }
-            }
-
-            /* Animation Styles */
-            .modal-enter {
-                animation: modalEnter 0.3s ease-out;
-            }
-
-            @keyframes modalEnter {
-                from {
-                    opacity: 0;
-                    transform: scale(0.95) translateY(-20px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: scale(1) translateY(0);
-                }
-            }
-
-            .contact-swiper .swiper-slide {
-                height: auto;
-            }
-
-            /* High DPI Displays */
-            @media (-webkit-min-device-pixel-ratio: 2),
-            (min-resolution: 192dpi) {
-
-                .contact-title,
-                .desktop-title {
-                    -webkit-font-smoothing: antialiased;
-                    -moz-osx-font-smoothing: grayscale;
-                }
-            }
-
-            /* Landscape Orientation on Mobile */
-            @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) {
-                .contact-button {
-                    min-height: 60px;
-                }
-
-                .contact-title {
-                    font-size: 0.8rem;
-                }
-
-                .contact-desc {
-                    font-size: 0.7rem;
-                }
-
-                .modal-container {
-                    max-width: 90vw;
-                    max-height: 80vh;
-                    overflow-y: auto;
-                }
-            }
-
-            /* Touch Device Optimizations */
-            @media (hover: none) and (pointer: coarse) {
-
-                .contact-button,
-                .desktop-button {
-                    -webkit-tap-highlight-color: rgba(251, 146, 60, 0.1);
-                    touch-action: manipulation;
-                }
-            }
-
-            /* Reduce Motion for Accessibility */
-            @media (prefers-reduced-motion: reduce) {
-                .modal-enter {
-                    animation: none;
-                }
-
-                .group-hover\\:w-full,
-                .transition {
-                    transition: none;
-                }
-            }
-
-            /* High Contrast Mode */
-            @media (prefers-contrast: high) {
-
-                .contact-button,
-                .desktop-button {
-                    border: 2px solid #ea580c;
-                }
-
-                .contact-title,
-                .desktop-title {
-                    font-weight: 700;
-                }
-            }
-        </style>
-    </section>
 
 
     <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
         <!-- Heading and description -->
         <div class="text-center mb-8">
-            <h2 class="text-3xl sm:text-4xl font-bold text-black mb-3">Shop by Categories</h2>
+            <h2 class="text-3xl sm:text-4xl font-light text-black mb-3 ">Shop by Categories</h2>
             <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
                 Discover our wide range of home improvement products organized by category
             </p>
@@ -1329,7 +798,7 @@ handleQueryError($conn, "New Status Query");
                                 <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Furniture</span>
+                                <span class="text-xs text-gray-700 text-center">Furniture</span>
                             </div>
                         </a>
                     </div>
@@ -1338,7 +807,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=buildingmaterials" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Building Materials</span>
@@ -1350,7 +819,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=bedfurniture" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Bedroom</span>
@@ -1362,7 +831,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=lighting" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Lighting</span>
@@ -1374,7 +843,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=aircon" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Aircon</span>
@@ -1386,7 +855,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=doors" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Doors</span>
@@ -1398,7 +867,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=tiles" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Tiles</span>
@@ -1410,7 +879,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=windows" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Windows</span>
@@ -1422,7 +891,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=bathroom" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Bathroom</span>
@@ -1434,7 +903,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=kitchen" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Kitchen</span>
@@ -1446,7 +915,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=pipes" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">Pipes</span>
@@ -1458,7 +927,7 @@ handleQueryError($conn, "New Status Query");
                     <div class="swiper-slide">
                         <a href="shop?category[]=aacblock" class="group block">
                             <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
+                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
                                     <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                                 </div>
                                 <span class="text-xs font-semibold text-gray-700 text-center">AAC Blocks</span>
@@ -1478,7 +947,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Furniture</span>
+                        <span class="text-sm text-black text-center">Furniture</span>
                     </div>
                 </a>
 
@@ -1487,7 +956,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Building materials</span>
+                        <span class="text-sm  text-black text-center">Building materials</span>
                     </div>
                 </a>
 
@@ -1496,7 +965,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Bedroom </span>
+                        <span class="text-sm  text-black text-center">Bedroom </span>
                     </div>
                 </a>
 
@@ -1505,7 +974,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Lighting fixture</span>
+                        <span class="text-sm  text-black text-center">Lighting fixture</span>
                     </div>
                 </a>
 
@@ -1514,7 +983,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Aircon</span>
+                        <span class="text-sm  text-black text-center">Aircon</span>
                     </div>
                 </a>
 
@@ -1523,7 +992,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Doors</span>
+                        <span class="text-sm  text-black text-center">Doors</span>
                     </div>
                 </a>
 
@@ -1533,7 +1002,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Tiles</span>
+                        <span class="text-sm  text-black text-center">Tiles</span>
                     </div>
                 </a>
 
@@ -1542,7 +1011,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Windows</span>
+                        <span class="text-sm  text-black text-center">Windows</span>
                     </div>
                 </a>
 
@@ -1551,7 +1020,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Bathroom </span>
+                        <span class="text-sm  text-black text-center">Bathroom </span>
                     </div>
                 </a>
 
@@ -1560,7 +1029,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Kitchen Fixtures</span>
+                        <span class="text-sm  text-black text-center">Kitchen Fixtures</span>
                     </div>
                 </a>
 
@@ -1569,7 +1038,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">Pipes</span>
+                        <span class="text-sm  text-black text-center">Pipes</span>
                     </div>
                 </a>
 
@@ -1578,7 +1047,7 @@ handleQueryError($conn, "New Status Query");
                         <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
                             <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
                         </div>
-                        <span class="text-sm font-semibold text-black text-center">AAC BLOCKS</span>
+                        <span class="text-sm  text-black text-center">AAC BLOCKS</span>
                     </div>
                 </a>
 
@@ -1596,7 +1065,7 @@ handleQueryError($conn, "New Status Query");
         <div class="max-w-full mx-auto">
             <!-- Section Header -->
             <div class="text-center mb-10 " data-aos="fade-up">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3 ">Best Seller</h2>
+                <h2 class="text-2xl md:text-3xl font-light text-gray-900 mb-3 ">Best Seller</h2>
                 <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
             </div>
 
@@ -1673,7 +1142,7 @@ handleQueryError($conn, "New Status Query");
                     </div>
                     <div class="p-4 md:p-6 text-center">
                         <div class="mb-3">
-                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md animate-pulse">
+                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md ">
                                 HOT DEAL
                             </span>
                         </div>
@@ -1692,11 +1161,11 @@ handleQueryError($conn, "New Status Query");
 
 
 
-<section>
-<?php
+    <section>
+        <?php
 
-// Separate query to get only new products for the sidebar panel
-$newProductsQuery = "
+        // Separate query to get only new products for the sidebar panel
+        $newProductsQuery = "
     SELECT 
         p.id,
         p.product_name AS name,
@@ -1721,342 +1190,342 @@ $newProductsQuery = "
     LIMIT 50
 ";
 
-$newProductsResult = $conn->query($newProductsQuery);
-$newProducts = [];
-if ($newProductsResult && $newProductsResult->num_rows > 0) {
-    while ($row = $newProductsResult->fetch_assoc()) {
-        $newProducts[] = $row;
-    }
-}
+        $newProductsResult = $conn->query($newProductsQuery);
+        $newProducts = [];
+        if ($newProductsResult && $newProductsResult->num_rows > 0) {
+            while ($row = $newProductsResult->fetch_assoc()) {
+                $newProducts[] = $row;
+            }
+        }
 
-if ($results->num_rows === 0) {
-    echo '<div class="col-span-full text-center py-8 text-gray-500">No products found.</div>';
-} else {
-?>
+        if ($results->num_rows === 0) {
+            echo '<div class="col-span-full text-center py-8 text-gray-500">No products found.</div>';
+        } else {
+        ?>
 
-    <!-- Only show button and sidebar if there are new products -->
-    <?php if (count($newProducts) > 0): ?>
-        <!-- Sidebar Toggle Button -->
-        <div class="notif-wrapper">
-            <button onclick="toggleSidebar()" class="sidebar-toggle-btn">
-                New Products!
-            </button>
-            <span class="notif-badge"><?php echo count($newProducts); ?></span>
-        </div>
+            <!-- Only show button and sidebar if there are new products -->
+            <?php if (count($newProducts) > 0): ?>
+                <!-- Sidebar Toggle Button -->
+                <div class="notif-wrapper">
+                    <button onclick="toggleSidebar()" class="sidebar-toggle-btn">
+                        New Products!
+                    </button>
+                    <span class="notif-badge"><?php echo count($newProducts); ?></span>
+                </div>
 
-        <!-- Sidebar Overlay -->
-        <div id="sidebarOverlay" 
-            class="fixed inset-0 bg-black bg-opacity-50 z-40 opacity-0 invisible transition-all duration-300"
-            onclick="toggleSidebar()">
-        </div>
+                <!-- Sidebar Overlay -->
+                <div id="sidebarOverlay"
+                    class="fixed inset-0 bg-black bg-opacity-50 z-40 opacity-0 invisible transition-all duration-300"
+                    onclick="toggleSidebar()">
+                </div>
 
-        <!-- Gate-style Sidebar -->
-        <div id="newProductsSidebar"
-            class="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
+                <!-- Gate-style Sidebar -->
+                <div id="newProductsSidebar"
+                    class="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
 
-            <!-- Sidebar Header -->
-            <div class="flex justify-between items-center p-4 border-b bg-orange-500 text-white">
-                <h2 class="text-lg font-bold">New Products</h2>
-                <button onclick="toggleSidebar()"
-                    class="text-white hover:text-orange-200 text-xl font-bold">
-                    ×
-                </button>
-            </div>
+                    <!-- Sidebar Header -->
+                    <div class="flex justify-between items-center p-4 border-b bg-orange-500 text-white">
+                        <h2 class="text-lg font-bold">New Products</h2>
+                        <button onclick="toggleSidebar()"
+                            class="text-white hover:text-orange-200 text-xl font-bold">
+                            ×
+                        </button>
+                    </div>
 
-            <!-- Sidebar Content -->
-            <div class="overflow-y-auto h-full pb-20">
-                <div class="p-4 space-y-3">
-                    <?php foreach ($newProducts as $product): ?>
-                        <div class="p-3 hover:bg-gray-50 transition-colors">
-                            <div class="flex items-start space-x-3">
-                                <?php if (!empty($product['main_image'])): ?>
-                                    <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
-                                        alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                        class="w-12 h-12 object-cover rounded"
-                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500" style="display:none;">
-                                        No Image
-                                    </div>
-                                <?php else: ?>
-                                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
-                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                <?php endif; ?>
+                    <!-- Sidebar Content -->
+                    <div class="overflow-y-auto h-full pb-20">
+                        <div class="p-4 space-y-3">
+                            <?php foreach ($newProducts as $product): ?>
+                                <div class="p-3 hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-start space-x-3">
+                                        <?php if (!empty($product['main_image'])): ?>
+                                            <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                                class="w-12 h-12 object-cover rounded"
+                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500" style="display:none;">
+                                                No Image
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        <?php endif; ?>
 
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-medium text-sm text-gray-900 truncate">
-                                        <?php echo htmlspecialchars($product['name']); ?>
-                                    </h3>
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="font-medium text-sm text-gray-900 truncate">
+                                                <?php echo htmlspecialchars($product['name']); ?>
+                                            </h3>
 
-                                    <?php if (!empty($product['description'])): ?>
-                                        <p class="text-xs text-gray-600 truncate mt-1">
-                                            <?php echo htmlspecialchars(substr($product['description'], 0, 50)) . (strlen($product['description']) > 50 ? '...' : ''); ?>
-                                        </p>
-                                    <?php endif; ?>
+                                            <?php if (!empty($product['description'])): ?>
+                                                <p class="text-xs text-gray-600 truncate mt-1">
+                                                    <?php echo htmlspecialchars(substr($product['description'], 0, 50)) . (strlen($product['description']) > 50 ? '...' : ''); ?>
+                                                </p>
+                                            <?php endif; ?>
 
-                                    <div class="flex justify-between items-center mt-1">
-                                        <span class="text-xs text-gray-400">
-                                            <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
-                                        </span>
-                                    </div>
+                                            <div class="flex justify-between items-center mt-1">
+                                                <span class="text-xs text-gray-400">
+                                                    <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                                                </span>
+                                            </div>
 
-                                    <!-- Action Button -->
-                                    <div class="mt-3 flex justify-start">
-                                        <form action="product_view" method="GET">
-                                            <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-                                            <button type="submit" class="Btn">
-                                                <div class="sign">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                </div>
-                                                <div class="text">View</div>
-                                            </button>
-                                        </form>
+                                            <!-- Action Button -->
+                                            <div class="mt-3 flex justify-start">
+                                                <form action="product_view" method="GET">
+                                                    <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                                                    <button type="submit" class="Btn">
+                                                        <div class="sign">
+                                                            <i class="fa-solid fa-bag-shopping"></i>
+                                                        </div>
+                                                        <div class="text">View</div>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                    </div>
+
+                    <!-- Sidebar Footer -->
+                    <div class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
+                        <button onclick="window.location.href='allproduct'"
+                            class="w-full px-3 py-2 bg-black text-white rounded hover:bg-blue-600 text-sm">
+                            View All New Products
+                        </button>
+                    </div>
+
                 </div>
-            </div>
 
-       <!-- Sidebar Footer -->
-<div class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
-    <button onclick="window.location.href='allproduct'"
-        class="w-full px-3 py-2 bg-black text-white rounded hover:bg-blue-600 text-sm">
-        View All New Products
-    </button>
-</div>
+                <script>
+                    function toggleSidebar() {
+                        const sidebar = document.getElementById("newProductsSidebar");
+                        const overlay = document.getElementById("sidebarOverlay");
+                        const notifWrapper = document.querySelector(".notif-wrapper");
+                        const isOpen = !sidebar.classList.contains("-translate-x-full");
 
-        </div>
+                        if (isOpen) {
+                            // Close sidebar (slide out to left)
+                            sidebar.classList.add("-translate-x-full");
+                            overlay.classList.add("opacity-0", "invisible");
+                            overlay.classList.remove("opacity-100", "visible");
+                            document.body.style.overflow = "auto";
 
-        <script>
-            function toggleSidebar() {
-                const sidebar = document.getElementById("newProductsSidebar");
-                const overlay = document.getElementById("sidebarOverlay");
-                const notifWrapper = document.querySelector(".notif-wrapper");
-                const isOpen = !sidebar.classList.contains("-translate-x-full");
+                            // Show the button again
+                            if (notifWrapper) {
+                                notifWrapper.style.display = "inline-block";
+                            }
+                        } else {
+                            // Open sidebar (slide in from left)
+                            sidebar.classList.remove("-translate-x-full");
+                            overlay.classList.remove("opacity-0", "invisible");
+                            overlay.classList.add("opacity-100", "visible");
+                            document.body.style.overflow = "hidden";
 
-                if (isOpen) {
-                    // Close sidebar (slide out to left)
-                    sidebar.classList.add("-translate-x-full");
-                    overlay.classList.add("opacity-0", "invisible");
-                    overlay.classList.remove("opacity-100", "visible");
-                    document.body.style.overflow = "auto";
-                    
-                    // Show the button again
-                    if (notifWrapper) {
-                        notifWrapper.style.display = "inline-block";
-                    }
-                } else {
-                    // Open sidebar (slide in from left)
-                    sidebar.classList.remove("-translate-x-full");
-                    overlay.classList.remove("opacity-0", "invisible");
-                    overlay.classList.add("opacity-100", "visible");
-                    document.body.style.overflow = "hidden";
-                    
-                    // Hide the button when sidebar is open
-                    if (notifWrapper) {
-                        notifWrapper.style.display = "none";
-                    }
-                }
-            }
-
-            function viewAllNewProducts() {
-                // Close sidebar first
-                toggleSidebar();
-                // Redirect to a page that shows all new products
-                setTimeout(() => {
-                    window.location.href = "?filter=new_products";
-                }, 300);
-            }
-
-            // Close sidebar when pressing Escape key
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    const sidebar = document.getElementById("newProductsSidebar");
-                    if (!sidebar.classList.contains("-translate-x-full")) {
-                        toggleSidebar();
-                    }
-                }
-            });
-
-            // Auto-refresh new products count every 30 seconds
-            setInterval(function() {
-                fetch(window.location.pathname + '?action=get_new_products_count')
-                    .then(response => response.json())
-                    .then(data => {
-                        const notifWrapper = document.querySelector('.notif-wrapper');
-                        const badge = document.querySelector('.notif-badge');
-                        
-                        if (data.count !== undefined) {
-                            if (data.count > 0) {
-                                // Show button if there are new products
-                                if (notifWrapper) {
-                                    notifWrapper.style.display = 'inline-block';
-                                }
-                                if (badge) {
-                                    badge.textContent = data.count;
-                                }
-                            } else {
-                                // Hide button if no new products
-                                if (notifWrapper) {
-                                    notifWrapper.style.display = 'none';
-                                }
+                            // Hide the button when sidebar is open
+                            if (notifWrapper) {
+                                notifWrapper.style.display = "none";
                             }
                         }
-                    })
-                    .catch(error => console.log('Auto-refresh error:', error));
-            }, 30000);
-        </script>
+                    }
 
-        <style>
-            /* Button wrapper - fixed positioning */
-            .notif-wrapper {
-                position: fixed !important;
-                top: 50% !important;
-                left: 0 !important;
-                transform: translateY(-50%) !important;
-                z-index: 9999 !important;
-                display: inline-block;
-            }
+                    function viewAllNewProducts() {
+                        // Close sidebar first
+                        toggleSidebar();
+                        // Redirect to a page that shows all new products
+                        setTimeout(() => {
+                            window.location.href = "?filter=new_products";
+                        }, 300);
+                    }
 
-            /* Main sidebar toggle button */
-            .sidebar-toggle-btn {
-                width: 130px;
-                height: 60px;
-                border-radius: 0 30px 30px 0;
-                background: #000000ff;
-                color: white;
-                border: none;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                font-weight: 500;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-            }
+                    // Close sidebar when pressing Escape key
+                    document.addEventListener('keydown', function(event) {
+                        if (event.key === 'Escape') {
+                            const sidebar = document.getElementById("newProductsSidebar");
+                            if (!sidebar.classList.contains("-translate-x-full")) {
+                                toggleSidebar();
+                            }
+                        }
+                    });
 
-            .sidebar-toggle-btn:hover {
-                background: #000000ff;
-            }
+                    // Auto-refresh new products count every 30 seconds
+                    setInterval(function() {
+                        fetch(window.location.pathname + '?action=get_new_products_count')
+                            .then(response => response.json())
+                            .then(data => {
+                                const notifWrapper = document.querySelector('.notif-wrapper');
+                                const badge = document.querySelector('.notif-badge');
 
-            /* Notification badge */
-            .notif-badge {
-                position: absolute;
-                top: -8px;
-                right: 3px;
-                background: #dc2626;
-                color: white;
-                border-radius: 50%;
-                padding: 4px 8px;
-                font-size: 12px;
-                font-weight: bold;
-                line-height: 1;
-                min-width: 20px;
-                text-align: center;
-                z-index: 1;
-            }
+                                if (data.count !== undefined) {
+                                    if (data.count > 0) {
+                                        // Show button if there are new products
+                                        if (notifWrapper) {
+                                            notifWrapper.style.display = 'inline-block';
+                                        }
+                                        if (badge) {
+                                            badge.textContent = data.count;
+                                        }
+                                    } else {
+                                        // Hide button if no new products
+                                        if (notifWrapper) {
+                                            notifWrapper.style.display = 'none';
+                                        }
+                                    }
+                                }
+                            })
+                            .catch(error => console.log('Auto-refresh error:', error));
+                    }, 30000);
+                </script>
 
-            /* Sidebar styling */
-            #newProductsSidebar {
-                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-            }
+                <style>
+                    /* Button wrapper - fixed positioning */
+                    .notif-wrapper {
+                        position: fixed !important;
+                        top: 50% !important;
+                        left: 0 !important;
+                        transform: translateY(-50%) !important;
+                        z-index: 9999 !important;
+                        display: inline-block;
+                    }
 
-            /* Custom scrollbar for the sidebar */
-            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar {
-                width: 4px;
-            }
+                    /* Main sidebar toggle button */
+                    .sidebar-toggle-btn {
+                        width: 130px;
+                        height: 60px;
+                        border-radius: 0 30px 30px 0;
+                        background: #000000ff;
+                        color: white;
+                        border: none;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        text-align: center;
+                        font-weight: 500;
+                        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                        cursor: pointer;
+                        transition: background-color 0.2s ease;
+                    }
 
-            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 2px;
-            }
+                    .sidebar-toggle-btn:hover {
+                        background: #000000ff;
+                    }
 
-            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-thumb {
-                background: #c1c1c1;
-                border-radius: 2px;
-            }
+                    /* Notification badge */
+                    .notif-badge {
+                        position: absolute;
+                        top: -8px;
+                        right: 3px;
+                        background: #dc2626;
+                        color: white;
+                        border-radius: 50%;
+                        padding: 4px 8px;
+                        font-size: 12px;
+                        font-weight: bold;
+                        line-height: 1;
+                        min-width: 20px;
+                        text-align: center;
+                        z-index: 1;
+                    }
 
-            #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-                background: #a1a1a1;
-            }
+                    /* Sidebar styling */
+                    #newProductsSidebar {
+                        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+                    }
 
-            /* Hover effect for product cards */
-            #newProductsSidebar .hover\:bg-gray-50:hover {
-                background-color: #f9fafb;
-                cursor: pointer;
-            }
+                    /* Custom scrollbar for the sidebar */
+                    #newProductsSidebar .overflow-y-auto::-webkit-scrollbar {
+                        width: 4px;
+                    }
 
-            /* Mobile responsive */
-            @media (max-width: 768px) {
-                #newProductsSidebar {
-                    width: 100%;
-                }
-                
-                .sidebar-toggle-btn {
-                    width: 90px;
-                    height: 50px;
-                    font-size: 14px;
-                }
-            }
+                    #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                        border-radius: 2px;
+                    }
 
-            /* View Button Styling */
-            .Btn {
-                width: 120px;
-                height: 35px;
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 10px;
-                background: linear-gradient(105deg, #000000ff, #000000ff);
-                border-radius: 30px;
-                color: #fff;
-                font-weight: 600;
-                border: none;
-                position: relative;
-                cursor: pointer;
-                transition-duration: .2s;
-                background-size: 200%;
-                background-position: 0%;
-                font-size: 12px;
-            }
+                    #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-thumb {
+                        background: #c1c1c1;
+                        border-radius: 2px;
+                    }
 
-            .Btn:hover {
-                background-position: 100%;
-                transform: scale(1.05);
-            }
+                    #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+                        background: #a1a1a1;
+                    }
 
-            .Btn:active {
-                transform: scale(0.95);
-            }
+                    /* Hover effect for product cards */
+                    #newProductsSidebar .hover\:bg-gray-50:hover {
+                        background-color: #f9fafb;
+                        cursor: pointer;
+                    }
 
-            .sign {
-                width: 25px;
-                height: 25px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #000000ff;
-                font-size: 10px;
-                margin-left: 2px;
-            }
+                    /* Mobile responsive */
+                    @media (max-width: 768px) {
+                        #newProductsSidebar {
+                            width: 100%;
+                        }
 
-            .text {
-                font-size: 11px;
-                font-weight: 500;
-            }
-        </style>
-    <?php endif; ?>
+                        .sidebar-toggle-btn {
+                            width: 90px;
+                            height: 50px;
+                            font-size: 14px;
+                        }
+                    }
 
-<?php
-} // End of main if statement
-?>
-</section>
+                    /* View Button Styling */
+                    .Btn {
+                        width: 120px;
+                        height: 35px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-start;
+                        gap: 10px;
+                        background: linear-gradient(105deg, #000000ff, #000000ff);
+                        border-radius: 30px;
+                        color: #fff;
+                        font-weight: 600;
+                        border: none;
+                        position: relative;
+                        cursor: pointer;
+                        transition-duration: .2s;
+                        background-size: 200%;
+                        background-position: 0%;
+                        font-size: 12px;
+                    }
+
+                    .Btn:hover {
+                        background-position: 100%;
+                        transform: scale(1.05);
+                    }
+
+                    .Btn:active {
+                        transform: scale(0.95);
+                    }
+
+                    .sign {
+                        width: 25px;
+                        height: 25px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #000000ff;
+                        font-size: 10px;
+                        margin-left: 2px;
+                    }
+
+                    .text {
+                        font-size: 11px;
+                        font-weight: 500;
+                    }
+                </style>
+            <?php endif; ?>
+
+        <?php
+        } // End of main if statement
+        ?>
+    </section>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
@@ -2064,7 +1533,7 @@ if ($results->num_rows === 0) {
         <div class="flex items-center gap-2 mb-2 mt-4" data-aos="fade-up">
             <!-- Details Button (as Title) -->
             <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                class="group relative inline-flex items-center gap-2 font-light text-2xl sm:text-3xl lg:text-4xl text-black">
                 <span class="relative">
                     <span class="block group-hover:text-orange-600 transition-colors duration-300">
                         Bed Furniture
@@ -2169,10 +1638,13 @@ if ($results->num_rows === 0) {
                                 <!-- Product Info -->
                                 <div class="space-y-2">
                                     <!-- Title -->
-                                    <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
-                                        <?= htmlspecialchars($row['product_name']) ?>
-                                    </h3>
-
+                                    <div class="relative w-full max-w-xs">
+                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                        <!-- Fade overlay -->
+                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                    </div>
 
 
                                     <!-- Rating Section -->
@@ -2308,7 +1780,7 @@ if ($results->num_rows === 0) {
         <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
             <!-- Details Button (as Title) -->
             <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                class="group relative inline-flex items-center gap-2 text-2xl sm:text-3xl lg:text-4xl text-black">
                 <span class="relative">
                     <span class="block group-hover:text-orange-600 transition-colors duration-300">
                         Furniture
@@ -2414,12 +1886,13 @@ if ($results->num_rows === 0) {
                                 <!-- Product Info -->
                                 <div class="space-y-2">
                                     <!-- Title -->
-                                    <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
-                                        <?= htmlspecialchars($row['product_name']) ?>
-                                    </h3>
-
-
-
+                                  <div class="relative w-full max-w-xs">
+                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                        <!-- Fade overlay -->
+                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                    </div>
                                     <!-- Rating Section -->
                                     <div class="flex items-center justify-between">
                                         <?php if ($total_raters > 0): ?>
@@ -2776,10 +2249,13 @@ if ($results->num_rows === 0) {
 
                                 <!-- Product Info -->
                                 <div class="space-y-2">
-                                    <!-- Title -->
-                                    <h3 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
-                                        <?= htmlspecialchars($row['product_name']) ?>
-                                    </h3>
+                            <div class="relative w-full max-w-xs">
+                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                        <!-- Fade overlay -->
+                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                    </div>
                                     <!-- Rating Section -->
                                     <div class="flex items-center justify-between">
                                         <?php if ($total_raters > 0): ?>
@@ -2950,10 +2426,13 @@ if ($results->num_rows === 0) {
 
                             <!-- Product Info -->
                             <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['namevariant']) ?>
-                                </h3>
-
+                                 <div class="relative w-full max-w-xs">
+                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                        <!-- Fade overlay -->
+                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                    </div>
                                 <!-- View Size & Color -->
                                 <button type="button"
                                     onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"

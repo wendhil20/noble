@@ -31,13 +31,15 @@ if ($user_id) {
 
 // Updated function na compatible sa new categories table
 function getNavigationData($conn) {
-    // Updated query to use categories table instead of product_categories
+    // ✅ Updated query WITH image_path for both categories and subcategories
     $sql = "SELECT 
         c.id as category_id,
         c.name as category_name,
+        c.image_path as category_image_path,
         ps.id as subcategory_id,
         ps.subcategory_name,
-        ps.subcategory_slug
+        ps.subcategory_slug,
+        ps.image_path as subcategory_image_path
     FROM categories c
     LEFT JOIN product_subcategories ps ON c.id = ps.category_id
     ORDER BY c.name, ps.subcategory_name";
@@ -54,17 +56,18 @@ function getNavigationData($conn) {
         while ($row = $result->fetch_assoc()) {
             $category_slug = generateSlug($row['category_name']);
             
-            // Create category if hindi pa exists
+            // ✅ Create category if hindi pa exists - WITH image_path
             if (!isset($navigation_data[$category_slug])) {
                 $navigation_data[$category_slug] = [
                     'id' => $row['category_id'],
                     'name' => $row['category_name'],
                     'slug' => $category_slug,
+                    'image_path' => $row['category_image_path'],  // ✅ ADDED
                     'subcategories' => []
                 ];
             }
             
-            // Add subcategory if may value
+            // ✅ Add subcategory if may value - WITH image_path
             if ($row['subcategory_id']) {
                 // Use the existing subcategory_slug from database or generate if empty
                 $sub_slug = !empty($row['subcategory_slug']) ? 
@@ -74,7 +77,8 @@ function getNavigationData($conn) {
                 $navigation_data[$category_slug]['subcategories'][] = [
                     'id' => $row['subcategory_id'],
                     'name' => $row['subcategory_name'],
-                    'slug' => $sub_slug
+                    'slug' => $sub_slug,
+                    'image_path' => $row['subcategory_image_path']  // ✅ ADDED
                 ];
             }
         }
@@ -82,6 +86,7 @@ function getNavigationData($conn) {
     
     return $navigation_data;
 }
+
 
 // generateSlug function (same as before)
 function generateSlug($string) {
@@ -105,7 +110,10 @@ $display_categories = getNavigationData($conn);
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+
+
 <style>
   [x-cloak] {
     display: none !important;
@@ -173,8 +181,7 @@ $display_categories = getNavigationData($conn);
       extend: {
         fontFamily: {
           // Sans-serif fonts
-
-          mont: ['Montserrat', 'sans-serif'],
+          mont: ['Roboto', 'sans-serif'],
 
         }
       }
@@ -370,70 +377,6 @@ $display_categories = getNavigationData($conn);
   }
 </style>
 
-<div class="bg-black text-white py-3 text-xs sm:text-sm">
-  <div class="container mx-auto px-4">
-    <!-- Mobile Layout (Stack vertically) -->
-    <div class="flex flex-col gap-3 sm:hidden">
-      <!-- Contact Info - Mobile -->
-      <div class="flex flex-col items-center gap-1 text-center">
-
-        <a href="mailto:noblehome.constph@gmail.com" class="hover:text-orange-300 transition">
-          noblehome.constph@gmail.com
-        </a>
-      </div>
-
-      <!-- Links - Mobile -->
-      <div class="flex justify-center items-center gap-4">
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../rules/help')"
-          class="hover:text-orange-300 transition inline-flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-          </svg>
-          Support
-        </a>
-
-        <span class="text-gray-400">|</span>
-
-        <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
-          About
-        </a>
-      </div>
-    </div>
-
-    <!-- Desktop Layout (Side by side) -->
-    <div class="hidden sm:flex sm:justify-between sm:items-center">
-      <!-- Left: Contact Info -->
-      <div class="flex items-center gap-4">
-        <a href="mailto:noblehomeconst.ph" class="hover:text-orange-300 transition">
-          noblehomeconst.ph@gmail.com
-        </a>
-      </div>
-
-      <!-- Right: Links -->
-      <div class="flex items-center gap-4">
-
-
-
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../rules/help')"
-          class="hover:text-orange-300 transition inline-flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM8.25 12l7.5 0" />
-          </svg>
-          Support
-        </a>
-
-        <span class="text-gray-400">|</span>
-
-        <a href="../about/about.php" class="text-white hover:text-orange-300 transition">
-          About
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 
 <!-- Navigation -->
@@ -444,7 +387,7 @@ $display_categories = getNavigationData($conn);
     productsOpen: false,
     profileOpen: false,
     selectedCategory: null
-}" class="bg-white shadow-lg sticky top-0 z-50 text-black font-bold">
+}" class="bg-white shadow-lg sticky top-0 z-50 text-black">
 
   <div class="max-w-full mx-auto px-3 sm:px-4 lg:px-6">
     <div class="flex justify-between items-center py-3 sm:py-4">
@@ -550,20 +493,30 @@ $display_categories = getNavigationData($conn);
     }
 }" class="relative w-64 md:w-96 font-mont">
 
-          <div class="flex items-center space-x-2">
-            <input
-              type="text"
-              x-model="search"
-              @input.debounce.300ms="fetchResults"
-              placeholder="Search products..."
-              class="border border-gray-300 px-3 py-1.5 rounded w-full text-sm outline-orange-500"
-              autocomplete="off">
-            <button
-              @click="fetchResults"
-              class="bg-orange-400 text-white px-4 py-1.5 rounded text-sm hover:bg-orange-600 transition">
-              Search
-            </button>
-          </div>
+ <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full max-w-md">
+  <!-- Search Icon -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+  </svg>
+
+  <!-- Input -->
+  <input
+    type="text"
+    x-model="search"
+    @input.debounce.300ms="fetchResults"
+    placeholder="Search products..."
+    class="flex-1 bg-transparent focus:outline-none text-sm text-gray-700 placeholder-gray-400"
+    autocomplete="off">
+
+  <!-- Button -->
+  <button
+    @click="fetchResults"
+    class="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:from-orange-500 hover:to-orange-600 transition shadow-sm">
+    Search
+  </button>
+</div>
+
 
           <div
             x-show="results.length > 0"
@@ -586,65 +539,272 @@ $display_categories = getNavigationData($conn);
 
         </div>
 
-<!-- Updated Products Dropdown HTML -->
-<div class="relative" x-data="{ productsOpen: false, selectedCategory: null }">
-  <button @click="productsOpen = !productsOpen"
-           class="text-black hover:text-orange-500 transition font-mont uppercase">
+
+<!-- Nested Carousel with Hover Subcategories -->
+<div class="relative" x-data="{ 
+    productsOpen: false, 
+    currentView: 'categories', 
+    selectedCategory: null,
+    selectedCategoryData: null,
+    hoveredCategory: null,
+    hoveredCategoryData: null,
+    categorySlideIndex: 0,
+    subcategorySlideIndex: 0,
+    hoverSubSlideIndex: 0,
+    categoriesPerSlide: 4,
+    subcategoriesPerSlide: 5,
+    hoverTimeout: null
+}">
+  <button @click="productsOpen = !productsOpen; currentView = 'categories'; categorySlideIndex = 0"
+           class="text-black hover:text-orange-500 transition font-mont uppercase text-sm">
     Products
   </button>
  
   <div x-show="productsOpen"
         @click.away="productsOpen = false"
         x-transition x-cloak
-       class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg flex w-[450px] z-50">
+       class="fixed left-0 right-0 top-[80px] bg-white shadow-md z-50 overflow-hidden border border-gray-200"
+       :class="hoveredCategory ? 'min-h-[400px]' : 'min-h-[280px]'">
      
-    <!-- Left side: Categories -->
-    <div class="w-1/2 border-r p-4 space-y-2 font-mont">
-      <?php if (!empty($display_categories)): ?>
-        <?php foreach ($display_categories as $catKey => $category): ?>
-          <button 
-             @mouseenter="selectedCategory = 'cat_<?= $category['id'] ?>'"
-             class="block w-full text-left hover:text-orange-500 text-sm uppercase">
-            <?= htmlspecialchars($category['name']) ?>
-          </button>
-        <?php endforeach; ?>
-      <?php else: ?>
-        <p class="text-gray-500 italic text-sm">No categories</p>
-      <?php endif; ?>
-    </div>
-     
-    <!-- Right side: Subcategories -->
-    <div class="w-1/2 p-4 font-mont">
-      <?php if (!empty($display_categories)): ?>
-        <?php foreach ($display_categories as $catKey => $category): ?>
-          <template x-if="selectedCategory === 'cat_<?= $category['id'] ?>'">
-            <div class="space-y-1">
-              <?php if (!empty($category['subcategories'])): ?>
-                <?php foreach ($category['subcategories'] as $sub): ?>
-                  <a href="../otherpage/allproductsub_variant.php?subcategory_id=<?= $sub['id'] ?>"
-                     class="block hover:text-orange-500 text-sm">
-                    <?= htmlspecialchars($sub['name']) ?>
-                  </a>
+    <!-- Categories Carousel -->
+    <div x-show="currentView === 'categories'"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="transform translate-x-full"
+         x-transition:enter-end="transform translate-x-0"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="transform translate-x-0"
+         x-transition:leave-end="transform -translate-x-full"
+         class="w-full h-full">
+      
+      <div class="max-w-7xl mx-auto px-8 py-6">
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="font-mont font-semibold text-lg text-black uppercase">Product Categories</h3>
+          
+          <!-- Carousel Controls -->
+          <div class="flex space-x-2">
+            <button @click="categorySlideIndex = Math.max(0, categorySlideIndex - 1)"
+                    :disabled="categorySlideIndex === 0"
+                    :class="categorySlideIndex === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-orange-500'"
+                    class="p-1.5 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button @click="categorySlideIndex = Math.min(Math.ceil(<?= count($display_categories ?? []) ?> / categoriesPerSlide) - 1, categorySlideIndex + 1)"
+                    :disabled="categorySlideIndex >= Math.ceil(<?= count($display_categories ?? []) ?> / categoriesPerSlide) - 1"
+                    :class="categorySlideIndex >= Math.ceil(<?= count($display_categories ?? []) ?> / categoriesPerSlide) - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-orange-500'"
+                    class="p-1.5 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Carousel Container -->
+        <div class="overflow-hidden">
+          <div class="flex transition-transform duration-500 ease-in-out"
+               :style="`transform: translateX(-${categorySlideIndex * 100}%)`">
+            
+            <?php if (!empty($display_categories)): ?>
+              <?php 
+              $categories = $display_categories;
+              $chunks = array_chunk($categories, 4);
+              ?>
+              
+              <?php foreach ($chunks as $chunkIndex => $categoryChunk): ?>
+                <div class="flex-none w-full flex space-x-4">
+                  <?php foreach ($categoryChunk as $category): ?>
+                    <div class="flex-1">
+                      <div 
+                         @mouseenter="
+                           clearTimeout(hoverTimeout);
+                           hoveredCategory = 'cat_<?= $category['id'] ?>'; 
+                           hoveredCategoryData = <?= htmlspecialchars(json_encode($category)) ?>;
+                           hoverSubSlideIndex = 0"
+                         @mouseleave="
+                           hoverTimeout = setTimeout(() => { 
+                             hoveredCategory = null; 
+                             hoveredCategoryData = null; 
+                           }, 300)"
+                         class="w-full p-4 rounded-lg hover:bg-gray-50 text-left transition-all duration-300 group cursor-default"
+                         :class="hoveredCategory === 'cat_<?= $category['id'] ?>' ? 'bg-gray-50' : ''">
+                        
+                        <!-- ✅ Flex container para katabi ang image at text -->
+                        <div class="flex items-center gap-3">
+                          
+                          <!-- Category Image - Maliit lang (50x50px) -->
+                          <?php if (!empty($category['image_path'])): ?>
+                            <div class="flex-shrink-0">
+                              <img 
+                                src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>" 
+                                alt="<?= htmlspecialchars($category['name']) ?>"
+                                class="w-12 h-12 object-cover rounded"
+                                onerror="this.style.display='none'"
+                              >
+                            </div>
+                          <?php endif; ?>
+                          
+                          <!-- Text Content -->
+                          <div class="flex-1">
+                            <div class="font-mont text-base uppercase font-semibold group-hover:text-black mb-1"
+                                 :class="hoveredCategory === 'cat_<?= $category['id'] ?>' ? 'text-black' : 'text-gray-800'">
+                              <?= htmlspecialchars($category['name']) ?>
+                            </div>
+                            <div class="text-xs text-gray-600">
+                              <?= count($category['subcategories'] ?? []) ?> subcategories
+                            </div>
+                          </div>
+                          
+                        </div>
+                        
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                  
+                  <!-- Fill empty slots if less than 4 categories in this chunk -->
+                  <?php for ($i = count($categoryChunk); $i < 4; $i++): ?>
+                    <div class="flex-1"></div>
+                  <?php endfor; ?>
+                </div>
+              <?php endforeach; ?>
+              
+            <?php else: ?>
+              <div class="w-full text-center py-8">
+                <p class="text-gray-500 italic">No categories available</p>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+        
+        <!-- Dots Indicator -->
+        <div class="flex justify-center mt-5 space-x-1.5">
+          <?php if (!empty($display_categories)): ?>
+            <?php $totalSlides = ceil(count($display_categories) / 4); ?>
+            <?php for ($i = 0; $i < $totalSlides; $i++): ?>
+              <button @click="categorySlideIndex = <?= $i ?>"
+                      :class="categorySlideIndex === <?= $i ?> ? 'bg-orange-500' : 'bg-gray-300'"
+                      class="w-2 h-2 rounded-full transition-colors duration-300"></button>
+            <?php endfor; ?>
+          <?php endif; ?>
+        </div>
+        
+        <!-- Hover Subcategories Carousel -->
+        <div x-show="hoveredCategory" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform translate-y-4"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform translate-y-0"
+             x-transition:leave-end="opacity-0 transform translate-y-4"
+             class="mt-6 pt-5 border-t border-gray-100"
+             @mouseenter="clearTimeout(hoverTimeout)"
+             @mouseleave="
+               hoverTimeout = setTimeout(() => { 
+                 hoveredCategory = null; 
+                 hoveredCategoryData = null; 
+               }, 300)">
+          
+          <div class="flex justify-between items-center mb-4">
+            <h4 class="font-semibold text-sm text-black uppercase" 
+                x-text="(hoveredCategoryData?.name || '') + ' Subcategories'"></h4>
+            
+            <!-- Hover Subcategory Carousel Controls -->
+            <div class="flex space-x-2" x-data="{ maxSlides: 0 }"
+                 x-init="$watch('hoveredCategoryData', (data) => { maxSlides = Math.ceil((data?.subcategories?.length || 0) / 5) })">
+              <button @click="hoverSubSlideIndex = Math.max(0, hoverSubSlideIndex - 1)"
+                      :disabled="hoverSubSlideIndex === 0"
+                      :class="hoverSubSlideIndex === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-orange-500'"
+                      class="p-1 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <button @click="hoverSubSlideIndex = Math.min(maxSlides - 1, hoverSubSlideIndex + 1)"
+                      :disabled="hoverSubSlideIndex >= maxSlides - 1"
+                      :class="hoverSubSlideIndex >= maxSlides - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-orange-500'"
+                      class="p-1 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Hover Subcategories Carousel -->
+          <div class="overflow-hidden">
+            <div class="flex transition-transform duration-500 ease-in-out"
+                 :style="`transform: translateX(-${hoverSubSlideIndex * 100}%)`">
+              
+              <?php if (!empty($display_categories)): ?>
+                <?php foreach ($display_categories as $catKey => $category): ?>
+                  <template x-if="hoveredCategory === 'cat_<?= $category['id'] ?>'">
+                    <div class="contents">
+                      <?php if (!empty($category['subcategories'])): ?>
+                        <?php 
+                        $subcategories = $category['subcategories'];
+                        $subChunks = array_chunk($subcategories, 5);
+                        ?>
+                        
+                        <?php foreach ($subChunks as $subChunkIndex => $subChunk): ?>
+                          <div class="flex-none w-full flex space-x-3">
+                            <?php foreach ($subChunk as $sub): ?>
+                              <div class="flex-1">
+                                <a href="../otherpage/allproductsub_variant.php?subcategory_id=<?= $sub['id'] ?>"
+                                   class="block p-2.5 rounded hover:bg-gray-50 transition-all duration-300 group">
+                                  
+                                  <!-- Subcategory Image -->
+                                  <?php if (!empty($sub['image_path'])): ?>
+                                    <div class="mb-2">
+                                      <img 
+                                        src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>" 
+                                        alt="<?= htmlspecialchars($sub['name']) ?>"
+                                        class="w-full h-16 object-contain rounded"
+                                        onerror="this.style.display='none'"
+                                      >
+                                    </div>
+                                  <?php endif; ?>
+                                  
+                                  <div class="text-sm group-hover:text-orange-500 transition text-black text-center">
+                                    <?= htmlspecialchars($sub['name']) ?>
+                                  </div>
+                                </a>
+                              </div>
+                            <?php endforeach; ?>
+                            
+                            <!-- Fill empty slots -->
+                            <?php for ($i = count($subChunk); $i < 5; $i++): ?>
+                              <div class="flex-1"></div>
+                            <?php endfor; ?>
+                          </div>
+                        <?php endforeach; ?>
+                        
+                      <?php else: ?>
+                        <div class="w-full text-center py-4">
+                          <p class="text-gray-500 italic text-sm">No subcategories available</p>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  </template>
                 <?php endforeach; ?>
-              <?php else: ?>
-                <p class="text-gray-500 italic text-sm">No subcategories</p>
               <?php endif; ?>
             </div>
-          </template>
-        <?php endforeach; ?>
-      <?php endif; ?>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
       <!-- Profile Link -->
 <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
-   class="<?= strpos($_SERVER['REQUEST_URI'], 'profile') !== false ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition font-mont">
+   class="<?= strpos($_SERVER['REQUEST_URI'], 'profile') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition  text-sm">
    Orders
 </a>
 
        <!-- Shop Link -->
 <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
-   class="<?= basename($_SERVER['PHP_SELF']) == 'shop.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 font-mont">
+   class="<?= basename($_SERVER['PHP_SELF']) == 'shop.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1  text-sm">
    <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
    Shop
 </a>
@@ -652,7 +812,7 @@ $display_categories = getNavigationData($conn);
 
           <div x-data="chatNotif" x-init="init()" class="relative">
             <a href="../otherpage/Chat_main.php"
-              class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-orange-600 transition relative">
+              class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
               <i class="fas fa-envelope"></i>
 
               <!-- Badge -->
@@ -1689,45 +1849,6 @@ if (!in_array($current_page_navigation, $hidden_pages_navigation)): ?>
   <!-- Swiper CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-  <nav class="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg p-3">
-      <div class="max-w-screen-xl mx-auto px-4 relative">
-          
-          <!-- Swiper Container -->
-          <div class="swiper navigation-swiper py-4">
-              
-              <!-- Navigation Buttons -->
-              <div class="swiper-button-prev nav-prev"></div>
-              <div class="swiper-button-next nav-next"></div>
-              
-              <!-- Swiper Wrapper -->
-              <div class="swiper-wrapper uppercase ">
-                  
-                  <!-- All Products Slide -->
-                  <div class="swiper-slide">
-                      <a href="../otherpage/allproductsub.php" 
-                         class="nav-link block px-4 py-2 rounded text-white font-medium text-sm hover:bg-white/20 transition-colors whitespace-nowrap <?php echo (!isset($_GET['subcategory_id'])) ? 'bg-white/20 font-bold' : ''; ?>">
-                          All subcategories
-                      </a>
-                  </div>
-
-                  <!-- Subcategory Slides -->
-                  <?php foreach ($navigation_subcategories as $subcategory_item): ?>
-                  <div class="swiper-slide ">
-                      <a href="allproductsub_variant.php?subcategory_id=<?php echo $subcategory_item['id']; ?>" 
-                         class="nav-link block px-4 py-2 rounded text-white font-medium text-sm hover:bg-white/20 transition-colors whitespace-nowrap <?php echo (isset($_GET['subcategory_id']) && $_GET['subcategory_id'] == $subcategory_item['id']) ? 'bg-white/20 font-bold' : ''; ?>"
-                         title="<?php echo htmlspecialchars($subcategory_item['subcategory_name']); ?>">
-                          <?php 
-                          $name = $subcategory_item['subcategory_name'];
-                          echo htmlspecialchars(strlen($name) > 20 ? substr($name, 0, 20) . '...' : $name); 
-                          ?>
-                      </a>
-                  </div>
-                  <?php endforeach; ?>
-
-              </div>
-          </div>
-      </div>
-  </nav>
 
   <!-- Swiper JS -->
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>

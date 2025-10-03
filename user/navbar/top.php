@@ -514,7 +514,7 @@ $display_categories = getNavigationData($conn);
             <!-- Button -->
             <button
               @click="fetchResults"
-              class="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-4 py-1.5 rounded-full text-sm  hover:from-orange-500 hover:to-orange-600 transition shadow-sm">
+              class="bg-black text-white px-4 py-1.5 rounded-full text-sm  hover:from-orange-500 hover:to-orange-600 transition shadow-sm">
               Search
             </button>
           </div>

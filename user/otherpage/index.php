@@ -440,16 +440,17 @@ handleQueryError($conn, "New Status Query");
         }
 
         .swiper-pagination-bullet {
-    width: 30px !important;
-    height: 4px !important;
-    border-radius: 2px !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    opacity: 1 !important;
-}
+            width: 30px !important;
+            height: 4px !important;
+            border-radius: 2px !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+            opacity: 1 !important;
+        }
 
-.swiper-pagination-bullet-active {
-    background: #ffffff !important;
-}
+        .swiper-pagination-bullet-active {
+            background: #ffffff !important;
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -538,26 +539,26 @@ handleQueryError($conn, "New Status Query");
         <?php unset($_SESSION['login_error']); ?>
     <?php endif; ?>
 
-<section class="w-full overflow-hidden relative">
-    <div class="mySwiper relative w-full">
-        <div class="swiper-wrapper">
-            <?php while ($row = $slideresult->fetch_assoc()): ?>
-                <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative bg-white">
-                    <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
-                        alt="Discount"
-                        class="w-full h-full object-cover object-center" />
-                    <!-- Overlay -->
-                    <div class="absolute inset-0 bg-black/10"></div>
-                </div>
-            <?php endwhile; ?>
+    <section class="w-full overflow-hidden relative">
+        <div class="mySwiper relative w-full">
+            <div class="swiper-wrapper">
+                <?php while ($row = $slideresult->fetch_assoc()): ?>
+                    <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative bg-white">
+                        <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
+                            alt="Discount"
+                            class="w-full h-full object-cover object-center" />
+                        <!-- Overlay -->
+                        <div class="absolute inset-0 bg-black/5"></div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+
+            <!-- Rectangle Pagination Indicators -->
+            <div class="swiper-pagination !bottom-4 relative z-10"></div>
+
+            <!-- buttons same as before -->
         </div>
-        
-        <!-- Rectangle Pagination Indicators -->
-        <div class="swiper-pagination !bottom-4 relative z-10"></div>
-        
-        <!-- buttons same as before -->
-    </div>
-</section>
+    </section>
 
 
     <section class="bg-black text-white p-2">
@@ -1179,8 +1180,8 @@ handleQueryError($conn, "New Status Query");
                     class="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
 
                     <!-- Sidebar Header -->
-                    <div class="flex justify-between items-center p-4 border-b bg-orange-500 text-white">
-                        <h2 class="text-lg font-bold">New Products</h2>
+                    <div class="flex justify-between items-center p-4 border-b bg-black text-white">
+                        <h2 class="text-lg ">New Products</h2>
                         <button onclick="toggleSidebar()"
                             class="text-white hover:text-orange-200 text-xl font-bold">
                             ×
@@ -1396,7 +1397,7 @@ handleQueryError($conn, "New Status Query");
                     }
 
                     #newProductsSidebar .overflow-y-auto::-webkit-scrollbar-track {
-                        background: #f1f1f1;
+                        background: #ffffffff;
                         border-radius: 2px;
                     }
 
@@ -1689,7 +1690,7 @@ handleQueryError($conn, "New Status Query");
                                         width: 0%;
                                         opacity: 0;
                                         color: white;
-                                       
+
                                         transition-duration: .3s;
                                     }
 
@@ -2539,138 +2540,138 @@ handleQueryError($conn, "New Status Query");
 
     </section>
 
-<!-- Featured Categories Section -->
-<section class="p-6">
-    <div class="text-center mb-6">
-        <h1 class="text-2xl">Featured Categories</h1>
-        <p class="text-gray-600">Discover our top product categories just for you.</p>
-    </div>
-    
-    <!-- Category Boxes - Clickable with Flex Layout -->
-    <div class="flex flex-wrap gap-4 justify-center">
-        <!-- Doors Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
-             onclick="loadCategoryProducts('doors')">
-            <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl  text-white">Doors</h2>
-            </div>
+    <!-- Featured Categories Section -->
+    <section class="p-6">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl">Featured Categories</h1>
+            <p class="text-gray-600">Discover our top product categories just for you.</p>
         </div>
-        
-        <!-- Aircon Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
-             onclick="loadCategoryProducts('aircon')">
-            <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl  text-white">Aircon</h2>
-            </div>
-        </div>
-        
-        <!-- Bathroom Fixtures Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
-             onclick="loadCategoryProducts('bathroomfixtures')">
-            <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl  text-white">Bathroom Fixtures</h2>
-            </div>
-        </div>
-        
-        <!-- Tiles Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
-             onclick="loadCategoryProducts('tiles')">
-            <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl  text-white">Tiles</h2>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Sidebar Overlay (Hidden by default) -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
+        <!-- Category Boxes - Clickable with Flex Layout -->
+        <div class="flex flex-wrap gap-4 justify-center">
+            <!-- Doors Category -->
+            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+                onclick="loadCategoryProducts('doors')">
+                <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
+                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <h2 class="text-2xl  text-white">Doors</h2>
+                </div>
+            </div>
 
-<!-- Sidebar for Products -->
-<div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
-    <!-- Sidebar Header -->
-    <div class="sticky top-0 bg-orange-500 border-b p-4 flex justify-between items-center z-1 0">
-        <div class="text-white">
-            <h2 class="text-xl font-bold capitalize" id="sidebarTitle">Products</h2>
-            <p class="text-sm " id="sidebarSubtitle">Loading...</p>
-        </div>
-        <button onclick="closeSidebar()" class="text-white hover:text-gray-900">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-    
-    <!-- Sidebar Content -->
-    <div id="sidebarContent" class="p-4">
-        <div class="flex justify-center items-center h-40">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-        </div>
-    </div>
-</div>
+            <!-- Aircon Category -->
+            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+                onclick="loadCategoryProducts('aircon')">
+                <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
+                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <h2 class="text-2xl  text-white">Aircon</h2>
+                </div>
+            </div>
 
-<script>
-function loadCategoryProducts(category) {
-    // Open sidebar
-    document.getElementById('sidebarOverlay').classList.remove('hidden');
-    document.getElementById('productSidebar').classList.remove('translate-x-full');
-    
-    // Update title
-    document.getElementById('sidebarTitle').textContent = category.charAt(0).toUpperCase() + category.slice(1);
-    document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
-    
-    // Show loading spinner
-    document.getElementById('sidebarContent').innerHTML = `
+            <!-- Bathroom Fixtures Category -->
+            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+                onclick="loadCategoryProducts('bathroomfixtures')">
+                <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
+                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <h2 class="text-2xl  text-white">Bathroom Fixtures</h2>
+                </div>
+            </div>
+
+            <!-- Tiles Category -->
+            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+                onclick="loadCategoryProducts('tiles')">
+                <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
+                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <h2 class="text-2xl  text-white">Tiles</h2>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sidebar Overlay (Hidden by default) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar for Products -->
+    <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
+        <!-- Sidebar Header -->
+        <div class="sticky top-0 bg-black border-b p-4 flex justify-between items-center z-1 0">
+            <div class="text-white">
+                <h2 class="text-xl  capitalize" id="sidebarTitle">Products</h2>
+                <p class="text-sm " id="sidebarSubtitle">Loading...</p>
+            </div>
+            <button onclick="closeSidebar()" class="text-white hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div id="sidebarContent" class="p-4">
+            <div class="flex justify-center items-center h-40">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadCategoryProducts(category) {
+            // Open sidebar
+            document.getElementById('sidebarOverlay').classList.remove('hidden');
+            document.getElementById('productSidebar').classList.remove('translate-x-full');
+
+            // Update title
+            document.getElementById('sidebarTitle').textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+
+            // Show loading spinner
+            document.getElementById('sidebarContent').innerHTML = `
         <div class="flex justify-center items-center h-40">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
     `;
-    
-    // Fetch products via AJAX
-    fetch('index_fetch_category_products.php?category=' + category)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('sidebarContent').innerHTML = data;
-            document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
-        })
-        .catch(error => {
-            document.getElementById('sidebarContent').innerHTML = `
+
+            // Fetch products via AJAX
+            fetch('index_fetch_category_products.php?category=' + category)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('sidebarContent').innerHTML = data;
+                    document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
+                })
+                .catch(error => {
+                    document.getElementById('sidebarContent').innerHTML = `
                 <div class="text-center text-red-500 p-4">
                     <p>Error loading products. Please try again.</p>
                 </div>
             `;
+                });
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+            document.getElementById('productSidebar').classList.add('translate-x-full');
+        }
+
+        // Close sidebar with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
         });
-}
+    </script>
 
-function closeSidebar() {
-    document.getElementById('sidebarOverlay').classList.add('hidden');
-    document.getElementById('productSidebar').classList.add('translate-x-full');
-}
+    <style>
+        .category-box {
+            transition: all 0.3s ease;
+        }
 
-// Close sidebar with ESC key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeSidebar();
-    }
-});
-</script>
+        .category-box:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
 
-<style>
-.category-box {
-    transition: all 0.3s ease;
-}
-
-.category-box:hover {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.category-box:active {
-    transform: scale(0.98);
-}
-</style>
+        .category-box:active {
+            transform: scale(0.98);
+        }
+    </style>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10">
         <!-- Header -->

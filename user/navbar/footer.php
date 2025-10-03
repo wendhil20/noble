@@ -63,6 +63,7 @@
                         <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
                         <a href="../rules/terms.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Terms of use</a>
                         <a href="../rules/policy.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Policy</a>
+                        <a href="../about/about.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About</a>
                     </nav>
                 </div>
 

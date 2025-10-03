@@ -216,10 +216,7 @@ $avg_stmt->close();
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
 
-    /* Gradient Background */
-    .gradient-bg {
-      background: linear-gradient(135deg, #f97316 100%, #f97316 100%);
-    }
+
 
     /* Swiper Styles */
     .related-swiper {
@@ -635,7 +632,7 @@ $avg_stmt->close();
   <?php include '../navbar/top.php'; ?>
 
   <!-- Hero Section with Bouncing Bubbles Background -->
-  <div class="gradient-bg text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
+  <div class="bg-black text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
     <!-- Bouncing Bubbles SVG Layer -->
     <div class="absolute inset-0 pointer-events-none z-0">
       <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
@@ -1326,14 +1323,14 @@ $avg_stmt->close();
        <?php if ($related_products->num_rows > 0): ?>
           <!-- Mobile Bottom Bar Trigger (Smaller & Side Floating) -->
           <button id="relatedProductsTrigger"
-            class="lg:hidden fixed bottom-20 right-4 z-[80] bg-orange-500 text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
+            class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
             <i class="fas fa-th-large text-sm"></i>
             <span>Related (<?= $related_products->num_rows ?>)</span>
           </button>
 
           <!-- Desktop Sidebar Trigger (Fixed on right side) -->
           <button id="desktopSidebarTrigger"
-            class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-orange-500 text-white px-3 py-6 rounded-l-lg shadow-lg hover:shadow-xl transition-all hover:px-4 flex-col items-center gap-2 group">
+            class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-black text-white px-3 py-6 rounded-l-lg shadow-lg hover:shadow-xl transition-all hover:px-4 flex-col items-center gap-2 group">
             <span class="text-xs  writing-mode-vertical transform rotate-180">Related Products</span>
             <span class="text-xs bg-white text-orange-600 rounded-full w-6 h-6 flex items-center justify-center font-bold"><?= $related_products->num_rows ?></span>
           </button>
@@ -1352,10 +1349,10 @@ $avg_stmt->close();
            max-h-[80vh] lg:max-h-full overflow-hidden flex flex-col">
 
             <!-- Header (Mobile & Desktop) -->
-            <div class="sticky top-0 bg-orange-500 text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
+            <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
               <div>
                 <h2 class="text-base lg:text-lg">Related Products</h2>
-                <p class="text-xs text-orange-100">Similar items you may like</p>
+                <p class="text-xs text-white">Similar items you may like</p>
               </div>
               <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
                 <i class="fas fa-times text-lg"></i>
@@ -1372,7 +1369,7 @@ $avg_stmt->close();
                 ?>
                   <div class="group">
                     <a href="product_view.php?id=<?= $row['id'] ?>"
-                      class="block bg-white rounded-lg hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full border border-gray-200 hover:border-orange-300">
+                      class="block bg-white  hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full  hover:border-orange-300">
 
                       <!-- Product Image -->
                       <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
@@ -1414,7 +1411,7 @@ $avg_stmt->close();
 
                         <!-- Product Code -->
                         <div class="flex items-center justify-between">
-                          <span class="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-medium">
+                          <span class="text-xs px-2 py-0.5 bg-black text-white">
                             <?= htmlspecialchars($row['codename']) ?>
                           </span>
                           <span class="text-xs text-gray-400">

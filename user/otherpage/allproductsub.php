@@ -43,6 +43,7 @@ $onsale_result = $conn->query($onsale_query);
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,6 +56,7 @@ $onsale_result = $conn->query($onsale_query);
             position: relative;
             overflow: hidden;
         }
+
         .category-card::before {
             content: '';
             position: absolute;
@@ -62,32 +64,38 @@ $onsale_result = $conn->query($onsale_query);
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             transition: left 0.5s;
         }
+
         .category-card:hover::before {
             left: 100%;
         }
+
         .subcategory-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .subcategory-card:hover {
             transform: translateY(-4px);
         }
-        
+
         /* Sidebar styles */
         .sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease-in-out;
         }
+
         .sidebar.open {
             transform: translateX(0);
         }
+
         .overlay {
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease-in-out;
         }
+
         .overlay.open {
             opacity: 1;
             pointer-events: auto;
@@ -98,151 +106,176 @@ $onsale_result = $conn->query($onsale_query);
             width: 100%;
             height: 500px;
         }
+
         .banner-swiper .swiper-slide {
             display: flex;
             align-items: center;
             justify-content: center;
             background: #f3f4f6;
         }
+
         .banner-swiper .swiper-slide img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         /* Large Desktop (1920px+) */
         @media (min-width: 1920px) {
             .banner-swiper {
                 height: 600px;
             }
         }
+
         /* Desktop (1440px-1919px) */
         @media (max-width: 1919px) {
             .banner-swiper {
                 height: 500px;
             }
         }
+
         /* Laptop (1280px-1439px) */
         @media (max-width: 1439px) {
             .banner-swiper {
                 height: 450px;
             }
         }
+
         /* Tablet Landscape (1024px-1279px) */
         @media (max-width: 1279px) {
             .banner-swiper {
                 height: 400px;
             }
         }
+
         /* Tablet Portrait (768px-1023px) */
         @media (max-width: 1023px) {
             .banner-swiper {
                 height: 350px;
             }
         }
+
         /* Mobile Landscape (640px-767px) */
         @media (max-width: 767px) {
             .banner-swiper {
                 height: 280px;
             }
         }
+
         /* Mobile Portrait (480px-639px) */
         @media (max-width: 639px) {
             .banner-swiper {
                 height: 240px;
             }
         }
+
         /* Small Mobile (375px-479px) */
         @media (max-width: 479px) {
             .banner-swiper {
                 height: 200px;
             }
         }
+
         /* Extra Small Mobile (≤374px) */
         @media (max-width: 374px) {
             .banner-swiper {
                 height: 180px;
             }
         }
+
         .swiper-button-next:after,
         .swiper-button-prev:after {
             content: '';
         }
+
         .swiper-pagination-bullet {
             background: white;
             opacity: 0.7;
         }
+
         .swiper-pagination-bullet-active {
             background: #dc2626;
             opacity: 1;
         }
     </style>
 </head>
+
 <body class="bg-white min-h-screen font-roboto">
     <?php include '../navbar/top.php'; ?>
-    
+
     <!-- On Sale Banner Swiper - Full Width -->
     <?php if ($onsale_result->num_rows > 0): ?>
-    <div class="w-full bg-gray-100 mb-8">
-        <div class="swiper banner-swiper">
-            <div class="swiper-wrapper">
-                <?php while ($banner = $onsale_result->fetch_assoc()): ?>
-                <div class="swiper-slide">
-                    <img src="../../uploads/<?= basename($banner['filename']) ?>" 
-                         alt="On Sale Banner" 
-                         class="w-full h-full object-cover">
+        <div class="w-full bg-gray-100 mb-8">
+            <div class="swiper banner-swiper">
+                <div class="swiper-wrapper">
+                    <?php while ($banner = $onsale_result->fetch_assoc()): ?>
+                        <div class="swiper-slide">
+                            <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                alt="On Sale Banner"
+                                class="w-full h-full object-cover">
+                        </div>
+                    <?php endwhile; ?>
                 </div>
-                <?php endwhile; ?>
+
+                <!-- Custom Navigation Buttons with Icons -->
+                <div class="swiper-button-prev !w-10 !h-10 !bg-black/70 hover:!bg-red-600 !rounded-full !transition-all !duration-300 hover:!scale-110 !flex !items-center !justify-center after:!content-[''] !shadow-lg !-left-2 md:!left-[100px]">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </div>
+                <div class="swiper-button-next !w-10 !h-10 !bg-black/70 hover:!bg-red-600 !rounded-full !transition-all !duration-300 hover:!scale-110 !flex !items-center !justify-center after:!content-[''] !shadow-lg !-right-2 md:!right-[100px]">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+                <div class="swiper-pagination"></div>
             </div>
-            
-             <!-- Custom Navigation Buttons with Icons -->
-            <div class="swiper-button-prev !w-14 !h-14 !bg-black/70 hover:!bg-red-600 !rounded-full !transition-all !duration-300 hover:!scale-110 !flex !items-center !justify-center after:!content-[''] !shadow-lg !-left-2 md:!left-[100px]">
-                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-                </svg>
-            </div>
-            <div class="swiper-button-next !w-14 !h-14 !bg-black/70 hover:!bg-red-600 !rounded-full !transition-all !duration-300 hover:!scale-110 !flex !items-center !justify-center after:!content-[''] !shadow-lg !-right-2 md:!right-[100px]">
-                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                </svg>
-            </div>
-            <div class="swiper-pagination"></div>
+
+            <section class="bg-black text-white py-1">
+                <div class="max-w-6xl mx-auto px-1 text-center md:text-left">
+                    <div class="inline-flex flex-wrap gap-3 items-center">
+                        <p class="text-base md:text-lg text-black">
+
+                        </p>
+                    </div>
+                </div>
+            </section>
         </div>
-    </div>
+
     <?php endif; ?>
 
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onclick="closeSidebar()"></div>
-    
+
     <!-- Mobile Sidebar -->
     <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 md:hidden overflow-y-auto">
         <div class="p-6">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-bold text-black">Sale Categories</h2>
+                <h2 class="text-xl text-black">Sale Categories</h2>
                 <button onclick="closeSidebar()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            
+
             <div class="space-y-3">
-                <?php 
+                <?php
                 $categories_result->data_seek(0); // Reset pointer
-                while ($category = $categories_result->fetch_assoc()): 
+                while ($category = $categories_result->fetch_assoc()):
                 ?>
-                    <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>'); closeSidebar();" 
-                       class="category-btn-mobile w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition-all duration-200 group"
-                       data-category-id="<?= $category['id'] ?>">
+                    <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>'); closeSidebar();"
+                        class="category-btn-mobile w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition-all duration-200 group"
+                        data-category-id="<?= $category['id'] ?>">
                         <div class="flex items-center gap-3">
                             <?php if ($category['image_path']): ?>
-                                <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>" 
-                                     alt="<?= htmlspecialchars($category['name']) ?>"
-                                     class="w-12 h-12 object-contain rounded">
+                                <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                                    alt="<?= htmlspecialchars($category['name']) ?>"
+                                    class="w-12 h-12 object-contain rounded">
                             <?php else: ?>
                                 <div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
                                     <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                 </div>
                             <?php endif; ?>
@@ -251,7 +284,7 @@ $onsale_result = $conn->query($onsale_query);
                                 <p class="font-semibold text-gray-900 text-sm uppercase"><?= htmlspecialchars($category['name']) ?></p>
                             </div>
                             <svg class="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </div>
                     </button>
@@ -265,14 +298,14 @@ $onsale_result = $conn->query($onsale_query);
         <div class="mb-12">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-4xl font-bold text-black mb-2">Sale Items</h1>
+                    <h1 class="text-4xl  text-black mb-2">Sale Items</h1>
                     <p class="text-gray-600 text-lg mt-2">Browse discounted products by category</p>
                     <div class="h-1 w-24 bg-red-600 mt-3"></div>
                 </div>
                 <!-- Mobile Menu Button -->
                 <button onclick="openSidebar()" class="md:hidden bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                     Categories
                 </button>
@@ -282,40 +315,40 @@ $onsale_result = $conn->query($onsale_query);
         <!-- Desktop Categories Section -->
         <div class="mb-12 hidden md:block">
             <div class="flex items-center gap-3 mb-6">
-                <h2 class="text-2xl font-semibold text-black">Sale Categories</h2>
-                <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">ON SALE</span>
+                <h2 class="text-2xl  text-black">Sale Categories</h2>
+                <span class="bg-red-600 text-white text-xs px-3 py-1 rounded-full">ON SALE</span>
             </div>
 
             <div class="relative">
                 <!-- Previous Button -->
-                <button onclick="slideCategories('prev')" 
-                        class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black rounded-full p-3 hover:bg-black hover:text-white transition-all duration-300 shadow-lg -ml-4">
+                <button onclick="slideCategories('prev')"
+                    class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black rounded-full p-3 hover:bg-black hover:text-white transition-all duration-300 shadow-lg -ml-4">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
 
                 <!-- Categories Slider Container -->
                 <div class="overflow-hidden px-8">
                     <div id="categories-slider" class="flex transition-transform duration-500 ease-in-out gap-6">
-                        <?php 
+                        <?php
                         $categories_result->data_seek(0); // Reset pointer
-                        while ($category = $categories_result->fetch_assoc()): 
+                        while ($category = $categories_result->fetch_assoc()):
                         ?>
-                            <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')" 
-                               class="category-btn category-card group flex-shrink-0 w-[calc(33.333%-1rem)] border-2 border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:border-black hover:shadow-2xl relative"
-                               data-category-id="<?= $category['id'] ?>"
-                               style="min-width: calc(33.333% - 1rem);">
-                                
+                            <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')"
+                                class="category-btn category-card group flex-shrink-0 w-[calc(33.333%-1rem)] border-2 border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:border-black hover:shadow-2xl relative"
+                                data-category-id="<?= $category['id'] ?>"
+                                style="min-width: calc(33.333% - 1rem);">
+
                                 <?php if ($category['image_path']): ?>
                                     <div class="aspect-[4/3] overflow-hidden bg-gray-50 relative">
-                                        <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>" 
-                                             alt="<?= htmlspecialchars($category['name']) ?>"
-                                             class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500">
-                                        
+                                        <img src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                                            alt="<?= htmlspecialchars($category['name']) ?>"
+                                            class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500">
+
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end justify-center p-4">
                                             <div class="text-center">
-                                                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded mb-2 inline-block">SALE</span>
+                                                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded mb-2 inline-block">SALE</span>
                                                 <h3 class="text-white text-lg drop-shadow-lg uppercase font-light">
                                                     <?= htmlspecialchars($category['name']) ?>
                                                 </h3>
@@ -325,12 +358,12 @@ $onsale_result = $conn->query($onsale_query);
                                 <?php else: ?>
                                     <div class="aspect-[4/3] bg-gray-100 flex items-center justify-center relative">
                                         <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        
+
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center p-4">
                                             <div class="text-center">
-                                                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded mb-2 inline-block">SALE</span>
+                                                <span class="bg-red-600 text-white text-xs  px-2 py-1 rounded mb-2 inline-block">SALE</span>
                                                 <h3 class="text-white text-lg drop-shadow-lg uppercase font-light">
                                                     <?= htmlspecialchars($category['name']) ?>
                                                 </h3>
@@ -344,10 +377,10 @@ $onsale_result = $conn->query($onsale_query);
                 </div>
 
                 <!-- Next Button -->
-                <button onclick="slideCategories('next')" 
-                        class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black rounded-full p-3 hover:bg-black hover:text-white transition-all duration-300 shadow-lg -mr-4">
+                <button onclick="slideCategories('next')"
+                    class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black rounded-full p-3 hover:bg-black hover:text-white transition-all duration-300 shadow-lg -mr-4">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
             </div>
@@ -361,8 +394,8 @@ $onsale_result = $conn->query($onsale_query);
                         <span id="category-title">Subcategories</span> <span class="text-red-600 text-lg">- On Sale</span>
                     </h2>
                 </div>
-                <button onclick="hideSubcategories()" 
-                        class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-300 text-sm font-medium">
+                <button onclick="hideSubcategories()"
+                    class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-300 text-sm font-medium">
                     ✕ Close
                 </button>
             </div>
@@ -374,7 +407,7 @@ $onsale_result = $conn->query($onsale_query);
     </div>
 
     <?php include '../navbar/footer.php'; ?>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
         // Initialize Swiper for Banner
@@ -457,9 +490,9 @@ $onsale_result = $conn->query($onsale_query);
 
             // Smooth scroll to subcategories
             setTimeout(() => {
-                document.getElementById('subcategories-section').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
+                document.getElementById('subcategories-section').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
             }, 100);
 
@@ -471,9 +504,9 @@ $onsale_result = $conn->query($onsale_query);
                 section.style.transition = 'opacity 0.5s';
                 section.style.opacity = '1';
             }, 10);
-            
+
             document.getElementById('category-title').textContent = categoryName;
-            
+
             // Show loading state
             document.getElementById('subcategories-content').innerHTML = `
                 <div class="col-span-full text-center py-16">
@@ -494,10 +527,10 @@ $onsale_result = $conn->query($onsale_query);
                     if (data.success && data.subcategories.length > 0) {
                         let html = '';
                         data.subcategories.forEach(sub => {
-                            const imagePath = sub.image_path 
-                                ? `../../uploads/${sub.subcategory_slug}/${sub.image_path}` 
-                                : null;
-                            
+                            const imagePath = sub.image_path ?
+                                `../../uploads/${sub.subcategory_slug}/${sub.image_path}` :
+                                null;
+
                             html += `
                                 <a href="allproductsub_variant.php?subcategory_id=${sub.id}" 
                                    class="subcategory-card bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-black hover:shadow-xl cursor-pointer group">
@@ -571,8 +604,12 @@ $onsale_result = $conn->query($onsale_query);
                 btn.classList.add('border-gray-200');
             });
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         }
     </script>
 </body>
+
 </html>

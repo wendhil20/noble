@@ -437,6 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return false;
     }
 
+    
     // ADD BACK the main PayPal processing in the POST section:
     if ($payment_method === 'PayPal') {
         try {
@@ -684,9 +685,6 @@ if ($_POST['payment_method'] === 'PayMongo') {
             throw new Exception('Invalid order amount');
         }
         
-        // Generate reference number
-        $reference_no = 'NB' . time() . rand(1000, 9999);
-        
         // Get coordinates from billing address if selected
         $latitude = null;
         $longitude = null;
@@ -703,163 +701,65 @@ if ($_POST['payment_method'] === 'PayMongo') {
             $stmt->close();
         }
         
-        $order_id = $conn->insert_id;
-        $stmt->close();
+        // ✅ STORE ORDER DATA IN SESSION - Don't insert to DB yet
+        $_SESSION['paymongo_order_data'] = [
+            'customer_name' => $customer_name,
+            'email' => $email,
+            'mobile' => $mobile,
+            'address' => $address,
+            'zipcode' => $zipcode,
+            'billing_address_id' => $billing_address_id,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'delivery_fee' => $delivery_fee,
+            'delivery_distance' => $delivery_distance,
+            'subtotal' => $subtotal,
+            'vat_amount' => $vat_amount,
+            'grand_total' => $grand_total,
+            'user_id' => $user_id,
+            'cart_items' => $cart_items // Store cart items for later insertion
+        ];
         
-        // Add cart items to order_items (existing code is correct)
-        $cart_stmt = $conn->prepare("
-            SELECT uci.* 
-            FROM user_cart_items uci 
-            WHERE uci.user_id = ?
-        ");
-        $cart_stmt->bind_param("i", $user_id);
-        $cart_stmt->execute();
-        $cart_result = $cart_stmt->get_result();
-        
-        $order_item_stmt = $conn->prepare("INSERT INTO order_items (
-            order_id, product_id, product_name, codename, type_name, 
-            variant_color, size, price, quantity, subtotal, 
-            descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
-        while ($item = $cart_result->fetch_assoc()) {
-            $item_subtotal = $item['price'] * $item['quantity'];
-            
-            $product_name = $item['variant_name'] ?? 'Product';
-            $color = $item['color_name'] ?? '';
-            $codename = $item['codename'] ?? '';
-            $type_name = $item['type_name'] ?? '';
-            $size = $item['size'] ?? '';
-            $descrip6 = $item['descrip6'] ?? '';
-            $descrip7 = $item['descrip7'] ?? '';
-            $origin = '';
-            
-            $order_item_stmt->bind_param(
-                "iisssssdiisssdd",
-                $order_id,
-                $item['product_id'],
-                $product_name,
-                $codename,
-                $type_name,
-                $color,
-                $size,
-                $item['price'],
-                $item['quantity'],
-                $item_subtotal,
-                $descrip6,
-                $descrip7,
-                $origin,
-                0, // delivery_fee_per_item
-                0  // item_total_delivery
-            );
-            
-            if (!$order_item_stmt->execute()) {
-                error_log("Failed to insert order item: " . $order_item_stmt->error);
+        // ✅ REDIRECT to create PayMongo session using AJAX call
+        ?>
+        <script>
+        // Create PayMongo session via AJAX
+        fetch('paymongo-create-sessions.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount: <?= $grand_total ?>,
+                delivery_fee: <?= $delivery_fee ?>,
+                order_details: {
+                    customer_name: '<?= addslashes($customer_name) ?>',
+                    email: '<?= addslashes($email) ?>',
+                    mobile: '<?= addslashes($mobile) ?>',
+                    address: '<?= addslashes($address) ?>',
+                    zipcode: '<?= addslashes($zipcode) ?>',
+                    billing_address_id: <?= $billing_address_id ?: 'null' ?>,
+                    latitude: <?= $latitude ?: 'null' ?>,
+                    longitude: <?= $longitude ?: 'null' ?>
+                }
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
+                window.location.href = data.data.attributes.checkout_url;
+            } else {
+                alert('PayMongo session creation failed. Please try again.');
+                console.error('PayMongo Error:', data);
             }
-        }
-        
-        $cart_stmt->close();
-        $order_item_stmt->close();
-        
-        // Create PayMongo checkout session (existing code)
-        $amount_in_centavos = intval($grand_total * 100);
-        $secretKey = "sk_test_AJdRkkXWfGW9W5DHV6UNNECZ";
-        
-        $checkout_data = [
-            "data" => [
-                "attributes" => [
-                    "amount" => $amount_in_centavos,
-                    "currency" => "PHP",
-                    "line_items" => [[
-                        "name" => "Noble Home Order #" . $reference_no,
-                        "quantity" => 1,
-                        "amount" => $amount_in_centavos,
-                        "currency" => "PHP",
-                        "description" => "Items: ₱" . number_format($subtotal, 2) .
-                            " + VAT: ₱" . number_format($vat_amount, 2) .
-                            " + Delivery: ₱" . number_format($delivery_fee, 2)
-                    ]],
-                    "payment_method_types" => ["gcash", "paymaya", "card", "grab_pay"],
-                    "success_url" => "http://localhost/noble/user/otherpage/paymongo-success.php?order_id=" . $order_id . "&ref=" . $reference_no,
-                    "cancel_url" => "http://localhost/noble/user/otherpage/checkout.php?payment_cancelled=1&order_id=" . $order_id,
-                    "description" => "Noble Home Construction - Order #" . $reference_no,
-                    "metadata" => [
-                        "user_id" => $user_id,
-                        "order_id" => $order_id,
-                        "reference_no" => $reference_no,
-                        "customer_name" => $customer_name,
-                        "customer_email" => $email
-                    ]
-                ]
-            ]
-        ];
-        
-        // Make PayMongo API call
-        $ch = curl_init("https://api.paymongo.com/v1/checkout_sessions");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Content-Type: application/json",
-            "Authorization: Basic " . base64_encode($secretKey . ":")
-        ]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($checkout_data));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_error = curl_error($ch);
-        curl_close($ch);
-        
-        // Debug logging
-        error_log("PayMongo Request Data: " . json_encode($checkout_data));
-        error_log("PayMongo Response: " . $response);
-        error_log("PayMongo HTTP Code: " . $http_code);
-        
-        if ($curl_error) {
-            throw new Exception('PayMongo connection failed: ' . $curl_error);
-        }
-        
-        if ($http_code !== 200) {
-            // Delete the order if PayMongo fails
-            $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
-            $conn->query("DELETE FROM orders WHERE id = $order_id");
-            throw new Exception('PayMongo API error: HTTP ' . $http_code . ' - ' . $response);
-        }
-        
-        $paymongo_data = json_decode($response, true);
-        
-        if (!$paymongo_data || !isset($paymongo_data['data']['attributes']['checkout_url'])) {
-            // Delete the order if response is invalid
-            $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
-            $conn->query("DELETE FROM orders WHERE id = $order_id");
-            throw new Exception('Invalid PayMongo response: ' . $response);
-        }
-        
-        // Update order with PayMongo session ID
-        $session_id = $paymongo_data['data']['id'];
-        $update_stmt = $conn->prepare("UPDATE orders SET paymongo_session_id = ? WHERE id = ?");
-        $update_stmt->bind_param("si", $session_id, $order_id);
-        $update_stmt->execute();
-        $update_stmt->close();
-        
-        // Clear user's cart
-        $clear_cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-        $clear_cart_stmt->bind_param("i", $user_id);
-        $clear_cart_stmt->execute();
-        $clear_cart_stmt->close();
-        
-        // Store order info in session for success page
-        $_SESSION['pending_paymongo_order'] = [
-            'order_id' => $order_id,
-            'session_id' => $session_id,
-            'reference_no' => $reference_no,
-            'amount' => $grand_total
-        ];
-        
-        // Redirect to PayMongo checkout
-        header('Location: ' . $paymongo_data['data']['attributes']['checkout_url']);
-        exit;
+        })
+        .catch(error => {
+            alert('Network error. Please try again.');
+            console.error('Error:', error);
+        });
+        </script>
+        <?php
+        exit; // Stop further execution
         
     } catch (Exception $e) {
         $error = "PayMongo payment error: " . $e->getMessage();

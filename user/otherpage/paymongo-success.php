@@ -1,5 +1,5 @@
 <?php
-// paymongo-success.php
+// paymongo-success.php - Simple version with reference_no fix
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
@@ -34,8 +34,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'] ?? 'Guest';
-$user_email = $_SESSION['user_email'] ?? null;
-$user_picture = $_SESSION['user_picture'] ?? null;
 
 $order_id = intval($_GET['order_id'] ?? 0);
 $reference_no = $_GET['ref'] ?? '';
@@ -43,59 +41,86 @@ $reference_no = $_GET['ref'] ?? '';
 $order_found = false;
 $payment_success = false;
 $error_message = '';
+$order = null;
+$order_items = null;
 
 try {
     if ($order_id > 0) {
-        // Get order details
+        // Find the order
         $stmt = $conn->prepare("
             SELECT * FROM orders 
-            WHERE id = ? AND user_id = ? AND reference_no = ?
+            WHERE id = ? AND user_id = ? AND mode_payment = 'PayMongo'
         ");
-        $stmt->bind_param("iis", $order_id, $user_id, $reference_no);
+        $stmt->bind_param("ii", $order_id, $user_id);
         $stmt->execute();
         $result = $stmt->get_result();
         
         if ($result->num_rows > 0) {
             $order = $result->fetch_assoc();
             $order_found = true;
-            
-            // Update payment status to verified
-            $update_stmt = $conn->prepare("
-                UPDATE orders 
-                SET payment_status = 'Pending', updated_at = NOW() 
-                WHERE id = ? AND user_id = ?
-            ");
-            $update_stmt->bind_param("ii", $order_id, $user_id);
-            
-            if ($update_stmt->execute()) {
+        }
+        $stmt->close();
+        
+        if ($order_found) {
+            // Check payment status and update if needed
+            if ($order['payment_status'] === 'pending') {
                 $payment_success = true;
-                
-                // Get order items
-                $items_stmt = $conn->prepare("
-                    SELECT * FROM order_items WHERE order_id = ?
+                $_SESSION['checkout_notice'] = 'Order already completed!';
+            } else if ($order['payment_status'] === 'pending_paymongo') {
+                // Update payment status to pending (successful payment)
+                $update_stmt = $conn->prepare("
+                    UPDATE orders 
+                    SET payment_status = 'pending', updated_at = NOW() 
+                    WHERE id = ? AND user_id = ?
                 ");
-                $items_stmt->bind_param("i", $order_id);
-                $items_stmt->execute();
-                $order_items = $items_stmt->get_result();
+                $update_stmt->bind_param("ii", $order['id'], $user_id);
                 
-                // Clear pending session
-                unset($_SESSION['pending_paymongo_order']);
+                if ($update_stmt->execute()) {
+                    $payment_success = true;
+                    
+                    // Clear cart
+                    $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
+                    $cart_stmt->bind_param("i", $user_id);
+                    $cart_stmt->execute();
+                    $cart_stmt->close();
+                    
+                    $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
+                } else {
+                    $error_message = "Failed to update payment status";
+                }
                 
-            } else {
-                $error_message = "Failed to update payment status";
+                $update_stmt->close();
             }
             
-            $update_stmt->close();
+            // Get order items
+            $items_stmt = $conn->prepare("SELECT * FROM order_items WHERE order_id = ?");
+            $items_stmt->bind_param("i", $order['id']);
+            $items_stmt->execute();
+            $order_items = $items_stmt->get_result();
+            
+            // Clear pending session
+            unset($_SESSION['pending_paymongo_order']);
+            
         } else {
             $error_message = "Order not found or access denied";
         }
-        $stmt->close();
+        
     } else {
         $error_message = "Invalid order ID";
     }
 } catch (Exception $e) {
     $error_message = "Database error: " . $e->getMessage();
     error_log("PayMongo success error: " . $e->getMessage());
+}
+
+// ✅ FIXED: Get display reference number with fallback logic
+$display_reference_no = '';
+if ($order && !empty($order['reference_no'])) {
+    $display_reference_no = $order['reference_no'];
+} elseif (!empty($reference_no)) {
+    $display_reference_no = $reference_no; // Use from URL parameter
+} else {
+    $display_reference_no = 'NH' . $order_id; // Generate fallback
 }
 ?>
 
@@ -105,7 +130,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
-    <title>Payment Successful - Noble Home</title>
+    <title>Payment <?= $payment_success ? 'Successful' : 'Failed' ?> - Noble Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,13 +143,6 @@ try {
         @keyframes successPulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
-        }
-        .confetti {
-            animation: confetti 3s ease-out infinite;
-        }
-        @keyframes confetti {
-            0% { transform: rotateZ(0deg); }
-            100% { transform: rotateZ(360deg); }
         }
     </style>
 </head>
@@ -164,7 +182,7 @@ try {
                         <div class="space-y-3">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Order Number:</span>
-                                <span class="font-bold text-blue-600">#<?= htmlspecialchars($order['reference_no']) ?></span>
+                                <span class="font-bold text-blue-600">#<?= htmlspecialchars($display_reference_no) ?></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Payment Method:</span>
@@ -177,7 +195,7 @@ try {
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Status:</span>
                                 <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                    Verified
+                                    Payment Verified
                                 </span>
                             </div>
                         </div>
@@ -196,12 +214,6 @@ try {
                                 <span class="text-gray-600">Items Subtotal:</span>
                                 <span class="font-medium">₱<?= number_format($order['subtotal'] ?? 0, 2) ?></span>
                             </div>
-                            <?php if (isset($order['vat_amount']) && $order['vat_amount'] > 0): ?>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">VAT (12%):</span>
-                                <span class="font-medium">₱<?= number_format($order['vat_amount'], 2) ?></span>
-                            </div>
-                            <?php endif; ?>
                             <?php if (isset($order['delivery_fee']) && $order['delivery_fee'] > 0): ?>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Delivery Fee:</span>
@@ -241,6 +253,9 @@ try {
                                     <?php endif; ?>
                                     <?php if (!empty($item['variant_color'])): ?>
                                         <div><strong>Color:</strong> <?= htmlspecialchars($item['variant_color']) ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($item['origin'])): ?>
+                                        <div><strong>Origin:</strong> <?= htmlspecialchars($item['origin']) ?></div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -293,7 +308,7 @@ try {
 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="order_receipt.php?order_id=<?= $order_id ?>" 
+                    <a href="order_receipt.php?order_id=<?= $order['id'] ?>" 
                        class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium text-center">
                         View Full Receipt
                     </a>
@@ -301,7 +316,7 @@ try {
                        class="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition font-medium text-center">
                         Continue Shopping
                     </a>
-                    <a href="../profile/profile.php" 
+                    <a href="profile.php" 
                        class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium text-center">
                         View Orders
                     </a>
@@ -344,7 +359,7 @@ try {
                         Return to Checkout
                     </a>
                     <a href="../index.php" 
-                       class="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition font-medium">
+                       class="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition font-medium text-center">
                         Continue Shopping
                     </a>
                 </div>
@@ -354,18 +369,6 @@ try {
 </div>
 
 <?php include '../navbar/footer.php'; ?>
-
-<script>
-    // Add some celebration effects for successful payments
-    <?php if ($payment_success): ?>
-    // Simple confetti animation
-    setTimeout(() => {
-        document.querySelectorAll('.confetti').forEach(el => {
-            el.style.animation = 'confetti 2s ease-out';
-        });
-    }, 1000);
-    <?php endif; ?>
-</script>
 
 </body>
 </html>

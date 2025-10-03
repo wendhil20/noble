@@ -218,16 +218,16 @@ for ($i = 0; $i < count($allItems); $i++) {
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     <!-- Header -->
-    <div class="bg-white shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center space-x-4">
-                    <a href="order_list.php" class="text-primary-600 hover:text-primary-700">
-                        <i class="fas fa-arrow-left text-xl"></i>
-                    </a>
-                    <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-3 rounded-xl shadow-lg">
-                        <i class="fas fa-clipboard-list text-white text-2xl"></i>
-                    </div>
+<div class="bg-transparent">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-4">
+                <a href="order_list.php" class="text-primary-600 hover:text-primary-700">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div class="bg-primary-500 p-3 rounded-lg">
+                    <i class="fas fa-clipboard-list text-white text-2xl"></i>
+                </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">P.O Management</h1>
                         <p class="text-gray-600 mt-1">
@@ -244,7 +244,7 @@ for ($i = 0; $i < count($allItems); $i++) {
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="alertContainer" class="mb-6"></div>
 
         <!-- Bulk Assignment Section -->

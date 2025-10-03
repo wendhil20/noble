@@ -1,7 +1,7 @@
 <?php
-// paymongo-create-sessions.php
-ini_set('display_errors', 0);
+// paymongo-create-sessions.php - FIXED version with correct parameter binding
 error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 session_name("nobleuser");
 session_start();
@@ -21,15 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once '../../connection/connect.php';
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'User not logged in']);
-    exit;
-}
-
 try {
+    require_once '../../connection/connect.php';
+    
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'User not logged in']);
+        exit;
+    }
+
     $input = json_decode(file_get_contents("php://input"), true);
 
     if (!$input || !isset($input['amount'])) {
@@ -37,116 +37,236 @@ try {
     }
 
     $amount = floatval($input['amount']);
-    if ($amount <= 0) throw new Exception('Invalid amount: ' . $amount);
+    if ($amount <= 0) {
+        throw new Exception('Invalid amount: ' . $amount);
+    }
 
     $user_id = $_SESSION['user_id'];
-    $reference_no = 'NB' . time() . rand(1000, 9999);
-
-    // Get order details from input
+    $delivery_fee = floatval($input['delivery_fee'] ?? 0);
     $order_details = $input['order_details'] ?? [];
+    
+    // Extract order details safely
     $customer_name = $order_details['customer_name'] ?? '';
     $email = $order_details['email'] ?? '';
     $mobile = $order_details['mobile'] ?? '';
-    
-    // Get additional form data
     $address = $order_details['address'] ?? '';
     $zipcode = $order_details['zipcode'] ?? '';
-    $billing_address_id = $order_details['billing_address_id'] ?? null;
-    $latitude = $order_details['latitude'] ?? null;
-    $longitude = $order_details['longitude'] ?? null;
+    $billing_address_id = !empty($order_details['billing_address_id']) ? intval($order_details['billing_address_id']) : null;
+    $latitude = !empty($order_details['latitude']) ? floatval($order_details['latitude']) : null;
+    $longitude = !empty($order_details['longitude']) ? floatval($order_details['longitude']) : null;
+    $delivery_distance = floatval($order_details['delivery_distance'] ?? 0);
+
+    // Validate required fields
+    if (empty($customer_name) || empty($email) || empty($mobile) || empty($address) || empty($zipcode)) {
+        throw new Exception('Missing required customer information');
+    }
+
+    // Generate reference number
+    $reference_no = 'NH' . mt_rand(9800000, 9899999);
+    
+    // Debug log BEFORE insert
+    error_log("=== DEBUG START ===");
+    error_log("Generated reference_no: " . $reference_no);
 
     // Calculate breakdown
-    $delivery_fee = floatval($input['delivery_fee'] ?? 0);
-    $subtotal = $amount - $delivery_fee; // Items subtotal
-    $vat_amount = $subtotal * 0.12; // 12% VAT on items only
-    $items_without_vat = $subtotal - $vat_amount; // Items before VAT
+    $subtotal = $amount - $delivery_fee;
+    $vat_amount = $subtotal * 0.12;
+    $items_without_vat = $subtotal - $vat_amount;
 
-    // ✅ SAVE ORDER TO DATABASE FIRST
-    $stmt = $conn->prepare("INSERT INTO orders (
+    // ✅ SIMPLIFIED INSERT - Test with minimal fields first
+    $test_stmt = $conn->prepare("INSERT INTO orders (
         user_id, customer_name, email, mobile, address, zipcode,
-        subtotal, delivery_fee, vat_amount, total, 
-        mode_payment, payment_status, reference_no, 
-        billing_address_id, latitude, longitude,
-        created_at, paymongo_session_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PayMongo', 'pending_paymongo', ?, ?, ?, ?, NOW(), '')");
+        subtotal, delivery_fee, total, mode_payment, payment_status, reference_no
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param("isssssdddsiddd", 
-        $user_id, 
-        $customer_name, 
-        $email, 
-        $mobile, 
-        $address,
-        $zipcode,
-        $items_without_vat,
-        $delivery_fee,
-        $vat_amount,
-        $amount, 
-        $reference_no,
-        $billing_address_id,
-        $latitude,
-        $longitude
+    if (!$test_stmt) {
+        throw new Exception('Failed to prepare order statement: ' . $conn->error);
+    }
+
+    $payment_method = 'PayMongo';
+    $payment_status = 'pending';
+    
+    // Create variables
+    $user_id_var = (int)$user_id;
+    $customer_name_var = (string)$customer_name;
+    $email_var = (string)$email;
+    $mobile_var = (string)$mobile;
+    $address_var = (string)$address;
+    $zipcode_var = (string)$zipcode;
+    $items_without_vat_var = (float)$items_without_vat;
+    $delivery_fee_var = (float)$delivery_fee;
+    $amount_var = (float)$amount;
+    $payment_method_var = (string)$payment_method;
+    $payment_status_var = (string)$payment_status;
+    $reference_no_var = (string)$reference_no;
+    
+    error_log("Binding reference_no_var: '" . $reference_no_var . "' (length: " . strlen($reference_no_var) . ")");
+    
+    $bind_success = $test_stmt->bind_param("isssssdddsss", 
+        $user_id_var,
+        $customer_name_var,
+        $email_var,
+        $mobile_var,
+        $address_var,
+        $zipcode_var,
+        $items_without_vat_var,
+        $delivery_fee_var,
+        $amount_var,
+        $payment_method_var,
+        $payment_status_var,
+        $reference_no_var
     );
+    
+    if (!$bind_success) {
+        error_log("Bind failed: " . $test_stmt->error);
+        throw new Exception('Failed to bind parameters: ' . $test_stmt->error);
+    }
+    
+    error_log("Bind successful, executing...");
 
-    if (!$stmt->execute()) {
-        throw new Exception('Failed to create order in database');
+    if (!$test_stmt->execute()) {
+        error_log("Execute failed: " . $test_stmt->error);
+        throw new Exception('Failed to create order: ' . $test_stmt->error);
     }
 
     $order_id = $conn->insert_id;
-    $stmt->close();
+    error_log("Insert successful, order_id: " . $order_id);
+    
+    // Verify immediately
+    $verify = $conn->query("SELECT reference_no FROM orders WHERE id = $order_id");
+    $row = $verify->fetch_assoc();
+    error_log("Verified reference_no from DB: '" . ($row['reference_no'] ?? 'NULL') . "'");
+    error_log("=== DEBUG END ===");
+    
+    $test_stmt->close();
+    
+    // Now update with remaining fields
+    if (!is_null($billing_address_id) || !is_null($latitude) || !is_null($longitude) || $delivery_distance > 0) {
+        $update_stmt = $conn->prepare("UPDATE orders SET 
+            billing_address_id = ?, 
+            latitude = ?, 
+            longitude = ?, 
+            delivery_distance = ?
+            WHERE id = ?");
+        
+        if ($update_stmt) {
+            $billing_id_var = $billing_address_id;
+            $lat_var = $latitude;
+            $lon_var = $longitude;
+            $dist_var = (float)$delivery_distance;
+            $order_id_var = $order_id;
+            
+            $update_stmt->bind_param("idddi", $billing_id_var, $lat_var, $lon_var, $dist_var, $order_id_var);
+            $update_stmt->execute();
+            $update_stmt->close();
+        }
+    }
 
-    // ✅ ADD CART ITEMS TO ORDER_ITEMS TABLE
+    // ✅ GET CART ITEMS AND ADD TO ORDER_ITEMS
     $cart_stmt = $conn->prepare("
-        SELECT uci.* 
+        SELECT uci.*, 
+               COALESCE(pv.origin, '') as origin,
+               pv.delivery_size_id,
+               ds.size_name,
+               ds.percentage as delivery_size_percentage
         FROM user_cart_items uci 
+        LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
+        LEFT JOIN delivery_sizes ds ON pv.delivery_size_id = ds.id
         WHERE uci.user_id = ?
     ");
-    $cart_stmt->bind_param("i", $user_id);
-    $cart_stmt->execute();
-    $cart_result = $cart_stmt->get_result();
+    
+    if (!$cart_stmt) {
+        throw new Exception('Failed to prepare cart statement: ' . $conn->error);
+    }
 
+    $user_id_cart = $user_id;
+    $cart_stmt->bind_param("i", $user_id_cart);
+    if (!$cart_stmt->execute()) {
+        throw new Exception('Failed to get cart items: ' . $cart_stmt->error);
+    }
+
+    $cart_result = $cart_stmt->get_result();
+    $cart_items = [];
+    while ($row = $cart_result->fetch_assoc()) {
+        $cart_items[] = $row;
+    }
+    $cart_stmt->close();
+
+    if (empty($cart_items)) {
+        // Delete the order since there are no items
+        $conn->query("DELETE FROM orders WHERE id = $order_id");
+        throw new Exception('No items found in cart');
+    }
+
+    // ✅ Insert order items with correct parameter count
     $order_item_stmt = $conn->prepare("INSERT INTO order_items (
         order_id, product_id, product_name, codename, type_name, 
         variant_color, size, price, quantity, subtotal, 
-        descrip6, descrip7, origin
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    while ($item = $cart_result->fetch_assoc()) {
-        $item_subtotal = $item['price'] * $item['quantity'];
+    if (!$order_item_stmt) {
+        throw new Exception('Failed to prepare order items statement: ' . $conn->error);
+    }
+
+    foreach ($cart_items as $item) {
+        $item_subtotal = floatval($item['price']) * intval($item['quantity']);
         
-        // Use data directly from user_cart_items table
-        $product_name = $item['variant_name'] ?? 'Product';
-        $color = $item['color_name'] ?? '';
+        // Extract item details safely
+        $product_name = $item['variant_name'] ?? $item['product_name'] ?? 'Product';
+        $color = $item['color_name'] ?? $item['variant_color'] ?? '';
         $codename = $item['codename'] ?? '';
         $type_name = $item['type_name'] ?? '';
         $size = $item['size'] ?? '';
         $descrip6 = $item['descrip6'] ?? '';
         $descrip7 = $item['descrip7'] ?? '';
+        $origin = $item['origin'] ?? '';
         
-        // Set origin as empty since user_cart_items doesn't have origin column
-        $origin = '';
+        // Delivery fees (can be 0 for now)
+        $delivery_fee_per_item = 0.00;
+        $item_total_delivery = 0.00;
 
-        $order_item_stmt->bind_param("iisssssdiisss", 
-            $order_id,
-            $item['product_id'],
-            $product_name,
-            $codename,
-            $type_name,
-            $color,
-            $size,
-            $item['price'],
-            $item['quantity'],
-            $item_subtotal,
-            $descrip6,
-            $descrip7,
-            $origin
+        // Create variables for all bind_param arguments
+        $order_id_var = $order_id;
+        $product_id_var = intval($item['product_id']);
+        $product_name_var = $product_name;
+        $codename_var = $codename;
+        $type_name_var = $type_name;
+        $color_var = $color;
+        $size_var = $size;
+        $price_var = floatval($item['price']);
+        $quantity_var = intval($item['quantity']);
+        $item_subtotal_var = $item_subtotal;
+        $descrip6_var = $descrip6;
+        $descrip7_var = $descrip7;
+        $origin_var = $origin;
+        $delivery_fee_per_item_var = $delivery_fee_per_item;
+        $item_total_delivery_var = $item_total_delivery;
+
+        $order_item_stmt->bind_param("iisssssdidsssdd", 
+            $order_id_var,                // i - 1
+            $product_id_var,              // i - 2
+            $product_name_var,            // s - 3
+            $codename_var,                // s - 4
+            $type_name_var,               // s - 5
+            $color_var,                   // s - 6
+            $size_var,                    // s - 7
+            $price_var,                   // d - 8
+            $quantity_var,                // i - 9
+            $item_subtotal_var,           // d - 10
+            $descrip6_var,                // s - 11
+            $descrip7_var,                // s - 12
+            $origin_var,                  // s - 13
+            $delivery_fee_per_item_var,   // d - 14
+            $item_total_delivery_var      // d - 15
         );
         
         if (!$order_item_stmt->execute()) {
             error_log("Failed to insert order item: " . $order_item_stmt->error);
+            // Don't throw exception here, just log the error
         }
     }
     
-    $cart_stmt->close();
     $order_item_stmt->close();
 
     // ✅ CREATE PAYMONGO CHECKOUT SESSION
@@ -172,14 +292,17 @@ try {
                 "cancel_url" => "http://localhost/noble/user/otherpage/checkout.php?payment_cancelled=1&order_id=" . $order_id,
                 "description" => "Noble Home Construction - Order #" . $reference_no,
                 "metadata" => [
-                    "user_id" => $user_id,
-                    "order_id" => $order_id,
-                    "reference_no" => $reference_no
+                    "user_id" => strval($user_id),
+                    "order_id" => strval($order_id),
+                    "reference_no" => $reference_no,
+                    "customer_name" => $customer_name,
+                    "customer_email" => $email
                 ]
             ]
         ]
     ];
 
+    // Make PayMongo API call
     $ch = curl_init("https://api.paymongo.com/v1/checkout_sessions");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -189,37 +312,65 @@ try {
     ]);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($checkout_data));
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
     curl_close($ch);
 
-    if ($http_code !== 200) {
-        // If PayMongo fails, delete the order we just created
+    // Debug logging
+    error_log("PayMongo Request Data: " . json_encode($checkout_data));
+    error_log("PayMongo Response: " . $response);
+    error_log("PayMongo HTTP Code: " . $http_code);
+
+    if ($curl_error) {
+        // Delete order if PayMongo fails
         $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
         $conn->query("DELETE FROM orders WHERE id = $order_id");
-        throw new Exception("PayMongo API error: $response");
+        throw new Exception("PayMongo connection failed: $curl_error");
+    }
+
+    if ($http_code !== 200) {
+        // Delete order if PayMongo fails
+        $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
+        $conn->query("DELETE FROM orders WHERE id = $order_id");
+        throw new Exception("PayMongo API error: HTTP $http_code - Response: " . substr($response, 0, 500));
     }
 
     $paymongo_response = json_decode($response, true);
     if (!$paymongo_response || !isset($paymongo_response['data']['id'])) {
+        // Delete order if PayMongo response is invalid
         $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
         $conn->query("DELETE FROM orders WHERE id = $order_id");
-        throw new Exception("Invalid PayMongo response");
+        throw new Exception("Invalid PayMongo response structure");
     }
 
     // ✅ UPDATE ORDER WITH PAYMONGO SESSION ID
     $session_id = $paymongo_response['data']['id'];
     $update_stmt = $conn->prepare("UPDATE orders SET paymongo_session_id = ? WHERE id = ?");
-    $update_stmt->bind_param("si", $session_id, $order_id);
-    $update_stmt->execute();
+    if (!$update_stmt) {
+        throw new Exception('Failed to prepare update statement: ' . $conn->error);
+    }
+    
+    // Create variables for bind_param
+    $session_id_var = $session_id;
+    $order_id_var = $order_id;
+    
+    $update_stmt->bind_param("si", $session_id_var, $order_id_var);
+    if (!$update_stmt->execute()) {
+        error_log("Failed to update order with PayMongo session ID: " . $update_stmt->error);
+    }
     $update_stmt->close();
 
-    // ✅ CLEAR USER'S CART
+    // ✅ CLEAR USER'S CART (since order is now created successfully)
     $clear_cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-    $clear_cart_stmt->bind_param("i", $user_id);
-    $clear_cart_stmt->execute();
-    $clear_cart_stmt->close();
+    if ($clear_cart_stmt) {
+        $user_id_clear = $user_id;
+        $clear_cart_stmt->bind_param("i", $user_id_clear);
+        $clear_cart_stmt->execute();
+        $clear_cart_stmt->close();
+    }
 
     // ✅ STORE ORDER INFO IN SESSION FOR SUCCESS PAGE
     $_SESSION['pending_paymongo_order'] = [
@@ -229,9 +380,16 @@ try {
         'amount' => $amount
     ];
 
-    echo $response; // Return PayMongo's response
+    // Return PayMongo's response
+    echo json_encode($paymongo_response);
 
 } catch (Exception $e) {
+    error_log("PayMongo create session error: " . $e->getMessage() . " - Stack trace: " . $e->getTraceAsString());
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);
+} catch (Error $e) {
+    error_log("PayMongo create session fatal error: " . $e->getMessage() . " - Stack trace: " . $e->getTraceAsString());
+    http_response_code(500);
+    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
+?>

@@ -366,13 +366,13 @@ if (!empty($view_assigned)) {
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     <!-- Header -->
-    <div class="bg-white shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center space-x-4">
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
-                        <i class="fas fa-users-cog text-white text-2xl"></i>
-                    </div>
+<div class="bg-transparent">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-4">
+                <div class="bg-blue-500 p-3 rounded-lg">
+                    <i class="fas fa-users-cog text-white text-2xl"></i>
+                </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">Warehouse Assignment</h1>
                         <p class="text-gray-600 mt-1">
@@ -406,7 +406,7 @@ if (!empty($view_assigned)) {
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Assignment Statistics -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 <?php echo $unassignedCount > 0 ? 'ring-2 ring-red-400' : ''; ?>">

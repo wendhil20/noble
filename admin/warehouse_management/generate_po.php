@@ -168,16 +168,16 @@ foreach ($allItems as $item) {
 
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <!-- Header -->
-    <div class="bg-white shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center space-x-4">
-                    <a href="po_management.php?order_id=<?php echo $order['id']; ?>" class="text-primary-600 hover:text-primary-700">
-                        <i class="fas fa-arrow-left text-xl"></i>
-                    </a>
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl shadow-lg">
-                        <i class="fas fa-file-invoice text-white text-2xl"></i>
-                    </div>
+<div class="bg-transparent">
+    <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-4">
+                <a href="po_management.php?order_id=<?php echo $order['id']; ?>" class="text-primary-600 hover:text-primary-700">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div class="bg-green-500 p-3 rounded-lg">
+                    <i class="fas fa-file-invoice text-white text-2xl"></i>
+                </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">Generate Purchase Order</h1>
                         <p class="text-gray-600 mt-1">Order #<?php echo $order['id']; ?> - <?php echo htmlspecialchars($order['customer_name']); ?></p>
@@ -206,7 +206,7 @@ foreach ($allItems as $item) {
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="alertContainer" class="mb-6"></div>
 
         <?php if (empty($supplierGroups)): ?>

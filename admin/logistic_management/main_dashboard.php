@@ -196,11 +196,11 @@ $statsStmt->close();
     <?php include '../navbar/top.php'; ?>
     
     <!-- Header -->
-    <div class="bg-white shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 space-y-4 sm:space-y-0">
+<div class="bg-transparent">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 space-y-4 sm:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
+                    <div class="bg-blue-500 p-3 rounded-lg">
                         <i class="fas fa-eye text-white text-2xl"></i>
                     </div>
                     <div>
@@ -239,78 +239,61 @@ $statsStmt->close();
     <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="bg-blue-100 p-3 rounded-lg">
-                        <i class="fas fa-calendar text-blue-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Scheduled</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo $stats['total_scheduled']; ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="bg-red-100 p-3 rounded-lg">
-                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Overdue</p>
-                        <p class="text-2xl font-bold text-red-600"><?php echo $stats['overdue_deliveries']; ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="bg-yellow-100 p-3 rounded-lg">
-                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pending</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo $stats['pending_deliveries']; ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="bg-green-100 p-3 rounded-lg">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Completed</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo $stats['completed_deliveries']; ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="bg-purple-100 p-3 rounded-lg">
-                        <i class="fas fa-truck-fast text-purple-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Today's Deliveries</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo $stats['today_deliveries']; ?></p>
-                    </div>
-                </div>
-            </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="bg-orange-100 p-3 rounded-lg">
-                        <i class="fas fa-exchange-alt text-orange-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Replacements</p>
-                        <p class="text-2xl font-bold text-gray-900"><?php echo $stats['replacement_deliveries']; ?></p>
-                    </div>
-                </div>
-            </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+    <!-- Total Scheduled -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-calendar text-blue-500 text-lg"></i>
+            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['total_scheduled']; ?></p>
         </div>
+        <p class="text-xs text-gray-600">Total Scheduled</p>
+    </div>
+    
+    <!-- Overdue -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-red-300 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
+            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['overdue_deliveries']; ?></p>
+        </div>
+        <p class="text-xs text-gray-600">Overdue</p>
+    </div>
+    
+    <!-- Pending -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-yellow-300 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-clock text-yellow-500 text-lg"></i>
+            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['pending_deliveries']; ?></p>
+        </div>
+        <p class="text-xs text-gray-600">Pending</p>
+    </div>
+    
+    <!-- Completed -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-green-300 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-check-circle text-green-500 text-lg"></i>
+            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['completed_deliveries']; ?></p>
+        </div>
+        <p class="text-xs text-gray-600">Completed</p>
+    </div>
+    
+    <!-- Today's Deliveries -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-purple-300 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-truck-fast text-purple-500 text-lg"></i>
+            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['today_deliveries']; ?></p>
+        </div>
+        <p class="text-xs text-gray-600">Today's Deliveries</p>
+    </div>
+    
+    <!-- Replacements -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-orange-300 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-exchange-alt text-orange-500 text-lg"></i>
+            <p class="text-2xl font-bold text-gray-900"><?php echo $stats['replacement_deliveries']; ?></p>
+        </div>
+        <p class="text-xs text-gray-600">Replacements</p>
+    </div>
+</div>
         
 
         <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">

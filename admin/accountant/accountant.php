@@ -439,8 +439,8 @@ $orders_result = $conn->query($orders_query);
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b-2 border-noble-orange">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header class="bg-white">
+        <div class="w-full px-6">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 bg-noble-orange rounded-lg flex items-center justify-center">
@@ -457,7 +457,7 @@ $orders_result = $conn->query($orders_query);
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="w-full px-6 py-8">
         <!-- Success/Error Messages -->
         <?php if ($success_message): ?>
             <div id="successAlert" class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between">

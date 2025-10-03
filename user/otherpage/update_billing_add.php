@@ -1433,7 +1433,6 @@ if ($_POST && isset($_POST['add_address'])) {
 
             return isValid;
         }
-        // LOCATION 3: Enhanced submit button event handler (around line 660-690 in your original code)
 
         // Enhanced form validation with STRICT submission prevention
         const form = document.querySelector('form');
@@ -1880,6 +1879,7 @@ if ($_POST && isset($_POST['add_address'])) {
         echo $redirect_script;
     }
     ?>
+
 </body>
 
 </html>

@@ -15,7 +15,6 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 
-
 // Update last activity time
 $_SESSION['last_activity'] = time();
 

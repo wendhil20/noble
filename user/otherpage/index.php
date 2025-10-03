@@ -56,7 +56,7 @@ $material_querys = "
            FROM product_colors pc2 
            WHERE pc2.product_id = p.id
        )
-    WHERE pv.discount = 30
+    WHERE pv.discount = 10
     ORDER BY pv.percent ASC, p.id ASC
 ";
 $material_results = mysqli_query($conn, $material_querys);
@@ -88,7 +88,7 @@ $material_querysone = "
             FROM product_colors pc2 
             WHERE pc2.product_id = p.id
         )
-    WHERE pv.discount BETWEEN 1 AND 15
+    WHERE pv.discount BETWEEN 1 AND 5
     GROUP BY p.id
     ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
 ";
@@ -223,6 +223,7 @@ $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $filters);
 $stmt->execute();
 $resultss = $stmt->get_result();
+
 
 // 10. Organize discount products into columns - ENHANCED error handling
 $products = [];
@@ -438,6 +439,17 @@ handleQueryError($conn, "New Status Query");
             margin-top: 2rem !important
         }
 
+        .swiper-pagination-bullet {
+    width: 30px !important;
+    height: 4px !important;
+    border-radius: 2px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    opacity: 1 !important;
+}
+
+.swiper-pagination-bullet-active {
+    background: #ffffff !important;
+}
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -526,21 +538,28 @@ handleQueryError($conn, "New Status Query");
         <?php unset($_SESSION['login_error']); ?>
     <?php endif; ?>
 
-
-    <section class="w-full overflow-hidden relative">
-        <div class="mySwiper relative w-full">
-            <div class="swiper-wrapper">
-                <?php while ($row = $slideresult->fetch_assoc()): ?>
-                    <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative bg-white">
-                        <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
-                            alt="Discount"
-                            class="w-full h-full object-cover object-center" />
-                    </div>
-                <?php endwhile; ?>
-            </div>
-            <!-- buttons same as before -->
+<section class="w-full overflow-hidden relative">
+    <div class="mySwiper relative w-full">
+        <div class="swiper-wrapper">
+            <?php while ($row = $slideresult->fetch_assoc()): ?>
+                <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative bg-white">
+                    <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
+                        alt="Discount"
+                        class="w-full h-full object-cover object-center" />
+                    <!-- Overlay -->
+                    <div class="absolute inset-0 bg-black/10"></div>
+                </div>
+            <?php endwhile; ?>
         </div>
-    </section>
+        
+        <!-- Rectangle Pagination Indicators -->
+        <div class="swiper-pagination !bottom-4 relative z-10"></div>
+        
+        <!-- buttons same as before -->
+    </div>
+</section>
+
+
     <section class="bg-black text-white p-2">
 
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-6">
@@ -556,7 +575,7 @@ handleQueryError($conn, "New Status Query");
                 <div class="flex-1 min-w-0">
                     <p class="text-xs sm:text-base md:text-lg lg:text-xl leading-tight">
                         <span class="inline">Exclusive Deals!</span>
-                        <span class="inline underline font-semibold ml-1">
+                        <span class="inline underline  ml-1">
                             Discounted Items Available
                         </span>
                     </p>
@@ -567,7 +586,7 @@ handleQueryError($conn, "New Status Query");
             <div class="w-full sm:w-auto flex-shrink-0">
                 <a href="allproduct.php?discount=all"
                     class="underline text-white hover:text-red-50 active:bg-gray-100 
-                      font-semibold px-3 py-1.5 sm:px-6 sm:py-3 
+                      px-3 py-1.5 sm:px-6 sm:py-3 
                       text-xs sm:text-base hover:shadow-lg
                       transition-all duration-200 ease-in-out
                       w-full sm:w-auto text-center inline-block
@@ -759,70 +778,102 @@ handleQueryError($conn, "New Status Query");
 
 
 
-    <section class="px-4 py-8 bg-white" x-data="{ selectedCategory: null }">
+    <section class="py-8 bg-white overflow-hidden">
         <!-- Heading and description -->
-        <div class="text-center mb-8">
-            <h2 class="text-3xl sm:text-4xl font-light text-black mb-3 ">Shop by Categories</h2>
+        <div class="text-center mb-8 px-4">
+            <h2 class="text-3xl sm:text-4xl font-light text-black mb-3">Shop by Categories</h2>
             <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
                 Discover our wide range of home improvement products organized by category
             </p>
         </div>
 
-        <!-- Mobile View (lg and below) - Swiper -->
-        <div class="block lg:hidden">
-            <div class="swiper category-swiper" x-init="
-        setTimeout(() => {
-            new Swiper($el, {
-                slidesPerView: 2.2,
-                spaceBetween: 12,
-                centeredSlides: false,
-                breakpoints: {
-                    480: {
-                        slidesPerView: 3.2,
-                        spaceBetween: 16,
+        <!-- Categories Container -->
+        <div class="relative px-4 sm:px-6 lg:px-8">
+            <!-- Navigation Buttons - Desktop Only -->
+            <button class="category-prev hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-orange-50 hover:scale-110 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+
+            <button class="category-next hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-orange-50 hover:scale-110 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+
+            <div class="swiper category-swiper !overflow-visible" x-init="
+            setTimeout(() => {
+                const swiper = new Swiper($el, {
+                    slidesPerView: 1.5,
+                    spaceBetween: 12,
+                    centeredSlides: false,
+                    navigation: {
+                        nextEl: '.category-next',
+                        prevEl: '.category-prev',
                     },
-                    640: {
-                        slidesPerView: 4.5,
-                        spaceBetween: 20,
+                    breakpoints: {
+                        480: {
+                            slidesPerView: 2,
+                            spaceBetween: 16,
+                        },
+                        640: {
+                            slidesPerView: 2.5,
+                            spaceBetween: 16,
+                        },
+                        768: {
+                            slidesPerView: 3,
+                            spaceBetween: 20,
+                        },
+                        1024: {
+                            slidesPerView: 4,
+                            spaceBetween: 24,
+                        },
+                        1280: {
+                            slidesPerView: 6,
+                            spaceBetween: 24,
+                        }
                     }
-                }
-            });
-            lucide.createIcons();
-        }, 100);
-    ">
-                <div class="swiper-wrapper pb-4">
+                });
+            }, 100);
+        ">
+                <div class="swiper-wrapper pb-2">
+                    <!-- Row 1 -->
                     <!-- Furniture -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=furniture" class="group block">
-                            <div class="bg-white p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Furniture</span>
                                 </div>
-                                <span class="text-xs text-gray-700 text-center">Furniture</span>
                             </div>
                         </a>
                     </div>
 
-                    <!-- Materials -->
+                    <!-- Building Materials -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=buildingmaterials" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/3.png" alt="Building Materials" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl text-center px-2 leading-tight">Building<br>Materials</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Building Materials</span>
                             </div>
                         </a>
                     </div>
 
-                    <!-- Bedroom Furniture -->
+                    <!-- Bedroom -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bedfurniture" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/4.png" alt="Bedroom" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Bedroom</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Bedroom</span>
                             </div>
                         </a>
                     </div>
@@ -830,11 +881,12 @@ handleQueryError($conn, "New Status Query");
                     <!-- Lighting -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=lighting" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/5.png" alt="Lighting" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl text-center leading-tight">Lighting<br>Fixture</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Lighting</span>
                             </div>
                         </a>
                     </div>
@@ -842,11 +894,12 @@ handleQueryError($conn, "New Status Query");
                     <!-- Aircon -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aircon" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Aircon</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Aircon</span>
                             </div>
                         </a>
                     </div>
@@ -854,23 +907,26 @@ handleQueryError($conn, "New Status Query");
                     <!-- Doors -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=doors" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Doors</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Doors</span>
                             </div>
                         </a>
                     </div>
 
+                    <!-- Row 2 -->
                     <!-- Tiles -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=tiles" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Tiles</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Tiles</span>
                             </div>
                         </a>
                     </div>
@@ -878,11 +934,12 @@ handleQueryError($conn, "New Status Query");
                     <!-- Windows -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=windows" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/9.png" alt="Windows" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Windows</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Windows</span>
                             </div>
                         </a>
                     </div>
@@ -890,11 +947,12 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bathroom -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bathroom" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/10.png" alt="Bathroom" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Bathroom</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Bathroom</span>
                             </div>
                         </a>
                     </div>
@@ -902,11 +960,12 @@ handleQueryError($conn, "New Status Query");
                     <!-- Kitchen -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=kitchen" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/11.png" alt="Kitchen" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl text-center leading-tight">Kitchen<br>Fixtures</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Kitchen</span>
                             </div>
                         </a>
                     </div>
@@ -914,11 +973,12 @@ handleQueryError($conn, "New Status Query");
                     <!-- Pipes -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=pipes" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/2.png" alt="Pipes" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Pipes</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">Pipes</span>
                             </div>
                         </a>
                     </div>
@@ -926,239 +986,134 @@ handleQueryError($conn, "New Status Query");
                     <!-- AAC Blocks -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aacblock" class="group block">
-                            <div class="bg-white p-4 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                                <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-200 transition-colors">
-                                    <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/12.png" alt="AAC Blocks" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">AAC BLOCKS</span>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-700 text-center">AAC Blocks</span>
                             </div>
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Desktop View (lg and above) - Grid Layout -->
-        <div class="hidden lg:block max-w-6xl mx-auto">
-            <div class="grid grid-cols-6 gap-6">
-                <!-- Row 1 -->
-                <a href="shop?category[]=furniture" class="group">
-                    <div class="p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm text-black text-center">Furniture</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=buildingmaterials" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/3.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Building materials</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=bedfurniture" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/4.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Bedroom </span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=lighting" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/5.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Lighting fixture</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=aircon" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/6.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Aircon</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=doors" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/7.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Doors</span>
-                    </div>
-                </a>
-
-                <!-- Row 2 -->
-                <a href="shop?category[]=tiles" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/8.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Tiles</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=windows" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/9.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Windows</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=bathroom" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/10.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Bathroom </span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=kitchen" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/11.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Kitchen Fixtures</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=pipes" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/2.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">Pipes</span>
-                    </div>
-                </a>
-
-                <a href="shop?category[]=aacblock" class="group">
-                    <div class=" p-6 h-36 flex flex-col items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300  hover:shadow-md">
-                        <div class="w-full h-full bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                            <img src="../img/category/12.png" alt="Furniture" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-sm  text-black text-center">AAC BLOCKS</span>
-                    </div>
-                </a>
-
-            </div>
-        </div>
-
-        <!-- Init Lucide icons -->
-        <script>
-            lucide.createIcons();
-        </script>
-    </section>
-
-
-    <section class="px-4 py-12">
-        <div class="max-w-full mx-auto">
-            <!-- Section Header -->
-            <div class="text-center mb-10 " data-aos="fade-up">
-                <h2 class="text-2xl md:text-3xl font-light text-gray-900 mb-3 ">Best Seller</h2>
-                <p class="text-gray-600 text-base md:text-lg">Save big on quality home improvement products</p>
-            </div>
-
-            <!-- Cards Container -->
-            <div class="flex flex-col sm:flex-row gap-4 md:gap-6">
-
-                <!-- Featured Promotion -->
-                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                        <img src="../img/promo/a.png" alt="Featured Sale" class="w-full h-full object-contain ">
-                    </div>
-                    <div class="p-4 md:p-6 text-center">
-                        <div class="mb-3">
-                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                                Featured Deal
-                            </span>
-                        </div>
-                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                            Home Renovation Sale
-                        </h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                            Get up to 50% off on selected home improvement products. Perfect time to upgrade your space.
-                        </p>
-
-                    </div>
-                </div>
-
-                <!-- Weekly Sale -->
-                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                        <img src="../img/promo/2.png" alt="Sale Items" class="w-full h-full object-contain">
-                    </div>
-                    <div class="p-4 md:p-6 text-center">
-                        <div class="mb-3">
-                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                                SALE
-                            </span>
-                        </div>
-                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                            Weekly Sale
-                        </h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                            Discounted items refreshed every week. Check back regularly for new deals and amazing savings.
-                        </p>
-
-                    </div>
-                </div>
-
-                <!-- New Arrivals -->
-                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                        <img src="../img/promo/3.png" alt="New Arrivals" class="w-full h-full object-contain ">
-                    </div>
-                    <div class="p-4 md:p-6 text-center">
-                        <div class="mb-3">
-                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                                NEW
-                            </span>
-                        </div>
-                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                            New Arrivals
-                        </h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                            Fresh inventory just arrived. Be the first to get the latest products and trending items.
-                        </p>
-
-                    </div>
-                </div>
-
-                <!-- Hot Deals -->
-                <div class="flex-1 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up">
-                    <div class="w-full h-48 md:h-56 relative overflow-hidden">
-                        <img src="../img/promo/4.png" alt="Hot Deals" class="w-full h-full object-contain ">
-                    </div>
-                    <div class="p-4 md:p-6 text-center">
-                        <div class="mb-3">
-                            <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold shadow-md ">
-                                HOT DEAL
-                            </span>
-                        </div>
-                        <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                            Hot Deals
-                        </h3>
-                        <p class="text-gray-600 mb-4 text-sm leading-relaxed">
-                            Limited quantity deals that won't last long. Grab them while supplies last - act fast!
-                        </p>
-
-                    </div>
-                </div>
+            <!-- Mobile Swipe Indicator -->
+            <div class="flex lg:hidden justify-center mt-4 gap-1">
+                <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                <div class="w-2 h-2 rounded-full bg-gray-300"></div>
             </div>
         </div>
     </section>
 
+
+    <section class="py-8 bg-white overflow-hidden">
+        <!-- Section Header -->
+        <div class="text-center mb-8 px-4" data-aos="fade-up">
+            <h2 class="text-3xl sm:text-4xl font-light text-black mb-3">Best Seller</h2>
+            <p class="text-gray-600 text-base sm:text-lg">Save big on quality home improvement products</p>
+        </div>
+
+        <!-- Cards Container -->
+        <div class="relative px-4 sm:px-6 lg:px-8">
+            <!-- Navigation Buttons - Desktop Only -->
+            <button class="promo-prev hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-orange-50 hover:scale-110 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+
+            <button class="promo-next hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-orange-50 hover:scale-110 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+
+            <div class="swiper promo-swiper !overflow-visible" x-data="{}" x-init="
+            setTimeout(() => {
+                new Swiper($el, {
+                    slidesPerView: 1.2,
+                    spaceBetween: 16,
+                    centeredSlides: false,
+                    navigation: {
+                        nextEl: '.promo-next',
+                        prevEl: '.promo-prev',
+                    },
+                    breakpoints: {
+                        640: {
+                            slidesPerView: 2,
+                            spaceBetween: 20,
+                        },
+                        1024: {
+                            slidesPerView: 3,
+                            spaceBetween: 24,
+                        },
+                        1280: {
+                            slidesPerView: 4,
+                            spaceBetween: 24,
+                        }
+                    }
+                });
+            }, 100);
+        ">
+                <div class="swiper-wrapper pb-2">
+                    <?php
+                    // Fetch bestsellers from database
+                    $bestsellers = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
+                    $count = 0;
+                    while ($item = $bestsellers->fetch_assoc()):
+                        $count++;
+                    ?>
+                        <!-- Bestseller Card -->
+                        <div class="swiper-slide">
+                            <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>" class="group block h-full">
+                                <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-orange-400 hover:shadow-xl transition-all duration-300 h-full">
+                                    <div class="relative w-full h-80 sm:h-96 overflow-hidden">
+                                        <img src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
+                                            alt="<?= htmlspecialchars($item['title']) ?>"
+                                            class="w-full h-full object-contain transition-transform duration-500">
+
+                                        <!-- Gradient Overlay -->
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+
+                                        <!-- Content Overlay -->
+                                        <div class="absolute inset-0 p-5 sm:p-6 flex flex-col justify-end text-white">
+                                            <h3 class="text-xl sm:text-2xl lg:text-3xl uppercase mb-2 group-hover:text-orange-400 transition-colors">
+                                                <?= htmlspecialchars($item['title']) ?>
+                                            </h3>
+                                            <p class="text-white/90 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2">
+                                                <?= htmlspecialchars($item['description']) ?>
+                                            </p>
+                                            <div class="flex items-center justify-between text-xs sm:text-sm">
+                                                <span class="text-orange-400 group-hover:underline">Learn More →</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Top Badge -->
+                                        <div class="absolute top-3 sm:top-4 right-3 sm:right-4">
+                                            <span class="bg-white text-black px-2.5 sm:px-3 py-1 rounded-full text-xs  shadow-lg">
+                                                <?= $count === 1 ? 'FEATURED' : 'BESTSELLER' ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    <?php endwhile; ?>
+                </div>
+            </div>
+
+            <!-- Pagination Dots -->
+            <div class="flex lg:hidden justify-center mt-6 gap-2">
+                <?php
+                $total = $conn->query("SELECT COUNT(*) as total FROM bestseller")->fetch_assoc()['total'];
+                for ($i = 0; $i < min($total, 4); $i++): ?>
+                    <div class="w-2 h-2 rounded-full <?= $i === 0 ? 'bg-orange-500' : 'bg-gray-300' ?>"></div>
+                <?php endfor; ?>
+            </div>
+        </div>
+    </section>
 
 
     <section>
@@ -1241,7 +1196,7 @@ handleQueryError($conn, "New Status Query");
                                         <?php if (!empty($product['main_image'])): ?>
                                             <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
                                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                                class="w-12 h-12 object-cover rounded"
+                                                class="w-12 h-12 object-contain rounded"
                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                             <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500" style="display:none;">
                                                 No Image
@@ -1622,7 +1577,7 @@ handleQueryError($conn, "New Status Query");
                                     <img src="../../<?= $row['main_image'] ?>"
                                         loading="lazy"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                        class="w-full h-full object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
                                         <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
@@ -1734,8 +1689,7 @@ handleQueryError($conn, "New Status Query");
                                         width: 0%;
                                         opacity: 0;
                                         color: white;
-                                        font-size: 1.1em;
-                                        font-weight: 500;
+                                       
                                         transition-duration: .3s;
                                     }
 
@@ -1886,7 +1840,7 @@ handleQueryError($conn, "New Status Query");
                                 <!-- Product Info -->
                                 <div class="space-y-2">
                                     <!-- Title -->
-                                  <div class="relative w-full max-w-xs">
+                                    <div class="relative w-full max-w-xs">
                                         <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
@@ -2025,8 +1979,8 @@ handleQueryError($conn, "New Status Query");
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <div class="inline-block mb-6">
-                    <span class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
-                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+                    <span class="text-sm  text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
+                    <h2 class="text-4xl md:text-5xl  text-gray-900 mb-4 tracking-tight">
                         We Design, We build, and We deliver
                     </h2>
                     <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
@@ -2049,13 +2003,13 @@ handleQueryError($conn, "New Status Query");
                         <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
+                        <h3 class=" text-xl text-gray-900 mb-2 tracking-tight">WPC Wall Panel</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Premium waterproof panels designed for contemporary interior applications</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
                                 Premium
                             </span>
-                            <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            <button class="text-slate-700 hover:text-slate-900  flex items-center group">
                                 View Details
                                 <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -2075,13 +2029,13 @@ handleQueryError($conn, "New Status Query");
                         <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
+                        <h3 class=" text-xl text-gray-900 mb-2 tracking-tight">Interior Design</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Professional styling concepts and innovative design solutions</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
                                 Inspiration
                             </span>
-                            <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            <a href="../explore/explore_first.php" class="text-slate-700 hover:text-slate-900 flex items-center group">
                                 Explore Ideas
                                 <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -2102,13 +2056,13 @@ handleQueryError($conn, "New Status Query");
                         <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
+                        <h3 class=" text-xl text-gray-900 mb-2 tracking-tight">Product Highlights</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Featured products showcased in real-world applications</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
                                 Featured
                             </span>
-                            <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            <button class="text-slate-700 hover:text-slate-900 flex items-center group">
                                 Shop Collection
                                 <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -2128,14 +2082,14 @@ handleQueryError($conn, "New Status Query");
                         <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="font-semibold text-xl text-gray-900 mb-2 tracking-tight">World Bex</h3>
+                        <h3 class="text-xl text-gray-900 mb-2 tracking-tight">World Bex</h3>
                         <p class="text-gray-600 mb-4 leading-relaxed flex-1">Thank You for Visiting Us at WORLDBEX 2025! 🎉🏡
                             We truly appreciate your time, support, and interest in Noblehome Depot at WORLDBEX 2025! Your presence made this event even more special, and we’re excited to help bring your home and construction projects to life.</p>
                         <div class="flex items-center justify-between">
-                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            <span class="bg-black border border-black text-white px-3 py-1.5 rounded-full text-xs  tracking-wide uppercase">
                                 Event
                             </span>
-                            <button class="text-slate-700 hover:text-slate-900 font-medium flex items-center group">
+                            <button class="text-slate-700 hover:text-slate-900  flex items-center group">
                                 Learn More
                                 <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -2147,17 +2101,6 @@ handleQueryError($conn, "New Status Query");
 
             </div>
 
-            <!-- Bottom CTA -->
-            <div class="text-center mt-16">
-                <div class="max-w-lg mx-auto mb-8">
-                    <p class="text-lg text-gray-600 leading-relaxed mb-6">
-                        Ready to explore our complete product portfolio?
-                    </p>
-                    <button class="bg-black hover:bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[200px]">
-                        View All Products
-                    </button>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -2168,7 +2111,7 @@ handleQueryError($conn, "New Status Query");
         <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
             <!-- Details Button (as Title) -->
             <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 font-bold text-2xl sm:text-3xl lg:text-4xl text-black">
+                class="group relative inline-flex items-center gap-2 text-2xl sm:text-3xl lg:text-4xl text-black">
                 <span class="relative">
                     <span class="block group-hover:text-orange-600 transition-colors duration-300">
                         Building Materials
@@ -2234,7 +2177,7 @@ handleQueryError($conn, "New Status Query");
                                     <img src="../../<?= $row['main_image'] ?>"
                                         loading="lazy"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                        class="w-full h-full object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
                                         <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
@@ -2249,7 +2192,7 @@ handleQueryError($conn, "New Status Query");
 
                                 <!-- Product Info -->
                                 <div class="space-y-2">
-                            <div class="relative w-full max-w-xs">
+                                    <div class="relative w-full max-w-xs">
                                         <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
@@ -2387,9 +2330,9 @@ handleQueryError($conn, "New Status Query");
         <!-- Header -->
         <div class="text-center mb-10 relative">
 
-            <h2 class="text-4xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
-            <h2 class="text-2xl font-extrabold text-black mb-2 tracking-tight" data-aos="fade-up">
-                Get Up to <span class="text-red-500">30% Discount</span> on Select Items!
+            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
+            <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
+                Get Up to <span class="text-red-500">10% Discount</span> on Select Items!
             </h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
 
@@ -2426,24 +2369,24 @@ handleQueryError($conn, "New Status Query");
 
                             <!-- Product Info -->
                             <div class="mt-auto">
-                                 <div class="relative w-full max-w-xs">
-                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
-                                            <?= htmlspecialchars($row['product_name']) ?>
-                                        </h3>
-                                        <!-- Fade overlay -->
-                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
-                                    </div>
+                                <div class="relative w-full max-w-xs">
+                                    <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                        <?= htmlspecialchars($row['product_name']) ?>
+                                    </h3>
+                                    <!-- Fade overlay -->
+                                    <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                </div>
                                 <!-- View Size & Color -->
                                 <button type="button"
                                     onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                    class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
+                                    class="text-sm text-black  hover:text-orange-500 transition mb-2 mt-2">
                                     View Size & Color
                                 </button>
 
                                 <!-- Pricing -->
                                 <?php if ($discount > 0): ?>
                                     <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <p class="text-base text-green-600 font-bold">
+                                    <p class="text-base text-black font-bold">
                                         ₱<?= number_format($finalPrice, 2) ?>
                                         <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                     </p>
@@ -2596,44 +2539,144 @@ handleQueryError($conn, "New Status Query");
 
     </section>
 
-    <section class="p-6"> <!-- Section Title -->
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold">Featured Categories</h1>
-            <p class="text-gray-600">Discover our top product categories just for you.</p>
-        </div> <!-- Boxes -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> <!-- Top Left -->
-            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat1.png" alt="Box 1 Image" class="w-full h-32 object-contain bg-white">
-                <div class="p-3 text-center">
-                    <h2 class="text-lg font-semibold mb-1">Doors</h2>
-                    <p class="text-gray-600 text-sm">Stylish and durable doors to match every home design.</p>
-                </div>
-            </div> <!-- Top Right -->
-            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat2.webp" alt="Box 2 Image" class="w-full h-32 object-contain bg-white">
-                <div class="p-3 text-center">
-                    <h2 class="text-lg font-semibold mb-1">Aircon</h2>
-                    <p class="text-gray-600 text-sm">Energy-efficient air conditioners to keep your space cool.</p>
-                </div>
-            </div> <!-- Bottom Left -->
-            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat3.png" alt="Box 3 Image" class="w-full h-32 object-contain bg-white">
-                <div class="p-3 text-center">
-                    <h2 class="text-lg font-semibold mb-1">Bathroom Fixtures</h2>
-                    <p class="text-gray-600 text-sm">Modern fixtures for a stylish and functional bathroom.</p>
-                </div>
-            </div> <!-- Bottom Right -->
-            <div class="rounded-xl overflow-hidden hover:scale-105 transition"> <img src="../img/categ/cat4.png" alt="Box 4 Image" class="w-full h-32 object-contain bg-white">
-                <div class="p-3 text-center">
-                    <h2 class="text-lg font-semibold mb-1">Tiles</h2>
-                    <p class="text-gray-600 text-sm">Premium tiles in various designs and textures for any space.</p>
-                </div>
+<!-- Featured Categories Section -->
+<section class="p-6">
+    <div class="text-center mb-6">
+        <h1 class="text-2xl">Featured Categories</h1>
+        <p class="text-gray-600">Discover our top product categories just for you.</p>
+    </div>
+    
+    <!-- Category Boxes - Clickable with Flex Layout -->
+    <div class="flex flex-wrap gap-4 justify-center">
+        <!-- Doors Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
+             onclick="loadCategoryProducts('doors')">
+            <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl  text-white">Doors</h2>
             </div>
         </div>
-    </section>
+        
+        <!-- Aircon Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
+             onclick="loadCategoryProducts('aircon')">
+            <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl  text-white">Aircon</h2>
+            </div>
+        </div>
+        
+        <!-- Bathroom Fixtures Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
+             onclick="loadCategoryProducts('bathroomfixtures')">
+            <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl  text-white">Bathroom Fixtures</h2>
+            </div>
+        </div>
+        
+        <!-- Tiles Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group" 
+             onclick="loadCategoryProducts('tiles')">
+            <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl  text-white">Tiles</h2>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sidebar Overlay (Hidden by default) -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
+
+<!-- Sidebar for Products -->
+<div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
+    <!-- Sidebar Header -->
+    <div class="sticky top-0 bg-orange-500 border-b p-4 flex justify-between items-center z-1 0">
+        <div class="text-white">
+            <h2 class="text-xl font-bold capitalize" id="sidebarTitle">Products</h2>
+            <p class="text-sm " id="sidebarSubtitle">Loading...</p>
+        </div>
+        <button onclick="closeSidebar()" class="text-white hover:text-gray-900">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Sidebar Content -->
+    <div id="sidebarContent" class="p-4">
+        <div class="flex justify-center items-center h-40">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadCategoryProducts(category) {
+    // Open sidebar
+    document.getElementById('sidebarOverlay').classList.remove('hidden');
+    document.getElementById('productSidebar').classList.remove('translate-x-full');
+    
+    // Update title
+    document.getElementById('sidebarTitle').textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+    
+    // Show loading spinner
+    document.getElementById('sidebarContent').innerHTML = `
+        <div class="flex justify-center items-center h-40">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+    `;
+    
+    // Fetch products via AJAX
+    fetch('index_fetch_category_products.php?category=' + category)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('sidebarContent').innerHTML = data;
+            document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
+        })
+        .catch(error => {
+            document.getElementById('sidebarContent').innerHTML = `
+                <div class="text-center text-red-500 p-4">
+                    <p>Error loading products. Please try again.</p>
+                </div>
+            `;
+        });
+}
+
+function closeSidebar() {
+    document.getElementById('sidebarOverlay').classList.add('hidden');
+    document.getElementById('productSidebar').classList.add('translate-x-full');
+}
+
+// Close sidebar with ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
+</script>
+
+<style>
+.category-box {
+    transition: all 0.3s ease;
+}
+
+.category-box:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.category-box:active {
+    transform: scale(0.98);
+}
+</style>
 
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10">
         <!-- Header -->
         <div class="text-center mb-8 sm:mb-12 relative">
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-black bg-clip-text mb-4 tracking-tight " data-aos="fade-up">
-                Discount Minimal <span class="text-red-700 drop-shadow-sm">up to 15%</span>
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl text-black bg-clip-text mb-4 tracking-tight " data-aos="fade-up">
+                Discount Minimal <span class="text-red-700 drop-shadow-sm">up to 5%</span>
             </h2>
             <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
             <p class="text-gray-600 mt-4 text-sm sm:text-base max-w-md mx-auto" data-aos="fade-up" data-aos-delay="200">
@@ -2841,7 +2884,7 @@ handleQueryError($conn, "New Status Query");
 
     <section class="p-5">
         <div class="mb-10 mt-10 text-center">
-            <h2 class="text-4xl font-extrabold text-black mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
+            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
         </div>
 
@@ -3328,7 +3371,7 @@ handleQueryError($conn, "New Status Query");
     <style>
         /* Pagination dots */
         .swiper-pagination-bullet {
-            background: linear-gradient(135deg, #6366f1, #3b82f6) !important;
+            background: linear-gradient(135deg, #ffffffff, #ffffffff) !important;
             opacity: 0.4 !important;
             transition: all 0.3s ease-in-out;
         }
@@ -3383,7 +3426,7 @@ handleQueryError($conn, "New Status Query");
 
     <section class="py-12 md:py-24 px-4">
         <div class="max-w-6xl mx-auto text-center mb-12 md:mb-20">
-            <h2 class="text-3xl md:text-5xl font-extrabold mb-4 md:mb-6 bg-clip-text text-black">What Our Customers Say</h2>
+            <h2 class="text-3xl md:text-5xl mb-4 md:mb-6 bg-clip-text text-black">What Our Customers Say</h2>
             <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Here's what people are saying about their experience with us.</p>
         </div>
 
@@ -3526,14 +3569,14 @@ handleQueryError($conn, "New Status Query");
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
-        // 🔁 Universal Swiper initializer
+        //  Universal Swiper initializer
         function initSwiper(selector, options) {
             if (document.querySelector(selector)) {
                 return new Swiper(selector, options);
             }
         }
 
-        // 🛒 Product form submit handler
+        //  Product form submit handler
         async function handleProductFormSubmit(e) {
             e.preventDefault();
 
@@ -3778,51 +3821,6 @@ handleQueryError($conn, "New Status Query");
                     }
                 }
             });
-
-            // 🎯 ALTERNATIVE: Kung gusto mo ng 3 products sa transition
-            initSwiper('.mySwiper-products-alternative', {
-                slidesPerView: 2,
-                spaceBetween: 10,
-                loop: true,
-                autoplay: {
-                    delay: 3000,
-                    disableOnInteraction: false
-                },
-                breakpoints: {
-                    // Small: 2 products - MALAKI
-                    480: {
-                        slidesPerView: 2,
-                        spaceBetween: 12
-                    },
-                    640: {
-                        slidesPerView: 2,
-                        spaceBetween: 15
-                    },
-
-                    // Small-Medium transition: 3 products
-                    768: {
-                        slidesPerView: 3,
-                        spaceBetween: 12
-                    },
-
-                    // Medium: 4 products  
-                    900: {
-                        slidesPerView: 4,
-                        spaceBetween: 15
-                    },
-
-                    // Large: 5 products
-                    1200: {
-                        slidesPerView: 5,
-                        spaceBetween: 18
-                    },
-                    1400: {
-                        slidesPerView: 5,
-                        spaceBetween: 20
-                    }
-                }
-            });
-
             // Rest of your code...
             initAutoVerticalSwipers();
 

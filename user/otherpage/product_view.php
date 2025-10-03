@@ -156,6 +156,7 @@ $avg_stmt->close();
   <style>
     body {
       font-family: 'Poppins', sans-serif;
+
     }
 
     /* Selection States */
@@ -505,7 +506,7 @@ $avg_stmt->close();
 
     /* 3. COLOR SELECTION BOX FIX */
     .color-selection-box {
-      padding: 0;  
+      padding: 0;
       margin-bottom: 0;
       border: 1px solid #e5e7eb;
       border-radius: 0.75rem;
@@ -647,7 +648,7 @@ $avg_stmt->close();
       </svg>
     </div>
     <div class="container mx-auto px-4 relative z-10">
-      <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-center mb-2 sm:mb-4">Your Shopping</h1>
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-center mb-2 sm:mb-4">Your Shopping</h1>
       <p class="text-sm sm:text-lg lg:text-xl text-center opacity-90 max-w-2xl mx-auto">
         Learn more about this item and check if it fits your needs.<br>
         Discover detailed specifications, available options, and make the best choice for your home.
@@ -755,7 +756,7 @@ $avg_stmt->close();
   </nav>
 
   <!-- Main Content -->
-  <div class="container mx-auto px-4 py-6 lg:py-8">
+  <div class="container mx-auto">
     <div class="bg-white rounded-xl overflow-hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
@@ -892,7 +893,7 @@ $avg_stmt->close();
 
             <!-- Product Name -->
             <div>
-              <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-600 mb-2">
+              <h1 class="text-xl sm:text-2xl lg:text-3xl  text-orange-600 mb-2">
                 <?= htmlspecialchars($product['product_name']) ?>
               </h1>
               <div class="flex flex-wrap gap-2 mb-3">
@@ -923,569 +924,673 @@ $avg_stmt->close();
           </div>
         </div>
 
-        <!-- Product Options Section -->
-        <div class="p-4 lg:p-8 bg-gray-50 flex flex-col">
+        <!-- Mobile Sidebar Toggle Button (Smaller Version) -->
+        <button id="mobileSidebarToggle"
+          class="lg:hidden fixed bottom-3 right-3 z-[90] bg-orange-500 text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
+          <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
+          <span>Add to Cart</span>
+        </button>
 
-         <!-- STEP 1: TYPE SELECTION FIRST -->
-          <?php if (!empty($types_data)): ?>
-            <div class="mb-8 lg:mb-10">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Item </h3>
-                <div class="text-sm text-gray-500">Required</div>
+
+        <!-- Overlay for mobile sidebar -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden lg:hidden"></div>
+
+        <!-- Product Options Section - Sidebar on mobile, normal on desktop -->
+        <div id="productOptionsContainer"
+          class="fixed lg:relative top-0 right-0 h-full lg:h-auto w-full sm:w-80 lg:w-full 
+         transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out
+         z-[101] lg:z-auto bg-white lg:bg-gray-50 shadow-xl lg:shadow-none overflow-y-auto">
+
+          <!-- Mobile Sidebar Header -->
+          <div class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm bg-orange-500">
+            <h2 class="text-lg text-white">Product Options</h2>
+            <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 p-1">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+
+          <div class="p-4 lg:p-8 flex flex-col">
+
+            <!-- STEP 1: TYPE SELECTION FIRST -->
+            <?php if (!empty($types_data)): ?>
+              <div class="mb-6 lg:mb-10">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-base lg:text-xl  text-gray-800">Item</h3>
+                  <div class="text-xs lg:text-sm text-gray-500">Required</div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  <?php foreach ($types_data as $index => $type): ?>
+                    <button type="button"
+                      onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
+                      class="type-btn border border-gray-300 p-2 hover:border-orange-500 transition-all duration-200 bg-white rounded focus:outline-none focus:ring-2 focus:ring-orange-300">
+
+                      <div class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
+                        <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
+                          <img src="../../<?= htmlspecialchars($type['image']) ?>"
+                            class="w-full h-full object-contain"
+                            alt="<?= htmlspecialchars($type['name']) ?>"
+                            loading="lazy"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                          <div class="w-full h-full flex items-center justify-center text-gray-300" style="display: none;">
+                            <i class="fas fa-image text-lg"></i>
+                          </div>
+                        <?php else: ?>
+                          <div class="w-full h-full flex items-center justify-center text-gray-300">
+                            <i class="fas fa-image text-lg"></i>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+
+                      <span class="text-[10px] font-medium text-gray-700 block truncate leading-tight uppercase text-center">
+                        <?= htmlspecialchars($type['name']) ?>
+                      </span>
+                    </button>
+                  <?php endforeach; ?>
+                </div>
               </div>
+            <?php endif; ?>
 
-              <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                <?php foreach ($types_data as $index => $type): ?>
-                  <button type="button"
-                    onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
-                    class="type-btn border border-gray-300 p-2 hover:border-orange-500 transition-all duration-200 bg-white rounded focus:outline-none focus:ring-2 focus:ring-orange-300">
+            <!-- STEP 2: COLOR SELECTION -->
+            <?php if (!empty($product_colors)): ?>
+              <div class="mb-6 lg:mb-10" id="color-selection-section">
+                <div class="flex items-center justify-between mb-4">
+                  <!-- Product Image - Mobile Sidebar Only -->
 
-                    <div class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
-                      <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
-                        <img src="../../<?= htmlspecialchars($type['image']) ?>"
-                          class="w-full h-full object-contain"
-                          alt="<?= htmlspecialchars($type['name']) ?>"
-                          loading="lazy"
-                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="w-full h-full flex items-center justify-center text-gray-300" style="display: none;">
-                          <i class="fas fa-image text-lg"></i>
-                        </div>
-                      <?php else: ?>
-                        <div class="w-full h-full flex items-center justify-center text-gray-300">
-                          <i class="fas fa-image text-lg"></i>
-                        </div>
-                      <?php endif; ?>
+
+                  <h3 class="text-base lg:text-xl  text-gray-800">Choose Color</h3>
+                  <div class="text-xs lg:text-sm text-gray-500">Required</div>
+                  <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
+                    <div class="aspect-square w-32 mx-auto bg-gray-50 rounded-lg overflow-hidden">
+                      <img id="sidebar-product-image"
+                        src="../../<?= htmlspecialchars($product['main_image']) ?>"
+                        class="w-full h-full object-contain"
+                        alt="<?= htmlspecialchars($product['product_name']) ?>">
                     </div>
+                    <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
+                      <?= htmlspecialchars($product['product_name']) ?>
+                    </h3>
+                  </div>
+                </div>
 
-                    <span class="text-[10px] font-medium text-gray-700 block truncate leading-tight uppercase text-center">
-                      <?= htmlspecialchars($type['name']) ?>
-                    </span>
-                  </button>
-                <?php endforeach; ?>
-              </div>
-            </div>
-          <?php endif; ?>
-
-          <style>
-            /* Compact type button styles */
-            .type-btn {
-              position: relative;
-            }
-
-            /* Hover effects */
-            .type-btn:hover {
-              transform: translateY(-1px);
-            }
-
-            .type-btn:active {
-              transform: translateY(0);
-            }
-
-            /* Focus states */
-            .type-btn:focus {
-              outline: 1px solid #f97316;
-              outline-offset: 1px;
-            }
-
-            /* Responsive adjustments */
-            @media (max-width: 640px) {
-              .type-btn {
-                padding: 0.5rem;
-              }
-            }
-          </style>
-
-          <!-- STEP 2: COLOR SELECTION SECOND - MODIFIED TO SHOW ALL COLORS IN GRID -->
- <?php if (!empty($product_colors)): ?>
-            <div class="mb-8 lg:mb-10" id="color-selection-section">
-              <!-- SECTION HEADER -->
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg lg:text-xl font-bold text-gray-800">Choose Color</h3>
-                <div class="text-sm text-gray-500">Required</div>
-              </div>
-
-              <!-- Initially disabled until type is selected -->
-              <div id="color-selection-container" class="opacity-50 pointer-events-none">
-                <!-- COLOR GRID CONTAINER -->
-                <div class=" p-4">
-                  <div class="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
-                    <!-- Grid container for compact buttons -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 p-1" id="all-colors-grid">
-
-                      <!-- Generate all colors as compact buttons -->
-                      <?php foreach ($product_colors as $color): ?>
-                        <button type="button"
-                          onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
-                          class="color-btn border border-black hover:border-orange-500 bg-white rounded
-                       px-2 py-1 text-xs transition-all duration-200 text-left
-                       disabled:opacity-50 disabled:cursor-not-allowed w-full min-h-[28px]"
-                          data-color-id="<?= $color['id'] ?>"
-                          data-color-name="<?= addslashes($color['color_name']) ?>"
-                          data-price="<?= $color['price'] ?>"
-                          data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
-                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
-                          disabled>
-                          <span class="text-black block truncate text-[11px] leading-tight text-center uppercase"><?= htmlspecialchars($color['color_name']) ?></span>
-                        </button>
-                      <?php endforeach; ?>
-
-                      <!-- If no colors available -->
-                      <?php if (empty($product_colors)): ?>
-                        <div class="w-full text-center py-8">
-                          <i class="fas fa-palette text-gray-300 text-4xl mb-2"></i>
-                          <p class="text-gray-500">No color options available</p>
-                        </div>
-                      <?php endif; ?>
+                <div id="color-selection-container" class="opacity-50 pointer-events-none">
+                  <div class="p-3">
+                    <div class="max-h-60 lg:max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
+                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1" id="all-colors-grid">
+                        <?php foreach ($product_colors as $color): ?>
+                          <button type="button"
+                            onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
+                            class="color-btn border border-black hover:border-orange-500 bg-white rounded
+                           px-2 py-1.5 text-xs transition-all duration-200 text-center
+                           disabled:opacity-50 disabled:cursor-not-allowed w-full min-h-[32px]"
+                            data-color-id="<?= $color['id'] ?>"
+                            data-color-name="<?= addslashes($color['color_name']) ?>"
+                            data-price="<?= $color['price'] ?>"
+                            data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
+                            data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
+                            disabled>
+                            <span class="text-black block truncate text-[10px] lg:text-[11px] leading-tight uppercase"><?= htmlspecialchars($color['color_name']) ?></span>
+                          </button>
+                        <?php endforeach; ?>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                <div id="color-disabled-message" class="text-center p-4 lg:p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg">
+                  <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
+                  <p class="text-sm lg:text-base text-gray-500">Please select an item type first</p>
+                </div>
+              </div>
+            <?php endif; ?>
+
+
+
+
+            <!-- STEP 3: SIZE/VARIANT SELECTION -->
+            <div class="mb-6 lg:mb-8" id="size-selection-section">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base lg:text-xl  text-gray-800">Choose Size</h3>
+                <div class="text-xs lg:text-sm text-gray-500">Required</div>
               </div>
 
-              <!-- Message when type not selected -->
-              <div id="color-disabled-message" class="text-center p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg">
-                <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-                <p class="text-gray-500">Please select an item type first</p>
+              <div id="variant-container" class="text-gray-500 p-4 bg-white text-center rounded-lg">
+                <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
+                <p class="text-sm lg:text-base">Please select a color first</p>
               </div>
-            </div>
-          <?php endif; ?>
 
-          <style>
-            /* Shopee-style compact color buttons */
-            .color-btn {
-              position: relative;
-              white-space: nowrap;
-            }
-
-            .color-btn.selected span {
-              color: #000000ff !important;
-              font-weight: 100;
-            }
-
-            /* Disabled state styling */
-            .color-btn:disabled {
-              opacity: 0.5;
-              cursor: not-allowed;
-            }
-
-            .color-btn:disabled:hover {
-              border-color: #d1d5db !important;
-            }
-
-            /* Custom scrollbar styling */
-            .scrollbar-thin {
-              scrollbar-width: thin;
-              scrollbar-color: #d1d5db #f9fafb;
-            }
-
-            .scrollbar-thin::-webkit-scrollbar {
-              width: 6px;
-            }
-
-            .scrollbar-thin::-webkit-scrollbar-track {
-              background: #f9fafb;
-              border-radius: 3px;
-            }
-
-            .scrollbar-thin::-webkit-scrollbar-thumb {
-              background: #d1d5db;
-              border-radius: 3px;
-            }
-
-            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-              background: #9ca3af;
-            }
-
-    
-          </style>
-
-        <!-- STEP 3: SIZE/VARIANT SELECTION THIRD -->
-          <div class="mb-6 lg:mb-8" id="size-selection-section">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg lg:text-xl font-bold text-gray-800"> Choose Size</h3>
-              <div class="text-sm text-gray-500">Required</div>
+              <?php foreach ($types_data as $type): ?>
+                <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+                  <?php if (!empty($type['variants'])): ?>
+                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-3">
+                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                        <?php foreach ($type['variants'] as $variant): ?>
+                          <?php
+                          $price = floatval($variant['variant_price']);
+                          $percent = floatval($variant['percent']);
+                          $discount = floatval($variant['discount'] ?? 0);
+                          $priceWithMarkup = $price + ($price * $percent / 100);
+                          $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                          ?>
+                          <button type="button"
+                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>')"
+                            class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
+                           px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
+                            data-price="<?= $price ?>"
+                            data-percent="<?= $percent ?>"
+                            data-discount="<?= $discount ?>"
+                            data-variant-id="<?= $variant['variant_id'] ?>">
+                            <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                              <?= htmlspecialchars($variant['size']) ?>
+                            </div>
+                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
+                          </button>
+                        <?php endforeach; ?>
+                      </div>
+                    </div>
+                  <?php else: ?>
+                    <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
+                  <?php endif; ?>
+                </div>
+              <?php endforeach; ?>
             </div>
 
-            <div id="variant-container" class="text-gray-500 p-4 bg-white text-center">
-              <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-              <p>Please select a color first</p>
-            </div>
+            <!-- PURCHASE SECTION -->
+            <div class="mt-4 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none p-4">
+              <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
+                <input type="hidden" name="product_id" value="<?= $product_id ?>" />
+                <input type="hidden" name="selected_color_id" id="selected_color_id">
+                <input type="hidden" name="selected_color" id="selected_color">
+                <input type="hidden" name="selected_type" id="selected_type">
+                <input type="hidden" name="selected_variant" id="selected_variant">
+                <input type="hidden" name="variant_id" id="variant_id">
+                <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
 
-            <?php foreach ($types_data as $type): ?>
-              <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-                <?php if (!empty($type['variants'])): ?>
-                  <div class="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-4">
-                    <!-- Compact grid layout -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                      <?php foreach ($type['variants'] as $variant): ?>
-                        <?php
-                        $price = floatval($variant['variant_price']);
-                        $percent = floatval($variant['percent']);
-                        $discount = floatval($variant['discount'] ?? 0);
-                        $priceWithMarkup = $price + ($price * $percent / 100);
-                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                        ?>
-                        <button type="button"
-                          onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>')"
-                          class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
-                       px-2 py-1.5 text-center transition-all duration-200 min-h-[36px] flex items-center justify-center"
-                          data-price="<?= $price ?>"
-                          data-percent="<?= $percent ?>"
-                          data-discount="<?= $discount ?>"
-                          data-variant-id="<?= $variant['variant_id'] ?>">
-
-                          <!-- Size label only -->
-                          <div class="text-gray-700 text-[11px] font-medium leading-tight">
-                            <?= htmlspecialchars($variant['size']) ?>
-                          </div>
-
-                          <!-- Hidden price data (for calculations) -->
-                          <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
-                        </button>
-                      <?php endforeach; ?>
+                <!-- Total Price Display -->
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-3 lg:p-4 border border-green-200">
+                  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                    <div>
+                      <p class="text-xs lg:text-sm text-gray-600 mb-1">Total Price</p>
+                      <p id="totalPrice" class="text-xl lg:text-3xl text-green-600">₱0.00</p>
+                    </div>
+                    <div id="selectionStatus" class="text-xs lg:text-sm text-gray-500 sm:text-right">
+                      Follow steps 1-3 to see total price
                     </div>
                   </div>
+                </div>
+
+                <?php if ($is_windows_category): ?>
+                  <button type="button" id="contactUsBtn" onclick="openContactModal()"
+                    disabled
+                    class="w-full py-3 lg:py-4 text-sm lg:text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 rounded-lg">
+                    <span id="contactBtnText" class="flex items-center justify-center gap-2">
+                      <i class="fas fa-phone"></i>
+                      Complete Steps 1-3 to Contact Us
+                    </span>
+                  </button>
                 <?php else: ?>
-                  <p class="text-gray-500 text-center p-4">No variants available for this type.</p>
+                  <div class="flex gap-2 lg:gap-3 w-full">
+                    <button type="submit" id="addToCartBtn"
+                      disabled
+                      class="flex-1 py-2.5 lg:py-4  text-xs lg:text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
+                      <span id="btnText" class="flex items-center justify-center gap-1 lg:gap-2">
+                        <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
+                        Add to Cart
+                      </span>
+                    </button>
+
+                    <button type="button" onclick="window.location.href='cart_view.php'"
+                      class="flex-1 py-2.5 lg:py-4  text-xs lg:text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
+                      <span class="flex items-center justify-center gap-1 lg:gap-2">
+                        <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
+                        View Cart
+                      </span>
+                    </button>
+                  </div>
                 <?php endif; ?>
-              </div>
-            <?php endforeach; ?>
+              </form>
+            </div>
           </div>
+        </div>
+
+        <!-- Contact Modal -->
+        <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+          <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
+            <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+
+            <div class="mb-6">
+              <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
+              <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
+            </div>
+
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
+              <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">No specific options selected</div>
+              <div id="selectedPriceText" class="text-lg font-bold text-green-600"></div>
+            </div>
+
+            <div class="space-y-4">
+              <a id="emailLink"
+                href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
+                class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+                <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
+              </a>
+
+              <div class="text-center">
+                <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
+                <a href="tel:+639922394563" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
+                  <i class="fas fa-phone mr-2"></i>(02) 8822-1295 / +63992-239-4563
+                </a>
+              </div>
+
+              <a href="https://wa.me/639922394563" target="_blank"
+                class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+                <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
+              </a>
+            </div>
+
+            <div class="mt-6 text-center text-sm text-gray-500">
+              <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
+            </div>
+          </div>
+        </div>
+
+        <style>
+          /* Sidebar animations */
+          #productOptionsContainer.sidebar-open {
+            transform: translateX(0);
+          }
+
+          /* Button styles */
+          .type-btn,
+          .color-btn,
+          .variant-btn {
+            position: relative;
+            transition: all 0.2s ease;
+          }
+
+          .type-btn:hover,
+          .color-btn:hover,
+          .variant-btn:hover {
+            transform: translateY(-1px);
+          }
+
+          .type-btn:active,
+          .color-btn:active,
+          .variant-btn:active {
+            transform: translateY(0);
+          }
+
+          /* Selected states */
+          .type-btn.selected,
+          .color-btn.selected,
+          .variant-btn.selected {
+            border-color: #f97316 !important;
+            background-color: #fff7ed !important;
+          }
+
+          .variant-btn.selected .text-gray-700,
+          .color-btn.selected span {
+            color: #000000 !important;
+            font-weight: 600;
+          }
+
+          /* Custom scrollbar */
+          .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db #f9fafb;
+          }
+
+          .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f9fafb;
+            border-radius: 3px;
+          }
+
+          .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+          }
+
+          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+          }
+
+          /* Modal animations */
+          #contactModal {
+            animation: modalFadeIn 0.3s ease-out;
+          }
+
+          @keyframes modalFadeIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95);
+            }
+
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+
+          #contactModal>div {
+            transform: translateY(-20px);
+            animation: slideUp 0.3s ease-out forwards;
+          }
+
+          @keyframes slideUp {
+            to {
+              transform: translateY(0);
+            }
+          }
+        </style>
+
+
+
+        <?php if (!empty($product_specs)): ?>
+          <section class="mt-6 lg:mt-8">
+            <div class="bg-white rounded-xl p-4 lg:p-8">
+              <h2 class="text-xl sm:text-2xl lg:text-3xl text-black mb-4 lg:mb-6 flex items-center gap-3">
+                <i class="fas fa-list-alt"></i>
+                Product Specifications
+              </h2>
+
+              <div class="mb-4 lg:mb-6">
+                <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
+                  <dl class="space-y-3">
+                    <?php for ($i = 1; $i <= 10; $i++):
+                      $key = "descrip$i";
+                      if (!empty($product_specs[$key])):
+                    ?>
+                        <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
+                          <dd class="text-black text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
+                        </div>
+                    <?php endif;
+                    endfor; ?>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </section>
+        <?php endif; ?>
+
+
+       <?php if ($related_products->num_rows > 0): ?>
+          <!-- Mobile Bottom Bar Trigger (Smaller & Side Floating) -->
+          <button id="relatedProductsTrigger"
+            class="lg:hidden fixed bottom-20 right-4 z-[80] bg-orange-500 text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
+            <i class="fas fa-th-large text-sm"></i>
+            <span>Related (<?= $related_products->num_rows ?>)</span>
+          </button>
+
+          <!-- Desktop Sidebar Trigger (Fixed on right side) -->
+          <button id="desktopSidebarTrigger"
+            class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-orange-500 text-white px-3 py-6 rounded-l-lg shadow-lg hover:shadow-xl transition-all hover:px-4 flex-col items-center gap-2 group">
+            <span class="text-xs  writing-mode-vertical transform rotate-180">Related Products</span>
+            <span class="text-xs bg-white text-orange-600 rounded-full w-6 h-6 flex items-center justify-center font-bold"><?= $related_products->num_rows ?></span>
+          </button>
+
+          <!-- Overlay for sidebars -->
+          <div id="relatedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden transition-opacity duration-300"></div>
+
+          <!-- Related Products Section - Bottom Sheet on Mobile, Right Sidebar on Desktop -->
+          <section id="relatedProductsContainer"
+            class="fixed bottom-0 lg:top-0 lg:bottom-auto left-0 lg:left-auto right-0 lg:right-0 
+           lg:h-full lg:w-80
+           transform translate-y-full lg:translate-y-0 lg:translate-x-full
+           transition-transform duration-300 ease-out
+           z-[111] bg-white 
+           shadow-2xl rounded-t-3xl lg:rounded-none 
+           max-h-[80vh] lg:max-h-full overflow-hidden flex flex-col">
+
+            <!-- Header (Mobile & Desktop) -->
+            <div class="sticky top-0 bg-orange-500 text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
+              <div>
+                <h2 class="text-base lg:text-lg">Related Products</h2>
+                <p class="text-xs text-orange-100">Similar items you may like</p>
+              </div>
+              <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
+                <i class="fas fa-times text-lg"></i>
+              </button>
+            </div>
+
+            <!-- Products Grid (Scrollable) -->
+            <div class="overflow-y-auto flex-1 p-3 bg-gray-50">
+              <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                <?php
+                // Reset the result pointer to iterate again
+                $related_products->data_seek(0);
+                while ($row = $related_products->fetch_assoc()):
+                ?>
+                  <div class="group">
+                    <a href="product_view.php?id=<?= $row['id'] ?>"
+                      class="block bg-white rounded-lg hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full border border-gray-200 hover:border-orange-300">
+
+                      <!-- Product Image -->
+                      <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
+                        <?php if ($row['main_image']): ?>
+                          <img src="../../<?= $row['main_image'] ?>"
+                            loading="lazy"
+                            class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                            alt="<?= htmlspecialchars($row['product_name']) ?>">
+                        <?php else: ?>
+                          <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                            <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-xs">No Image</span>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+
+                      <!-- Product Information -->
+                      <div class="p-2.5">
+                        <!-- Product Name -->
+                        <h3 class=" text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight">
+                          <?= htmlspecialchars($row['product_name']) ?>
+                        </h3>
+
+                        <!-- Product Description -->
+                        <div class="mb-2">
+                          <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                            <?= htmlspecialchars($row['description']) ?>
+                          </p>
+
+                          <?php if (!empty($row['descrip6'])): ?>
+                            <p class="text-gray-500 text-xs line-clamp-1">
+                              • <?= htmlspecialchars($row['descrip6']) ?>
+                            </p>
+                          <?php endif; ?>
+                        </div>
+
+                        <!-- Product Code -->
+                        <div class="flex items-center justify-between">
+                          <span class="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-medium">
+                            <?= htmlspecialchars($row['codename']) ?>
+                          </span>
+                          <span class="text-xs text-gray-400">
+                            <i class="fas fa-arrow-right"></i>
+                          </span>
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                <?php endwhile; ?>
+              </div>
+            </div>
+          </section>
 
           <style>
-            /* Compact size button styles */
-            .variant-btn {
-              position: relative;
+            /* Sidebar animations */
+            #relatedProductsContainer.sidebar-open {
+              transform: translateX(0) translateY(0);
             }
 
-            /* Selection state */
-            .variant-btn.selected {
-              border-color: #f97316 !important;
-              border-width: 1px !important;
-              background-color: #fff7ed !important;
-            }
-
-            .variant-btn.selected .text-gray-700 {
-              color: #000000ff !important;
-              font-weight: 600;
-            }
-
-            /* Disabled state */
-            .variant-btn:disabled {
-              opacity: 0.5;
-              cursor: not-allowed;
-            }
-
-            .variant-btn:disabled:hover {
-              border-color: #d1d5db !important;
+            /* Smooth scrolling */
+            #relatedProductsContainer {
+              -webkit-overflow-scrolling: touch;
             }
 
             /* Custom scrollbar */
-            .scrollbar-thin {
-              scrollbar-width: thin;
-              scrollbar-color: #d1d5db #f9fafb;
-            }
-
-            .scrollbar-thin::-webkit-scrollbar {
+            #relatedProductsContainer::-webkit-scrollbar {
               width: 6px;
             }
 
-            .scrollbar-thin::-webkit-scrollbar-track {
-              background: #f9fafb;
+            #relatedProductsContainer::-webkit-scrollbar-track {
+              background: #f1f1f1;
+            }
+
+            #relatedProductsContainer::-webkit-scrollbar-thumb {
+              background: #cbd5e0;
               border-radius: 3px;
             }
 
-            .scrollbar-thin::-webkit-scrollbar-thumb {
-              background: #d1d5db;
-              border-radius: 3px;
+            #relatedProductsContainer::-webkit-scrollbar-thumb:hover {
+              background: #a0aec0;
             }
 
-            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-              background: #9ca3af;
+            /* Prevent body scroll when sidebar is open */
+            body.related-sidebar-open {
+              overflow: hidden;
             }
 
-            /* Focus states */
-     
+            /* Vertical text for desktop trigger */
+            .writing-mode-vertical {
+              writing-mode: vertical-rl;
+            }
           </style>
-          <!-- PURCHASE SECTION -->
-          <div class="mt-2">
-            <form id="productForm" method="POST" class="space-y-4">
-              <!-- Hidden inputs remain the same -->
-              <input type="hidden" name="product_id" value="<?= $product_id ?>" />
-              <input type="hidden" name="selected_color_id" id="selected_color_id">
-              <input type="hidden" name="selected_color" id="selected_color">
-              <input type="hidden" name="selected_type" id="selected_type">
-              <input type="hidden" name="selected_variant" id="selected_variant">
-              <input type="hidden" name="variant_id" id="variant_id">
-              <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
 
-              <!-- Total Price Display -->
-              <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                  <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Price</p>
-                    <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
-                  </div>
-                  <div id="selectionStatus" class="text-sm text-gray-500 sm:text-right">
-                    Follow steps 1-3 to see total price
-                  </div>
-                </div>
-              </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const mobileTrigger = document.getElementById('relatedProductsTrigger');
+              const desktopTrigger = document.getElementById('desktopSidebarTrigger');
+              const closeBtn = document.getElementById('closeRelatedProducts');
+              const overlay = document.getElementById('relatedOverlay');
+              const container = document.getElementById('relatedProductsContainer');
 
-              <?php if ($is_windows_category): ?>
-                <!-- Contact Us Button -->
-                <button type="button" id="contactUsBtn" onclick="openContactModal()"
-                  disabled
-                  class="w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
-                  <span id="contactBtnText" class="flex items-center justify-center gap-2">
-                    <i class="fas fa-phone"></i>
-                    Complete Steps 1-3 to Contact Us
-                  </span>
-                </button>
-              <?php else: ?>
-                <div class="flex gap-3 w-full">
-                  <!-- Add to Cart Button -->
-<button type="submit" id="addToCartBtn"
-  disabled
-  class="flex-1 py-2 sm:py-3 lg:py-4 font-bold text-xs sm:text-sm md:text-base lg:text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75">
-  <span id="btnText" class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
-    <i class="fas fa-shopping-cart text-xs sm:text-sm md:text-base lg:text-lg"></i>
-    Add to Cart
-  </span>
-</button>
+              function openSidebar() {
+                container.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('related-sidebar-open');
 
-<!-- Another Button -->
-<button type="button" onclick="window.location.href='cart_view.php'"
-  class="flex-1 py-2 sm:py-3 lg:py-4 font-bold text-xs sm:text-sm md:text-base lg:text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white">
-  <span class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg">
-    <i class="fas fa-shopping-cart text-xs sm:text-sm md:text-base lg:text-lg"></i>
-    View Cart & QTY
-  </span>
-</button>
+                setTimeout(() => {
+                  overlay.style.opacity = '1';
+                }, 10);
+              }
 
+              function closeSidebar() {
+                container.classList.remove('sidebar-open');
+                overlay.style.opacity = '0';
+                document.body.classList.remove('related-sidebar-open');
 
-                </div>
+                setTimeout(() => {
+                  overlay.classList.add('hidden');
+                }, 300);
+              }
 
-              <?php endif; ?>
-            </form>
-          </div>
-        </div>
+              if (mobileTrigger) {
+                mobileTrigger.addEventListener('click', openSidebar);
+              }
+
+              if (desktopTrigger) {
+                desktopTrigger.addEventListener('click', openSidebar);
+              }
+
+              if (closeBtn) {
+                closeBtn.addEventListener('click', closeSidebar);
+              }
+
+              if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+              }
+
+              // Close on swipe down (mobile only)
+              let touchStartY = 0;
+              let touchEndY = 0;
+
+              if (container) {
+                container.addEventListener('touchstart', (e) => {
+                  touchStartY = e.changedTouches[0].screenY;
+                }, {
+                  passive: true
+                });
+
+                container.addEventListener('touchend', (e) => {
+                  touchEndY = e.changedTouches[0].screenY;
+                  handleSwipe();
+                }, {
+                  passive: true
+                });
+
+                function handleSwipe() {
+                  const scrollTop = container.querySelector('.overflow-y-auto').scrollTop;
+                  if (scrollTop === 0 && touchEndY > touchStartY + 50) {
+                    closeSidebar();
+                  }
+                }
+              }
+
+              // Close with Escape key
+              document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && container.classList.contains('sidebar-open')) {
+                  closeSidebar();
+                }
+              });
+            });
+          </script>
+        <?php endif; ?>
+
       </div>
     </div>
-
-    <!-- Contact Modal (Add this before the closing </body> tag) -->
-    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
-        <!-- Close Button -->
-        <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-
-        <!-- Modal Header -->
-        <div class="mb-6">
-          <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
-          <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
-        </div>
-
-        <!-- Product Info -->
-        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
-
-          <!-- Selected Options Display -->
-          <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">
-            No specific options selected
-          </div>
-
-          <!-- Price Display -->
-          <div id="selectedPriceText" class="text-lg font-bold text-green-600">
-            <!-- Price will be populated by JavaScript -->
-          </div>
-        </div>
-
-        <!-- Contact Methods -->
-        <div class="space-y-4">
-          <!-- Email Contact -->
-          <a id="emailLink"
-            href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
-            class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-            <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
-          </a>
-
-          <!-- Phone Contact -->
-          <div class="text-center">
-            <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
-            <a href="tel:+1234567890" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
-              <i class="fas fa-phone mr-2"></i>(02) 8822-1295/ +63992-239-4563
-            </a>
-          </div>
-
-          <!-- WhatsApp Contact (optional) -->
-          <a href="https://wa.me/1234567890" target="_blank"
-            class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-            <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
-          </a>
-        </div>
-
-        <!-- Additional Info -->
-        <div class="mt-6 text-center text-sm text-gray-500">
-          <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
-        </div>
-      </div>
-    </div>
-
-    <style>
-      /* Modal Animation Styles */
-      #contactModal {
-        animation: modalFadeIn 0.3s ease-out;
-      }
-
-      #contactModal.hidden {
-        animation: modalFadeOut 0.3s ease-in;
-      }
-
-      @keyframes modalFadeIn {
-        from {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-
-      @keyframes modalFadeOut {
-        from {
-          opacity: 1;
-          transform: scale(1);
-        }
-
-        to {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-      }
-
-      /* Ensure modal content animates */
-      #contactModal>div {
-        transform: translateY(-20px);
-        animation: slideUp 0.3s ease-out forwards;
-      }
-
-      @keyframes slideUp {
-        to {
-          transform: translateY(0);
-        }
-      }
-    </style>
-
-    <?php if (!empty($product_specs)): ?>
-      <section class="mt-6 lg:mt-8">
-        <div class="bg-white rounded-xl p-4 lg:p-8">
-          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-black mb-4 lg:mb-6 flex items-center gap-3">
-            <i class="fas fa-list-alt"></i>
-            Product Specifications
-          </h2>
-
-          <div class="mb-4 lg:mb-6">
-            <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
-              <dl class="space-y-3">
-                <?php for ($i = 1; $i <= 10; $i++):
-                  $key = "descrip$i";
-                  if (!empty($product_specs[$key])):
-                ?>
-                    <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
-                      <dd class="text-gray-700 text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
-                    </div>
-                <?php endif;
-                endfor; ?>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </section>
-    <?php endif; ?>
-
-    <!-- Related Products -->
-    <?php if ($related_products->num_rows > 0): ?>
-      <section class="mt-8 bg-gradient-to-br from-slate-50 to-gray-100 py-6 px-4 rounded-xl ">
-        <div class="max-w-6xl mx-auto">
-          <!-- Header -->
-          <div class="text-center mb-6">
-            <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Related Products</h2>
-            <p class="text-gray-600 text-sm">
-              Similar products you may like
-            </p>
-            <div class="w-16 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 mx-auto mt-2 rounded-full"></div>
-          </div>
-
-          <!-- Products Grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <?php while ($row = $related_products->fetch_assoc()): ?>
-              <div class="group">
-                <a href="product_view.php?id=<?= $row['id'] ?>"
-                  class="block rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full">
-
-                  <!-- Product Image -->
-                  <div class="relative aspect-square  overflow-hidden">
-                    <?php if ($row['main_image']): ?>
-                      <img src="../../<?= $row['main_image'] ?>"
-                        loading="lazy"
-                        class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        alt="<?= htmlspecialchars($row['product_name']) ?>">
-                    <?php else: ?>
-                      <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                        <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span class="text-xs">No Image</span>
-                      </div>
-                    <?php endif; ?>
-                  </div>
-
-                  <!-- Product Information -->
-                  <div class="p-3 flex flex-col justify-between flex-grow">
-                    <!-- Product Name -->
-                    <h3 class="font-semibold text-gray-800 text-sm mb-2 line-clamp-2 leading-tight">
-                      <?= htmlspecialchars($row['product_name']) ?>
-                    </h3>
-
-                    <!-- Product Description -->
-                    <div class="flex-grow mb-2">
-                      <p class="text-gray-600 text-xs line-clamp-1 mb-1">
-                        <?= htmlspecialchars($row['description']) ?>
-                      </p>
-
-                      <?php if (!empty($row['descrip6'])): ?>
-                        <p class="text-gray-500 text-xs line-clamp-1 mb-1">
-                          • <?= htmlspecialchars($row['descrip6']) ?>
-                        </p>
-                      <?php endif; ?>
-                    </div>
-
-                    <!-- Product Code -->
-                    <div class="flex items-center justify-between mt-auto">
-                      <span class="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                        <?= htmlspecialchars($row['codename']) ?>
-                      </span>
-                    </div>
-                  </div>
-                </a>
-              </div>
-            <?php endwhile; ?>
-          </div>
-        </div>
-      </section>
-    <?php endif; ?>
-
   </div>
+
 
   <?php include '../navbar/footer.php'; ?>
 
+
   <script>
+    // Mobile sidebar functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebarToggle = document.getElementById('mobileSidebarToggle');
+      const closeSidebar = document.getElementById('closeSidebar');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+      const productOptions = document.getElementById('productOptionsContainer');
+
+      function openSidebar() {
+        productOptions.classList.add('sidebar-open');
+        sidebarOverlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeSidebarFunc() {
+        productOptions.classList.remove('sidebar-open');
+        sidebarOverlay.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', openSidebar);
+      }
+
+      if (closeSidebar) {
+        closeSidebar.addEventListener('click', closeSidebarFunc);
+      }
+
+      if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebarFunc);
+      }
+    });
+
+
     document.addEventListener('DOMContentLoaded', function() {
       // Highlight active thumbnail on click
       document.querySelectorAll('.thumbnail-item').forEach((item) => {
@@ -1952,6 +2057,8 @@ $avg_stmt->close();
         }
       }
 
+      // Add this inside your ProductSelector class, sa setColorFromGrid method:
+
       setColorFromGrid(colorId, colorName, price, image, colorCode) {
         this.selectedColorData = {
           id: colorId,
@@ -1967,20 +2074,28 @@ $avg_stmt->close();
           this.elements.selectedColor.value = colorName;
         }
 
-        // Update main image if color has an image
-        if (image && this.elements.mainImage) {
+        // Update BOTH images if color has an image
+        if (image) {
           let imagePath;
 
-          // Check if path already starts with ../../
           if (image.startsWith('../../')) {
             imagePath = image;
           } else {
-            // Add the prefix only if needed
             imagePath = `../../${image}`;
           }
 
           console.log('Setting image path:', imagePath);
-          this.elements.mainImage.src = imagePath;
+
+          // Update main product image
+          if (this.elements.mainImage) {
+            this.elements.mainImage.src = imagePath;
+          }
+
+          // ✅ UPDATE SIDEBAR IMAGE TOO
+          const sidebarImage = document.getElementById('sidebar-product-image');
+          if (sidebarImage) {
+            sidebarImage.src = imagePath;
+          }
         }
 
         // Enable variant selection if type is also selected
@@ -1988,7 +2103,6 @@ $avg_stmt->close();
           this.showVariantGroup(this.selectedTypeId);
         }
 
-        // Update display and button state
         this.updateDisplay();
       }
 
@@ -2235,7 +2349,7 @@ $avg_stmt->close();
               contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
             } else {
               contactBtn.disabled = true;
-              contactBtn.className = 'w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+              contactBtn.className = 'w-full py-3 lg:py-4  text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
               contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Complete Steps 1-3 to Contact Us';
             }
           }
@@ -2247,11 +2361,11 @@ $avg_stmt->close();
           if (addToCartBtn && btnText) {
             if (hasRequiredSelections) {
               addToCartBtn.disabled = false;
-              addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
+              addToCartBtn.className = 'flex-1 py-3 lg:py-4  text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
               btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
             } else {
               addToCartBtn.disabled = true;
-              addToCartBtn.className = 'flex-1 py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+              addToCartBtn.className = 'flex-1 py-3 lg:py-4  text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
               btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to cart';
             }
           }
@@ -2386,7 +2500,7 @@ $avg_stmt->close();
 
         // Create notification element
         const notification = document.createElement('div');
-        notification.className = `notification-toast fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+        notification.className = `notification-toast fixed top-4 right-4 z-[150] px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
 
         // Set colors based on type
         if (type === 'success') {

@@ -9,7 +9,6 @@ require_once '../role/roleaccount.php';
 
 require_role(['productspecialist', 'superadmin']);
 
-
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
   // Redirect to login page

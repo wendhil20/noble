@@ -1,6 +1,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
  
- <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden font-mont">
+ <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden font-roboto">
         <!-- Decorative Elements -->
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
@@ -21,7 +21,7 @@
 
                         <!-- Text Branding -->
                         <div>
-                            <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
+                            <h2 class="text-3xl bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">NobleHome</h2>
 
                         </div>
                     </div>
@@ -55,7 +55,7 @@
 
                 <!-- Quick Links -->
                 <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
+                    <h3 class="text-xl  mb-6 text-white relative">
                         Quick Links
                         <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </h3>
@@ -68,7 +68,7 @@
 
                 <!-- Services -->
                 <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
+                    <h3 class="text-xl mb-6 text-white relative">
                         Our Services
                         <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </h3>

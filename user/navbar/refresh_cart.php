@@ -76,7 +76,7 @@ try {
                         <?= !empty($item['descrip7']) ? ', ' . htmlspecialchars($item['descrip7']) : '' ?>
                     </p>
                     <div class="flex items-center justify-between mt-1">
-                        <span class="text-xs sm:text-sm font-semibold text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                        <span class="text-xs sm:text-sm text-black">₱<?= number_format($unit_price, 2) ?></span>
                         <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
                     </div>
                 </div>
@@ -108,19 +108,19 @@ try {
         ob_start();
         ?>
         <div class="flex justify-between items-center mb-3">
-            <span class="font-medium text-sm text-gray-700">Total:</span>
-            <span class="font-bold text-base sm:text-lg text-orange-600" id="cart-total">
+            <span class=" text-sm text-gray-700">Total:</span>
+            <span class=" text-base sm:text-lg text-black" id="cart-total">
                 ₱<?= number_format($total, 2) ?>
             </span>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
             <a href="../otherpage/cart_view.php"
-                class="bg-white border border-orange-500 text-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-50 transition">
+                class="bg-black text-white px-3 py-2  text-xs sm:text-sm  text-center transition">
                 View Cart
             </a>
             <a href="checkout.php"
-                class="bg-orange-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-center hover:bg-orange-600 transition">
+                class="bg-black text-white px-3 py-2  text-xs sm:text-sm  text-center  transition">
                 Checkout
             </a>
         </div>

@@ -65,7 +65,7 @@ if ($subcategory_id > 0) {
     $stmt->close();
 }
 
-// Build the product query - ONLY for the selected subcategory
+// Build the product query - ONLY for the selected subcategory AND with discount > 0
 $query = "
     SELECT 
         p.id as product_id,
@@ -82,18 +82,21 @@ $query = "
         pv.price,
         pv.discount,
         pv.namevariant,
-        pv.category_id,
-        pv.subcategory_id,
-        pv.category_name,
-        pv.subcategory_name,
+        ps.category_id,
+        ps.id as subcategory_id,
+        c.name AS category_name,
+        ps.subcategory_name,
         pc.product_id as pc_product_id,
         pc.color_name
     FROM products p
-    LEFT JOIN product_variants pv ON p.id = pv.product_id
-    LEFT JOIN product_colors pc ON pv.product_id = pc.product_id
-    WHERE pv.subcategory_id = ?
-    ORDER BY p.id DESC
+    INNER JOIN product_variants pv ON p.id = pv.product_id
+    INNER JOIN product_subcategories ps ON pv.subcategory_id = ps.id
+    LEFT JOIN categories c ON ps.category_id = c.id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    WHERE pv.subcategory_id = ? AND pv.discount > 0
+    ORDER BY pv.discount DESC, p.id DESC
 ";
+
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $subcategory_id);
@@ -152,7 +155,7 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($subcategory_name); ?> - Products</title>
+    <title><?php echo htmlspecialchars($subcategory_name); ?> - Sale Items</title>
     <!-- Add your CSS links here -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -163,29 +166,37 @@ $stmt->close();
     <?php include '../navbar/top.php'; ?>
 
     <!-- Header Section -->
-    <div class="bg-black text-white">
+    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white">
         <div class="container mx-auto px-6 py-12">
             <div class="text-center">
+                <div class="inline-block bg-white text-red-600 px-4 py-2 rounded-full text-sm font-bold mb-4">
+                    🔥 SALE ITEMS
+                </div>
                 <h1 class="text-4xl md:text-5xl font-bold mb-4 uppercase">
                     <?php echo htmlspecialchars($subcategory_name); ?>
                 </h1>
-                <p class="text-xl text-blue-100 mb-6">
-                    Discover our premium collection
+                <p class="text-xl text-red-100 mb-6">
+                    Limited Time Discounts - Shop Now!
                 </p>
 
                 <!-- Breadcrumb -->
                 <nav class="flex justify-center" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-2 text-sm">
                         <li>
-                            <a href="index.php" class="text-blue-200 hover:text-white">Home</a>
+                            <a href="index.php" class="text-red-200 hover:text-white">Home</a>
                         </li>
-                        <li><i class="fas fa-chevron-right text-blue-300 mx-2"></i></li>
+                        <li><i class="fas fa-chevron-right text-red-300 mx-2"></i></li>
+                        <li>
+                            <a href="allproductsub.php"
+                                class="text-red-200 hover:text-white">Sale Categories</a>
+                        </li>
+                        <li><i class="fas fa-chevron-right text-red-300 mx-2"></i></li>
                         <li>
                             <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
-                                class="text-blue-200 hover:text-white"><?php echo htmlspecialchars($category_name); ?></a>
+                                class="text-red-200 hover:text-white"><?php echo htmlspecialchars($category_name); ?></a>
                         </li>
-                        <li><i class="fas fa-chevron-right text-blue-300 mx-2"></i></li>
-                        <li class="text-blue-100"><?php echo htmlspecialchars($subcategory_name); ?></li>
+                        <li><i class="fas fa-chevron-right text-red-300 mx-2"></i></li>
+                        <li class="text-red-100"><?php echo htmlspecialchars($subcategory_name); ?></li>
                     </ol>
                 </nav>
             </div>
@@ -197,19 +208,25 @@ $stmt->close();
 
         <!-- Product Count and Filter Info -->
         <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-sm border p-4">
+            <div class="bg-white rounded-lg shadow-sm border-2 border-red-200 p-4">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900 mt-2 uppercase">
-                            <?php echo htmlspecialchars($subcategory_name); ?> PRODUCTS
-                        </h2>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">SALE</span>
+                            <h2 class="text-2xl font-bold text-gray-900 uppercase">
+                                <?php echo htmlspecialchars($subcategory_name); ?> ON SALE
+                            </h2>
+                        </div>
+                        <p class="text-sm text-gray-600">
+                            <?php echo count($products); ?> discounted product<?php echo count($products) != 1 ? 's' : ''; ?> available
+                        </p>
                     </div>
 
                     <!-- Back to Categories Button -->
-                    <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
-                        class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors uppercase">
+                    <a href="allproductsub.php"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors uppercase">
                         <i class="fas fa-arrow-left mr-2"></i>
-                        Back to <?php echo htmlspecialchars($category_name); ?>
+                        Back to Sale Categories
                     </a>
                 </div>
             </div>
@@ -220,7 +237,21 @@ $stmt->close();
         <?php if (!empty($products)): ?>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <?php foreach ($products as $product): ?>
-                    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                    <div class="bg-white rounded-xl border-2 border-gray-200 overflow-hidden hover:shadow-xl hover:border-red-400 transition-all duration-300 group relative">
+                        <!-- Sale Badge -->
+                        <div class="absolute top-3 left-3 z-10 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            <i class="fas fa-tag mr-1"></i>
+                            <?php 
+                            $maxDiscount = 0;
+                            foreach ($product['variants'] as $variant) {
+                                if ($variant['discount'] > $maxDiscount) {
+                                    $maxDiscount = $variant['discount'];
+                                }
+                            }
+                            echo $maxDiscount . '% OFF';
+                            ?>
+                        </div>
+
                         <!-- Product Image -->
                         <div class="aspect-square overflow-hidden bg-gray-50">
                             <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
@@ -243,17 +274,23 @@ $stmt->close();
                             <?php if (!empty($product['variants'])): ?>
                                 <?php $firstVariant = $product['variants'][0]; ?>
                                 <div class="mb-3">
-                                    <p class="text-orange-600 font-bold text-lg">
-                                        ₱<?php echo number_format($firstVariant['price'], 2); ?>
-                                        <?php if ($firstVariant['discount'] > 0): ?>
-                                            <span class="text-xs text-green-600 ml-1">
-                                                (-<?php echo $firstVariant['discount']; ?>%)
-                                            </span>
-                                        <?php endif; ?>
+                                    <?php 
+                                    $originalPrice = $firstVariant['price'] / (1 - ($firstVariant['discount'] / 100));
+                                    ?>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="text-red-600 font-bold text-xl">
+                                            ₱<?php echo number_format($firstVariant['price'], 2); ?>
+                                        </p>
+                                        <p class="text-gray-400 text-sm line-through">
+                                            ₱<?php echo number_format($originalPrice, 2); ?>
+                                        </p>
+                                    </div>
+                                    <p class="text-xs text-green-600 font-semibold">
+                                        Save ₱<?php echo number_format($originalPrice - $firstVariant['price'], 2); ?>
                                     </p>
 
                                     <!-- Variant Details -->
-                                    <div class="text-xs text-gray-500 mt-1">
+                                    <div class="text-xs text-gray-500 mt-2">
                                         <?php if ($firstVariant['color']): ?>
                                             <span class="inline-block bg-gray-100 px-2 py-1 rounded mr-1">
                                                 <?php echo htmlspecialchars($firstVariant['color']); ?>
@@ -267,8 +304,8 @@ $stmt->close();
                                     </div>
 
                                     <?php if (count($product['variants']) > 1): ?>
-                                        <p class="text-xs text-blue-600 mt-1">
-                                            +<?php echo count($product['variants']) - 1; ?> more size available
+                                        <p class="text-xs text-red-600 mt-2 font-semibold">
+                                            +<?php echo count($product['variants']) - 1; ?> more option<?php echo count($product['variants']) > 2 ? 's' : ''; ?> on sale
                                         </p>
                                     <?php endif; ?>
                                 </div>
@@ -277,9 +314,9 @@ $stmt->close();
                             <!-- View Product Button -->
                             <form action="product_view.php" method="GET" class="mt-4">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
-                                <button type="submit" class="w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-orange-400 transition-colors duration-200 font-medium">
-                                    <i class="fa-solid fa-bag-shopping"></i>
-                                    View Product
+                                <button type="submit" class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium">
+                                    <i class="fa-solid fa-bag-shopping mr-1"></i>
+                                    View Sale Item
                                 </button>
                             </form>
                         </div>
@@ -289,17 +326,17 @@ $stmt->close();
         <?php else: ?>
             <!-- Empty State -->
             <div class="text-center py-16">
-                <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-box-open text-3xl text-gray-400"></i>
+                <div class="w-24 h-24 mx-auto mb-6 bg-red-50 rounded-full flex items-center justify-center">
+                    <i class="fas fa-tags text-4xl text-red-400"></i>
                 </div>
-                <h3 class="text-2xl font-semibold text-gray-900 mb-3">No Products Found</h3>
+                <h3 class="text-2xl font-semibold text-gray-900 mb-3">No Sale Items Found</h3>
                 <p class="text-gray-600 mb-8 max-w-md mx-auto">
-                    There are no products available in the "<?php echo htmlspecialchars($subcategory_name); ?>" subcategory at the moment.
+                    There are currently no discounted products in the "<?php echo htmlspecialchars($subcategory_name); ?>" subcategory.
                 </p>
-                <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
-                    class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                <a href="allproductsub.php"
+                    class="inline-flex items-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>
-                    Browse Other Subcategories
+                    Browse Other Sale Categories
                 </a>
             </div>
         <?php endif; ?>

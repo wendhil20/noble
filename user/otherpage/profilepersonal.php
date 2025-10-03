@@ -41,7 +41,8 @@ $qualifying_orders = $tier_result->fetch_assoc()['qualifying_orders'];
 $tier_stmt->close();
 
 // Calculate tier information
-function calculateUserTier($qualifying_orders, $conn) {
+function calculateUserTier($qualifying_orders, $conn)
+{
     $tier_info = [
         'tier_name' => 'Member',
         'discount_percent' => 0,
@@ -51,7 +52,7 @@ function calculateUserTier($qualifying_orders, $conn) {
         'benefits' => ['Standard Support', 'Regular Promotions'],
         'card_image' => null
     ];
-    
+
     if ($qualifying_orders >= 75) {
         $stmt = $conn->prepare("SELECT * FROM tiercard WHERE LOWER(card_name) = 'platinum' LIMIT 1");
         $stmt->execute();
@@ -101,7 +102,7 @@ function calculateUserTier($qualifying_orders, $conn) {
         }
         $stmt->close();
     }
-    
+
     return $tier_info;
 }
 
@@ -126,7 +127,8 @@ while ($row = $orders_result->fetch_assoc()) {
 }
 $stmt->close();
 
-function getStatusBadge($status) {
+function getStatusBadge($status)
+{
     $status = strtolower($status ?? 'pending');
     $badges = [
         'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -140,17 +142,63 @@ function getStatusBadge($status) {
     $class = $badges[$status] ?? 'bg-gray-100 text-gray-800 border-gray-300';
     return "<span class='px-3 py-1 rounded-lg text-sm font-medium border {$class}'>" . ucfirst($status) . "</span>";
 }
+
+
+// Get user's billing addresses
+$billing_addresses = [];
+if ($user_id) {
+    $stmt = $conn->prepare("
+        SELECT * FROM billing_addresses 
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $billing_addresses[] = $row;
+    }
+    $stmt->close();
+}
+
+
+$query = mysqli_query($conn, "SELECT is_verified FROM user_details WHERE user_id = '$user_id'");
+$row = mysqli_fetch_assoc($query);
+
+$is_verified = null; // default value
+if ($row && isset($row['is_verified'])) {
+    $is_verified = $row['is_verified'];
+}
+
+$user_id = $_SESSION['user_id'];
+
+$sql = "SELECT is_verified FROM user_details WHERE user_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$user = $result->fetch_assoc();
+$stmt->close();
+
+// Safe access
+$is_verified = $user['is_verified'] ?? null;
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Order History - Noble Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         .card {
             background: white;
@@ -159,6 +207,7 @@ function getStatusBadge($status) {
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
             transition: box-shadow 0.2s ease;
         }
+
         .card:hover {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
@@ -166,12 +215,15 @@ function getStatusBadge($status) {
         .progress-bar {
             transition: width 1s ease-out;
         }
+
         .order-row:hover {
             background-color: #f8fafc;
         }
+
         .tier-qualifying {
             border-left: 4px solid #059669;
         }
+
         .high-value {
             border-left: 4px solid #d97706;
         }
@@ -197,386 +249,355 @@ function getStatusBadge($status) {
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
-        <!-- User Profile with Tier Card Background -->
-        <div class="relative  overflow-hidden mb-6" style="min-height: 200px;">
-            <!-- Tier Card Background -->
-            <?php if ($user_tier['card_image']): ?>
-                <div class="absolute inset-0 bg-cover bg-center" 
-                     style="background-image: url('../../uploads/<?= $user_tier['card_image'] ?>');">
-                    <div class="absolute inset-0 bg-black bg-opacity-40"></div>
-                </div>
-            <?php else: ?>
-                <div class="absolute inset-0 ">
-                    <div class="absolute inset-0 "></div>
-                </div>
-            <?php endif; ?>
-            
-            <!-- Profile Content -->
-            <div class="relative z-10 text-white p-6">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    <!-- User Info Section -->
-                    <div class="flex items-center gap-6 text-black">
-                        <!-- Avatar/Profile Picture Placeholder -->
-                        <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-black border-opacity-30">
-                            <i class="fas fa-user text-3xl text-black opacity-80 "></i>
-                        </div>
-                        
-                        <!-- User Details -->
-                        <div>
-                            <h2 class="text-2xl font-bold mb-1">
-                                <?php 
-                                // Get user name from session or database
-                                echo isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : 'Member';
-                                ?>
-                            </h2>
-                            <div class="text-lg font-medium text-black text-opacity-90 mb-2">
-                                <?= $user_tier['tier_name'] ?>
-                            </div>
-                            <div class="flex items-center gap-4 text-sm text-black text-opacity-80">
-                                <span><i class="fas fa-shopping-cart mr-1"></i><?= $total_orders ?> Total Orders</span>
-                                <span><i class="fas fa-star mr-1"></i><?= $qualifying_orders ?> Qualifying</span>
-                                <span><i class="fas fa-percent mr-1"></i><?= number_format($user_tier['discount_percent'], 1) ?>% Discount</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Tier Progress -->
-                    <div class="mt-6 lg:mt-0 lg:w-80 text-black">
-                        <?php if ($user_tier['next_target']): ?>
-                            <div class="  p-4  border-opacity-30">
-                                <div class="text-sm mb-2 flex justify-between">
-                                    <span class="font-medium">Progress to <?= $user_tier['next_target'] ?></span>
-                                    <span class="font-bold"><?= number_format($user_tier['progress'], 1) ?>%</span>
-                                </div>
-                                <div class="w-full bg-white bg-opacity-30 rounded-full h-3 mb-2 border border-black border-opacity-20">
-                                    <div class="bg-white h-3 rounded-full progress-bar shadow-sm" 
-                                         style="width: <?= min(100, $user_tier['progress']) ?>%"></div>
-                                </div>
-                                <p class="text-sm text-black text-opacity-90">
-                                    <?= $user_tier['orders_needed'] ?> more orders needed
-                                </p>
-                            </div>
-                        <?php else: ?>
-                            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-30 text-center">
-                                <i class="fas fa-trophy text-2xl mb-2 text-yellow-300"></i>
-                                <p class="font-bold">Maximum Tier Achieved</p>
-                                <p class="text-sm text-white text-opacity-90">Highest membership level</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
+            <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
 
-        <!-- Tier Information -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div class="card p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Benefits</h3>
-                <div class="space-y-3">
-                    <?php foreach ($user_tier['benefits'] as $benefit): ?>
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-check-circle text-green-600"></i>
-                            <span class="text-gray-700"><?= $benefit ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="card p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Tier Requirements</h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-5 bg-gray-200 rounded flex items-center justify-center">
-                                <i class="fas fa-user text-xs text-gray-600"></i>
-                            </div>
-                            <span class="text-gray-700">Member (0+ orders)</span>
-                        </div>
-                        <span class="text-sm text-gray-500">0% discount</span>
-                    </div>
-                    
-                    <?php
-                    $tier_cards_stmt = $conn->query("SELECT * FROM tiercard ORDER BY card_discount ASC");
-                    $tier_requirements = [25, 50, 75];
-                    $tier_names = ['Silver', 'Gold', 'Platinum'];
-                    $tier_index = 0;
-                    
-                    while ($tier_card = $tier_cards_stmt->fetch_assoc()): ?>
-                    <div class="flex justify-between items-center py-2 <?= $tier_index < 2 ? 'border-b border-gray-200' : '' ?>">
-                        <div class="flex items-center gap-3">
-                            <?php if ($tier_card['card_image']): ?>
-                                <img src="../../uploads/<?= $tier_card['card_image'] ?>" 
-                                     alt="<?= $tier_card['card_name'] ?> Card" 
-                                     class="w-8 h-5 object-contain rounded">
+                <!-- Profile Information -->
+                <div class="flex-1">
+                    <div class="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                        <!-- Professional Avatar -->
+                        <div class="relative mx-auto sm:mx-0">
+                            <?php if ($user_picture): ?>
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-xl overflow-hidden border-2 border-gray-200 shadow-md">
+                                    <img src="<?= htmlspecialchars($user_picture); ?>" alt="Profile Picture" class="w-full h-full object-cover">
+                                </div>
                             <?php else: ?>
-                                <div class="w-8 h-5 bg-gray-200 rounded flex items-center justify-center">
-                                    <i class="fas fa-credit-card text-xs text-gray-600"></i>
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl lg:text-3xl font-bold shadow-md">
+                                    <?= strtoupper(substr($user_name, 0, 1)); ?>
                                 </div>
                             <?php endif; ?>
-                            <span class="text-gray-700"><?= ucfirst($tier_card['card_name']) ?> (<?= $tier_requirements[$tier_index] ?>+ orders)</span>
+
+                            <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                                <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-success rounded-full border-2 sm:border-4 border-green-500 bg-green-500 flex items-center justify-center shadow-sm">
+                                    <i class="fas fa-check text-white text-xs sm:text-sm"></i>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                        <span class="text-sm text-gray-500"><?= number_format($tier_card['card_discount'], 0) ?>% discount</span>
+
+                        <!-- User Details -->
+                        <div class="flex-1 text-center sm:text-left w-full">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 font-inter"><?= htmlspecialchars($user_name); ?></h2>
+                                <?php if (!empty($is_verified) && $is_verified == 1): ?>
+                                    <span class="px-2 sm:px-3 py-1 bg-green-100 text-green-800 text-xs sm:text-sm font-medium rounded-full border border-green-200 whitespace-nowrap mx-auto sm:mx-0 w-fit">
+                                        <i class="fas fa-shield-alt mr-1"></i>Verified Account
+                                    </span>
+                                <?php else: ?>
+                                    <span class="px-2 sm:px-3 py-1 bg-red-100 text-red-800 text-xs sm:text-sm font-medium rounded-full border border-red-200 whitespace-nowrap mx-auto sm:mx-0 w-fit">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>Pending Verification
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="space-y-2 text-gray-600 mb-4 sm:mb-6">
+                                <div class="flex items-center justify-center sm:justify-start gap-3">
+                                    <i class="fas fa-envelope text-gray-400 w-4 flex-shrink-0"></i>
+                                    <span class="font-medium text-sm sm:text-base break-all"><?= htmlspecialchars($user_email); ?></span>
+                                </div>
+                            </div>
+
+                            <!-- Action Button -->
+                            <div class="mb-4 sm:mb-6">
+                                <?php if ($is_verified == 1): ?>
+                                    <button disabled class="w-full sm:w-auto flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-green-50 text-green-700 font-semibold rounded-lg border border-green-200 cursor-not-allowed text-sm sm:text-base">
+                                        <i class="fas fa-check-circle"></i>
+                                        Account Verified
+                                    </button>
+                                <?php else: ?>
+                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+                                        <i class="fas fa-user-cog"></i>
+                                        Complete Verification
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Feedback Form -->
+                            <div class="mt-4 sm:mt-6 p-3 sm:p-4 border rounded-lg bg-gray-50">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3">Comment on this Website</h3>
+                                <form action="profilerate.php" method="POST" class="space-y-3">
+                                    <input type="hidden" name="user_id" value="<?= $user_id; ?>">
+
+                                    <!-- Rating -->
+                                    <div class="flex items-center justify-center sm:justify-start gap-1">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <label>
+                                                <input type="radio" name="rating" value="<?= $i ?>" required class="hidden peer">
+                                                <i class="fas fa-star text-gray-300 peer-checked:text-yellow-500 cursor-pointer text-lg sm:text-xl"></i>
+                                            </label>
+                                        <?php endfor; ?>
+                                    </div>
+
+                                    <!-- Comment -->
+                                    <textarea name="comment" rows="3" class="w-full border rounded-lg p-2 text-sm sm:text-base" placeholder="Write your feedback..."></textarea>
+
+                                    <!-- Submit -->
+                                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base font-medium">
+                                        Submit Feedback
+                                    </button>
+                                </form>
+
+                                <?php
+                                // Kunin yung huling feedback na ginawa ng naka-login user para sa profile na ito
+                                $current_feedback = $conn->query("
+                                          SELECT * FROM user_feedback 
+                                          WHERE user_id = $user_id AND author_id = {$_SESSION['user_id']}
+                               ORDER BY created_at DESC LIMIT 1
+                                     ");
+                                ?>
+
+                                <?php if ($current_feedback && $current_feedback->num_rows > 0):
+                                    $fb = $current_feedback->fetch_assoc(); ?>
+
+                                    <details class="mt-4 border rounded-lg bg-white shadow-sm">
+                                        <summary class="cursor-pointer px-3 sm:px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 rounded-t-lg">
+                                            Your Latest Review
+                                        </summary>
+                                        <div class="p-3 sm:p-4 border-t">
+                                            <!-- Rating -->
+                                            <div class="flex items-center gap-1 mb-2">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <i class="fas fa-star text-sm sm:text-base <?= $i <= $fb['rating'] ? 'text-yellow-500' : 'text-gray-300' ?>"></i>
+                                                <?php endfor; ?>
+                                            </div>
+
+                                            <!-- Comment -->
+                                            <p class="text-gray-700 text-sm mb-2"><?= htmlspecialchars($fb['comment']); ?></p>
+                                            <span class="text-xs text-gray-500">Submitted on <?= date('M j, Y g:i A', strtotime($fb['created_at'])); ?></span>
+                                        </div>
+                                    </details>
+
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
-                    <?php $tier_index++; endwhile; ?>
                 </div>
-                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-sm text-blue-800">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Only completed orders ≥ ₱20,000 count toward tier progression
-                    </p>
+
+                <!-- Statistics Cards -->
+                <div class="w-full lg:w-96 xl:w-80 2xl:w-96">
+                    <!-- Addresses Card -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm mb-3 sm:mb-4">
+                        <div class="flex items-center justify-between mb-3 sm:mb-4">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-map-marker-alt text-green-600 text-sm sm:text-base"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-500">Delivery Addresses</p>
+                                    <p class="text-sm sm:text-base font-bold text-gray-900"><?= count($billing_addresses) ?> Saved</p>
+                                </div>
+                            </div>
+                            <button onclick="openBillingModal()" class="px-2 sm:px-3 py-1 sm:py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-xs sm:text-sm font-medium whitespace-nowrap">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </button>
+                        </div>
+
+                        <button onclick="window.location.href='update_billing_add.php'" class="w-full px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
+                            <i class="fas fa-plus mr-2"></i>Add New Address
+                        </button>
+                    </div>
+
+                    <!-- Order History Button -->
+                    <div>
+                        <a href="order_history.php" class="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base font-medium">
+                            <i class="fas fa-history mr-2"></i>View Order History
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search and Filters -->
-        <div class="card p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Search & Filter</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Search Orders</label>
-                    <input type="text" id="searchOrders" 
-                           placeholder="Reference number, customer..."
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                    <select id="tierFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Orders</option>
-                        <option value="qualifying">Tier Qualifying</option>
-                        <option value="high-value">High Value (₱20K+)</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button id="applyFilters" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
-                        Apply Filters
+        <!-- Professional Billing Addresses Modal -->
+        <div id="billingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-green-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900 font-inter">Delivery Addresses</h3>
+                            <p class="text-sm text-gray-600"><?= count($billing_addresses) ?> saved addresses</p>
+                        </div>
+                    </div>
+                    <button onclick="closeBillingModal()" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times text-gray-600"></i>
                     </button>
                 </div>
+
+                <!-- Add New Address Button -->
+                <div class="mb-6">
+                    <button onclick="window.location.href='update_billing_add.php'" class="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-medium">
+                        <i class="fas fa-plus"></i>
+                        Add New Address
+                    </button>
+                </div>
+
+                <!-- Addresses Content -->
+                <div class="space-y-4">
+                    <?php if (empty($billing_addresses)): ?>
+                        <div class="text-center py-12">
+                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-map-marker-alt text-2xl text-gray-400"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-2">No Addresses Saved</h4>
+                            <p class="text-gray-600 mb-6">Add your first delivery address for faster checkout</p>
+                            <button onclick="window.location.href='update_billing_add.php'" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <i class="fas fa-plus"></i>
+                                Add Address
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <?php foreach ($billing_addresses as $index => $address): ?>
+                                <div class="border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-md transition-all duration-300 bg-white">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-user text-green-600"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-gray-900"><?= htmlspecialchars($address['full_name']) ?></h4>
+                                                <?php if ($index === 0): ?>
+                                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium border border-green-200">Primary Address</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="flex gap-2">
+                                            <button onclick="editAddress(<?= $address['id'] ?>)"
+                                                class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Edit Address">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="deleteAddress(<?= $address['id'] ?>, '<?= htmlspecialchars($address['full_name']) ?>')"
+                                                class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete Address">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Info -->
+                                    <div class="space-y-3 mb-4">
+                                        <div class="flex items-center gap-3 text-sm text-gray-600">
+                                            <i class="fas fa-phone text-gray-400 w-4"></i>
+                                            <span><?= htmlspecialchars($address['phone']) ?></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Address -->
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                        <div class="flex items-start gap-3">
+                                            <i class="fas fa-map-marker-alt text-gray-500 mt-1 flex-shrink-0"></i>
+                                            <div>
+                                                <p class="text-sm text-gray-700 font-medium mb-1"><?= htmlspecialchars($address['address']) ?></p>
+                                                <p class="text-xs text-gray-500">
+                                                    <?= htmlspecialchars($address['city'] . ', ' . $address['state'] . ' ' . $address['postal_code']) ?>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <?php if (!empty($address['notes'])): ?>
+                                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                                <div class="flex items-start gap-2">
+                                                    <i class="fas fa-sticky-note text-gray-400 text-xs mt-0.5"></i>
+                                                    <p class="text-xs text-gray-600 italic">
+                                                        <?= htmlspecialchars($address['notes']) ?>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
-
-        <!-- Orders List -->
-        <?php if (empty($orders)): ?>
-            <div class="card p-12 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-shopping-bag text-2xl text-gray-400"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
-                <p class="text-gray-600 mb-6">You haven't placed any orders yet.</p>
-                <a href="../products/" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium">
-                    <i class="fas fa-shopping-cart"></i>Start Shopping
-                </a>
-            </div>
-        <?php else: ?>
-            <div class="space-y-4" id="ordersContainer">
-                <?php foreach ($orders as $order): ?>
-                    <?php 
-                    $is_high_value = $order['total'] >= 20000;
-                    $is_completed = strtolower($order['status']) === 'completed';
-                    $is_qualifying = $is_high_value && $is_completed;
-                    ?>
-                    <div class="card order-row <?= $is_qualifying ? 'tier-qualifying' : ($is_high_value ? 'high-value' : '') ?> p-6"
-                         data-reference="<?= strtolower($order['reference_no']) ?>"
-                         data-customer="<?= strtolower($order['customer_name']) ?>"
-                         data-status="<?= strtolower($order['status'] ?? 'pending') ?>"
-                         data-qualifying="<?= $is_qualifying ? 'true' : 'false' ?>"
-                         data-high-value="<?= $is_high_value ? 'true' : 'false' ?>"
-                         data-completed="<?= $is_completed ? 'true' : 'false' ?>">
-                        
-                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-                            <div class="flex items-center gap-4 flex-wrap">
-                                <h4 class="text-lg font-semibold text-gray-900"><?= htmlspecialchars($order['reference_no']) ?></h4>
-                                <?= getStatusBadge($order['status'] ?? 'pending') ?>
-                                
-                                <?php if ($is_qualifying): ?>
-                                    <span class="px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-800 border border-green-300">
-                                        <i class="fas fa-star mr-1"></i>Tier Qualifying
-                                    </span>
-                                <?php elseif ($is_high_value && !$is_completed): ?>
-                                    <span class="px-3 py-1 rounded-lg text-sm font-medium bg-amber-100 text-amber-800 border border-amber-300">
-                                        <i class="fas fa-clock mr-1"></i>High Value
-                                    </span>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="text-right">
-                                <div class="text-2xl font-bold <?= $is_qualifying ? 'text-green-700' : ($is_high_value ? 'text-amber-700' : 'text-gray-700') ?>">
-                                    ₱<?= number_format($order['total'], 2) ?>
-                                </div>
-                                <?php if ($is_qualifying): ?>
-                                    <div class="text-sm text-green-600 font-medium">+1 Tier Point</div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                            <div>
-                                <div class="text-sm text-gray-600">Customer</div>
-                                <div class="font-medium text-gray-900"><?= htmlspecialchars($order['customer_name']) ?></div>
-                            </div>
-                            <div>
-                                <div class="text-sm text-gray-600">Order Date</div>
-                                <div class="font-medium text-gray-900"><?= date('M j, Y', strtotime($order['created_at'])) ?></div>
-                            </div>
-                            <div>
-                                <div class="text-sm text-gray-600">Payment Method</div>
-                                <div class="font-medium text-gray-900"><?= htmlspecialchars($order['mode_payment']) ?></div>
-                            </div>
-                            <div>
-                                <div class="text-sm text-gray-600">Contact</div>
-                                <div class="font-medium text-gray-900"><?= htmlspecialchars($order['mobile']) ?></div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                            <div class="text-sm text-gray-600 mb-1">Delivery Address</div>
-                            <div class="text-gray-900"><?= htmlspecialchars($order['address']) ?></div>
-                        </div>
-
-                        <div class="flex justify-end">
-                            <a href="order_receipt.php?order_id=<?= $order['id'] ?>"
-                               class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
-                                <i class="fas fa-file-invoice"></i>View Receipt
-                            </a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Pagination -->
-            <?php if ($total_pages > 1): ?>
-                <div class="mt-8 flex justify-center">
-                    <nav class="flex items-center space-x-1">
-                        <?php if ($page > 1): ?>
-                            <a href="?page=<?= $page - 1 ?>" 
-                               class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
-                                Previous
-                            </a>
-                        <?php endif; ?>
-
-                        <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
-                            <a href="?page=<?= $i ?>" 
-                               class="px-3 py-2 text-sm font-medium border <?= $i == $page ? 'text-white bg-blue-600 border-blue-600' : 'text-gray-600 bg-white border-gray-300 hover:bg-gray-50' ?>">
-                                <?= $i ?>
-                            </a>
-                        <?php endfor; ?>
-
-                        <?php if ($page < $total_pages): ?>
-                            <a href="?page=<?= $page + 1 ?>" 
-                               class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
-                                Next
-                            </a>
-                        <?php endif; ?>
-                    </nav>
-                </div>
-
-             
-            <?php endif; ?>
-        <?php endif; ?>
     </div>
 
+
+    <?php include '../navbar/footer.php'; ?>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchOrders');
-            const statusFilter = document.getElementById('statusFilter');
-            const tierFilter = document.getElementById('tierFilter');
-            const applyButton = document.getElementById('applyFilters');
-            const ordersContainer = document.getElementById('ordersContainer');
-            
-            function filterOrders() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const statusValue = statusFilter.value.toLowerCase();
-                const tierValue = tierFilter.value.toLowerCase();
-                const orders = ordersContainer.querySelectorAll('.order-row');
-                
-                let visibleCount = 0;
-                
-                orders.forEach(order => {
-                    const reference = order.dataset.reference;
-                    const customer = order.dataset.customer;
-                    const status = order.dataset.status;
-                    const isQualifying = order.dataset.qualifying === 'true';
-                    const isHighValue = order.dataset.highValue === 'true';
-                    const isCompleted = order.dataset.completed === 'true';
-                    
-                    let showOrder = true;
-                    
-                    if (searchTerm && !reference.includes(searchTerm) && !customer.includes(searchTerm)) {
-                        showOrder = false;
-                    }
-                    
-                    if (statusValue && status !== statusValue) {
-                        showOrder = false;
-                    }
-                    
-                    if (tierValue) {
-                        switch (tierValue) {
-                            case 'qualifying':
-                                if (!isQualifying) showOrder = false;
-                                break;
-                            case 'high-value':
-                                if (!isHighValue) showOrder = false;
-                                break;
-                            case 'completed':
-                                if (!isCompleted) showOrder = false;
-                                break;
+        function editAddress(addressId) {
+            // Redirect to edit page with address ID
+            window.location.href = `update_billing_add.php?edit=${addressId}`;
+        }
+
+        function deleteAddress(addressId, fullName) {
+            // Show confirmation dialog
+            if (confirm(`Are you sure you want to delete the address for "${fullName}"?\n\nThis action cannot be undone.`)) {
+                // Show loading state
+                const button = event.target.closest('button');
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<div class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>';
+                button.disabled = true;
+
+                // Send delete request
+                fetch('delete_billing_address.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            address_id: addressId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show success message
+                            showNotification('Address deleted successfully!', 'success');
+                            // Reload page after short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            // Show error message
+                            showNotification(data.message || 'Failed to delete address', 'error');
+                            // Restore button
+                            button.innerHTML = originalContent;
+                            button.disabled = false;
                         }
-                    }
-                    
-                    order.style.display = showOrder ? 'block' : 'none';
-                    if (showOrder) visibleCount++;
-                });
-                
-                showNoResultsMessage(visibleCount === 0);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('An error occurred while deleting the address', 'error');
+                        // Restore button
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                    });
             }
-            
-            function showNoResultsMessage(show) {
-                let noResultsDiv = document.getElementById('noResultsMessage');
-                
-                if (show && !noResultsDiv) {
-                    noResultsDiv = document.createElement('div');
-                    noResultsDiv.id = 'noResultsMessage';
-                    noResultsDiv.className = 'card p-12 text-center mt-6';
-                    noResultsDiv.innerHTML = `
-                        <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-search text-2xl text-gray-400"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
-                        <p class="text-gray-600 mb-4">No orders match your search criteria.</p>
-                        <button onclick="clearAllFilters()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
-                            Clear Filters
-                        </button>
-                    `;
-                    ordersContainer.appendChild(noResultsDiv);
-                } else if (!show && noResultsDiv) {
-                    noResultsDiv.remove();
-                }
+        }
+
+        // Billing Modal Functions
+        function openBillingModal() {
+            document.getElementById('billingModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeBillingModal() {
+            document.getElementById('billingModal').classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('billingModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBillingModal();
             }
-            
-            searchInput.addEventListener('input', filterOrders);
-            statusFilter.addEventListener('change', filterOrders);
-            tierFilter.addEventListener('change', filterOrders);
-            applyButton.addEventListener('click', filterOrders);
-            
-            window.clearAllFilters = function() {
-                searchInput.value = '';
-                statusFilter.value = '';
-                tierFilter.value = '';
-                filterOrders();
-            };
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBillingModal();
+            }
         });
     </script>
 </body>
+
 </html>

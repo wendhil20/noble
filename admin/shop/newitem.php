@@ -10,7 +10,6 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-
 /**
  * Auto-assigns categories for ALL product variants based on codenames
  * Also updates the codename in products table to match category
@@ -155,6 +154,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
 
+        // ✅ NEW: Handle lead time bulk updates
+        if (!empty($_POST['bulk_lead_count']) && !empty($_POST['bulk_lead_interval'])) {
+            $leadCount = intval($_POST['bulk_lead_count']);
+            $leadInterval = $_POST['bulk_lead_interval'];
+            $leadGap = !empty($_POST['bulk_lead_gap']) ? intval($_POST['bulk_lead_gap']) : null;
+
+            // Update lead time directly in product_variants table
+            $stmt = $conn->prepare("UPDATE product_variants SET lead_count = ?, lead_interval = ?, lead_gap = ? WHERE id IN (" . implode(',', $ids) . ")");
+            $stmt->bind_param("isi", $leadCount, $leadInterval, $leadGap);
+            $stmt->execute();
+        }
+
         // FIXED: Auto-sync categories based on product codename - update both variants and products
         if (isset($_POST['auto_sync_categories'])) {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
@@ -203,14 +214,18 @@ $origin_filter = $_GET['origin'] ?? '';
 $category_filter = $_GET['category'] ?? '';
 $subcategory_filter = $_GET['subcategory'] ?? '';
 $delivery_size_filter = $_GET['delivery_size'] ?? '';
+$leadtime_filter = $_GET['leadtime'] ?? ''; // ✅ NEW: Lead time filter
 
-// Enhanced query that shows category mismatch status and includes delivery size info
+// Enhanced query that shows category mismatch status and includes delivery size info and lead time
 $query = "
     SELECT 
         pv.*,
         p.codename,
         p.product_name,
         p.main_image,
+        pv.lead_count,
+        pv.lead_interval,
+        pv.lead_gap,
         c1.name as current_category_name,
         c2.name as expected_category_name,
         c2.id as expected_category_id,
@@ -260,6 +275,13 @@ if (is_numeric($delivery_size_filter)) {
     $query .= " AND pv.delivery_size_id = " . intval($delivery_size_filter);
 }
 
+// ✅ NEW: Add lead time filter
+if ($leadtime_filter === 'with_leadtime') {
+    $query .= " AND pv.lead_count IS NOT NULL AND pv.lead_interval IS NOT NULL";
+} elseif ($leadtime_filter === 'without_leadtime') {
+    $query .= " AND (pv.lead_count IS NULL OR pv.lead_interval IS NULL)";
+}
+
 // Add filter for category sync status
 $sync_filter = $_GET['sync_status'] ?? '';
 if ($sync_filter === 'mismatched') {
@@ -285,6 +307,17 @@ $count_query = "
 ";
 $count_result = $conn->query($count_query);
 $counts = $count_result->fetch_assoc();
+
+// ✅ NEW: Get lead time counts
+$leadtime_count_query = "
+    SELECT 
+        SUM(CASE WHEN pv.lead_count IS NOT NULL AND pv.lead_interval IS NOT NULL THEN 1 ELSE 0 END) as with_leadtime_count,
+        SUM(CASE WHEN pv.lead_count IS NULL OR pv.lead_interval IS NULL THEN 1 ELSE 0 END) as without_leadtime_count
+    FROM product_variants pv
+    JOIN products p ON pv.product_id = p.id
+";
+$leadtime_count_result = $conn->query($leadtime_count_query);
+$leadtime_counts = $leadtime_count_result->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
@@ -375,7 +408,7 @@ $counts = $count_result->fetch_assoc();
 <body class="bg-gray-100 font-sans">
 <?php include '../navbar/top.php'; ?>
 <div class="max-w-full mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variant Status, Origin, Category & Delivery Size</h1>
+  <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variant Status, Origin, Category, Delivery Size & Lead Time</h1>
 
   <?php if ($sync_message): ?>
   <!-- Success Message -->
@@ -404,10 +437,16 @@ $counts = $count_result->fetch_assoc();
   <!-- Category Sync Status Summary -->
   <div class="bg-white rounded-lg shadow-md p-4 mb-6">
     <h3 class="text-lg font-semibold text-gray-800 mb-2">Category Synchronization Status</h3>
-    <div class="flex gap-4 text-sm">
+    <div class="flex gap-4 text-sm mb-3">
       <span class="text-green-600">✓ Matched: <?= $counts['matched_count'] ?></span>
       <span class="text-red-600">✗ Mismatched: <?= $counts['mismatched_count'] ?></span>
       <span class="text-yellow-600">⚠ No Match: <?= $counts['no_match_count'] ?></span>
+    </div>
+    <!-- ✅ NEW: Lead Time Status -->
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Lead Time Status</h3>
+    <div class="flex gap-4 text-sm">
+      <span class="text-blue-600">⏰ With Lead Time: <?= $leadtime_counts['with_leadtime_count'] ?></span>
+      <span class="text-gray-600">⚫ Without Lead Time: <?= $leadtime_counts['without_leadtime_count'] ?></span>
     </div>
   </div>
 
@@ -475,6 +514,16 @@ $counts = $count_result->fetch_assoc();
       </select>
     </div>
 
+    <!-- ✅ NEW: Lead Time filter -->
+    <div>
+      <label class="text-sm font-medium text-gray-700">Lead Time:</label>
+      <select name="leadtime" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
+        <option value="">All</option>
+        <option value="with_leadtime" <?= $leadtime_filter === 'with_leadtime' ? 'selected' : '' ?>>⏰ With Lead Time</option>
+        <option value="without_leadtime" <?= $leadtime_filter === 'without_leadtime' ? 'selected' : '' ?>>⚫ Without Lead Time</option>
+      </select>
+    </div>
+
     <div>
       <label class="text-sm font-medium text-gray-700">Category Sync:</label>
       <select name="sync_status" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
@@ -536,6 +585,17 @@ $counts = $count_result->fetch_assoc();
             <option value="<?= $size['id'] ?>"><?= htmlspecialchars($size['size_name']) ?> (<?= $size['percentage'] ?>%)</option>
           <?php endwhile; ?>
         </select>
+
+        <!-- ✅ NEW: Lead Time bulk update inputs -->
+        <input type="number" name="bulk_lead_count" placeholder="Lead Count" min="1" class="border rounded px-2 py-1 text-sm w-24">
+        <select name="bulk_lead_interval" class="border rounded px-2 py-1 text-sm">
+          <option value="">Lead Interval</option>
+          <option value="day">Day</option>
+          <option value="week">Week</option>
+          <option value="month">Month</option>
+          <option value="year">Year</option>
+        </select>
+        <input type="number" name="bulk_lead_gap" placeholder="Gap (Days)" min="0" class="border rounded px-2 py-1 text-sm w-20">
 
         <button type="submit" name="auto_sync_categories" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm" title="Auto-sync categories based on product codename">
           Auto-Sync Categories
@@ -626,6 +686,18 @@ $counts = $count_result->fetch_assoc();
           <?php if ($row['delivery_size_name']): ?>
             <div class="text-xs text-purple-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($row['delivery_size_name']) ?> - <?= $row['delivery_size_percentage'] ?>%">
               Size: <span class="font-medium"><?= htmlspecialchars($row['delivery_size_name']) ?></span> (<?= $row['delivery_size_percentage'] ?>%)
+            </div>
+          <?php endif; ?>
+
+          <!-- ✅ NEW: Lead Time Information -->
+          <?php if ($row['lead_count'] && $row['lead_interval']): ?>
+            <div class="text-xs text-indigo-600 mb-1 pointer-events-none truncate" 
+                 title="Lead Time: <?= $row['lead_count'] ?> <?= $row['lead_interval'] ?><?= $row['lead_count'] > 1 ? 's' : '' ?><?= $row['lead_gap'] ? ' + ' . $row['lead_gap'] . ' day' . ($row['lead_gap'] > 1 ? 's' : '') : '' ?>">
+              ⏰: <span class="font-medium"><?= $row['lead_count'] ?><?= substr($row['lead_interval'], 0, 1) ?></span><?= $row['lead_gap'] ? '+' . $row['lead_gap'] . 'd' : '' ?>
+            </div>
+          <?php else: ?>
+            <div class="text-xs text-gray-400 mb-1 pointer-events-none">
+              ⚫ No Lead Time
             </div>
           <?php endif; ?>
 

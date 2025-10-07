@@ -83,8 +83,23 @@ while ($row = $colors_result->fetch_assoc()) {
   $product_colors[] = $row;
 }
 
-// Fetch product types and variants
-$stmt = $conn->prepare("SELECT pt.*, pv.id as variant_id, pv.namevariant, pv.color, pv.size, pv.price as variant_price, pv.percent, pv.discount, pv.image as variant_image FROM product_types pt LEFT JOIN product_variants pv ON pt.id = pv.type_id WHERE pt.product_id = ?");
+// Fetch product types and variants (UPDATED: added sku_info)
+$stmt = $conn->prepare("
+  SELECT 
+    pt.*, 
+    pv.id as variant_id, 
+    pv.namevariant, 
+    pv.color, 
+    pv.size, 
+    pv.price as variant_price, 
+    pv.percent, 
+    pv.discount, 
+    pv.image as variant_image,
+    pv.sku_info
+  FROM product_types pt 
+  LEFT JOIN product_variants pv ON pt.id = pv.type_id 
+  WHERE pt.product_id = ?
+");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $types_result = $stmt->get_result();
@@ -884,17 +899,45 @@ $avg_stmt->close();
               <?php endif; ?>
             </div>
 
-            <!-- Product Name -->
-            <div>
-              <h1 class="text-xl sm:text-2xl lg:text-3xl  text-orange-600 mb-2">
-                <?= htmlspecialchars($product['product_name']) ?>
-              </h1>
-              <div class="flex flex-wrap gap-2 mb-3">
-                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-                  <?= htmlspecialchars($product['codename']) ?>
-                </span>
-              </div>
-            </div>
+       <!-- Product Name and Price -->
+<div>
+  <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
+    <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
+      <?= htmlspecialchars($product['product_name']) ?>
+    </h1>
+    
+    <!-- Dynamic Price Display -->
+    <div id="product-price-display" class="hidden">
+      <div class="text-right">
+        <!-- Original Price (with strikethrough if discount exists) -->
+        <div id="original-price-container" class="hidden">
+          <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
+        </div>
+        
+        <!-- Final Price -->
+        <div class="text-2xl lg:text-3xl font-bold text-green-600" id="final-price">₱0.00</div>
+        
+        <!-- Discount Badge -->
+        <div id="discount-badge" class="hidden mt-1">
+          <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+            <span id="discount-percent">0</span>% OFF
+          </span>
+        </div>
+        
+        <!-- Selected Size Info -->
+        <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
+          Size: <span class="font-semibold" id="selected-size-text">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="flex flex-wrap gap-2 mb-3">
+    <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+      <?= htmlspecialchars($product['codename']) ?>
+    </span>
+  </div>
+</div>
 
             <!-- Description -->
             <div>
@@ -919,7 +962,7 @@ $avg_stmt->close();
 
         <!-- Mobile Sidebar Toggle Button (Smaller Version) -->
         <button id="mobileSidebarToggle"
-          class="lg:hidden fixed bottom-3 right-3 z-[90] bg-orange-500 text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
+          class="lg:hidden fixed bottom-3 right-3 z-[90] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
           <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
           <span>Add to Cart</span>
         </button>
@@ -932,12 +975,12 @@ $avg_stmt->close();
         <div id="productOptionsContainer"
           class="fixed lg:relative top-0 right-0 h-full lg:h-auto w-full sm:w-80 lg:w-full 
          transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out
-         z-[101] lg:z-auto bg-white lg:bg-gray-50 shadow-xl lg:shadow-none overflow-y-auto">
+         z-[101] lg:z-auto bg-white lg:bg-white shadow-xl lg:shadow-none overflow-y-auto">
 
           <!-- Mobile Sidebar Header -->
           <div class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm bg-orange-500">
             <h2 class="text-lg text-white">Product Options</h2>
-            <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 p-1">
+            <button id="closeSidebar" class="text-white hover:text-white p-1">
               <i class="fas fa-times text-xl"></i>
             </button>
           </div>
@@ -949,7 +992,7 @@ $avg_stmt->close();
             <?php if (!empty($types_data)): ?>
               <div class="mb-6 lg:mb-10">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl  text-gray-800">Item</h3>
+                  <h3 class="text-base lg:text-xl  text-gray-800">Click Item</h3>
                   <div class="text-xs lg:text-sm text-gray-500">Required</div>
                 </div>
 
@@ -995,7 +1038,8 @@ $avg_stmt->close();
                   <h3 class="text-base lg:text-xl  text-gray-800">Choose Color</h3>
                   <div class="text-xs lg:text-sm text-gray-500">Required</div>
                   <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
-                    <div class="aspect-square w-32 mx-auto bg-gray-50 rounded-lg overflow-hidden">
+                    <div class="aspect-square w-32 mx-auto overflow-hidden">
+                           <h1 class="text-center">Display</h1>
                       <img id="sidebar-product-image"
                         src="../../<?= htmlspecialchars($product['main_image']) ?>"
                         class="w-full h-full object-contain"
@@ -1003,6 +1047,7 @@ $avg_stmt->close();
                     </div>
                     <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
                       <?= htmlspecialchars($product['product_name']) ?>
+               
                     </h3>
                   </div>
                 </div>
@@ -1038,54 +1083,252 @@ $avg_stmt->close();
               </div>
             <?php endif; ?>
 
-            <!-- STEP 3: SIZE/VARIANT SELECTION -->
-            <div class="mb-6 lg:mb-8" id="size-selection-section">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base lg:text-xl  text-gray-800">Choose Size</h3>
-                <div class="text-xs lg:text-sm text-gray-500">Required</div>
-              </div>
+<!-- STEP 3: SIZE/VARIANT SELECTION -->
+<div class="mb-6 lg:mb-8" id="size-selection-section">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base lg:text-xl text-gray-800">Choose Size</h3>
+    <div class="text-xs lg:text-sm text-gray-500">Required</div>
+  </div>
 
-              <div id="variant-container" class="text-gray-500 p-4 bg-white text-center rounded-lg">
-                <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
-                <p class="text-sm lg:text-base">Please select a color first</p>
-              </div>
+  <div id="variant-container" class="text-gray-500 p-4 bg-white text-center rounded-lg">
+    <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
+    <p class="text-sm lg:text-base">Please select a color first</p>
+  </div>
 
-              <?php foreach ($types_data as $type): ?>
-                <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-                  <?php if (!empty($type['variants'])): ?>
-                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-3">
-                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                        <?php foreach ($type['variants'] as $variant): ?>
-                          <?php
-                          $price = floatval($variant['variant_price']);
-                          $percent = floatval($variant['percent']);
-                          $discount = floatval($variant['discount'] ?? 0);
-                          $priceWithMarkup = $price + ($price * $percent / 100);
-                          $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                          ?>
-                          <button type="button"
-                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>')"
-                            class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
-                           px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
-                            data-price="<?= $price ?>"
-                            data-percent="<?= $percent ?>"
-                            data-discount="<?= $discount ?>"
-                            data-variant-id="<?= $variant['variant_id'] ?>">
-                            <div class="text-gray-700 text-[11px] font-medium leading-tight">
-                              <?= htmlspecialchars($variant['size']) ?>
-                            </div>
-                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
-                          </button>
-                        <?php endforeach; ?>
-                      </div>
-                    </div>
-                  <?php else: ?>
-                    <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
-                  <?php endif; ?>
+  <?php foreach ($types_data as $type): ?>
+    <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+      <?php if (!empty($type['variants'])): ?>
+        <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-3">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <?php foreach ($type['variants'] as $variant): ?>
+              <?php
+              $price = floatval($variant['variant_price']);
+              $percent = floatval($variant['percent']);
+              $discount = floatval($variant['discount'] ?? 0);
+              $priceWithMarkup = $price + ($price * $percent / 100);
+              $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+              
+              // Parse SKU info
+              $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
+              ?>
+              <button type="button"
+                onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this);"
+                class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
+                       px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
+                data-price="<?= $price ?>"
+                data-percent="<?= $percent ?>"
+                data-discount="<?= $discount ?>"
+                data-variant-id="<?= $variant['variant_id'] ?>"
+                data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'>
+                <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                  <?= htmlspecialchars($variant['size']) ?>
                 </div>
-              <?php endforeach; ?>
-            </div>
+                <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
+              </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php else: ?>
+        <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
+      <?php endif; ?>
+    </div>
+  <?php endforeach; ?>
 
+  <!-- SKU Info Display Section (Below size buttons) -->
+  <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200">
+    <div class="flex items-start justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
+      </div>
+      <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    
+    <!-- Content container with collapse functionality -->
+    <div id="sku-info-content-wrapper">
+      <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
+        <!-- Content will be inserted here -->
+      </div>
+      
+      <!-- See More / See Less button -->
+      <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
+        <span id="toggle-sku-text">See More</span>
+        <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Custom scrollbar styling */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Smooth slide animation */
+#sku-info-display {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Collapsed state */
+#sku-info-content.collapsed {
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+}
+
+#sku-info-content.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, #f9fafb);
+  pointer-events: none;
+}
+
+#sku-info-content.expanded {
+  max-height: none;
+}
+</style>
+
+<script>
+let isExpanded = false;
+
+function showSkuInfo(button) {
+  const display = document.getElementById('sku-info-display');
+  const content = document.getElementById('sku-info-content');
+  const toggleBtn = document.getElementById('toggle-sku-btn');
+  const skuInfoJson = button.getAttribute('data-sku-info');
+  
+  // Reset state
+  isExpanded = false;
+  content.classList.remove('collapsed', 'expanded');
+  toggleBtn.classList.add('hidden');
+  
+  // If no SKU info, hide the display
+  if (!skuInfoJson) {
+    display.classList.add('hidden');
+    return;
+  }
+  
+  try {
+    const skuInfo = JSON.parse(skuInfoJson);
+    
+    // Build content HTML
+    let html = '';
+    
+    // Check if it's plain text (only has 'notes' field)
+    if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
+      html = `
+        <div class="bg-white p-4 rounded-lg">
+          <div class="whitespace-pre-wrap text-gray-800">${escapeHtml(skuInfo.notes)}</div>
+        </div>
+      `;
+    } else {
+      // Structured data display as list
+      html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
+      
+      for (const [key, value] of Object.entries(skuInfo)) {
+        const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+        html += `
+          <div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+            <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(label)}:</span>
+            <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
+          </div>
+        `;
+      }
+      
+      html += '</div></div>';
+    }
+    
+    content.innerHTML = html;
+    display.classList.remove('hidden');
+    
+    // Check if content height exceeds 120px and show toggle button
+    setTimeout(() => {
+      if (content.scrollHeight > 120) {
+        content.classList.add('collapsed');
+        toggleBtn.classList.remove('hidden');
+        updateToggleButton();
+      }
+    }, 50);
+    
+  } catch (e) {
+    console.error('Error parsing SKU info:', e);
+    display.classList.add('hidden');
+  }
+}
+
+function toggleSkuContent() {
+  const content = document.getElementById('sku-info-content');
+  isExpanded = !isExpanded;
+  
+  if (isExpanded) {
+    content.classList.remove('collapsed');
+    content.classList.add('expanded');
+  } else {
+    content.classList.remove('expanded');
+    content.classList.add('collapsed');
+  }
+  
+  updateToggleButton();
+}
+
+function updateToggleButton() {
+  const toggleText = document.getElementById('toggle-sku-text');
+  const toggleIcon = document.getElementById('toggle-sku-icon');
+  
+  if (isExpanded) {
+    toggleText.textContent = 'See Less';
+    toggleIcon.classList.remove('fa-chevron-down');
+    toggleIcon.classList.add('fa-chevron-up');
+  } else {
+    toggleText.textContent = 'See More';
+    toggleIcon.classList.remove('fa-chevron-up');
+    toggleIcon.classList.add('fa-chevron-down');
+  }
+}
+
+function hideSkuInfo() {
+  const display = document.getElementById('sku-info-display');
+  display.classList.add('hidden');
+  isExpanded = false;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
             <!-- PURCHASE SECTION -->
             <div class="mt-4 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none p-4">
               <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
@@ -2240,6 +2483,9 @@ $avg_stmt->close();
         if (this.elements.variantId) {
           this.elements.variantId.value = variantId;
         }
+
+        // Update price display next to product name
+this.updateProductHeaderPrice();
       }
 
       unselectVariant(button) {
@@ -2254,6 +2500,9 @@ $avg_stmt->close();
         if (this.elements.variantId) {
           this.elements.variantId.value = '';
         }
+
+        // Hide price display in product header
+  this.hideProductHeaderPrice();
       }
 
       clearVariantSelection() {
@@ -2269,6 +2518,7 @@ $avg_stmt->close();
           btn.classList.add('border-gray-200', 'bg-white');
         });
       }
+
 
       // Price and Display Methods
       calculateTotalPrice() {
@@ -2297,6 +2547,92 @@ $avg_stmt->close();
           hasSelections
         };
       }
+
+      // New method to update product header price display
+updateProductHeaderPrice() {
+  if (!this.selectedVariantData) {
+    console.log('No variant data available');
+    return;
+  }
+
+  const priceDisplay = document.getElementById('product-price-display');
+  const originalPriceContainer = document.getElementById('original-price-container');
+  const originalPriceElement = document.getElementById('original-price');
+  const finalPriceElement = document.getElementById('final-price');
+  const discountBadge = document.getElementById('discount-badge');
+  const discountPercent = document.getElementById('discount-percent');
+  const selectedSizeText = document.getElementById('selected-size-text');
+
+  if (!priceDisplay || !finalPriceElement) {
+    console.error('Required price display elements not found');
+    return;
+  }
+
+  try {
+    // Show the price display
+    priceDisplay.classList.remove('hidden');
+
+    // Calculate prices - start with variant price with markup
+    let finalPrice = parseFloat(this.selectedVariantData.priceWithMarkup) || 0;
+    
+    // Add color price if selected
+    if (this.selectedColorData && this.selectedColorData.price) {
+      finalPrice += parseFloat(this.selectedColorData.price);
+    }
+
+    console.log('Final price calculation:', {
+      variantPrice: this.selectedVariantData.priceWithMarkup,
+      colorPrice: this.selectedColorData?.price || 0,
+      finalPrice: finalPrice
+    });
+
+    // Update size info
+    if (selectedSizeText && this.selectedVariantData.size) {
+      selectedSizeText.textContent = this.selectedVariantData.size;
+    }
+
+    // Check if there's a discount
+    const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
+    
+    if (discountValue > 0) {
+      // Show original price with strikethrough
+      const originalPrice = finalPrice;
+      const discountedPrice = originalPrice - (originalPrice * discountValue / 100);
+      
+      if (originalPriceContainer && originalPriceElement) {
+        originalPriceContainer.classList.remove('hidden');
+        originalPriceElement.textContent = `₱${originalPrice.toFixed(2)}`;
+      }
+      
+      finalPriceElement.textContent = `₱${discountedPrice.toFixed(2)}`;
+      
+      // Show discount badge
+      if (discountBadge && discountPercent) {
+        discountBadge.classList.remove('hidden');
+        discountPercent.textContent = discountValue.toFixed(0);
+      }
+    } else {
+      // No discount, just show final price
+      if (originalPriceContainer) {
+        originalPriceContainer.classList.add('hidden');
+      }
+      finalPriceElement.textContent = `₱${finalPrice.toFixed(2)}`;
+      if (discountBadge) {
+        discountBadge.classList.add('hidden');
+      }
+    }
+  } catch (error) {
+    console.error('Error updating product header price:', error);
+  }
+}
+
+// New method to hide product header price
+hideProductHeaderPrice() {
+  const priceDisplay = document.getElementById('product-price-display');
+  if (priceDisplay) {
+    priceDisplay.classList.add('hidden');
+  }
+}
 
       updateTotalPrice() {
         const {

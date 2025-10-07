@@ -2,32 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PayMongo Checkout Sample</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Into Picture</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 200vh; /* para may scroll space */
+      background: #111;
+      overflow-x: hidden;
+    }
+
+    .hero {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1); /* start normal size */
+      transition: transform 0.1s linear;
+    }
+
+    .content {
+      height: 100vh;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+  </style>
 </head>
 <body>
-  <h2>PayMongo Checkout</h2>
-  <input type="number" id="amount" placeholder="Enter Amount (₱)">
-  <button id="payBtn">Pay Now</button>
+
+  <div class="hero">
+    <img id="bg" src="https://picsum.photos/id/1018/1920/1080" alt="Background">
+  </div>
+
+  <div class="content">
+    <p>Now you are inside the picture, Papalicious 😎</p>
+  </div>
 
   <script>
-    document.getElementById('payBtn').addEventListener('click', async () => {
-      const amount = document.getElementById('amount').value;
+    const bg = document.getElementById("bg");
 
-      const res = await fetch("paymongo-create-session.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount })
-      });
-
-      const data = await res.json();
-      console.log(data);
-
-      if (data.data && data.data.attributes.checkout_url) {
-        window.location.href = data.data.attributes.checkout_url;
-      } else {
-        alert("Failed to create checkout session.");
-      }
+    window.addEventListener("scroll", () => {
+      let scrollY = window.scrollY;
+      let scale = 1 + scrollY / 1000; // adjust zoom speed
+      bg.style.transform = `scale(${scale})`;
     });
   </script>
+
 </body>
 </html>

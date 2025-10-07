@@ -40,7 +40,7 @@ $categories_result = $conn->query($categories_query);
 $onsale_query = "SELECT * FROM onsalebanner ORDER BY uploaded_at DESC";
 $onsale_result = $conn->query($onsale_query);
 ?>
-
+     
 <!DOCTYPE html>
 <html lang="en">
 
@@ -80,7 +80,6 @@ $onsale_result = $conn->query($onsale_query);
             transform: translateY(-4px);
         }
 
-        /* Sidebar styles */
         .sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease-in-out;
@@ -101,7 +100,6 @@ $onsale_result = $conn->query($onsale_query);
             pointer-events: auto;
         }
 
-        /* Swiper Banner Styles */
         .banner-swiper {
             width: 100%;
             height: 500px;
@@ -120,63 +118,54 @@ $onsale_result = $conn->query($onsale_query);
             object-fit: cover;
         }
 
-        /* Large Desktop (1920px+) */
         @media (min-width: 1920px) {
             .banner-swiper {
                 height: 600px;
             }
         }
 
-        /* Desktop (1440px-1919px) */
         @media (max-width: 1919px) {
             .banner-swiper {
                 height: 500px;
             }
         }
 
-        /* Laptop (1280px-1439px) */
         @media (max-width: 1439px) {
             .banner-swiper {
                 height: 450px;
             }
         }
 
-        /* Tablet Landscape (1024px-1279px) */
         @media (max-width: 1279px) {
             .banner-swiper {
                 height: 400px;
             }
         }
 
-        /* Tablet Portrait (768px-1023px) */
         @media (max-width: 1023px) {
             .banner-swiper {
                 height: 350px;
             }
         }
 
-        /* Mobile Landscape (640px-767px) */
         @media (max-width: 767px) {
             .banner-swiper {
                 height: 280px;
             }
         }
 
-        /* Mobile Portrait (480px-639px) */
         @media (max-width: 639px) {
             .banner-swiper {
                 height: 240px;
             }
         }
 
-        /* Small Mobile (375px-479px) */
         @media (max-width: 479px) {
             .banner-swiper {
                 height: 200px;
             }
         }
 
-        /* Extra Small Mobile (≤374px) */
         @media (max-width: 374px) {
             .banner-swiper {
                 height: 180px;
@@ -203,7 +192,7 @@ $onsale_result = $conn->query($onsale_query);
 <body class="bg-white min-h-screen font-roboto">
     <?php include '../navbar/top.php'; ?>
 
-    <!-- On Sale Banner Swiper - Full Width -->
+    <!-- On Sale Banner Swiper -->
     <?php if ($onsale_result->num_rows > 0): ?>
         <div class="w-full bg-gray-100 mb-8">
             <div class="swiper banner-swiper">
@@ -217,7 +206,6 @@ $onsale_result = $conn->query($onsale_query);
                     <?php endwhile; ?>
                 </div>
 
-                <!-- Custom Navigation Buttons with Icons -->
                 <div class="swiper-button-prev !w-10 !h-10 !bg-black/70 hover:!bg-red-600 !rounded-full !transition-all !duration-300 hover:!scale-110 !flex !items-center !justify-center after:!content-[''] !shadow-lg !-left-2 md:!left-[100px]">
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -234,14 +222,11 @@ $onsale_result = $conn->query($onsale_query);
             <section class="bg-black text-white py-1">
                 <div class="max-w-6xl mx-auto px-1 text-center md:text-left">
                     <div class="inline-flex flex-wrap gap-3 items-center">
-                        <p class="text-base md:text-lg text-black">
-
-                        </p>
+                        <p class="text-base md:text-lg text-black"></p>
                     </div>
                 </div>
             </section>
         </div>
-
     <?php endif; ?>
 
     <!-- Mobile Sidebar Overlay -->
@@ -261,7 +246,7 @@ $onsale_result = $conn->query($onsale_query);
 
             <div class="space-y-3">
                 <?php
-                $categories_result->data_seek(0); // Reset pointer
+                $categories_result->data_seek(0);
                 while ($category = $categories_result->fetch_assoc()):
                 ?>
                     <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>'); closeSidebar();"
@@ -298,11 +283,10 @@ $onsale_result = $conn->query($onsale_query);
         <div class="mb-12">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-4xl  text-black mb-2">Sale Items</h1>
+                    <h1 class="text-4xl text-black mb-2">Sale Items</h1>
                     <p class="text-gray-600 text-lg mt-2">Browse discounted products by category</p>
                     <div class="h-1 w-24 bg-red-600 mt-3"></div>
                 </div>
-                <!-- Mobile Menu Button -->
                 <button onclick="openSidebar()" class="md:hidden bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -315,12 +299,11 @@ $onsale_result = $conn->query($onsale_query);
         <!-- Desktop Categories Section -->
         <div class="mb-12 hidden md:block">
             <div class="flex items-center gap-3 mb-6">
-                <h2 class="text-2xl  text-black">Sale Categories</h2>
+                <h2 class="text-2xl text-black">Sale Categories</h2>
                 <span class="bg-red-600 text-white text-xs px-3 py-1 rounded-full">ON SALE</span>
             </div>
 
             <div class="relative">
-                <!-- Previous Button -->
                 <button onclick="slideCategories('prev')"
                     class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black rounded-full p-3 hover:bg-black hover:text-white transition-all duration-300 shadow-lg -ml-4">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,11 +311,10 @@ $onsale_result = $conn->query($onsale_query);
                     </svg>
                 </button>
 
-                <!-- Categories Slider Container -->
                 <div class="overflow-hidden px-8">
                     <div id="categories-slider" class="flex transition-transform duration-500 ease-in-out gap-6">
                         <?php
-                        $categories_result->data_seek(0); // Reset pointer
+                        $categories_result->data_seek(0);
                         while ($category = $categories_result->fetch_assoc()):
                         ?>
                             <button onclick="loadSubcategories(<?= $category['id'] ?>, '<?= htmlspecialchars($category['name'], ENT_QUOTES) ?>')"
@@ -363,7 +345,7 @@ $onsale_result = $conn->query($onsale_query);
 
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center p-4">
                                             <div class="text-center">
-                                                <span class="bg-red-600 text-white text-xs  px-2 py-1 rounded mb-2 inline-block">SALE</span>
+                                                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded mb-2 inline-block">SALE</span>
                                                 <h3 class="text-white text-lg drop-shadow-lg uppercase font-light">
                                                     <?= htmlspecialchars($category['name']) ?>
                                                 </h3>
@@ -376,7 +358,6 @@ $onsale_result = $conn->query($onsale_query);
                     </div>
                 </div>
 
-                <!-- Next Button -->
                 <button onclick="slideCategories('next')"
                     class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black rounded-full p-3 hover:bg-black hover:text-white transition-all duration-300 shadow-lg -mr-4">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +391,6 @@ $onsale_result = $conn->query($onsale_query);
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
-        // Initialize Swiper for Banner
         const bannerSwiper = new Swiper('.banner-swiper', {
             loop: true,
             autoplay: {
@@ -462,33 +442,28 @@ $onsale_result = $conn->query($onsale_query);
         }
 
         function loadSubcategories(categoryId, categoryName) {
-            // Remove active class from all category buttons (desktop)
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.classList.remove('border-black', 'bg-gray-50', 'shadow-xl');
                 btn.classList.add('border-gray-200');
             });
 
-            // Remove active class from mobile buttons
             document.querySelectorAll('.category-btn-mobile').forEach(btn => {
                 btn.classList.remove('border-red-600', 'bg-red-50');
                 btn.classList.add('border-gray-200');
             });
 
-            // Add active class to clicked button (desktop)
             const clickedBtn = document.querySelector(`.category-btn[data-category-id="${categoryId}"]`);
             if (clickedBtn) {
                 clickedBtn.classList.remove('border-gray-200');
                 clickedBtn.classList.add('border-black', 'bg-gray-50', 'shadow-xl');
             }
 
-            // Add active class to mobile button
             const clickedMobileBtn = document.querySelector(`.category-btn-mobile[data-category-id="${categoryId}"]`);
             if (clickedMobileBtn) {
                 clickedMobileBtn.classList.remove('border-gray-200');
                 clickedMobileBtn.classList.add('border-red-600', 'bg-red-50');
             }
 
-            // Smooth scroll to subcategories
             setTimeout(() => {
                 document.getElementById('subcategories-section').scrollIntoView({
                     behavior: 'smooth',
@@ -496,7 +471,6 @@ $onsale_result = $conn->query($onsale_query);
                 });
             }, 100);
 
-            // Show subcategories section with animation
             const section = document.getElementById('subcategories-section');
             section.classList.remove('hidden');
             section.style.opacity = '0';
@@ -507,7 +481,6 @@ $onsale_result = $conn->query($onsale_query);
 
             document.getElementById('category-title').textContent = categoryName;
 
-            // Show loading state
             document.getElementById('subcategories-content').innerHTML = `
                 <div class="col-span-full text-center py-16">
                     <div class="inline-block">
@@ -520,7 +493,6 @@ $onsale_result = $conn->query($onsale_query);
                 </div>
             `;
 
-            // Fetch subcategories via AJAX
             fetch(`allproduct_get.php?category_id=${categoryId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -531,8 +503,9 @@ $onsale_result = $conn->query($onsale_query);
                                 `../../uploads/${sub.subcategory_slug}/${sub.image_path}` :
                                 null;
 
+                            // ✅ IMPORTANT: Add &sale=1 parameter here for SALE items
                             html += `
-                                <a href="allproductsub_variant.php?subcategory_id=${sub.id}" 
+                                <a href="allproductsub_variant.php?subcategory_id=${sub.id}&sale=1" 
                                    class="subcategory-card bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-black hover:shadow-xl cursor-pointer group">
                                     <div class="aspect-square overflow-hidden bg-gray-50 relative">
                                         ${imagePath 
@@ -593,7 +566,6 @@ $onsale_result = $conn->query($onsale_query);
                 section.classList.add('hidden');
             }, 300);
 
-            // Remove active class from all buttons
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.classList.remove('border-black', 'bg-gray-50', 'shadow-xl');
                 btn.classList.add('border-gray-200');

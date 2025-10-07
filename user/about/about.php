@@ -1,382 +1,539 @@
-<?php
-session_name("nobleuser");
-session_start();
-include '../../connection/connect.php';
-
-// ✅ Restore session from remember_token (normal account or Google)
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
-    $token = $_COOKIE['remember_token'];
-    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    if ($res->num_rows > 0) {
-        $user = $res->fetch_assoc();
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
-        $_SESSION['user_email'] = $user['email'];
-
-        // Check if the account is Google-based (optional flag or logic)
-        if (!empty($user['google_id'])) {
-            $_SESSION['google_logged_in'] = true;
-            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
-        }
-    }
-    $stmt->close();
-}
-
-// ✅ Final check if logged in (either normal or Google)
-if (!isset($_SESSION['user_id'])) {
-    // Not logged in, redirect to login/Google callback
-    header('Location: ../google-callback.php');
-    exit;
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noble Home Corp - About Us</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <style>
-        .font-poppins {
-            font-family: 'Poppins', sans-serif;
+        .slide-section {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+        }
+        
+        .slide-section.active-slide {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 10;
         }
 
-        .font-opensans {
-            font-family: 'Open Sans', sans-serif;
+        .bg-overlay {
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
         }
 
-        .shadow-subtle {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        .nav-button {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 40;
+            background: rgba(249, 115, 22, 0.9);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .border-accent {
-            border-color: #e97517;
+        .nav-button:hover {
+            background: rgba(249, 115, 22, 1);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 10px 30px rgba(249, 115, 22, 0.5);
         }
 
-        .hover-lift:hover {
-            transform: translateY(-2px);
-            transition: transform 0.2s ease;
+        .nav-button.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
-        .text-primary {
-            color: #1e40af;
+        .nav-button-left {
+            left: 30px;
         }
 
-        .text-accent {
-            color: #e97517;
+        .nav-button-right {
+            right: 30px;
         }
 
-        .bg-accent {
-            background-color: #e97517;
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .nav-button {
+                width: 45px;
+                height: 45px;
+            }
+
+            .nav-button-left {
+                left: 15px;
+            }
+
+            .nav-button-right {
+                right: 15px;
+            }
+
+            .nav-button i {
+                font-size: 1.25rem;
+            }
+
+            /* Prevent zoom on double tap */
+            * {
+                touch-action: manipulation;
+            }
         }
 
-        .bg-primary {
-            background-color: #1e40af;
+        @media (max-width: 640px) {
+            .nav-button {
+                width: 40px;
+                height: 40px;
+            }
+
+            .nav-button-left {
+                left: 10px;
+            }
+
+            .nav-button-right {
+                right: 10px;
+            }
+
+            .nav-button i {
+                font-size: 1rem;
+            }
         }
     </style>
-
-
 </head>
-
-<body class="">
+<body class="font-roboto overflow-x-hidden">
     <?php include '../navbar/top.php'; ?>
-    
-<!-- About Us with Many Bouncing Bubbles -->
-<div class="relative bg-white overflow-hidden">
-  <!-- Bubble Background Container -->
-  <div class="absolute inset-0 z-0 pointer-events-none">
-    <!-- Generate multiple bubbles -->
-    <div class="bubble bg-orange-200 opacity-30 w-10 h-10 rounded-full animate-bubble" style="top: 10%; left: 15%; animation-delay: 0s;"></div>
-    <div class="bubble bg-orange-300 opacity-20 w-16 h-16 rounded-full animate-bubble" style="top: 50%; left: 30%; animation-delay: 2s;"></div>
-    <div class="bubble bg-orange-100 opacity-40 w-8 h-8 rounded-full animate-bubble" style="top: 70%; left: 60%; animation-delay: 1.5s;"></div>
-    <div class="bubble bg-orange-200 opacity-30 w-12 h-12 rounded-full animate-bubble" style="top: 20%; left: 80%; animation-delay: 3s;"></div>
-    <div class="bubble bg-orange-300 opacity-25 w-14 h-14 rounded-full animate-bubble" style="top: 40%; left: 10%; animation-delay: 1s;"></div>
-    <div class="bubble bg-orange-100 opacity-35 w-9 h-9 rounded-full animate-bubble" style="top: 65%; left: 85%; animation-delay: 4s;"></div>
-    <div class="bubble bg-orange-200 opacity-20 w-6 h-6 rounded-full animate-bubble" style="top: 30%; left: 45%; animation-delay: 2.5s;"></div>
-    <div class="bubble bg-orange-300 opacity-25 w-11 h-11 rounded-full animate-bubble" style="top: 85%; left: 25%; animation-delay: 3.5s;"></div>
-  </div>
-
-  <!-- Content Section -->
-  <div class="relative max-w-7xl mx-auto px-6 py-12 z-10">
-    <h1 class="text-4xl md:text-5xl font-bold text-orange-600 text-center font-poppins">About Us</h1>
-    <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-  </div>
-</div>
-
-<!-- Custom CSS for Bubble Animation -->
-<style>
-  @keyframes bubbleFloat {
-    0% {
-      transform: translateY(0) scale(1);
-      opacity: 0.4;
-    }
-    50% {
-      transform: translateY(-30px) scale(1.05);
-      opacity: 0.6;
-    }
-    100% {
-      transform: translateY(0) scale(1);
-      opacity: 0.4;
-    }
-  }
-
-  .animate-bubble {
-    animation: bubbleFloat 6s ease-in-out infinite;
-    position: absolute;
-  }
-</style>
-
-
-
-    <div class=" px-6 py-12">
-        <!-- Company Introduction -->
-        <div class="bg-white rounded-lg  p-8 mb-12">
-            <div class="flex flex-col md:flex-row items-center gap-8">
-                <div class="flex-shrink-0">
-                    <img src="../img/logo.png" alt="Noble Home Corp Logo" class="w-32 h-32 object-contain">
-                </div>
-                <div class="flex-1">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4 font-poppins"><span class="text-orange-500">Noble Home</span> Contruction Corporation </h2>
-                    <p class="text-lg text-gray-700 leading-relaxed ">
-                        A trusted supplier of high-quality construction materials, serving builders, contractors, and developers across the Philippines. We offer a comprehensive range of products including AAC blocks, fiber cement boards, tiles, aluminum windows, and more—delivering reliable solutions for all types of construction projects.
-                    </p>
+    <!-- Navigation Buttons -->
+    <button id="prevBtn" class="nav-button nav-button-left">
+        <i class="fas fa-chevron-left text-2xl"></i>
+    </button>
+    <button id="nextBtn" class="nav-button nav-button-right">
+        <i class="fas fa-chevron-right text-2xl"></i>
+    </button>
+    <!-- Scrollable Content -->
+    <div class="relative h-[600vh]">
+        
+        <!-- Slide 1: Hero -->
+        <section class="slide-section active-slide flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="0">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="../img/saleandexplore/a.png" alt="Hero Background" class="w-full h-full object-cover">
+                 <div class="absolute inset-0 bg-black/50"></div>
+            </div>
+            
+            <!-- Content Card -->
+            <div class="relative z-10 rounded-3xl p-6 sm:p-10 md:p-16 max-w-5xl w-full">
+                <div class="text-center">
+                    <p class="text-base sm:text-lg md:text-xl text-white mb-4 sm:mb-6" data-aos="fade-down">Building Excellence, that is</p>
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-light text-white leading-tight uppercase" data-aos="fade-up" data-aos-delay="300">
+                        About us NobleHome<span class="block text-orange-500">depot.</span>
+                        our <span class="block text-orange-500">mission.</span>
+                        our <span class="block text-orange-500">vision.</span>
+                    </h1>
+                    <div class="mt-8 sm:mt-10 md:mt-12 animate-bounce">
+                        <i class="fas fa-chevron-down text-2xl sm:text-3xl md:text-4xl text-white"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Mission & Vision Section -->
-        <div class="grid md:grid-cols-2 gap-12 items-start mb-12">
-            <!-- Left: Image -->
-            <div>
-                <img src="../img/about.png" alt="Mission and Vision" class="w-full h-[530px] object-contain rounded-lg ">
+         <!-- Slide 2: Introduction -->
+        <section class="slide-section flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="1">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1920" alt="Construction Background" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/70"></div>
             </div>
-
-            <!-- Right: Mission and Vision -->
-            <div class="space-y-8">
-                <!-- Mission -->
-                <div class="bg-white rounded-lg  p-8 hover-lift">
-                    <div class="flex items-center mb-6">
-                        <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mr-4">
-                            <i class="fas fa-bullseye text-white text-xl"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-orange-500 font-poppins">Our Mission <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+            
+            <!-- Content Card -->
+            <div class="relative z-10 p-6 sm:p-10 md:p-16 max-w-6xl w-full">
+                <div class="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
+                    <div data-aos="fade-right" data-aos-delay="200">
+                        <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm uppercase tracking-wider mb-4 sm:mb-6">
+                            Who We Are
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-white leading-tight">
+                            <strong class="text-white uppercase underline decoration-2 underline-offset-4">NobleHome Depot</strong> is a trusted supplier of <strong class="text-white uppercase underline underline-offset-4">high-quality</strong> construction materials across the Philippines.
                         </h2>
-
                     </div>
-                    <p class="text-gray-700 leading-relaxed">
-                        At NobleHome Construction Corporation, our mission is to provide high-quality, innovative furnishing solutions that transform homes into timeless, elegant spaces. We are committed to delivering exceptional value, superior customer service, and a diverse range of products that meet the unique needs of every home.
-                    </p>
+                    <div class="space-y-4 sm:space-y-6">
+                        <p class="text-base sm:text-lg md:text-xl text-white leading-relaxed" data-aos="fade-up" data-aos-delay="400">
+                            We serve builders, contractors, and developers with a comprehensive range of products including AAC blocks, fiber cement boards, tiles, aluminum windows, and more.
+                        </p>
+                        <p class="text-base sm:text-lg md:text-xl text-white leading-relaxed" data-aos="fade-up" data-aos-delay="600">
+                            Our commitment is to deliver reliable solutions for all types of construction projects, ensuring quality and excellence in every product.
+                        </p>
+                    </div>
                 </div>
+            </div>
+        </section>
 
-                <!-- Vision -->
-                <div class="bg-white rounded-lg  p-8 hover-lift">
-                    <div class="flex items-center mb-6">
-                        <div class="w-12 h-12 bg-accent rounded-lg flex items-center justify-center mr-4">
-                            <i class="fas fa-eye text-white text-xl"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-orange-500 font-poppins">Our Vision <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+
+        <!-- Slide 3: Mission -->
+        <section class="slide-section flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="2">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920" alt="Modern Home Background" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-black/70"></div>
+            </div>
+            
+            <!-- Content Card -->
+            <div class="relative z-10 backdrop-blur-sm rounded-3xl p-6 sm:p-10 md:p-16 max-w-6xl w-full shadow-2xl" data-aos="fade-up">
+                <div class="grid md:grid-cols-5 gap-6 sm:gap-8 md:gap-12 items-center">
+                    <!-- Video Section - Hidden on Mobile, Visible on Desktop -->
+                    <div class="hidden md:block md:col-span-2"  data-aos="fade-up" data-aos-delay="200">
+                       <video autoplay muted loop playsinline class="w-full rounded-2xl shadow-xl">
+  <source src="../../video/g.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+                    </div>
+
+                    <!-- Button Section - Visible on Mobile Only -->
+                    <div class="md:hidden flex justify-center order-2"  data-aos="fade-up" data-aos-delay="200">
+                        <button id="openVideoModal" class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3">
+                            <i class="fas fa-play-circle text-2xl"></i>
+                            Watch
+                        </button>
+                    </div>
+
+                    <div class="md:col-span-3 order-1 md:order-2"  data-aos="fade-up"  data-aos-delay="300">
+                        <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm  uppercase tracking-wider mb-4 sm:mb-6">
+                            Our Mission
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-white leading-tight mb-4 sm:mb-6 uppercase">
+                            Transforming homes into <span class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">timeless, elegant spaces</span>
                         </h2>
-
+                        <p class="text-base sm:text-lg md:text-xl text-white leading-relaxed mb-3 sm:mb-4">
+                            At NobleHome Construction Corporation, our mission is to provide high-quality, innovative furnishing solutions that transform homes into timeless, elegant spaces.
+                        </p>
+                        <p class="text-base sm:text-lg md:text-xl text-white leading-relaxed">
+                            We are committed to delivering exceptional value, superior customer service, and a diverse range of products that meet the unique needs of every home.
+                        </p>
                     </div>
-                    <p class="text-gray-700 leading-relaxed">
-                        To be the leading provider of premium furnishing supplies, offering customers a one-stop destination for style, quality, and affordability. We envision empowering every homeowner to create inspiring spaces that reflect their individual tastes and elevate their everyday living.
-                    </p>
+                </div>
+            </div>
+        </section>
+ <!-- Video Modal -->
+        <div id="videoModal" class="fixed inset-0 bg-black/90 z-[200] hidden items-center justify-center p-4">
+            <div class="relative w-full max-w-lg sm:max-w-xl md:max-w-2xl">
+                <button id="closeVideoModal" class="absolute -top-10 sm:-top-12 right-0 text-white text-2xl sm:text-3xl md:text-4xl hover:text-orange-500 transition-colors">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <div class="bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
+                    <video id="modalVideo" controls playsinline class="w-full">
+                        <source src="../../video/g.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
             </div>
         </div>
 
-        <!-- Core Values Section -->
-        <div class="bg-white rounded-lg  p-8">
-            <h2 class="text-3xl font-bold text-orange-500 text-center mb-12 font-poppins">
-                Our Core Values <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-            </h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Product Abilities -->
-                <div class="text-center hover-lift">
-                    <div class="w-20 h-20 bg-blue-50 border-2 border-primary rounded-lg flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-cogs text-2xl text-primary"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">PRODUCT ABILITIES</h3>
-                    <p class="text-gray-700 leading-relaxed">
-                        We have a warehouse that supplies all of our products and materials. With all of our sister companies Ecotex, Ecopipe, Realflooring, Realiving, Instyle and GrandEast, we can provide all the products in the market.
-                    </p>
+        <!-- Slide 4: Vision -->
+        <section class="slide-section flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="3">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1920" alt="Vision Background" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-900/80 to-teal-800/80"></div>
+            </div>
+            
+            <!-- Content Card -->
+            <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 md:p-16 max-w-6xl w-full shadow-2xl">
+                <div class="text-center mb-8 sm:mb-10 md:mb-12" data-aos="fade-down">
+                    <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider mb-4 sm:mb-6">
+                        Our Vision
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 leading-tight max-w-4xl mx-auto px-4">
+                        To be the <strong class="font-semibold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">leading provider</strong> of premium furnishing supplies in the Philippines
+                    </h2>
                 </div>
-
-                <!-- Design Abilities -->
-                <div class="text-center hover-lift">
-                    <div class="w-20 h-20 bg-orange-50 border-2 border-accent rounded-lg flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-pencil-ruler text-2xl text-accent"></i>
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:border-2 hover:border-orange-500 hover:-translate-y-2 hover:shadow-xl border-2 border-transparent" data-aos="fade-up" data-aos-delay="200">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                            <i class="fas fa-home text-white text-lg sm:text-xl md:text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2">One-Stop Destination</h3>
+                        <p class="text-sm sm:text-base text-gray-600">Complete solutions for style, quality, and affordability in one place.</p>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">DESIGN ABILITIES</h3>
-                    <p class="text-gray-700 leading-relaxed">
-                        We have expert designers, architects and engineers that collaborate to ensure the precision and accuracy of the design based on industry standards.
-                    </p>
-                </div>
-
-                <!-- Production Abilities -->
-                <div class="text-center hover-lift">
-                    <div class="w-20 h-20 bg-green-50 border-2 border-green-600 rounded-lg flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-industry text-2xl text-green-600"></i>
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:border-2 hover:border-orange-500 hover:-translate-y-2 hover:shadow-xl border-2 border-transparent" data-aos="fade-up" data-aos-delay="400">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                            <i class="fas fa-users text-white text-lg sm:text-xl md:text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Empower Homeowners</h3>
+                        <p class="text-sm sm:text-base text-gray-600">Helping every homeowner create spaces that reflect their unique taste.</p>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">PRODUCTION ABILITIES</h3>
-                    <p class="text-gray-700 leading-relaxed">
-                        Using our automated machines CNC saw, CNC drilling, edge banding machine and other production equipment, we can manufacture and produce products on time. Our expert production team ensures quality and standards.
-                    </p>
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:border-2 hover:border-orange-500 hover:-translate-y-2 hover:shadow-xl border-2 border-transparent sm:col-span-2 md:col-span-1" data-aos="fade-up" data-aos-delay="600">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                            <i class="fas fa-star text-white text-lg sm:text-xl md:text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Elevate Living</h3>
+                        <p class="text-sm sm:text-base text-gray-600">Inspiring designs that enhance everyday living experiences.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-
-    <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden">
-        <!-- Decorative Elements -->
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
-
-        <div class="max-w-7xl mx-auto px-6 relative z-10">
-            <!-- Main Footer Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-
-                <!-- Enhanced Branding Section -->
-                <div class="lg:col-span-2">
-                    <div class="flex items-center space-x-4 mb-6">
-                        <!-- Logo with glow and pulse -->
-                        <div class="relative">
-                            <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
-                                <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
-                            </div>
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
-                        </div>
-
-                        <!-- Text Branding -->
-                        <div>
-                            <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Noble Home</h2>
-
-                        </div>
-                    </div>
-
-
-                    <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
-                        Crafting exceptional living spaces with unmatched quality and attention to detail. Your dream home awaits with our expert construction and design services.
-                    </p>
-
-                    <!-- Contact Info -->
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                    <path d="m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">noblehomeconst.ph@gmail.com</span>
-                        </div>
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">0968 591 6536</span>
-                        </div>
-                    </div>
+        <!-- Slide 5: Values -->
+        <section class="slide-section flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="4">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=1920" alt="Values Background" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-indigo-800/80"></div>
+            </div>
+            
+            <!-- Content Card -->
+            <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 md:p-16 max-w-6xl w-full shadow-2xl">
+                <div class="text-center mb-8 sm:mb-10 md:mb-12" data-aos="fade-down">
+                    <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider mb-4 sm:mb-6">
+                        Core Values
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 leading-tight max-w-3xl mx-auto px-4">
+                        The <strong class="font-semibold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">principles</strong> that guide everything we do
+                    </h2>
                 </div>
-
-                <!-- Quick Links -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
-                        Quick Links
-                        <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </h3>
-                    <nav class="space-y-3">
-                        <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
-                        <a href="about" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About Us</a>
-                        <a href="contact" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Contact</a>
-                    </nav>
-                </div>
-
-                <!-- Services -->
-                <div>
-                    <h3 class="text-xl font-bold mb-6 text-white relative">
-                        Our Services
-                        <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                    </h3>
-                    <ul class="space-y-3 text-gray-300">
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer">Appointment</li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                        <li class="hover:text-orange-300 transition-colors cursor-pointer"></li>
-                    </ul>
+                <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
+                    <div class="text-center" data-aos="flip-left" data-aos-delay="200">
+                        <div class="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                            <i class="fas fa-shield-alt text-white text-2xl sm:text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3">Trust</h3>
+                        <p class="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
+                            Building lasting relationships through transparency and reliability in every interaction.
+                        </p>
+                    </div>
+                    <div class="text-center" data-aos="flip-left" data-aos-delay="400">
+                        <div class="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                            <i class="fas fa-gem text-white text-2xl sm:text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3">Excellence</h3>
+                        <p class="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
+                            Committed to the highest standards in every product and service we deliver.
+                        </p>
+                    </div>
+                    <div class="text-center sm:col-span-2 md:col-span-1" data-aos="flip-left" data-aos-delay="600">
+                        <div class="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                            <i class="fas fa-handshake text-white text-2xl sm:text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3">Partnership</h3>
+                        <p class="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
+                            Collaborating with clients to achieve their construction goals and dreams.
+                        </p>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Divider -->
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-8"></div>
-
-            <!-- Bottom Section -->
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
-                <!-- Copyright -->
-                <div class="text-center lg:text-left">
-                    <p class="text-gray-400 text-sm">
-                        © 2025 Noble Home Construction. All rights reserved.
-                    </p>
-                    <p class="text-gray-500 text-xs mt-1">
-                        Licensed & Insured | PCAB License No. 12345
-                    </p>
-                </div>
-
-                <!-- Enhanced Social Media -->
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-400 text-sm mr-2">Follow us:</span>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Facebook">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M22 12a10 10 0 10-11.63 9.88v-6.99H8.4v-2.89h1.97V9.91c0-1.95 1.16-3.03 2.93-3.03.85 0 1.74.15 1.74.15v1.91h-.98c-.97 0-1.27.6-1.27 1.21v1.45h2.16l-.35 2.89h-1.81v6.99A10 10 0 0022 12z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="Instagram">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .3 2.5.5.6.2 1 .6 1.5 1.1.4.4.8.9 1.1 1.5.2.5.4 1.3.5 2.5.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 2-.5 2.5-.2.6-.6 1-1.1 1.5-.4.4-.9.8-1.5 1.1-.5.2-1.3.4-2.5.5-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.6-1.5-1.1-.4-.4-.8-.9-1.1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-2 .5-2.5.2-.6.6-1 1.1-1.5.4-.4.9-.8 1.5-1.1.5-.2 1.3-.4 2.5-.5C8.4 2.2 8.8 2.2 12 2.2zm0 2.3c-3.1 0-3.5 0-4.7.1-.9.1-1.4.2-1.8.4-.5.2-.8.4-1.2.8s-.6.7-.8 1.2c-.2.4-.3.9-.4 1.8-.1 1.2-.1 1.6-.1 4.7s0 3.5.1 4.7c.1.9.2 1.4.4 1.8.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.2.9.3 1.8.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c.9-.1 1.4-.2 1.8-.4.5-.2.8-.4 1.2-.8s.6-.7.8-1.2c.2-.4.3-.9.4-1.8.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.1-.9-.2-1.4-.4-1.8-.2-.5-.4-.8-.8-1.2s-.7-.6-1.2-.8c-.4-.2-.9-.3-1.8-.4-1.2-.1-1.6-.1-4.7-.1zm0 3.7a5.8 5.8 0 100 11.6 5.8 5.8 0 000-11.6zm0 9.5a3.7 3.7 0 110-7.4 3.7 3.7 0 010 7.4zm5.9-9.8a1.3 1.3 0 11-2.6 0 1.3 1.3 0 012.6 0z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group" aria-label="LinkedIn">
-                        <svg class="w-5 h-5 text-gray-300 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                        </svg>
-                    </a>
-                </div>
-
-                <!-- Back to Top Button -->
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-                    class="w-12 h-12 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
+        <!-- Slide 6: CTA -->
+        <section class="slide-section flex items-center justify-center p-4 sm:p-6 md:p-8" data-slide="5">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1920" alt="CTA Background" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-br from-red-900/80 to-orange-800/80"></div>
+            </div>
+            
+            <!-- Content Card -->
+            <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 md:p-16 max-w-5xl w-full shadow-2xl text-center" data-aos="zoom-in">
+                <span class="inline-block px-4 sm:px-5 md:px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider mb-4 sm:mb-6" data-aos="fade-down" data-aos-delay="200">
+                    Let's Build Together
+                </span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 leading-tight mb-4 sm:mb-6 px-4" data-aos="fade-up" data-aos-delay="400">
+                    Ready to build your <span class="block text-orange-500 font-semibold">dream project?</span>
+                </h2>
+                <p class="text-lg sm:text-xl md:text-2xl text-gray-600 mb-8 sm:mb-10 md:mb-12 max-w-2xl mx-auto px-4" data-aos="fade-up" data-aos-delay="600">
+                    Let's create something extraordinary together. Get in touch with our team today.
+                </p>
+                <button class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 sm:px-12 md:px-16 py-4 sm:py-5 rounded-full text-base sm:text-lg md:text-xl font-semibold hover:shadow-2xl transition-all duration-300 transform hover:scale-105" data-aos="fade-up" data-aos-delay="800">
+                    <i class="fas fa-envelope mr-2 sm:mr-3"></i> Contact Us Now
                 </button>
             </div>
-        </div>
+        </section>
+    </div>
 
-        <!-- Background Pattern -->
-        <div class="absolute bottom-0 right-0 opacity-5">
-            <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-                <path d="M50 50h100v100H50z" stroke="currentColor" stroke-width="2" />
-                <path d="M70 70h60v60H70z" stroke="currentColor" stroke-width="1" />
-                <path d="M90 90h20v20H90z" stroke="currentColor" stroke-width="1" />
-            </svg>
-        </div>
-    </footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: false,
+            mirror: false,
+            offset: 0,
+            easing: 'ease-out'
+        });
+
+        let currentSlide = 0;
+        const totalSlides = 6;
+        const slides = document.querySelectorAll('.slide-section');
+        let isScrolling = false;
+
+        // Handle scroll events
+        let scrollTimeout;
+        window.addEventListener('wheel', (e) => {
+            if (isScrolling) return;
+            
+            e.preventDefault();
+            
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                if (e.deltaY > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }, 50);
+        }, { passive: false });
+
+        // Handle touch events for mobile
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        window.addEventListener('touchstart', (e) => {
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            if (isScrolling) return;
+            
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchStartY - touchEndY > swipeThreshold) {
+                nextSlide();
+            } else if (touchEndY - touchStartY > swipeThreshold) {
+                prevSlide();
+            }
+        }
+
+        // Handle keyboard navigation
+        window.addEventListener('keydown', (e) => {
+            if (isScrolling) return;
+            
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide(currentSlide);
+            }
+        }
+
+        // Navigation button handlers
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        prevBtn.addEventListener('click', () => {
+            prevSlide();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            nextSlide();
+        });
+
+        function updateNavigationButtons() {
+            if (currentSlide === 0) {
+                prevBtn.classList.add('disabled');
+            } else {
+                prevBtn.classList.remove('disabled');
+            }
+
+            if (currentSlide === totalSlides - 1) {
+                nextBtn.classList.add('disabled');
+            } else {
+                nextBtn.classList.remove('disabled');
+            }
+        }
+
+        function updateSlide(slideIndex) {
+            isScrolling = true;
+
+            slides.forEach((slide) => {
+                slide.classList.remove('active-slide');
+                
+                slide.querySelectorAll('[data-aos]').forEach(el => {
+                    el.classList.remove('aos-animate');
+                });
+            });
+
+            slides[slideIndex].classList.add('active-slide');
+
+            updateNavigationButtons();
+
+            setTimeout(() => {
+                const activeSlide = slides[slideIndex];
+                
+                activeSlide.querySelectorAll('[data-aos]').forEach(el => {
+                    void el.offsetHeight;
+                    el.classList.add('aos-animate');
+                });
+                
+                isScrolling = false;
+            }, 100);
+        }
+
+        // Initialize navigation buttons on load
+        updateNavigationButtons();
+
+        // Video Modal Handlers
+        const videoModal = document.getElementById('videoModal');
+        const openVideoBtn = document.getElementById('openVideoModal');
+        const closeVideoBtn = document.getElementById('closeVideoModal');
+        const modalVideo = document.getElementById('modalVideo');
+
+        if (openVideoBtn) {
+            openVideoBtn.addEventListener('click', () => {
+                videoModal.classList.remove('hidden');
+                videoModal.classList.add('flex');
+                modalVideo.play();
+            });
+        }
+
+        if (closeVideoBtn) {
+            closeVideoBtn.addEventListener('click', () => {
+                videoModal.classList.add('hidden');
+                videoModal.classList.remove('flex');
+                modalVideo.pause();
+                modalVideo.currentTime = 0;
+            });
+        }
+
+        // Close modal when clicking outside
+        videoModal.addEventListener('click', (e) => {
+            if (e.target === videoModal) {
+                videoModal.classList.add('hidden');
+                videoModal.classList.remove('flex');
+                modalVideo.pause();
+                modalVideo.currentTime = 0;
+            }
+        });
+    </script>
 
 </body>
-
 </html>

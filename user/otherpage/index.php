@@ -28,7 +28,7 @@ $SYCJ_result = mysqli_query($conn, $SYCJ_query);
 
 
 
-// 3. Discount 30% materials - FIXED: descrip6, descrip7 from products table
+// 3. Discount 10% materials - RANDOM 10 ONLY
 $material_querys = "
     SELECT 
         pv.*,
@@ -57,9 +57,11 @@ $material_querys = "
            WHERE pc2.product_id = p.id
        )
     WHERE pv.discount = 10
-    ORDER BY pv.percent ASC, p.id ASC
+    ORDER BY RAND()
+    LIMIT 10
 ";
 $material_results = mysqli_query($conn, $material_querys);
+
 
 // 4. Discount between 1-15% - FIXED: descrip6, descrip7 from products table
 $material_querysone = "
@@ -95,7 +97,7 @@ $material_querysone = "
 $material_resultsone = mysqli_query($conn, $material_querysone);
 
 
-// 5. Fetch "new" status product variants - FIXED: added descrip6, descrip7 from products table
+// 5. Fetch "new" status product variants - RANDOM 10 ONLY
 $material_querystwo = "
     SELECT 
         pv.*,
@@ -107,8 +109,8 @@ $material_querystwo = "
         p.codename,
         p.main_image,
         p.description,
-        p.descrip6,   -- Extra description field 6 from products table
-        p.descrip7,   -- Extra description field 7 from products table
+        p.descrip6,
+        p.descrip7,
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
@@ -118,14 +120,15 @@ $material_querystwo = "
     INNER JOIN products p ON pt.product_id = p.id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE pv.status = 'new'
-    GROUP BY pv.id   -- group by variant para isang kulay lang ma-fetch
-    ORDER BY pv.percent ASC, p.id ASC
+    GROUP BY pv.id
+    ORDER BY RAND()
+    LIMIT 10
 ";
 $material_resultstwo = mysqli_query($conn, $material_querystwo);
 
 
 
-// 6. Products without discount - OPTIMIZED with consistent field selection
+// 6. Products without discount - RANDOM 10 ONLY
 $discount_result = mysqli_query(
     $conn,
     "SELECT 
@@ -149,10 +152,12 @@ $discount_result = mysqli_query(
      INNER JOIN products p ON pt.product_id = p.id
      LEFT JOIN product_colors pc ON p.id = pc.product_id
      WHERE pv.discount IS NULL OR pv.discount = 0
-     ORDER BY pv.percent ASC, p.id ASC, pc.id ASC"
+     GROUP BY pv.id
+     ORDER BY RAND()
+     LIMIT 10"
 );
 
-// 7. Filter by furniture codename - OPTIMIZED with consistent joins
+// 7. Filter by furniture codename - RANDOM 10 ONLY
 $filter = 'furniture';
 $query = "
     SELECT 
@@ -167,14 +172,16 @@ $query = "
     LEFT JOIN product_variants v ON v.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
-    ORDER BY p.id DESC
+    ORDER BY RAND()
+    LIMIT 10
 ";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $filter);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// 8. Filter by material codename with rating - OPTIMIZED
+
+// 8. Filter by material codename with rating - RANDOM 10 ONLY
 $filter = 'buildingmaterials';
 $query = "
     SELECT 
@@ -195,14 +202,15 @@ $query = "
     LEFT JOIN product_ratings r ON r.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
-    ORDER BY p.id DESC
+    ORDER BY RAND()
+    LIMIT 10
 ";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $filter);
 $stmt->execute();
 $results = $stmt->get_result();
 
-// 9. Filter by bedfurniture codename - OPTIMIZED with consistent joins
+// 9. Filter by bedfurniture codename - RANDOM 10 ONLY
 $filters = 'bedfurniture';
 $query = "
     SELECT 
@@ -217,7 +225,8 @@ $query = "
     LEFT JOIN product_variants v ON v.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
-    ORDER BY p.id DESC
+    ORDER BY RAND()
+    LIMIT 10
 ";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $filters);
@@ -282,6 +291,7 @@ handleQueryError($conn, "New Status Query");
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
     <script>
         // Function to hide the notification after 5 seconds
         setTimeout(function() {
@@ -2338,6 +2348,13 @@ handleQueryError($conn, "New Status Query");
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
 
         </div>
+         
+    <?php 
+    // Check if there are any products
+    $row_count = mysqli_num_rows($material_results);
+    ?>
+
+    <?php if ($row_count > 0): ?>
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
@@ -2511,6 +2528,27 @@ handleQueryError($conn, "New Status Query");
                 <?php endwhile; ?>
             </div>
         </div>
+            <?php else: ?>
+        <!-- No Products Available Message -->
+        <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+            <div class="text-center max-w-md">
+                <!-- Icon -->
+                <div class="mb-6">
+                    <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                </div>
+                
+                <!-- Message -->
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                    No Products Available
+                </h3>
+                <p class="text-gray-500 text-sm sm:text-base mb-6">
+                    There are currently no discounted products available in this section. Please check back later for amazing deals!
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
 
         <!-- Shared Modal -->
         <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
@@ -2684,7 +2722,13 @@ handleQueryError($conn, "New Status Query");
                 Discover amazing deals on premium products with exclusive discounts
             </p>
         </div>
+ 
+    <?php 
+    // Check if there are any products
+    $row_count = mysqli_num_rows($material_resultsone);
+    ?>
 
+    <?php if ($row_count > 0): ?>
         <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
@@ -2855,6 +2899,27 @@ handleQueryError($conn, "New Status Query");
                 <?php endwhile; ?>
             </div>
         </div>
+    <?php else: ?>
+        <!-- No Products Available Message -->
+        <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+            <div class="text-center max-w-md">
+                <!-- Icon -->
+                <div class="mb-6">
+                    <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                </div>
+                
+                <!-- Message -->
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                    No Products Available
+                </h3>
+                <p class="text-gray-500 text-sm sm:text-base mb-6">
+                    There are currently no discounted products available in this section. Please check back later for amazing deals!
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
 
         <!-- Shared Modal -->
         <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
@@ -2888,7 +2953,13 @@ handleQueryError($conn, "New Status Query");
             <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
         </div>
+ 
+    <?php 
+    // Check if there are any products
+    $row_count = mysqli_num_rows($material_resultstwo);
+    ?>
 
+    <?php if ($row_count > 0): ?>
         <div class="swiper mySwiper-material">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="200">
                 <?php
@@ -3066,6 +3137,27 @@ handleQueryError($conn, "New Status Query");
                 <?php endwhile; ?>
             </div>
         </div>
+            <?php else: ?>
+        <!-- No Products Available Message -->
+        <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+            <div class="text-center max-w-md">
+                <!-- Icon -->
+                <div class="mb-6">
+                    <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                </div>
+                
+                <!-- Message -->
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                    No Products Available
+                </h3>
+                <p class="text-gray-500 text-sm sm:text-base mb-6">
+                    There are currently no discounted products available in this section. Please check back later for amazing deals!
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
 
         <!-- Shared Modal -->
         <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
@@ -3457,106 +3549,119 @@ handleQueryError($conn, "New Status Query");
     </section>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const reviewWrapper = document.getElementById("reviewWrapper");
+    document.addEventListener("DOMContentLoaded", function() {
+    const reviewWrapper = document.getElementById("reviewWrapper");
+    let reviewSwiper = null;
 
-            // Init Swiper with mobile-friendly settings     
-            let reviewSwiper = new Swiper(".reviewCarousel", {
-                loop: true,
-                autoplay: {
-                    delay: 4000,
-                    disableOnInteraction: false
-                },
-                pagination: {
-                    el: ".swiper-pagination",
-                    clickable: true
-                },
-                slidesPerView: 1,
-                spaceBetween: 20,
-                effect: "slide",
-                speed: 700,
-                // Mobile breakpoints
-                breakpoints: {
-                    640: {
-                        spaceBetween: 30
-                    }
+    // Initialize Swiper with dynamic loop
+    function initReviewSwiper(slideCount) {
+        // Destroy existing instance if any
+        if (reviewSwiper) {
+            reviewSwiper.destroy(true, true);
+        }
+
+        reviewSwiper = new Swiper(".reviewCarousel", {
+            loop: slideCount > 1, // Only loop if more than 1 review
+            autoplay: slideCount > 1 ? {
+                delay: 4000,
+                disableOnInteraction: false
+            } : false, // Disable autoplay for single slide
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true
+            },
+            slidesPerView: 1,
+            spaceBetween: 20,
+            effect: "slide",
+            speed: 700,
+            breakpoints: {
+                640: {
+                    spaceBetween: 30
                 }
-            });
+            }
+        });
+    }
 
-            async function loadReviews() {
-                try {
-                    // Replace this with your actual fetch
-                    const res = await fetch("profilefetch_reviews.php");
-                    const reviews = await res.json();
+    async function loadReviews() {
+        try {
+            const res = await fetch("profilefetch_reviews.php");
+            const reviews = await res.json();
 
+            reviewWrapper.innerHTML = "";
 
-                    reviewWrapper.innerHTML = "";
+            if (reviews.length > 0) {
+                reviews.forEach(r => {
+                    let stars = "";
+                    for (let i = 1; i <= 5; i++) {
+                        stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;
+                    }
 
-                    if (reviews.length > 0) {
-                        reviews.forEach(r => {
-                            let stars = "";
-                            for (let i = 1; i <= 5; i++) {
-                                stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;
-                            }
-
-                            reviewWrapper.innerHTML += `                         
-                        <div class="swiper-slide">                             
-                            <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">                                 
-                                <div class="flex justify-center mb-4 md:mb-6 space-x-1">                                     
-                                    ${stars}                                 
-                                </div>                                 
-                                <p class="text-gray-700 italic leading-relaxed mb-6 md:mb-8 text-base md:text-lg text-center font-medium px-2 md:px-6">                                     
-                                    "${r.comment}"                                 
-                                </p>                                 
-                                <div class="flex items-center justify-center space-x-3 md:space-x-4">                                     
-                                    <div class="profile-ring">                                     
-                                        <img src="${r.profile_picture}" alt="${r.name}"                                           
-                                             class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover">                                     
-                                    </div>                                     
-                                    <div class="text-left">                                         
-                                        <h4 class="name-highlight font-bold text-base md:text-lg">${r.name}</h4>                                         
-                                        <p class="text-xs md:text-sm text-gray-500 font-medium">${new Date(r.created_at).toLocaleDateString()}</p>                                     
-                                    </div>                                 
-                                </div>                             
-                            </div>                         
-                        </div>                     
+                    reviewWrapper.innerHTML += `
+                        <div class="swiper-slide">
+                            <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
+                                <div class="flex justify-center mb-4 md:mb-6 space-x-1">
+                                    ${stars}
+                                </div>
+                                <p class="text-gray-700 italic leading-relaxed mb-6 md:mb-8 text-base md:text-lg text-center font-medium px-2 md:px-6">
+                                    "${r.comment}"
+                                </p>
+                                <div class="flex items-center justify-center space-x-3 md:space-x-4">
+                                    <div class="profile-ring">
+                                        <img src="${r.profile_picture}" alt="${r.name}"
+                                             class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover">
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="name-highlight font-bold text-base md:text-lg">${r.name}</h4>
+                                        <p class="text-xs md:text-sm text-gray-500 font-medium">${new Date(r.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     `;
-                        });
-                    } else {
-                        reviewWrapper.innerHTML = `                     
-                    <div class="swiper-slide">                         
+                });
+
+                // Re-initialize Swiper with the actual review count
+                initReviewSwiper(reviews.length);
+            } else {
+                // Empty state - single slide
+                reviewWrapper.innerHTML = `
+                    <div class="swiper-slide">
                         <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                             <div class="text-center py-8 md:py-12">
                                 <p class="text-gray-600 text-base md:text-lg">No reviews yet.</p>
                             </div>
-                        </div>                      
-                    </div>                     
+                        </div>
+                    </div>
                 `;
-                    }
 
-                    reviewSwiper.update();
-                } catch (err) {
-                    console.error("Error fetching reviews:", err);
-                    // Show error state
-                    reviewWrapper.innerHTML = `                     
-                <div class="swiper-slide">                         
+                // Re-initialize with loop disabled for single slide
+                initReviewSwiper(1);
+            }
+        } catch (err) {
+            console.error("Error fetching reviews:", err);
+
+            // Error state - single slide
+            reviewWrapper.innerHTML = `
+                <div class="swiper-slide">
                     <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                         <div class="text-center py-8 md:py-12">
                             <p class="text-red-500 text-base md:text-lg">Error loading reviews. Please try again.</p>
                         </div>
-                    </div>                      
-                </div>                     
+                    </div>
+                </div>
             `;
-                    reviewSwiper.update();
-                }
-            }
 
-            // Load on page load     
-            loadReviews();
+            // Re-initialize with loop disabled for single slide
+            initReviewSwiper(1);
+        }
+    }
 
-            // Auto refresh every 10 seconds     
-            setInterval(loadReviews, 10000);
-        });
+    // Initial load
+    loadReviews();
+
+    // Auto refresh every 10 seconds
+    setInterval(loadReviews, 10000);
+});
     </script>
 
 
@@ -3570,6 +3675,19 @@ handleQueryError($conn, "New Status Query");
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
+          // Initialize Lenis
+        const lenis = new Lenis({
+            duration: 3,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            smooth: true
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
         //  Universal Swiper initializer
         function initSwiper(selector, options) {
             if (document.querySelector(selector)) {
@@ -3705,130 +3823,151 @@ handleQueryError($conn, "New Status Query");
                 }
             });
         }
+// Helper function to check if loop should be enabled
+function shouldEnableLoop(selector, slidesPerView) {
+    const container = document.querySelector(selector);
+    if (!container) return false;
+    
+    const slideCount = container.querySelectorAll('.swiper-slide').length;
+    // Loop needs at least slidesPerView * 2 slides to work properly
+    return slideCount >= slidesPerView * 2;
+}
 
-        // 🚀 DOM Ready - PROGRESSIVE SCALING (2 → 4 → 5)
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof Swiper === 'undefined') {
-                console.error('Swiper library is not loaded.');
-                return;
-            }
+// DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Swiper === 'undefined') {
+        console.error('Swiper library is not loaded.');
+        return;
+    }
 
-            // ✅ MAIN HERO SWIPER - Para sa banner/slides mo
-            initSwiper('.mySwiper', {
-                slidesPerView: 1,
-                spaceBetween: 0,
-                loop: true,
-                autoplay: {
-                    delay: 4000,
-                    disableOnInteraction: false,
-                    pauseOnMouseEnter: true
-                },
-                pagination: {
-                    el: ".swiper-pagination",
-                    clickable: true
-                },
-                navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev"
-                },
-                speed: 1000,
-                effect: 'slide'
-            });
+    // ✅ MAIN HERO SWIPER
+    const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;
+    initSwiper('.mySwiper', {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        loop: heroSlideCount > 1, // Only loop if more than 1 slide
+        autoplay: heroSlideCount > 1 ? {
+            delay: 4000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true
+        } : false,
+        pagination: {
+            el: ".swiper-pagination",
+            clickable: true
+        },
+        navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev"
+        },
+        speed: 1000,
+        effect: 'slide'
+    });
 
-            // 🛒 PROGRESSIVE PRODUCTS DISPLAY: 2 → 4 → 5
-            initSwiper('.mySwiper-products', {
-                slidesPerView: 2, // ✅ Default: 2 products (small screens)
-                spaceBetween: 10,
-                loop: true,
-                autoplay: {
-                    delay: 3000,
-                    disableOnInteraction: false,
-                    pauseOnMouseEnter: true
-                },
-                pagination: {
-                    el: ".swiper-pagination",
-                    clickable: true
-                },
-                navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev"
-                },
-                breakpoints: {
-                    // Small screens (320px - 767px): 2 products - MALAKI
-                    480: {
-                        slidesPerView: 2,
-                        spaceBetween: 12
-                    },
-                    640: {
-                        slidesPerView: 2,
-                        spaceBetween: 15
-                    },
-
-                    // Medium screens (768px - 1023px): 4 products - MEDIUM
-                    768: {
-                        slidesPerView: 3,
-                        spaceBetween: 15
-                    },
-
-                    // Large screens (1024px+): 5 products - SMALLER BUT MORE
-                    1024: {
-                        slidesPerView: 5,
-                        spaceBetween: 18
-                    },
-                    1280: {
-                        slidesPerView: 5,
-                        spaceBetween: 20
-                    },
-                    1536: {
-                        slidesPerView: 7,
-                        spaceBetween: 25
-                    }
-                }
-            });
-
-            // 💎 MATERIALS - Baka pwedeng mas marami since smaller items
-            initSwiper('.mySwiper-material', {
+    // 🛒 PRODUCTS SWIPER - Dynamic loop based on slide count
+    const productSlideCount = document.querySelector('.mySwiper-products')?.querySelectorAll('.swiper-slide').length || 0;
+    initSwiper('.mySwiper-products', {
+        slidesPerView: 2,
+        spaceBetween: 10,
+        loop: productSlideCount >= 4, // Need at least 4 slides for loop with 2 per view
+        autoplay: productSlideCount > 2 ? {
+            delay: 3000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true
+        } : false,
+        pagination: {
+            el: ".swiper-pagination",
+            clickable: true
+        },
+        navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev"
+        },
+        breakpoints: {
+            480: {
                 slidesPerView: 2,
-                spaceBetween: 8,
-                loop: true,
-                autoplay: {
-                    delay: 2500,
-                    disableOnInteraction: false
-                },
-                breakpoints: {
-                    480: {
-                        slidesPerView: 2,
-                        spaceBetween: 10
-                    }, // Small: 2 malaki
-                    640: {
-                        slidesPerView: 2,
-                        spaceBetween: 12
-                    },
-                    768: {
-                        slidesPerView: 3,
-                        spaceBetween: 12
-                    }, // Medium: 4
-                    1024: {
-                        slidesPerView: 4,
-                        spaceBetween: 15
-                    }, // Large: 5
-                    1280: {
-                        slidesPerView: 4,
-                        spaceBetween: 18
-                    }, // Extra large: 6 (optional)
-                    1536: {
-                        slidesPerView: 8,
-                        spaceBetween: 20
-                    }
-                }
-            });
-            // Rest of your code...
-            initAutoVerticalSwipers();
+                spaceBetween: 12,
+                loop: productSlideCount >= 4
+            },
+            640: {
+                slidesPerView: 2,
+                spaceBetween: 15,
+                loop: productSlideCount >= 4
+            },
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 15,
+                loop: productSlideCount >= 6 // 3 per view needs 6+ slides
+            },
+            1024: {
+                slidesPerView: 5,
+                spaceBetween: 18,
+                loop: productSlideCount >= 10 // 5 per view needs 10+ slides
+            },
+            1280: {
+                slidesPerView: 5,
+                spaceBetween: 20,
+                loop: productSlideCount >= 10
+            },
+            1536: {
+                slidesPerView: 7,
+                spaceBetween: 25,
+                loop: productSlideCount >= 14 // 7 per view needs 14+ slides
+            }
+        }
+    });
 
-            document.querySelectorAll('.productForm').forEach(form => {
-                form.addEventListener('submit', handleProductFormSubmit);
-            });
-        });
+    // 💎 MATERIALS SWIPER
+    const materialSlideCount = document.querySelector('.mySwiper-material')?.querySelectorAll('.swiper-slide').length || 0;
+    initSwiper('.mySwiper-material', {
+        slidesPerView: 2,
+        spaceBetween: 8,
+        loop: materialSlideCount >= 4,
+        autoplay: materialSlideCount > 2 ? {
+            delay: 2500,
+            disableOnInteraction: false
+        } : false,
+        breakpoints: {
+            480: {
+                slidesPerView: 2,
+                spaceBetween: 10,
+                loop: materialSlideCount >= 4
+            },
+            640: {
+                slidesPerView: 2,
+                spaceBetween: 12,
+                loop: materialSlideCount >= 4
+            },
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 12,
+                loop: materialSlideCount >= 6
+            },
+            1024: {
+                slidesPerView: 4,
+                spaceBetween: 15,
+                loop: materialSlideCount >= 8
+            },
+            1280: {
+                slidesPerView: 4,
+                spaceBetween: 18,
+                loop: materialSlideCount >= 8
+            },
+            1536: {
+                slidesPerView: 8,
+                spaceBetween: 20,
+                loop: materialSlideCount >= 16
+            }
+        }
+    });
+
+    // Auto vertical swipers
+    initAutoVerticalSwipers();
+
+    // Product forms
+    document.querySelectorAll('.productForm').forEach(form => {
+        form.addEventListener('submit', handleProductFormSubmit);
+    });
+});
     </script>
 
 </body>

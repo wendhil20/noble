@@ -559,7 +559,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
 
     <div id="notificationContainer"></div>
 
-<script>
+ <script>
 'use strict';
 
 const CONFIG = {
@@ -1006,5 +1006,6 @@ document.addEventListener('DOMContentLoaded', () => {
     new CartManager();
 });
 </script>
+
 </body>
 </html>

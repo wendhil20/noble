@@ -1569,7 +1569,7 @@ $display_categories = getNavigationData($conn);
                             class="w-6 h-6 object-cover rounded"
                             onerror="this.style.display='none'">
                         <?php endif; ?>
-                        <span><?= htmlspecialchars($category['name']) ?></span>
+                        <span class="uppercase"><?= htmlspecialchars($category['name']) ?></span>
                       </div>
                       <svg class="w-3 h-3 transition-transform" :class="subOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -1588,7 +1588,7 @@ $display_categories = getNavigationData($conn);
                                 class="w-5 h-5 object-contain rounded"
                                 onerror="this.style.display='none'">
                             <?php endif; ?>
-                            <span><?= htmlspecialchars($sub['name']) ?></span>
+                            <span class="uppercase"><?= htmlspecialchars($sub['name']) ?></span>
                           </a>
                         <?php endforeach; ?>
                       <?php else: ?>

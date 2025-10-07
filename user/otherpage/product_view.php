@@ -154,10 +154,6 @@ $avg_stmt->close();
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-
-    }
 
     /* Selection States */
     .selected {
@@ -628,7 +624,7 @@ $avg_stmt->close();
   </style>
 </head>
 
-<body class="">
+<body class="font-roboto">
   <?php include '../navbar/top.php'; ?>
 
   <!-- Hero Section with Bouncing Bubbles Background -->
@@ -1041,9 +1037,6 @@ $avg_stmt->close();
                 </div>
               </div>
             <?php endif; ?>
-
-
-
 
             <!-- STEP 3: SIZE/VARIANT SELECTION -->
             <div class="mb-6 lg:mb-8" id="size-selection-section">

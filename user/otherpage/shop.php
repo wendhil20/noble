@@ -90,7 +90,7 @@ $total_pages = ceil($total_products / $per_page);
 
 $all_categories = [
     'furniture' => 'Furniture',
-    'buildingmaterials' => 'Materials',
+    'buildingmaterials' => 'Building Materials',
     'lightingfixture' => 'Lighting',
     'bedfurniture' => 'Bedroom Furniture',
     'aircon' => 'Air Conditioners',
@@ -156,21 +156,21 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
         .pagination-btn:hover:not(.disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            background: linear-gradient(135deg, #000000ff 0%rgba(0, 0, 0, 1)0c 100%);
             color: white;
         }
 
         .pagination-btn.active {
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            background: linear-gradient(135deg, #000000ff 0%, #000000ff 100%);
             color: white;
-            border-color: #f97316;
+          
         }
 
         .pagination-btn.disabled {
             opacity: 0.5;
             cursor: not-allowed;
             background: #f1f5f9;
-            color: #94a3b8;
+            color: #010202ff;
         }
 
         /* Mobile Sidebar Filter */
@@ -637,6 +637,21 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Products Section -->
             <div class="flex-1 lg:order-1">
+
+                <?php if (!empty($selected_categories)): ?>
+                    <div class="mb-10">
+                        <div class="flex flex-wrap items-center justify-center gap-4">
+                            <?php foreach ($selected_categories as $cat_key): ?>
+                                <?php if (isset($all_categories[$cat_key])): ?>
+                                    <span class="inline-block  text-black px-8 py-4 rounded-xl text-5xl uppercase tracking-wider underline">
+                                        <?= htmlspecialchars($all_categories[$cat_key]) ?>
+                                    </span>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Controls -->
                 <div class="p-4 sm:p-6 mb-8 shadow-sm">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -671,8 +686,6 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                                     </div>
                                 </div>
                             </div>
-
-
                         </div>
                     </div>
                 </div>
@@ -763,7 +776,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                     <div class="p-8" data-aos="fade-up">
                         <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
                             <a href="?<?= http_build_query(array_merge($_GET, ['page' => max(1, $page - 1)])) ?>"
-                                class="pagination-btn px-6 py-3 text-sm font-semibold rounded-xl bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
+                                class="pagination-btn px-6 py-3 text-sm  bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
                                 <i class="fas fa-chevron-left mr-2"></i>Previous
                             </a>
 
@@ -773,14 +786,14 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                                 $end = min($total_pages, $page + 2);
                                 for ($i = $start; $i <= $end; $i++): ?>
                                     <a href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"
-                                        class="pagination-btn w-12 h-12 flex items-center justify-center rounded-xl text-sm font-semibold <?= $page === $i ? 'active' : 'bg-white text-gray-700' ?> shadow-sm">
+                                        class="pagination-btn w-12 h-12 flex items-center justify-center  text-sm  <?= $page === $i ? 'active' : 'bg-white text-black' ?> shadow-sm">
                                         <?= $i ?>
                                     </a>
                                 <?php endfor; ?>
                             </div>
 
                             <a href="?<?= http_build_query(array_merge($_GET, ['page' => min($total_pages, $page + 1)])) ?>"
-                                class="pagination-btn px-6 py-3 text-sm font-semibold rounded-xl bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                                class="pagination-btn px-6 py-3 text-sm  bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
                                 Next<i class="fas fa-chevron-right ml-2"></i>
                             </a>
                         </div>
@@ -790,7 +803,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                             <label class="text-sm font-medium text-gray-700">Jump to page:</label>
                             <input type="number" min="1" max="<?= $total_pages ?>" value="<?= $page ?>"
                                 onchange="jumpToPage(this.value)"
-                                class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-center">
+                                class="w-20 px-3 py-2 border border-gray-300 focus:ring-2 focus:ring-primary text-center">
                         </div>
                     </div>
                 <?php endif; ?>
@@ -862,7 +875,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                                 <i class="fas fa-sort text-gray-500 mr-2"></i>
                                 Sort By
                             </label>
-                            <select name="sort" class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary bg-white">
+                            <select name="sort" class="w-full py-3 px-4 border border-gray-300  focus:ring-2 focus:ring-primary bg-white">
                                 <option value="name_asc" <?= $sort_by === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
                                 <option value="name_desc" <?= $sort_by === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
                                 <option value="newest" <?= $sort_by === 'newest' ? 'selected' : '' ?>>Newest First</option>
@@ -872,10 +885,10 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
 
                         <!-- Actions -->
                         <div class="pt-4 border-t border-gray-200 space-y-3">
-                            <button type="submit" class="w-full bg-primary text-white px-6 py-3.5 rounded-lg hover:bg-primary-dark font-semibold transition-all shadow-md hover:shadow-lg">
+                            <button type="submit" class="w-full bg-black text-white px-6 py-3.5  hover:bg-primary-dark  transition-all shadow-md hover:shadow-lg">
                                 <i class="fas fa-check mr-2"></i>Apply Filters
                             </button>
-                            <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-6 py-3.5 rounded-lg hover:bg-gray-200 font-semibold transition-all">
+                            <button type="button" onclick="clearAllFilters()" class="w-full bg-gray-100 text-gray-700 px-6 py-3.5  hover:bg-gray-200  transition-all">
                                 <i class="fas fa-times mr-2"></i>Clear All
                             </button>
                         </div>

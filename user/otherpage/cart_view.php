@@ -105,9 +105,10 @@ $total_cart_items = count($cart_items);
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-roboto">
   <?php include '../navbar/top.php'; ?>
 
   <!-- Hero Section -->
@@ -123,16 +124,14 @@ $total_cart_items = count($cart_items);
       </svg>
     </div>
 
-    <div class="bg-orange-400 text-white py-5 sm:py-8 lg:py-12 z-0">
+    <div class="bg-black text-white py-5 sm:py-8 lg:py-12 z-0">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-2 sm:mb-4">Your Shopping Cart</h1>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl text-center mb-2 sm:mb-4">Your Shopping Cart</h1>
         <p class="text-base sm:text-lg lg:text-xl text-center opacity-90">Review your items and proceed to checkout</p>
       </div>
     </div>
     <style>
-      body {
-        font-family: 'Poppins', sans-serif;
-      }
+
 
       /* Bouncing animation for bubbles */
       .bubble1 {
@@ -295,7 +294,7 @@ $total_cart_items = count($cart_items);
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm">
-        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+        <a href="index" class="text-black hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>
@@ -307,7 +306,7 @@ $total_cart_items = count($cart_items);
   <!-- Cart Content -->
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
     <div class=" p-4 sm:p-6 lg:p-8">
-      <h2 class="text-2xl sm:text-3xl font-bold text-orange-400 mb-4 sm:mb-6 flex items-center gap-2">
+      <h2 class="text-2xl sm:text-3xl  text-black mb-4 sm:mb-6 flex items-center gap-2">
         <i class="fas fa-shopping-cart"></i>Your Cart
       </h2>
 
@@ -322,7 +321,7 @@ $total_cart_items = count($cart_items);
         <div class="text-center py-12">
           <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
           <p class="text-gray-600 text-lg mb-4">Your cart is currently empty.</p>
-          <a href="shop" class="inline-block bg-orange-400 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+          <a href="shop" class="inline-block bg-black hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
             <i class="fas fa-store mr-2"></i>Continue Shopping
           </a>
         </div>

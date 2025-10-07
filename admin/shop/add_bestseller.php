@@ -110,6 +110,23 @@ if (isset($_POST['add_section'])) {
     exit();
 }
 
+// Update section (bestsellertwo)
+if (isset($_POST['update_section'])) {
+    $section_id = (int)$_POST['section_id'];
+    $bestseller_id = (int)$_POST['bestseller_id'];
+    $subtitle = $_POST['subtitle'];
+    $content = $_POST['content'];
+    
+    $stmt = $conn->prepare("UPDATE bestsellertwo SET bestseller_id=?, subtitle=?, content=? WHERE id=?");
+    $stmt->bind_param("issi", $bestseller_id, $subtitle, $content, $section_id);
+    $stmt->execute();
+    
+    $_SESSION['msg'] = "✅ Section updated!";
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+
 // Add more images to existing section
 if (isset($_POST['add_more_images'])) {
     $section_id = (int)$_POST['section_id'];
@@ -157,6 +174,7 @@ if (isset($_POST['update_products'])) {
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
+
 
 // Update bestseller
 if (isset($_POST['update_bestseller'])) {

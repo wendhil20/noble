@@ -788,7 +788,6 @@ handleQueryError($conn, "New Status Query");
     </script>
 
 
-
     <section class="py-8 bg-white overflow-hidden">
         <!-- Heading and description -->
         <div class="text-center mb-8 px-4">
@@ -3794,6 +3793,8 @@ handleQueryError($conn, "New Status Query");
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
+
+        
           // Initialize Lenis
         const lenis = new Lenis({
             duration: 3,

@@ -242,8 +242,6 @@
                           }
                       });
                   </script>
-
-
               </div>
 
               <!-- Back to Top Button -->

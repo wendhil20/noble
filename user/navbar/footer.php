@@ -1,5 +1,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Lobster&family=Quicksand:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Anton&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Barlow:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+
   <footer class="bg-black pattern-bg text-white py-16 mt-12 relative overflow-hidden font-roboto">
       <!-- Decorative Elements -->
       <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
@@ -16,7 +17,7 @@
                           <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl glow-effect floating overflow-hidden">
                               <img src="../img/logo.png" alt="Noble Home Logo" class="w-10 h-10 object-cover">
                           </div>
-                         
+
                       </div>
 
                       <!-- Text Branding -->
@@ -114,107 +115,133 @@
                       </svg>
                   </a>
 
-              <!-- Social Icons Section -->
-<div class="flex items-center space-x-4">
+                  <!-- Social Icons Section -->
+                  <div class="flex items-center space-x-4">
 
-  <!-- WeChat -->
-  <a href="#" id="wechatBtn"
-    class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
-    aria-label="WeChat">
-    <i class="fab fa-weixin text-2xl text-green-500 group-hover:text-green-400"></i>
-  </a>
+                      <!-- WeChat -->
+                      <a href="" id="wechatBtn"
+                          class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
+                          aria-label="WeChat">
+                          <i class="fab fa-weixin text-2xl text-green-500 group-hover:text-green-400"></i>
+                      </a>
 
-  <!-- Viber -->
-  <a href="#" id="viberBtn"
-    class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
-    aria-label="Viber">
-    <i class="fab fa-viber text-2xl text-purple-500 group-hover:text-purple-400"></i>
-  </a>
+                      <!-- Viber -->
+                      <a href="" id="viberBtn"
+                          class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
+                          aria-label="Viber">
+                          <i class="fab fa-viber text-2xl text-purple-500 group-hover:text-purple-400"></i>
+                      </a>
 
-  <!-- WhatsApp -->
-  <a href="#" id="whatsappBtn"
-    class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
-    aria-label="WhatsApp">
-    <i class="fab fa-whatsapp text-2xl text-green-600 group-hover:text-green-500"></i>
-  </a>
-</div>
+                      <!-- WhatsApp -->
+                      <a href="" id="whatsappBtn"
+                          class="w-12 h-12 glass-effect rounded-xl flex items-center justify-center social-hover transition-all duration-300 group"
+                          aria-label="WhatsApp">
+                          <i class="fab fa-whatsapp text-2xl text-green-600 group-hover:text-green-500"></i>
+                      </a>
+                  </div>
 
-<!-- Modal (shared for all socials) -->
-<div id="socialModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-2xl shadow-xl p-6 w-80 relative animate-fadeIn">
-    <!-- Close Button -->
-    <button id="closeModal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+                  <!-- Modal (shared for all socials) -->
+                  <div id="socialModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div class="bg-white rounded-2xl shadow-xl p-6 w-80 relative animate-fadeIn">
+                          <!-- Close Button -->
+                          <button id="closeModal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
 
-    <!-- Dynamic Title -->
-    <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4 text-center"></h2>
+                          <!-- Dynamic Title -->
+                          <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4 text-center"></h2>
 
-    <!-- Dynamic Image -->
-    <div class="flex flex-col items-center">
-      <img id="modalImage" src="" alt="QR Code" class="rounded-xl shadow-md w-56 h-56 object-contain">
-      <p class="text-sm text-gray-500 mt-3">Scan this QR code to start chatting</p>
-    </div>
-  </div>
-</div>
+                          <!-- Dynamic Image -->
+                          <div class="flex flex-col items-center">
+                              <img id="modalImage" src="" alt="QR Code" class="rounded-xl shadow-md w-56 h-56 object-contain">
+                              <p class="text-sm text-gray-500 mt-3">Scan this QR code to start chatting</p>
+                          </div>
+                      </div>
+                  </div>
 
-<!-- Animation -->
-<style>
-@keyframes fadeIn {
-  from {opacity: 0; transform: scale(0.9);}
-  to {opacity: 1; transform: scale(1);}
-}
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-</style>
+                  <!-- Animation -->
+                  <style>
+                      @keyframes fadeIn {
+                          from {
+                              opacity: 0;
+                              transform: scale(0.9);
+                          }
 
-<!-- Script -->
-<script>
-  // Elements
-  const socialModal = document.getElementById('socialModal');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalImage = document.getElementById('modalImage');
-  const closeModal = document.getElementById('closeModal');
+                          to {
+                              opacity: 1;
+                              transform: scale(1);
+                          }
+                      }
 
-  // Buttons
-  const wechatBtn = document.getElementById('wechatBtn');
-  const viberBtn = document.getElementById('viberBtn');
-  const whatsappBtn = document.getElementById('whatsappBtn');
+                      .animate-fadeIn {
+                          animation: fadeIn 0.3s ease-out;
+                      }
+                  </style>
 
-  // Function to show modal
-  function showModal(title, imgSrc) {
-    modalTitle.textContent = title;
-    modalImage.src = imgSrc;
-    socialModal.classList.remove('hidden');
-  }
+                  <!-- Replace the existing script section in your footer with this: -->
 
-  // Click Handlers
-  wechatBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    showModal('Chat with us on WeChat', '../img/wechat.png');
-  });
+                  <script>
+                      // Social Modal Elements
+                      const socialModal = document.getElementById('socialModal');
+                      const modalTitle = document.getElementById('modalTitle');
+                      const modalImage = document.getElementById('modalImage');
+                      const closeSocialModalBtn = document.getElementById('closeModal'); // Renamed to avoid conflict
 
-  viberBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    showModal('Chat with us on Viber', '../img/viber.png');
-  });
+                      // Social Media Buttons
+                      const wechatBtn = document.getElementById('wechatBtn');
+                      const viberBtn = document.getElementById('viberBtn');
+                      const whatsappBtn = document.getElementById('whatsappBtn');
 
-  whatsappBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    showModal('Chat with us on WhatsApp', '../img/whatapp.jpg');
-  });
+                      // Function to show modal
+                      function showSocialModal(title, imgSrc) {
+                          modalTitle.textContent = title;
+                          modalImage.src = imgSrc;
+                          socialModal.classList.remove('hidden');
+                      }
 
-  // Close Modal
-  closeModal.addEventListener('click', () => {
-    socialModal.classList.add('hidden');
-  });
+                      // Click Handlers for Social Media Buttons
+                      if (wechatBtn) {
+                          wechatBtn.addEventListener('click', (e) => {
+                              e.preventDefault();
+                              showSocialModal('Chat with us on WeChat', '../img/wechat.png');
+                          });
+                      }
 
-  // Close when clicking outside
-  socialModal.addEventListener('click', (e) => {
-    if (e.target === socialModal) {
-      socialModal.classList.add('hidden');
-    }
-  });
-</script>
+                      if (viberBtn) {
+                          viberBtn.addEventListener('click', (e) => {
+                              e.preventDefault();
+                              showSocialModal('Chat with us on Viber', '../img/viber.png');
+                          });
+                      }
+
+                      if (whatsappBtn) {
+                          whatsappBtn.addEventListener('click', (e) => {
+                              e.preventDefault();
+                              showSocialModal('Chat with us on WhatsApp', '../img/whatapp.jpg');
+                          });
+                      }
+
+                      // Close Modal Button
+                      if (closeSocialModalBtn) {
+                          closeSocialModalBtn.addEventListener('click', () => {
+                              socialModal.classList.add('hidden');
+                          });
+                      }
+
+                      // Close when clicking outside modal
+                      if (socialModal) {
+                          socialModal.addEventListener('click', (e) => {
+                              if (e.target === socialModal) {
+                                  socialModal.classList.add('hidden');
+                              }
+                          });
+                      }
+
+                      // Close modal with Escape key
+                      document.addEventListener('keydown', (e) => {
+                          if (e.key === 'Escape' && socialModal && !socialModal.classList.contains('hidden')) {
+                              socialModal.classList.add('hidden');
+                          }
+                      });
+                  </script>
 
 
               </div>

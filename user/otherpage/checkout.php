@@ -129,7 +129,10 @@ if ($user_id) {
            COALESCE(pv.origin, '') as origin,
            pv.delivery_size_id,
            ds.size_name,
-           ds.percentage as delivery_size_percentage
+           ds.percentage as delivery_size_percentage,
+           pv.lead_count,
+           pv.lead_interval,
+           pv.lead_gap
     FROM user_cart_items uci 
     LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
     LEFT JOIN delivery_sizes ds ON pv.delivery_size_id = ds.id
@@ -148,6 +151,52 @@ if ($user_id) {
 function generateReferenceNumber()
 {
     return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
+}
+
+/**
+ * Calculate delivery date range based on lead time settings
+ * @param int $leadCount - Number of intervals
+ * @param string $leadInterval - Type of interval (day/week/month/year)
+ * @param int $leadGap - Additional days gap
+ * @return array|null ['start_date' => DateTime, 'end_date' => DateTime, 'display' => string]
+ */
+function calculateLeadTimeRange($leadCount, $leadInterval, $leadGap) {
+    if (empty($leadCount) || empty($leadInterval)) {
+        return null;
+    }
+
+    $today = new DateTime();
+    $startDate = clone $today;
+    $endDate = clone $today;
+
+    // Calculate start date (first delivery)
+    switch ($leadInterval) {
+        case 'day':
+            $startDate->modify("+{$leadCount} days");
+            break;
+        case 'week':
+            $daysToAdd = $leadCount * 7;
+            $startDate->modify("+{$daysToAdd} days");
+            break;
+        case 'month':
+            $startDate->modify("+{$leadCount} months");
+            break;
+        case 'year':
+            $startDate->modify("+{$leadCount} years");
+            break;
+    }
+
+    // Calculate end date (start date + gap)
+    $endDate = clone $startDate;
+    if ($leadGap > 0) {
+        $endDate->modify("+{$leadGap} days");
+    }
+
+    return [
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'display' => $startDate->format('M d, Y') . ' - ' . $endDate->format('M d, Y')
+    ];
 }
 
 // ✅ Function to detect zone by postal code
@@ -949,61 +998,75 @@ if ($_POST['payment_method'] === 'PayMongo') {
 
             // ✅ Save each item with individual delivery calculations
             $stmt = $conn->prepare("INSERT INTO order_items (
-    order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, delivery_fee_per_item, item_total_delivery
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    order_id, product_id, product_name, codename, type_name, variant_color, size, 
+    price, quantity, subtotal, descrip6, descrip7, origin, 
+    delivery_fee_per_item, item_total_delivery, lt_from, lt_to
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-            foreach ($cart_items as $index => $item) {
-                $subtotal_item = $item['price'] * $item['quantity'];
-                $product_name = $item['product_name'] ?? $item['variant_name'];
-                $codename = $item['codename'] ?? '';
-                $type_name = $item['type_name'] ?? '';
-                $variant_color = $item['color_name'] ?: ($item['variant_name'] ?? '');
-                $size = $item['size'] ?? '';
-                $price = $item['price'];
-                $quantity = $item['quantity'];
+foreach ($cart_items as $index => $item) {
+    $subtotal_item = $item['price'] * $item['quantity'];
+    $product_name = $item['product_name'] ?? $item['variant_name'];
+    $codename = $item['codename'] ?? '';
+    $type_name = $item['type_name'] ?? '';
+    $variant_color = $item['color_name'] ?: ($item['variant_name'] ?? '');
+    $size = $item['size'] ?? '';
+    $price = $item['price'];
+    $quantity = $item['quantity'];
 
-                // Get delivery details for this specific item
-                $item_delivery_detail = $item_delivery_details[$index] ?? null;
+    // Get delivery details for this specific item
+    $item_delivery_detail = $item_delivery_details[$index] ?? null;
 
-                if ($item_delivery_detail) {
-                    $delivery_fee_per_item = $item_delivery_detail['delivery_fee_per_item'];
-                    $item_total_delivery = $item_delivery_detail['item_total_delivery'];
-                } else {
-                    // Fallback calculation
-                    $delivery_fee_per_item = 0;
-                    $item_total_delivery = 0;
-                }
+    if ($item_delivery_detail) {
+        $delivery_fee_per_item = $item_delivery_detail['delivery_fee_per_item'];
+        $item_total_delivery = $item_delivery_detail['item_total_delivery'];
+    } else {
+        // Fallback calculation
+        $delivery_fee_per_item = 0;
+        $item_total_delivery = 0;
+    }
 
-                // ✅ Get descrip6 and descrip7 directly from cart item
-                $desc6 = $item['descrip6'] ?? '';
-                $desc7 = $item['descrip7'] ?? '';
-                $origin = $item['origin'] ?? '';
-                $product_id = $item['product_id'] ?? null;
+    // ✅ Calculate lead time dates
+    $leadTimeRange = calculateLeadTimeRange(
+        $item['lead_count'] ?? null,
+        $item['lead_interval'] ?? null,
+        $item['lead_gap'] ?? null
+    );
+    
+    $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
+    $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
 
-                $stmt->bind_param(
-                    "iisssssiiisssdd",
-                    $order_id,
-                    $product_id,
-                    $product_name,
-                    $codename,
-                    $type_name,
-                    $variant_color,
-                    $size,
-                    $price,
-                    $quantity,
-                    $subtotal_item,
-                    $desc6,
-                    $desc7,
-                    $origin,
-                    $delivery_fee_per_item,
-                    $item_total_delivery
-                );
+    // ✅ Get descrip6 and descrip7 directly from cart item
+    $desc6 = $item['descrip6'] ?? '';
+    $desc7 = $item['descrip7'] ?? '';
+    $origin = $item['origin'] ?? '';
+    $product_id = $item['product_id'] ?? null;
 
-                if (!$stmt->execute()) {
-                    throw new Exception("Failed to save order item: " . $stmt->error);
-                }
-            }
-            $stmt->close();
+    $stmt->bind_param(
+        "iisssssiiisssddss",
+        $order_id,
+        $product_id,
+        $product_name,
+        $codename,
+        $type_name,
+        $variant_color,
+        $size,
+        $price,
+        $quantity,
+        $subtotal_item,
+        $desc6,
+        $desc7,
+        $origin,
+        $delivery_fee_per_item,
+        $item_total_delivery,
+        $lt_from,
+        $lt_to
+    );
+
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to save order item: " . $stmt->error);
+    }
+}
+$stmt->close();
 
             // ✅ Clear cart
             $stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
@@ -1615,76 +1678,100 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                         <!-- Scrollable items -->
                         <div class="max-h-80 overflow-y-auto divide-y divide-gray-200">
                             <?php foreach ($cart_items as $index => $item): ?>
-                                <div class="p-4" id="cartItem<?= $index ?>"
-                                    data-delivery-size-percentage="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
-                                    data-delivery-size-name="<?= htmlspecialchars($item['size_name'] ?? 'default') ?>"
-                                    data-item-index="<?= $index ?>">
-                                    <!-- Hidden inputs for JavaScript access -->
-                                    <input type="hidden" name="item_<?= $index ?>_delivery_size_percentage"
-                                        value="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
-                                        data-delivery-percentage="true">
+    <div class="p-4" id="cartItem<?= $index ?>"
+        data-delivery-size-percentage="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
+        data-delivery-size-name="<?= htmlspecialchars($item['size_name'] ?? 'default') ?>"
+        data-item-index="<?= $index ?>">
+        <!-- Hidden inputs for JavaScript access -->
+        <input type="hidden" name="item_<?= $index ?>_delivery_size_percentage"
+            value="<?= htmlspecialchars($item['delivery_size_percentage'] ?? '5.0') ?>"
+            data-delivery-percentage="true">
 
-                                    <div class="flex justify-between items-start gap-4">
-                                        <div class="flex-1">
-                                            <h5 class="font-bold text-orange-600 mb-2">
-                                                <?= htmlspecialchars($item['variant_name']) ?>
-                                            </h5>
-                                            <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-2">
-                                                <?php if (!empty($item['type_name'])): ?>
-                                                    <div><strong>Type:</strong> <?= htmlspecialchars($item['type_name']) ?></div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
-                                                    <div><strong>Size:</strong> <?= htmlspecialchars($item['size']) ?></div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($item['color_name'])): ?>
-                                                    <div><strong>Color:</strong> <?= htmlspecialchars($item['color_name']) ?></div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($item['origin'])): ?>
-                                                    <?php $is_local = stripos($item['origin'], 'local') !== false; ?>
-                                                    <div class="<?= $is_local ? 'text-blue-600' : 'text-red-600' ?>">
-                                                        <strong>Origin:</strong> <?= htmlspecialchars($item['origin']) ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <!-- NEW: Display delivery size info -->
-                                                <?php if (!empty($item['size_name']) && !empty($item['delivery_size_percentage'])): ?>
-                                                    <div class="text-purple-600">
-                                                        <strong>Delivery Size:</strong>
-                                                        <span class="delivery-size-percentage">
-                                                            <?= htmlspecialchars($item['size_name']) ?> (<?= number_format($item['delivery_size_percentage'], 1) ?>%)
-                                                        </span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="bg-blue-50 p-2 rounded text-xs">
-                                                <div class="flex justify-between text-blue-700">
-                                                    <span>Delivery per item:</span>
-                                                    <span class="deliveryPerItem font-medium">₱0.00</span>
-                                                </div>
-                                                <div class="flex justify-between text-blue-700">
-                                                    <span>Total delivery:</span>
-                                                    <span class="totalDeliveryForItem font-medium">₱0.00</span>
-                                                </div>
-                                                <!-- NEW: Show size-based allocation info when calculated -->
-                                                <div class="flex justify-between text-purple-600 mt-1 size-allocation-info" style="display: none;">
-                                                    <span>Size allocation:</span>
-                                                    <span class="sizeAllocationPercentage font-medium">0%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div class="text-sm text-gray-600">
-                                                ₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?>
-                                            </div>
-                                            <div class="font-bold text-green-600">
-                                                ₱<?= number_format($item['price'] * $item['quantity'], 2) ?>
-                                            </div>
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                Qty: <span class="itemQuantity"><?= $item['quantity'] ?></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
+        <div class="flex justify-between items-start gap-4">
+            <div class="flex-1">
+                <h5 class="font-bold text-orange-600 mb-2">
+                    <?= htmlspecialchars($item['variant_name']) ?>
+                </h5>
+                <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-2">
+                    <?php if (!empty($item['type_name'])): ?>
+                        <div><strong>Type:</strong> <?= htmlspecialchars($item['type_name']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($item['size']) && trim($item['size']) !== ''): ?>
+                        <div><strong>Size:</strong> <?= htmlspecialchars($item['size']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($item['color_name'])): ?>
+                        <div><strong>Color:</strong> <?= htmlspecialchars($item['color_name']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($item['origin'])): ?>
+                        <?php $is_local = stripos($item['origin'], 'local') !== false; ?>
+                        <div class="<?= $is_local ? 'text-blue-600' : 'text-red-600' ?>">
+                            <strong>Origin:</strong> <?= htmlspecialchars($item['origin']) ?>
+                        </div>
+                    <?php endif; ?>
+                    <!-- NEW: Display delivery size info -->
+                    <?php if (!empty($item['size_name']) && !empty($item['delivery_size_percentage'])): ?>
+                        <div class="text-purple-600">
+                            <strong>Delivery Size:</strong>
+                            <span class="delivery-size-percentage">
+                                <?= htmlspecialchars($item['size_name']) ?> (<?= number_format($item['delivery_size_percentage'], 1) ?>%)
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- ✅ NEW: Display Lead Time "Receive By" -->
+                <?php 
+                    $leadTimeRange = calculateLeadTimeRange(
+                        $item['lead_count'] ?? null,
+                        $item['lead_interval'] ?? null,
+                        $item['lead_gap'] ?? null
+                    );
+                    
+                    if ($leadTimeRange): 
+                ?>
+                    <div class="bg-green-50 border border-green-200 rounded p-2 mb-2">
+                        <div class="flex items-center gap-2 text-xs text-green-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <div>
+                                <strong>Receive By:</strong>
+                                <span class="font-semibold"><?= htmlspecialchars($leadTimeRange['display']) ?></span>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
+                <div class="bg-blue-50 p-2 rounded text-xs">
+                    <div class="flex justify-between text-blue-700">
+                        <span>Delivery per item:</span>
+                        <span class="deliveryPerItem font-medium">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between text-blue-700">
+                        <span>Total delivery:</span>
+                        <span class="totalDeliveryForItem font-medium">₱0.00</span>
+                    </div>
+                    <!-- NEW: Show size-based allocation info when calculated -->
+                    <div class="flex justify-between text-purple-600 mt-1 size-allocation-info" style="display: none;">
+                        <span>Size allocation:</span>
+                        <span class="sizeAllocationPercentage font-medium">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-gray-600">
+                    ₱<?= number_format($item['price'], 2) ?> × <?= $item['quantity'] ?>
+                </div>
+                <div class="font-bold text-green-600">
+                    ₱<?= number_format($item['price'] * $item['quantity'], 2) ?>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
+                    Qty: <span class="itemQuantity"><?= $item['quantity'] ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endforeach; ?>
                         </div>
 
                         <!-- Total calculation -->

@@ -1,4 +1,5 @@
 <?php
+//update_process.php
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
@@ -374,47 +375,69 @@ if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name']
                 }
 
                 // Process variant updates and additions
-                foreach ($_POST['variant_id'][$index] as $v_index => $variant_id) {
-                    // Skip if marked for deletion
-                    if (isset($_POST['delete_variant'][$index]) && in_array($variant_id, $_POST['delete_variant'][$index])) {
-                        continue;
-                    }
+foreach ($_POST['variant_id'][$index] as $v_index => $variant_id) {
+    // Skip if marked for deletion
+    if (isset($_POST['delete_variant'][$index]) && in_array($variant_id, $_POST['delete_variant'][$index])) {
+        continue;
+    }
 
-                    $size = $conn->real_escape_string($_POST['variant_size'][$index][$v_index] ?? '');
-                    $price = floatval($_POST['variant_price'][$index][$v_index] ?? 0);
-                    $percent = floatval($_POST['variant_percent'][$index][$v_index] ?? 0);
-                    $discount = floatval($_POST['variant_discount'][$index][$v_index] ?? 0);
-                    $namevariant = $conn->real_escape_string($_POST['variant_namevariant'][$index][$v_index] ?? '');
+    $size = $conn->real_escape_string($_POST['variant_size'][$index][$v_index] ?? '');
+    $namevariant = $conn->real_escape_string($_POST['variant_namevariant'][$index][$v_index] ?? '');
 
-                    // Calculate final price with markup and discount
-                    $markup_price = $price + ($price * $percent / 100);
-                    $final_price = $markup_price - ($markup_price * $discount / 100);
+    // NEW: Get the already-calculated final price from the hidden field
+    $final_price = floatval($_POST['variant_price'][$index][$v_index] ?? 0);
 
-                    if ($variant_id === 'new') {
-                        // Insert new variant
-                        $insert_variant_sql = "INSERT INTO product_variants (type_id, size, price, percent, discount, namevariant) 
-                            VALUES ($current_type_id, '$size', $final_price, $percent, $discount, '$namevariant')";
+    // Get original price, percent, and discount for storage
+    $original_price = floatval($_POST['variant_original_price'][$index][$v_index] ?? 0);
+    $percent = floatval($_POST['variant_percent'][$index][$v_index] ?? 0);
+    $discount = floatval($_POST['variant_discount'][$index][$v_index] ?? 0);
 
-                        if (!$conn->query($insert_variant_sql)) {
-                            throw new Exception("Failed to insert variant: " . $conn->error);
-                        }
-                        echo "Added new variant: $size for type $type_name<br>";
-                    } else {
-                        // Update existing variant
-                        $update_variant_sql = "UPDATE product_variants SET 
-                            size = '$size',
-                            price = $final_price,
-                            percent = $percent,
-                            discount = $discount,
-                            namevariant = '$namevariant'
-                            WHERE id = $variant_id";
+    // NEW: Extract dimension and weight data
+    $width = !empty($_POST['variant_width'][$index][$v_index]) ? floatval($_POST['variant_width'][$index][$v_index]) : null;
+    $height = !empty($_POST['variant_height'][$index][$v_index]) ? floatval($_POST['variant_height'][$index][$v_index]) : null;
+    $length = !empty($_POST['variant_length'][$index][$v_index]) ? floatval($_POST['variant_length'][$index][$v_index]) : null;
+    $dimension_unit = $conn->real_escape_string($_POST['variant_dimension_unit'][$index][$v_index] ?? 'cm');
+    $weight = !empty($_POST['variant_weight'][$index][$v_index]) ? floatval($_POST['variant_weight'][$index][$v_index]) : null;
+    $weight_unit = $conn->real_escape_string($_POST['variant_weight_unit'][$index][$v_index] ?? 'kg');
 
-                        if (!$conn->query($update_variant_sql)) {
-                            throw new Exception("Failed to update variant: " . $conn->error);
-                        }
-                        echo "Updated variant: $size<br>";
-                    }
-                }
+    if ($variant_id === 'new') {
+        // Insert new variant
+        $insert_variant_sql = "INSERT INTO product_variants (product_id, type_id, size, original_price, price, percent, discount, namevariant, width, height, length, dimension_unit, weight, weight_unit) 
+            VALUES ($product_id, $current_type_id, '$size', $original_price, $final_price, $percent, $discount, '$namevariant', " . 
+            ($width !== null ? $width : "NULL") . ", " . 
+            ($height !== null ? $height : "NULL") . ", " . 
+            ($length !== null ? $length : "NULL") . ", " . 
+            "'$dimension_unit', " . 
+            ($weight !== null ? $weight : "NULL") . ", " . 
+            "'$weight_unit')";
+
+        if (!$conn->query($insert_variant_sql)) {
+            throw new Exception("Failed to insert variant: " . $conn->error);
+        }
+        echo "Added new variant: $size for type $type_name<br>";
+    } else {
+        // Update existing variant
+        $update_variant_sql = "UPDATE product_variants SET 
+            size = '$size',
+            original_price = $original_price,
+            price = $final_price,
+            percent = $percent,
+            discount = $discount,
+            namevariant = '$namevariant',
+            width = " . ($width !== null ? $width : "NULL") . ",
+            height = " . ($height !== null ? $height : "NULL") . ",
+            length = " . ($length !== null ? $length : "NULL") . ",
+            dimension_unit = '$dimension_unit',
+            weight = " . ($weight !== null ? $weight : "NULL") . ",
+            weight_unit = '$weight_unit'
+            WHERE id = $variant_id";
+
+        if (!$conn->query($update_variant_sql)) {
+            throw new Exception("Failed to update variant: " . $conn->error);
+        }
+        echo "Updated variant: $size<br>";
+    }
+}
             }
         }
     }

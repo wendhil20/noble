@@ -1,4 +1,5 @@
 <?php
+//update_product.php
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
@@ -198,20 +199,23 @@ if (!empty($product['sub_images'])) {
       </div>
 
       <!-- REPLACED CODENAME WITH CATEGORY DROPDOWN -->
-      <div class="mb-4">
-        <label class="block font-semibold mb-1">Category</label>
-        <select name="category" required class="w-full border p-2 rounded bg-white">
-          <option value="">Select a Category</option>
-          <?php while ($category = $categories->fetch_assoc()): ?>
-            <option value="<?= htmlspecialchars($category['name']) ?>" 
-                    <?= (isset($product['category']) && $product['category'] == $category['name']) ? 'selected' : '' ?>>
-              <?= htmlspecialchars($category['name']) ?>
-            </option>
-          <?php endwhile; ?>
-        </select>
-        <p class="text-xs text-gray-500 mt-1">Choose the category this product belongs to</p>
-      </div>
-
+<div class="mb-4">
+  <label class="block font-semibold mb-1">Category</label>
+  <select name="category" required class="w-full border p-2 rounded bg-white">
+    <option value="">Select a Category</option>
+    <?php 
+    // Reset the result pointer to reuse the categories
+    $categories->data_seek(0);
+    while ($category = $categories->fetch_assoc()): 
+    ?>
+      <option value="<?= htmlspecialchars($category['name']) ?>" 
+              <?= (isset($product['codename']) && $product['codename'] == $category['name']) ? 'selected' : '' ?>>
+        <?= htmlspecialchars($category['name']) ?>
+      </option>
+    <?php endwhile; ?>
+  </select>
+  <p class="text-xs text-gray-500 mt-1">Choose the category this product belongs to</p>
+</div>
       <div class="mb-4">
         <label class="block font-semibold mb-1">Quantity</label>
         <input type="number" name="quantity" value="<?php echo htmlspecialchars($product['quantity']); ?>" required class="w-full border p-2 rounded" />
@@ -303,58 +307,153 @@ if (!empty($product['sub_images'])) {
             <label class="block font-medium mb-1">Variants (Sizes, etc.):</label>
             <div id="variant-section-<?php echo $typeIndex; ?>">
               <?php while ($variant = $variants->fetch_assoc()) { ?>
-                <div class="flex gap-2 mb-2 items-center bg-blue-50 p-2 rounded">
-                  <input type="hidden" name="variant_id[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
+  <div class="bg-blue-50 p-4 rounded border mb-3">
+    <input type="hidden" name="variant_id[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
 
-                  <!-- Delete -->
-                  <div class="flex items-center">
-                    <input type="checkbox" name="delete_variant[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
-                    <label class="text-sm text-gray-600 ml-1">Del</label>
-                  </div>
+    <!-- Row 1: Delete & Basic Info -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+      <!-- Delete Checkbox -->
+      <div class="flex items-center">
+        <input type="checkbox" name="delete_variant[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
+        <label class="text-sm text-gray-600 ml-1">Delete</label>
+      </div>
 
-                  <!-- Size -->
-                  <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['size']); ?>" placeholder="Size" class="border p-2 w-1/6 rounded" />
+      <!-- Size -->
+      <div>
+        <label class="text-xs font-medium text-gray-600">Size/Type</label>
+        <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]" 
+               value="<?php echo htmlspecialchars($variant['size']); ?>" 
+               placeholder="Size" class="border p-2 w-full rounded text-sm" />
+      </div>
 
-                  <!-- Base Price -->
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="variant_price[<?php echo $typeIndex; ?>][]"
-                    value="<?php echo htmlspecialchars($variant['price']); ?>"
-                    placeholder="Base Price"
-                    class="border p-2 w-1/6 rounded computed-price" />
+      <!-- Name Variant -->
+      <div>
+        <label class="text-xs font-medium text-gray-600">Variant Name</label>
+        <input type="text" name="variant_namevariant[<?php echo $typeIndex; ?>][]" 
+               value="<?php echo htmlspecialchars($variant['namevariant'] ?? ''); ?>" 
+               placeholder="Name Variant" class="border p-2 w-full rounded text-sm" />
+      </div>
 
-                  <!-- Markup % -->
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="variant_percent[<?php echo $typeIndex; ?>][]"
-                    value="<?php echo htmlspecialchars($variant['percent'] ?? ''); ?>"
-                    placeholder="Markup %"
-                    class="border p-2 w-1/6 rounded percent-input" />
+      <!-- Original Price (THE TRUE BASE) -->
+      <div>
+        <label class="text-xs font-medium text-gray-600 flex items-center gap-1">
+          Original Price 
+          <span class="text-blue-500 text-xs" title="This is the base price for calculations">ℹ️</span>
+        </label>
+        <input type="number" step="0.01" 
+               name="variant_original_price[<?php echo $typeIndex; ?>][]" 
+               value="<?php echo htmlspecialchars($variant['original_price'] ?? ''); ?>" 
+               placeholder="Original Price" 
+               class="border p-2 w-full rounded text-sm original-price-input" 
+               data-variant-index="<?php echo $typeIndex; ?>" />
+      </div>
+    </div>
 
-                  <!-- Markup Display -->
-                  <div class="markup-preview text-sm text-green-600 w-1/6 font-semibold">₱0.00</div>
+    <!-- Row 2: Pricing Calculations -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+      <!-- Markup % -->
+      <div>
+        <label class="text-xs font-medium text-gray-600">Markup %</label>
+        <input type="number" step="0.01" 
+               name="variant_percent[<?php echo $typeIndex; ?>][]"
+               value="<?php echo htmlspecialchars($variant['percent'] ?? ''); ?>"
+               placeholder="Markup %" 
+               class="border p-2 w-full rounded percent-input text-sm" 
+               data-variant-index="<?php echo $typeIndex; ?>" />
+      </div>
 
-                  <!-- Discount -->
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="variant_discount[<?php echo $typeIndex; ?>][]"
-                    value="<?php echo htmlspecialchars($variant['discount'] ?? ''); ?>"
-                    placeholder="Discount %"
-                    class="border p-2 w-1/6 rounded discount-input" />
+      <!-- Markup Display (Calculated) -->
+      <div>
+        <label class="text-xs font-medium text-gray-600">After Markup</label>
+        <div class="markup-preview text-sm text-green-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
+      </div>
 
-                  <!-- Final Price Display -->
-                  <div class="final-preview text-sm text-red-600 w-1/6 font-semibold">₱0.00</div>
+      <!-- Discount % -->
+      <div>
+        <label class="text-xs font-medium text-gray-600">Discount %</label>
+        <input type="number" step="0.01" 
+               name="variant_discount[<?php echo $typeIndex; ?>][]"
+               value="<?php echo htmlspecialchars($variant['discount'] ?? ''); ?>"
+               placeholder="Discount %" 
+               class="border p-2 w-full rounded discount-input text-sm" 
+               data-variant-index="<?php echo $typeIndex; ?>" />
+      </div>
 
-                  <!-- Name Variant -->
-                  <input type="text" name="variant_namevariant[<?php echo $typeIndex; ?>][]" value="<?php echo htmlspecialchars($variant['namevariant'] ?? ''); ?>" placeholder="Name Variant" class="border p-2 w-1/6 rounded" />
+      <!-- Final Price Display (Calculated) -->
+      <div>
+        <label class="text-xs font-medium text-gray-600">Final Price</label>
+        <div class="final-preview text-sm text-red-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
+      </div>
+    </div>
 
-                  <!-- Remove Button -->
-                  <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
-                </div>
-              <?php } ?>
+    <!-- Hidden field to store the computed final price (this is what gets saved as 'price') -->
+    <input type="hidden" 
+           name="variant_price[<?php echo $typeIndex; ?>][]" 
+           value="<?php echo htmlspecialchars($variant['price']); ?>" 
+           class="computed-price-input" />
+
+    <!-- Row 3: Dimensions -->
+    <div class="bg-white p-3 rounded mb-2">
+      <label class="text-xs font-semibold text-gray-700 block mb-2">📏 Dimensions</label>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div>
+          <label class="text-xs font-medium text-gray-600">Width</label>
+          <input type="number" step="0.01" name="variant_width[<?php echo $typeIndex; ?>][]" 
+                 value="<?php echo htmlspecialchars($variant['width'] ?? ''); ?>" 
+                 placeholder="Width" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Height</label>
+          <input type="number" step="0.01" name="variant_height[<?php echo $typeIndex; ?>][]" 
+                 value="<?php echo htmlspecialchars($variant['height'] ?? ''); ?>" 
+                 placeholder="Height" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Length</label>
+          <input type="number" step="0.01" name="variant_length[<?php echo $typeIndex; ?>][]" 
+                 value="<?php echo htmlspecialchars($variant['length'] ?? ''); ?>" 
+                 placeholder="Length" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Unit</label>
+          <select name="variant_dimension_unit[<?php echo $typeIndex; ?>][]" class="border p-2 w-full rounded text-sm">
+            <option value="mm" <?php echo ($variant['dimension_unit'] ?? 'cm') == 'mm' ? 'selected' : ''; ?>>mm</option>
+            <option value="cm" <?php echo ($variant['dimension_unit'] ?? 'cm') == 'cm' ? 'selected' : ''; ?>>cm</option>
+            <option value="inches" <?php echo ($variant['dimension_unit'] ?? 'cm') == 'inches' ? 'selected' : ''; ?>>inches</option>
+            <option value="m" <?php echo ($variant['dimension_unit'] ?? 'cm') == 'm' ? 'selected' : ''; ?>>m</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Weight -->
+    <div class="bg-white p-3 rounded mb-2">
+      <label class="text-xs font-semibold text-gray-700 block mb-2">⚖️ Weight</label>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-xs font-medium text-gray-600">Weight</label>
+          <input type="number" step="0.01" name="variant_weight[<?php echo $typeIndex; ?>][]" 
+                 value="<?php echo htmlspecialchars($variant['weight'] ?? ''); ?>" 
+                 placeholder="Weight" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Unit</label>
+          <select name="variant_weight_unit[<?php echo $typeIndex; ?>][]" class="border p-2 w-full rounded text-sm">
+            <option value="g" <?php echo ($variant['weight_unit'] ?? 'kg') == 'g' ? 'selected' : ''; ?>>g (Grams)</option>
+            <option value="kg" <?php echo ($variant['weight_unit'] ?? 'kg') == 'kg' ? 'selected' : ''; ?>>kg (Kilograms)</option>
+            <option value="lbs" <?php echo ($variant['weight_unit'] ?? 'kg') == 'lbs' ? 'selected' : ''; ?>>lbs (Pounds)</option>
+            <option value="oz" <?php echo ($variant['weight_unit'] ?? 'kg') == 'oz' ? 'selected' : ''; ?>>oz (Ounces)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Button -->
+    <div class="flex justify-end">
+      <button type="button" onclick="removeVariant(this)" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Remove Variant</button>
+    </div>
+  </div>
+<?php } ?>
             </div>
             <button type="button" onclick="addVariant(<?php echo $typeIndex; ?>)" class="text-sm text-blue-600 mt-1">+ Add Variant</button>
           </div>
@@ -530,81 +629,129 @@ if (!empty($product['sub_images'])) {
     }
 
     function addVariant(index) {
-      const variantSection = document.getElementById('variant-section-' + index);
-      const lastData = getLastVariantData(index);
+  const variantSection = document.getElementById('variant-section-' + index);
 
-      const div = document.createElement('div');
-      div.classList.add('flex', 'gap-2', 'mb-2', 'items-center', 'bg-blue-50', 'p-2', 'rounded');
+  const div = document.createElement('div');
+  div.classList.add('bg-blue-50', 'p-4', 'rounded', 'border', 'mb-3');
 
-      // Hidden ID
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.name = `variant_id[${index}][]`;
-      hiddenInput.value = 'new';
-      div.appendChild(hiddenInput);
+  div.innerHTML = `
+    <input type="hidden" name="variant_id[${index}][]" value="new" />
 
-      // Delete placeholder
-      const deleteLabel = document.createElement('div');
-      deleteLabel.innerHTML = `<span class="text-sm text-gray-400 w-[40px] inline-block">New</span>`;
-      div.appendChild(deleteLabel);
+    <!-- Row 1: Delete & Basic Info -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+      <div class="flex items-center">
+        <span class="text-sm text-gray-400">New</span>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-600">Size/Type</label>
+        <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-full rounded text-sm" />
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-600">Variant Name</label>
+        <input type="text" name="variant_namevariant[${index}][]" placeholder="Name Variant" class="border p-2 w-full rounded text-sm" />
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-600 flex items-center gap-1">
+          Original Price 
+          <span class="text-blue-500 text-xs" title="This is the base price for calculations">ℹ️</span>
+        </label>
+        <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 w-full rounded text-sm original-price-input" data-variant-index="${index}" />
+      </div>
+    </div>
 
-      // Size
-      const sizeInput = createInput('text', `variant_size[${index}][]`, 'Size', 'w-1/6');
-      div.appendChild(sizeInput);
+    <!-- Row 2: Pricing Calculations -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+      <div>
+        <label class="text-xs font-medium text-gray-600">Markup %</label>
+        <input type="number" step="0.01" name="variant_percent[${index}][]" placeholder="Markup %" class="border p-2 w-full rounded percent-input text-sm" data-variant-index="${index}" />
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-600">After Markup</label>
+        <div class="markup-preview text-sm text-green-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-600">Discount %</label>
+        <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount %" class="border p-2 w-full rounded discount-input text-sm" data-variant-index="${index}" />
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-600">Final Price</label>
+        <div class="final-preview text-sm text-red-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
+      </div>
+    </div>
 
-      // Base Price
-      const priceInput = createInput('number', `variant_price[${index}][]`, 'Base Price', 'w-1/6 computed-price');
-      priceInput.step = '0.01';
-      div.appendChild(priceInput);
+    <!-- Hidden computed price field -->
+    <input type="hidden" name="variant_price[${index}][]" value="0" class="computed-price-input" />
 
-      // Markup %
-      const percentInput = createInput('number', `variant_percent[${index}][]`, 'Markup %', 'w-1/6 percent-input');
-      percentInput.step = '0.01';
-      div.appendChild(percentInput);
+    <!-- Row 3: Dimensions -->
+    <div class="bg-white p-3 rounded mb-2">
+      <label class="text-xs font-semibold text-gray-700 block mb-2">📏 Dimensions</label>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div>
+          <label class="text-xs font-medium text-gray-600">Width</label>
+          <input type="number" step="0.01" name="variant_width[${index}][]" placeholder="Width" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Height</label>
+          <input type="number" step="0.01" name="variant_height[${index}][]" placeholder="Height" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Length</label>
+          <input type="number" step="0.01" name="variant_length[${index}][]" placeholder="Length" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Unit</label>
+          <select name="variant_dimension_unit[${index}][]" class="border p-2 w-full rounded text-sm">
+            <option value="mm">mm</option>
+            <option value="cm" selected>cm</option>
+            <option value="inches">inches</option>
+            <option value="m">m</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-      // Markup Preview
-      const markupDisplay = document.createElement('div');
-      markupDisplay.className = 'markup-preview text-sm text-green-600 w-1/6 font-semibold';
-      markupDisplay.textContent = '₱0.00';
-      div.appendChild(markupDisplay);
+    <!-- Row 4: Weight -->
+    <div class="bg-white p-3 rounded mb-2">
+      <label class="text-xs font-semibold text-gray-700 block mb-2">⚖️ Weight</label>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-xs font-medium text-gray-600">Weight</label>
+          <input type="number" step="0.01" name="variant_weight[${index}][]" placeholder="Weight" class="border p-2 w-full rounded text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Unit</label>
+          <select name="variant_weight_unit[${index}][]" class="border p-2 w-full rounded text-sm">
+            <option value="g">g (Grams)</option>
+            <option value="kg" selected>kg (Kilograms)</option>
+            <option value="lbs">lbs (Pounds)</option>
+            <option value="oz">oz (Ounces)</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-      // Discount %
-      const discountInput = createInput('number', `variant_discount[${index}][]`, 'Discount %', 'w-1/6 discount-input');
-      discountInput.step = '0.01';
-      div.appendChild(discountInput);
+    <!-- Remove Button -->
+    <div class="flex justify-end">
+      <button type="button" onclick="removeVariant(this)" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Remove Variant</button>
+    </div>
+  `;
 
-      // Final Price Preview
-      const finalDisplay = document.createElement('div');
-      finalDisplay.className = 'final-preview text-sm text-red-600 w-1/6 font-semibold';
-      finalDisplay.textContent = '₱0.00';
-      div.appendChild(finalDisplay);
+  variantSection.appendChild(div);
 
-      // Name Variant
-      const nameVariantInput = createInput('text', `variant_namevariant[${index}][]`, 'Name Variant', 'w-1/6');
-      div.appendChild(nameVariantInput);
+  // Add event listeners for price calculation
+  const originalPriceInput = div.querySelector('.original-price-input');
+  const percentInput = div.querySelector('.percent-input');
+  const discountInput = div.querySelector('.discount-input');
+  const markupDisplay = div.querySelector('.markup-preview');
+  const finalDisplay = div.querySelector('.final-preview');
+  const computedPriceInput = div.querySelector('.computed-price-input');
 
-      // Remove Button
-      const removeButton = document.createElement('button');
-      removeButton.type = 'button';
-      removeButton.className = 'text-red-500 text-sm';
-      removeButton.innerHTML = '✕';
-      removeButton.onclick = () => removeVariant(removeButton);
-      div.appendChild(removeButton);
-
-      variantSection.appendChild(div);
-
-      // Add event listeners for price calculation
-      const hook = () => applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay);
-      priceInput.addEventListener('input', hook);
-      percentInput.addEventListener('input', hook);
-      discountInput.addEventListener('input', hook);
-
-      // Calculate initial markup and final price
-      applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay);
-
-      // Focus on the size input
-      sizeInput.focus();
-    }
+  const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+  
+  originalPriceInput.addEventListener('input', hook);
+  percentInput.addEventListener('input', hook);
+  discountInput.addEventListener('input', hook);
+}
 
     function addType() {
       const typesSection = document.getElementById('types-section');
@@ -631,48 +778,56 @@ if (!empty($product['sub_images'])) {
       typeIndex++;
     }
 
-    function applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay) {
-      const base = parseFloat(priceInput.value);
-      const percent = parseFloat(percentInput.value);
-      const discount = parseFloat(discountInput?.value || 0);
+    function applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput) {
+  const originalPrice = parseFloat(originalPriceInput.value) || 0;
+  const percent = parseFloat(percentInput.value) || 0;
+  const discount = parseFloat(discountInput.value) || 0;
 
-      if (!isNaN(base) && !isNaN(percent)) {
-        const computed = base + (base * percent / 100);
-        markupDisplay.textContent = '₱' + computed.toFixed(2);
+  if (originalPrice > 0) {
+    // Calculate price after markup
+    const priceAfterMarkup = originalPrice + (originalPrice * percent / 100);
+    markupDisplay.textContent = '₱' + priceAfterMarkup.toFixed(2);
 
-        if (!isNaN(discount)) {
-          const final = computed - (computed * discount / 100);
-          finalDisplay.textContent = '₱' + final.toFixed(2);
-        } else {
-          finalDisplay.textContent = '₱' + computed.toFixed(2);
-        }
-      } else {
-        markupDisplay.textContent = '₱0.00';
-        finalDisplay.textContent = '₱0.00';
-      }
+    // Calculate final price after discount
+    const finalPrice = priceAfterMarkup - (priceAfterMarkup * discount / 100);
+    finalDisplay.textContent = '₱' + finalPrice.toFixed(2);
+    
+    // Update the hidden computed price field (this is what gets saved to DB)
+    if (computedPriceInput) {
+      computedPriceInput.value = finalPrice.toFixed(2);
     }
+  } else {
+    markupDisplay.textContent = '₱0.00';
+    finalDisplay.textContent = '₱0.00';
+    if (computedPriceInput) {
+      computedPriceInput.value = '0';
+    }
+  }
+}
 
     // Hook inputs on page load (existing data)
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.percent-input').forEach((percentInput) => {
-        const parent = percentInput.closest('.flex');
-        const priceInput = parent.querySelector('.computed-price');
-        const discountInput = parent.querySelector('.discount-input');
-        const markupDisplay = parent.querySelector('.markup-preview');
-        const finalDisplay = parent.querySelector('.final-preview');
+document.addEventListener('DOMContentLoaded', () => {
+  // Process all existing variant rows
+  document.querySelectorAll('.bg-blue-50.p-4.rounded.border.mb-3').forEach((variantDiv) => {
+    const originalPriceInput = variantDiv.querySelector('.original-price-input');
+    const percentInput = variantDiv.querySelector('.percent-input');
+    const discountInput = variantDiv.querySelector('.discount-input');
+    const markupDisplay = variantDiv.querySelector('.markup-preview');
+    const finalDisplay = variantDiv.querySelector('.final-preview');
+    const computedPriceInput = variantDiv.querySelector('.computed-price-input');
 
-        if (priceInput && markupDisplay && finalDisplay) {
-          const hook = () => applyMarkup(priceInput, percentInput, discountInput, markupDisplay, finalDisplay);
+    if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
+      const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
 
-          priceInput.addEventListener('input', hook);
-          percentInput.addEventListener('input', hook);
-          if (discountInput) discountInput.addEventListener('input', hook);
+      originalPriceInput.addEventListener('input', hook);
+      percentInput.addEventListener('input', hook);
+      if (discountInput) discountInput.addEventListener('input', hook);
 
-          // Trigger initial display
-          hook();
-        }
-      });
-    });
+      // Trigger initial display
+      hook();
+    }
+  });
+});
   </script>
 
 </body>

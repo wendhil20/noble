@@ -3,6 +3,54 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
+/**
+ * Calculate delivery date range based on lead time settings
+ * @param int $leadCount - Number of intervals
+ * @param string $leadInterval - Type of interval (day/week/month/year)
+ * @param int $leadGap - Additional days gap
+ * @return array ['start_date' => 'Oct 14, 2025', 'end_date' => 'Oct 21, 2025', 'display' => 'Oct 14, 2025 - Oct 21, 2025']
+ */
+function calculateDeliveryDateRange($leadCount, $leadInterval, $leadGap) {
+    if (empty($leadCount) || empty($leadInterval)) {
+        return null;
+    }
+
+    $today = new DateTime();
+    $startDate = clone $today;
+    $endDate = clone $today;
+
+    // Calculate start date (first delivery)
+    switch ($leadInterval) {
+        case 'day':
+            $startDate->modify("+{$leadCount} days");
+            break;
+        case 'week':
+            $daysToAdd = $leadCount * 7;
+            $startDate->modify("+{$daysToAdd} days");
+            break;
+        case 'month':
+            $startDate->modify("+{$leadCount} months");
+            break;
+        case 'year':
+            $startDate->modify("+{$leadCount} years");
+            break;
+    }
+
+    // Calculate end date (start date + gap)
+    $endDate = clone $startDate;
+    if ($leadGap > 0) {
+        $endDate->modify("+{$leadGap} days");
+    }
+
+    return [
+        'start_date' => $startDate->format('M d, Y'),
+        'end_date' => $endDate->format('M d, Y'),
+        'display' => $startDate->format('M d, Y') . ' - ' . $endDate->format('M d, Y'),
+        'start_timestamp' => $startDate->getTimestamp(),
+        'end_timestamp' => $endDate->getTimestamp()
+    ];
+}
+
 // ✅ Restore session from remember_token (email or mobile-based or Google)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $token = $_COOKIE['remember_token'];
@@ -52,27 +100,30 @@ unset($_SESSION['checkout_notice']);
 // ✅ Fetch cart items from database - FIXED: descrip6, descrip7 from products table
 if ($user_id) {
   $stmt = $conn->prepare("
-        SELECT 
-            c.*, 
-            t.type_image, 
-            p.descrip6, 
-            p.descrip7, 
-            p.product_name,
-            p.main_image,
-            v.origin,
-            v.discount,
-            v.percent,
-            v.status
-        FROM user_cart_items c
-        LEFT JOIN product_types t 
-            ON t.product_id = c.product_id AND t.type_name = c.type_name
-        LEFT JOIN product_variants v 
-            ON c.variant_id = v.id
-        LEFT JOIN products p 
-            ON c.product_id = p.id
-        WHERE c.user_id = ?
-        ORDER BY c.id DESC
-    ");
+    SELECT 
+        c.*, 
+        t.type_image, 
+        p.descrip6, 
+        p.descrip7, 
+        p.product_name,
+        p.main_image,
+        v.origin,
+        v.discount,
+        v.percent,
+        v.status,
+        v.lead_count,
+        v.lead_interval,
+        v.lead_gap
+    FROM user_cart_items c
+    LEFT JOIN product_types t 
+        ON t.product_id = c.product_id AND t.type_name = c.type_name
+    LEFT JOIN product_variants v 
+        ON c.variant_id = v.id
+    LEFT JOIN products p 
+        ON c.product_id = p.id
+    WHERE c.user_id = ?
+    ORDER BY c.id DESC
+");
 
   $stmt->bind_param("i", $user_id);
   $stmt->execute();
@@ -340,6 +391,7 @@ $total_cart_items = count($cart_items);
                     <th class="py-3 px-4">Total</th>
                     <th class="py-3 px-4">Image</th>
                     <th class="py-3 px-4">Origin</th>
+                    <th class="py-3 px-4">Get Items By</th>
                     <th class="py-3 px-4 rounded-tr-lg">Remove</th>
                   </tr>
                 </thead>
@@ -413,6 +465,24 @@ $total_cart_items = count($cart_items);
                           <span class="text-gray-400 text-sm">—</span>
                         <?php endif; ?>
                       </td>
+                      <td class="py-4 px-4">
+  <?php 
+    $deliveryDates = calculateDeliveryDateRange(
+      $item['lead_count'] ?? null, 
+      $item['lead_interval'] ?? null, 
+      $item['lead_gap'] ?? null
+    );
+    
+    if ($deliveryDates): 
+  ?>
+    <div class="text-sm">
+      <div class="font-semibold text-green-700">Get Items By:</div>
+      <div class="text-gray-700"><?= htmlspecialchars($deliveryDates['display']) ?></div>
+    </div>
+  <?php else: ?>
+    <span class="text-gray-400 text-sm">TBD</span>
+  <?php endif; ?>
+</td>
                       <td class="py-4 px-4 align-middle">
                         <a href="../cart/remove_from_cart.php?key=<?= $item['id'] ?>"
                           class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors" title="Remove">
@@ -493,6 +563,27 @@ $total_cart_items = count($cart_items);
                     <?php endif; ?>
                   </div>
                 </div>
+
+                <!-- Delivery Date Range -->
+<?php 
+  $deliveryDates = calculateDeliveryDateRange(
+    $item['lead_count'] ?? null, 
+    $item['lead_interval'] ?? null, 
+    $item['lead_gap'] ?? null
+  );
+  
+  if ($deliveryDates): 
+?>
+  <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+    <div class="flex items-start gap-2">
+      <i class="fas fa-truck text-green-600 mt-0.5"></i>
+      <div>
+        <div class="text-xs font-semibold text-green-700 mb-1">Estimated Delivery</div>
+        <div class="text-sm text-gray-700"><?= htmlspecialchars($deliveryDates['display']) ?></div>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
 
                 <!-- Price and Quantity -->
                 <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">

@@ -137,6 +137,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE product_variants ADD CONSTRAINT FK_product_variants_product_id FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE");
         }
 
+        // Check and add dimension and weight columns if they don't exist
+$dimension_columns = ['width', 'height', 'length', 'dimension_unit', 'weight', 'weight_unit'];
+foreach ($dimension_columns as $column) {
+    $check_col = $conn->query("SHOW COLUMNS FROM product_variants LIKE '$column'");
+    if ($check_col->num_rows == 0) {
+        if ($column == 'dimension_unit') {
+            $conn->query("ALTER TABLE product_variants ADD COLUMN $column VARCHAR(10) DEFAULT 'cm' AFTER length");
+        } elseif ($column == 'weight_unit') {
+            $conn->query("ALTER TABLE product_variants ADD COLUMN $column VARCHAR(10) DEFAULT 'kg' AFTER weight");
+        } elseif (in_array($column, ['width', 'height', 'length', 'weight'])) {
+            $position = ($column == 'width') ? 'AFTER discount' : 
+                       (($column == 'height') ? 'AFTER width' : 
+                       (($column == 'length') ? 'AFTER height' : 'AFTER dimension_unit'));
+            $conn->query("ALTER TABLE product_variants ADD COLUMN $column DECIMAL(10,2) DEFAULT NULL $position");
+        }
+    }
+}
+
         // Insert product with sub images
         $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, sub_images, description) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) throw new Exception("Prepare failed for product insert: " . $conn->error);
@@ -214,6 +232,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $price = (float)($_POST['variant_price'][$type_index][$variant_index] ?? 0);
                         $percent = (float)($_POST['variant_percent'][$type_index][$variant_index] ?? 0);
                         $discount = (float)($_POST['variant_discount'][$type_index][$variant_index] ?? 0);
+                        $width = !empty($_POST['variant_width'][$type_index][$variant_index]) ? (float)$_POST['variant_width'][$type_index][$variant_index] : null;
+        $height = !empty($_POST['variant_height'][$type_index][$variant_index]) ? (float)$_POST['variant_height'][$type_index][$variant_index] : null;
+        $length = !empty($_POST['variant_length'][$type_index][$variant_index]) ? (float)$_POST['variant_length'][$type_index][$variant_index] : null;
+        $dimension_unit = $_POST['variant_dimension_unit'][$type_index][$variant_index] ?? 'cm';
+        $weight = !empty($_POST['variant_weight'][$type_index][$variant_index]) ? (float)$_POST['variant_weight'][$type_index][$variant_index] : null;
+        $weight_unit = $_POST['variant_weight_unit'][$type_index][$variant_index] ?? 'kg';
 
                         if (!empty($size) || !empty($name_variant)) {
                             $final_price = $price + ($price * $percent / 100);
@@ -229,20 +253,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
 
                             // FIXED: Now includes product_id in the insert
-                            $stmt = $conn->prepare("INSERT INTO product_variants (product_id, type_id, color, size, original_price, price, percent, discount, namevariant, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                            if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
-                            $stmt->bind_param("iissddddss",
-                                $product_id,      // ADD THIS - the missing product_id
-                                $type_id,
-                                $color,
-                                $size,
-                                $original_price,
-                                $final_price,
-                                $percent,
-                                $discount,
-                                $name_variant,
-                                $variant_image
-                            );
+                            // UPDATED: Now includes dimensions and weight
+$stmt = $conn->prepare("INSERT INTO product_variants (product_id, type_id, color, size, original_price, price, percent, discount, namevariant, image, width, height, length, dimension_unit, weight, weight_unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+if (!$stmt) throw new Exception("Prepare failed for product_variants: " . $conn->error);
+$stmt->bind_param("iissddddssdddsds",
+    $product_id,
+    $type_id,
+    $color,
+    $size,
+    $original_price,
+    $final_price,
+    $percent,
+    $discount,
+    $name_variant,
+    $variant_image,
+    $width,              // NEW
+    $height,             // NEW
+    $length,             // NEW
+    $dimension_unit,     // NEW
+    $weight,             // NEW
+    $weight_unit         // NEW
+);
                             $stmt->execute();
                             $stmt->close();
                         }

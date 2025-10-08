@@ -261,13 +261,16 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
         </div>
         
         <!-- Variants Section (Size, etc.) -->
-        <div>
-          <label class="block font-medium mb-2">Other Variants for this Type:</label>
-          <div id="variant-section-${typeIndex}" class="space-y-2">
-            ${variantRowHTML(typeIndex)}
-          </div>
-          <button type="button" onclick="addVariant(${typeIndex})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm mt-2 hover:bg-blue-600">+ Add Variant</button>
-        </div>
+<div>
+  <label class="block font-medium mb-2">Product Variants (Size, Dimensions, Weight):</label>
+  <div class="text-xs text-gray-600 mb-2">
+    Add variants with their dimensions and weight. Useful for furniture and construction materials.
+  </div>
+  <div id="variant-section-${typeIndex}" class="space-y-2">
+    ${variantRowHTML(typeIndex)}
+  </div>
+  <button type="button" onclick="addVariant(${typeIndex})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm mt-2 hover:bg-blue-600">+ Add Variant</button>
+</div>
       `;
 
       section.appendChild(wrapper);
@@ -288,19 +291,96 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     }
 
     // HTML template for variant row
-    function variantRowHTML(index) {
-      return `
-        <div class="variant-row grid grid-cols-2 md:grid-cols-6 gap-2 items-center bg-blue-50 p-3 rounded border">
-          <input type="text" name="variant_size[${index}][]" placeholder="Size/Type" class="border p-2 rounded" />
-          <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 rounded"  oninput="copyToBasePrice(this)" />
-          <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 rounded" />
-          <input type="number" name="variant_percent[${index}][]" placeholder="%" class="border p-2 rounded" oninput="updatePriceFromPercent(this)" />
-          <input type="text" name="variant_namevariant[${index}][]" placeholder="Variant Name" class="border p-2 rounded" />
-          <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount" class="border p-2 rounded" />
-          <button type="button" onclick="removeVariant(this)" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">Remove</button>
+function variantRowHTML(index) {
+  return `
+    <div class="variant-row bg-blue-50 p-4 rounded border mb-3">
+      <!-- Row 1: Basic Info -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+        <div>
+          <label class="text-xs font-medium text-gray-600">Size/Type</label>
+          <input type="text" name="variant_size[${index}][]" placeholder="Size/Type" class="border p-2 rounded w-full text-sm" />
         </div>
-      `;
-    }
+        <div>
+          <label class="text-xs font-medium text-gray-600">Variant Name</label>
+          <input type="text" name="variant_namevariant[${index}][]" placeholder="Variant Name" class="border p-2 rounded w-full text-sm" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Original Price</label>
+          <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 rounded w-full text-sm" oninput="copyToBasePrice(this)" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Base Price</label>
+          <input type="number" step="0.01" name="variant_price[${index}][]" placeholder="Base Price" class="border p-2 rounded w-full text-sm" />
+        </div>
+      </div>
+
+      <!-- Row 2: Pricing -->
+      <div class="grid grid-cols-2 md:grid-cols-2 gap-2 mb-2">
+        <div>
+          <label class="text-xs font-medium text-gray-600">Percentage (%)</label>
+          <input type="number" name="variant_percent[${index}][]" placeholder="%" class="border p-2 rounded w-full text-sm" oninput="updatePriceFromPercent(this)" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Discount</label>
+          <input type="number" step="0.01" name="variant_discount[${index}][]" placeholder="Discount" class="border p-2 rounded w-full text-sm" />
+        </div>
+      </div>
+
+      <!-- Row 3: Dimensions -->
+      <div class="bg-white p-3 rounded mb-2">
+        <label class="text-xs font-semibold text-gray-700 block mb-2">📏 Dimensions</label>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+          <div>
+            <label class="text-xs font-medium text-gray-600">Width</label>
+            <input type="number" step="0.01" name="variant_width[${index}][]" placeholder="Width" class="border p-2 rounded w-full text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-600">Height</label>
+            <input type="number" step="0.01" name="variant_height[${index}][]" placeholder="Height" class="border p-2 rounded w-full text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-600">Length</label>
+            <input type="number" step="0.01" name="variant_length[${index}][]" placeholder="Length" class="border p-2 rounded w-full text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-600">Unit</label>
+            <select name="variant_dimension_unit[${index}][]" class="border p-2 rounded w-full text-sm">
+              <option value="mm">mm (Millimeters)</option>
+              <option value="cm" selected>cm (Centimeters)</option>
+              <option value="inches">inches</option>
+              <option value="m">m (Meters)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Weight -->
+      <div class="bg-white p-3 rounded mb-2">
+        <label class="text-xs font-semibold text-gray-700 block mb-2">⚖️ Weight</label>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-medium text-gray-600">Weight</label>
+            <input type="number" step="0.01" name="variant_weight[${index}][]" placeholder="Weight" class="border p-2 rounded w-full text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-600">Unit</label>
+            <select name="variant_weight_unit[${index}][]" class="border p-2 rounded w-full text-sm">
+              <option value="g">g (Grams)</option>
+              <option value="kg" selected>kg (Kilograms)</option>
+              <option value="lbs">lbs (Pounds)</option>
+              <option value="oz">oz (Ounces)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remove Button -->
+      <div class="flex justify-end">
+        <button type="button" onclick="removeVariant(this)" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Remove Variant</button>
+      </div>
+    </div>
+  `;
+}
 
     // Function to add color
     function addColor(index) {

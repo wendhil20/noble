@@ -1173,7 +1173,7 @@ handleQueryError($conn, "New Status Query");
         <?php if (count($newProducts) > 0): ?>
             <!-- Sidebar Toggle Button -->
             <div class="fixed top-1/2 left-0 -translate-y-1/2 z-40 inline-block opacity-100 pointer-events-auto visible transition-opacity duration-300" id="notifWrapper">
-                <button onclick="toggleSidebar()" class="w-32 h-15 rounded-r-full bg-black text-white border-none flex justify-center items-center text-center shadow-lg cursor-pointer hover:bg-gray-800 transition-colors duration-200">
+                <button onclick="toggleSidebar()" class="w-32 h-15 p-2 rounded-r-full bg-black text-white border-none flex justify-center items-center text-center shadow-lg cursor-pointer hover:bg-gray-800 transition-colors duration-200">
                     New Products!
                 </button>
                 <span class="absolute -top-2 right-1 bg-red-600 text-white rounded-full px-2 py-1 text-xs leading-none min-w-[20px] text-center z-10">

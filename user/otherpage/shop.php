@@ -459,53 +459,51 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
     <?php include '../navbar/top.php'; ?>
 
 <section class="bg-white relative mb-12">
-        <div class="w-full px-4 sm:px-6 lg:px-8 py-12 lg:py-13">
-            <div class="text-center">
-                <!-- Two Container Buttons with Background Images -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    <!-- Explore Products Container -->
-                    <a href="allproduct" class="group relative overflow-hidden h-96 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-                        <!-- Background Image with Overlay -->
-                        <div class="absolute inset-0 bg-contain bg-center" style="background-image: url('../img/saleandexplore/a.png');">
-                            <div class="absolute inset-0 bg-black/50 group-hover:bg-black/60 transition-all duration-300"></div>
-                        </div>
-
-                        <!-- Content -->
-                        <div class="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                            <h3 class="text-3xl lg:text-4xl uppercase mb-3">Explore Products</h3>
-                            <p class="text-white/90 text-base mb-4">Browse our complete collection</p>
-                            <span class="inline-flex items-center gap-2 text-sm ">
-                                View Collection
-                                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                </svg>
-                            </span>
-                        </div>
-                    </a>
-
-                    <!-- On Sale Products Container -->
-                    <a href="allproductsub" class="group relative overflow-hidden h-96 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-                        <!-- Background Image with Overlay -->
-                        <div class="absolute inset-0 bg-contain bg-center" style="background-image: url('../img/saleandexplore/b.png');">
-                            <div class="absolute inset-0 bg-black/50 group-hover:bg-black/60 transition-all duration-300"></div>
-                        </div>
-
-                        <!-- Content -->
-                        <div class="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                            <h3 class="text-3xl lg:text-4xl uppercase  mb-3">On Sale Products</h3>
-                            <span class="inline-flex items-center gap-2 text-sm ">
-                                Shop Deals
-                                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                </svg>
-                            </span>
-                        </div>
-                    </a>
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
+        <!-- Two Container Buttons with Background Images -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Explore Products Container -->
+            <a href="allproduct" class="group relative overflow-hidden h-96 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                <!-- Background Image with Overlay -->
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
                 </div>
-            </div>
-        </div>
-    </section>
 
+                <!-- Content -->
+                <div class="relative h-full flex flex-col items-center justify-center p-8 text-white">
+                    <h3 class="text-3xl lg:text-4xl uppercase mb-3 tracking-wide">Explore Products</h3>
+                    <p class="text-white/90 text-base mb-6">Browse our complete collection</p>
+                    <span class="inline-flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                        View Collection
+                        <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                    </span>
+                </div>
+            </a>
+
+            <!-- On Sale Products Container -->
+            <a href="allproductsub" class="group relative overflow-hidden h-96 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                <!-- Background Image with Overlay -->
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
+                </div>
+
+                <!-- Content -->
+                <div class="relative h-full flex flex-col items-center justify-center p-8 text-white">
+                    <h3 class="text-3xl lg:text-4xl font-bold uppercase mb-3 tracking-wide">On Sale Products</h3>
+                    <p class="text-white/90 text-base mb-6">Limited time offers</p>
+                    <span class="inline-flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                        Shop Deals
+                        <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                    </span>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
 
     <!-- Mobile Filter Overlay -->
     <div id="mobileFilterOverlay" class="mobile-filter-overlay"></div>

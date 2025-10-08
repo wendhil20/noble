@@ -125,12 +125,11 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
     <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title>Shop Products - Noble Home</title>
     <meta name="description" content="Explore our premium collection of furniture, materials, and home décor items.">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
     <style>
         .line-clamp-2 {
             display: -webkit-box;
@@ -457,25 +456,24 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
 
 <body class="font-roboto">
     <?php include '../navbar/top.php'; ?>
-
 <section class="bg-white relative mb-12">
     <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
         <!-- Two Container Buttons with Background Images -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Explore Products Container -->
-            <a href="allproduct" class="group relative overflow-hidden h-96 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <a href="allproduct" class="group relative overflow-hidden h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
                 </div>
 
                 <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                    <h3 class="text-3xl lg:text-4xl uppercase mb-3 tracking-wide">Explore Products</h3>
-                    <p class="text-white/90 text-base mb-6">Browse our complete collection</p>
-                    <span class="inline-flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                <div class="relative h-full flex flex-col items-center justify-center p-6 text-white">
+                    <h3 class="text-2xl lg:text-3xl uppercase mb-2 tracking-wide">Explore Products</h3>
+                    <p class="text-white/90 text-sm mb-4">Browse our complete collection</p>
+                    <span class="inline-flex items-center gap-2 text-xs bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
                         View Collection
-                        <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </span>
@@ -483,19 +481,19 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
             </a>
 
             <!-- On Sale Products Container -->
-            <a href="allproductsub" class="group relative overflow-hidden h-96 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <a href="allproductsub" class="group relative overflow-hidden h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
                 </div>
 
                 <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                    <h3 class="text-3xl lg:text-4xl font-bold uppercase mb-3 tracking-wide">On Sale Products</h3>
-                    <p class="text-white/90 text-base mb-6">Limited time offers</p>
-                    <span class="inline-flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                <div class="relative h-full flex flex-col items-center justify-center p-6 text-white">
+                    <h3 class="text-2xl lg:text-3xl uppercase mb-2 tracking-wide">On Sale Products</h3>
+                    <p class="text-white/90 text-sm mb-4">Limited time offers</p>
+                    <span class="inline-flex items-center gap-2 text-xs bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
                         Shop Deals
-                        <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </span>
@@ -900,6 +898,26 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
 
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script>
+           // Initialize Lenis
+        const lenis = new Lenis({
+            duration: 3,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            smooth: true
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+        //  Universal Swiper initializer
+        function initSwiper(selector, options) {
+            if (document.querySelector(selector)) {
+                return new Swiper(selector, options);
+            }
+        }
+
         AOS.init({
             duration: 800,
             once: true,

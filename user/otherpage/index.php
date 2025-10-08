@@ -611,183 +611,106 @@ handleQueryError($conn, "New Status Query");
 
     </section>
 
-    <!-- POPUP MODAL -->
-    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-        <div class="relative max-w-4xl w-full mx-4">
-            <!-- Close Button -->
-            <button onclick="hidePromoModal()"
-                class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
+  <!-- POPUP MODAL -->
+<div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div class="relative max-w-4xl w-full mx-4">
+        <!-- Close Button -->
+        <button onclick="hidePromoModal()"
+            class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
 
-            <!-- Carousel Container -->
-            <div class="relative overflow-hidden">
-                <div id="slideContainer" class="flex transition-transform duration-700 ease-in-out">
-                    <!-- Slide 1 -->
-                    <a href="allproduct.php?discount=20" class="flex-shrink-0 w-full relative group flex items-center justify-center">
-                        <img src="../img/sale/c.png" alt="20% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-                            <span class="text-white text-4xl font-extrabold tracking-wide">Shop 20% OFF</span>
-                        </div>
-                    </a>
-
-                    <!-- Slide 2 -->
-                    <a href="allproduct.php?discount=30" class="flex-shrink-0 w-full relative group flex items-center justify-center">
-                        <img src="../img/sale/c.png" alt="30% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-                            <span class="text-white text-4xl font-extrabold tracking-wide">Shop 30% OFF</span>
-                        </div>
-                    </a>
-
-                    <!-- Slide 3 -->
-                    <a href="allproduct.php?discount=50" class="flex-shrink-0 w-full relative group flex items-center justify-center">
-                        <img src="../img/sale/c.png" alt="50% OFF Sale" class="max-w-full max-h-[80vh] object-contain">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-                            <span class="text-white text-4xl font-extrabold tracking-wide">Shop 50% OFF</span>
-                        </div>
-                    </a>
+        <!-- Single Image Display -->
+        <div class="relative overflow-hidden">
+            <a href="allproduct.php?discount=20" class="relative group flex items-center justify-center">
+                <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                    <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
                 </div>
-
-                <!-- Left Arrow -->
-                <button onclick="moveToPreviousSlide()"
-                    class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 w-12 h-12 rounded-full text-2xl flex items-center justify-center transition-all duration-300 shadow-lg">
-                    ‹
-                </button>
-
-                <!-- Right Arrow -->
-                <button onclick="moveToNextSlide()"
-                    class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 w-12 h-12 rounded-full text-2xl flex items-center justify-center transition-all duration-300 shadow-lg">
-                    ›
-                </button>
-            </div>
-
-            <!-- Slide Indicators -->
-            <div class="flex justify-center mt-6 gap-2">
-                <button onclick="jumpToSpecificSlide(0)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
-                <button onclick="jumpToSpecificSlide(1)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
-                <button onclick="jumpToSpecificSlide(2)" class="slide-indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors duration-300"></button>
-            </div>
+            </a>
         </div>
     </div>
+</div>
 
-    <script>
-        let activeSlidePosition = 0;
-        const maxSlideCount = document.querySelectorAll("#slideContainer a").length;
-        const carouselWrapper = document.getElementById("slideContainer");
-        const dotIndicators = document.querySelectorAll(".slide-indicator");
+<script>
+    const POPUP_DISPLAY_DURATION = 10000; // 10 seconds
+    const POPUP_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    let autoCloseTimer = null;
 
-        function moveToSlidePosition(pos) {
-            if (pos >= maxSlideCount) activeSlidePosition = 0;
-            else if (pos < 0) activeSlidePosition = maxSlideCount - 1;
-            else activeSlidePosition = pos;
-
-            carouselWrapper.style.transform = `translateX(-${activeSlidePosition * 100}%)`;
-            refreshIndicatorDots();
+    function displayPromoModal() {
+        document.getElementById('promoPopup').classList.remove('hidden');
+        const timestamp = Date.now();
+        
+        // Store timestamp in localStorage (persists even after browser close)
+        try {
+            localStorage.setItem('promoModalLastShown', timestamp.toString());
+        } catch (e) {
+            console.error('Failed to save timestamp:', e);
         }
 
-        function refreshIndicatorDots() {
-            dotIndicators.forEach((dot, idx) => {
-                if (idx === activeSlidePosition) {
-                    dot.classList.remove('bg-white/50');
-                    dot.classList.add('bg-white');
-                } else {
-                    dot.classList.remove('bg-white');
-                    dot.classList.add('bg-white/50');
-                }
-            });
+        // Auto-close after 10 seconds
+        autoCloseTimer = setTimeout(() => {
+            hidePromoModal();
+        }, POPUP_DISPLAY_DURATION);
+    }
+
+    function hidePromoModal() {
+        document.getElementById('promoPopup').classList.add('hidden');
+        if (autoCloseTimer) {
+            clearTimeout(autoCloseTimer);
+            autoCloseTimer = null;
         }
+    }
 
-        function moveToNextSlide() {
-            moveToSlidePosition(activeSlidePosition + 1);
+    function getLastShownTime() {
+        try {
+            const stored = localStorage.getItem('promoModalLastShown');
+            return stored ? parseInt(stored) : null;
+        } catch (e) {
+            console.error('Failed to retrieve timestamp:', e);
+            return null;
         }
+    }
 
-        function moveToPreviousSlide() {
-            moveToSlidePosition(activeSlidePosition - 1);
-        }
+    function setupModalSchedule() {
+        const currentTimestamp = Date.now();
+        const lastShownTime = getLastShownTime();
 
-        function jumpToSpecificSlide(pos) {
-            moveToSlidePosition(pos);
-        }
+        console.log('Current time:', new Date(currentTimestamp).toLocaleString());
 
-        // Auto-advance slides every 5 seconds
-        let carouselTimer = setInterval(() => {
-            moveToNextSlide();
-        }, 5000);
+        if (!lastShownTime) {
+            // First visit - show popup immediately
+            console.log('First visit - showing popup now');
+            displayPromoModal();
+        } else {
+            const elapsedMilliseconds = currentTimestamp - lastShownTime;
+            const elapsedMinutes = Math.floor(elapsedMilliseconds / 60000);
+            const elapsedHours = Math.floor(elapsedMinutes / 60);
 
-        // Pause auto-advance on hover
-        document.getElementById('promoPopup').addEventListener('mouseenter', () => {
-            clearInterval(carouselTimer);
-        });
+            console.log(`Last shown: ${new Date(lastShownTime).toLocaleString()}`);
+            console.log(`Time elapsed: ${elapsedHours} hours and ${elapsedMinutes % 60} minutes`);
 
-        // Resume auto-advance when mouse leaves
-        document.getElementById('promoPopup').addEventListener('mouseleave', () => {
-            carouselTimer = setInterval(() => {
-                moveToNextSlide();
-            }, 5000);
-        });
-
-        // Popup management functions
-        function displayPromoModal() {
-            document.getElementById('promoPopup').classList.remove('hidden');
-            const timestamp = Date.now();
-            // Store timestamp in session that persists across page reloads
-            try {
-                sessionStorage.setItem('promoModalLastShown', timestamp.toString());
-            } catch (e) {
-                // Fallback to window object if sessionStorage fails
-                window.modalLastShown = timestamp;
-            }
-        }
-
-        function hidePromoModal() {
-            document.getElementById('promoPopup').classList.add('hidden');
-            clearInterval(carouselTimer);
-        }
-
-        function getLastShownTime() {
-            try {
-                const stored = sessionStorage.getItem('promoModalLastShown');
-                return stored ? parseInt(stored) : null;
-            } catch (e) {
-                // Fallback to window object
-                return window.modalLastShown || null;
-            }
-        }
-
-        function setupModalSchedule() {
-            const currentTimestamp = Date.now();
-            const lastShownTime = getLastShownTime();
-
-            console.log('Current time:', new Date(currentTimestamp).toLocaleTimeString());
-
-            if (!lastShownTime) {
-                console.log('First visit - popup will show in 5 seconds');
-                setTimeout(displayPromoModal, 5000);
+            if (elapsedMilliseconds >= POPUP_INTERVAL) {
+                // 2+ hours passed - show popup now
+                console.log('2+ hours passed - showing popup now');
+                displayPromoModal();
             } else {
-                const elapsedSeconds = Math.floor((currentTimestamp - lastShownTime) / 1000);
-                const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+                // Calculate remaining time
+                const remainingMilliseconds = POPUP_INTERVAL - elapsedMilliseconds;
+                const remainingMinutes = Math.floor(remainingMilliseconds / 60000);
+                const remainingHours = Math.floor(remainingMinutes / 60);
+                
+                console.log(`Popup will show in ${remainingHours} hours and ${remainingMinutes % 60} minutes`);
 
-                console.log(`Last shown: ${new Date(lastShownTime).toLocaleTimeString()}`);
-                console.log(`Time elapsed: ${elapsedMinutes} minutes and ${elapsedSeconds % 60} seconds`);
-
-                if (elapsedSeconds >= 300) { // 5 minutes = 300 seconds
-                    console.log('5+ minutes passed - showing popup now');
+                // Schedule popup for later
+                setTimeout(() => {
                     displayPromoModal();
-                } else {
-                    const remainingSeconds = 300 - elapsedSeconds;
-                    const remainingMinutes = Math.floor(remainingSeconds / 60);
-                    console.log(`Popup will show in ${remainingMinutes} minutes and ${remainingSeconds % 60} seconds`);
-
-                    setTimeout(displayPromoModal, remainingSeconds * 1000);
-                }
+                }, remainingMilliseconds);
             }
         }
+    }
 
-        // Initialize popup logic
-        setupModalSchedule();
-
-        // Initialize indicators
-        refreshIndicatorDots();
-    </script>
-
+    // Initialize popup logic when page loads
+    setupModalSchedule();
+</script>
 
 
     <section class="py-8 bg-white overflow-hidden">
@@ -1505,7 +1428,7 @@ handleQueryError($conn, "New Status Query");
                         setTimeout(() => clearInterval(checkMobileMenu), 5000);
                     });
 
-                    // Auto-refresh (keep existing)
+                     // Auto-refresh (keep existing)
                     setInterval(function() {
                         fetch(window.location.pathname + '?action=get_new_products_count')
                             .then(response => response.json())

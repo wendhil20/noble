@@ -1126,12 +1126,12 @@ handleQueryError($conn, "New Status Query");
             </div>
         </div>
     </section>
-    
-<section>
-    <?php
 
-    // Separate query to get only new products for the sidebar panel
-    $newProductsQuery = "
+    <section>
+        <?php
+
+        // Separate query to get only new products for the sidebar panel
+        $newProductsQuery = "
     SELECT 
         p.id,
         p.product_name AS name,
@@ -1156,403 +1156,461 @@ handleQueryError($conn, "New Status Query");
     LIMIT 50
 ";
 
-    $newProductsResult = $conn->query($newProductsQuery);
-    $newProducts = [];
-    if ($newProductsResult && $newProductsResult->num_rows > 0) {
-        while ($row = $newProductsResult->fetch_assoc()) {
-            $newProducts[] = $row;
+        $newProductsResult = $conn->query($newProductsQuery);
+        $newProducts = [];
+        if ($newProductsResult && $newProductsResult->num_rows > 0) {
+            while ($row = $newProductsResult->fetch_assoc()) {
+                $newProducts[] = $row;
+            }
         }
-    }
 
-    if ($results->num_rows === 0) {
-        echo '<div class="col-span-full text-center py-8 text-gray-500">No products found.</div>';
-    } else {
-    ?>
+        if ($results->num_rows === 0) {
+            echo '<div class="col-span-full text-center py-8 text-gray-500">No products found.</div>';
+        } else {
+        ?>
 
-        <!-- Only show button and sidebar if there are new products -->
-        <?php if (count($newProducts) > 0): ?>
-            <!-- Sidebar Toggle Button -->
-            <div class="fixed top-1/2 left-0 -translate-y-1/2 z-40 inline-block opacity-100 pointer-events-auto visible transition-opacity duration-300" id="notifWrapper">
-                <button onclick="toggleSidebar()" class="w-32 h-15 p-2 rounded-r-full bg-black text-white border-none flex justify-center items-center text-center shadow-lg cursor-pointer hover:bg-gray-800 transition-colors duration-200">
-                    New Products!
-                </button>
-                <span class="absolute -top-2 right-1 bg-red-600 text-white rounded-full px-2 py-1 text-xs leading-none min-w-[20px] text-center z-10">
-                    <?php echo count($newProducts); ?>
-                </span>
-            </div>
-
-            <!-- Sidebar Overlay -->
-            <div id="sidebarOverlay"
-                class="fixed inset-0 bg-black bg-opacity-50 opacity-0 invisible transition-all duration-300 z-[39] pointer-events-none"
-                onclick="toggleSidebar()">
-            </div>
-
-            <!-- Gate-style Sidebar -->
-            <div id="newProductsSidebar"
-                class="fixed left-0 w-80 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out z-40 flex flex-col"
-                style="top: 80px; height: calc(100vh - 80px);">
-
-                <!-- Sidebar Header -->
-                <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
-                    <h2 class="text-lg">New Products</h2>
-                    <button onclick="toggleSidebar()"
-                        class="text-white hover:text-orange-400 text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-all leading-none">
-                        ×
+            <!-- Only show button and sidebar if there are new products -->
+            <?php if (count($newProducts) > 0): ?>
+                <!-- Sidebar Toggle Button - ADJUSTED POSITION -->
+                <div class="fixed top-1/2 left-0 z-[100] inline-block  transition-opacity duration-300" id="notifWrapper" style="display: inline-block !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;">
+                    <button onclick="toggleSidebar()" class="w-32 h-15 p-2 rounded-r-full bg-black text-white border-none flex justify-center items-center text-center shadow-lg cursor-pointer hover:bg-gray-800 transition-colors duration-200">
+                        New Products!
                     </button>
+                    <span class="absolute -top-2 right-1 bg-red-600 text-white rounded-full px-2 py-1 text-xs leading-none min-w-[20px] text-center z-10">
+                        <?php echo count($newProducts); ?>
+                    </span>
                 </div>
 
-                <!-- Sidebar Content - SCROLLABLE AREA -->
-                <div class="sidebar-scroll-area flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
-                    <!-- Scroll Up Button -->
-                    <button onclick="scrollSidebarUp()" 
-                        class="fixed right-4 w-7 h-7 bg-black text-white border-none rounded-full flex items-center justify-center cursor-pointer z-50 shadow-md hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all duration-200 text-xs"
-                        style="top: 100px;"
-                        title="Scroll Up">
-                        <i class="fa-solid fa-chevron-up"></i>
-                    </button>
-                    
-                    <!-- Scroll Down Button -->
-                    <button onclick="scrollSidebarDown()" 
-                        class="fixed right-4 w-7 h-7 bg-black text-white border-none rounded-full flex items-center justify-center cursor-pointer z-50 shadow-md hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all duration-200 text-xs"
-                        style="bottom: 100px;"
-                        title="Scroll Down">
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                    
-                    <div class="p-4 space-y-3">
-                        <?php foreach ($newProducts as $product): ?>
-                            <div class="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                                <div class="flex items-start space-x-3">
-                                    <?php if (!empty($product['main_image'])): ?>
-                                        <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
-                                            alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                            class="w-12 h-12 object-contain rounded"
-                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500 hidden">
-                                            No Image
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
-                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    <?php endif; ?>
+                <!-- Sidebar Overlay -->
+                <div id="sidebarOverlay"
+                    class="fixed inset-0 bg-black bg-opacity-50 opacity-0 invisible transition-all duration-300 z-[39] pointer-events-none"
+                    onclick="toggleSidebar()">
+                </div>
 
-                                    <div class="flex-1 min-w-0">
-                                        <h3 class="font-medium text-sm text-gray-900 truncate">
-                                            <?php echo htmlspecialchars($product['name']); ?>
-                                        </h3>
+                <!-- Gate-style Sidebar -->
+                <div id="newProductsSidebar"
+                    class="fixed left-0 top-0 w-80 max-w-[85vw] bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out z-[99999] flex flex-col h-screen">
 
-                                        <?php if (!empty($product['description'])): ?>
-                                            <p class="text-xs text-gray-600 truncate mt-1">
-                                                <?php echo htmlspecialchars(substr($product['description'], 0, 50)) . (strlen($product['description']) > 50 ? '...' : ''); ?>
-                                            </p>
+                    <!-- Sidebar Header -->
+                    <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
+                        <h2 class="text-lg">New Products</h2>
+                        <button onclick="toggleSidebar()"
+                            class="text-white hover:text-orange-400 text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-all leading-none">
+                            ×
+                        </button>
+                    </div>
+
+                    <!-- Sidebar Content - SCROLLABLE AREA -->
+                    <div class="sidebar-scroll-area flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+                        <!-- Scroll Up Button -->
+                        <button onclick="scrollSidebarUp()"
+                            class="scroll-up-btn fixed top-24 w-7 h-7 bg-black text-white border-none rounded-full flex items-center justify-center cursor-pointer z-50 shadow-md hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all duration-200 text-xs"
+                            style="right: 15px;"
+                            title="Scroll Up">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+
+                        <!-- Scroll Down Button -->
+                        <button onclick="scrollSidebarDown()"
+                            class="scroll-down-btn fixed bottom-24 w-7 h-7 bg-black text-white border-none rounded-full flex items-center justify-center cursor-pointer z-50 shadow-md hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all duration-200 text-xs"
+                            style="right: 15px;"
+                            title="Scroll Down">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+
+                        <div class="p-4 space-y-3">
+                            <?php foreach ($newProducts as $product): ?>
+                                <div class="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                                    <div class="flex items-start space-x-3">
+                                        <?php if (!empty($product['main_image'])): ?>
+                                            <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                                class="w-12 h-12 object-contain rounded"
+                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500 hidden">
+                                                No Image
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
                                         <?php endif; ?>
 
-                                        <div class="flex justify-between items-center mt-1">
-                                            <span class="text-xs text-gray-400">
-                                                <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
-                                            </span>
-                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="uppercase text-sm text-gray-900 truncate">
+                                                <?php echo htmlspecialchars($product['name']); ?>
+                                            </h3>
 
-                                        <!-- Action Button -->
-                                        <div class="mt-3 flex justify-start">
-                                            <form action="product_view" method="GET">
-                                                <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-                                                <button type="submit" class="w-[120px] h-[35px] flex items-center justify-start gap-2.5 bg-gradient-to-r from-black to-black rounded-full text-white font-semibold border-none relative cursor-pointer transition-all duration-200 text-xs bg-[length:200%] bg-[position:0%] hover:bg-[position:100%] hover:scale-105 active:scale-95">
-                                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] ml-0.5">
-                                                        <i class="fa-solid fa-bag-shopping"></i>
-                                                    </div>
-                                                    <div class="text-[11px] font-medium">View</div>
-                                                </button>
-                                            </form>
+                                            <?php if (!empty($product['description'])): ?>
+                                                <p class="text-xs text-gray-600 truncate mt-1">
+                                                    <?php echo htmlspecialchars(substr($product['description'], 0, 50)) . (strlen($product['description']) > 50 ? '...' : ''); ?>
+                                                </p>
+                                            <?php endif; ?>
+
+                                            <div class="flex justify-between items-center mt-1">
+                                                <span class="text-xs text-gray-400">
+                                                    <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                                                </span>
+                                            </div>
+
+                                            <!-- Action Button -->
+                                            <div class="mt-3 flex justify-center">
+                                                <form action="product_view" method="GET">
+                                                    <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                                                    <button type="submit" class="px-4 py-2 flex items-center justify-center gap-2 bg-black rounded-full text-white border-none cursor-pointer transition-all duration-200 text-xs hover:bg-gray-800 hover:scale-105 active:scale-95">
+                                                        <i class="fa-solid fa-bag-shopping text-[10px]"></i>
+                                                        <span>View</span>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <!-- Extra padding para di matakpan ng footer -->
+                        <div class="h-20"></div>
                     </div>
-                    <!-- Extra padding para di matakpan ng footer -->
-                    <div class="h-20"></div>
+
+                    <!-- Sidebar Footer -->
+                    <div class="p-4 bg-white border-t shrink-0">
+                        <button onclick="window.location.href='allproduct'"
+                            class="w-full px-3 py-2 bg-black text-white rounded hover:bg-blue-600 text-sm transition-colors">
+                            View All New Products
+                        </button>
+                    </div>
+
                 </div>
 
-                <!-- Sidebar Footer -->
-                <div class="p-4 bg-white border-t shrink-0">
-                    <button onclick="window.location.href='allproduct'"
-                        class="w-full px-3 py-2 bg-black text-white rounded hover:bg-blue-600 text-sm transition-colors">
-                        View All New Products
-                    </button>
-                </div>
+                <script>
+                    let savedScrollPosition = 0;
 
-            </div>
+                    // Scroll functions for sidebar
+                    function scrollSidebarUp() {
+                        const scrollArea = document.querySelector(".sidebar-scroll-area");
+                        if (scrollArea) {
+                            scrollArea.scrollBy({
+                                top: -200,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
 
-       <script>
-    let savedScrollPosition = 0;
+                    function scrollSidebarDown() {
+                        const scrollArea = document.querySelector(".sidebar-scroll-area");
+                        if (scrollArea) {
+                            scrollArea.scrollBy({
+                                top: 200,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
 
-    // Scroll functions for sidebar
-    function scrollSidebarUp() {
-        const scrollArea = document.querySelector(".sidebar-scroll-area");
-        if (scrollArea) {
-            scrollArea.scrollBy({ top: -200, behavior: 'smooth' });
-        }
-    }
+                    function toggleSidebar() {
+                        const sidebar = document.getElementById("newProductsSidebar");
+                        const overlay = document.getElementById("sidebarOverlay");
+                        const notifWrapper = document.getElementById("notifWrapper");
+                        const isOpen = !sidebar.classList.contains("-translate-x-full");
 
-    function scrollSidebarDown() {
-        const scrollArea = document.querySelector(".sidebar-scroll-area");
-        if (scrollArea) {
-            scrollArea.scrollBy({ top: 200, behavior: 'smooth' });
-        }
-    }
+                        if (isOpen) {
+                            // CLOSE SIDEBAR
+                            sidebar.classList.add("-translate-x-full");
+                            overlay.classList.add("opacity-0", "invisible");
+                            overlay.classList.remove("opacity-100", "visible", "pointer-events-auto");
 
-    function toggleSidebar() {
-        const sidebar = document.getElementById("newProductsSidebar");
-        const overlay = document.getElementById("sidebarOverlay");
-        const notifWrapper = document.getElementById("notifWrapper");
-        const isOpen = !sidebar.classList.contains("-translate-x-full");
+                            // UNLOCK SCROLL - Remove all locks first
+                            document.body.style.overflow = "";
+                            document.body.style.position = "";
+                            document.body.style.width = "";
+                            document.body.style.height = "";
+                            document.body.style.top = "";
+                            document.documentElement.style.overflow = "";
 
-        if (isOpen) {
-            // CLOSE SIDEBAR
-            sidebar.classList.add("-translate-x-full");
-            overlay.classList.add("opacity-0", "invisible");
-            overlay.classList.remove("opacity-100", "visible", "pointer-events-auto");
-            
-            // UNLOCK SCROLL - Remove all locks first
-            document.body.style.overflow = "";
-            document.body.style.position = "";
-            document.body.style.width = "";
-            document.body.style.height = "";
-            document.body.style.top = "";
-            document.documentElement.style.overflow = "";
-            
-            // Restore scroll position after a tiny delay
-            requestAnimationFrame(() => {
-                window.scrollTo(0, savedScrollPosition);
-                savedScrollPosition = 0;
-            });
+                            // Restore scroll position after a tiny delay
+                            requestAnimationFrame(() => {
+                                window.scrollTo(0, savedScrollPosition);
+                                savedScrollPosition = 0;
+                            });
 
-            if (notifWrapper) {
-                notifWrapper.style.display = "inline-block";
-            }
-        } else {
-            // OPEN SIDEBAR
-            // Get CURRENT scroll position right before locking
-            savedScrollPosition = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-            
-            sidebar.classList.remove("-translate-x-full");
-            overlay.classList.remove("opacity-0", "invisible");
-            overlay.classList.add("opacity-100", "visible", "pointer-events-auto");
-            
-            // LOCK SCROLL immediately after saving position
-            document.body.style.position = "fixed";
-            document.body.style.top = `-${savedScrollPosition}px`;
-            document.body.style.left = "0";
-            document.body.style.right = "0";
-            document.body.style.width = "100%";
-            document.body.style.overflow = "hidden";
+                            if (notifWrapper) {
+                                notifWrapper.style.display = "inline-block";
+                            }
+                        } else {
+                            // OPEN SIDEBAR
+                            // Get CURRENT scroll position right before locking
+                            savedScrollPosition = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
 
-            if (notifWrapper) {
-                notifWrapper.style.display = "none";
-            }
-        }
-    }
+                            sidebar.classList.remove("-translate-x-full");
+                            overlay.classList.remove("opacity-0", "invisible");
+                            overlay.classList.add("opacity-100", "visible", "pointer-events-auto");
 
-    // CRITICAL: Prevent ALL scroll events when sidebar is open
-    document.addEventListener('wheel', function(e) {
-        const sidebar = document.getElementById("newProductsSidebar");
-        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
-        
-        if (isOpen) {
-            const scrollArea = document.querySelector(".sidebar-scroll-area");
-            
-            // Allow scroll ONLY inside sidebar scroll area
-            if (scrollArea && scrollArea.contains(e.target)) {
-                // Check if at top/bottom to prevent bounce
-                const atTop = scrollArea.scrollTop === 0;
-                const atBottom = scrollArea.scrollHeight - scrollArea.scrollTop === scrollArea.clientHeight;
-                
-                if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
-                    e.preventDefault();
-                }
-            } else {
-                // Block all other scroll
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }
-    }, { passive: false, capture: true });
+                            // LOCK SCROLL immediately after saving position
+                            document.body.style.position = "fixed";
+                            document.body.style.top = `-${savedScrollPosition}px`;
+                            document.body.style.left = "0";
+                            document.body.style.right = "0";
+                            document.body.style.width = "100%";
+                            document.body.style.overflow = "hidden";
+                            document.documentElement.style.overflow = "hidden"; // Lock HTML element too
 
-    // Mobile touch scroll prevention
-    document.addEventListener('touchmove', function(e) {
-        const sidebar = document.getElementById("newProductsSidebar");
-        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
-        
-        if (isOpen) {
-            const scrollArea = document.querySelector(".sidebar-scroll-area");
-            
-            if (!scrollArea || !scrollArea.contains(e.target)) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }
-    }, { passive: false, capture: true });
+                            if (notifWrapper) {
+                                notifWrapper.style.display = "none";
+                            }
+                        }
+                    }
 
-    // Prevent keyboard scrolling (Space, Arrow keys, Page Up/Down)
-    document.addEventListener('keydown', function(e) {
-        const sidebar = document.getElementById("newProductsSidebar");
-        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
-        
-        if (isOpen) {
-            const scrollKeys = [32, 33, 34, 35, 36, 37, 38, 39, 40]; // Space, Page Up, Page Down, End, Home, Arrows
-            
-            if (scrollKeys.includes(e.keyCode)) {
-                const scrollArea = document.querySelector(".sidebar-scroll-area");
-                
-                // Only allow if focus is inside scroll area
-                if (!scrollArea || !scrollArea.contains(document.activeElement)) {
-                    e.preventDefault();
-                }
-            }
-            
-            // ESC to close
-            if (e.key === 'Escape') {
-                toggleSidebar();
-            }
-        }
-    });
+                    // CRITICAL: Prevent ALL scroll events when sidebar is open (including navbar area)
+                    document.addEventListener('wheel', function(e) {
+                        const sidebar = document.getElementById("newProductsSidebar");
+                        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
 
-    function viewAllNewProducts() {
-        toggleSidebar();
-        setTimeout(() => {
-            window.location.href = "?filter=new_products";
-        }, 300);
-    }
+                        if (isOpen) {
+                            const scrollArea = document.querySelector(".sidebar-scroll-area");
 
-    // Mobile menu integration
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkMobileMenu = setInterval(function() {
-            const mobileMenuOverlay = document.querySelector('.lg\\:hidden.fixed.inset-0');
+                            // Allow scroll ONLY inside sidebar scroll area
+                            if (scrollArea && scrollArea.contains(e.target)) {
+                                // Check if at top/bottom to prevent bounce
+                                const atTop = scrollArea.scrollTop === 0;
+                                const atBottom = scrollArea.scrollHeight - scrollArea.scrollTop === scrollArea.clientHeight;
 
-            if (mobileMenuOverlay) {
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'attributes') {
-                            const sidebar = document.getElementById("newProductsSidebar");
-                            const overlay = document.getElementById("sidebarOverlay");
-                            const notifWrapper = document.getElementById("notifWrapper");
-
-                            const isVisible = mobileMenuOverlay.style.display !== 'none' &&
-                                !mobileMenuOverlay.hasAttribute('hidden');
-
-                            if (isVisible || mobileMenuOverlay.offsetParent !== null) {
-                                // Close sidebar when mobile menu opens
-                                if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
-                                    toggleSidebar();
-                                }
-
-                                if (notifWrapper) {
-                                    notifWrapper.style.opacity = "0";
-                                    notifWrapper.style.pointerEvents = "none";
-                                    notifWrapper.style.visibility = "hidden";
+                                if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+                                    e.preventDefault();
                                 }
                             } else {
-                                if (notifWrapper) {
-                                    notifWrapper.style.opacity = "1";
-                                    notifWrapper.style.pointerEvents = "auto";
-                                    notifWrapper.style.visibility = "visible";
+                                // Block all other scroll INCLUDING navbar
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return false;
+                            }
+                        }
+                    }, {
+                        passive: false,
+                        capture: true
+                    });
+
+                    // EXTRA: Block scroll event on window level for navbar
+                    window.addEventListener('scroll', function(e) {
+                        const sidebar = document.getElementById("newProductsSidebar");
+                        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
+
+                        if (isOpen) {
+                            e.preventDefault();
+                            window.scrollTo(0, savedScrollPosition);
+                        }
+                    }, {
+                        passive: false,
+                        capture: true
+                    });
+
+                    // Mobile touch scroll prevention
+                    document.addEventListener('touchmove', function(e) {
+                        const sidebar = document.getElementById("newProductsSidebar");
+                        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
+
+                        if (isOpen) {
+                            const scrollArea = document.querySelector(".sidebar-scroll-area");
+
+                            if (!scrollArea || !scrollArea.contains(e.target)) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                        }
+                    }, {
+                        passive: false,
+                        capture: true
+                    });
+
+                    // Prevent keyboard scrolling (Space, Arrow keys, Page Up/Down)
+                    document.addEventListener('keydown', function(e) {
+                        const sidebar = document.getElementById("newProductsSidebar");
+                        const isOpen = sidebar && !sidebar.classList.contains("-translate-x-full");
+
+                        if (isOpen) {
+                            const scrollKeys = [32, 33, 34, 35, 36, 37, 38, 39, 40]; // Space, Page Up, Page Down, End, Home, Arrows
+
+                            if (scrollKeys.includes(e.keyCode)) {
+                                const scrollArea = document.querySelector(".sidebar-scroll-area");
+
+                                // Only allow if focus is inside scroll area
+                                if (!scrollArea || !scrollArea.contains(document.activeElement)) {
+                                    e.preventDefault();
                                 }
+                            }
+
+                            // ESC to close
+                            if (e.key === 'Escape') {
+                                toggleSidebar();
                             }
                         }
                     });
-                });
 
-                observer.observe(mobileMenuOverlay, {
-                    attributes: true,
-                    attributeFilter: ['style', 'class', 'x-show', 'hidden'],
-                    childList: false,
-                    subtree: false
-                });
+                    function viewAllNewProducts() {
+                        toggleSidebar();
+                        setTimeout(() => {
+                            window.location.href = "?filter=new_products";
+                        }, 300);
+                    }
 
-                clearInterval(checkMobileMenu);
-            }
-        }, 100);
+                    // Mobile menu integration
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const checkMobileMenu = setInterval(function() {
+                            const mobileMenuOverlay = document.querySelector('.lg\\:hidden.fixed.inset-0');
 
-        setTimeout(() => clearInterval(checkMobileMenu), 5000);
-    });
+                            if (mobileMenuOverlay) {
+                                const observer = new MutationObserver(function(mutations) {
+                                    mutations.forEach(function(mutation) {
+                                        if (mutation.type === 'attributes') {
+                                            const sidebar = document.getElementById("newProductsSidebar");
+                                            const overlay = document.getElementById("sidebarOverlay");
+                                            const notifWrapper = document.getElementById("notifWrapper");
 
-    // Auto-refresh (keep existing)
-    setInterval(function() {
-        fetch(window.location.pathname + '?action=get_new_products_count')
-            .then(response => response.json())
-            .then(data => {
-                const notifWrapper = document.getElementById('notifWrapper');
-                const badge = notifWrapper?.querySelector('span');
+                                            const isVisible = mobileMenuOverlay.style.display !== 'none' &&
+                                                !mobileMenuOverlay.hasAttribute('hidden');
 
-                if (data.count !== undefined) {
-                    if (data.count > 0) {
-                        if (notifWrapper) {
-                            notifWrapper.style.display = 'inline-block';
+                                            if (isVisible || mobileMenuOverlay.offsetParent !== null) {
+                                                // Close sidebar when mobile menu opens
+                                                if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
+                                                    toggleSidebar();
+                                                }
+
+                                                if (notifWrapper) {
+                                                    notifWrapper.style.opacity = "0";
+                                                    notifWrapper.style.pointerEvents = "none";
+                                                    notifWrapper.style.visibility = "hidden";
+                                                }
+                                            } else {
+                                                if (notifWrapper) {
+                                                    notifWrapper.style.opacity = "1";
+                                                    notifWrapper.style.pointerEvents = "auto";
+                                                    notifWrapper.style.visibility = "visible";
+                                                }
+                                            }
+                                        }
+                                    });
+                                });
+
+                                observer.observe(mobileMenuOverlay, {
+                                    attributes: true,
+                                    attributeFilter: ['style', 'class', 'x-show', 'hidden'],
+                                    childList: false,
+                                    subtree: false
+                                });
+
+                                clearInterval(checkMobileMenu);
+                            }
+                        }, 100);
+
+                        setTimeout(() => clearInterval(checkMobileMenu), 5000);
+                    });
+
+                    // Auto-refresh (keep existing)
+                    setInterval(function() {
+                        fetch(window.location.pathname + '?action=get_new_products_count')
+                            .then(response => response.json())
+                            .then(data => {
+                                const notifWrapper = document.getElementById('notifWrapper');
+                                const badge = notifWrapper?.querySelector('span');
+
+                                if (data.count !== undefined) {
+                                    if (data.count > 0) {
+                                        if (notifWrapper) {
+                                            notifWrapper.style.display = 'inline-block';
+                                        }
+                                        if (badge) {
+                                            badge.textContent = data.count;
+                                        }
+                                    } else {
+                                        if (notifWrapper) {
+                                            notifWrapper.style.display = 'none';
+                                        }
+                                    }
+                                }
+                            })
+                            .catch(error => console.log('Auto-refresh error:', error));
+                    }, 30000);
+                </script>
+
+                <style>
+                    /* Custom scrollbar for the sidebar */
+                    .sidebar-scroll-area::-webkit-scrollbar {
+                        width: 6px;
+                    }
+
+                    .sidebar-scroll-area::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                        border-radius: 3px;
+                    }
+
+                    .sidebar-scroll-area::-webkit-scrollbar-thumb {
+                        background: #c1c1c1;
+                        border-radius: 3px;
+                    }
+
+                    .sidebar-scroll-area::-webkit-scrollbar-thumb:hover {
+                        background: #a1a1a1;
+                    }
+
+                    /* Mobile responsive */
+                    @media (max-width: 1024px) {
+                        #newProductsSidebar {
+                            width: 90vw !important;
+                            max-width: 90vw !important;
                         }
-                        if (badge) {
-                            badge.textContent = data.count;
+
+                        #notifWrapper button {
+                            width: 80px !important;
+                            height: 45px !important;
+                            font-size: 11px !important;
                         }
-                    } else {
-                        if (notifWrapper) {
-                            notifWrapper.style.display = 'none';
+
+                        #notifWrapper span {
+                            top: -5px !important;
+                            right: 2px !important;
+                            padding: 2px 6px !important;
+                            font-size: 10px !important;
+                        }
+
+                        /* Scroll buttons mobile adjustment */
+                        .scroll-up-btn,
+                        .scroll-down-btn {
+                            width: 24px !important;
+                            height: 24px !important;
+                            font-size: 10px !important;
+                            right: 10px !important;
+                        }
+
+                        .scroll-up-btn {
+                            top: 5.5rem !important;
+                        }
+
+                        .scroll-down-btn {
+                            bottom: 5.5rem !important;
                         }
                     }
-                }
-            })
-            .catch(error => console.log('Auto-refresh error:', error));
-    }, 30000);
-</script>
 
-            <style>
-                /* Custom scrollbar for the sidebar */
-                .sidebar-scroll-area::-webkit-scrollbar {
-                    width: 6px;
-                }
+                    @media (max-width: 640px) {
+                        #newProductsSidebar {
+                            width: 95vw !important;
+                            max-width: 95vw !important;
+                        }
 
-                .sidebar-scroll-area::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                    border-radius: 3px;
-                }
-
-                .sidebar-scroll-area::-webkit-scrollbar-thumb {
-                    background: #c1c1c1;
-                    border-radius: 3px;
-                }
-
-                .sidebar-scroll-area::-webkit-scrollbar-thumb:hover {
-                    background: #a1a1a1;
-                }
-
-                /* Mobile responsive */
-                @media (max-width: 1024px) {
-                    #newProductsSidebar {
-                        width: 100%;
-                        max-width: 85vw;
+                        #notifWrapper button {
+                            width: 70px !important;
+                            height: 40px !important;
+                            font-size: 10px !important;
+                            padding: 0 8px !important;
+                        }
                     }
+                </style>
+            <?php endif; ?>
 
-                    #notifWrapper button {
-                        width: 90px;
-                        height: 50px;
-                        font-size: 14px;
-                    }
+        <?php
+        } // End of main if statement
+        ?>
+    </section>
 
-                    #notifWrapper span {
-                        top: -5px;
-                        right: 0px;
-                        padding: 3px 6px;
-                    }
-                }
-            </style>
-        <?php endif; ?>
-
-    <?php
-    } // End of main if statement
-    ?>
-</section>
     <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
         <!-- Header first -->
 
@@ -2408,207 +2466,207 @@ handleQueryError($conn, "New Status Query");
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
 
         </div>
-         
-    <?php 
-    // Check if there are any products
-    $row_count = mysqli_num_rows($material_results);
-    ?>
 
-    <?php if ($row_count > 0): ?>
-        <!-- Swiper Container -->
-        <div class="swiper mySwiper-products w-full">
-            <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                <?php while ($row = mysqli_fetch_assoc($material_results)) : ?>
-                    <?php
-                    $base = (float)$row['price'];
-                    $percent = (float)($row['percent'] ?? 0);
-                    $discount = (float)($row['discount'] ?? 0);
-                    $priceWithMarkup = $base + ($base * $percent / 100);
-                    $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                    ?>
-                    <div class="swiper-slide p-2">
-                        <div class="bg-white p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
-                            <!-- Triangle Badge -->
-                            <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+        <?php
+        // Check if there are any products
+        $row_count = mysqli_num_rows($material_results);
+        ?>
+
+        <?php if ($row_count > 0): ?>
+            <!-- Swiper Container -->
+            <div class="swiper mySwiper-products w-full">
+                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                    <?php while ($row = mysqli_fetch_assoc($material_results)) : ?>
+                        <?php
+                        $base = (float)$row['price'];
+                        $percent = (float)($row['percent'] ?? 0);
+                        $discount = (float)($row['discount'] ?? 0);
+                        $priceWithMarkup = $base + ($base * $percent / 100);
+                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                        ?>
+                        <div class="swiper-slide p-2">
+                            <div class="bg-white p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                                <!-- Triangle Badge -->
+                                <div class="absolute top-0 left-0 z-10">
+                                    <div class="w-12 h-12 relative">
+                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
-                                <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <div class="relative w-full max-w-xs">
-                                    <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
-                                        <?= htmlspecialchars($row['product_name']) ?>
-                                    </h3>
-                                    <!-- Fade overlay -->
-                                    <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                <!-- Product Image -->
+                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
+                                    <?php if (!empty($row['type_image'])): ?>
+                                        <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                            class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                    <?php endif; ?>
                                 </div>
-                                <!-- View Size & Color -->
-                                <button type="button"
-                                    onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                    class="text-sm text-black  hover:text-orange-500 transition mb-2 mt-2">
-                                    View Size & Color
-                                </button>
 
-                                <!-- Pricing -->
-                                <?php if ($discount > 0): ?>
-                                    <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <p class="text-base text-black font-bold">
-                                        ₱<?= number_format($finalPrice, 2) ?>
-                                        <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                <?php endif; ?>
+                                <!-- Product Info -->
+                                <div class="mt-auto">
+                                    <div class="relative w-full max-w-xs">
+                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                        <!-- Fade overlay -->
+                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                    </div>
+                                    <!-- View Size & Color -->
+                                    <button type="button"
+                                        onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
+                                        class="text-sm text-black  hover:text-orange-500 transition mb-2 mt-2">
+                                        View Size & Color
+                                    </button>
 
-                                <!-- Replace your current View Details Button section with this -->
-                                <div class="flex flex-col gap-2 mt-auto">
-                                    <!-- Animated View Details Button -->
-                                    <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
-                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                        <button type="submit" class="animated-view-btn">
-                                            <div class="btn-sign">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                            </div>
-                                            <div class="btn-text">View Details</div>
-                                        </button>
-                                    </form>
+                                    <!-- Pricing -->
+                                    <?php if ($discount > 0): ?>
+                                        <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                        <p class="text-base text-black font-bold">
+                                            ₱<?= number_format($finalPrice, 2) ?>
+                                            <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            Origin:
+                                            <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
+                                                <?= ucfirst($row['origin']) ?>
+                                            </span>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                    <?php endif; ?>
+
+                                    <!-- Replace your current View Details Button section with this -->
+                                    <div class="flex flex-col gap-2 mt-auto">
+                                        <!-- Animated View Details Button -->
+                                        <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
+                                            <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                            <button type="submit" class="animated-view-btn">
+                                                <div class="btn-sign">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                </div>
+                                                <div class="btn-text">View Details</div>
+                                            </button>
+                                        </form>
 
 
-                                    <!-- Pre-Order Button -->
-                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="return_url" value="index">
-                                        <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                            <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                            Add to Cart
-                                        </button>
-                                    </form>
+                                        <!-- Pre-Order Button -->
+                                        <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                            <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                            <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                            <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                            <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                            <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                            <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                            <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                            <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                            <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                            <input type="hidden" name="return_url" value="index">
+                                            <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                Add to Cart
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <style>
+                                        /* Animated View Details Button Styles */
+                                        .animated-view-btn {
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: flex-start;
+                                            width: 48px;
+                                            height: 45px;
+                                            border: none;
+                                            cursor: pointer;
+                                            position: relative;
+                                            overflow: hidden;
+                                            transition-duration: .3s;
+                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                        }
+
+                                        /* Icon */
+                                        .animated-view-btn .btn-sign {
+                                            width: 100%;
+                                            font-size: 1.2em;
+                                            color: white;
+                                            transition-duration: .3s;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        }
+
+                                        /* Text */
+                                        .animated-view-btn .btn-text {
+                                            position: absolute;
+                                            right: 0%;
+                                            width: 0%;
+                                            opacity: 0;
+                                            color: white;
+                                            font-size: 0.9em;
+                                            font-weight: 600;
+                                            transition-duration: .3s;
+                                            white-space: nowrap;
+                                        }
+
+                                        /* Hover effect */
+                                        .animated-view-btn:hover {
+                                            width: 180px;
+                                            transition-duration: .3s;
+                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                        }
+
+                                        .animated-view-btn:hover .btn-sign {
+                                            width: 35%;
+                                            transition-duration: .3s;
+                                            padding-left: 15px;
+                                        }
+
+                                        .animated-view-btn:hover .btn-text {
+                                            opacity: 1;
+                                            width: 65%;
+                                            transition-duration: .3s;
+                                            padding-right: 15px;
+                                        }
+
+                                        /* Click effect */
+                                        .animated-view-btn:active {
+                                            transform: translate(1px, 1px);
+                                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                                        }
+
+                                        /* Focus accessibility */
+                                        .animated-view-btn:focus {
+                                            outline: 2px solid #f97316;
+                                            outline-offset: 2px;
+                                        }
+                                    </style>
                                 </div>
-                                <style>
-                                    /* Animated View Details Button Styles */
-                                    .animated-view-btn {
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: flex-start;
-                                        width: 48px;
-                                        height: 45px;
-                                        border: none;
-                                        cursor: pointer;
-                                        position: relative;
-                                        overflow: hidden;
-                                        transition-duration: .3s;
-                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                    }
-
-                                    /* Icon */
-                                    .animated-view-btn .btn-sign {
-                                        width: 100%;
-                                        font-size: 1.2em;
-                                        color: white;
-                                        transition-duration: .3s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                    }
-
-                                    /* Text */
-                                    .animated-view-btn .btn-text {
-                                        position: absolute;
-                                        right: 0%;
-                                        width: 0%;
-                                        opacity: 0;
-                                        color: white;
-                                        font-size: 0.9em;
-                                        font-weight: 600;
-                                        transition-duration: .3s;
-                                        white-space: nowrap;
-                                    }
-
-                                    /* Hover effect */
-                                    .animated-view-btn:hover {
-                                        width: 180px;
-                                        transition-duration: .3s;
-                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                    }
-
-                                    .animated-view-btn:hover .btn-sign {
-                                        width: 35%;
-                                        transition-duration: .3s;
-                                        padding-left: 15px;
-                                    }
-
-                                    .animated-view-btn:hover .btn-text {
-                                        opacity: 1;
-                                        width: 65%;
-                                        transition-duration: .3s;
-                                        padding-right: 15px;
-                                    }
-
-                                    /* Click effect */
-                                    .animated-view-btn:active {
-                                        transform: translate(1px, 1px);
-                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                                    }
-
-                                    /* Focus accessibility */
-                                    .animated-view-btn:focus {
-                                        outline: 2px solid #f97316;
-                                        outline-offset: 2px;
-                                    }
-                                </style>
                             </div>
                         </div>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-        </div>
-            <?php else: ?>
-        <!-- No Products Available Message -->
-        <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-            <div class="text-center max-w-md">
-                <!-- Icon -->
-                <div class="mb-6">
-                    <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
+                    <?php endwhile; ?>
                 </div>
-                
-                <!-- Message -->
-                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                    No Products Available
-                </h3>
-                <p class="text-gray-500 text-sm sm:text-base mb-6">
-                    There are currently no discounted products available in this section. Please check back later for amazing deals!
-                </p>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php else: ?>
+            <!-- No Products Available Message -->
+            <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+                <div class="text-center max-w-md">
+                    <!-- Icon -->
+                    <div class="mb-6">
+                        <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Message -->
+                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                        No Products Available
+                    </h3>
+                    <p class="text-gray-500 text-sm sm:text-base mb-6">
+                        There are currently no discounted products available in this section. Please check back later for amazing deals!
+                    </p>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- Shared Modal -->
         <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
@@ -2782,204 +2840,204 @@ handleQueryError($conn, "New Status Query");
                 Discover amazing deals on premium products with exclusive discounts
             </p>
         </div>
- 
-    <?php 
-    // Check if there are any products
-    $row_count = mysqli_num_rows($material_resultsone);
-    ?>
 
-    <?php if ($row_count > 0): ?>
-        <!-- Swiper Container -->
-        <div class="swiper mySwiper-products w-full">
-            <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                <?php while ($row = mysqli_fetch_assoc($material_resultsone)) : ?>
-                    <?php
-                    $base = (float)$row['price'];
-                    $percent = (float)($row['percent'] ?? 0);
-                    $discount = (float)($row['discount'] ?? 0);
-                    $priceWithMarkup = $base + ($base * $percent / 100);
-                    $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                    ?>
-                    <div class="swiper-slide p-2">
-                        <div class=" p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
-                            <!-- Triangle Badge -->
-                            <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+        <?php
+        // Check if there are any products
+        $row_count = mysqli_num_rows($material_resultsone);
+        ?>
+
+        <?php if ($row_count > 0): ?>
+            <!-- Swiper Container -->
+            <div class="swiper mySwiper-products w-full">
+                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                    <?php while ($row = mysqli_fetch_assoc($material_resultsone)) : ?>
+                        <?php
+                        $base = (float)$row['price'];
+                        $percent = (float)($row['percent'] ?? 0);
+                        $discount = (float)($row['discount'] ?? 0);
+                        $priceWithMarkup = $base + ($base * $percent / 100);
+                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                        ?>
+                        <div class="swiper-slide p-2">
+                            <div class=" p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                                <!-- Triangle Badge -->
+                                <div class="absolute top-0 left-0 z-10">
+                                    <div class="w-12 h-12 relative">
+                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
-                                <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['namevariant']) ?>
-                                </h3>
-
-                                <!-- View Size & Color -->
-                                <button type="button"
-                                    onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                    class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
-                                    View Size & Color
-                                </button>
-
-                                <!-- Pricing -->
-                                <?php if ($discount > 0): ?>
-                                    <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <p class="text-base text-green-600 font-bold">
-                                        ₱<?= number_format($finalPrice, 2) ?>
-                                        <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                <?php endif; ?>
-
-                                <!-- Buttons -->
-                                <div class="flex flex-col gap-2 mt-auto">
-                                    <!-- Animated View Details Button -->
-                                    <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
-                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                        <button type="submit" class="animated-view-btn">
-                                            <div class="btn-sign">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                            </div>
-                                            <div class="btn-text">View Details</div>
-                                        </button>
-                                    </form>
-
-
-                                    <!-- Pre-Order Button -->
-                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="return_url" value="index">
-                                        <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                            <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                            Add to Cart
-                                        </button>
-                                    </form>
+                                <!-- Product Image -->
+                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
+                                    <?php if (!empty($row['type_image'])): ?>
+                                        <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                            class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                    <?php endif; ?>
                                 </div>
-                                <style>
-                                    /* Animated View Details Button Styles */
-                                    .animated-view-btn {
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: flex-start;
-                                        width: 48px;
-                                        height: 45px;
-                                        border: none;
-                                        cursor: pointer;
-                                        position: relative;
-                                        overflow: hidden;
-                                        transition-duration: .3s;
-                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                    }
 
-                                    /* Icon */
-                                    .animated-view-btn .btn-sign {
-                                        width: 100%;
-                                        font-size: 1.2em;
-                                        color: white;
-                                        transition-duration: .3s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                    }
+                                <!-- Product Info -->
+                                <div class="mt-auto">
+                                    <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
+                                        <?= htmlspecialchars($row['namevariant']) ?>
+                                    </h3>
 
-                                    /* Text */
-                                    .animated-view-btn .btn-text {
-                                        position: absolute;
-                                        right: 0%;
-                                        width: 0%;
-                                        opacity: 0;
-                                        color: white;
-                                        font-size: 0.9em;
-                                        font-weight: 600;
-                                        transition-duration: .3s;
-                                        white-space: nowrap;
-                                    }
+                                    <!-- View Size & Color -->
+                                    <button type="button"
+                                        onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
+                                        class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
+                                        View Size & Color
+                                    </button>
 
-                                    /* Hover effect */
-                                    .animated-view-btn:hover {
-                                        width: 180px;
-                                        transition-duration: .3s;
-                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                    }
+                                    <!-- Pricing -->
+                                    <?php if ($discount > 0): ?>
+                                        <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                        <p class="text-base text-green-600 font-bold">
+                                            ₱<?= number_format($finalPrice, 2) ?>
+                                            <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            Origin:
+                                            <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
+                                                <?= ucfirst($row['origin']) ?>
+                                            </span>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                    <?php endif; ?>
 
-                                    .animated-view-btn:hover .btn-sign {
-                                        width: 35%;
-                                        transition-duration: .3s;
-                                        padding-left: 15px;
-                                    }
+                                    <!-- Buttons -->
+                                    <div class="flex flex-col gap-2 mt-auto">
+                                        <!-- Animated View Details Button -->
+                                        <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
+                                            <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                            <button type="submit" class="animated-view-btn">
+                                                <div class="btn-sign">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                </div>
+                                                <div class="btn-text">View Details</div>
+                                            </button>
+                                        </form>
 
-                                    .animated-view-btn:hover .btn-text {
-                                        opacity: 1;
-                                        width: 65%;
-                                        transition-duration: .3s;
-                                        padding-right: 15px;
-                                    }
 
-                                    /* Click effect */
-                                    .animated-view-btn:active {
-                                        transform: translate(1px, 1px);
-                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                                    }
+                                        <!-- Pre-Order Button -->
+                                        <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                            <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                            <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                            <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                            <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                            <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                            <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                            <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                            <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                            <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                            <input type="hidden" name="return_url" value="index">
+                                            <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                Add to Cart
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <style>
+                                        /* Animated View Details Button Styles */
+                                        .animated-view-btn {
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: flex-start;
+                                            width: 48px;
+                                            height: 45px;
+                                            border: none;
+                                            cursor: pointer;
+                                            position: relative;
+                                            overflow: hidden;
+                                            transition-duration: .3s;
+                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                        }
 
-                                    /* Focus accessibility */
-                                    .animated-view-btn:focus {
-                                        outline: 2px solid #f97316;
-                                        outline-offset: 2px;
-                                    }
-                                </style>
+                                        /* Icon */
+                                        .animated-view-btn .btn-sign {
+                                            width: 100%;
+                                            font-size: 1.2em;
+                                            color: white;
+                                            transition-duration: .3s;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        }
+
+                                        /* Text */
+                                        .animated-view-btn .btn-text {
+                                            position: absolute;
+                                            right: 0%;
+                                            width: 0%;
+                                            opacity: 0;
+                                            color: white;
+                                            font-size: 0.9em;
+                                            font-weight: 600;
+                                            transition-duration: .3s;
+                                            white-space: nowrap;
+                                        }
+
+                                        /* Hover effect */
+                                        .animated-view-btn:hover {
+                                            width: 180px;
+                                            transition-duration: .3s;
+                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                        }
+
+                                        .animated-view-btn:hover .btn-sign {
+                                            width: 35%;
+                                            transition-duration: .3s;
+                                            padding-left: 15px;
+                                        }
+
+                                        .animated-view-btn:hover .btn-text {
+                                            opacity: 1;
+                                            width: 65%;
+                                            transition-duration: .3s;
+                                            padding-right: 15px;
+                                        }
+
+                                        /* Click effect */
+                                        .animated-view-btn:active {
+                                            transform: translate(1px, 1px);
+                                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                                        }
+
+                                        /* Focus accessibility */
+                                        .animated-view-btn:focus {
+                                            outline: 2px solid #f97316;
+                                            outline-offset: 2px;
+                                        }
+                                    </style>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-        </div>
-    <?php else: ?>
-        <!-- No Products Available Message -->
-        <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-            <div class="text-center max-w-md">
-                <!-- Icon -->
-                <div class="mb-6">
-                    <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
+                    <?php endwhile; ?>
                 </div>
-                
-                <!-- Message -->
-                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                    No Products Available
-                </h3>
-                <p class="text-gray-500 text-sm sm:text-base mb-6">
-                    There are currently no discounted products available in this section. Please check back later for amazing deals!
-                </p>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php else: ?>
+            <!-- No Products Available Message -->
+            <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+                <div class="text-center max-w-md">
+                    <!-- Icon -->
+                    <div class="mb-6">
+                        <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Message -->
+                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                        No Products Available
+                    </h3>
+                    <p class="text-gray-500 text-sm sm:text-base mb-6">
+                        There are currently no discounted products available in this section. Please check back later for amazing deals!
+                    </p>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- Shared Modal -->
         <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
@@ -3013,211 +3071,211 @@ handleQueryError($conn, "New Status Query");
             <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
             <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
         </div>
- 
-    <?php 
-    // Check if there are any products
-    $row_count = mysqli_num_rows($material_resultstwo);
-    ?>
 
-    <?php if ($row_count > 0): ?>
-        <div class="swiper mySwiper-material">
-            <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="200">
-                <?php
-                $has_new = false;
-                while ($row = mysqli_fetch_assoc($material_resultstwo)):
-                    $has_new = true;
+        <?php
+        // Check if there are any products
+        $row_count = mysqli_num_rows($material_resultstwo);
+        ?>
 
-                    // Only use variant price
-                    $base_price = floatval($row['price']);
-                    $discount = floatval($row['discount'] ?? 0);
-                    $finalPrice = $discount > 0 ? $base_price * (1 - $discount / 100) : $base_price;
-                ?>
-                    <div class="swiper-slide h-full p-2">
-                        <div class=" p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
+        <?php if ($row_count > 0): ?>
+            <div class="swiper mySwiper-material">
+                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="200">
+                    <?php
+                    $has_new = false;
+                    while ($row = mysqli_fetch_assoc($material_resultstwo)):
+                        $has_new = true;
 
-                            <!-- NEW Badge -->
-                            <div class="absolute top-2 right-2 z-10">
-                                <span class="bg-black text-white text-[10px] font-bold px-2 py-1 shadow">NEW</span>
-                            </div>
+                        // Only use variant price
+                        $base_price = floatval($row['price']);
+                        $discount = floatval($row['discount'] ?? 0);
+                        $finalPrice = $discount > 0 ? $base_price * (1 - $discount / 100) : $base_price;
+                    ?>
+                        <div class="swiper-slide h-full p-2">
+                            <div class=" p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
 
-                            <!-- Icon -->
-                            <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                <!-- NEW Badge -->
+                                <div class="absolute top-2 right-2 z-10">
+                                    <span class="bg-black text-white text-[10px] font-bold px-2 py-1 shadow">NEW</span>
                                 </div>
-                            </div>
-                            <!-- Product Image -->
-                            <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
-                                <?php if (!empty($row['type_image'])): ?>
-                                    <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                        class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                <?php endif; ?>
-                            </div>
 
-                            <!-- Product Info -->
-                            <div class="mt-auto">
-                                <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                    <?= htmlspecialchars($row['namevariant']) ?>
-                                </h3>
-
-                                <!-- View Size & Color -->
-                                <button type="button"
-                                    onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                    class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
-                                    View Size & Color
-                                </button>
-
-                                <!-- Pricing -->
-                                <?php if ($discount > 0): ?>
-                                    <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <p class="text-base text-green-600 font-bold">
-                                        ₱<?= number_format($finalPrice, 2) ?>
-                                        <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        Origin:
-                                        <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                            <?= ucfirst($row['origin']) ?>
-                                        </span>
-                                    </p>
-                                <?php else: ?>
-                                    <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                <?php endif; ?>
-
-                                <div class="flex flex-col gap-2 mt-auto">
-                                    <!-- Animated View Details Button -->
-                                    <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
-                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                        <button type="submit" class="animated-view-btn">
-                                            <div class="btn-sign">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                            </div>
-                                            <div class="btn-text">View Details</div>
-                                        </button>
-                                    </form>
-
-
-                                    <!-- Pre-Order Button -->
-                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                        <input type="hidden" name="return_url" value="index">
-                                        <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                            <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                            Add to Cart
-                                        </button>
-                                    </form>
+                                <!-- Icon -->
+                                <div class="absolute top-0 left-0 z-10">
+                                    <div class="w-12 h-12 relative">
+                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    </div>
                                 </div>
-                                <style>
-                                    /* Animated View Details Button Styles */
-                                    .animated-view-btn {
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: flex-start;
-                                        width: 48px;
-                                        height: 45px;
-                                        border: none;
-                                        cursor: pointer;
-                                        position: relative;
-                                        overflow: hidden;
-                                        transition-duration: .3s;
-                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                    }
+                                <!-- Product Image -->
+                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
+                                    <?php if (!empty($row['type_image'])): ?>
+                                        <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                            class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                    <?php endif; ?>
+                                </div>
 
-                                    /* Icon */
-                                    .animated-view-btn .btn-sign {
-                                        width: 100%;
-                                        font-size: 1.2em;
-                                        color: white;
-                                        transition-duration: .3s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                    }
+                                <!-- Product Info -->
+                                <div class="mt-auto">
+                                    <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
+                                        <?= htmlspecialchars($row['namevariant']) ?>
+                                    </h3>
 
-                                    /* Text */
-                                    .animated-view-btn .btn-text {
-                                        position: absolute;
-                                        right: 0%;
-                                        width: 0%;
-                                        opacity: 0;
-                                        color: white;
-                                        font-size: 0.9em;
-                                        font-weight: 600;
-                                        transition-duration: .3s;
-                                        white-space: nowrap;
-                                    }
+                                    <!-- View Size & Color -->
+                                    <button type="button"
+                                        onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
+                                        class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
+                                        View Size & Color
+                                    </button>
 
-                                    /* Hover effect */
-                                    .animated-view-btn:hover {
-                                        width: 180px;
-                                        transition-duration: .3s;
-                                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                    }
+                                    <!-- Pricing -->
+                                    <?php if ($discount > 0): ?>
+                                        <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                        <p class="text-base text-green-600 font-bold">
+                                            ₱<?= number_format($finalPrice, 2) ?>
+                                            <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            Origin:
+                                            <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
+                                                <?= ucfirst($row['origin']) ?>
+                                            </span>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                    <?php endif; ?>
 
-                                    .animated-view-btn:hover .btn-sign {
-                                        width: 35%;
-                                        transition-duration: .3s;
-                                        padding-left: 15px;
-                                    }
-
-                                    .animated-view-btn:hover .btn-text {
-                                        opacity: 1;
-                                        width: 65%;
-                                        transition-duration: .3s;
-                                        padding-right: 15px;
-                                    }
-
-                                    /* Click effect */
-                                    .animated-view-btn:active {
-                                        transform: translate(1px, 1px);
-                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                                    }
-
-                                    /* Focus accessibility */
-                                    .animated-view-btn:focus {
-                                        outline: 2px solid #f97316;
-                                        outline-offset: 2px;
-                                    }
-                                </style>
+                                    <div class="flex flex-col gap-2 mt-auto">
+                                        <!-- Animated View Details Button -->
+                                        <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
+                                            <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                            <button type="submit" class="animated-view-btn">
+                                                <div class="btn-sign">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                </div>
+                                                <div class="btn-text">View Details</div>
+                                            </button>
+                                        </form>
 
 
+                                        <!-- Pre-Order Button -->
+                                        <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                            <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                            <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                            <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                            <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                            <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                            <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                            <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                            <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                            <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                            <input type="hidden" name="return_url" value="index">
+                                            <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                Add to Cart
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <style>
+                                        /* Animated View Details Button Styles */
+                                        .animated-view-btn {
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: flex-start;
+                                            width: 48px;
+                                            height: 45px;
+                                            border: none;
+                                            cursor: pointer;
+                                            position: relative;
+                                            overflow: hidden;
+                                            transition-duration: .3s;
+                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                        }
+
+                                        /* Icon */
+                                        .animated-view-btn .btn-sign {
+                                            width: 100%;
+                                            font-size: 1.2em;
+                                            color: white;
+                                            transition-duration: .3s;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        }
+
+                                        /* Text */
+                                        .animated-view-btn .btn-text {
+                                            position: absolute;
+                                            right: 0%;
+                                            width: 0%;
+                                            opacity: 0;
+                                            color: white;
+                                            font-size: 0.9em;
+                                            font-weight: 600;
+                                            transition-duration: .3s;
+                                            white-space: nowrap;
+                                        }
+
+                                        /* Hover effect */
+                                        .animated-view-btn:hover {
+                                            width: 180px;
+                                            transition-duration: .3s;
+                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                                        }
+
+                                        .animated-view-btn:hover .btn-sign {
+                                            width: 35%;
+                                            transition-duration: .3s;
+                                            padding-left: 15px;
+                                        }
+
+                                        .animated-view-btn:hover .btn-text {
+                                            opacity: 1;
+                                            width: 65%;
+                                            transition-duration: .3s;
+                                            padding-right: 15px;
+                                        }
+
+                                        /* Click effect */
+                                        .animated-view-btn:active {
+                                            transform: translate(1px, 1px);
+                                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                                        }
+
+                                        /* Focus accessibility */
+                                        .animated-view-btn:focus {
+                                            outline: 2px solid #f97316;
+                                            outline-offset: 2px;
+                                        }
+                                    </style>
+
+
+                                </div>
                             </div>
                         </div>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-        </div>
-            <?php else: ?>
-        <!-- No Products Available Message -->
-        <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-            <div class="text-center max-w-md">
-                <!-- Icon -->
-                <div class="mb-6">
-                    <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
+                    <?php endwhile; ?>
                 </div>
-                
-                <!-- Message -->
-                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                    No Products Available
-                </h3>
-                <p class="text-gray-500 text-sm sm:text-base mb-6">
-                    There are currently no discounted products available in this section. Please check back later for amazing deals!
-                </p>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php else: ?>
+            <!-- No Products Available Message -->
+            <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+                <div class="text-center max-w-md">
+                    <!-- Icon -->
+                    <div class="mb-6">
+                        <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Message -->
+                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                        No Products Available
+                    </h3>
+                    <p class="text-gray-500 text-sm sm:text-base mb-6">
+                        There are currently no discounted products available in this section. Please check back later for amazing deals!
+                    </p>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- Shared Modal -->
         <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
@@ -3609,54 +3667,54 @@ handleQueryError($conn, "New Status Query");
     </section>
 
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-    const reviewWrapper = document.getElementById("reviewWrapper");
-    let reviewSwiper = null;
+        document.addEventListener("DOMContentLoaded", function() {
+            const reviewWrapper = document.getElementById("reviewWrapper");
+            let reviewSwiper = null;
 
-    // Initialize Swiper with dynamic loop
-    function initReviewSwiper(slideCount) {
-        // Destroy existing instance if any
-        if (reviewSwiper) {
-            reviewSwiper.destroy(true, true);
-        }
-
-        reviewSwiper = new Swiper(".reviewCarousel", {
-            loop: slideCount > 1, // Only loop if more than 1 review
-            autoplay: slideCount > 1 ? {
-                delay: 4000,
-                disableOnInteraction: false
-            } : false, // Disable autoplay for single slide
-            pagination: {
-                el: ".swiper-pagination",
-                clickable: true
-            },
-            slidesPerView: 1,
-            spaceBetween: 20,
-            effect: "slide",
-            speed: 700,
-            breakpoints: {
-                640: {
-                    spaceBetween: 30
+            // Initialize Swiper with dynamic loop
+            function initReviewSwiper(slideCount) {
+                // Destroy existing instance if any
+                if (reviewSwiper) {
+                    reviewSwiper.destroy(true, true);
                 }
-            }
-        });
-    }
 
-    async function loadReviews() {
-        try {
-            const res = await fetch("profilefetch_reviews.php");
-            const reviews = await res.json();
-
-            reviewWrapper.innerHTML = "";
-
-            if (reviews.length > 0) {
-                reviews.forEach(r => {
-                    let stars = "";
-                    for (let i = 1; i <= 5; i++) {
-                        stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;
+                reviewSwiper = new Swiper(".reviewCarousel", {
+                    loop: slideCount > 1, // Only loop if more than 1 review
+                    autoplay: slideCount > 1 ? {
+                        delay: 4000,
+                        disableOnInteraction: false
+                    } : false, // Disable autoplay for single slide
+                    pagination: {
+                        el: ".swiper-pagination",
+                        clickable: true
+                    },
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                    effect: "slide",
+                    speed: 700,
+                    breakpoints: {
+                        640: {
+                            spaceBetween: 30
+                        }
                     }
+                });
+            }
 
-                    reviewWrapper.innerHTML += `
+            async function loadReviews() {
+                try {
+                    const res = await fetch("profilefetch_reviews.php");
+                    const reviews = await res.json();
+
+                    reviewWrapper.innerHTML = "";
+
+                    if (reviews.length > 0) {
+                        reviews.forEach(r => {
+                            let stars = "";
+                            for (let i = 1; i <= 5; i++) {
+                                stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;
+                            }
+
+                            reviewWrapper.innerHTML += `
                         <div class="swiper-slide">
                             <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                                 <div class="flex justify-center mb-4 md:mb-6 space-x-1">
@@ -3678,13 +3736,13 @@ handleQueryError($conn, "New Status Query");
                             </div>
                         </div>
                     `;
-                });
+                        });
 
-                // Re-initialize Swiper with the actual review count
-                initReviewSwiper(reviews.length);
-            } else {
-                // Empty state - single slide
-                reviewWrapper.innerHTML = `
+                        // Re-initialize Swiper with the actual review count
+                        initReviewSwiper(reviews.length);
+                    } else {
+                        // Empty state - single slide
+                        reviewWrapper.innerHTML = `
                     <div class="swiper-slide">
                         <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                             <div class="text-center py-8 md:py-12">
@@ -3694,14 +3752,14 @@ handleQueryError($conn, "New Status Query");
                     </div>
                 `;
 
-                // Re-initialize with loop disabled for single slide
-                initReviewSwiper(1);
-            }
-        } catch (err) {
-            console.error("Error fetching reviews:", err);
+                        // Re-initialize with loop disabled for single slide
+                        initReviewSwiper(1);
+                    }
+                } catch (err) {
+                    console.error("Error fetching reviews:", err);
 
-            // Error state - single slide
-            reviewWrapper.innerHTML = `
+                    // Error state - single slide
+                    reviewWrapper.innerHTML = `
                 <div class="swiper-slide">
                     <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
                         <div class="text-center py-8 md:py-12">
@@ -3711,17 +3769,17 @@ handleQueryError($conn, "New Status Query");
                 </div>
             `;
 
-            // Re-initialize with loop disabled for single slide
-            initReviewSwiper(1);
-        }
-    }
+                    // Re-initialize with loop disabled for single slide
+                    initReviewSwiper(1);
+                }
+            }
 
-    // Initial load
-    loadReviews();
+            // Initial load
+            loadReviews();
 
-    // Auto refresh every 10 seconds
-    setInterval(loadReviews, 10000);
-});
+            // Auto refresh every 10 seconds
+            setInterval(loadReviews, 10000);
+        });
     </script>
 
 
@@ -3735,7 +3793,7 @@ handleQueryError($conn, "New Status Query");
     <!-- Include Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
-          // Initialize Lenis
+        // Initialize Lenis
         const lenis = new Lenis({
             duration: 3,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -3883,151 +3941,151 @@ handleQueryError($conn, "New Status Query");
                 }
             });
         }
-// Helper function to check if loop should be enabled
-function shouldEnableLoop(selector, slidesPerView) {
-    const container = document.querySelector(selector);
-    if (!container) return false;
-    
-    const slideCount = container.querySelectorAll('.swiper-slide').length;
-    // Loop needs at least slidesPerView * 2 slides to work properly
-    return slideCount >= slidesPerView * 2;
-}
+        // Helper function to check if loop should be enabled
+        function shouldEnableLoop(selector, slidesPerView) {
+            const container = document.querySelector(selector);
+            if (!container) return false;
 
-// DOM Ready
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof Swiper === 'undefined') {
-        console.error('Swiper library is not loaded.');
-        return;
-    }
-
-    // ✅ MAIN HERO SWIPER
-    const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;
-    initSwiper('.mySwiper', {
-        slidesPerView: 1,
-        spaceBetween: 0,
-        loop: heroSlideCount > 1, // Only loop if more than 1 slide
-        autoplay: heroSlideCount > 1 ? {
-            delay: 4000,
-            disableOnInteraction: false,
-            pauseOnMouseEnter: true
-        } : false,
-        pagination: {
-            el: ".swiper-pagination",
-            clickable: true
-        },
-        navigation: {
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev"
-        },
-        speed: 1000,
-        effect: 'slide'
-    });
-
-    // 🛒 PRODUCTS SWIPER - Dynamic loop based on slide count
-    const productSlideCount = document.querySelector('.mySwiper-products')?.querySelectorAll('.swiper-slide').length || 0;
-    initSwiper('.mySwiper-products', {
-        slidesPerView: 2,
-        spaceBetween: 10,
-        loop: productSlideCount >= 4, // Need at least 4 slides for loop with 2 per view
-        autoplay: productSlideCount > 2 ? {
-            delay: 3000,
-            disableOnInteraction: false,
-            pauseOnMouseEnter: true
-        } : false,
-        pagination: {
-            el: ".swiper-pagination",
-            clickable: true
-        },
-        navigation: {
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev"
-        },
-        breakpoints: {
-            480: {
-                slidesPerView: 2,
-                spaceBetween: 12,
-                loop: productSlideCount >= 4
-            },
-            640: {
-                slidesPerView: 2,
-                spaceBetween: 15,
-                loop: productSlideCount >= 4
-            },
-            768: {
-                slidesPerView: 3,
-                spaceBetween: 15,
-                loop: productSlideCount >= 6 // 3 per view needs 6+ slides
-            },
-            1024: {
-                slidesPerView: 5,
-                spaceBetween: 18,
-                loop: productSlideCount >= 10 // 5 per view needs 10+ slides
-            },
-            1280: {
-                slidesPerView: 5,
-                spaceBetween: 20,
-                loop: productSlideCount >= 10
-            },
-            1536: {
-                slidesPerView: 7,
-                spaceBetween: 25,
-                loop: productSlideCount >= 14 // 7 per view needs 14+ slides
-            }
+            const slideCount = container.querySelectorAll('.swiper-slide').length;
+            // Loop needs at least slidesPerView * 2 slides to work properly
+            return slideCount >= slidesPerView * 2;
         }
-    });
 
-    // 💎 MATERIALS SWIPER
-    const materialSlideCount = document.querySelector('.mySwiper-material')?.querySelectorAll('.swiper-slide').length || 0;
-    initSwiper('.mySwiper-material', {
-        slidesPerView: 2,
-        spaceBetween: 8,
-        loop: materialSlideCount >= 4,
-        autoplay: materialSlideCount > 2 ? {
-            delay: 2500,
-            disableOnInteraction: false
-        } : false,
-        breakpoints: {
-            480: {
+        // DOM Ready
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Swiper === 'undefined') {
+                console.error('Swiper library is not loaded.');
+                return;
+            }
+
+            // ✅ MAIN HERO SWIPER
+            const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;
+            initSwiper('.mySwiper', {
+                slidesPerView: 1,
+                spaceBetween: 0,
+                loop: heroSlideCount > 1, // Only loop if more than 1 slide
+                autoplay: heroSlideCount > 1 ? {
+                    delay: 4000,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true
+                } : false,
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true
+                },
+                navigation: {
+                    nextEl: ".swiper-button-next",
+                    prevEl: ".swiper-button-prev"
+                },
+                speed: 1000,
+                effect: 'slide'
+            });
+
+            // 🛒 PRODUCTS SWIPER - Dynamic loop based on slide count
+            const productSlideCount = document.querySelector('.mySwiper-products')?.querySelectorAll('.swiper-slide').length || 0;
+            initSwiper('.mySwiper-products', {
                 slidesPerView: 2,
                 spaceBetween: 10,
-                loop: materialSlideCount >= 4
-            },
-            640: {
+                loop: productSlideCount >= 4, // Need at least 4 slides for loop with 2 per view
+                autoplay: productSlideCount > 2 ? {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true
+                } : false,
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true
+                },
+                navigation: {
+                    nextEl: ".swiper-button-next",
+                    prevEl: ".swiper-button-prev"
+                },
+                breakpoints: {
+                    480: {
+                        slidesPerView: 2,
+                        spaceBetween: 12,
+                        loop: productSlideCount >= 4
+                    },
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 15,
+                        loop: productSlideCount >= 4
+                    },
+                    768: {
+                        slidesPerView: 3,
+                        spaceBetween: 15,
+                        loop: productSlideCount >= 6 // 3 per view needs 6+ slides
+                    },
+                    1024: {
+                        slidesPerView: 5,
+                        spaceBetween: 18,
+                        loop: productSlideCount >= 10 // 5 per view needs 10+ slides
+                    },
+                    1280: {
+                        slidesPerView: 5,
+                        spaceBetween: 20,
+                        loop: productSlideCount >= 10
+                    },
+                    1536: {
+                        slidesPerView: 7,
+                        spaceBetween: 25,
+                        loop: productSlideCount >= 14 // 7 per view needs 14+ slides
+                    }
+                }
+            });
+
+            // 💎 MATERIALS SWIPER
+            const materialSlideCount = document.querySelector('.mySwiper-material')?.querySelectorAll('.swiper-slide').length || 0;
+            initSwiper('.mySwiper-material', {
                 slidesPerView: 2,
-                spaceBetween: 12,
-                loop: materialSlideCount >= 4
-            },
-            768: {
-                slidesPerView: 3,
-                spaceBetween: 12,
-                loop: materialSlideCount >= 6
-            },
-            1024: {
-                slidesPerView: 4,
-                spaceBetween: 15,
-                loop: materialSlideCount >= 8
-            },
-            1280: {
-                slidesPerView: 4,
-                spaceBetween: 18,
-                loop: materialSlideCount >= 8
-            },
-            1536: {
-                slidesPerView: 8,
-                spaceBetween: 20,
-                loop: materialSlideCount >= 16
-            }
-        }
-    });
+                spaceBetween: 8,
+                loop: materialSlideCount >= 4,
+                autoplay: materialSlideCount > 2 ? {
+                    delay: 2500,
+                    disableOnInteraction: false
+                } : false,
+                breakpoints: {
+                    480: {
+                        slidesPerView: 2,
+                        spaceBetween: 10,
+                        loop: materialSlideCount >= 4
+                    },
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 12,
+                        loop: materialSlideCount >= 4
+                    },
+                    768: {
+                        slidesPerView: 3,
+                        spaceBetween: 12,
+                        loop: materialSlideCount >= 6
+                    },
+                    1024: {
+                        slidesPerView: 4,
+                        spaceBetween: 15,
+                        loop: materialSlideCount >= 8
+                    },
+                    1280: {
+                        slidesPerView: 4,
+                        spaceBetween: 18,
+                        loop: materialSlideCount >= 8
+                    },
+                    1536: {
+                        slidesPerView: 8,
+                        spaceBetween: 20,
+                        loop: materialSlideCount >= 16
+                    }
+                }
+            });
 
-    // Auto vertical swipers
-    initAutoVerticalSwipers();
+            // Auto vertical swipers
+            initAutoVerticalSwipers();
 
-    // Product forms
-    document.querySelectorAll('.productForm').forEach(form => {
-        form.addEventListener('submit', handleProductFormSubmit);
-    });
-});
+            // Product forms
+            document.querySelectorAll('.productForm').forEach(form => {
+                form.addEventListener('submit', handleProductFormSubmit);
+            });
+        });
     </script>
 
 </body>

@@ -11,8 +11,7 @@ foreach ($cart as $item) {
   $total_cart_items += $item['quantity'];
 }
 
-// ✅ Retrieve user info (REMOVE the duplicate assignment that causes the warning)
-// $user_id = $_SESSION['user_id']; // ❌ REMOVE THIS LINE - it causes the warning
+// ✅ Retrieve user info
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? null;
 $user_picture = $_SESSION['user_picture'] ?? null;
@@ -28,11 +27,65 @@ if ($user_id) {
   $count_stmt->close();
 }
 
+// Fetch new products for sidebar
+$newProductsQuery = "
+    SELECT 
+        p.id,
+        p.product_name AS name,
+        p.codename,
+        p.quantity,
+        p.price,
+        p.description,
+        p.main_image,
+        p.category_id,
+        COALESCE(c.name, 'Uncategorized') AS category_name,
+        p.created_at,
+        CASE 
+            WHEN p.quantity > 0 THEN 'In Stock'
+            WHEN p.quantity = 0 THEN 'Out of Stock'
+            ELSE 'Unknown'
+        END AS stock_status
+    FROM products p
+    LEFT JOIN categories c ON c.id = p.category_id
+    WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
+    AND p.quantity >= 0
+    ORDER BY p.created_at DESC
+    LIMIT 50
+";
 
-// Updated function na compatible sa new categories table
+$newProductsResult = $conn->query($newProductsQuery);
+$newProducts = [];
+if ($newProductsResult && $newProductsResult->num_rows > 0) {
+  while ($row = $newProductsResult->fetch_assoc()) {
+    $newProducts[] = $row;
+  }
+}
+
+// Handle AJAX request for new products count
+if (isset($_GET['action']) && $_GET['action'] === 'get_new_products_count') {
+  header('Content-Type: application/json');
+
+  $newProductsCountQuery = "
+        SELECT COUNT(*) as count 
+        FROM products 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
+        AND quantity >= 0
+    ";
+
+  $result = $conn->query($newProductsCountQuery);
+  $count = 0;
+
+  if ($result && $row = $result->fetch_assoc()) {
+    $count = (int)$row['count'];
+  }
+
+  echo json_encode(['count' => $count]);
+  exit;
+}
+
+// Navigation data functions
 function getNavigationData($conn)
 {
-  // ✅ Updated query WITH image_path for both categories and subcategories
   $sql = "SELECT 
         c.id as category_id,
         c.name as category_name,
@@ -57,20 +110,17 @@ function getNavigationData($conn)
     while ($row = $result->fetch_assoc()) {
       $category_slug = generateSlug($row['category_name']);
 
-      // ✅ Create category if hindi pa exists - WITH image_path
       if (!isset($navigation_data[$category_slug])) {
         $navigation_data[$category_slug] = [
           'id' => $row['category_id'],
           'name' => $row['category_name'],
           'slug' => $category_slug,
-          'image_path' => $row['category_image_path'],  // ✅ ADDED
+          'image_path' => $row['category_image_path'],
           'subcategories' => []
         ];
       }
 
-      // ✅ Add subcategory if may value - WITH image_path
       if ($row['subcategory_id']) {
-        // Use the existing subcategory_slug from database or generate if empty
         $sub_slug = !empty($row['subcategory_slug']) ?
           $row['subcategory_slug'] :
           generateSlug($row['subcategory_name']);
@@ -79,7 +129,7 @@ function getNavigationData($conn)
           'id' => $row['subcategory_id'],
           'name' => $row['subcategory_name'],
           'slug' => $sub_slug,
-          'image_path' => $row['subcategory_image_path']  // ✅ ADDED
+          'image_path' => $row['subcategory_image_path']
         ];
       }
     }
@@ -88,8 +138,6 @@ function getNavigationData($conn)
   return $navigation_data;
 }
 
-
-// generateSlug function (same as before)
 function generateSlug($string)
 {
   $slug = strtolower(trim($string));
@@ -98,10 +146,7 @@ function generateSlug($string)
   return trim($slug, '-');
 }
 
-// Get navigation data and assign to $display_categories variable
 $display_categories = getNavigationData($conn);
-
-
 ?>
 
 
@@ -379,42 +424,36 @@ $display_categories = getNavigationData($conn);
   }
 </style>
 
-
-
-<!-- Navigation -->
 <nav x-data="{ 
     mobileOpen: false, 
     loginOpen: false, 
     registerOpen: false,
     productsOpen: false,
     profileOpen: false,
-    selectedCategory: null
+    selectedCategory: null,
+    newProductsModal: false,
+    newProductsSidebarMobile: false
 }" class="bg-white shadow-lg sticky top-0 z-50 text-black">
 
   <div class="max-w-full mx-auto px-3 sm:px-4 lg:px-6">
     <div class="flex justify-between items-center py-3 sm:py-4">
-
-<!-- Logo with Inspiration and Find Pro beside it -->
-<div class="flex items-center space-x-4 sm:space-x-6">
-  <!-- Logo -->
-  <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index')"
-    class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
-    <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
-      <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
-    </div>
-    <div class="leading-snug">
-      <span class="block text-sm sm:text-lg lg:text-xl text-orange-400 tracking-tight font-roboto">
-        NobleHome
-      </span>
-      <span class="block text-xs text-gray-800 tracking-tight font-roboto">
-        Depot
-      </span>
-    </div>
-  </a>
-
-
-</div>
-
+      <div class="flex items-center space-x-4 sm:space-x-6">
+        <!-- Logo ONLY -->
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index')"
+          class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
+            <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
+          </div>
+          <div class="leading-snug">
+            <span class="block text-sm sm:text-lg lg:text-xl text-orange-400 tracking-tight font-roboto">
+              NobleHome
+            </span>
+            <span class="block text-xs text-gray-800 tracking-tight font-roboto">
+              Depot
+            </span>
+          </div>
+        </a>
+      </div>
 
       <!-- Mobile Cart & User Icons (visible on mobile before hamburger) -->
       <div class="flex items-center space-x-3 lg:hidden">
@@ -479,18 +518,270 @@ $display_categories = getNavigationData($conn);
 
       <!-- Desktop Navigation -->
       <div class="hidden lg:flex space-x-6 items-center uppercase">
-  <!-- Links beside logo -->
-  <div class="flex items-center space-x-3 sm:space-x-5">
-    <a href="../inspiration/index.php"
-      class="text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
-      Inspiration
-    </a>
-    <a href="../findpro/index.php"
-      class="text-sm  text-black hover:text-orange-500 transition duration-200 font-roboto">
-      Find Professionals    
-    </a>
-  </div>
-        <!-- Search component -->
+
+        <!-- NEW PRODUCTS, INSPIRATION & FIND PRO - Show directly on extra large screens -->
+        <?php if (count($newProducts) > 0): ?>
+          <button @click="newProductsModal = true"
+            class="hidden xl:flex relative text-black hover:text-orange-500 transition font-mont uppercase text-sm">
+            New Products
+            <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none min-w-[18px] text-center">
+              <?php echo count($newProducts); ?>
+            </span>
+          </button>
+        <?php endif; ?>
+
+        <a href="../inspiration/index.php"
+          class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
+          Inspiration
+        </a>
+
+        <a href="../findpro/index.php"
+          class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
+          Find Pro
+        </a>
+
+        <!-- MORE DROPDOWN - Show on medium screens when space is tight -->
+        <div x-data="{ moreOpen: false, searchModalOpen: false }" class="relative xl:hidden">
+          <button @click="moreOpen = !moreOpen"
+            class="text-black hover:text-orange-500 transition font-mont uppercase text-sm flex items-center gap-1 relative">
+            More
+            <?php if (count($newProducts) > 0): ?>
+              <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[8px] leading-none min-w-[16px] text-center">
+                <?php echo count($newProducts); ?>
+              </span>
+            <?php endif; ?>
+            <svg class="w-4 h-4 transition-transform" :class="moreOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div x-show="moreOpen"
+            x-cloak
+            @click.away="moreOpen = false"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-1"
+            class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+
+            <!-- Search in Dropdown -->
+            <button @click="searchModalOpen = true; moreOpen = false"
+              class="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Search Products
+            </button>
+
+            <!-- New Products in Dropdown -->
+            <?php if (count($newProducts) > 0): ?>
+              <button @click="newProductsModal = true; moreOpen = false"
+                class="flex items-center justify-between w-full px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                  </svg>
+                  New Products
+                </div>
+                <span class="bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+                  <?php echo count($newProducts); ?>
+                </span>
+              </button>
+            <?php endif; ?>
+
+            <!-- Inspiration -->
+            <a href="../inspiration/index.php"
+              class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Inspiration
+            </a>
+
+            <!-- Find Professionals -->
+            <a href="../findpro/index.php"
+              class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Find Professionals
+            </a>
+          </div>
+
+          <!-- Search Modal (triggered from More dropdown) -->
+          <div x-show="searchModalOpen"
+            x-cloak
+            @click.self="searchModalOpen = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-start justify-center p-2 pt-20">
+
+            <!-- Modal Content -->
+            <div x-show="searchModalOpen"
+              x-transition:enter="transition ease-out duration-300"
+              x-transition:enter-start="opacity-0 scale-95 -translate-y-4"
+              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-200"
+              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+              x-transition:leave-end="opacity-0 scale-95 -translate-y-4"
+              @click.stop
+              x-data="{
+        search: '',
+        results: [],
+        isLoading: false,
+        fetchResults() {
+          if (this.search.trim().length < 1) {
+            this.results = [];
+            return;
+          }
+          this.isLoading = true;
+          fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
+            .then(res => res.json())
+            .then(data => {
+              this.results = data;
+              this.isLoading = false;
+            })
+            .catch(() => {
+              this.results = [];
+              this.isLoading = false;
+            });
+        }
+      }"
+              x-init="$nextTick(() => $refs.searchInput && $refs.searchInput.focus())"
+              class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+
+              <!-- Modal Header -->
+              <div class="flex justify-between items-center p-2 sm:p-3 border-b bg-black text-white shrink-0">
+                <div class="flex items-center gap-3">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <h2 class="text-lg sm:text-xl ">Search Products</h2>
+                </div>
+                <button @click="searchModalOpen = false"
+                  class="text-white hover:text-orange-200 text-2xl sm:text-3xl w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
+                  ×
+                </button>
+              </div>
+
+              <!-- Search Input Section -->
+              <div class="p-2 border-b bg-gray-50 shrink-0">
+                <div class="flex items-center gap-2 bg-white border border-gray-300 rounded-full px-3 py-2 focus-within:border-orange-500 transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                  </svg>
+
+                  <input
+                    type="text"
+                    x-ref="searchInput"
+                    x-model="search"
+                    @input.debounce.300ms="fetchResults"
+                    @keydown.escape="searchModalOpen = false"
+                    placeholder="Search products..."
+                    class="flex-1 bg-transparent focus:outline-none text-sm text-gray-700 placeholder-gray-400"
+                    autocomplete="off">
+
+                  <!-- Clear Button -->
+                  <button
+                    x-show="search.length > 0"
+                    @click="search = ''; results = []; $refs.searchInput.focus()"
+                    class="text-gray-400 hover:text-gray-600 transition flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  <!-- Search Button -->
+                  <button
+                    @click="fetchResults"
+                    class="bg-black hover:bg-orange-600 text-white px-4 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0">
+                    Search
+                  </button>
+                </div>
+
+                <!-- Search Tips -->
+                <div x-show="search.length === 0 && results.length === 0" class="mt-4">
+                  <p class="text-xs text-gray-500 mb-2">Search Tips:</p>
+                  <div class="flex flex-wrap gap-2">
+                    <span class="text-xs bg-white px-3 py-1 rounded-full text-gray-600 border">Try "paint"</span>
+                    <span class="text-xs bg-white px-3 py-1 rounded-full text-gray-600 border">Try "tiles"</span>
+                    <span class="text-xs bg-white px-3 py-1 rounded-full text-gray-600 border">Try "table"</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Results Section -->
+              <div class="flex-1 overflow-y-auto p-4 sm:p-6" style="-webkit-overflow-scrolling: touch;">
+                <!-- Loading State -->
+                <div x-show="isLoading" class="flex flex-col items-center justify-center py-12">
+                  <div class="loading-spinner mb-4"></div>
+                  <p class="text-sm text-gray-500">Searching...</p>
+                </div>
+
+                <!-- Results -->
+                <div x-show="!isLoading && results.length > 0" class="space-y-2">
+                  <p class="text-sm text-gray-500 mb-4">
+                    Found <span x-text="results.length"></span> result(s)
+                  </p>
+                  <template x-for="item in results" :key="item.id">
+                    <a :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
+                      class="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-200 group">
+                      <div class="flex-shrink-0">
+                        <img :src="item.main_image"
+                          alt=""
+                          class="w-16 h-16 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition">
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-gray-900 group-hover:text-orange-600 transition truncate" x-text="item.product_name"></h3>
+                        <p class="text-xs text-gray-500 mt-1" x-text="item.category_name || 'Product'"></p>
+                      </div>
+                      <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </template>
+                </div>
+
+                <!-- No Results -->
+                <div x-show="!isLoading && search.length > 0 && results.length === 0" class="flex flex-col items-center justify-center py-12">
+                  <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <p class="text-gray-500 font-medium mb-2">No products found</p>
+                  <p class="text-sm text-gray-400">Try different keywords</p>
+                </div>
+
+                <!-- Empty State -->
+                <div x-show="!isLoading && search.length === 0" class="flex flex-col items-center justify-center py-12">
+                  <svg class="w-20 h-20 text-gray-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <p class="text-gray-500 font-medium mb-2">Start typing to search</p>
+                  <p class="text-sm text-gray-400 text-center">Search for products, categories</p>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="p-4 bg-gray-50 border-t shrink-0">
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                  <span>Press <kbd class="px-2 py-1 bg-white border rounded">ESC</kbd> to close</span>
+                  <span x-show="results.length > 0">
+                    <span x-text="results.length"></span> results
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search component - Keep the original full search bar for desktop XL screens -->
         <div x-data="{
     search: '',
     results: [],
@@ -508,7 +799,7 @@ $display_categories = getNavigationData($conn);
                 this.results = [];
             });
     }
-}" class="relative w-64 md:w-96 font-mont">
+}" class="relative w-64 md:w-96 font-mont hidden xl:block">
 
           <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full max-w-2xl">
             <!-- Search Icon -->
@@ -529,11 +820,10 @@ $display_categories = getNavigationData($conn);
             <!-- Button -->
             <button
               @click="fetchResults"
-              class="bg-black text-white px-4 py-1.5 rounded-full text-sm  hover:from-orange-500 hover:to-orange-600 transition shadow-sm">
+              class="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-800 transition shadow-sm">
               Search
             </button>
           </div>
-
 
           <div
             x-show="results.length > 0"
@@ -553,8 +843,58 @@ $display_categories = getNavigationData($conn);
               </template>
             </ul>
           </div>
-
         </div>
+
+        <style>
+          /* Loading Spinner */
+          .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #f97316;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+          }
+
+          @keyframes spin {
+            0% {
+              transform: rotate(0deg);
+            }
+
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+          /* Keyboard shortcut styling */
+          kbd {
+            font-family: monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+          }
+
+          /* Smooth scrolling */
+          .overflow-y-auto {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(249, 115, 22, 0.3) transparent;
+          }
+
+          .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+          }
+
+          .overflow-y-auto::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .overflow-y-auto::-webkit-scrollbar-thumb {
+            background-color: rgba(249, 115, 22, 0.3);
+            border-radius: 4px;
+          }
+
+          .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(249, 115, 22, 0.5);
+          }
+        </style>
 
         <!-- Products Dropdown with Side Panel Subcategories -->
         <div class="relative" x-data="{ 
@@ -778,8 +1118,8 @@ $display_categories = getNavigationData($conn);
           <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
           Shop
         </a>
-        <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
 
+        <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
           <div x-data="chatNotif" x-init="init()" class="relative">
             <a href="../otherpage/Chat_main.php"
               class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
@@ -1417,7 +1757,7 @@ $display_categories = getNavigationData($conn);
               <span class="block text-xs ">Depot</span>
             </div>
           </div>
-          <button @click="mobileOpen = false" class="text-white hover:bg-white/20 rounded-full p-2 transition">
+          <button @click="mobileOpen = false" class="text-gray-700 hover:bg-gray-100 rounded-full p-2 transition">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -1449,23 +1789,23 @@ $display_categories = getNavigationData($conn);
 
         <!-- Mobile Search -->
         <div x-data="{
-        search: '',
-        results: [],
-        searchOpen: false,
-        fetchResults() {
-            if (this.search.trim() === '') {
-              this.results = [];
-              this.searchOpen = false;
-              return;
-            }
-            fetch(`../otherpage/search_ajax.php?search=${encodeURIComponent(this.search)}`)
-                .then(res => res.json())
-                .then(data => {
-                    this.results = data;
-                    this.searchOpen = true;
-                });
+    search: '',
+    results: [],
+    searchOpen: false,
+    fetchResults() {
+        if (this.search.trim() === '') {
+          this.results = [];
+          this.searchOpen = false;
+          return;
         }
-    }" class="p-4 border-b border-gray-200">
+        fetch(`../otherpage/search_ajax.php?search=${encodeURIComponent(this.search)}`)
+            .then(res => res.json())
+            .then(data => {
+                this.results = data;
+                this.searchOpen = true;
+            });
+    }
+}" class="p-4 border-b border-gray-200">
           <div class="relative">
             <input
               type="text"
@@ -1493,6 +1833,41 @@ $display_categories = getNavigationData($conn);
 
         <!-- Navigation Links -->
         <div class="py-2">
+
+          <!-- NEW PRODUCTS BUTTON - Mobile -->
+          <?php if (count($newProducts) > 0): ?>
+            <button @click="newProductsSidebarMobile = true; mobileOpen = false"
+              class="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+              <div class="flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+                <span class="font-medium">New Products</span>
+              </div>
+              <span class="bg-red-600 text-white rounded-full px-2 py-0.5 text-xs font-bold">
+                <?php echo count($newProducts); ?>
+              </span>
+            </button>
+          <?php endif; ?>
+
+          <!-- INSPIRATION LINK - Mobile -->
+          <a href="../inspiration/index.php"
+            class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <span class="font-medium">Inspiration</span>
+          </a>
+
+          <!-- FIND PROFESSIONALS LINK - Mobile -->
+          <a href="../findpro/index.php"
+            class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span class="font-medium">Find Professionals</span>
+          </a>
+
 
           <!-- Orders -->
           <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
@@ -1631,6 +2006,157 @@ $display_categories = getNavigationData($conn);
         <?php endif; ?>
       </div>
     </div>
+
+
+    <!-- New Products Sidebar for Mobile -->
+    <?php if (count($newProducts) > 0): ?>
+      <!-- Overlay -->
+      <div x-show="newProductsSidebarMobile"
+        x-cloak
+        @click="newProductsSidebarMobile = false"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="lg:hidden fixed inset-0 z-[9999] bg-black bg-opacity-50">
+      </div>
+
+      <!-- Sidebar Panel -->
+      <div x-show="newProductsSidebarMobile"
+        x-cloak
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="-translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="-translate-x-full"
+        class="lg:hidden fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-[10000] flex flex-col">
+
+        <!-- Sidebar Header -->
+        <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+            <h2 class="text-base font-semibold">New Products</h2>
+            <span class="bg-red-600 text-white rounded-full px-2 py-0.5 text-xs font-bold ml-2">
+              <?php echo count($newProducts); ?>
+            </span>
+          </div>
+          <button @click="newProductsSidebarMobile = false"
+            class="text-white hover:text-orange-400 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
+            ×
+          </button>
+        </div>
+
+        <!-- Sidebar Content - Scrollable -->
+        <div class="flex-1 overflow-y-auto p-4" style="-webkit-overflow-scrolling: touch;">
+          <div class="space-y-4">
+            <?php foreach ($newProducts as $product): ?>
+              <div class="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all duration-300 hover:border-orange-400">
+                <div class="flex gap-3">
+                  <!-- Product Image -->
+                  <div class="relative flex-shrink-0">
+                    <?php if (!empty($product['main_image'])): ?>
+                      <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                        alt="<?php echo htmlspecialchars($product['name']); ?>"
+                        class="w-20 h-20 object-contain rounded"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="w-20 h-20 bg-gray-200 rounded hidden items-center justify-center">
+                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    <?php else: ?>
+                      <div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    <?php endif; ?>
+
+                    <!-- NEW Badge -->
+                    <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow">
+                      NEW
+                    </span>
+                  </div>
+
+                  <!-- Product Info -->
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
+                      <?php echo htmlspecialchars($product['name']); ?>
+                    </h3>
+
+                    <?php if (!empty($product['description'])): ?>
+                      <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                        <?php echo htmlspecialchars($product['description']); ?>
+                      </p>
+                    <?php endif; ?>
+
+                    <!-- Category & Date -->
+                    <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <?php echo htmlspecialchars($product['category_name']); ?>
+                      </span>
+                      <span>•</span>
+                      <span><?php echo date('M j', strtotime($product['created_at'])); ?></span>
+                    </div>
+
+                    <!-- Stock Status -->
+                    <?php if ($product['stock_status'] === 'In Stock'): ?>
+                      <span class="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full mb-2">
+                        <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                        In Stock
+                      </span>
+                    <?php else: ?>
+                      <span class="inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full mb-2">
+                        <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
+                        Out of Stock
+                      </span>
+                    <?php endif; ?>
+
+                    <!-- Action Button -->
+                    <form action="product_view" method="GET" class="mt-2">
+                      <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                      <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>View Product</span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 bg-gray-50 border-t shrink-0">
+          <button onclick="window.location.href='allproduct'"
+            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            View All Products
+          </button>
+        </div>
+      </div>
+
+      <style>
+        /* Line clamp utilities */
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      </style>
+    <?php endif; ?>
 
     <!-- Login Modal - Full Screen on Mobile -->
     <div x-show="loginOpen" x-cloak x-transition
@@ -1837,6 +2363,228 @@ $display_categories = getNavigationData($conn);
         </div>
       </div>
     </div>
+  </div>
+
+
+<!-- New Products Modal - List Style -->
+<?php if (count($newProducts) > 0): ?>
+  <!-- Modal Overlay -->
+  <div x-show="newProductsModal"
+    x-cloak
+    @click.self="newProductsModal = false"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+
+    <!-- Modal Content -->
+    <div x-show="newProductsModal"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      @click.stop
+      class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+          </svg>
+          <div>
+            <h2 class="text-base sm:text-lg">New Products</h2>
+            <p class="text-xs text-white">Latest additions to our store</p>
+          </div>
+        </div>
+        <button @click="newProductsModal = false"
+          class="text-white hover:text-orange-200 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
+          ×
+        </button>
+      </div>
+
+      <!-- Modal Body - List View -->
+      <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+        <div class="divide-y divide-gray-200">
+          <?php foreach ($newProducts as $index => $product): ?>
+            <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
+              <div class="flex gap-4">
+                <!-- Product Image -->
+                <div class="flex-shrink-0 relative">
+                  <?php if (!empty($product['main_image'])): ?>
+                    <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                      alt="<?php echo htmlspecialchars($product['name']); ?>"
+                      class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
+                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg hidden items-center justify-center border border-gray-200">
+                      <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  <?php else: ?>
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                      <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  <?php endif; ?>
+                  
+                  <!-- NEW Badge -->
+                  <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">
+                    NEW
+                  </span>
+                </div>
+
+                <!-- Product Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2 mb-2">
+                    <h3 class="uppercase text-sm sm:text-base text-gray-900 group-hover:text-orange-600 transition line-clamp-2">
+                      <?php echo htmlspecialchars($product['name']); ?>
+                    </h3>
+                    
+                    <!-- Stock Status Badge -->
+                    <?php if ($product['stock_status'] === 'In Stock'): ?>
+                      <span class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                        In Stock
+                      </span>
+                    <?php else: ?>
+                      <span class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
+                        Out of Stock
+                      </span>
+                    <?php endif; ?>
+                  </div>
+
+                  <?php if (!empty($product['description'])): ?>
+                    <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                      <?php echo htmlspecialchars($product['description']); ?>
+                    </p>
+                  <?php endif; ?>
+
+                  <!-- Meta Info -->
+                  <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      <?php echo htmlspecialchars($product['category_name']); ?>
+                    </span>
+                    <span class="text-gray-300">•</span>
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                    </span>
+                  </div>
+
+                  <!-- Action Button -->
+                  <form action="product_view" method="GET">
+                    <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                    <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4  transition-all">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View Details
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-gray-50 border-t shrink-0">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button onclick="window.location.href='allproduct'"
+            class="flex-1 bg-black hover:bg-orange-600 text-white  py-2.5 px-4  transition-all flex items-center justify-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            View All Products
+          </button>
+          <button @click="newProductsModal = false"
+            class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700  transition-all text-sm">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Modal specific styles */
+    [x-cloak] {
+      display: none !important;
+    }
+
+    /* Smooth scrollbar for modal */
+    .overflow-y-auto::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-track {
+      background: #f9fafb;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+
+    /* Line clamp utilities */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Hover effect for list items */
+    .group:hover {
+      background-color: #fff7ed;
+    }
+  </style>
+
+  <script>
+    // Auto-refresh new products count
+    setInterval(function() {
+      fetch(window.location.pathname + '?action=get_new_products_count')
+        .then(response => {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return response.json();
+          }
+          throw new Error('Not JSON');
+        })
+        .then(data => {
+          const badge = document.querySelector('button[\\@click="newProductsModal = true"] span');
+          if (badge && data.count !== undefined) {
+            badge.textContent = data.count;
+            badge.style.display = data.count > 0 ? 'inline-flex' : 'none';
+          }
+        })
+        .catch(error => {
+          console.log('Silent error:', error);
+        });
+    }, 30000); // Every 30 seconds
+  </script>
+<?php endif; ?>
+
 </nav>
 
 <?php
@@ -1845,6 +2593,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 ?>
 
 <script src="../navbar/top-obf.js"></script>
+
 <script>
   document.addEventListener("alpine:init", () => {
     Alpine.data("notificationSystem", () => ({

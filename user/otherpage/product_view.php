@@ -64,6 +64,27 @@ if (!$product) {
   exit;
 }
 
+// ✅ NEW: Fetch the first type's image AND name to use as main display
+$type_main_image = null;
+$type_main_name = null;
+
+$stmt = $conn->prepare("SELECT type_image, type_name FROM product_types WHERE product_id = ? ORDER BY id ASC LIMIT 1");
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows > 0) {
+  $type_row = $result->fetch_assoc();
+  $type_main_image = $type_row['type_image'];
+  $type_main_name = $type_row['type_name'];
+}
+$stmt->close();
+
+// ✅ Use type image if available, fallback to product main_image
+$display_image = !empty($type_main_image) ? $type_main_image : $product['main_image'];
+
+// ✅ Use type name if available, fallback to product name
+$display_name = !empty($type_main_name) ? $type_main_name : $product['product_name'];
+
 // Process sub images
 $sub_images = [];
 if (!empty($product['sub_images'])) {
@@ -111,7 +132,7 @@ while ($row = $types_result->fetch_assoc()) {
     $types_data[$type_name] = [
       'id' => $row['id'],
       'name' => $type_name,
-      'image' => $row['type_image'],
+      'image' => $row['type_image'], // ✅ This is the type_image
       'variants' => []
     ];
   }
@@ -119,7 +140,6 @@ while ($row = $types_result->fetch_assoc()) {
     $types_data[$type_name]['variants'][] = $row;
   }
 }
-
 
 $codename = $product['codename']; // current product codename
 $stmt = $conn->prepare("SELECT id, product_name, codename, quantity, price, main_image, description, descrip6, descrip7
@@ -169,7 +189,6 @@ $avg_stmt->close();
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-
     /* Selection States */
     .selected {
       border-color: #f97316;
@@ -771,12 +790,17 @@ $avg_stmt->close();
         <!-- Product Image & Info Section -->
         <div class="p-4 lg:p-8">
           <!-- Product Image -->
+          <!-- Product Image -->
           <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
-              w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0">
+                 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0">
+            <!-- ✅ UPDATED: Now uses type_name in alt attribute -->
             <img id="main-product-image"
-              src="../../<?= htmlspecialchars($product['main_image']) ?>"
+              src="../../<?= htmlspecialchars($display_image) ?>"
+              data-original-image="../../<?= htmlspecialchars($display_image) ?>"
+              data-original-name="<?= htmlspecialchars($display_name) ?>"
               class="w-full h-full object-contain transition-all duration-300 hover:scale-105"
-              alt="<?= htmlspecialchars($product['product_name']) ?>">
+              alt="<?= htmlspecialchars($display_name) ?>">
+
 
             <!-- Image Navigation Arrows (if sub images exist) -->
             <?php if (!empty($sub_images)): ?>
@@ -803,9 +827,10 @@ $avg_stmt->close();
               <!-- Scrollable Container -->
               <div class="thumbnail-container overflow-x-auto scrollbar-hide">
                 <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
-                  <!-- Main Image Thumbnail -->
+
+                  <!-- ✅ UPDATED: Main Thumbnail now shows first type image -->
                   <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
-                    <img src="../../<?= htmlspecialchars($product['main_image']) ?>" loading="lazy"
+                    <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
                       class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
                       alt="Main Image">
                   </div>
@@ -899,45 +924,49 @@ $avg_stmt->close();
               <?php endif; ?>
             </div>
 
-       <!-- Product Name and Price -->
-<div>
-  <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
-    <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
-      <?= htmlspecialchars($product['product_name']) ?>
-    </h1>
-    
-    <!-- Dynamic Price Display -->
-    <div id="product-price-display" class="hidden">
-      <div class="text-right">
-        <!-- Original Price (with strikethrough if discount exists) -->
-        <div id="original-price-container" class="hidden">
-          <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
-        </div>
-        
-        <!-- Final Price -->
-        <div class="text-2xl lg:text-3xl font-bold text-green-600" id="final-price">₱0.00</div>
-        
-        <!-- Discount Badge -->
-        <div id="discount-badge" class="hidden mt-1">
-          <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-            <span id="discount-percent">0</span>% OFF
-          </span>
-        </div>
-        
-        <!-- Selected Size Info -->
-        <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
-          Size: <span class="font-semibold" id="selected-size-text">-</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="flex flex-wrap gap-2 mb-3">
-    <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-      <?= htmlspecialchars($product['codename']) ?>
-    </span>
-  </div>
-</div>
+            <!-- Product Name and Price -->
+            <div>
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
+                <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
+                  <?= htmlspecialchars($display_name ?? $product['product_name'] ?? 'Product') ?>
+                </h1>
+                <?php if (!empty($type_main_name) && !empty($product['product_name']) && $type_main_name !== $product['product_name']): ?>
+                  <p class="text-sm text-gray-500 mt-1">
+                    <?= htmlspecialchars($product['product_name']) ?>
+                  </p>
+                <?php endif; ?>
+                <!-- Dynamic Price Display -->
+                <div id="product-price-display" class="hidden">
+                  <div class="text-right">
+                    <!-- Original Price (with strikethrough if discount exists) -->
+                    <div id="original-price-container" class="hidden">
+                      <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
+                    </div>
+
+                    <!-- Final Price -->
+                    <div class="text-2xl lg:text-3xl font-bold text-green-600" id="final-price">₱0.00</div>
+
+                    <!-- Discount Badge -->
+                    <div id="discount-badge" class="hidden mt-1">
+                      <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                        <span id="discount-percent">0</span>% OFF
+                      </span>
+                    </div>
+
+                    <!-- Selected Size Info -->
+                    <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
+                      Size: <span class="font-semibold" id="selected-size-text">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <?= htmlspecialchars($product['codename']) ?>
+                </span>
+              </div>
+            </div>
 
             <!-- Description -->
             <div>
@@ -1033,21 +1062,26 @@ $avg_stmt->close();
               <div class="mb-6 lg:mb-10" id="color-selection-section">
                 <div class="flex items-center justify-between mb-4">
                   <!-- Product Image - Mobile Sidebar Only -->
-
-
                   <h3 class="text-base lg:text-xl  text-gray-800">Choose Color</h3>
                   <div class="text-xs lg:text-sm text-gray-500">Required</div>
                   <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
-                    <div class="aspect-square w-32 mx-auto overflow-hidden">
-                           <h1 class="text-center">Display</h1>
-                      <img id="sidebar-product-image"
-                        src="../../<?= htmlspecialchars($product['main_image']) ?>"
-                        class="w-full h-full object-contain"
-                        alt="<?= htmlspecialchars($product['product_name']) ?>">
+                    <!-- Product Image - Mobile Sidebar Only -->
+                    <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
+                      <div class="aspect-square w-32 mx-auto overflow-hidden">
+                        <h1 class="text-center">Display</h1>
+                        <!-- ✅ UPDATED: Sidebar image also uses first type image -->
+                        <img id="sidebar-product-image"
+                          src="../../<?= htmlspecialchars($display_image) ?>"
+                          class="w-full h-full object-contain"
+                          alt="<?= htmlspecialchars($product['product_name']) ?>">
+                      </div>
+                      <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
+                        <?= htmlspecialchars($product['product_name']) ?>
+                      </h3>
                     </div>
                     <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
                       <?= htmlspecialchars($product['product_name']) ?>
-               
+
                     </h3>
                   </div>
                 </div>
@@ -1083,252 +1117,253 @@ $avg_stmt->close();
               </div>
             <?php endif; ?>
 
-<!-- STEP 3: SIZE/VARIANT SELECTION -->
-<div class="mb-6 lg:mb-8" id="size-selection-section">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-base lg:text-xl text-gray-800">Choose Size</h3>
-    <div class="text-xs lg:text-sm text-gray-500">Required</div>
-  </div>
+            <!-- STEP 3: SIZE/VARIANT SELECTION -->
+            <div class="mb-6 lg:mb-8" id="size-selection-section">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base lg:text-xl text-gray-800">Choose Size</h3>
+                <div class="text-xs lg:text-sm text-gray-500">Required</div>
+              </div>
 
-  <div id="variant-container" class="text-gray-500 p-4 bg-white text-center rounded-lg">
-    <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
-    <p class="text-sm lg:text-base">Please select a color first</p>
-  </div>
+              <div id="variant-container" class="text-gray-500 p-4 bg-white text-center rounded-lg">
+                <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
+                <p class="text-sm lg:text-base">Please select a color first</p>
+              </div>
 
-  <?php foreach ($types_data as $type): ?>
-    <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-      <?php if (!empty($type['variants'])): ?>
-        <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-3">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <?php foreach ($type['variants'] as $variant): ?>
-              <?php
-              $price = floatval($variant['variant_price']);
-              $percent = floatval($variant['percent']);
-              $discount = floatval($variant['discount'] ?? 0);
-              $priceWithMarkup = $price + ($price * $percent / 100);
-              $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-              
-              // Parse SKU info
-              $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
-              ?>
-              <button type="button"
-                onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this);"
-                class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
+              <?php foreach ($types_data as $type): ?>
+                <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+                  <?php if (!empty($type['variants'])): ?>
+                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-3">
+                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                        <?php foreach ($type['variants'] as $variant): ?>
+                          <?php
+                          $price = floatval($variant['variant_price']);
+                          $percent = floatval($variant['percent']);
+                          $discount = floatval($variant['discount'] ?? 0);
+                          $priceWithMarkup = $price + ($price * $percent / 100);
+                          $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+
+                          // Parse SKU info
+                          $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
+                          ?>
+                          <button type="button"
+                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this);"
+                            class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
                        px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
-                data-price="<?= $price ?>"
-                data-percent="<?= $percent ?>"
-                data-discount="<?= $discount ?>"
-                data-variant-id="<?= $variant['variant_id'] ?>"
-                data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'>
-                <div class="text-gray-700 text-[11px] font-medium leading-tight">
-                  <?= htmlspecialchars($variant['size']) ?>
+                            data-price="<?= $price ?>"
+                            data-percent="<?= $percent ?>"
+                            data-discount="<?= $discount ?>"
+                            data-variant-id="<?= $variant['variant_id'] ?>"
+                            data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'>
+                            <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                              <?= htmlspecialchars($variant['size']) ?>
+                            </div>
+                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
+                          </button>
+                        <?php endforeach; ?>
+                      </div>
+                    </div>
+                  <?php else: ?>
+                    <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
+                  <?php endif; ?>
                 </div>
-                <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
-              </button>
-            <?php endforeach; ?>
-          </div>
-        </div>
-      <?php else: ?>
-        <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
-      <?php endif; ?>
-    </div>
-  <?php endforeach; ?>
+              <?php endforeach; ?>
 
-  <!-- SKU Info Display Section (Below size buttons) -->
-  <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200">
-    <div class="flex items-start justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
-      </div>
-      <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
-        <i class="fas fa-times text-lg"></i>
-      </button>
-    </div>
-    
-    <!-- Content container with collapse functionality -->
-    <div id="sku-info-content-wrapper">
-      <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
-        <!-- Content will be inserted here -->
-      </div>
-      
-      <!-- See More / See Less button -->
-      <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
-        <span id="toggle-sku-text">See More</span>
-        <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
-      </button>
-    </div>
-  </div>
-</div>
+              <!-- SKU Info Display Section (Below size buttons) -->
+              <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
+                  </div>
+                  <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
+                    <i class="fas fa-times text-lg"></i>
+                  </button>
+                </div>
 
-<style>
-/* Custom scrollbar styling */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-}
+                <!-- Content container with collapse functionality -->
+                <div id="sku-info-content-wrapper">
+                  <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
+                    <!-- Content will be inserted here -->
+                  </div>
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
+                  <!-- See More / See Less button -->
+                  <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
+                    <span id="toggle-sku-text">See More</span>
+                    <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 10px;
-}
+            <style>
+              /* Custom scrollbar styling */
+              .scrollbar-thin::-webkit-scrollbar {
+                width: 6px;
+              }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
+              .scrollbar-thin::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+              }
 
-/* Smooth slide animation */
-#sku-info-display {
-  animation: slideDown 0.3s ease-out;
-}
+              .scrollbar-thin::-webkit-scrollbar-thumb {
+                background: #d1d5db;
+                border-radius: 10px;
+              }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+              .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+                background: #9ca3af;
+              }
 
-/* Collapsed state */
-#sku-info-content.collapsed {
-  max-height: 120px;
-  overflow: hidden;
-  position: relative;
-}
+              /* Smooth slide animation */
+              #sku-info-display {
+                animation: slideDown 0.3s ease-out;
+              }
 
-#sku-info-content.collapsed::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: linear-gradient(to bottom, transparent, #f9fafb);
-  pointer-events: none;
-}
+              @keyframes slideDown {
+                from {
+                  opacity: 0;
+                  transform: translateY(-10px);
+                }
 
-#sku-info-content.expanded {
-  max-height: none;
-}
-</style>
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
 
-<script>
-let isExpanded = false;
+              /* Collapsed state */
+              #sku-info-content.collapsed {
+                max-height: 120px;
+                overflow: hidden;
+                position: relative;
+              }
 
-function showSkuInfo(button) {
-  const display = document.getElementById('sku-info-display');
-  const content = document.getElementById('sku-info-content');
-  const toggleBtn = document.getElementById('toggle-sku-btn');
-  const skuInfoJson = button.getAttribute('data-sku-info');
-  
-  // Reset state
-  isExpanded = false;
-  content.classList.remove('collapsed', 'expanded');
-  toggleBtn.classList.add('hidden');
-  
-  // If no SKU info, hide the display
-  if (!skuInfoJson) {
-    display.classList.add('hidden');
-    return;
-  }
-  
-  try {
-    const skuInfo = JSON.parse(skuInfoJson);
-    
-    // Build content HTML
-    let html = '';
-    
-    // Check if it's plain text (only has 'notes' field)
-    if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
-      html = `
+              #sku-info-content.collapsed::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 40px;
+                background: linear-gradient(to bottom, transparent, #f9fafb);
+                pointer-events: none;
+              }
+
+              #sku-info-content.expanded {
+                max-height: none;
+              }
+            </style>
+
+            <script>
+              let isExpanded = false;
+
+              function showSkuInfo(button) {
+                const display = document.getElementById('sku-info-display');
+                const content = document.getElementById('sku-info-content');
+                const toggleBtn = document.getElementById('toggle-sku-btn');
+                const skuInfoJson = button.getAttribute('data-sku-info');
+
+                // Reset state
+                isExpanded = false;
+                content.classList.remove('collapsed', 'expanded');
+                toggleBtn.classList.add('hidden');
+
+                // If no SKU info, hide the display
+                if (!skuInfoJson) {
+                  display.classList.add('hidden');
+                  return;
+                }
+
+                try {
+                  const skuInfo = JSON.parse(skuInfoJson);
+
+                  // Build content HTML
+                  let html = '';
+
+                  // Check if it's plain text (only has 'notes' field)
+                  if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
+                    html = `
         <div class="bg-white p-4 rounded-lg">
           <div class="whitespace-pre-wrap text-gray-800">${escapeHtml(skuInfo.notes)}</div>
         </div>
       `;
-    } else {
-      // Structured data display as list
-      html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
-      
-      for (const [key, value] of Object.entries(skuInfo)) {
-        const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
-        html += `
+                  } else {
+                    // Structured data display as list
+                    html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
+
+                    for (const [key, value] of Object.entries(skuInfo)) {
+                      const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+                      html += `
           <div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
             <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(label)}:</span>
             <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
           </div>
         `;
-      }
-      
-      html += '</div></div>';
-    }
-    
-    content.innerHTML = html;
-    display.classList.remove('hidden');
-    
-    // Check if content height exceeds 120px and show toggle button
-    setTimeout(() => {
-      if (content.scrollHeight > 120) {
-        content.classList.add('collapsed');
-        toggleBtn.classList.remove('hidden');
-        updateToggleButton();
-      }
-    }, 50);
-    
-  } catch (e) {
-    console.error('Error parsing SKU info:', e);
-    display.classList.add('hidden');
-  }
-}
+                    }
 
-function toggleSkuContent() {
-  const content = document.getElementById('sku-info-content');
-  isExpanded = !isExpanded;
-  
-  if (isExpanded) {
-    content.classList.remove('collapsed');
-    content.classList.add('expanded');
-  } else {
-    content.classList.remove('expanded');
-    content.classList.add('collapsed');
-  }
-  
-  updateToggleButton();
-}
+                    html += '</div></div>';
+                  }
 
-function updateToggleButton() {
-  const toggleText = document.getElementById('toggle-sku-text');
-  const toggleIcon = document.getElementById('toggle-sku-icon');
-  
-  if (isExpanded) {
-    toggleText.textContent = 'See Less';
-    toggleIcon.classList.remove('fa-chevron-down');
-    toggleIcon.classList.add('fa-chevron-up');
-  } else {
-    toggleText.textContent = 'See More';
-    toggleIcon.classList.remove('fa-chevron-up');
-    toggleIcon.classList.add('fa-chevron-down');
-  }
-}
+                  content.innerHTML = html;
+                  display.classList.remove('hidden');
 
-function hideSkuInfo() {
-  const display = document.getElementById('sku-info-display');
-  display.classList.add('hidden');
-  isExpanded = false;
-}
+                  // Check if content height exceeds 120px and show toggle button
+                  setTimeout(() => {
+                    if (content.scrollHeight > 120) {
+                      content.classList.add('collapsed');
+                      toggleBtn.classList.remove('hidden');
+                      updateToggleButton();
+                    }
+                  }, 50);
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-</script>
+                } catch (e) {
+                  console.error('Error parsing SKU info:', e);
+                  display.classList.add('hidden');
+                }
+              }
+
+              function toggleSkuContent() {
+                const content = document.getElementById('sku-info-content');
+                isExpanded = !isExpanded;
+
+                if (isExpanded) {
+                  content.classList.remove('collapsed');
+                  content.classList.add('expanded');
+                } else {
+                  content.classList.remove('expanded');
+                  content.classList.add('collapsed');
+                }
+
+                updateToggleButton();
+              }
+
+              function updateToggleButton() {
+                const toggleText = document.getElementById('toggle-sku-text');
+                const toggleIcon = document.getElementById('toggle-sku-icon');
+
+                if (isExpanded) {
+                  toggleText.textContent = 'See Less';
+                  toggleIcon.classList.remove('fa-chevron-down');
+                  toggleIcon.classList.add('fa-chevron-up');
+                } else {
+                  toggleText.textContent = 'See More';
+                  toggleIcon.classList.remove('fa-chevron-up');
+                  toggleIcon.classList.add('fa-chevron-down');
+                }
+              }
+
+              function hideSkuInfo() {
+                const display = document.getElementById('sku-info-display');
+                display.classList.add('hidden');
+                isExpanded = false;
+              }
+
+              function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+              }
+            </script>
             <!-- PURCHASE SECTION -->
             <div class="mt-4 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none p-4">
               <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
@@ -1556,7 +1591,7 @@ function escapeHtml(text) {
         <?php endif; ?>
 
 
-       <?php if ($related_products->num_rows > 0): ?>
+        <?php if ($related_products->num_rows > 0): ?>
           <!-- Mobile Bottom Bar Trigger (Smaller & Side Floating) -->
           <button id="relatedProductsTrigger"
             class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
@@ -2485,7 +2520,7 @@ function escapeHtml(text) {
         }
 
         // Update price display next to product name
-this.updateProductHeaderPrice();
+        this.updateProductHeaderPrice();
       }
 
       unselectVariant(button) {
@@ -2502,7 +2537,7 @@ this.updateProductHeaderPrice();
         }
 
         // Hide price display in product header
-  this.hideProductHeaderPrice();
+        this.hideProductHeaderPrice();
       }
 
       clearVariantSelection() {
@@ -2549,90 +2584,90 @@ this.updateProductHeaderPrice();
       }
 
       // New method to update product header price display
-updateProductHeaderPrice() {
-  if (!this.selectedVariantData) {
-    console.log('No variant data available');
-    return;
-  }
+      updateProductHeaderPrice() {
+        if (!this.selectedVariantData) {
+          console.log('No variant data available');
+          return;
+        }
 
-  const priceDisplay = document.getElementById('product-price-display');
-  const originalPriceContainer = document.getElementById('original-price-container');
-  const originalPriceElement = document.getElementById('original-price');
-  const finalPriceElement = document.getElementById('final-price');
-  const discountBadge = document.getElementById('discount-badge');
-  const discountPercent = document.getElementById('discount-percent');
-  const selectedSizeText = document.getElementById('selected-size-text');
+        const priceDisplay = document.getElementById('product-price-display');
+        const originalPriceContainer = document.getElementById('original-price-container');
+        const originalPriceElement = document.getElementById('original-price');
+        const finalPriceElement = document.getElementById('final-price');
+        const discountBadge = document.getElementById('discount-badge');
+        const discountPercent = document.getElementById('discount-percent');
+        const selectedSizeText = document.getElementById('selected-size-text');
 
-  if (!priceDisplay || !finalPriceElement) {
-    console.error('Required price display elements not found');
-    return;
-  }
+        if (!priceDisplay || !finalPriceElement) {
+          console.error('Required price display elements not found');
+          return;
+        }
 
-  try {
-    // Show the price display
-    priceDisplay.classList.remove('hidden');
+        try {
+          // Show the price display
+          priceDisplay.classList.remove('hidden');
 
-    // Calculate prices - start with variant price with markup
-    let finalPrice = parseFloat(this.selectedVariantData.priceWithMarkup) || 0;
-    
-    // Add color price if selected
-    if (this.selectedColorData && this.selectedColorData.price) {
-      finalPrice += parseFloat(this.selectedColorData.price);
-    }
+          // Calculate prices - start with variant price with markup
+          let finalPrice = parseFloat(this.selectedVariantData.priceWithMarkup) || 0;
 
-    console.log('Final price calculation:', {
-      variantPrice: this.selectedVariantData.priceWithMarkup,
-      colorPrice: this.selectedColorData?.price || 0,
-      finalPrice: finalPrice
-    });
+          // Add color price if selected
+          if (this.selectedColorData && this.selectedColorData.price) {
+            finalPrice += parseFloat(this.selectedColorData.price);
+          }
 
-    // Update size info
-    if (selectedSizeText && this.selectedVariantData.size) {
-      selectedSizeText.textContent = this.selectedVariantData.size;
-    }
+          console.log('Final price calculation:', {
+            variantPrice: this.selectedVariantData.priceWithMarkup,
+            colorPrice: this.selectedColorData?.price || 0,
+            finalPrice: finalPrice
+          });
 
-    // Check if there's a discount
-    const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
-    
-    if (discountValue > 0) {
-      // Show original price with strikethrough
-      const originalPrice = finalPrice;
-      const discountedPrice = originalPrice - (originalPrice * discountValue / 100);
-      
-      if (originalPriceContainer && originalPriceElement) {
-        originalPriceContainer.classList.remove('hidden');
-        originalPriceElement.textContent = `₱${originalPrice.toFixed(2)}`;
+          // Update size info
+          if (selectedSizeText && this.selectedVariantData.size) {
+            selectedSizeText.textContent = this.selectedVariantData.size;
+          }
+
+          // Check if there's a discount
+          const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
+
+          if (discountValue > 0) {
+            // Show original price with strikethrough
+            const originalPrice = finalPrice;
+            const discountedPrice = originalPrice - (originalPrice * discountValue / 100);
+
+            if (originalPriceContainer && originalPriceElement) {
+              originalPriceContainer.classList.remove('hidden');
+              originalPriceElement.textContent = `₱${originalPrice.toFixed(2)}`;
+            }
+
+            finalPriceElement.textContent = `₱${discountedPrice.toFixed(2)}`;
+
+            // Show discount badge
+            if (discountBadge && discountPercent) {
+              discountBadge.classList.remove('hidden');
+              discountPercent.textContent = discountValue.toFixed(0);
+            }
+          } else {
+            // No discount, just show final price
+            if (originalPriceContainer) {
+              originalPriceContainer.classList.add('hidden');
+            }
+            finalPriceElement.textContent = `₱${finalPrice.toFixed(2)}`;
+            if (discountBadge) {
+              discountBadge.classList.add('hidden');
+            }
+          }
+        } catch (error) {
+          console.error('Error updating product header price:', error);
+        }
       }
-      
-      finalPriceElement.textContent = `₱${discountedPrice.toFixed(2)}`;
-      
-      // Show discount badge
-      if (discountBadge && discountPercent) {
-        discountBadge.classList.remove('hidden');
-        discountPercent.textContent = discountValue.toFixed(0);
-      }
-    } else {
-      // No discount, just show final price
-      if (originalPriceContainer) {
-        originalPriceContainer.classList.add('hidden');
-      }
-      finalPriceElement.textContent = `₱${finalPrice.toFixed(2)}`;
-      if (discountBadge) {
-        discountBadge.classList.add('hidden');
-      }
-    }
-  } catch (error) {
-    console.error('Error updating product header price:', error);
-  }
-}
 
-// New method to hide product header price
-hideProductHeaderPrice() {
-  const priceDisplay = document.getElementById('product-price-display');
-  if (priceDisplay) {
-    priceDisplay.classList.add('hidden');
-  }
-}
+      // New method to hide product header price
+      hideProductHeaderPrice() {
+        const priceDisplay = document.getElementById('product-price-display');
+        if (priceDisplay) {
+          priceDisplay.classList.add('hidden');
+        }
+      }
 
       updateTotalPrice() {
         const {

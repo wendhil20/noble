@@ -944,7 +944,7 @@ $avg_stmt->close();
                     </div>
 
                     <!-- Final Price -->
-                    <div class="text-2xl lg:text-3xl font-bold text-green-600" id="final-price">₱0.00</div>
+                    <div class="text-2xl lg:text-3xl text-black" id="final-price">₱0.00</div>
 
                     <!-- Discount Badge -->
                     <div id="discount-badge" class="hidden mt-1">
@@ -1062,7 +1062,7 @@ $avg_stmt->close();
               <div class="mb-6 lg:mb-10" id="color-selection-section">
                 <div class="flex items-center justify-between mb-4">
                   <!-- Product Image - Mobile Sidebar Only -->
-                  <h3 class="text-base lg:text-xl  text-gray-800">Choose Color</h3>
+                  <h3 class="text-base lg:text-xl  text-gray-800">Choose type</h3>
                   <div class="text-xs lg:text-sm text-gray-500">Required</div>
                   <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
                     <!-- Product Image - Mobile Sidebar Only -->
@@ -1601,9 +1601,9 @@ $avg_stmt->close();
 
           <!-- Desktop Sidebar Trigger (Fixed on right side) -->
           <button id="desktopSidebarTrigger"
-            class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-black text-white px-3 py-6 rounded-l-lg shadow-lg hover:shadow-xl transition-all hover:px-4 flex-col items-center gap-2 group">
-            <span class="text-xs  writing-mode-vertical transform rotate-180">Related Products</span>
-            <span class="text-xs bg-white text-orange-600 rounded-full w-6 h-6 flex items-center justify-center font-bold"><?= $related_products->num_rows ?></span>
+            class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-black text-white px-3 py-6 rounded-l-lg shadow-lg hover:bg-gray-200 hover:text-black transition-all hover:px-4 flex-col items-center gap-2 group">
+            <span class="text-xs writing-mode-vertical transform rotate-180">Related Products</span>
+            <span class="text-xs bg-white text-orange-600 rounded-full w-6 h-6 flex items-center justify-center "><?= $related_products->num_rows ?></span>
           </button>
 
           <!-- Overlay for sidebars -->

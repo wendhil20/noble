@@ -530,12 +530,12 @@ $display_categories = getNavigationData($conn);
           </button>
         <?php endif; ?>
 
-        <a href="../inspiration/index.php"
+        <a href="../otherpage/inspiration.php"
           class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
           Inspiration
         </a>
 
-        <a href="../findpro/index.php"
+        <a href="../otheepage/findpro.php"
           class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
           Find Pro
         </a>
@@ -966,7 +966,7 @@ $display_categories = getNavigationData($conn);
                             <img
                               src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
                               alt="<?= htmlspecialchars($category['name']) ?>"
-                              class="w-8 h-8 object-cover rounded"
+                              class="w-8 h-8 object-contain rounded"
                               onerror="this.style.display='none'">
                           </div>
                         <?php endif; ?>
@@ -2365,8 +2365,7 @@ $display_categories = getNavigationData($conn);
     </div>
   </div>
 
-
-<!-- New Products Modal - List Style -->
+<!-- New Products Modal - List Style with Scroll Buttons -->
 <?php if (count($newProducts) > 0): ?>
   <!-- Modal Overlay -->
   <div x-show="newProductsModal"
@@ -2389,7 +2388,8 @@ $display_categories = getNavigationData($conn);
       x-transition:leave-start="opacity-100 scale-100"
       x-transition:leave-end="opacity-0 scale-95"
       @click.stop
-      class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+      x-data="{ showScrollUp: false, showScrollDown: true }"
+      class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative">
 
       <!-- Modal Header -->
       <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
@@ -2408,8 +2408,24 @@ $display_categories = getNavigationData($conn);
         </button>
       </div>
 
+      <!-- Scroll Up Button -->
+      <button x-show="showScrollUp"
+        x-transition
+        @click="$refs.modalBody.scrollBy({ top: -300, behavior: 'smooth' })"
+        class="absolute top-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+        </svg>
+      </button>
+
       <!-- Modal Body - List View -->
-      <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+      <div x-ref="modalBody"
+        @scroll="
+          showScrollUp = $el.scrollTop > 100;
+          showScrollDown = $el.scrollTop < ($el.scrollHeight - $el.clientHeight - 100);
+        "
+        class="flex-1 overflow-y-auto" 
+        style="-webkit-overflow-scrolling: touch;">
         <div class="divide-y divide-gray-200">
           <?php foreach ($newProducts as $index => $product): ?>
             <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
@@ -2487,10 +2503,9 @@ $display_categories = getNavigationData($conn);
                   <!-- Action Button -->
                   <form action="product_view" method="GET">
                     <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-                    <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4  transition-all">
+                    <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                       </svg>
                       View Details
                     </button>
@@ -2502,18 +2517,28 @@ $display_categories = getNavigationData($conn);
         </div>
       </div>
 
+      <!-- Scroll Down Button -->
+      <button x-show="showScrollDown"
+        x-transition
+        @click="$refs.modalBody.scrollBy({ top: 300, behavior: 'smooth' })"
+        class="absolute bottom-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
       <!-- Modal Footer -->
       <div class="p-4 bg-gray-50 border-t shrink-0">
         <div class="flex flex-col sm:flex-row gap-2">
           <button onclick="window.location.href='allproduct'"
-            class="flex-1 bg-black hover:bg-orange-600 text-white  py-2.5 px-4  transition-all flex items-center justify-center gap-2 text-sm">
+            class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             View All Products
           </button>
           <button @click="newProductsModal = false"
-            class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700  transition-all text-sm">
+            class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all text-sm">
             Close
           </button>
         </div>

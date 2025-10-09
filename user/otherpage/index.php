@@ -622,7 +622,7 @@ handleQueryError($conn, "New Status Query");
         <div class="relative overflow-hidden">
             <a href="allproduct.php?discount=20" class="relative group flex items-center justify-center">
                 <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
                     <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
                 </div>
             </a>

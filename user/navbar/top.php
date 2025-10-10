@@ -1262,9 +1262,9 @@ $display_categories = getNavigationData($conn);
                   ?>
                     <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
                       <?php if (!empty($item['type_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
                       <?php elseif (!empty($item['main_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                        <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
                       <?php else: ?>
                         <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                           <i class="fas fa-image text-gray-400 text-xs"></i>

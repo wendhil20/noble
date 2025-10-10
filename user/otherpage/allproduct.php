@@ -37,72 +37,56 @@ $category_filter = $_GET['category'] ?? '';
 $subcategory_filter = $_GET['sub'] ?? '';
 $discount_filter = $_GET['discount'] ?? '';
 
-// Build query
+// Simple query - get ALL products with LEFT JOIN
 $material_query = "
     SELECT 
-        pv.*, 
-        pv.origin,
-        pt.type_name,
-        pt.type_image,
-        pt.product_id,
+        p.id AS product_id,
         p.product_name,
         p.codename,
         p.main_image,
         p.sub_images,
         p.description,
-        pc.id AS color_id,
-        pc.color_name AS color,
-        pc.color_code,
-        pc.price AS color_price
-    FROM product_variants pv
-    INNER JOIN product_types pt ON pv.type_id = pt.id
-    INNER JOIN products p ON pt.product_id = p.id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id 
-        AND pc.id = (SELECT MIN(id) FROM product_colors WHERE product_id = p.id)
+        pt.id AS type_id,
+        pt.type_name,
+        pt.type_image,
+        GROUP_CONCAT(
+            DISTINCT
+            JSON_OBJECT(
+                'variant_id', pv.id,
+                'name', pv.namevariant,
+                'size', pv.size,
+                'price', pv.price,
+                'percent', pv.percent,
+                'discount', pv.discount,
+                'origin', pv.origin,
+                'category', pv.category_name,
+                'subcategory', pv.subcategory_name
+            )
+            ORDER BY pv.size
+        ) AS variants,
+        GROUP_CONCAT(
+            DISTINCT
+            JSON_OBJECT(
+                'color_id', pc.id,
+                'color_name', pc.color_name,
+                'color_code', pc.color_code,
+                'color_price', pc.price
+            )
+        ) AS colors
+    FROM products p
+    LEFT JOIN product_types pt ON p.id = pt.product_id
+    LEFT JOIN product_variants pv ON pt.id = pv.type_id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
+    GROUP BY p.id, pt.id
+    ORDER BY p.id DESC
 ";
 
-$where_conditions = [];
-$params = [];
-$param_types = "";
-
-if (!empty($category_filter)) {
-    $where_conditions[] = "pv.category_name = ?";
-    $params[] = $category_filter;
-    $param_types .= "s";
-}
-
-if (!empty($subcategory_filter)) {
-    $where_conditions[] = "pv.subcategory_name = ?";
-    $params[] = $subcategory_filter;
-    $param_types .= "s";
-}
-
-if (!empty($discount_filter)) {
-    if ($discount_filter == "20") {
-        $where_conditions[] = "pv.discount <= ?";
-        $params[] = 20;
-        $param_types .= "i";
-    } elseif ($discount_filter == "30") {
-        $where_conditions[] = "pv.discount = ?";
-        $params[] = 30;
-        $param_types .= "i";
-    }
-}
-
-if (!empty($where_conditions)) {
-    $material_query .= " WHERE " . implode(" AND ", $where_conditions);
-}
-
-$material_query .= " ORDER BY pv.discount DESC, pv.percent ASC, p.id, pc.id";
-
 try {
-    if (!empty($params)) {
-        $stmt = $conn->prepare($material_query);
-        $stmt->bind_param($param_types, ...$params);
-        $stmt->execute();
-        $material_results = $stmt->get_result();
-    } else {
-        $material_results = mysqli_query($conn, $material_query);
+    $material_results = mysqli_query($conn, $material_query);
+    
+    if (!$material_results) {
+        error_log("Query failed: " . mysqli_error($conn));
+        $material_results = false;
     }
 } catch (Exception $e) {
     error_log("Database query error: " . $e->getMessage());
@@ -159,6 +143,7 @@ function process_product_images($main_image, $sub_images, $type_image) {
     return $images;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -503,56 +488,111 @@ function process_product_images($main_image, $sub_images, $type_image) {
             </div>
         </aside>
 
-        <!-- Products -->
-        <main class="flex-1 p-6">
-            <div class="mb-4 text-sm text-gray-600">
-                Showing <span id="displayCount">0</span> of <span id="totalCount">0</span> products
-            </div>
+      <!-- In the products section -->
+<main class="flex-1 p-6">
+    <div class="mb-4 text-sm text-gray-600">
+        Showing <span id="displayCount">0</span> of <span id="totalCount">0</span> products
+    </div>
 
-            <!-- Hidden product data -->
-            <div id="productData" style="display: none;">
-                <?php if ($material_results && mysqli_num_rows($material_results) > 0): ?>
-                    <?php while ($row = mysqli_fetch_assoc($material_results)):
-                        $pricing = calculate_price($row['price'], $row['percent'] ?? 0, $row['discount'] ?? 0);
-                        $all_images = process_product_images($row['main_image'], $row['sub_images'], $row['type_image']);
-                        $discount = (float)($row['discount'] ?? 0);
-                        
-                        $product_json = json_encode([
-                            'id' => $row['product_id'],
-                            'name' => $row['namevariant'],
-                            'price' => $pricing['final'],
-                            'original_price' => $pricing['original'],
-                            'discount' => $discount,
-                            'origin' => $row['origin'] ?? 'local',
-                            'color' => $row['color'] ?? 'N/A',
-                            'size' => $row['size'] ?? 'N/A',
-                            'images' => $all_images,
-                            'type_name' => $row['type_name'] ?? '',
-                            'variant_id' => $row['id'] ?? 0,
-                            'color_id' => $row['color_id'] ?? 0,
-                            'color_price' => $row['color_price'] ?? 0,
-                            'variant_price' => $row['price'] ?? 0,
-                            'percent' => $row['percent'] ?? 0
-                        ]);
-                    ?>
-                        <div class="product-data-item" data-product='<?= $product_json ?>'></div>
-                    <?php endwhile; ?>
-                <?php endif; ?>
-            </div>
+    <!-- Hidden product data -->
+    <div id="productData" style="display: none;">
+        <?php if ($material_results && mysqli_num_rows($material_results) > 0): ?>
+      <?php 
+$productsGrouped = [];
 
-            <div id="productsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
+while ($row = mysqli_fetch_assoc($material_results)):
+    $product_id = $row['product_id'];
+    
+    // Each row is now ONE unique product
+    $all_images = process_product_images($row['main_image'], $row['sub_images'], $row['type_image']);
+    
+    // Handle variants
+    $variants = [];
+    if (!empty($row['variants'])) {
+        $variants = json_decode('[' . $row['variants'] . ']', true);
+    } else {
+        $variants = [[
+            'variant_id' => 0,
+            'name' => 'Standard',
+            'size' => 'One Size',
+            'price' => 0,
+            'percent' => 0,
+            'discount' => 0,
+            'origin' => 'local',
+            'category' => $row['codename'] ?? '',
+            'subcategory' => ''
+        ]];
+    }
+    
+    // Handle colors - now comes as JSON array
+    $colors = [];
+    if (!empty($row['colors'])) {
+        $colorsData = json_decode('[' . $row['colors'] . ']', true);
+        foreach ($colorsData as $colorData) {
+            if (!empty($colorData['color_id'])) {
+                $colors[] = [
+                    'id' => $colorData['color_id'],
+                    'name' => $colorData['color_name'] ?? 'Default',
+                    'code' => $colorData['color_code'] ?? '',
+                    'price' => $colorData['color_price'] ?? 0
+                ];
+            }
+        }
+    }
+    
+    $first_variant = $variants[0] ?? [];
+    $first_color = $colors[0] ?? ['id' => 0, 'name' => 'Default', 'code' => '', 'price' => 0];
+    
+    $pricing = calculate_price(
+        $first_variant['price'] ?? 0, 
+        $first_variant['percent'] ?? 0, 
+        $first_variant['discount'] ?? 0
+    );
+    
+    $product = [
+        'id' => $product_id,
+        'name' => $row['product_name'],
+        'type_name' => $row['type_name'] ?? 'Standard',
+        'type_id' => $row['type_id'] ?? 0,
+        'images' => $all_images,
+        'variants' => $variants,
+        'colors' => $colors,
+        'initial_variant' => [
+            'variant_id' => $first_variant['variant_id'] ?? 0,
+            'name' => $first_variant['name'] ?? 'Standard',
+            'size' => $first_variant['size'] ?? 'One Size',
+            'price' => $pricing['final'],
+            'original_price' => $pricing['original'],
+            'discount' => $first_variant['discount'] ?? 0,
+            'origin' => $first_variant['origin'] ?? 'local',
+            'variant_price' => $first_variant['price'] ?? 0,
+            'percent' => $first_variant['percent'] ?? 0,
+            'color' => $first_color['name'],
+            'color_id' => $first_color['id'],
+            'color_price' => $first_color['price']
+        ]
+    ];
+    
+    $product_json = json_encode($product);
+?>
+    <div class="product-data-item" data-product='<?= $product_json ?>'></div>
+<?php endwhile; ?>
+        <?php endif; ?>
+    </div>
 
-            <div class="text-center">
-                <button id="loadMoreBtn" class="hidden px-8 py-3 bg-black text-white hover:bg-orange-600 ">
-                    Load More Products
-                </button>
-            </div>
+    <div id="productsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
 
-            <div id="noResults" class="hidden text-center py-20">
-                <h3 class="text-2xl font-bold mb-3">No products found</h3>
-                <p class="text-gray-500">Try adjusting your filters</p>
-            </div>
-        </main>
+    <div class="text-center">
+        <button id="loadMoreBtn" class="hidden px-8 py-3 bg-black text-white hover:bg-orange-600">
+            Load More Products
+        </button>
+    </div>
+
+    <div id="noResults" class="hidden text-center py-20">
+        <h3 class="text-2xl font-bold mb-3">No products found</h3>
+        <p class="text-gray-500">Try adjusting your filters</p>
+    </div>
+</main>
     </div>
 
     <?php include '../navbar/footer.php'; ?>
@@ -580,12 +620,47 @@ const Utils = {
     }
 };
 
-// Load products from PHP
-const allProducts = [];
+// Load products from PHP and DEDUPLICATE by product ID
+const allProductsRaw = [];
+const productMap = new Map();
+
 document.querySelectorAll('.product-data-item').forEach(item => {
     const productData = JSON.parse(item.getAttribute('data-product'));
-    allProducts.push(productData);
+    allProductsRaw.push(productData);
+    
+    const productId = productData.id;
+    
+    if (!productMap.has(productId)) {
+        // First time seeing this product - create base entry
+        productMap.set(productId, {
+            id: productData.id,
+            name: productData.name,
+            type_name: productData.type_name || '',
+            type_id: productData.type_id || 0,
+            images: productData.images,
+            variants: productData.variants || [],
+            colors: [],
+            initial_variant: productData.initial_variant || {}
+        });
+    }
+    
+    const product = productMap.get(productId);
+    
+    // Add color if not already in array
+    if (productData.color && productData.color !== 'N/A') {
+        const colorExists = product.colors.some(c => c.id === productData.color_id);
+        if (!colorExists) {
+            product.colors.push({
+                id: productData.color_id,
+                name: productData.color,
+                code: productData.color_code,
+                price: productData.color_price
+            });
+        }
+    }
 });
+
+const allProducts = Array.from(productMap.values());
 
 class MobileFilterManager {
     constructor() {
@@ -669,25 +744,13 @@ class ProductFilter {
     }
 
     initSearchFilters() {
-        // Add the main search input from header
-        ['searchInput', 'searchFilter', 'mobileSearchFilter'].forEach(id => {
-            const input = document.getElementById(id);
-            input?.addEventListener('input', (e) => {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
                 this.filters.search = e.target.value.toLowerCase().trim();
-                this.syncSearchInputs(id, e.target.value);
                 this.debouncedFilter();
             });
-        });
-    }
-
-    syncSearchInputs(sourceId, value) {
-        // Sync all search inputs
-        ['searchInput', 'searchFilter', 'mobileSearchFilter'].forEach(id => {
-            if (id !== sourceId) {
-                const input = document.getElementById(id);
-                if (input && input.value !== value) input.value = value;
-            }
-        });
+        }
     }
 
     initPriceFilters() {
@@ -707,7 +770,6 @@ class ProductFilter {
                     const value = parseInt(e.target.value);
                     this.filters[filterKey] = value;
                     display.textContent = Utils.formatNumber(value);
-                    this.syncPriceSliders(filterKey, value);
                     this.debouncedFilter();
                 });
             }
@@ -719,7 +781,6 @@ class ProductFilter {
             const select = document.getElementById(id);
             select?.addEventListener('change', (e) => {
                 this.filters.sort = e.target.value;
-                this.syncSelects(id, e.target.value);
                 this.applyFilters();
             });
         });
@@ -754,25 +815,6 @@ class ProductFilter {
         });
     }
 
-    syncPriceSliders(type, value) {
-        const ids = type === 'minPrice' 
-            ? ['minPrice', 'mobileMinPrice', 'minValue', 'mobileMinValue']
-            : ['maxPrice', 'mobileMaxPrice', 'maxValue', 'mobileMaxValue'];
-        
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (el.tagName === 'INPUT') el.value = value;
-            else el.textContent = Utils.formatNumber(value);
-        });
-    }
-
-    syncSelects(sourceId, value) {
-        const targetId = sourceId.includes('mobile') ? 'sortFilter' : 'mobileSortFilter';
-        const target = document.getElementById(targetId);
-        if (target && target.value !== value) target.value = value;
-    }
-
     applyFilters() {
         this.filteredProducts = this.allProducts.filter(p => 
             this.matchesSearch(p) && this.matchesOrigin(p) && 
@@ -785,40 +827,54 @@ class ProductFilter {
 
         this.displayedCount = 0;
         this.grid.innerHTML = '';
-        this.updateDisplay();
+        this.loadMore();
     }
 
     matchesSearch(p) {
         if (!this.filters.search) return true;
         
         const searchTerm = this.filters.search;
+        const initial = p.initial_variant || {};
+        
         return p.name.toLowerCase().includes(searchTerm) ||
-               (p.color && p.color.toLowerCase().includes(searchTerm)) ||
-               (p.size && p.size.toLowerCase().includes(searchTerm)) ||
-               (p.type_name && p.type_name.toLowerCase().includes(searchTerm));
+               (initial.size && initial.size.toLowerCase().includes(searchTerm)) ||
+               (p.type_name && p.type_name.toLowerCase().includes(searchTerm)) ||
+               (p.colors && p.colors.some(c => c.name.toLowerCase().includes(searchTerm))) ||
+               (p.variants && p.variants.some(v => 
+                   v.size.toLowerCase().includes(searchTerm) ||
+                   v.name.toLowerCase().includes(searchTerm)
+               ));
     }
 
     matchesOrigin(p) {
-        return this.filters.origin === 'all' || p.origin === this.filters.origin;
+        if (this.filters.origin === 'all') return true;
+        const initial = p.initial_variant || {};
+        return initial.origin === this.filters.origin;
     }
 
     matchesDiscount(p) {
-        const discount = parseFloat(p.discount || 0);
+        const initial = p.initial_variant || {};
+        const discount = parseFloat(initial.discount || 0);
         return this.filters.discount === 'all' || 
                (this.filters.discount === 'discounted' && discount > 0) ||
                (this.filters.discount === 'no-discount' && discount === 0);
     }
 
     matchesPriceRange(p) {
-        return p.price >= this.filters.minPrice && p.price <= this.filters.maxPrice;
+        const initial = p.initial_variant || {};
+        const price = initial.price || 0;
+        return price >= this.filters.minPrice && price <= this.filters.maxPrice;
     }
 
     sortProducts() {
         this.filteredProducts.sort((a, b) => {
+            const aInitial = a.initial_variant || {};
+            const bInitial = b.initial_variant || {};
+            
             switch (this.filters.sort) {
-                case 'price-low': return a.price - b.price;
-                case 'price-high': return b.price - a.price;
-                case 'discount-high': return b.discount - a.discount;
+                case 'price-low': return (aInitial.price || 0) - (bInitial.price || 0);
+                case 'price-high': return (bInitial.price || 0) - (aInitial.price || 0);
+                case 'discount-high': return (bInitial.discount || 0) - (aInitial.discount || 0);
                 case 'name': return a.name.localeCompare(b.name);
                 default: return 0;
             }
@@ -826,19 +882,16 @@ class ProductFilter {
     }
 
     loadMore() {
-        this.displayedCount += this.productsPerPage;
-        this.updateDisplay();
-    }
+        const startIndex = this.displayedCount;
+        const endIndex = startIndex + this.productsPerPage;
+        const toDisplay = this.filteredProducts.slice(startIndex, endIndex);
 
-    updateDisplay() {
-        const toDisplay = this.filteredProducts.slice(0, this.displayedCount + this.productsPerPage);
-        const newProducts = toDisplay.slice(this.displayedCount);
-
-        newProducts.forEach(product => {
+        toDisplay.forEach(product => {
             this.grid.appendChild(this.createProductCard(product));
         });
 
-        this.displayedCount = toDisplay.length;
+        this.displayedCount += toDisplay.length;
+        
         this.displayCount.textContent = this.displayedCount;
         this.totalCount.textContent = this.filteredProducts.length;
 
@@ -857,38 +910,120 @@ class ProductFilter {
         }
     }
 
-     createProductCard(product) {
+    calculateVariantPrice(base_price, percent, discount) {
+        const base = parseFloat(base_price || 0);
+        const markup_percent = parseFloat(percent || 0);
+        const discount_percent = parseFloat(discount || 0);
+
+        const price_with_markup = base + (base * markup_percent / 100);
+        const final_price = price_with_markup - (price_with_markup * discount_percent / 100);
+
+        return {
+            original: price_with_markup,
+            final: final_price
+        };
+    }
+
+    createProductCard(product) {
         const card = document.createElement('article');
         card.className = 'product-card p-3 relative';
         
+        const initial = product.initial_variant || {};
+        const variants = product.variants || [];
+        const colors = product.colors || [];
+        
+        // Determine if product has multiple options
+        const hasMultipleVariants = variants.length > 1;
+        const hasMultipleColors = colors.length > 1;
+        const showAddToCart = !hasMultipleVariants && !hasMultipleColors;
+        
+        // Create variant buttons HTML (only if multiple variants)
+        const variantButtons = hasMultipleVariants ? variants.map((v, idx) => {
+            const pricing = this.calculateVariantPrice(v.price, v.percent, v.discount);
+            const defaultColor = colors.length > 0 ? colors[0] : initial;
+            
+            return `
+                <button type="button" 
+                        class="variant-btn px-3 py-2 border rounded hover:border-orange-500 transition text-sm ${idx === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300'}"
+                        data-variant='${JSON.stringify({
+                            variant_id: v.variant_id,
+                            name: v.name,
+                            size: v.size,
+                            price: pricing.final,
+                            original_price: pricing.original,
+                            discount: v.discount,
+                            origin: v.origin,
+                            variant_price: v.price,
+                            percent: v.percent,
+                            color: defaultColor.name || initial.color,
+                            color_id: defaultColor.id || initial.color_id,
+                            color_price: defaultColor.price || initial.color_price
+                        }).replace(/'/g, '&apos;')}'>
+                    ${v.size}
+                </button>
+            `;
+        }).join('') : '';
+        
+        // Create color buttons HTML (only if multiple colors)
+        const colorButtons = hasMultipleColors ? colors.map((color, idx) => `
+            <button type="button"
+                    class="color-btn px-3 py-2 border rounded hover:border-orange-500 transition text-sm ${idx === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300'}"
+                    data-color='${JSON.stringify({
+                        id: color.id,
+                        name: color.name,
+                        code: color.code,
+                        price: color.price
+                    }).replace(/'/g, '&apos;')}'>
+                ${color.name}
+            </button>
+        `).join('') : '';
+        
         card.innerHTML = `
-            ${product.discount > 0 ? `
-                <div class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                    -${product.discount}%
+            ${initial.discount > 0 ? `
+                <div class="discount-badge absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                    -${initial.discount}%
                 </div>
             ` : ''}
             
             <div class="aspect-square mb-3 overflow-hidden">
-                <img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-contain">
+                <img src="${product.images?.[0] || '../img/placeholder.jpg'}" alt="${product.name}" class="w-full h-full object-contain product-image">
             </div>
             
-            <h3 class="text-lg font-semibold mb-2 line-clamp-2">${product.name}</h3>
+            <h3 class="text-lg font-semibold mb-3 line-clamp-2 product-name">${product.name}</h3>
             
-   
+            ${hasMultipleColors ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-600 mb-2 font-medium">Color:</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${colorButtons}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${hasMultipleVariants ? `
+                <div class="mb-3">
+                    <p class="text-xs text-gray-600 mb-2 font-medium">Size:</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${variantButtons}
+                    </div>
+                </div>
+            ` : ''}
+
             <div class="mb-3 space-y-1">
                 <div class="text-xs text-gray-600">
-                    <div>Color: ${product.color}</div>
-                    <div>Size: ${product.size}</div>
+                    <div>Color: <span class="product-color">${initial.color || 'N/A'}</span></div>
+                    <div>Size: <span class="selected-size">${initial.size || 'N/A'}</span></div>
                 </div>
             </div>
-            <div class="mb-3">
-                ${product.discount > 0 ? `
-                    <p class="text-xs text-gray-400 line-through">₱${product.original_price.toLocaleString()}</p>
-                ` : ''}
+
+            <div class="price-container mb-3">
+                ${initial.discount > 0 ? `
+                    <p class="text-xs text-gray-400 line-through original-price">₱${(initial.original_price || 0).toLocaleString()}</p>
+                ` : '<p class="text-xs text-gray-400 line-through original-price hidden"></p>'}
                 <div class="flex items-center justify-between">
-                    <p class="text-xl font-bold text-black">₱${product.price.toLocaleString()}</p>
-                    <span class="px-2 py-1 text-xs font-medium bg-black text-white ">
-                        ${product.origin}
+                    <p class="text-xl font-bold text-black final-price">₱${(initial.price || 0).toLocaleString()}</p>
+                    <span class="px-2 py-1 text-xs font-medium bg-black text-white product-origin">
+                        ${initial.origin || 'local'}
                     </span>
                 </div>
             </div>
@@ -896,34 +1031,182 @@ class ProductFilter {
             <div class="space-y-2">
                 <form action="product_view" method="GET">
                     <input type="hidden" name="id" value="${product.id}">
-                    <button type="submit" class="w-full bg-black text-white py-2  hover:bg-black text-sm transition">
+                    <button type="submit" class="w-full bg-black text-white py-2 hover:bg-black text-sm transition">
                         View Product
                     </button>
                 </form>
                 
-                <form class="productForm" data-product-id="${product.id}">
-                    <input type="hidden" name="product_id" value="${product.id}">
-                    <input type="hidden" name="selected_type" value="${product.type_name}">
-                    <input type="hidden" name="selected_variant" value="${product.name}">
-                    <input type="hidden" name="variant_id" value="${product.variant_id}">
-                    <input type="hidden" name="selected_color_id" value="${product.color_id}">
-                    <input type="hidden" name="selected_color_name" value="${product.color}">
-                    <input type="hidden" name="color_price" value="${product.color_price}">
-                    <input type="hidden" name="variant_price" value="${product.variant_price}">
-                    <input type="hidden" name="total_price" value="${product.price}">
-                    <input type="hidden" name="discount" value="${product.discount}">
-                    <input type="hidden" name="percent" value="${product.percent}">
-                    <input type="hidden" name="origin" value="${product.origin}">
-                    <input type="hidden" name="return_url" value="index">
-                    
-                    <button type="submit" class="w-full bg-black text-white py-2     hover:bg-gray-800 text-sm flex items-center justify-center gap-2 transition">
-                        <i class="fas fa-shopping-cart"></i> Add to Cart
-                    </button>
-                </form>
+                ${showAddToCart ? `
+                    <form class="productForm" data-product-id="${product.id}">
+                        <input type="hidden" name="product_id" value="${product.id}">
+                        <input type="hidden" name="selected_type" value="${product.type_name || ''}">
+                        <input type="hidden" name="selected_variant" value="${initial.name || ''}" class="variant-name-input">
+                        <input type="hidden" name="variant_id" value="${initial.variant_id || 0}" class="variant-id-input">
+                        <input type="hidden" name="selected_color_id" value="${initial.color_id || 0}" class="color-id-input">
+                        <input type="hidden" name="selected_color_name" value="${initial.color || ''}" class="color-name-input">
+                        <input type="hidden" name="color_price" value="${initial.color_price || 0}" class="color-price-input">
+                        <input type="hidden" name="variant_price" value="${initial.variant_price || 0}" class="variant-price-input">
+                        <input type="hidden" name="total_price" value="${initial.price || 0}" class="total-price-input">
+                        <input type="hidden" name="discount" value="${initial.discount || 0}" class="discount-input">
+                        <input type="hidden" name="percent" value="${initial.percent || 0}" class="percent-input">
+                        <input type="hidden" name="origin" value="${initial.origin || 'local'}" class="origin-input">
+                        <input type="hidden" name="return_url" value="index">
+                        
+                        <button type="submit" class="w-full bg-black text-white py-2 hover:bg-gray-800 text-sm flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                        </button>
+                    </form>
+                ` : ''}
             </div>
         `;
         
+        // Only add variant listeners if there are multiple variants
+        if (hasMultipleVariants) {
+            card.querySelectorAll('.variant-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const variantData = JSON.parse(btn.dataset.variant);
+                    const form = card.querySelector('.productForm');
+                    
+                    if (form) {
+                        form.querySelector('.variant-id-input').value = variantData.variant_id;
+                        form.querySelector('.variant-name-input').value = variantData.name;
+                        
+                        const sizeEl = card.querySelector('.selected-size');
+                        if (sizeEl) sizeEl.textContent = variantData.size;
+                        
+                        form.querySelector('.variant-price-input').value = variantData.variant_price;
+                        form.querySelector('.total-price-input').value = variantData.price;
+                        form.querySelector('.discount-input').value = variantData.discount;
+                        form.querySelector('.percent-input').value = variantData.percent;
+                        form.querySelector('.origin-input').value = variantData.origin;
+                        
+                        const priceEl = card.querySelector('.final-price');
+                        if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
+                        
+                        const originEl = card.querySelector('.product-origin');
+                        if (originEl) originEl.textContent = variantData.origin;
+                        
+                        if (variantData.color) {
+                            form.querySelector('.color-id-input').value = variantData.color_id;
+                            form.querySelector('.color-name-input').value = variantData.color;
+                            form.querySelector('.color-price-input').value = variantData.color_price;
+                            const colorEl = card.querySelector('.product-color');
+                            if (colorEl) colorEl.textContent = variantData.color;
+                        }
+                        
+                        const originalPriceEl = card.querySelector('.original-price');
+                        if (originalPriceEl) {
+                            if (variantData.discount > 0) {
+                                originalPriceEl.textContent = `₱${variantData.original_price.toLocaleString()}`;
+                                originalPriceEl.classList.remove('hidden');
+                            } else {
+                                originalPriceEl.classList.add('hidden');
+                            }
+                        }
+                        
+                        let discountBadge = card.querySelector('.discount-badge');
+                        if (variantData.discount > 0) {
+                            if (discountBadge) {
+                                discountBadge.textContent = `-${variantData.discount}%`;
+                            } else {
+                                discountBadge = document.createElement('div');
+                                discountBadge.className = 'discount-badge absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10';
+                                discountBadge.textContent = `-${variantData.discount}%`;
+                                card.insertBefore(discountBadge, card.firstChild);
+                            }
+                        } else if (discountBadge) {
+                            discountBadge.remove();
+                        }
+                    }
+                    
+                    card.querySelectorAll('.variant-btn').forEach(b => {
+                        b.classList.remove('border-orange-500', 'bg-orange-50');
+                        b.classList.add('border-gray-300');
+                    });
+                    btn.classList.add('border-orange-500', 'bg-orange-50');
+                    btn.classList.remove('border-gray-300');
+                });
+            });
+        }
+        
+        // Only add color listeners if there are multiple colors
+        if (hasMultipleColors) {
+            card.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const colorData = JSON.parse(btn.dataset.color);
+                    this.updateProductCard(card, colorData, 'color');
+                    
+                    card.querySelectorAll('.color-btn').forEach(b => {
+                        b.classList.remove('border-orange-500', 'bg-orange-50');
+                        b.classList.add('border-gray-300');
+                    });
+                    btn.classList.add('border-orange-500', 'bg-orange-50');
+                    btn.classList.remove('border-gray-300');
+                });
+            });
+        }
+        
         return card;
+    }
+
+    updateProductCard(card, data, type) {
+        const form = card.querySelector('.productForm');
+        
+        if (type === 'variant') {
+            card.querySelector('.selected-size').textContent = data.size;
+            card.querySelector('.final-price').textContent = `₱${data.price.toLocaleString()}`;
+            card.querySelector('.product-origin').textContent = data.origin;
+            
+            const originalPriceEl = card.querySelector('.original-price');
+            if (data.discount > 0) {
+                originalPriceEl.textContent = `₱${data.original_price.toLocaleString()}`;
+                originalPriceEl.classList.remove('hidden');
+            } else {
+                originalPriceEl.classList.add('hidden');
+            }
+            
+            let discountBadge = card.querySelector('.discount-badge');
+            if (data.discount > 0) {
+                if (discountBadge) {
+                    discountBadge.textContent = `-${data.discount}%`;
+                } else {
+                    discountBadge = document.createElement('div');
+                    discountBadge.className = 'discount-badge absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10';
+                    discountBadge.textContent = `-${data.discount}%`;
+                    card.insertBefore(discountBadge, card.firstChild);
+                }
+            } else if (discountBadge) {
+                discountBadge.remove();
+            }
+            
+            form.querySelector('.variant-name-input').value = data.name;
+            form.querySelector('.variant-id-input').value = data.variant_id;
+            form.querySelector('.variant-price-input').value = data.variant_price;
+            form.querySelector('.total-price-input').value = data.price;
+            form.querySelector('.discount-input').value = data.discount;
+            form.querySelector('.percent-input').value = data.percent;
+            form.querySelector('.origin-input').value = data.origin;
+            
+        } else if (type === 'color') {
+            card.querySelector('.product-color').textContent = data.name;
+            form.querySelector('.color-id-input').value = data.id;
+            form.querySelector('.color-name-input').value = data.name;
+            form.querySelector('.color-price-input').value = data.price;
+            
+            const variantPrice = parseFloat(form.querySelector('.variant-price-input').value) || 0;
+            const discount = parseFloat(form.querySelector('.discount-input').value) || 0;
+            const percent = parseFloat(form.querySelector('.percent-input').value) || 0;
+            
+            let discountedPrice = variantPrice;
+            if (percent > 0) discountedPrice -= variantPrice * (percent / 100);
+            if (discount > 0) discountedPrice -= variantPrice * (discount / 100);
+            
+            const totalPrice = data.price + discountedPrice;
+            form.querySelector('.total-price-input').value = totalPrice;
+            card.querySelector('.final-price').textContent = `₱${totalPrice.toLocaleString()}`;
+        }
     }
 }
 

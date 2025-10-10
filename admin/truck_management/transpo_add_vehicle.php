@@ -17,43 +17,55 @@ $vehicle_msg = '';
 // Handle vehicle insert
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_vehicle'])) {
     $vehicle_type = trim($_POST['vehicle_type']);
+    $vehicle_variant = trim($_POST['vehicle_variant']) ?: null;
     $vehicle_description = trim($_POST['vehicle_description']) ?: null;
     $base_fare = trim($_POST['base_fare']);
-    $base_fare_distance = trim($_POST['base_fare_distance']);
     $add_per_km = trim($_POST['add_per_km']);
+    $per_km_rate = trim($_POST['per_km_rate']);
     $length = trim($_POST['length']) ?: null;
     $width = trim($_POST['width']) ?: null;
     $height = trim($_POST['height']) ?: null;
-    $max_cubic_ft = trim($_POST['max_cubic_ft']) ?: null;
+    $max_cubic_meter = trim($_POST['max_cubic_meter']) ?: null;
     $max_weight_capacity = trim($_POST['max_weight_capacity']) ?: null;
 
     // Validate required fields
-    if ($vehicle_type !== '' && $base_fare !== '' && $base_fare_distance !== '' && $add_per_km !== '') {
+    if ($vehicle_type !== '' && $base_fare !== '' && $add_per_km !== '' && $per_km_rate !== '') {
         
-        $stmt = $conn->prepare("INSERT INTO transportify_vehicle_list (vehicle_type, vehicle_description, base_fare, base_fare_distance, add_per_km, length, width, height, max_cubic_ft, max_weight_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO transportify_vehicle_list (vehicle_type, vehicle_variant, vehicle_description, base_fare, add_per_km, per_km_rate, length, width, height, max_cubic_meter, max_weight_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
-        $stmt->bind_param("ssdddddddd", 
+        $stmt->bind_param("sssdddddddd", 
             $vehicle_type,
+            $vehicle_variant,
             $vehicle_description,
             $base_fare,
-            $base_fare_distance,
             $add_per_km,
+            $per_km_rate,
             $length,
             $width,
             $height,
-            $max_cubic_ft,
+            $max_cubic_meter,
             $max_weight_capacity
         );
         
         if ($stmt->execute()) {
-            $vehicle_msg = "✅ New vehicle type added successfully!";
+            $_SESSION['vehicle_msg'] = "✅ New vehicle type added successfully!";
         } else {
-            $vehicle_msg = "❌ Error adding vehicle: " . $stmt->error;
+            $_SESSION['vehicle_msg'] = "❌ Error adding vehicle: " . $stmt->error;
         }
         $stmt->close();
     } else {
-        $vehicle_msg = "❌ Please fill in all required fields.";
+        $_SESSION['vehicle_msg'] = "❌ Please fill in all required fields.";
     }
+    
+    // Redirect to prevent form resubmission
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+// Get message from session and clear it
+if (isset($_SESSION['vehicle_msg'])) {
+    $vehicle_msg = $_SESSION['vehicle_msg'];
+    unset($_SESSION['vehicle_msg']);
 }
 
 // Fetch vehicles list
@@ -98,31 +110,30 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                 <!-- Basic Vehicle Information Section -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Vehicle Type Information</h3>
-                    <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Vehicle Type *</label>
                             <select name="vehicle_type" required class="w-full border px-3 py-2 rounded mt-1">
                                 <option value="">Select vehicle type</option>
-                                <option value="Motorcycle">Motorcycle</option>
                                 <option value="Sedan">Sedan</option>
                                 <option value="MPV/SUV">MPV/SUV</option>
+                                <option value="Small Pickup">Small Pickup</option>
                                 <option value="Light Van">Light Van</option>
                                 <option value="L300/Van">L300/Van</option>
-                                <option value="Small Pickup (Open)">Small Pickup (Open)</option>
-                                <option value="Small Pickup (Enclosed)">Small Pickup (Enclosed)</option>
-                                <option value="Pickup Truck (Open)">Pickup Truck (Open)</option>
-                                <option value="Pickup Truck (Enclosed)">Pickup Truck (Enclosed)</option>
-                                <option value="Small Truck">Small Truck (Closed Van)</option>
-                                <option value="6w Truck">6-Wheeler Truck</option>
-                                <option value="10w Truck">10-Wheeler Truck</option>
+                                <option value="Closed Van">Closed Van</option>
+                                <option value="Open Truck">Open Truck</option>
+                                <option value="6w Fwd Truck">6w Fwd Truck</option>
                                 <option value="Wing Van">Wing Van</option>
-                                <option value="Trailer">Trailer Truck</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Vehicle Description</label>
-                            <textarea name="vehicle_description" rows="2" class="w-full border px-3 py-2 rounded mt-1" placeholder="Brief description of the vehicle type"></textarea>
+                            <label class="block text-sm font-medium text-gray-700">Vehicle Variant</label>
+                            <input type="text" name="vehicle_variant" class="w-full border px-3 py-2 rounded mt-1" placeholder="e.g., XL, Standard, Heavy Duty">
                         </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700">Vehicle Description</label>
+                        <textarea name="vehicle_description" rows="2" class="w-full border px-3 py-2 rounded mt-1" placeholder="Brief description of the vehicle type"></textarea>
                     </div>
                 </div>
 
@@ -135,15 +146,23 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                             <input type="number" step="0.01" name="base_fare" required class="w-full border px-3 py-2 rounded mt-1" placeholder="0.00">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Base Fare Distance (km) *</label>
-                            <input type="number" step="0.01" name="base_fare_distance" required class="w-full border px-3 py-2 rounded mt-1" placeholder="0.00">
-                        </div>
-                        <div>
                             <label class="block text-sm font-medium text-gray-700">Additional Per KM (₱) *</label>
                             <input type="number" step="0.01" name="add_per_km" required class="w-full border px-3 py-2 rounded mt-1" placeholder="0.00">
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Per KM Rate Starts At (km) *</label>
+                            <input type="number" step="0.01" name="per_km_rate" required class="w-full border px-3 py-2 rounded mt-1" placeholder="e.g., 1 or 40">
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-600 mt-2">💡 Example: Base fare ₱500 for 5km, then ₱20/km for additional distance</p>
+                    <div class="bg-white p-3 rounded mt-3 border border-blue-200">
+                        <p class="text-xs text-gray-700 font-semibold mb-2">💡 Pricing Examples:</p>
+                        <p class="text-xs text-gray-600 mb-1">
+                            <strong>Option 1 (1 km):</strong> Base fare ₱500 + (₱20 × distance_km). Example: 10km trip = ₱500 + (₱20 × 10) = ₱700
+                        </p>
+                        <p class="text-xs text-gray-600">
+                            <strong>Option 40 (40 km):</strong> Base fare ₱2000 for first 40km, then ₱30/km after. Example: 50km trip = ₱2000 + (₱30 × 10) = ₱2300
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Dimensions Section -->
@@ -170,8 +189,8 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                     <h3 class="text-lg font-semibold text-gray-800 mb-3">📦 Capacity Information</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Max Cubic Feet (ft³)</label>
-                            <input type="number" step="0.01" name="max_cubic_ft" class="w-full border px-3 py-2 rounded mt-1" placeholder="0.00">
+                            <label class="block text-sm font-medium text-gray-700">Max Cubic Meter (m³)</label>
+                            <input type="number" step="0.01" name="max_cubic_meter" class="w-full border px-3 py-2 rounded mt-1" placeholder="0.00">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Max Weight Capacity (kg)</label>
@@ -194,10 +213,11 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                             <tr>
                                 <th class="px-3 py-2 border-b">#</th>
                                 <th class="px-3 py-2 border-b">Vehicle Type</th>
+                                <th class="px-3 py-2 border-b">Variant</th>
                                 <th class="px-3 py-2 border-b">Description</th>
                                 <th class="px-3 py-2 border-b">Base Fare</th>
-                                <th class="px-3 py-2 border-b">Base Distance</th>
                                 <th class="px-3 py-2 border-b">Per KM</th>
+                                <th class="px-3 py-2 border-b">Rate Starts</th>
                                 <th class="px-3 py-2 border-b">Dimensions (L×W×H)</th>
                                 <th class="px-3 py-2 border-b">Max Capacity</th>
                                 <th class="px-3 py-2 border-b">Actions</th>
@@ -212,6 +232,11 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                             <strong><?= htmlspecialchars($row['vehicle_type']) ?></strong>
                                         </td>
                                         <td class="px-3 py-2 border-b">
+                                            <span class="text-gray-600">
+                                                <?= htmlspecialchars($row['vehicle_variant'] ?: '-') ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2 border-b">
                                             <small class="text-gray-600">
                                                 <?= htmlspecialchars($row['vehicle_description'] ?: 'No description') ?>
                                             </small>
@@ -220,10 +245,12 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                             <strong>₱<?= number_format($row['base_fare'], 2) ?></strong>
                                         </td>
                                         <td class="px-3 py-2 border-b">
-                                            <?= number_format($row['base_fare_distance'], 2) ?> km
+                                            ₱<?= number_format($row['add_per_km'], 2) ?>
                                         </td>
                                         <td class="px-3 py-2 border-b">
-                                            ₱<?= number_format($row['add_per_km'], 2) ?>
+                                            <span class="px-2 py-1 rounded text-xs <?= $row['per_km_rate'] == 1 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' ?>">
+                                                <?= $row['per_km_rate'] ?> km
+                                            </span>
                                         </td>
                                         <td class="px-3 py-2 border-b">
                                             <?php if ($row['length'] || $row['width'] || $row['height']): ?>
@@ -237,9 +264,9 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                             <?php endif; ?>
                                         </td>
                                         <td class="px-3 py-2 border-b">
-                                            <?php if ($row['max_cubic_ft']): ?>
+                                            <?php if ($row['max_cubic_meter']): ?>
                                                 <small class="text-gray-600">
-                                                    <?= number_format($row['max_cubic_ft'], 2) ?> ft³
+                                                    <?= number_format($row['max_cubic_meter'], 2) ?> m³
                                                 </small><br>
                                             <?php endif; ?>
                                             <?php if ($row['max_weight_capacity']): ?>
@@ -247,7 +274,7 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                                     <?= number_format($row['max_weight_capacity'], 2) ?> kg
                                                 </small>
                                             <?php endif; ?>
-                                            <?php if (!$row['max_cubic_ft'] && !$row['max_weight_capacity']): ?>
+                                            <?php if (!$row['max_cubic_meter'] && !$row['max_weight_capacity']): ?>
                                                 <small class="text-gray-400">Not specified</small>
                                             <?php endif; ?>
                                         </td>
@@ -259,7 +286,7 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="9" class="text-center py-6 text-gray-500">No vehicle types found.</td>
+                                    <td colspan="10" class="text-center py-6 text-gray-500">No vehicle types found.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -280,26 +307,30 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
             alert('Edit vehicle for ID: ' + id);
         }
 
-        // Auto-calculate cubic feet when dimensions are entered
+        // Auto-calculate cubic meter when dimensions are entered
         const lengthInput = document.querySelector('input[name="length"]');
         const widthInput = document.querySelector('input[name="width"]');
         const heightInput = document.querySelector('input[name="height"]');
-        const cubicFtInput = document.querySelector('input[name="max_cubic_ft"]');
+        const cubicMeterInput = document.querySelector('input[name="max_cubic_meter"]');
 
-        function calculateCubicFeet() {
+        function calculateCubicMeter() {
             const length = parseFloat(lengthInput.value) || 0;
             const width = parseFloat(widthInput.value) || 0;
             const height = parseFloat(heightInput.value) || 0;
             
             if (length > 0 && width > 0 && height > 0) {
-                const cubicFt = (length * width * height).toFixed(2);
-                cubicFtInput.value = cubicFt;
+                // Convert feet to meters (1 foot = 0.3048 meters)
+                const lengthM = length * 0.3048;
+                const widthM = width * 0.3048;
+                const heightM = height * 0.3048;
+                const cubicM = (lengthM * widthM * heightM).toFixed(2);
+                cubicMeterInput.value = cubicM;
             }
         }
 
-        lengthInput.addEventListener('input', calculateCubicFeet);
-        widthInput.addEventListener('input', calculateCubicFeet);
-        heightInput.addEventListener('input', calculateCubicFeet);
+        lengthInput.addEventListener('input', calculateCubicMeter);
+        widthInput.addEventListener('input', calculateCubicMeter);
+        heightInput.addEventListener('input', calculateCubicMeter);
     </script>
 </body>
 </html>

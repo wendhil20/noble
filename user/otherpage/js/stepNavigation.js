@@ -116,63 +116,48 @@ function validateStep(stepNumber) {
             return true;
 
         case 2:
-            // Check if address is selected
-            const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
-            if (!selectedRadio) {
-                showNotification('Please select a delivery address to continue.', 'error');
-                return false;
-            }
-            return true;
+    // Check if address is selected
+    const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
+    if (!selectedRadio) {
+        showNotification('Please select a delivery address to continue.', 'error');
+        return false;
+    }
+    
+    // Verify selectedAddress is set
+    if (!selectedAddress || !selectedAddress.latitude || !selectedAddress.longitude) {
+        showNotification('Invalid address data. Please select again.', 'error');
+        return false;
+    }
+    
+    return true;
 
         case 3:
-            // FIXED: Check delivery calculation based on zone type
-            if (!selectedZone) {
-                showNotification('Please select a delivery zone to continue.', 'error');
-                return false;
-            }
-
-            // For free delivery zones (NCR), no distance calculation needed
-            if (selectedZone.zone_code === 'NCR' || selectedZone.is_free_delivery) {
-                // Auto-calculate free delivery if not already done
-                const deliveryFeeInput = document.getElementById('deliveryFee');
-                const deliveryDistanceInput = document.getElementById('deliveryDistance');
-
-                if (!deliveryFeeInput.value || parseFloat(deliveryFeeInput.value) !== 0) {
-                    // Set free delivery values
-                    deliveryFeeInput.value = '0.00';
-                    deliveryDistanceInput.value = '0.00';
-                    updateTotalsDisplay(0);
-
-                    // Update delivery display for free zones
-                    const distanceResultElement = document.getElementById('distanceResult');
-                    if (distanceResultElement) {
-                        distanceResultElement.innerHTML = `
-                            <div class="bg-green-100 border border-green-300 rounded p-3">
-                                <div class="font-medium text-green-800">FREE DELIVERY!</div>
-                                <div class="font-medium text-green-800">Zone: ${selectedZone.zone_name}</div>
-                                <div class="text-sm text-green-600 mt-1">No delivery charges for this area</div>
-                            </div>
-                        `;
-                    }
-
-                    // Enable continue to payment button
-                    const continueToPaymentBtn = document.getElementById('continueToPayment');
-                    if (continueToPaymentBtn) {
-                        continueToPaymentBtn.disabled = false;
-                        continueToPaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                        continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-                    }
-                }
-                return true;
-            } else {
-                // For paid delivery zones, check if distance is calculated
-                const deliveryDistance = parseFloat(document.getElementById('deliveryDistance')?.value || '0');
-                if (deliveryDistance <= 0) {
-                    showNotification('Please calculate delivery distance and fee to continue.', 'error');
-                    return false;
-                }
-                return true;
-            }
+    // ✅ FIXED: Only check if delivery calculation is complete
+    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+    const deliveryFeeInput = document.getElementById('deliveryFee');
+    
+    if (!deliveryDistanceInput || !deliveryFeeInput) {
+        showNotification('Delivery calculation fields not found.', 'error');
+        return false;
+    }
+    
+    const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+    const deliveryFee = parseFloat(deliveryFeeInput.value || '0');
+    
+    // Check if distance has been calculated
+    if (deliveryDistance <= 0) {
+        showNotification('Please calculate delivery distance and fee to continue.', 'error');
+        return false;
+    }
+    
+    // Delivery fee can be 0 or positive
+    if (deliveryFee < 0) {
+        showNotification('Invalid delivery fee. Please recalculate.', 'error');
+        return false;
+    }
+    
+    console.log('✓ Step 3 validated - Distance:', deliveryDistance, 'Fee:', deliveryFee);
+    return true;
 
         case 4:
             // Check payment method selection

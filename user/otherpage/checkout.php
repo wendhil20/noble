@@ -87,13 +87,13 @@ $total_price = 0;
 $error = null;
 $order_success = false;
 
-// ✅ Fetch delivery zones
-$delivery_zones = [];
-$stmt = $conn->prepare("SELECT * FROM delivery_zones ORDER BY zone_name");
+// ✅ Fetch Transportify vehicle list for automatic assignment
+$transportify_vehicles = [];
+$stmt = $conn->prepare("SELECT * FROM transportify_vehicle_list ORDER BY base_fare ASC");
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
-    $delivery_zones[] = $row;
+    $transportify_vehicles[] = $row;
 }
 $stmt->close();
 
@@ -123,19 +123,23 @@ if ($user_id) {
 }
 
 if ($user_id) {
-    // ✅ Fetch cart items with origin and delivery size info
+    // ✅ Fetch cart items with dimensions and weight for vehicle assignment
     $stmt = $conn->prepare("
     SELECT uci.*, 
            COALESCE(pv.origin, '') as origin,
-           pv.delivery_size_id,
-           ds.size_name,
-           ds.percentage as delivery_size_percentage,
+           pv.width,
+           pv.height,
+           pv.length,
+           pv.dimension_unit,
+           pv.weight,
+           pv.weight_unit,
            pv.lead_count,
            pv.lead_interval,
-           pv.lead_gap
+           pv.lead_gap,
+           p.product_name
     FROM user_cart_items uci 
     LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
-    LEFT JOIN delivery_sizes ds ON pv.delivery_size_id = ds.id
+    LEFT JOIN products p ON uci.product_id = p.id
     WHERE uci.user_id = ?
 ");
     $stmt->bind_param("i", $user_id);
@@ -199,153 +203,139 @@ function calculateLeadTimeRange($leadCount, $leadInterval, $leadGap) {
     ];
 }
 
-// ✅ Function to detect zone by postal code
-function detectZoneByPostalCode($postal_code, $conn)
-{
-    // First try exact postal code match
-    $stmt = $conn->prepare("
-        SELECT dz.* FROM delivery_zones dz 
-        JOIN zone_postal_codes zpc ON dz.id = zpc.zone_id 
-        WHERE zpc.postal_code = ?
-    ");
-    $stmt->bind_param("s", $postal_code);
-    $stmt->execute();
-    $result = $stmt->get_result();
 
-    if ($result->num_rows > 0) {
-        $zone = $result->fetch_assoc();
-        $stmt->close();
-        return $zone;
-    }
-    $stmt->close();
 
-    // Fallback: Auto-detect based on postal code ranges
-    $postal_num = intval($postal_code);
-
-    // NCR postal codes (1000-1800)
-    if ($postal_num >= 1000 && $postal_num <= 1800) {
-        $zone_code = 'NCR';
-    }
-    // Luzon postal codes (2000-3999)
-    elseif ($postal_num >= 2000 && $postal_num <= 3999) {
-        $zone_code = 'LUZON';
-    }
-    // Visayas postal codes (4000-6999)
-    elseif ($postal_num >= 4000 && $postal_num <= 6999) {
-        $zone_code = 'VISAYAS';
-    }
-    // Mindanao postal codes (7000-9999)
-    elseif ($postal_num >= 7000 && $postal_num <= 9999) {
-        $zone_code = 'MINDANAO';
-    }
-    // Default to Luzon for unknown codes
-    else {
-        $zone_code = 'LUZON';
-    }
-
-    // Get the detected zone
-    $stmt = $conn->prepare("SELECT * FROM delivery_zones WHERE zone_code = ?");
-    $stmt->bind_param("s", $zone_code);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $zone = $result->fetch_assoc();
-        $stmt->close();
-        return $zone;
-    }
-    $stmt->close();
-
-    // Final fallback to first available zone
-    $stmt = $conn->prepare("SELECT * FROM delivery_zones ORDER BY id LIMIT 1");
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $zone = $result->fetch_assoc();
-    $stmt->close();
-    return $zone;
+/**
+ * Calculate cubic meters from dimensions
+ */
+function calculateCubicMeters($width, $height, $length, $unit, $quantity = 1) {
+    // Convert all to meters
+    $meters = [
+        'cm' => 0.01,
+        'm' => 1,
+        'mm' => 0.001,
+        'in' => 0.0254,
+        'ft' => 0.3048
+    ];
+    
+    $multiplier = $meters[strtolower($unit)] ?? 0.01; // Default cm
+    
+    $widthM = ($width * $multiplier);
+    $heightM = ($height * $multiplier);
+    $lengthM = ($length * $multiplier);
+    
+    return ($widthM * $heightM * $lengthM) * $quantity;
 }
 
-// ✅ New zone-based delivery calculation
-function calculateZoneBasedDelivery($cart_items, $distance_km, $selected_zone)
-{
-    // Check if NCR (free delivery)
-    if ($selected_zone['zone_code'] === 'NCR' || $selected_zone['is_free_delivery']) {
-        // Even for free delivery, calculate individual item allocations as 0
-        $item_delivery_details = [];
-        foreach ($cart_items as $item) {
-            $item_delivery_details[] = [
-                'item_id' => $item['id'] ?? $item['variant_id'],
-                'quantity' => (int)$item['quantity'],
-                'delivery_fee_per_item' => 0.00,
-                'item_total_delivery' => 0.00,
-                'delivery_size_percentage' => $item['delivery_size_percentage'] ?? 0
-            ];
-        }
+/**
+ * Convert weight to kilograms
+ */
+function convertToKilograms($weight, $unit, $quantity = 1) {
+    $kgConversion = [
+        'kg' => 1,
+        'g' => 0.001,
+        'lb' => 0.453592,
+        'oz' => 0.0283495
+    ];
+    
+    $multiplier = $kgConversion[strtolower($unit)] ?? 1; // Default kg
+    return ($weight * $multiplier) * $quantity;
+}
 
-        return [
-            'total_delivery_cost' => 0.00,
-            'base_delivery_fee' => 0.00,
-            'additional_fees' => 0.00,
-            'delivery_fee_per_item' => 0.00,
-            'zone_info' => $selected_zone,
-            'is_free' => true,
-            'item_delivery_details' => $item_delivery_details
-        ];
-    }
-
-    // Calculate base delivery fee (distance-based only)
-    $base_fee = (float)$selected_zone['base_fee'];
-    $included_km = (float)$selected_zone['included_km'];
-    $per_km_rate = (float)$selected_zone['per_km_rate'];
-
-    $base_delivery_fee = $base_fee;
-
-    if ($distance_km > $included_km) {
-        $extra_km = $distance_km - $included_km;
-        $base_delivery_fee += ($extra_km * $per_km_rate);
-    }
-
-    // Debug logging
-    error_log("DEBUG - Base delivery fee (distance-based): $base_delivery_fee");
-
-    // Calculate additional percentage fees per item
-    $item_delivery_details = [];
-    $total_additional_fees = 0;
-
+/**
+ * Automatically assign the best Transportify vehicle for cart items
+ */
+function assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn) {
+    $totalCubicMeters = 0;
+    $totalWeightKg = 0;
+    $itemVehicleData = [];
+    
+    // Calculate total volume and weight
     foreach ($cart_items as $item) {
-        $quantity = (int)$item['quantity'];
-        $item_percentage = (float)($item['delivery_size_percentage'] ?? 5.0); // Default 5% if no size
-
-        // Calculate additional fee per item as percentage of base delivery cost
-        $additional_fee_per_item = ($base_delivery_fee * $item_percentage) / 100;
-        $item_total_additional = $additional_fee_per_item * $quantity;
-
-        $item_delivery_details[] = [
+        $width = floatval($item['width'] ?? 0);
+        $height = floatval($item['height'] ?? 0);
+        $length = floatval($item['length'] ?? 0);
+        $dimensionUnit = $item['dimension_unit'] ?? 'cm';
+        $weight = floatval($item['weight'] ?? 0);
+        $weightUnit = $item['weight_unit'] ?? 'kg';
+        $quantity = intval($item['quantity'] ?? 1);
+        
+        // Calculate for this item
+        $itemCubicM = calculateCubicMeters($width, $height, $length, $dimensionUnit, $quantity);
+        $itemWeightKg = convertToKilograms($weight, $weightUnit, $quantity);
+        
+        $totalCubicMeters += $itemCubicM;
+        $totalWeightKg += $itemWeightKg;
+        
+        $itemVehicleData[] = [
             'item_id' => $item['id'] ?? $item['variant_id'],
+            'variant_name' => $item['variant_name'],
             'quantity' => $quantity,
-            'delivery_fee_per_item' => $additional_fee_per_item,
-            'item_total_delivery' => $item_total_additional,
-            'delivery_size_percentage' => $item_percentage
+            'cubic_meters' => $itemCubicM,
+            'weight_kg' => $itemWeightKg
         ];
-
-        $total_additional_fees += $item_total_additional;
-
-        // Debug logging for each item
-        error_log("DEBUG - Item: {$item['variant_name']}, Percentage: {$item_percentage}%, Additional per item: $additional_fee_per_item, Total additional: $item_total_additional");
+        
+        error_log("Item: {$item['variant_name']}, Volume: {$itemCubicM}m³, Weight: {$itemWeightKg}kg");
     }
-
-    // Calculate final total delivery cost
-    $final_delivery_cost = $base_delivery_fee + $total_additional_fees;
-
-    error_log("DEBUG - Base delivery: $base_delivery_fee, Additional fees: $total_additional_fees, Final total: $final_delivery_cost");
-
+    
+    error_log("Total Volume: {$totalCubicMeters}m³, Total Weight: {$totalWeightKg}kg");
+    
+    // Find suitable vehicle (smallest that can fit)
+    $assignedVehicle = null;
+    foreach ($transportify_vehicles as $vehicle) {
+        $maxCubicM = floatval($vehicle['max_cubic_meter'] ?? 0);
+        $maxWeightKg = floatval($vehicle['max_weight_capacity'] ?? 0);
+        
+        if ($totalCubicMeters <= $maxCubicM && $totalWeightKg <= $maxWeightKg) {
+            $assignedVehicle = $vehicle;
+            break; // Get the smallest suitable vehicle
+        }
+    }
+    
+    if (!$assignedVehicle) {
+        // No single vehicle fits - use largest available
+        $assignedVehicle = end($transportify_vehicles);
+        error_log("WARNING: No vehicle fits perfectly. Using largest: {$assignedVehicle['vehicle_type']}");
+    }
+    
+    error_log("Assigned Vehicle: {$assignedVehicle['vehicle_type']} (Max: {$assignedVehicle['max_cubic_meter']}m³, {$assignedVehicle['max_weight_capacity']}kg)");
+    
     return [
-        'total_delivery_cost' => $final_delivery_cost,
-        'base_delivery_fee' => $base_delivery_fee,
-        'additional_fees' => $total_additional_fees,
-        'zone_info' => $selected_zone,
-        'is_free' => false,
-        'item_delivery_details' => $item_delivery_details
+        'vehicle' => $assignedVehicle,
+        'total_cubic_meters' => $totalCubicMeters,
+        'total_weight_kg' => $totalWeightKg,
+        'item_vehicle_data' => $itemVehicleData
+    ];
+}
+
+/**
+ * Calculate delivery cost based on Transportify vehicle and distance
+ */
+function calculateTransportifyDeliveryCost($distance_km, $vehicleData) {
+    $vehicle = $vehicleData['vehicle'];
+    
+    $baseFare = floatval($vehicle['base_fare']);
+    $addPerKm = floatval($vehicle['add_per_km']);
+    $perKmRate = floatval($vehicle['per_km_rate']); // Where per km charging starts (1 or 40)
+    
+    $deliveryCost = $baseFare;
+    
+    // Check if distance exceeds the starting point for per-km rate
+    if ($distance_km > $perKmRate) {
+        $chargeableKm = $distance_km - $perKmRate;
+        $deliveryCost += ($chargeableKm * $addPerKm);
+    }
+    
+    error_log("Delivery Calculation: Base=₱{$baseFare}, Distance={$distance_km}km, Rate starts at {$perKmRate}km, Add per km=₱{$addPerKm}, Total=₱{$deliveryCost}");
+    
+    return [
+        'total_delivery_cost' => $deliveryCost,
+        'base_fare' => $baseFare,
+        'distance_km' => $distance_km,
+        'chargeable_km' => max(0, $distance_km - $perKmRate),
+        'per_km_charge' => max(0, ($distance_km - $perKmRate) * $addPerKm),
+        'vehicle_info' => $vehicle,
+        'vehicle_data' => $vehicleData
     ];
 }
 
@@ -490,9 +480,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ADD BACK the main PayPal processing in the POST section:
     if ($payment_method === 'PayPal') {
         try {
-            if (!isset($total_price, $delivery_fee)) {
-                throw new Exception("Missing required pricing data");
-            }
+            // ✅ Validate delivery calculation
+        if (empty($delivery_distance) || $delivery_distance <= 0) {
+            throw new Exception("Delivery distance not calculated. Please go back and calculate delivery fee.");
+        }
+        
+        if (!isset($delivery_fee) || $delivery_fee < 0) {
+            throw new Exception("Invalid delivery fee. Please recalculate.");
+        }
+        
+        if (!isset($total_price, $delivery_fee)) {
+            throw new Exception("Missing required pricing data");
+        }
 
             $subtotal = (float)$total_price;
             $delivery_fee = (float)$delivery_fee;
@@ -896,28 +895,12 @@ if ($_POST['payment_method'] === 'PayMongo') {
         $validation_errors[] = "ZIP Code must be exactly 4 digits";
     }
 
-    // ✅ Zone detection and selection
-    $selected_zone = null;
-    $zone_id = trim($_POST['zone_id'] ?? '');
+   // ✅ Automatic Transportify vehicle assignment
+$vehicleAssignment = assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn);
 
-    if (!empty($zone_id) && is_numeric($zone_id)) {
-        // Manual zone selection
-        $stmt = $conn->prepare("SELECT * FROM delivery_zones WHERE id = ?");
-        $stmt->bind_param("i", $zone_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
-            $selected_zone = $result->fetch_assoc();
-        }
-        $stmt->close();
-    } else {
-        // Auto-detect by postal code
-        $selected_zone = detectZoneByPostalCode($zipcode, $conn);
-    }
-
-    if (!$selected_zone) {
-        $validation_errors[] = "Unable to determine delivery zone. Please select manually.";
-    }
+if (!$vehicleAssignment || !$vehicleAssignment['vehicle']) {
+    $validation_errors[] = "Unable to assign delivery vehicle. Please contact support.";
+}
 
     if (empty($payment_method)) {
         $validation_errors[] = "Payment method is required";
@@ -991,17 +974,17 @@ if ($_POST['payment_method'] === 'PayMongo') {
             $order_id = $stmt->insert_id;
             $stmt->close();
 
-            // ✅ Calculate zone-based delivery with size percentages
-            $delivery_result = calculateZoneBasedDelivery($cart_items, $delivery_distance, $selected_zone);
-            $delivery_fee = $delivery_result['total_delivery_cost'];
-            $item_delivery_details = $delivery_result['item_delivery_details'] ?? [];
+            // ✅ Calculate Transportify vehicle delivery cost
+$delivery_result = calculateTransportifyDeliveryCost($delivery_distance, $vehicleAssignment);
+$delivery_fee = $delivery_result['total_delivery_cost'];
+$assigned_vehicle = $delivery_result['vehicle_info'];
 
             // ✅ Save each item with individual delivery calculations
             $stmt = $conn->prepare("INSERT INTO order_items (
     order_id, product_id, product_name, codename, type_name, variant_color, size, 
     price, quantity, subtotal, descrip6, descrip7, origin, 
-    delivery_fee_per_item, item_total_delivery, lt_from, lt_to
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    lt_from, lt_to, assigned_vehicle_type, assigned_vehicle_id, vehicle_base_fare, vehicle_delivery_cost
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 foreach ($cart_items as $index => $item) {
     $subtotal_item = $item['price'] * $item['quantity'];
@@ -1040,9 +1023,13 @@ foreach ($cart_items as $index => $item) {
     $desc7 = $item['descrip7'] ?? '';
     $origin = $item['origin'] ?? '';
     $product_id = $item['product_id'] ?? null;
+    $vehicleType = $assigned_vehicle['vehicle_type'] ?? null;
+    $vehicleId = $assigned_vehicle['id'] ?? null;
+    $vehicleBaseFare = $assigned_vehicle['base_fare'] ?? 0;
+    $vehicleDeliveryCost = $delivery_fee; // Total delivery split among items or assign per order
 
     $stmt->bind_param(
-        "iisssssiiisssddss",
+        "iisssssiiissssssisd",
         $order_id,
         $product_id,
         $product_name,
@@ -1056,10 +1043,12 @@ foreach ($cart_items as $index => $item) {
         $desc6,
         $desc7,
         $origin,
-        $delivery_fee_per_item,
-        $item_total_delivery,
         $lt_from,
-        $lt_to
+        $lt_to,
+        $vehicleType,        // NEW
+        $vehicleId,          // NEW
+        $vehicleBaseFare,    // NEW
+        $vehicleDeliveryCost // NEW
     );
 
     if (!$stmt->execute()) {
@@ -1188,12 +1177,21 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 
     <script>
         // Initialize global configuration object with PHP data
-        window.checkoutConfig = {
-            deliverySettings: <?= $delivery_settings ? json_encode($delivery_settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : 'null' ?>,
-            deliveryZones: <?= json_encode($delivery_zones, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
-            totalPrice: <?= (float)$total_price ?>,
-            hasAddresses: <?= $has_billing_addresses ? 'true' : 'false' ?>
-        };
+window.checkoutConfig = {
+    deliverySettings: <?= $delivery_settings ? json_encode($delivery_settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : 'null' ?>,
+    transportifyVehicles: <?= json_encode($transportify_vehicles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+    totalPrice: <?= (float)$total_price ?>,
+    hasAddresses: <?= $has_billing_addresses ? 'true' : 'false' ?>
+};
+
+// ✅ CRITICAL: Assign vehicles to global scope for access in distanceCalculation.js
+window.transportifyVehicles = <?= json_encode($transportify_vehicles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+// Debug: Verify vehicles are loaded
+console.log('Transportify Vehicles Loaded:', window.transportifyVehicles.length, 'vehicles');
+if (window.transportifyVehicles.length === 0) {
+    console.error('⚠️ WARNING: No Transportify vehicles found in database!');
+}
     </script>
 
     <?php include '../navbar/top.php'; ?>
@@ -1366,24 +1364,15 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             <textarea name="address" id="addressInput" rows="3" required
                                 class="w-full border px-4 py-3 rounded-lg resize-none bg-white" readonly></textarea>
                         </div>
-                        <!-- Modified HTML section - make the select disabled/readonly -->
-                        <div class="mt-6">
-                            <label class="block font-medium mb-2">Delivery Zone</label>
-
-                            <!-- Hidden input to store the selected zone ID for form submission -->
-                            <input type="hidden" name="zone_id" id="selectedZoneId" value="">
-
-                            <!-- Display area for the detected zone -->
-                            <div id="zoneDisplay" class="w-full border border-gray-300 px-4 py-3 rounded-lg bg-gray-50">
-                                <div id="zoneInfo" class="text-gray-500">
-                                    Auto-detecting delivery zone...
-                                </div>
-                            </div>
-
-                            <div class="text-xs text-gray-500 mt-1" id="zoneDescription">
-                                Delivery zone will be automatically selected based on your address
-                            </div>
-                        </div>
+                        <!-- Removed: Zone selection (now using automatic vehicle assignment) -->
+<div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="flex items-center gap-2 text-blue-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="font-medium">Delivery vehicle will be automatically assigned based on your order size and weight in the next step.</span>
+    </div>
+</div>
                     </div>
                 <?php else: ?>
                     <div class="border-2 border-dashed border-red-300 rounded-lg p-8 text-center bg-red-50">
@@ -1416,14 +1405,13 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
             <!-- STEP 3: Delivery Fee Calculation -->
             <div class="step-content hidden" id="step3">
                 <div class=" p-4 mb-6">
-                    <div class="flex items-center">
-
-                        <div>
-                            <h3 class="text-lg font-bold text-black">Step 3: Calculate Delivery Fee</h3>
-                            <p class="text-black text-sm">Determine delivery costs based on distance</p>
-                        </div>
-                    </div>
-                </div>
+    <div class="flex items-center">
+        <div>
+            <h3 class="text-lg font-bold text-black">Step 3: Calculate Delivery Fee</h3>
+            <p class="text-black text-sm">Automatic vehicle assignment based on order size and distance</p>
+        </div>
+    </div>
+</div>
 
                 <?php if ($delivery_settings && $has_billing_addresses): ?>
                     <div class="bg-white rounded-lg p-6">
@@ -1742,21 +1730,7 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                     </div>
                 <?php endif; ?>
                 
-                <div class="bg-blue-50 p-2 rounded text-xs">
-                    <div class="flex justify-between text-blue-700">
-                        <span>Delivery per item:</span>
-                        <span class="deliveryPerItem font-medium">₱0.00</span>
-                    </div>
-                    <div class="flex justify-between text-blue-700">
-                        <span>Total delivery:</span>
-                        <span class="totalDeliveryForItem font-medium">₱0.00</span>
-                    </div>
-                    <!-- NEW: Show size-based allocation info when calculated -->
-                    <div class="flex justify-between text-purple-600 mt-1 size-allocation-info" style="display: none;">
-                        <span>Size allocation:</span>
-                        <span class="sizeAllocationPercentage font-medium">0%</span>
-                    </div>
-                </div>
+                <!-- Removed: Per-item delivery breakdown (now using single vehicle for entire order) -->
             </div>
             <div class="text-right">
                 <div class="text-sm text-gray-600">
@@ -1835,13 +1809,17 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- Include all JavaScript modules in the correct order -->
-    <script src="js/main.js"></script>
-    <script src="js/stepNavigation.js"></script>
-    <script src="js/addressZone.js"></script>
-    <script src="js/distanceCalculation.js"></script>
-    <script src="js/mapModal.js"></script>
-    <script src="js/checkoutForm.js"></script>
-    <script src="js/paymentquickFixPayment.js"></script>
+<script>
+// ✅ Ensure vehicles are available before other scripts load
+console.log('Pre-load check - Vehicles available:', window.transportifyVehicles ? window.transportifyVehicles.length : 0);
+</script>
+<script src="js/main.js"></script>
+<script src="js/stepNavigation.js"></script>
+<script src="js/addressZone.js"></script>
+<script src="js/distanceCalculation.js"></script>
+<script src="js/mapModal.js"></script>
+<script src="js/checkoutForm.js"></script>
+<script src="js/paymentquickFixPayment.js"></script>
     <script>
         // Pass cart items data to JavaScript for delivery calculations
         window.cartItemsData = <?= json_encode(array_values($cart_items), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;

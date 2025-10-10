@@ -64,52 +64,75 @@ class PaymentSystem {
     }
 
     switchPaymentMethod(method) {
-        console.log('Switching to payment method:', method);
-        
-        // Hide all payment fields
-        const bankFields = document.getElementById('bankTransferFields');
-        const paypalFields = document.getElementById('paypalFields'); 
-        const paymongoFields = document.getElementById('paymongoFields');
-        
-        if (bankFields) bankFields.classList.add('hidden');
-        if (paypalFields) paypalFields.classList.add('hidden');
-        if (paymongoFields) paymongoFields.classList.add('hidden');
+    console.log('Switching to payment method:', method);
+    
+    // Hide all payment fields
+    const bankFields = document.getElementById('bankTransferFields');
+    const paypalFields = document.getElementById('paypalFields'); 
+    const paymongoFields = document.getElementById('paymongoFields');
+    
+    if (bankFields) bankFields.classList.add('hidden');
+    if (paypalFields) paypalFields.classList.add('hidden');
+    if (paymongoFields) paymongoFields.classList.add('hidden');
 
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
 
-        // Show relevant fields based on method
-        if (method === 'Bank Transfer') {
-            if (bankFields) {
-                bankFields.classList.remove('hidden');
-                this.renderBankTransferInterface();
-            }
-            this.showPlaceOrderButton('Place Order');
-            
-        } else if (method === 'PayPal') {
-            if (paypalFields) {
-                paypalFields.classList.remove('hidden');
-                this.renderPayPalInterface();
-            }
-            this.showPlaceOrderButton('Continue to PayPal');
-            
-        } else if (method === 'PayMongo') {
-            if (paymongoFields) {
-                paymongoFields.classList.remove('hidden');
-                this.renderPayMongoInterface();
-            }
-            this.showPlaceOrderButton('Pay with PayMongo');
-            this.updatePayMongoAmount();
+    // Show relevant fields based on method
+    if (method === 'Bank Transfer') {
+        if (bankFields) {
+            bankFields.classList.remove('hidden');
+            this.renderBankTransferInterface();
         }
-    }
-
-    showPlaceOrderButton(text) {
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
+        // ✅ Don't enable button immediately - wait for bank selection
         if (placeOrderBtn) {
             placeOrderBtn.style.display = 'inline-block';
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.textContent = 'Place Order';
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        }
+        
+    } else if (method === 'PayPal') {
+    if (paypalFields) {
+        paypalFields.classList.remove('hidden');
+        this.renderPayPalInterface();
+    }
+    // ✅ Enable button immediately for PayPal (validation happens server-side)
+    if (placeOrderBtn) {
+        placeOrderBtn.style.display = 'inline-block';
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.textContent = 'Continue to PayPal';
+        placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+    }
+        
+    } else if (method === 'PayMongo') {
+        if (paymongoFields) {
+            paymongoFields.classList.remove('hidden');
+            this.renderPayMongoInterface();
+        }
+        this.showPlaceOrderButton('Pay with PayMongo');
+        this.updatePayMongoAmount();
+    }
+}
+
+    showPlaceOrderButton(text, enabled = true) {
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.style.display = 'inline-block';
+        placeOrderBtn.textContent = text;
+        
+        if (enabled) {
             placeOrderBtn.disabled = false;
-            placeOrderBtn.textContent = text;
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        } else {
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
         }
     }
+}
 
     updatePayMongoAmount() {
         const paymongoAmount = document.getElementById('paymongoAmount');
@@ -151,191 +174,429 @@ class PaymentSystem {
     }
 
     renderBankTransferInterface() {
-        const bankFields = document.getElementById('bankTransferFields');
-        const bankSelectionArea = document.getElementById('bankSelectionArea');
-        if (!bankSelectionArea) return;
+    const bankFields = document.getElementById('bankTransferFields');
+    const bankSelectionArea = document.getElementById('bankSelectionArea');
+    if (!bankSelectionArea) return;
 
-        const bankAccounts = {
-            'BPI': {
-                name: 'Bank of the Philippine Islands',
-                accountName: 'Noble Home Construction',
-                accountNumber: '1234-5678-90',
-                color: 'red'
-            },
-            'BDO': {
-                name: 'Banco de Oro',
-                accountName: 'Noble Home Construction', 
-                accountNumber: '0987-6543-21',
-                color: 'blue'
-            },
-            'Metrobank': {
-                name: 'Metropolitan Bank',
-                accountName: 'Noble Home Construction',
-                accountNumber: '5678-9012-34',
-                color: 'yellow'
-            }
-        };
+    const bankAccounts = {
+        'BPI': {
+            name: 'Bank of the Philippine Islands',
+            accountName: 'Noble Home Construction',
+            accountNumber: '1234-5678-90',
+            color: 'red'
+        },
+        'BDO': {
+            name: 'Banco de Oro',
+            accountName: 'Noble Home Construction', 
+            accountNumber: '0987-6543-21',
+            color: 'blue'
+        },
+        'Metrobank': {
+            name: 'Metropolitan Bank',
+            accountName: 'Noble Home Construction',
+            accountNumber: '5678-9012-34',
+            color: 'yellow'
+        }
+    };
 
-        bankSelectionArea.innerHTML = `
-            <div class="space-y-4">
-                <h5 class="font-bold text-blue-800 mb-3">Select Bank for Transfer</h5>
-                <div class="grid gap-3">
-                    ${Object.entries(bankAccounts).map(([bankCode, bankInfo]) => `
-                        <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition">
-                            <input type="radio" name="bank_selection" value="${bankCode}" class="mr-3" onchange="window.paymentSystem.selectBank('${bankCode}', ${JSON.stringify(bankInfo).replace(/"/g, '&quot;')})" />
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-${bankInfo.color}-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
-                                    ${bankCode}
-                                </div>
-                                <div>
-                                    <div class="font-medium">${bankInfo.name}</div>
-                                    <div class="text-sm text-gray-600">${bankCode}</div>
-                                </div>
+    bankSelectionArea.innerHTML = `
+        <div class="space-y-4">
+            <h5 class="font-bold text-blue-800 mb-3">Select Bank for Transfer *</h5>
+            <div class="grid gap-3">
+                ${Object.entries(bankAccounts).map(([bankCode, bankInfo]) => `
+                    <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition bank-option">
+                        <input type="radio" name="bank_selection" value="${bankCode}" class="mr-3 bank-radio" required />
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-${bankInfo.color}-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                                ${bankCode.substring(0, 2)}
                             </div>
-                        </label>
-                    `).join('')}
-                </div>
-                <div id="bankDetailsArea" class="hidden"></div>
+                            <div>
+                                <div class="font-medium">${bankInfo.name}</div>
+                                <div class="text-sm text-gray-600">${bankCode}</div>
+                            </div>
+                        </div>
+                    </label>
+                `).join('')}
             </div>
-        `;
-    }
+            <div id="bankDetailsArea" class="hidden"></div>
+        </div>
+    `;
+
+    // ✅ ADD EVENT LISTENERS FOR BANK SELECTION
+    const bankRadios = bankSelectionArea.querySelectorAll('.bank-radio');
+    bankRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                const bankCode = e.target.value;
+                const bankInfo = bankAccounts[bankCode];
+                this.selectBank(bankCode, bankInfo);
+                
+                // Enable place order button after bank selection
+                this.showPlaceOrderButton('Place Order');
+            }
+        });
+    });
+}
 
     selectBank(bankCode, bankInfo) {
-        const selectedBankInput = document.getElementById('selectedBank');
-        if (selectedBankInput) selectedBankInput.value = bankCode;
-
-        this.showBankDetails(bankInfo);
+    console.log('Bank selected:', bankCode);
+    
+    const selectedBankInput = document.getElementById('selectedBank');
+    if (selectedBankInput) {
+        selectedBankInput.value = bankCode;
+        console.log('✓ Bank type hidden input set:', bankCode);
     }
+
+    this.showBankDetails(bankInfo);
+    
+    // Enable place order button
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+    }
+}
 
     showBankDetails(bankInfo) {
-        const bankDetailsArea = document.getElementById('bankDetailsArea');
-        if (!bankDetailsArea) return;
+    const bankDetailsArea = document.getElementById('bankDetailsArea');
+    if (!bankDetailsArea) return;
 
-        const grandTotalElement = document.getElementById('grandTotalDisplay');
-        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
+    const grandTotalElement = document.getElementById('grandTotalDisplay');
+    const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
 
-        bankDetailsArea.classList.remove('hidden');
-        bankDetailsArea.innerHTML = `
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                <h6 class="font-bold text-blue-800 mb-3">Transfer Details</h6>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span>Account Name:</span>
-                        <span class="font-medium">${bankInfo.accountName}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Account Number:</span>
-                        <span class="font-medium">${bankInfo.accountNumber}</span>
-                    </div>
-                    <div class="flex justify-between border-t pt-2">
-                        <span>Amount:</span>
-                        <span class="font-bold text-green-600">${totalAmount}</span>
-                    </div>
+    bankDetailsArea.classList.remove('hidden');
+    bankDetailsArea.innerHTML = `
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <h6 class="font-bold text-blue-800 mb-3">Transfer Details</h6>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span>Account Name:</span>
+                    <span class="font-medium">${bankInfo.accountName}</span>
                 </div>
-                
-                <div class="mt-4">
-                    <label class="block font-medium mb-2">Payment Screenshot *</label>
-                    <input type="file" name="payment_screenshot" accept="image/*" required 
-                           class="w-full border border-gray-300 px-3 py-2 rounded-lg" />
+                <div class="flex justify-between">
+                    <span>Account Number:</span>
+                    <span class="font-medium">${bankInfo.accountNumber}</span>
                 </div>
-                
-                <div class="mt-4">
-                    <label class="block font-medium mb-2">Reference Number (Optional)</label>
-                    <input type="text" name="reference_number_input" 
-                           class="w-full border border-gray-300 px-3 py-2 rounded-lg" />
+                <div class="flex justify-between border-t pt-2">
+                    <span>Amount:</span>
+                    <span class="font-bold text-green-600">${totalAmount}</span>
                 </div>
             </div>
-        `;
+            
+            <div class="mt-4">
+                <label class="block font-medium mb-2">Payment Screenshot *</label>
+                <input type="file" name="payment_screenshot" accept="image/*" required 
+                       class="w-full border border-gray-300 px-3 py-2 rounded-lg file-input" 
+                       onchange="window.paymentSystem.validateBankTransferForm()" />
+                <p class="text-xs text-gray-500 mt-1">Required: Upload proof of payment</p>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block font-medium mb-2">Reference Number (Optional)</label>
+                <input type="text" name="reference_number_input" id="reference_number_input"
+                       class="w-full border border-gray-300 px-3 py-2 rounded-lg" 
+                       placeholder="Enter bank reference number" />
+            </div>
+        </div>
+    `;
+}
+
+validateBankTransferForm() {
+    const selectedBank = document.getElementById('selectedBank');
+    const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
+    
+    const bankSelected = selectedBank && selectedBank.value;
+    const screenshotUploaded = paymentScreenshot && paymentScreenshot.files && paymentScreenshot.files.length > 0;
+    
+    console.log('Bank Transfer Validation:', {
+        bankSelected: bankSelected,
+        screenshot: screenshotUploaded
+    });
+    
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        if (bankSelected && screenshotUploaded) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            return true;
+        } else {
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            return false;
+        }
     }
+    
+    return false;
+}
 
     renderPayPalInterface() {
-        const paypalFields = document.getElementById('paypalFields');
-        if (!paypalFields) return;
+    const paypalFields = document.getElementById('paypalFields');
+    if (!paypalFields) return;
 
-        const grandTotalElement = document.getElementById('grandTotalDisplay');
-        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
+    const grandTotalElement = document.getElementById('grandTotalDisplay');
+    const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
 
-        paypalFields.innerHTML = `
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-8 h-8">
-                            <path fill="#003087" d="M15.7 4.2h6.5c2.2 0 3.9.5 5.1 1.5 1.1.9 1.6 2.3 1.3 4.2-.7 4.8-3.6 6.8-8.5 6.8h-2.2c-.5 0-.9.3-1 .8l-1 6.6c0 .3-.3.5-.6.5H11c-.5 0-.9-.4-.8-.9L13.5 5c.1-.4.4-.8.9-.8h1.3z" />
-                            <path fill="#009cde" d="M26.8 10.6c-.3 2-1.2 3.6-2.6 4.6-1.4 1-3.3 1.5-5.7 1.5h-2.4c-.5 0-.9.3-1 .8l-1.1 7.1c0 .3-.3.5-.6.5h-3.4c-.5 0-.9-.4-.8-.9l2.4-15.6c.1-.4.4-.8.9-.8h7.2c1.4 0 2.6.2 3.6.6 1.5.6 2.1 2 1.9 3.2z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h5 class="font-bold text-blue-800">PayPal Payment</h5>
-                        <p class="text-sm text-blue-600">Secure payment with PayPal</p>
-                    </div>
+    paypalFields.innerHTML = `
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-8 h-8">
+                        <path fill="#003087" d="M15.7 4.2h6.5c2.2 0 3.9.5 5.1 1.5 1.1.9 1.6 2.3 1.3 4.2-.7 4.8-3.6 6.8-8.5 6.8h-2.2c-.5 0-.9.3-1 .8l-1 6.6c0 .3-.3.5-.6.5H11c-.5 0-.9-.4-.8-.9L13.5 5c.1-.4.4-.8.9-.8h1.3z" />
+                        <path fill="#009cde" d="M26.8 10.6c-.3 2-1.2 3.6-2.6 4.6-1.4 1-3.3 1.5-5.7 1.5h-2.4c-.5 0-.9.3-1 .8l-1.1 7.1c0 .3-.3.5-.6.5h-3.4c-.5 0-.9-.4-.8-.9l2.4-15.6c.1-.4.4-.8.9-.8h7.2c1.4 0 2.6.2 3.6.6 1.5.6 2.1 2 1.9 3.2z" />
+                    </svg>
                 </div>
-                
-                <div class="text-center p-4">
-                    <div class="text-lg font-bold text-blue-800 mb-2">Total: ${totalAmount}</div>
-                    <p class="text-sm text-blue-600">Click "Continue to PayPal" to proceed with payment</p>
+                <div>
+                    <h5 class="font-bold text-blue-800">PayPal Payment</h5>
+                    <p class="text-sm text-blue-600">Secure payment with PayPal</p>
                 </div>
             </div>
-        `;
+            
+            <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Amount:</span>
+                        <span class="font-bold text-blue-800" id="paypalAmount">${totalAmount}</span>
+                    </div>
+                    <div class="text-xs text-blue-600 mt-2">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Safe and secure payment with PayPal</li>
+                            <li>Pay with your PayPal balance, bank account, or credit card</li>
+                            <li>No need to share financial details with us</li>
+                            <li>Instant payment confirmation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded flex items-center">
+                <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm text-blue-700">Click "Continue to PayPal" to complete your payment securely</span>
+            </div>
+        </div>
+    `;
+    
+    // ✅ Update PayPal amount display
+    this.updatePayPalAmount();
+}
+
+updatePayPalAmount() {
+    const paypalAmount = document.getElementById('paypalAmount');
+    const grandTotal = document.getElementById('grandTotalDisplay');
+    if (paypalAmount && grandTotal) {
+        paypalAmount.textContent = grandTotal.textContent;
+        console.log('✓ PayPal amount updated:', grandTotal.textContent);
     }
+}
+
+handlePayPalSubmission(form) {
+    if (this.isSubmitting) {
+        console.log('⚠️ Already submitting, ignoring duplicate request');
+        return;
+    }
+
+    console.log('Processing PayPal payment...');
+    
+    // Validate delivery calculation first
+    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+    const deliveryFeeInput = document.getElementById('deliveryFee');
+    
+    if (!deliveryDistanceInput || !deliveryFeeInput) {
+        showNotification('Delivery calculation missing. Please refresh the page.', 'error');
+        return;
+    }
+    
+    const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+    const deliveryFee = parseFloat(deliveryFeeInput.value || '0');
+    
+    if (deliveryDistance <= 0) {
+        showNotification('Please calculate delivery distance first (Step 3)', 'error');
+        goToStep(3);
+        return;
+    }
+    
+    if (deliveryFee < 0) {
+        showNotification('Invalid delivery fee. Please recalculate.', 'error');
+        goToStep(3);
+        return;
+    }
+
+    console.log('✓ Delivery validated for PayPal:', { distance: deliveryDistance, fee: deliveryFee });
+
+    // Get total amount for validation
+    const grandTotalElement = document.getElementById('grandTotalDisplay');
+    if (!grandTotalElement) {
+        showNotification('Cannot find total amount. Please refresh the page.', 'error');
+        return;
+    }
+
+    const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '');
+    const totalAmount = parseFloat(totalText);
+    
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+        showNotification('Invalid order total. Please refresh the page.', 'error');
+        return;
+    }
+
+    console.log('✓ PayPal amount validated:', totalAmount);
+
+    // Update button state
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.textContent = 'Redirecting to PayPal...';
+        placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+    }
+
+    showNotification('Redirecting to PayPal for secure payment...', 'info');
+    
+    // Mark as submitting
+    this.isSubmitting = true;
+
+    // Submit the form (PHP will handle PayPal redirect)
+    console.log('✓ Submitting form for PayPal processing');
+    form.submit();
+}
 
     setupFormSubmission() {
-        const checkoutForm = document.getElementById('checkoutForm');
-        if (!checkoutForm) {
-            console.warn('Checkout form not found');
-            return;
-        }
-
-        checkoutForm.addEventListener('submit', (e) => {
-            if (this.isSubmitting) {
-                e.preventDefault();
-                return false;
-            }
-
-            const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
-            
-            if (!selectedMethod) {
-                e.preventDefault();
-                showNotification('Please select a payment method', 'error');
-                return false;
-            }
-
-            console.log('Form submitting with method:', selectedMethod.value);
-
-            // Handle PayMongo with AJAX
-            if (selectedMethod.value === 'PayMongo') {
-                e.preventDefault();
-                this.handlePayMongoPayment();
-                return false;
-            }
-
-            // Let other payment methods submit normally
-            this.isSubmitting = true;
-            showNotification(`Processing ${selectedMethod.value} payment...`, 'info');
-        });
+    const checkoutForm = document.getElementById('checkoutForm');
+    if (!checkoutForm) {
+        console.warn('Checkout form not found');
+        return;
     }
 
-    async handlePayMongoPayment() {
-        if (this.isSubmitting) return;
-        this.isSubmitting = true;
-
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-        if (!placeOrderBtn) {
-            this.isSubmitting = false;
-            return;
+    checkoutForm.addEventListener('submit', (e) => {
+        if (this.isSubmitting) {
+            e.preventDefault();
+            return false;
         }
 
-        placeOrderBtn.disabled = true;
-        placeOrderBtn.textContent = 'Creating PayMongo session...';
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+        
+        if (!selectedMethod) {
+            e.preventDefault();
+            showNotification('Please select a payment method', 'error');
+            return false;
+        }
 
-        try {
-            // Get total amount
-            const grandTotalElement = document.getElementById('grandTotalDisplay');
-            if (!grandTotalElement) {
-                throw new Error('Cannot find total amount');
+        // ✅ VALIDATE BANK TRANSFER BEFORE SUBMISSION
+        if (selectedMethod.value === 'Bank Transfer') {
+            e.preventDefault(); // Always prevent default for validation
+            
+            const selectedBank = document.getElementById('selectedBank');
+            const paymentScreenshot = document.querySelector('input[name="payment_screenshot"]');
+            
+            // Check if bank is selected
+            if (!selectedBank || !selectedBank.value) {
+                showNotification('Please select a bank for transfer', 'error');
+                return false;
             }
             
-            const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '');
-            const amount = parseFloat(totalText);
+            // Check if screenshot is uploaded
+            if (!paymentScreenshot || !paymentScreenshot.files || !paymentScreenshot.files.length) {
+                showNotification('Please upload payment screenshot', 'error');
+                return false;
+            }
+            
+            // ✅ If validation passes, submit normally
+            console.log('✓ Bank Transfer validated - submitting form');
+            this.isSubmitting = true;
+            checkoutForm.submit(); // Submit the form
+            return true;
+        }
+
+        // ✅ FIXED: Validate delivery calculation before submission
+        const deliveryDistanceInput = document.getElementById('deliveryDistance');
+        const deliveryFeeInput = document.getElementById('deliveryFee');
+        
+        if (!deliveryDistanceInput || !deliveryFeeInput) {
+            e.preventDefault();
+            showNotification('Delivery calculation missing. Please refresh the page.', 'error');
+            return false;
+        }
+        
+        const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+        const deliveryFee = parseFloat(deliveryFeeInput.value || '0');
+        
+        if (deliveryDistance <= 0) {
+            e.preventDefault();
+            showNotification('Please calculate delivery distance first (Step 3)', 'error');
+            goToStep(3);
+            return false;
+        }
+        
+        if (deliveryFee < 0) {
+            e.preventDefault();
+            showNotification('Invalid delivery fee. Please recalculate.', 'error');
+            goToStep(3);
+            return false;
+        }
+
+        console.log('✓ Delivery validated - Distance:', deliveryDistance, 'Fee:', deliveryFee);
+        console.log('Form submitting with method:', selectedMethod.value);
+
+        // Handle PayMongo with AJAX
+        if (selectedMethod.value === 'PayMongo') {
+            e.preventDefault();
+            this.handlePayMongoPayment();
+            return false;
+        }
+
+        // Handle PayPal submission
+        if (selectedMethod.value === 'PayPal') {
+            e.preventDefault();
+            this.handlePayPalSubmission(checkoutForm);
+            return false;
+        }
+
+        // Let other payment methods submit normally
+        this.isSubmitting = true;
+        showNotification(`Processing ${selectedMethod.value} payment...`, 'info');
+    });
+}
+
+    async handlePayMongoPayment() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (!placeOrderBtn) {
+        this.isSubmitting = false;
+        return;
+    }
+
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.textContent = 'Creating PayMongo session...';
+
+    try {
+        // ✅ FIXED: Validate delivery calculation first
+        const deliveryDistanceInput = document.getElementById('deliveryDistance');
+        const deliveryFeeInput = document.getElementById('deliveryFee');
+        
+        if (!deliveryDistanceInput || !deliveryFeeInput) {
+            throw new Error('Delivery calculation fields not found');
+        }
+        
+        const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+        const deliveryFee = parseFloat(deliveryFeeInput.value || '0');
+        
+        if (deliveryDistance <= 0) {
+            throw new Error('Please calculate delivery distance first');
+        }
+
+        // Get total amount
+        const grandTotalElement = document.getElementById('grandTotalDisplay');
+        if (!grandTotalElement) {
+            throw new Error('Cannot find total amount');
+        }
+        
+        const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '');
+        const amount = parseFloat(totalText);
             
             if (isNaN(amount) || amount <= 0) {
                 throw new Error('Invalid amount: ' + totalText);
@@ -360,7 +621,6 @@ class PaymentSystem {
                 billing_address_id: formData.get('billing_address_id') || null,
                 delivery_distance: parseFloat(formData.get('delivery_distance')) || 0,
                 delivery_fee: parseFloat(formData.get('delivery_fee')) || 0,
-                zone_id: formData.get('zone_id') || null
             };
 
             // ✅ VALIDATION: Check required fields

@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeStepNavigation();
         initializeAddressSelection();
         initializeDistanceCalculation();
+        initializeDeliveryTypeSelection();
         initializeMapModal();
         initializeCheckoutForm();
         

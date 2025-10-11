@@ -132,7 +132,20 @@ function validateStep(stepNumber) {
     return true;
 
         case 3:
-    // ✅ FIXED: Only check if delivery calculation is complete
+    // Check delivery type
+    const deliveryTypeRadio = document.querySelector('input[name="delivery_type"]:checked');
+    
+    if (!deliveryTypeRadio) {
+        showNotification('Please select a delivery method.', 'error');
+        return false;
+    }
+    
+    // If pickup, always valid
+    if (deliveryTypeRadio.value === 'pickup') {
+        return true;
+    }
+    
+    // If delivery, check if calculation is complete
     const deliveryDistanceInput = document.getElementById('deliveryDistance');
     const deliveryFeeInput = document.getElementById('deliveryFee');
     
@@ -156,7 +169,7 @@ function validateStep(stepNumber) {
         return false;
     }
     
-    console.log('✓ Step 3 validated - Distance:', deliveryDistance, 'Fee:', deliveryFee);
+    console.log('✓ Step 3 validated - Type:', deliveryTypeRadio.value, 'Distance:', deliveryDistance, 'Fee:', deliveryFee);
     return true;
 
         case 4:

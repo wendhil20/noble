@@ -510,32 +510,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $paypal_order_id = $paypal_order['id'];
 
                 // Insert order with PayPal data
-                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                // Get delivery type for PayPal
+$delivery_type = $_POST['delivery_type'] ?? 'delivery';
+if ($delivery_type === 'pickup') {
+    $delivery_fee = 0.00;
+    $delivery_distance = 0.00;
+}
 
-                if (!$stmt) {
-                    throw new Exception("Database prepare failed: " . $conn->error);
-                }
+// Get vehicle assignment for delivery
+$assigned_vehicle_id = null;
+$assigned_vehicle_type = null;
+$total_cubic_meters = 0;
+$total_weight_kg = 0;
+$total_width = 0;
+$total_height = 0;
+$total_length = 0;
 
-                $stmt->bind_param(
-                    "ssssssdsiddiddsss",
-                    $name,
-                    $email,
-                    $mobile,
-                    $address,
-                    $zipcode,
-                    $payment_method,
-                    $grand_total,
-                    $reference_no,
-                    $billing_address_id,
-                    $latitude,
-                    $longitude,
-                    $user_id,
-                    $delivery_distance,
-                    $delivery_fee,
-                    $subtotal,
-                    $payment_status,
-                    $paypal_order_id
-                );
+if ($delivery_type === 'delivery') {
+    $vehicleAssignment = assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn);
+    if ($vehicleAssignment && $vehicleAssignment['vehicle']) {
+        $assigned_vehicle_id = $vehicleAssignment['vehicle']['id'];
+        $assigned_vehicle_type = $vehicleAssignment['vehicle']['vehicle_type'];
+        $total_cubic_meters = $vehicleAssignment['totalCubicMeters'];
+        $total_weight_kg = $vehicleAssignment['totalWeightKg'];
+        
+        foreach ($cart_items as $item) {
+            $width = floatval($item['width'] ?? 0);
+            $height = floatval($item['height'] ?? 0);
+            $length = floatval($item['length'] ?? 0);
+            $dimensionUnit = $item['dimension_unit'] ?? 'cm';
+            
+            $meters = ['cm' => 0.01, 'm' => 1, 'mm' => 0.001, 'in' => 0.0254, 'ft' => 0.3048];
+            $multiplier = $meters[strtolower($dimensionUnit)] ?? 0.01;
+            
+            $total_width += ($width * $multiplier);
+            $total_height += ($height * $multiplier);
+            $total_length += ($length * $multiplier);
+        }
+    }
+}
+
+$stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+$stmt->bind_param(
+    "ssssssdsiddiddsssiisddddds",
+    $name,
+    $email,
+    $mobile,
+    $address,
+    $zipcode,
+    $payment_method,
+    $grand_total,
+    $reference_no,
+    $billing_address_id,
+    $latitude,
+    $longitude,
+    $user_id,
+    $delivery_distance,
+    $delivery_fee,
+    $subtotal,
+    $payment_status,
+    $paypal_order_id,
+    $assigned_vehicle_id,
+    $assigned_vehicle_type,
+    $total_cubic_meters,
+    $total_weight_kg,
+    $total_width,
+    $total_height,
+    $total_length,
+    $delivery_type
+);
 
                 if ($stmt->execute()) {
                     $order_id = $stmt->insert_id;
@@ -751,22 +795,31 @@ if ($_POST['payment_method'] === 'PayMongo') {
         
         // ✅ STORE ORDER DATA IN SESSION - Don't insert to DB yet
         $_SESSION['paymongo_order_data'] = [
-            'customer_name' => $customer_name,
-            'email' => $email,
-            'mobile' => $mobile,
-            'address' => $address,
-            'zipcode' => $zipcode,
-            'billing_address_id' => $billing_address_id,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'delivery_fee' => $delivery_fee,
-            'delivery_distance' => $delivery_distance,
-            'subtotal' => $subtotal,
-            'vat_amount' => $vat_amount,
-            'grand_total' => $grand_total,
-            'user_id' => $user_id,
-            'cart_items' => $cart_items // Store cart items for later insertion
-        ];
+    'customer_name' => $customer_name,
+    'email' => $email,
+    'mobile' => $mobile,
+    'address' => $address,
+    'zipcode' => $zipcode,
+    'billing_address_id' => $billing_address_id,
+    'latitude' => $latitude,
+    'longitude' => $longitude,
+    'delivery_fee' => $delivery_fee,
+    'delivery_distance' => $delivery_distance,
+    'subtotal' => $subtotal,
+    'vat_amount' => $vat_amount,
+    'grand_total' => $grand_total,
+    'user_id' => $user_id,
+    'cart_items' => $cart_items,
+    // ✅ NEW: Add delivery type and vehicle info
+    'delivery_type' => $_POST['delivery_type'] ?? 'delivery',
+    'assigned_vehicle_id' => $assigned_vehicle_id,
+    'assigned_vehicle_type' => $assigned_vehicle_type,
+    'total_cubic_meters' => $total_cubic_meters,
+    'total_weight_kg' => $total_weight_kg,
+    'total_width' => $total_width,
+    'total_height' => $total_height,
+    'total_length' => $total_length
+];
         
         // ✅ REDIRECT to create PayMongo session using AJAX call
         ?>
@@ -903,26 +956,72 @@ if (!$vehicleAssignment || !$vehicleAssignment['vehicle']) {
 }
 
     if (empty($payment_method)) {
-        $validation_errors[] = "Payment method is required";
-    }
+    $validation_errors[] = "Payment method is required";
+}
 
-    if (empty($cart_items)) {
-        $validation_errors[] = "Your cart is empty";
-    }
+if (empty($cart_items)) {
+    $validation_errors[] = "Your cart is empty";
+}
 
-    // ✅ If billing address is selected, fetch coordinates
-    if (!empty($billing_address_id) && is_numeric($billing_address_id)) {
-        $stmt = $conn->prepare("SELECT latitude, longitude FROM billing_addresses WHERE id = ? AND user_id = ?");
-        $stmt->bind_param("ii", $billing_address_id, $user_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
-            $billing_data = $result->fetch_assoc();
-            $latitude = $billing_data['latitude'];
-            $longitude = $billing_data['longitude'];
+// ✅ If billing address is selected, fetch coordinates
+if (!empty($billing_address_id) && is_numeric($billing_address_id)) {
+    $stmt = $conn->prepare("SELECT latitude, longitude FROM billing_addresses WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $billing_address_id, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $billing_data = $result->fetch_assoc();
+        $latitude = $billing_data['latitude'];
+        $longitude = $billing_data['longitude'];
+    }
+    $stmt->close();
+}
+
+// ✅ NEW: Get delivery type for ALL payment methods
+$delivery_type = trim($_POST['delivery_type'] ?? 'delivery');
+
+// ✅ Automatic Transportify vehicle assignment (for ALL payment methods including Bank Transfer)
+$vehicleAssignment = null;
+$assigned_vehicle_id = null;
+$assigned_vehicle_type = null;
+$total_cubic_meters = 0;
+$total_weight_kg = 0;
+$total_width = 0;
+$total_height = 0;
+$total_length = 0;
+
+if ($delivery_type === 'delivery') {
+    $vehicleAssignment = assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn);
+    
+    if (!$vehicleAssignment || !$vehicleAssignment['vehicle']) {
+        $validation_errors[] = "Unable to assign delivery vehicle. Please contact support.";
+    } else {
+        $assigned_vehicle_id = $vehicleAssignment['vehicle']['id'];
+        $assigned_vehicle_type = $vehicleAssignment['vehicle']['vehicle_type'];
+        $total_cubic_meters = $vehicleAssignment['total_cubic_meters'];
+        $total_weight_kg = $vehicleAssignment['total_weight_kg'];
+        
+        // Calculate total dimensions (sum of all items)
+        foreach ($cart_items as $item) {
+            $width = floatval($item['width'] ?? 0);
+            $height = floatval($item['height'] ?? 0);
+            $length = floatval($item['length'] ?? 0);
+            $dimensionUnit = $item['dimension_unit'] ?? 'cm';
+            
+            // Convert to meters
+            $meters = ['cm' => 0.01, 'm' => 1, 'mm' => 0.001, 'in' => 0.0254, 'ft' => 0.3048];
+            $multiplier = $meters[strtolower($dimensionUnit)] ?? 0.01;
+            
+            $total_width += ($width * $multiplier);
+            $total_height += ($height * $multiplier);
+            $total_length += ($length * $multiplier);
         }
-        $stmt->close();
     }
+} else {
+    // For pickup, set delivery fee to 0
+    $delivery_fee = 0.00;
+    $delivery_distance = 0.00;
+}
 
     // If there are validation errors, show them
     if (!empty($validation_errors)) {
@@ -941,31 +1040,40 @@ if (!$vehicleAssignment || !$vehicleAssignment['vehicle']) {
 
             // ✅ Save order (FIXED: Use correct number of placeholders - 19 placeholders)
             $payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
-            $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-            // FIXED: Bind exactly 19 parameters (matching the placeholders)
-            $stmt->bind_param(
-                "ssssssdsiddiddsssss",
-                $name,                  // s
-                $email,                 // s  
-                $mobile,                // s
-                $address,               // s
-                $zipcode,               // s
-                $payment_method,        // s
-                $grand_total,           // d
-                $reference_no,          // s
-                $billing_address_id,    // i
-                $latitude,              // d
-                $longitude,             // d
-                $user_id,               // i
-                $delivery_distance,     // d
-                $delivery_fee,          // d
-                $subtotal,              // d
-                $bank_type,             // s
-                $screenshot_filename,   // s
-                $reference_number,      // s
-                $payment_status         // s
-            );
+$stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+// FIXED: Bind 27 parameters
+$stmt->bind_param(
+    "ssssssdsiddidddssssisddddds",
+    $name,            // s
+    $email,          // s  
+    $mobile,                // s
+    $address,               // s
+    $zipcode,               // s
+    $payment_method,        // s
+    $grand_total,           // d
+    $reference_no,          // s
+    $billing_address_id,    // i
+    $latitude,              // d
+    $longitude,             // d
+    $user_id,               // i
+    $delivery_distance,     // d
+    $delivery_fee,          // d
+    $subtotal,              // d
+    $bank_type,             // s
+    $screenshot_filename,   // s
+    $reference_number,      // s
+    $payment_status,        // s
+    $assigned_vehicle_id,   // i
+    $assigned_vehicle_type, // s
+    $total_cubic_meters,    // d
+    $total_weight_kg,       // d
+    $total_width,           // d
+    $total_height,          // d
+    $total_length,          // d
+    $delivery_type          // s
+);
 
             if (!$stmt->execute()) {
                 throw new Exception("Failed to create order: " . $stmt->error);
@@ -979,12 +1087,12 @@ $delivery_result = calculateTransportifyDeliveryCost($delivery_distance, $vehicl
 $delivery_fee = $delivery_result['total_delivery_cost'];
 $assigned_vehicle = $delivery_result['vehicle_info'];
 
-            // ✅ Save each item with individual delivery calculations
-            $stmt = $conn->prepare("INSERT INTO order_items (
+            // ✅ Simplified order items (no vehicle info)
+$stmt = $conn->prepare("INSERT INTO order_items (
     order_id, product_id, product_name, codename, type_name, variant_color, size, 
     price, quantity, subtotal, descrip6, descrip7, origin, 
-    lt_from, lt_to, assigned_vehicle_type, assigned_vehicle_id, vehicle_base_fare, vehicle_delivery_cost
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    lt_from, lt_to
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 foreach ($cart_items as $index => $item) {
     $subtotal_item = $item['price'] * $item['quantity'];
@@ -995,18 +1103,6 @@ foreach ($cart_items as $index => $item) {
     $size = $item['size'] ?? '';
     $price = $item['price'];
     $quantity = $item['quantity'];
-
-    // Get delivery details for this specific item
-    $item_delivery_detail = $item_delivery_details[$index] ?? null;
-
-    if ($item_delivery_detail) {
-        $delivery_fee_per_item = $item_delivery_detail['delivery_fee_per_item'];
-        $item_total_delivery = $item_delivery_detail['item_total_delivery'];
-    } else {
-        // Fallback calculation
-        $delivery_fee_per_item = 0;
-        $item_total_delivery = 0;
-    }
 
     // ✅ Calculate lead time dates
     $leadTimeRange = calculateLeadTimeRange(
@@ -1023,13 +1119,9 @@ foreach ($cart_items as $index => $item) {
     $desc7 = $item['descrip7'] ?? '';
     $origin = $item['origin'] ?? '';
     $product_id = $item['product_id'] ?? null;
-    $vehicleType = $assigned_vehicle['vehicle_type'] ?? null;
-    $vehicleId = $assigned_vehicle['id'] ?? null;
-    $vehicleBaseFare = $assigned_vehicle['base_fare'] ?? 0;
-    $vehicleDeliveryCost = $delivery_fee; // Total delivery split among items or assign per order
 
     $stmt->bind_param(
-        "iisssssiiissssssisd",
+        "iisssssiiisssss",
         $order_id,
         $product_id,
         $product_name,
@@ -1044,11 +1136,7 @@ foreach ($cart_items as $index => $item) {
         $desc7,
         $origin,
         $lt_from,
-        $lt_to,
-        $vehicleType,        // NEW
-        $vehicleId,          // NEW
-        $vehicleBaseFare,    // NEW
-        $vehicleDeliveryCost // NEW
+        $lt_to
     );
 
     if (!$stmt->execute()) {
@@ -1403,69 +1491,202 @@ if (window.transportifyVehicles.length === 0) {
             </div>
 
             <!-- STEP 3: Delivery Fee Calculation -->
-            <div class="step-content hidden" id="step3">
-                <div class=" p-4 mb-6">
-    <div class="flex items-center">
-        <div>
-            <h3 class="text-lg font-bold text-black">Step 3: Calculate Delivery Fee</h3>
-            <p class="text-black text-sm">Automatic vehicle assignment based on order size and distance</p>
+<div class="step-content hidden" id="step3">
+    <div class="p-4 mb-6">
+        <div class="flex items-center">
+            <div>
+                <h3 class="text-lg font-bold text-black">Step 3: Delivery Options</h3>
+                <p class="text-black text-sm">Choose delivery method and calculate costs</p>
+            </div>
         </div>
     </div>
-</div>
 
-                <?php if ($delivery_settings && $has_billing_addresses): ?>
-                    <div class="bg-white rounded-lg p-6">
-                        <h4 class="font-bold text-gray-800 mb-4">Delivery Distance Calculator</h4>
-
-                        <div class="grid md:grid-cols-2 gap-6 mb-6">
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h5 class="font-bold text-gray-700 mb-3">Store Information</h5>
-                                <p class="text-sm text-gray-600 mb-2">
-                                    <strong>Location:</strong> <?= htmlspecialchars($delivery_settings['location_name']) ?>
-                                </p>
-                                <div class="text-sm space-y-1">
-                                    <div><strong>Base Fee:</strong> ₱<?= number_format($delivery_settings['base_fee'], 2) ?></div>
-                                    <div><strong>Per KM Rate:</strong> ₱<?= number_format($delivery_settings['per_km_rate'], 2) ?></div>
-                                    <div><strong>Free Delivery Distance:</strong> <?= $delivery_settings['total_km_base_fee'] ?> km</div>
-                                </div>
-                            </div>
-
-                            <div class="bg-blue-50 p-4 rounded-lg">
-                                <h5 class="font-bold text-gray-700 mb-3">Distance Calculation</h5>
-                                <div class="space-y-3">
-                                    <button type="button" id="calculateDistance"
-                                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-400"
-                                        disabled>
-                                        Calculate Distance & Fee
-                                    </button>
-                                    <button type="button" id="showMapModal"
-                                        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
-                                        disabled>
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
-                                        </svg>
-                                        View on Map
-                                    </button>
-                                </div>
-                                <div id="distanceResult" class="mt-4 text-sm"></div>
-                            </div>
-                        </div>
-
-                        <!-- Hidden inputs for calculated values -->
-                        <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
-                        <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
+    <!-- ✅ NEW: Delivery Type Selection -->
+    <div class="bg-white border rounded-lg p-6 mb-6">
+        <h4 class="font-bold text-gray-800 mb-4">Select Delivery Method</h4>
+        
+        <div class="grid md:grid-cols-2 gap-4">
+            <!-- Delivery Option -->
+            <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition delivery-option">
+                <input type="radio" name="delivery_type" value="delivery" class="mt-2 mr-4" checked required />
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-6 h-6 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                        <div class="font-bold text-lg">Delivery</div>
                     </div>
-                <?php endif; ?>
+                    <div class="text-sm text-gray-600">
+                        We'll deliver to your address using our courier service
+                    </div>
+                    <div class="mt-2 text-xs text-orange-600 font-medium">
+                        Delivery fee applies based on distance
+                    </div>
+                </div>
+            </label>
 
-                <div class="flex justify-between mt-8">
-                    <button type="button" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition font-medium" onclick="goToStep(2)">
-                        Back to Address
-                    </button>
-                    <button type="button" id="continueToPayment" class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium" onclick="goToStep(4)" disabled>
-                        Continue
-                    </button>
+            <!-- Pickup Option -->
+            <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-green-50 hover:border-green-300 transition pickup-option">
+                <input type="radio" name="delivery_type" value="pickup" class="mt-2 mr-4" required />
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <div class="font-bold text-lg">Pick-up</div>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        You'll pick up your order from our store
+                    </div>
+                    <div class="mt-2 text-xs text-green-600 font-medium">
+                        FREE - No delivery fee
+                    </div>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <!-- ✅ Delivery Calculation Section (shown only for delivery) -->
+    <div id="deliveryCalculationSection" class="bg-white rounded-lg p-6">
+        <h4 class="font-bold text-gray-800 mb-4">Delivery Distance Calculator</h4>
+
+        <!-- ✅ NEW: Order Dimensions Summary (hidden until calculation) -->
+<div id="orderDimensionsSummaryContainer" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h5 class="font-bold text-blue-800 mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                Your Order Dimensions
+            </h5>
+            <div id="orderDimensionsSummary" class="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="font-medium text-gray-700 mb-2">Total Size:</div>
+                    <div class="space-y-1 text-gray-600">
+                        <div>Volume: <span id="totalVolume" class="font-semibold">Calculating...</span></div>
+                        <div>Weight: <span id="totalWeight" class="font-semibold">Calculating...</span></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-700 mb-2">Estimated Dimensions:</div>
+                    <div class="space-y-1 text-gray-600">
+                        <div>Width: <span id="totalWidth" class="font-semibold">Calculating...</span></div>
+                        <div>Height: <span id="totalHeight" class="font-semibold">Calculating...</span></div>
+                        <div>Length: <span id="totalLength" class="font-semibold">Calculating...</span></div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <!-- Store Information -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h5 class="font-bold text-gray-700 mb-3">Store Information</h5>
+                <p class="text-sm text-gray-600 mb-2">
+                    <strong>Location:</strong> <?= htmlspecialchars($delivery_settings['location_name']) ?>
+                </p>
+            </div>
+
+            <!-- Distance Calculation -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h5 class="font-bold text-gray-700 mb-3">Distance Calculation</h5>
+                <div class="space-y-3">
+                    <button type="button" id="calculateDistance"
+                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-400"
+                        disabled>
+                        Calculate Distance & Fee
+                    </button>
+                    <button type="button" id="showMapModal"
+                        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
+                        disabled>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+                        </svg>
+                        View on Map
+                    </button>
+                </div>
+                <div id="distanceResult" class="mt-4 text-sm"></div>
+            </div>
+        </div>
+
+        <!-- ✅ NEW: Assigned Vehicle Details (shown after calculation) -->
+        <div id="assignedVehicleDetails" class="hidden bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <h5 class="font-bold text-green-800 mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Assigned Vehicle
+            </h5>
+            <div id="vehicleDetailsContent" class="grid md:grid-cols-2 gap-4 text-sm">
+                <!-- Content populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Hidden inputs for calculated values -->
+        <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
+        <input type="hidden" name="delivery_fee" id="deliveryFee" value="0">
+    </div>
+
+    <!-- ✅ Pickup Information (shown only for pickup) -->
+    <div id="pickupInformationSection" class="hidden bg-green-50 border border-green-200 rounded-lg p-6">
+        <h4 class="font-bold text-green-800 mb-4 flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Store Pick-up Location
+        </h4>
+        <?php if ($delivery_settings): ?>
+        <div class="space-y-3">
+            <div class="bg-white rounded-lg p-4">
+                <div class="font-medium text-gray-700 mb-2">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    Store Address:
+                </div>
+                <div class="text-gray-600"><?= htmlspecialchars($delivery_settings['location_name']) ?></div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4">
+                <div class="font-medium text-gray-700 mb-2">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Pick-up Hours:
+                </div>
+                <div class="text-gray-600">Monday - Saturday: 9:00 AM - 6:00 PM</div>
+                <div class="text-gray-600">Sunday: Closed</div>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 border-l-4 border-green-500">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-green-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="text-sm text-gray-700">
+                        <div class="font-semibold mb-1">Important Reminders:</div>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Bring a valid ID when picking up</li>
+                            <li>Present your order reference number</li>
+                            <li>We'll notify you when your order is ready</li>
+                            <li>Please pick up within 7 days of notification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="flex justify-between mt-8">
+        <button type="button" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition font-medium" onclick="goToStep(2)">
+            Back to Address
+        </button>
+        <button type="button" id="continueToPayment" class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition font-medium" onclick="goToStep(4)" disabled>
+            Continue to Payment
+        </button>
+    </div>
+</div>
 
             <!-- STEP 4: Payment & Order Summary -->
             <div class="step-content hidden" id="step4">

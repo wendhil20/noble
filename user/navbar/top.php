@@ -1295,21 +1295,7 @@ $display_categories = getNavigationData($conn);
 
 
         <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
-          <div x-data="chatNotif" x-init="init()" class="relative">
-            <a href="../otherpage/Chat_main.php"
-              class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
-              <i class="fas fa-envelope"></i>
-
-              <!-- Badge -->
-              <template x-if="unreadCount > 0">
-                <span
-                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                  x-text="unreadCount">
-                </span>
-              </template>
-            </a>
-          </div>
-
+         
           <!-- Notifications -->
           <div class="relative">
             <button
@@ -1361,9 +1347,20 @@ $display_categories = getNavigationData($conn);
               </ul>
             </div>
           </div>
+           <div x-data="chatNotif" x-init="init()" class="relative">
+            <a href="../otherpage/Chat_main.php"
+              class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
+              <i class="fas fa-envelope"></i>
+              <!-- Badge -->
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </a>
+          </div>
         </div>
-
-      
 
         <script src="../navbar/topcart-obf.js"></script>
 

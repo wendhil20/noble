@@ -417,13 +417,6 @@ handleQueryError($conn, "New Status Query");
             opacity: .3
         }
 
-        .mySwiper .swiper-slide img {
-            width: 100vw !important;
-            height: 100% !important;
-            object-fit: contain !important;
-            object-position: center !important;
-        }
-
         .swiper-button-next,
         .swiper-button-prev {
             width: 2rem;
@@ -550,11 +543,12 @@ handleQueryError($conn, "New Status Query");
         <?php unset($_SESSION['login_error']); ?>
     <?php endif; ?>
 
+
     <section class="w-full overflow-hidden relative">
         <div class="mySwiper relative w-full">
             <div class="swiper-wrapper">
                 <?php while ($row = $slideresult->fetch_assoc()): ?>
-                    <div class="swiper-slide h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative bg-white">
+                    <div class="swiper-slide h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[500px] relative bg-white">
                         <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
                             alt="Discount"
                             class="w-full h-full object-cover object-center" />
@@ -569,8 +563,25 @@ handleQueryError($conn, "New Status Query");
 
             <!-- buttons same as before -->
         </div>
-    </section>
 
+        <style>
+            .mySwiper .swiper-slide img {
+                width: 90% !important;
+                max-width: 1400px !important;
+                height: 90% !important;
+                object-fit: contain !important;
+                object-position: center !important;
+                margin: auto !important;
+            }
+
+            @media (max-width: 768px) {
+                .mySwiper .swiper-slide img {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+            }
+        </style>
+    </section>
 
     <section class="bg-black text-white p-2">
 
@@ -611,116 +622,118 @@ handleQueryError($conn, "New Status Query");
 
     </section>
 
-  <!-- POPUP MODAL -->
-<div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="relative max-w-4xl w-full mx-4">
-        <!-- Close Button -->
-        <button onclick="hidePromoModal()"
-            class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
+    <!-- POPUP MODAL -->
+    <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+        <div class="relative max-w-4xl w-full mx-4">
+            <!-- Close Button -->
+            <button onclick="hidePromoModal()"
+                class="absolute -top-4 -right-4 text-white hover:text-red-500 bg-black/70 rounded-full w-10 h-10 flex items-center justify-center text-2xl z-10 transition-colors duration-300">✕</button>
 
-        <!-- Single Image Display -->
-        <div class="relative overflow-hidden">
-            <a href="allproduct.php?discount=20" class="relative group flex items-center justify-center">
-                <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
-                    <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
-                </div>
-            </a>
+            <!-- Single Image Display -->
+            <div class="relative overflow-hidden">
+                <a href="allproduct.php?discount=20" class="relative group flex items-center justify-center">
+                    <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
+                        <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    const POPUP_DISPLAY_DURATION = 10000; // 10 seconds
-    const POPUP_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-    let autoCloseTimer = null;
+    <script>
+        const POPUP_DISPLAY_DURATION = 10000; // 10 seconds
+        const POPUP_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+        let autoCloseTimer = null;
 
-    function displayPromoModal() {
-        document.getElementById('promoPopup').classList.remove('hidden');
-        const timestamp = Date.now();
-        
-        // Store timestamp in localStorage (persists even after browser close)
-        try {
-            localStorage.setItem('promoModalLastShown', timestamp.toString());
-        } catch (e) {
-            console.error('Failed to save timestamp:', e);
+        function displayPromoModal() {
+            document.getElementById('promoPopup').classList.remove('hidden');
+            const timestamp = Date.now();
+
+            // Store timestamp in localStorage (persists even after browser close)
+            try {
+                localStorage.setItem('promoModalLastShown', timestamp.toString());
+            } catch (e) {
+                console.error('Failed to save timestamp:', e);
+            }
+
+            // Auto-close after 10 seconds
+            autoCloseTimer = setTimeout(() => {
+                hidePromoModal();
+            }, POPUP_DISPLAY_DURATION);
         }
 
-        // Auto-close after 10 seconds
-        autoCloseTimer = setTimeout(() => {
-            hidePromoModal();
-        }, POPUP_DISPLAY_DURATION);
-    }
-
-    function hidePromoModal() {
-        document.getElementById('promoPopup').classList.add('hidden');
-        if (autoCloseTimer) {
-            clearTimeout(autoCloseTimer);
-            autoCloseTimer = null;
-        }
-    }
-
-    function getLastShownTime() {
-        try {
-            const stored = localStorage.getItem('promoModalLastShown');
-            return stored ? parseInt(stored) : null;
-        } catch (e) {
-            console.error('Failed to retrieve timestamp:', e);
-            return null;
-        }
-    }
-
-    function setupModalSchedule() {
-        const currentTimestamp = Date.now();
-        const lastShownTime = getLastShownTime();
-
-        console.log('Current time:', new Date(currentTimestamp).toLocaleString());
-
-        if (!lastShownTime) {
-            // First visit - show popup immediately
-            console.log('First visit - showing popup now');
-            displayPromoModal();
-        } else {
-            const elapsedMilliseconds = currentTimestamp - lastShownTime;
-            const elapsedMinutes = Math.floor(elapsedMilliseconds / 60000);
-            const elapsedHours = Math.floor(elapsedMinutes / 60);
-
-            console.log(`Last shown: ${new Date(lastShownTime).toLocaleString()}`);
-            console.log(`Time elapsed: ${elapsedHours} hours and ${elapsedMinutes % 60} minutes`);
-
-            if (elapsedMilliseconds >= POPUP_INTERVAL) {
-                // 2+ hours passed - show popup now
-                console.log('2+ hours passed - showing popup now');
-                displayPromoModal();
-            } else {
-                // Calculate remaining time
-                const remainingMilliseconds = POPUP_INTERVAL - elapsedMilliseconds;
-                const remainingMinutes = Math.floor(remainingMilliseconds / 60000);
-                const remainingHours = Math.floor(remainingMinutes / 60);
-                
-                console.log(`Popup will show in ${remainingHours} hours and ${remainingMinutes % 60} minutes`);
-
-                // Schedule popup for later
-                setTimeout(() => {
-                    displayPromoModal();
-                }, remainingMilliseconds);
+        function hidePromoModal() {
+            document.getElementById('promoPopup').classList.add('hidden');
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+                autoCloseTimer = null;
             }
         }
-    }
 
-    // Initialize popup logic when page loads
-    setupModalSchedule();
-</script>
+        function getLastShownTime() {
+            try {
+                const stored = localStorage.getItem('promoModalLastShown');
+                return stored ? parseInt(stored) : null;
+            } catch (e) {
+                console.error('Failed to retrieve timestamp:', e);
+                return null;
+            }
+        }
 
+        function setupModalSchedule() {
+            const currentTimestamp = Date.now();
+            const lastShownTime = getLastShownTime();
+
+            console.log('Current time:', new Date(currentTimestamp).toLocaleString());
+
+            if (!lastShownTime) {
+                // First visit - show popup immediately
+                console.log('First visit - showing popup now');
+                displayPromoModal();
+            } else {
+                const elapsedMilliseconds = currentTimestamp - lastShownTime;
+                const elapsedMinutes = Math.floor(elapsedMilliseconds / 60000);
+                const elapsedHours = Math.floor(elapsedMinutes / 60);
+
+                console.log(`Last shown: ${new Date(lastShownTime).toLocaleString()}`);
+                console.log(`Time elapsed: ${elapsedHours} hours and ${elapsedMinutes % 60} minutes`);
+
+                if (elapsedMilliseconds >= POPUP_INTERVAL) {
+                    // 2+ hours passed - show popup now
+                    console.log('2+ hours passed - showing popup now');
+                    displayPromoModal();
+                } else {
+                    // Calculate remaining time
+                    const remainingMilliseconds = POPUP_INTERVAL - elapsedMilliseconds;
+                    const remainingMinutes = Math.floor(remainingMilliseconds / 60000);
+                    const remainingHours = Math.floor(remainingMinutes / 60);
+
+                    console.log(`Popup will show in ${remainingHours} hours and ${remainingMinutes % 60} minutes`);
+
+                    // Schedule popup for later
+                    setTimeout(() => {
+                        displayPromoModal();
+                    }, remainingMilliseconds);
+                }
+            }
+        }
+
+        // Initialize popup logic when page loads
+        setupModalSchedule();
+    </script>
 
     <section class="py-8 bg-white overflow-hidden">
         <!-- Heading and description -->
         <div class="text-center mb-8 px-4">
-            <h2 class="text-3xl sm:text-4xl font-light text-black mb-3">Shop by Categories</h2>
-            <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-light text-black mb-3">
+                Shop by Categories
+            </h2>
+            <p class="text-gray-600 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
                 Discover our wide range of home improvement products organized by category
             </p>
         </div>
+
 
         <!-- Categories Container -->
         <div class="relative px-4 sm:px-6 lg:px-8">
@@ -738,50 +751,49 @@ handleQueryError($conn, "New Status Query");
             </button>
 
             <div class="swiper category-swiper !overflow-visible" x-init="
-            setTimeout(() => {
-                const swiper = new Swiper($el, {
-                    slidesPerView: 1.5,
-                    spaceBetween: 12,
-                    centeredSlides: false,
-                    navigation: {
-                        nextEl: '.category-next',
-                        prevEl: '.category-prev',
+        setTimeout(() => {
+            const swiper = new Swiper($el, {
+                slidesPerView: 2.5,
+                spaceBetween: 12,
+                centeredSlides: false,
+                navigation: {
+                    nextEl: '.category-next',
+                    prevEl: '.category-prev',
+                },
+                breakpoints: {
+                    480: {
+                        slidesPerView: 3,
+                        spaceBetween: 12,
                     },
-                    breakpoints: {
-                        480: {
-                            slidesPerView: 2,
-                            spaceBetween: 16,
-                        },
-                        640: {
-                            slidesPerView: 2.5,
-                            spaceBetween: 16,
-                        },
-                        768: {
-                            slidesPerView: 3,
-                            spaceBetween: 20,
-                        },
-                        1024: {
-                            slidesPerView: 4,
-                            spaceBetween: 24,
-                        },
-                        1280: {
-                            slidesPerView: 6,
-                            spaceBetween: 24,
-                        }
+                    640: {
+                        slidesPerView: 4,
+                        spaceBetween: 14,
+                    },
+                    768: {
+                        slidesPerView: 5,
+                        spaceBetween: 16,
+                    },
+                    1024: {
+                        slidesPerView: 6,
+                        spaceBetween: 18,
+                    },
+                    1280: {
+                        slidesPerView: 8,
+                        spaceBetween: 20,
                     }
-                });
-            }, 100);
-        ">
+                }
+            });
+        }, 100);
+    ">
                 <div class="swiper-wrapper pb-2">
-                    <!-- Row 1 -->
                     <!-- Furniture -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=furniture" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/1.png" alt="Furniture" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Furniture</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Furniture</span>
                                 </div>
                             </div>
                         </a>
@@ -790,11 +802,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Building Materials -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=buildingmaterials" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/3.png" alt="Building Materials" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/3.png" alt="Building Materials" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl text-center px-2 leading-tight">Building<br>Materials</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2 leading-tight">Building<br>Materials</span>
                                 </div>
                             </div>
                         </a>
@@ -803,11 +815,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bedroom -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bedfurniture" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/4.png" alt="Bedroom" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/4.png" alt="Bedroom" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Bedroom</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Bedroom</span>
                                 </div>
                             </div>
                         </a>
@@ -816,11 +828,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Lighting -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=lighting" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/5.png" alt="Lighting" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/5.png" alt="Lighting" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl text-center leading-tight">Lighting<br>Fixture</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2 leading-tight">Lighting<br>Fixture</span>
                                 </div>
                             </div>
                         </a>
@@ -829,11 +841,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Aircon -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aircon" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Aircon</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Aircon</span>
                                 </div>
                             </div>
                         </a>
@@ -842,25 +854,24 @@ handleQueryError($conn, "New Status Query");
                     <!-- Doors -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=doors" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Doors</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Doors</span>
                                 </div>
                             </div>
                         </a>
                     </div>
 
-                    <!-- Row 2 -->
                     <!-- Tiles -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=tiles" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Tiles</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Tiles</span>
                                 </div>
                             </div>
                         </a>
@@ -869,11 +880,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Windows -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=windows" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/9.png" alt="Windows" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/9.png" alt="Windows" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Windows</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Windows</span>
                                 </div>
                             </div>
                         </a>
@@ -882,11 +893,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Bathroom -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=bathroom" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/10.png" alt="Bathroom" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/10.png" alt="Bathroom" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Bathroom</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Bathroom</span>
                                 </div>
                             </div>
                         </a>
@@ -895,11 +906,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Kitchen -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=kitchen" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/11.png" alt="Kitchen" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/11.png" alt="Kitchen" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl text-center leading-tight">Kitchen<br>Fixtures</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2 leading-tight">Kitchen<br>Fixtures</span>
                                 </div>
                             </div>
                         </a>
@@ -908,11 +919,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- Pipes -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=pipes" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/2.png" alt="Pipes" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/2.png" alt="Pipes" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">Pipes</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">Pipes</span>
                                 </div>
                             </div>
                         </a>
@@ -921,11 +932,11 @@ handleQueryError($conn, "New Status Query");
                     <!-- AAC Blocks -->
                     <div class="swiper-slide">
                         <a href="shop?category[]=aacblock" class="group block">
-                            <div class="relative h-48 sm:h-52 lg:h-56 bg-white border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
-                                <img src="../img/category/12.png" alt="AAC Blocks" class="w-full h-full object-contain">
+                            <div class="relative h-32 sm:h-36 lg:h-40 bg-white border-2 border-gray-200 rounded-lg overflow-hidden group-hover:border-orange-400 group-hover:shadow-xl transition-all duration-300">
+                                <img src="../img/category/12.png" alt="AAC Blocks" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <span class="text-xl sm:text-2xl hover:underline text-white drop-shadow-2xl">AAC BLOCKS</span>
+                                    <span class="text-xs sm:text-sm lg:text-base hover:underline text-white drop-shadow-2xl text-center px-2">AAC BLOCKS</span>
                                 </div>
                             </div>
                         </a>
@@ -946,9 +957,14 @@ handleQueryError($conn, "New Status Query");
     <section class="py-8 bg-white overflow-hidden">
         <!-- Section Header -->
         <div class="text-center mb-8 px-4" data-aos="fade-up">
-            <h2 class="text-3xl sm:text-4xl font-light text-black mb-3">Best Seller</h2>
-            <p class="text-gray-600 text-base sm:text-lg">Save big on quality home improvement products</p>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-light text-black mb-3">
+                Best Seller
+            </h2>
+            <p class="text-gray-600 text-sm sm:text-base md:text-lg">
+                Save big on quality home improvement products
+            </p>
         </div>
+
 
         <!-- Cards Container -->
         <div class="relative px-4 sm:px-6 lg:px-8">
@@ -966,32 +982,36 @@ handleQueryError($conn, "New Status Query");
             </button>
 
             <div class="swiper promo-swiper !overflow-visible" x-data="{}" x-init="
-            setTimeout(() => {
-                new Swiper($el, {
-                    slidesPerView: 1.2,
-                    spaceBetween: 16,
-                    centeredSlides: false,
-                    navigation: {
-                        nextEl: '.promo-next',
-                        prevEl: '.promo-prev',
+        setTimeout(() => {
+            new Swiper($el, {
+                slidesPerView: 2.2,
+                spaceBetween: 12,
+                centeredSlides: false,
+                navigation: {
+                    nextEl: '.promo-next',
+                    prevEl: '.promo-prev',
+                },
+                breakpoints: {
+                    480: {
+                        slidesPerView: 2.5,
+                        spaceBetween: 14,
                     },
-                    breakpoints: {
-                        640: {
-                            slidesPerView: 2,
-                            spaceBetween: 20,
-                        },
-                        1024: {
-                            slidesPerView: 3,
-                            spaceBetween: 24,
-                        },
-                        1280: {
-                            slidesPerView: 4,
-                            spaceBetween: 24,
-                        }
+                    640: {
+                        slidesPerView: 3,
+                        spaceBetween: 16,
+                    },
+                    1024: {
+                        slidesPerView: 4,
+                        spaceBetween: 15,
+                    },
+                    1280: {
+                        slidesPerView: 5,
+                        spaceBetween: 15,
                     }
-                });
-            }, 100);
-        ">
+                }
+            });
+        }, 100);
+    ">
                 <div class="swiper-wrapper pb-2">
                     <?php
                     // Fetch bestsellers from database
@@ -1003,31 +1023,31 @@ handleQueryError($conn, "New Status Query");
                         <!-- Bestseller Card -->
                         <div class="swiper-slide">
                             <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>" class="group block h-full">
-                                <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-orange-400 hover:shadow-xl transition-all duration-300 h-full">
-                                    <div class="relative w-full h-80 sm:h-96 overflow-hidden">
+                                <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:border-orange-400 hover:shadow-xl transition-all duration-300 h-full">
+                                    <div class="relative w-full aspect-[3/4] overflow-hidden">
                                         <img src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
                                             alt="<?= htmlspecialchars($item['title']) ?>"
-                                            class="w-full h-full object-contain transition-transform duration-500">
+                                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
 
                                         <!-- Gradient Overlay -->
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
                                         <!-- Content Overlay -->
-                                        <div class="absolute inset-0 p-5 sm:p-6 flex flex-col justify-end text-white">
-                                            <h3 class="text-xl sm:text-2xl lg:text-3xl uppercase mb-2 group-hover:text-orange-400 transition-colors">
+                                        <div class="absolute inset-0 p-3 sm:p-6 flex flex-col justify-end text-white">
+                                            <h3 class="text-sm sm:text-2xl lg:text-3xl uppercase mb-1 sm:mb-2 group-hover:text-orange-400 transition-colors leading-tight">
                                                 <?= htmlspecialchars($item['title']) ?>
                                             </h3>
-                                            <p class="text-white/90 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2">
+                                            <p class="text-white/90 text-[10px] sm:text-sm leading-relaxed mb-2 sm:mb-4 line-clamp-2 hidden sm:block">
                                                 <?= htmlspecialchars($item['description']) ?>
                                             </p>
-                                            <div class="flex items-center justify-between text-xs sm:text-sm">
-                                                <span class="text-orange-400 group-hover:underline">Learn More →</span>
+                                            <div class="flex items-center justify-between text-[10px] sm:text-sm">
+                                                <span class="text-orange-400 group-hover:underline hidden sm:inline">Learn More →</span>
                                             </div>
                                         </div>
 
                                         <!-- Top Badge -->
-                                        <div class="absolute top-3 sm:top-4 right-3 sm:right-4">
-                                            <span class="bg-white text-black px-2.5 sm:px-3 py-1 rounded-full text-xs  shadow-lg">
+                                        <div class="absolute top-2 sm:top-4 right-2 sm:right-4">
+                                            <span class="bg-white text-black px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-xs shadow-lg">
                                                 <?= $count === 1 ? 'FEATURED' : 'BESTSELLER' ?>
                                             </span>
                                         </div>
@@ -1038,22 +1058,12 @@ handleQueryError($conn, "New Status Query");
                     <?php endwhile; ?>
                 </div>
             </div>
-
-            <!-- Pagination Dots -->
-            <div class="flex lg:hidden justify-center mt-6 gap-2">
-                <?php
-                $total = $conn->query("SELECT COUNT(*) as total FROM bestseller")->fetch_assoc()['total'];
-                for ($i = 0; $i < min($total, 4); $i++): ?>
-                    <div class="w-2 h-2 rounded-full <?= $i === 0 ? 'bg-orange-500' : 'bg-gray-300' ?>"></div>
-                <?php endfor; ?>
-            </div>
         </div>
     </section>
 
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
+    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10">
         <!-- Header first -->
-
         <div class="flex items-center gap-2 mb-2 mt-4" data-aos="fade-up">
             <!-- Details Button (as Title) -->
             <a href="shop.php"
@@ -1070,7 +1080,7 @@ handleQueryError($conn, "New Status Query");
                 <svg xmlns="http://www.w3.org/2000/svg"
                     fill="none" viewBox="0 0 24 24"
                     stroke-width="2.5" stroke="currentColor"
-                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600 ">
+                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -1078,31 +1088,6 @@ handleQueryError($conn, "New Status Query");
                 <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
             </a>
         </div>
-
-
-
-        <style>
-            .bubble-bounce {
-                position: absolute;
-                display: inline-block;
-                opacity: 0.18;
-                border-radius: 50%;
-                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
-                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
-            }
-
-            @keyframes bubble-bounce {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1);
-                }
-
-                50% {
-                    transform: translateY(-30px) scale(1.08);
-                }
-            }
-        </style>
 
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
@@ -1128,17 +1113,18 @@ handleQueryError($conn, "New Status Query");
                     $empty = 5 - $full - $half;
                     ?>
                     <div class="swiper-slide p-1">
-                        <div class="relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[450px] ">
+                        <!-- Clickable entire card for both mobile and desktop -->
+                        <a href="product_view?id=<?= (int)$row['id'] ?>"
+                            class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[280px] sm:h-[340px] lg:h-[450px]">
 
                             <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 relative">
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 sm:w-7 sm:h-7 lg:w-9 lg:h-9 object-contain" />
                                 </div>
                             </div>
 
-
                             <!-- Image Container with Overlay -->
-                            <div class="relative h-[280px] overflow-hidden">
+                            <div class="relative h-[160px] sm:h-[200px] lg:h-[280px] overflow-hidden">
                                 <!-- Gradient Overlay -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
@@ -1146,10 +1132,10 @@ handleQueryError($conn, "New Status Query");
                                     <img src="../../<?= $row['main_image'] ?>"
                                         loading="lazy"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                        class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
@@ -1157,153 +1143,142 @@ handleQueryError($conn, "New Status Query");
                             </div>
 
                             <!-- Content Section -->
-                            <div class="p-4 flex flex-col justify-between h-[170px]">
+                            <div class="p-2 sm:p-3 lg:p-4 flex flex-col justify-between h-[120px] sm:h-[140px] lg:h-[170px]">
 
                                 <!-- Product Info -->
-                                <div class="space-y-2">
+                                <div class="space-y-1 sm:space-y-2">
                                     <!-- Title -->
                                     <div class="relative w-full max-w-xs">
-                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                        <h3 class="text-xs sm:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-6">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
-                                        <!-- Fade overlay -->
-                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                        <!-- Fade overlay - desktop only -->
+                                        <div class="hidden sm:block absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
                                     </div>
-
 
                                     <!-- Rating Section -->
                                     <div class="flex items-center justify-between">
                                         <?php if ($total_raters > 0): ?>
                                             <div class="flex items-center space-x-1">
-                                                <div class="flex text-yellow-400 text-xs">
+                                                <div class="flex text-yellow-400 text-[10px] sm:text-xs">
                                                     <?php
                                                     for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
                                                     if ($half) echo '<i class="fas fa-star-half-alt"></i>';
                                                     for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
                                                     ?>
                                                 </div>
-                                                <span class="text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                                <span class="text-[10px] sm:text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
                                             </div>
-                                            <span class="text-xs text-gray-400">(<?= $total_raters ?> reviews)</span>
+                                            <span class="text-[10px] sm:text-xs text-gray-400">(<?= $total_raters ?>)</span>
                                         <?php else: ?>
                                             <div class="flex items-center space-x-1">
-                                                <div class="flex text-gray-300 text-xs">
+                                                <div class="flex text-gray-300 text-[10px] sm:text-xs">
                                                     <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
                                                 </div>
-                                                <span class="text-xs text-gray-400">No rating</span>
+                                                <span class="text-[10px] sm:text-xs text-gray-400">No rating</span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
-
-                                    <!-- Description -->
-                                    <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                        <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                                            <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                            <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? ' ' : '' ?>
-                                            <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                    <!-- Description --><!-- Description -->
+                                    <?php if (!empty($row['description'])): ?>
+                                        <p class="text-[10px] sm:text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                            <?= htmlspecialchars($row['description']) ?>
                                         </p>
                                     <?php else: ?>
-                                        <p class="text-xs text-gray-400 italic">No description available</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-400 italic">No description</p>
                                     <?php endif; ?>
-
-
                                 </div>
 
-                                <!-- Action Button -->
-                                <div class="mt-3 flex justify-start">
-                                    <form action="product_view" method="GET">
+                                <!-- Action Button - Desktop Only -->
+                                <div class="mt-3 hidden lg:flex justify-start">
+                                    <form action="product_view" method="GET" class="pointer-events-auto">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit" class="Btn">
-                                            <div class="sign">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                            </div>
-                                            <div class="text">View</div>
+                                        <button type="submit"
+                                            class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                            <i class="fa-solid fa-bag-shopping"></i>
+                                            <span>View</span>
                                         </button>
                                     </form>
                                 </div>
-
-                                <style>
-                                    /* From Uiverse.io by vinodjangid07 */
-                                    .Btn {
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: flex-start;
-                                        width: 45px;
-                                        height: 45px;
-                                        border: none;
-                                        border-radius: 0px;
-                                        cursor: pointer;
-                                        position: relative;
-                                        overflow: hidden;
-                                        transition-duration: .3s;
-                                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-                                        background-color: black;
-                                    }
-
-                                    /* icon */
-                                    .Btn .sign {
-                                        width: 100%;
-                                        font-size: 1.5em;
-                                        color: white;
-                                        transition-duration: .3s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                    }
-
-                                    /* text */
-                                    .Btn .text {
-                                        position: absolute;
-                                        right: 0%;
-                                        width: 0%;
-                                        opacity: 0;
-                                        color: white;
-
-                                        transition-duration: .3s;
-                                    }
-
-                                    /* hover effect */
-                                    .Btn:hover {
-                                        width: 125px;
-                                        border-radius: 0px;
-                                        transition-duration: .3s;
-                                    }
-
-                                    .Btn:hover .sign {
-                                        width: 30%;
-                                        transition-duration: .3s;
-                                        padding-left: 20px;
-                                    }
-
-                                    .Btn:hover .text {
-                                        opacity: 1;
-                                        width: 70%;
-                                        transition-duration: .3s;
-                                        padding-right: 20px;
-                                    }
-
-                                    /* click effect */
-                                    .Btn:active {
-                                        transform: translate(2px, 2px);
-                                    }
-                                </style>
-
                             </div>
-                        </div>
+                        </a>
                     </div>
                 <?php endwhile; ?>
             </div>
         </div>
+
+        <style>
+            /* From Uiverse.io by vinodjangid07 */
+            .Btn {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                width: 45px;
+                height: 45px;
+                border: none;
+                border-radius: 0px;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+                transition-duration: .3s;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+                background-color: black;
+            }
+
+            /* icon */
+            .Btn .sign {
+                width: 100%;
+                font-size: 1.5em;
+                color: white;
+                transition-duration: .3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* text */
+            .Btn .text {
+                position: absolute;
+                right: 0%;
+                width: 0%;
+                opacity: 0;
+                color: white;
+                transition-duration: .3s;
+            }
+
+            /* hover effect */
+            .Btn:hover {
+                width: 125px;
+                border-radius: 0px;
+                transition-duration: .3s;
+            }
+
+            .Btn:hover .sign {
+                width: 30%;
+                transition-duration: .3s;
+                padding-left: 20px;
+            }
+
+            .Btn:hover .text {
+                opacity: 1;
+                width: 70%;
+                transition-duration: .3s;
+                padding-right: 20px;
+            }
+
+            /* click effect */
+            .Btn:active {
+                transform: translate(2px, 2px);
+            }
+        </style>
     </section>
 
-
-
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
+    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1">
         <!-- Header first -->
-        <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+        <div class="flex items-center gap-2 mb-2 mt-2" data-aos="fade-up">
             <!-- Details Button (as Title) -->
             <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 text-2xl sm:text-3xl lg:text-4xl text-black">
+                class="group relative inline-flex items-center gap-2 font-light text-2xl sm:text-3xl lg:text-4xl text-black">
                 <span class="relative">
                     <span class="block group-hover:text-orange-600 transition-colors duration-300">
                         Furniture
@@ -1325,33 +1300,6 @@ handleQueryError($conn, "New Status Query");
             </a>
         </div>
 
-
-
-
-        <style>
-            .bubble-bounce {
-                position: absolute;
-                display: inline-block;
-                opacity: 0.18;
-                border-radius: 50%;
-                animation: bubble-bounce 2.2s cubic-bezier(.68, -0.55, .27, 1.55) infinite;
-                box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.25);
-            }
-
-            @keyframes bubble-bounce {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1);
-                }
-
-                50% {
-                    transform: translateY(-30px) scale(1.08);
-                }
-            }
-        </style>
-
-        <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
                 <?php while ($row = mysqli_fetch_assoc($result)) : ?>
@@ -1376,16 +1324,18 @@ handleQueryError($conn, "New Status Query");
                     $empty = 5 - $full - $half;
                     ?>
                     <div class="swiper-slide p-1">
-                        <div class="relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[450px] ">
+                        <!-- Clickable entire card for both mobile and desktop -->
+                        <a href="product_view?id=<?= (int)$row['id'] ?>"
+                            class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[280px] sm:h-[340px] lg:h-[450px]">
 
                             <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 relative">
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 sm:w-7 sm:h-7 lg:w-9 lg:h-9 object-contain" />
                                 </div>
                             </div>
 
                             <!-- Image Container with Overlay -->
-                            <div class="relative h-[280px] overflow-hidden">
+                            <div class="relative h-[160px] sm:h-[200px] lg:h-[280px] overflow-hidden">
                                 <!-- Gradient Overlay -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
@@ -1393,10 +1343,10 @@ handleQueryError($conn, "New Status Query");
                                     <img src="../../<?= $row['main_image'] ?>"
                                         loading="lazy"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                        class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
@@ -1404,141 +1354,135 @@ handleQueryError($conn, "New Status Query");
                             </div>
 
                             <!-- Content Section -->
-                            <div class="p-4 flex flex-col justify-between h-[170px]">
+                            <div class="p-2 sm:p-3 lg:p-4 flex flex-col justify-between h-[120px] sm:h-[140px] lg:h-[170px]">
 
                                 <!-- Product Info -->
-                                <div class="space-y-2">
+                                <div class="space-y-1 sm:space-y-2">
                                     <!-- Title -->
                                     <div class="relative w-full max-w-xs">
-                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                        <h3 class="text-xs sm:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-6">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
-                                        <!-- Fade overlay -->
-                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                        <!-- Fade overlay - desktop only -->
+                                        <div class="hidden sm:block absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
                                     </div>
+
                                     <!-- Rating Section -->
                                     <div class="flex items-center justify-between">
                                         <?php if ($total_raters > 0): ?>
                                             <div class="flex items-center space-x-1">
-                                                <div class="flex text-yellow-400 text-xs">
+                                                <div class="flex text-yellow-400 text-[10px] sm:text-xs">
                                                     <?php
                                                     for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
                                                     if ($half) echo '<i class="fas fa-star-half-alt"></i>';
                                                     for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
                                                     ?>
                                                 </div>
-                                                <span class="text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                                <span class="text-[10px] sm:text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
                                             </div>
-                                            <span class="text-xs text-gray-400">(<?= $total_raters ?> reviews)</span>
+                                            <span class="text-[10px] sm:text-xs text-gray-400">(<?= $total_raters ?>)</span>
                                         <?php else: ?>
                                             <div class="flex items-center space-x-1">
-                                                <div class="flex text-gray-300 text-xs">
+                                                <div class="flex text-gray-300 text-[10px] sm:text-xs">
                                                     <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
                                                 </div>
-                                                <span class="text-xs text-gray-400">No rating</span>
+                                                <span class="text-[10px] sm:text-xs text-gray-400">No rating</span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
-
                                     <!-- Description -->
-                                    <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                        <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                                            <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                            <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? ' ' : '' ?>
-                                            <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                    <?php if (!empty($row['description'])): ?>
+                                        <p class="text-[10px] sm:text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                            <?= htmlspecialchars($row['description']) ?>
                                         </p>
                                     <?php else: ?>
-                                        <p class="text-xs text-gray-400 italic">No description available</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-400 italic">No description</p>
                                     <?php endif; ?>
-
-
                                 </div>
 
-                                <!-- Action Button -->
-                                <div class="mt-3 flex justify-start">
-                                    <form action="product_view" method="GET">
+                                <!-- Action Button - Desktop Only -->
+                                <div class="mt-3 hidden lg:flex justify-start">
+                                    <form action="product_view" method="GET" class="pointer-events-auto">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit" class="Btn">
-                                            <div class="sign">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                            </div>
-                                            <div class="text">View</div>
+                                        <button type="submit"
+                                            class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                            <i class="fa-solid fa-bag-shopping"></i>
+                                            <span>View</span>
                                         </button>
                                     </form>
+
                                 </div>
-
-                                <style>
-                                    /* From Uiverse.io by vinodjangid07 */
-                                    .Btn {
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: flex-start;
-                                        width: 45px;
-                                        height: 45px;
-                                        border: none;
-                                        border-radius: 0px;
-                                        cursor: pointer;
-                                        position: relative;
-                                        overflow: hidden;
-                                        transition-duration: .3s;
-                                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-                                        background-color: black;
-                                    }
-
-                                    /* icon */
-                                    .Btn .sign {
-                                        width: 100%;
-                                        font-size: 1.5em;
-                                        color: white;
-                                        transition-duration: .3s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                    }
-
-                                    /* text */
-                                    .Btn .text {
-                                        position: absolute;
-                                        right: 0%;
-                                        width: 0%;
-                                        opacity: 0;
-                                        color: white;
-                                        font-size: 1.1em;
-                                        font-weight: 500;
-                                        transition-duration: .3s;
-                                    }
-
-                                    /* hover effect */
-                                    .Btn:hover {
-                                        width: 125px;
-                                        border-radius: 0px;
-                                        transition-duration: .3s;
-                                    }
-
-                                    .Btn:hover .sign {
-                                        width: 30%;
-                                        transition-duration: .3s;
-                                        padding-left: 20px;
-                                    }
-
-                                    .Btn:hover .text {
-                                        opacity: 1;
-                                        width: 70%;
-                                        transition-duration: .3s;
-                                        padding-right: 20px;
-                                    }
-
-                                    /* click effect */
-                                    .Btn:active {
-                                        transform: translate(2px, 2px);
-                                    }
-                                </style>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 <?php endwhile; ?>
             </div>
         </div>
+
+        <style>
+            /* From Uiverse.io by vinodjangid07 */
+            .Btn {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                width: 45px;
+                height: 45px;
+                border: none;
+                border-radius: 0px;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+                transition-duration: .3s;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+                background-color: black;
+            }
+
+            /* icon */
+            .Btn .sign {
+                width: 100%;
+                font-size: 1.5em;
+                color: white;
+                transition-duration: .3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* text */
+            .Btn .text {
+                position: absolute;
+                right: 0%;
+                width: 0%;
+                opacity: 0;
+                color: white;
+                transition-duration: .3s;
+            }
+
+            /* hover effect */
+            .Btn:hover {
+                width: 125px;
+                border-radius: 0px;
+                transition-duration: .3s;
+            }
+
+            .Btn:hover .sign {
+                width: 30%;
+                transition-duration: .3s;
+                padding-left: 20px;
+            }
+
+            .Btn:hover .text {
+                opacity: 1;
+                width: 70%;
+                transition-duration: .3s;
+                padding-right: 20px;
+            }
+
+            /* click effect */
+            .Btn:active {
+                transform: translate(2px, 2px);
+            }
+        </style>
     </section>
 
 
@@ -1674,13 +1618,12 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10 ">
+    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-2">
         <!-- Header first -->
-
-        <div class="flex items-center gap-2 mb-2" data-aos="fade-up">
+        <div class="flex items-center gap-2 mb-2 mt-2" data-aos="fade-up">
             <!-- Details Button (as Title) -->
             <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 text-2xl sm:text-3xl lg:text-4xl text-black">
+                class="group relative inline-flex items-center gap-2 font-light text-2xl sm:text-3xl lg:text-4xl text-black">
                 <span class="relative">
                     <span class="block group-hover:text-orange-600 transition-colors duration-300">
                         Building Materials
@@ -1702,8 +1645,6 @@ handleQueryError($conn, "New Status Query");
             </a>
         </div>
 
-
-        <!-- Swiper Container -->
         <div class="swiper mySwiper-products w-full">
             <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
                 <?php while ($row = mysqli_fetch_assoc($results)) : ?>
@@ -1728,17 +1669,18 @@ handleQueryError($conn, "New Status Query");
                     $empty = 5 - $full - $half;
                     ?>
                     <div class="swiper-slide p-1">
-                        <div class="relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[450px] ">
+                        <!-- Clickable entire card for both mobile and desktop -->
+                        <a href="product_view?id=<?= (int)$row['id'] ?>"
+                            class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[280px] sm:h-[340px] lg:h-[450px]">
 
                             <div class="absolute top-0 left-0 z-10">
-                                <div class="w-12 h-12 relative">
-                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 relative">
+                                    <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 sm:w-7 sm:h-7 lg:w-9 lg:h-9 object-contain" />
                                 </div>
                             </div>
 
-
                             <!-- Image Container with Overlay -->
-                            <div class="relative h-[280px] overflow-hidden">
+                            <div class="relative h-[160px] sm:h-[200px] lg:h-[280px] overflow-hidden">
                                 <!-- Gradient Overlay -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
@@ -1746,10 +1688,10 @@ handleQueryError($conn, "New Status Query");
                                     <img src="../../<?= $row['main_image'] ?>"
                                         loading="lazy"
                                         alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                        class="w-full h-full object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
+                                        class="w-full h-full object-contain sm:object-contain transition-all duration-700 group-hover:scale-110 group-hover:brightness-105" />
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-12 h-12 sm:w-16 sm:h-16" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
@@ -1757,140 +1699,134 @@ handleQueryError($conn, "New Status Query");
                             </div>
 
                             <!-- Content Section -->
-                            <div class="p-4 flex flex-col justify-between h-[170px]">
+                            <div class="p-2 sm:p-3 lg:p-4 flex flex-col justify-between h-[120px] sm:h-[140px] lg:h-[170px]">
 
                                 <!-- Product Info -->
-                                <div class="space-y-2">
+                                <div class="space-y-1 sm:space-y-2">
+                                    <!-- Title -->
                                     <div class="relative w-full max-w-xs">
-                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                        <h3 class="text-xs sm:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-6">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
-                                        <!-- Fade overlay -->
-                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
+                                        <!-- Fade overlay - desktop only -->
+                                        <div class="hidden sm:block absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
                                     </div>
+
                                     <!-- Rating Section -->
                                     <div class="flex items-center justify-between">
                                         <?php if ($total_raters > 0): ?>
                                             <div class="flex items-center space-x-1">
-                                                <div class="flex text-yellow-400 text-xs">
+                                                <div class="flex text-yellow-400 text-[10px] sm:text-xs">
                                                     <?php
                                                     for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
                                                     if ($half) echo '<i class="fas fa-star-half-alt"></i>';
                                                     for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
                                                     ?>
                                                 </div>
-                                                <span class="text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                                <span class="text-[10px] sm:text-xs text-gray-500 font-medium"><?= $avg_rating ?></span>
                                             </div>
-                                            <span class="text-xs text-gray-400">(<?= $total_raters ?> reviews)</span>
+                                            <span class="text-[10px] sm:text-xs text-gray-400">(<?= $total_raters ?>)</span>
                                         <?php else: ?>
                                             <div class="flex items-center space-x-1">
-                                                <div class="flex text-gray-300 text-xs">
+                                                <div class="flex text-gray-300 text-[10px] sm:text-xs">
                                                     <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
                                                 </div>
-                                                <span class="text-xs text-gray-400">No rating</span>
+                                                <span class="text-[10px] sm:text-xs text-gray-400">No rating</span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
-
-                                    <!-- Description -->
-                                    <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                                        <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                                            <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                            <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? ' ' : '' ?>
-                                            <?= htmlspecialchars($row['descrip7'] ?? '') ?>
+                                    <!-- Description --><!-- Description -->
+                                    <?php if (!empty($row['description'])): ?>
+                                        <p class="text-[10px] sm:text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                            <?= htmlspecialchars($row['description']) ?>
                                         </p>
                                     <?php else: ?>
-                                        <p class="text-xs text-gray-400 italic">No description available</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-400 italic">No description</p>
                                     <?php endif; ?>
-
-
                                 </div>
 
-                                <!-- Action Button -->
-                                <div class="mt-3 flex justify-start">
-                                    <form action="product_view" method="GET">
+                                <!-- Action Button - Desktop Only -->
+                                <div class="mt-3 hidden lg:flex justify-start">
+                                    <form action="product_view" method="GET" class="pointer-events-auto">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                        <button type="submit" class="Btn">
-                                            <div class="sign">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                            </div>
-                                            <div class="text">View</div>
+                                        <button type="submit"
+                                            class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                            <i class="fa-solid fa-bag-shopping"></i>
+                                            <span>View</span>
                                         </button>
                                     </form>
                                 </div>
-
-                                <style>
-                                    /* From Uiverse.io by vinodjangid07 */
-                                    .Btn {
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: flex-start;
-                                        width: 45px;
-                                        height: 45px;
-                                        border: none;
-                                        border-radius: 0px;
-                                        cursor: pointer;
-                                        position: relative;
-                                        overflow: hidden;
-                                        transition-duration: .3s;
-                                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-                                        background-color: black;
-                                    }
-
-                                    /* icon */
-                                    .Btn .sign {
-                                        width: 100%;
-                                        font-size: 1.5em;
-                                        color: white;
-                                        transition-duration: .3s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                    }
-
-                                    /* text */
-                                    .Btn .text {
-                                        position: absolute;
-                                        right: 0%;
-                                        width: 0%;
-                                        opacity: 0;
-                                        color: white;
-                                        font-size: 1.1em;
-                                        font-weight: 500;
-                                        transition-duration: .3s;
-                                    }
-
-                                    /* hover effect */
-                                    .Btn:hover {
-                                        width: 125px;
-                                        border-radius: 0px;
-                                        transition-duration: .3s;
-                                    }
-
-                                    .Btn:hover .sign {
-                                        width: 30%;
-                                        transition-duration: .3s;
-                                        padding-left: 20px;
-                                    }
-
-                                    .Btn:hover .text {
-                                        opacity: 1;
-                                        width: 70%;
-                                        transition-duration: .3s;
-                                        padding-right: 20px;
-                                    }
-
-                                    /* click effect */
-                                    .Btn:active {
-                                        transform: translate(2px, 2px);
-                                    }
-                                </style>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 <?php endwhile; ?>
             </div>
         </div>
+
+        <style>
+            /* From Uiverse.io by vinodjangid07 */
+            .Btn {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                width: 45px;
+                height: 45px;
+                border: none;
+                border-radius: 0px;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+                transition-duration: .3s;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+                background-color: black;
+            }
+
+            /* icon */
+            .Btn .sign {
+                width: 100%;
+                font-size: 1.5em;
+                color: white;
+                transition-duration: .3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* text */
+            .Btn .text {
+                position: absolute;
+                right: 0%;
+                width: 0%;
+                opacity: 0;
+                color: white;
+                transition-duration: .3s;
+            }
+
+            /* hover effect */
+            .Btn:hover {
+                width: 125px;
+                border-radius: 0px;
+                transition-duration: .3s;
+            }
+
+            .Btn:hover .sign {
+                width: 30%;
+                transition-duration: .3s;
+                padding-left: 20px;
+            }
+
+            .Btn:hover .text {
+                opacity: 1;
+                width: 70%;
+                transition-duration: .3s;
+                padding-right: 20px;
+            }
+
+            /* click effect */
+            .Btn:active {
+                transform: translate(2px, 2px);
+            }
+        </style>
     </section>
 
 
@@ -1898,13 +1834,11 @@ handleQueryError($conn, "New Status Query");
     <section class="px-4 py-10">
         <!-- Header -->
         <div class="text-center mb-10 relative">
-
             <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
             <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
                 Get Up to <span class="text-red-500">10% Discount</span> on Select Items!
             </h2>
-            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-
+         
         </div>
 
         <?php
@@ -1925,19 +1859,19 @@ handleQueryError($conn, "New Status Query");
                         $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                         ?>
                         <div class="swiper-slide p-2">
-                            <div class="bg-white p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                            <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[320px] sm:h-[360px] lg:h-[420px] text-center relative">
                                 <!-- Triangle Badge -->
                                 <div class="absolute top-0 left-0 z-10">
-                                    <div class="w-12 h-12 relative">
-                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
+                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
                                     </div>
                                 </div>
 
                                 <!-- Product Image -->
-                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
+                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
                                     <?php if (!empty($row['type_image'])): ?>
                                         <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                            class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                            class="w-full h-full object-cover lg:object-contain transition-transform duration-300 group-hover:scale-105" />
                                     <?php else: ?>
                                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                     <?php endif; ?>
@@ -1945,52 +1879,91 @@ handleQueryError($conn, "New Status Query");
 
                                 <!-- Product Info -->
                                 <div class="mt-auto">
-                                    <div class="relative w-full max-w-xs">
-                                        <h3 class="text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 truncate pr-6">
+                                    <div class="relative w-full">
+                                        <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
                                             <?= htmlspecialchars($row['product_name']) ?>
                                         </h3>
-                                        <!-- Fade overlay -->
-                                        <div class="absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-white to-transparent"></div>
                                     </div>
-                                    <!-- View Size & Color -->
-                                    <button type="button"
-                                        onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                        class="text-sm text-black  hover:text-orange-500 transition mb-2 mt-2">
-                                        View Size & Color
-                                    </button>
 
-                                    <!-- Pricing -->
-                                    <?php if ($discount > 0): ?>
-                                        <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                        <p class="text-base text-black font-bold">
-                                            ₱<?= number_format($finalPrice, 2) ?>
-                                            <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                    <!-- Description - Desktop Only -->
+                                    <div class="hidden lg:block relative w-full mt-1">
+                                        <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
+                                            <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
                                         </p>
-                                        <p class="text-sm text-gray-600">
-                                            Origin:
-                                            <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                                <?= ucfirst($row['origin']) ?>
-                                            </span>
-                                        </p>
-                                    <?php else: ?>
-                                        <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <?php endif; ?>
+                                    </div>
 
-                                    <!-- Replace your current View Details Button section with this -->
-                                    <div class="flex flex-col gap-2 mt-auto">
-                                        <!-- Animated View Details Button -->
-                                        <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
+                                    <!-- Price + View Button Row - Desktop Only -->
+                                    <div class="hidden lg:flex items-center justify-between mt-2 px-2">
+                                        <!-- Pricing -->
+                                        <div>
+                                            <?php if ($discount > 0): ?>
+                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <p class="text-sm text-black font-bold">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                </p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- View Button -->
+                                        <form action="product_view" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                            <button type="submit" class="animated-view-btn">
-                                                <div class="btn-sign">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                </div>
-                                                <div class="btn-text">View Details</div>
+                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
+                                                <i class="fa-solid fa-bag-shopping"></i>
+                                                <span>View</span>
                                             </button>
                                         </form>
+                                    </div>
 
+                                    <!-- Mobile Layout (Original) -->
+                                    <div class="lg:hidden">
+                                        <!-- Pricing -->
+                                        <div class="my-1">
+                                            <?php if ($discount > 0): ?>
+                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <p class="text-sm text-black font-bold">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                </p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                            <?php endif; ?>
+                                        </div>
 
-                                        <!-- Pre-Order Button -->
+                                        <!-- Buttons -->
+                                        <div class="flex flex-col gap-1.5 mt-1.5">
+                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                    <span>View</span>
+                                                </button>
+                                            </form>
+
+                                            <!-- Add to Cart Button -->
+                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="return_url" value="index">
+                                                <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                    <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                                    Add to Cart
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- Add to Cart Button - Desktop -->
+                                    <div class="hidden lg:block mt-2">
                                         <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
                                             <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
                                             <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
@@ -2002,84 +1975,12 @@ handleQueryError($conn, "New Status Query");
                                             <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                             <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                             <input type="hidden" name="return_url" value="index">
-                                            <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                            <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
                                                 <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
                                                 Add to Cart
                                             </button>
                                         </form>
                                     </div>
-                                    <style>
-                                        /* Animated View Details Button Styles */
-                                        .animated-view-btn {
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: flex-start;
-                                            width: 48px;
-                                            height: 45px;
-                                            border: none;
-                                            cursor: pointer;
-                                            position: relative;
-                                            overflow: hidden;
-                                            transition-duration: .3s;
-                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                        }
-
-                                        /* Icon */
-                                        .animated-view-btn .btn-sign {
-                                            width: 100%;
-                                            font-size: 1.2em;
-                                            color: white;
-                                            transition-duration: .3s;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                        }
-
-                                        /* Text */
-                                        .animated-view-btn .btn-text {
-                                            position: absolute;
-                                            right: 0%;
-                                            width: 0%;
-                                            opacity: 0;
-                                            color: white;
-                                            font-size: 0.9em;
-                                            font-weight: 600;
-                                            transition-duration: .3s;
-                                            white-space: nowrap;
-                                        }
-
-                                        /* Hover effect */
-                                        .animated-view-btn:hover {
-                                            width: 180px;
-                                            transition-duration: .3s;
-                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                        }
-
-                                        .animated-view-btn:hover .btn-sign {
-                                            width: 35%;
-                                            transition-duration: .3s;
-                                            padding-left: 15px;
-                                        }
-
-                                        .animated-view-btn:hover .btn-text {
-                                            opacity: 1;
-                                            width: 65%;
-                                            transition-duration: .3s;
-                                            padding-right: 15px;
-                                        }
-
-                                        /* Click effect */
-                                        .animated-view-btn:active {
-                                            transform: translate(1px, 1px);
-                                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                                        }
-
-                                        /* Focus accessibility */
-                                        .animated-view-btn:focus {
-                                            outline: 2px solid #f97316;
-                                            outline-offset: 2px;
-                                        }
-                                    </style>
                                 </div>
                             </div>
                         </div>
@@ -2107,34 +2008,90 @@ handleQueryError($conn, "New Status Query");
                 </div>
             </div>
         <?php endif; ?>
-
-        <!-- Shared Modal -->
-        <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-            <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center relative">
-                <button onclick="closeModal()"
-                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
-                <h2 class="text-lg font-semibold mb-4">Product Details</h2>
-                <p class="text-gray-700"><span class="font-semibold">Color:</span> <span id="modalColor"></span></p>
-                <p class="text-gray-700"><span class="font-semibold">Size:</span> <span id="modalSize"></span></p>
-            </div>
-        </div>
-
-        <script>
-            function openModal(color, size) {
-                document.getElementById("modalColor").innerText = color;
-                document.getElementById("modalSize").innerText = size;
-                document.getElementById("infoModal").classList.remove("hidden");
-            }
-
-            function closeModal() {
-                document.getElementById("infoModal").classList.add("hidden");
-            }
-            document.getElementById("infoModal").addEventListener("click", function(e) {
-                if (e.target === this) closeModal();
-            });
-        </script>
-
     </section>
+
+    <style>
+        /* Animated View Details Button Styles */
+        .animated-view-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 45px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition-duration: .3s;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+        }
+
+        /* Icon */
+        .animated-view-btn .btn-sign {
+            width: 100%;
+            font-size: 1em;
+            color: white;
+            transition-duration: .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Text */
+        .animated-view-btn .btn-text {
+            position: absolute;
+            right: 0%;
+            width: 0%;
+            opacity: 0;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition-duration: .3s;
+            white-space: nowrap;
+        }
+
+        /* Hover effect */
+        .animated-view-btn:hover {
+            width: 120px;
+            transition-duration: .3s;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+        }
+
+        .animated-view-btn:hover .btn-sign {
+            width: 35%;
+            transition-duration: .3s;
+            padding-left: 12px;
+        }
+
+        .animated-view-btn:hover .btn-text {
+            opacity: 1;
+            width: 65%;
+            transition-duration: .3s;
+            padding-right: 12px;
+        }
+
+        /* Click effect */
+        .animated-view-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 1024px) {
+            .animated-view-btn {
+                width: 42px;
+                height: 38px;
+            }
+
+            .animated-view-btn .btn-sign {
+                font-size: 0.9em;
+            }
+
+            .animated-view-btn:hover {
+                width: 100px;
+            }
+        }
+    </style>
 
     <!-- Featured Categories Section -->
     <section class="p-6">
@@ -2269,16 +2226,15 @@ handleQueryError($conn, "New Status Query");
         }
     </style>
 
-    <section class="px-2 sm:px-4 lg:px-6 py-8 sm:py-10">
+    <!-- Top Sales Section -->
+    <section class="px-4 py-10">
         <!-- Header -->
-        <div class="text-center mb-8 sm:mb-12 relative">
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl text-black bg-clip-text mb-4 tracking-tight " data-aos="fade-up">
-                Discount Minimal <span class="text-red-700 drop-shadow-sm">up to 5%</span>
+        <div class="text-center mb-10 relative">
+            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
+            <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
+                Get Up to <span class="text-red-500">5% Discount</span> on Select Items!
             </h2>
-            <div class="mx-auto w-32 sm:w-40 h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg" data-aos="fade-up"></div>
-            <p class="text-gray-600 mt-4 text-sm sm:text-base max-w-md mx-auto" data-aos="fade-up" data-aos-delay="200">
-                Discover amazing deals on premium products with exclusive discounts
-            </p>
+            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
         </div>
 
         <?php
@@ -2299,19 +2255,19 @@ handleQueryError($conn, "New Status Query");
                         $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                         ?>
                         <div class="swiper-slide p-2">
-                            <div class=" p-4 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[480px] text-center relative">
+                            <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[320px] sm:h-[360px] lg:h-[420px] text-center relative">
                                 <!-- Triangle Badge -->
                                 <div class="absolute top-0 left-0 z-10">
-                                    <div class="w-12 h-12 relative">
-                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
+                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
                                     </div>
                                 </div>
 
                                 <!-- Product Image -->
-                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
+                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
                                     <?php if (!empty($row['type_image'])): ?>
                                         <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                            class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                            class="w-full h-full object-cover lg:object-contain transition-transform duration-300 group-hover:scale-105" />
                                     <?php else: ?>
                                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                     <?php endif; ?>
@@ -2319,49 +2275,91 @@ handleQueryError($conn, "New Status Query");
 
                                 <!-- Product Info -->
                                 <div class="mt-auto">
-                                    <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                        <?= htmlspecialchars($row['namevariant']) ?>
-                                    </h3>
+                                    <div class="relative w-full">
+                                        <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                    </div>
 
-                                    <!-- View Size & Color -->
-                                    <button type="button"
-                                        onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                        class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
-                                        View Size & Color
-                                    </button>
-
-                                    <!-- Pricing -->
-                                    <?php if ($discount > 0): ?>
-                                        <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                        <p class="text-base text-green-600 font-bold">
-                                            ₱<?= number_format($finalPrice, 2) ?>
-                                            <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                    <!-- Description - Desktop Only -->
+                                    <div class="hidden lg:block relative w-full mt-1">
+                                        <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
+                                            <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
                                         </p>
-                                        <p class="text-sm text-gray-600">
-                                            Origin:
-                                            <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                                <?= ucfirst($row['origin']) ?>
-                                            </span>
-                                        </p>
-                                    <?php else: ?>
-                                        <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <?php endif; ?>
+                                    </div>
 
-                                    <!-- Buttons -->
-                                    <div class="flex flex-col gap-2 mt-auto">
-                                        <!-- Animated View Details Button -->
-                                        <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
+                                    <!-- Price + View Button Row - Desktop Only -->
+                                    <div class="hidden lg:flex items-center justify-between mt-2 px-2">
+                                        <!-- Pricing -->
+                                        <div>
+                                            <?php if ($discount > 0): ?>
+                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <p class="text-sm text-black font-bold">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                </p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- View Button -->
+                                        <form action="product_view" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                            <button type="submit" class="animated-view-btn">
-                                                <div class="btn-sign">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                </div>
-                                                <div class="btn-text">View Details</div>
+                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
+                                                <i class="fa-solid fa-bag-shopping"></i>
+                                                <span>View</span>
                                             </button>
                                         </form>
+                                    </div>
 
+                                    <!-- Mobile Layout (Original) -->
+                                    <div class="lg:hidden">
+                                        <!-- Pricing -->
+                                        <div class="my-1">
+                                            <?php if ($discount > 0): ?>
+                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <p class="text-sm text-black font-bold">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                </p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                            <?php endif; ?>
+                                        </div>
 
-                                        <!-- Pre-Order Button -->
+                                        <!-- Buttons -->
+                                        <div class="flex flex-col gap-1.5 mt-1.5">
+                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                    <span>View</span>
+                                                </button>
+                                            </form>
+
+                                            <!-- Add to Cart Button -->
+                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="return_url" value="index">
+                                                <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                    <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                                    Add to Cart
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- Add to Cart Button - Desktop -->
+                                    <div class="hidden lg:block mt-2">
                                         <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
                                             <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
                                             <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
@@ -2373,84 +2371,12 @@ handleQueryError($conn, "New Status Query");
                                             <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                             <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                             <input type="hidden" name="return_url" value="index">
-                                            <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                            <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
                                                 <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
                                                 Add to Cart
                                             </button>
                                         </form>
                                     </div>
-                                    <style>
-                                        /* Animated View Details Button Styles */
-                                        .animated-view-btn {
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: flex-start;
-                                            width: 48px;
-                                            height: 45px;
-                                            border: none;
-                                            cursor: pointer;
-                                            position: relative;
-                                            overflow: hidden;
-                                            transition-duration: .3s;
-                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                        }
-
-                                        /* Icon */
-                                        .animated-view-btn .btn-sign {
-                                            width: 100%;
-                                            font-size: 1.2em;
-                                            color: white;
-                                            transition-duration: .3s;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                        }
-
-                                        /* Text */
-                                        .animated-view-btn .btn-text {
-                                            position: absolute;
-                                            right: 0%;
-                                            width: 0%;
-                                            opacity: 0;
-                                            color: white;
-                                            font-size: 0.9em;
-                                            font-weight: 600;
-                                            transition-duration: .3s;
-                                            white-space: nowrap;
-                                        }
-
-                                        /* Hover effect */
-                                        .animated-view-btn:hover {
-                                            width: 180px;
-                                            transition-duration: .3s;
-                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                        }
-
-                                        .animated-view-btn:hover .btn-sign {
-                                            width: 35%;
-                                            transition-duration: .3s;
-                                            padding-left: 15px;
-                                        }
-
-                                        .animated-view-btn:hover .btn-text {
-                                            opacity: 1;
-                                            width: 65%;
-                                            transition-duration: .3s;
-                                            padding-right: 15px;
-                                        }
-
-                                        /* Click effect */
-                                        .animated-view-btn:active {
-                                            transform: translate(1px, 1px);
-                                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                                        }
-
-                                        /* Focus accessibility */
-                                        .animated-view-btn:focus {
-                                            outline: 2px solid #f97316;
-                                            outline-offset: 2px;
-                                        }
-                                    </style>
                                 </div>
                             </div>
                         </div>
@@ -2478,38 +2404,98 @@ handleQueryError($conn, "New Status Query");
                 </div>
             </div>
         <?php endif; ?>
-
-        <!-- Shared Modal -->
-        <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-            <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center relative">
-                <button onclick="closeModal()"
-                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
-                <h2 class="text-lg font-semibold mb-4">Product Details</h2>
-                <p class="text-gray-700"><span class="font-semibold">Color:</span> <span id="modalColor"></span></p>
-                <p class="text-gray-700"><span class="font-semibold">Size:</span> <span id="modalSize"></span></p>
-            </div>
-        </div>
-
-        <script>
-            function openModal(color, size) {
-                document.getElementById("modalColor").innerText = color;
-                document.getElementById("modalSize").innerText = size;
-                document.getElementById("infoModal").classList.remove("hidden");
-            }
-
-            function closeModal() {
-                document.getElementById("infoModal").classList.add("hidden");
-            }
-            document.getElementById("infoModal").addEventListener("click", function(e) {
-                if (e.target === this) closeModal();
-            });
-        </script>
     </section>
 
-    <section class="p-5">
-        <div class="mb-10 mt-10 text-center">
-            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="slide-up">New Arrival</h2>
-            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full" data-aos="fade-up"></div>
+    <style>
+        /* Animated View Details Button Styles */
+        .animated-view-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 45px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition-duration: .3s;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+        }
+
+        /* Icon */
+        .animated-view-btn .btn-sign {
+            width: 100%;
+            font-size: 1em;
+            color: white;
+            transition-duration: .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Text */
+        .animated-view-btn .btn-text {
+            position: absolute;
+            right: 0%;
+            width: 0%;
+            opacity: 0;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition-duration: .3s;
+            white-space: nowrap;
+        }
+
+        /* Hover effect */
+        .animated-view-btn:hover {
+            width: 120px;
+            transition-duration: .3s;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+        }
+
+        .animated-view-btn:hover .btn-sign {
+            width: 35%;
+            transition-duration: .3s;
+            padding-left: 12px;
+        }
+
+        .animated-view-btn:hover .btn-text {
+            opacity: 1;
+            width: 65%;
+            transition-duration: .3s;
+            padding-right: 12px;
+        }
+
+        /* Click effect */
+        .animated-view-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 1024px) {
+            .animated-view-btn {
+                width: 42px;
+                height: 38px;
+            }
+
+            .animated-view-btn .btn-sign {
+                font-size: 0.9em;
+            }
+
+            .animated-view-btn:hover {
+                width: 100px;
+            }
+        }
+    </style>
+
+    <!-- Top Sales Section -->
+    <section class="px-4 py-10">
+        <!-- Header -->
+        <div class="text-center mb-10 relative">
+            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">New Arrival</h2>
+
+            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
         </div>
 
         <?php
@@ -2518,37 +2504,31 @@ handleQueryError($conn, "New Status Query");
         ?>
 
         <?php if ($row_count > 0): ?>
-            <div class="swiper mySwiper-material">
-                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="200">
-                    <?php
-                    $has_new = false;
-                    while ($row = mysqli_fetch_assoc($material_resultstwo)):
-                        $has_new = true;
-
-                        // Only use variant price
-                        $base_price = floatval($row['price']);
-                        $discount = floatval($row['discount'] ?? 0);
-                        $finalPrice = $discount > 0 ? $base_price * (1 - $discount / 100) : $base_price;
-                    ?>
-                        <div class="swiper-slide h-full p-2">
-                            <div class=" p-4 group hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-[470px] w-full text-center">
-
-                                <!-- NEW Badge -->
-                                <div class="absolute top-2 right-2 z-10">
-                                    <span class="bg-black text-white text-[10px] font-bold px-2 py-1 shadow">NEW</span>
-                                </div>
-
-                                <!-- Icon -->
+            <!-- Swiper Container -->
+            <div class="swiper mySwiper-products w-full">
+                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                    <?php while ($row = mysqli_fetch_assoc($material_resultstwo)) : ?>
+                        <?php
+                        $base = (float)$row['price'];
+                        $percent = (float)($row['percent'] ?? 0);
+                        $discount = (float)($row['discount'] ?? 0);
+                        $priceWithMarkup = $base + ($base * $percent / 100);
+                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                        ?>
+                        <div class="swiper-slide p-2">
+                            <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[320px] sm:h-[360px] lg:h-[420px] text-center relative">
+                                <!-- Triangle Badge -->
                                 <div class="absolute top-0 left-0 z-10">
-                                    <div class="w-12 h-12 relative">
-                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-9 h-9 object-contain" />
+                                    <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
+                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
                                     </div>
                                 </div>
+
                                 <!-- Product Image -->
-                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-4">
+                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
                                     <?php if (!empty($row['type_image'])): ?>
                                         <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                            class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                                            class="w-full h-full object-cover lg:object-contain transition-transform duration-300 group-hover:scale-105" />
                                     <?php else: ?>
                                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                     <?php endif; ?>
@@ -2556,48 +2536,91 @@ handleQueryError($conn, "New Status Query");
 
                                 <!-- Product Info -->
                                 <div class="mt-auto">
-                                    <h3 class="text-base font-semibold underline underline-offset-4 text-orange-500 leading-snug break-words">
-                                        <?= htmlspecialchars($row['namevariant']) ?>
-                                    </h3>
+                                    <div class="relative w-full">
+                                        <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
+                                            <?= htmlspecialchars($row['product_name']) ?>
+                                        </h3>
+                                    </div>
 
-                                    <!-- View Size & Color -->
-                                    <button type="button"
-                                        onclick="openModal('<?= htmlspecialchars($row['color']) ?>', '<?= htmlspecialchars($row['size']) ?>')"
-                                        class="text-sm text-blue-600  hover:text-orange-500 transition mb-2 mt-2">
-                                        View Size & Color
-                                    </button>
-
-                                    <!-- Pricing -->
-                                    <?php if ($discount > 0): ?>
-                                        <p class="text-sm text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                        <p class="text-base text-green-600 font-bold">
-                                            ₱<?= number_format($finalPrice, 2) ?>
-                                            <span class="text-sm text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                    <!-- Description - Desktop Only -->
+                                    <div class="hidden lg:block relative w-full mt-1">
+                                        <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
+                                            <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
                                         </p>
-                                        <p class="text-sm text-gray-600">
-                                            Origin:
-                                            <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                                <?= ucfirst($row['origin']) ?>
-                                            </span>
-                                        </p>
-                                    <?php else: ?>
-                                        <p class="text-base text-green-600 font-bold mb-2">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                    <?php endif; ?>
+                                    </div>
 
-                                    <div class="flex flex-col gap-2 mt-auto">
-                                        <!-- Animated View Details Button -->
-                                        <form action="product_view" method="GET" class="w-full flex justify-start mt-4">
+                                    <!-- Price + View Button Row - Desktop Only -->
+                                    <div class="hidden lg:flex items-center justify-between mt-2 px-2">
+                                        <!-- Pricing -->
+                                        <div>
+                                            <?php if ($discount > 0): ?>
+                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <p class="text-sm text-black font-bold">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                </p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- View Button -->
+                                        <form action="product_view" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                            <button type="submit" class="animated-view-btn">
-                                                <div class="btn-sign">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                </div>
-                                                <div class="btn-text">View Details</div>
+                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
+                                                <i class="fa-solid fa-bag-shopping"></i>
+                                                <span>View</span>
                                             </button>
                                         </form>
+                                    </div>
 
+                                    <!-- Mobile Layout (Original) -->
+                                    <div class="lg:hidden">
+                                        <!-- Pricing -->
+                                        <div class="my-1">
+                                            <?php if ($discount > 0): ?>
+                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <p class="text-sm text-black font-bold">
+                                                    ₱<?= number_format($finalPrice, 2) ?>
+                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                </p>
+                                            <?php else: ?>
+                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                            <?php endif; ?>
+                                        </div>
 
-                                        <!-- Pre-Order Button -->
+                                        <!-- Buttons -->
+                                        <div class="flex flex-col gap-1.5 mt-1.5">
+                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                                    <i class="fa-solid fa-bag-shopping"></i>
+                                                    <span>View</span>
+                                                </button>
+                                            </form>
+
+                                            <!-- Add to Cart Button -->
+                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                <input type="hidden" name="return_url" value="index">
+                                                <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                    <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                                    Add to Cart
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- Add to Cart Button - Desktop -->
+                                    <div class="hidden lg:block mt-2">
                                         <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
                                             <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
                                             <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
@@ -2609,86 +2632,12 @@ handleQueryError($conn, "New Status Query");
                                             <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                             <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                             <input type="hidden" name="return_url" value="index">
-                                            <button type="submit" class="w-full bg-black hover:from-orange-600 hover:to-orange-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                            <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
                                                 <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
                                                 Add to Cart
                                             </button>
                                         </form>
                                     </div>
-                                    <style>
-                                        /* Animated View Details Button Styles */
-                                        .animated-view-btn {
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: flex-start;
-                                            width: 48px;
-                                            height: 45px;
-                                            border: none;
-                                            cursor: pointer;
-                                            position: relative;
-                                            overflow: hidden;
-                                            transition-duration: .3s;
-                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                        }
-
-                                        /* Icon */
-                                        .animated-view-btn .btn-sign {
-                                            width: 100%;
-                                            font-size: 1.2em;
-                                            color: white;
-                                            transition-duration: .3s;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                        }
-
-                                        /* Text */
-                                        .animated-view-btn .btn-text {
-                                            position: absolute;
-                                            right: 0%;
-                                            width: 0%;
-                                            opacity: 0;
-                                            color: white;
-                                            font-size: 0.9em;
-                                            font-weight: 600;
-                                            transition-duration: .3s;
-                                            white-space: nowrap;
-                                        }
-
-                                        /* Hover effect */
-                                        .animated-view-btn:hover {
-                                            width: 180px;
-                                            transition-duration: .3s;
-                                            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                                        }
-
-                                        .animated-view-btn:hover .btn-sign {
-                                            width: 35%;
-                                            transition-duration: .3s;
-                                            padding-left: 15px;
-                                        }
-
-                                        .animated-view-btn:hover .btn-text {
-                                            opacity: 1;
-                                            width: 65%;
-                                            transition-duration: .3s;
-                                            padding-right: 15px;
-                                        }
-
-                                        /* Click effect */
-                                        .animated-view-btn:active {
-                                            transform: translate(1px, 1px);
-                                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                                        }
-
-                                        /* Focus accessibility */
-                                        .animated-view-btn:focus {
-                                            outline: 2px solid #f97316;
-                                            outline-offset: 2px;
-                                        }
-                                    </style>
-
-
                                 </div>
                             </div>
                         </div>
@@ -2716,33 +2665,90 @@ handleQueryError($conn, "New Status Query");
                 </div>
             </div>
         <?php endif; ?>
-
-        <!-- Shared Modal -->
-        <div id="infoModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-            <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center relative">
-                <button onclick="closeModal()"
-                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
-                <h2 class="text-lg font-semibold mb-4">Product Details</h2>
-                <p class="text-gray-700"><span class="font-semibold">Color:</span> <span id="modalColor"></span></p>
-                <p class="text-gray-700"><span class="font-semibold">Size:</span> <span id="modalSize"></span></p>
-            </div>
-        </div>
-
-        <script>
-            function openModal(color, size) {
-                document.getElementById("modalColor").innerText = color;
-                document.getElementById("modalSize").innerText = size;
-                document.getElementById("infoModal").classList.remove("hidden");
-            }
-
-            function closeModal() {
-                document.getElementById("infoModal").classList.add("hidden");
-            }
-            document.getElementById("infoModal").addEventListener("click", function(e) {
-                if (e.target === this) closeModal();
-            });
-        </script>
     </section>
+
+    <style>
+        /* Animated View Details Button Styles */
+        .animated-view-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 45px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition-duration: .3s;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+        }
+
+        /* Icon */
+        .animated-view-btn .btn-sign {
+            width: 100%;
+            font-size: 1em;
+            color: white;
+            transition-duration: .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Text */
+        .animated-view-btn .btn-text {
+            position: absolute;
+            right: 0%;
+            width: 0%;
+            opacity: 0;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition-duration: .3s;
+            white-space: nowrap;
+        }
+
+        /* Hover effect */
+        .animated-view-btn:hover {
+            width: 120px;
+            transition-duration: .3s;
+            background: linear-gradient(135deg, #000000 0%, #000000 100%);
+        }
+
+        .animated-view-btn:hover .btn-sign {
+            width: 35%;
+            transition-duration: .3s;
+            padding-left: 12px;
+        }
+
+        .animated-view-btn:hover .btn-text {
+            opacity: 1;
+            width: 65%;
+            transition-duration: .3s;
+            padding-right: 12px;
+        }
+
+        /* Click effect */
+        .animated-view-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 1024px) {
+            .animated-view-btn {
+                width: 42px;
+                height: 38px;
+            }
+
+            .animated-view-btn .btn-sign {
+                font-size: 0.9em;
+            }
+
+            .animated-view-btn:hover {
+                width: 100px;
+            }
+        }
+    </style>
 
     <!-- Floating Chatbot Widget -->
     <div id="chatbot-widget" class="fixed bottom-5 right-5 z-50">

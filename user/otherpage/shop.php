@@ -459,21 +459,21 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
 <section class="bg-white relative mb-12">
     <div class="w-full px-4 sm:px-6 lg:px-8 py-2">
         <!-- Two Container Buttons with Background Images -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <!-- Explore Products Container -->
-            <a href="allproduct" class="group relative overflow-hidden h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <a href="allproduct" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
                 </div>
 
                 <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-6 text-white">
-                    <h3 class="text-2xl lg:text-3xl uppercase mb-2 tracking-wide">Explore Products</h3>
-                    <p class="text-white/90 text-sm mb-4">Browse our complete collection</p>
-                    <span class="inline-flex items-center gap-2 text-xs bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
+                    <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold">Explore Products</h3>
+                    <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4">Browse our complete collection</p>
+                    <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
                         View Collection
-                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </span>
@@ -481,19 +481,19 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
             </a>
 
             <!-- On Sale Products Container -->
-            <a href="allproductsub" class="group relative overflow-hidden h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <a href="allproductsub" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
                 </div>
 
                 <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-6 text-white">
-                    <h3 class="text-2xl lg:text-3xl uppercase mb-2 tracking-wide">On Sale Products</h3>
-                    <p class="text-white/90 text-sm mb-4">Limited time offers</p>
-                    <span class="inline-flex items-center gap-2 text-xs bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
+                <div class="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white">
+                    <h3 class="text-lg sm:text-xl lg:text-3xl uppercase mb-1 sm:mb-2 tracking-wide font-semibold">On Sale Products</h3>
+                    <p class="text-white/90 text-xs sm:text-sm mb-2 sm:mb-4">Limited time offers</p>
+                    <span class="inline-flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20 group-hover:bg-white/20 transition-all duration-300">
                         Shop Deals
-                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </span>
@@ -615,19 +615,19 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
         </div>
     </div>
 
-    <!-- Mobile Filter Toggle Button -->
+<!-- Mobile Filter Toggle Button -->
     <div class="mobile-filter-toggle">
-        <button id="mobileFilterToggle" class="bg-primary hover:bg-primary-dark text-white px-6 py-4 rounded-full font-semibold flex items-center shadow-2xl transition-all hover:scale-105">
-            <i class="fas fa-sliders-h mr-2"></i>
+        <button id="mobileFilterToggle" class="bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-full font-semibold flex items-center shadow-lg transition-all hover:scale-105 text-sm">
+            <i class="fas fa-sliders-h mr-1.5 text-xs"></i>
             Filters
             <?php if ($active_filters > 0): ?>
-                <span class="ml-2 bg-white text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs ">
+                <span class="ml-1.5 bg-white text-primary w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">
                     <?= $active_filters ?>
                 </span>
             <?php endif; ?>
         </button>
     </div>
-
+    
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col lg:flex-row gap-8">
@@ -662,32 +662,12 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                             </select>
                         </div>
 
-                        <!-- Action Buttons - Carousel on Mobile -->
-                        <div class="w-full sm:w-auto">
-                            <!-- Mobile Carousel -->
-                            <div class="sm:hidden">
-                                <div class="relative overflow-hidden">
-                                    <div id="actionCarousel" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2" style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
-                                        <a href="allproduct" class="flex-shrink-0 snap-center text-primary font-semibold hover:underline transition-all" style="min-width: 200px;">
-                                            <i class="fas fa-box-open mr-2"></i>Explore Products
-                                        </a>
-                                        <a href="allproductsub" class="flex-shrink-0 snap-center text-primary font-semibold hover:underline transition-all" style="min-width: 200px;">
-                                            <i class="fas fa-th mr-2"></i>View All Products
-                                        </a>
-                                    </div>
-                                    <!-- Carousel Indicators -->
-                                    <div class="flex justify-center gap-1.5 mt-2">
-                                        <button onclick="scrollCarousel(0)" class="carousel-dot w-2 h-2 rounded-full bg-primary transition-all"></button>
-                                        <button onclick="scrollCarousel(1)" class="carousel-dot w-2 h-2 rounded-full bg-gray-300 transition-all"></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
 
-                <!-- Product Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 mb-12">
+              <!-- Product Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
                     <?php while ($row = $products->fetch_assoc()): ?>
                         <?php
                         $product_id = (int)$row['id'];
@@ -702,7 +682,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                             <a href="product_view.php?id=<?= $product_id ?>" class="flex flex-col h-full">
                                 <!-- Image Container - Fixed Square -->
                                 <div class="relative w-full " style="padding-bottom: 100%;">
-                                    <div class="absolute inset-0 p-3 sm:p-4">
+                                    <div class="absolute inset-0 p-2 sm:p-4">
                                         <?php if (!empty($row['main_image'])): ?>
                                             <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
                                                 alt="<?= htmlspecialchars($row['product_name']) ?>"
@@ -710,14 +690,14 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                                                 loading="lazy">
                                         <?php else: ?>
                                             <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                                <i class="fas fa-image text-3xl sm:text-4xl"></i>
+                                                <i class="fas fa-image text-2xl sm:text-4xl"></i>
                                             </div>
                                         <?php endif; ?>
                                     </div>
 
                                     <!-- Category Badge -->
-                                    <div class="absolute top-2 left-2 sm:top-3 sm:left-3">
-                                        <span class="bg-black text-white px-2 py-1 sm:px-3 sm:py-1.5  text-[10px] sm:text-xs font-semibold uppercase shadow-md">
+                                    <div class="absolute top-1.5 left-1.5 sm:top-3 sm:left-3">
+                                        <span class="bg-black text-white px-1.5 py-0.5 sm:px-3 sm:py-1.5 text-[9px] sm:text-xs font-semibold uppercase shadow-md">
                                             <?= htmlspecialchars($row['codename']) ?>
                                         </span>
                                     </div>
@@ -733,23 +713,23 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                                 </div>
 
                                 <!-- Content Container -->
-                                <div class="flex-1 flex flex-col p-3 sm:p-5">
+                                <div class="flex-1 flex flex-col p-2 sm:p-5">
                                     <!-- Product Name - Fixed 2 lines -->
-                                    <h3 class="text-2xl sm:text-base text-black mb-1.5 sm:mb-2 line-clamp-2 uppercase" style="min-height: 2.5rem;">
+                                    <h3 class="text-[11px] sm:text-base text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold" style="min-height: 2rem;">
                                         <?= htmlspecialchars($row['product_name']) ?>
                                     </h3>
 
                                     <!-- Description - Fixed 2 lines -->
-                                    <p class="text-[10px] sm:text-sm text-gray-600 line-clamp-2 mb-2 sm:mb-3" style="min-height: 2rem;">
+                                    <p class="text-[9px] sm:text-sm text-gray-600 line-clamp-2 mb-1.5 sm:mb-3" style="min-height: 1.5rem;">
                                         <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
                                     </p>
 
                                     <!-- Bottom Section -->
-                                    <div class="mt-auto space-y-2 sm:space-y-3">
+                                    <div class="mt-auto space-y-1.5 sm:space-y-3">
                                         <!-- Variant Count -->
                                         <div>
-                                            <span class="inline-flex items-center bg-black text-white px-2 py-1 sm:px-3 sm:py-1.5  text-[10px] sm:text-xs ">
-                                                <i class="fas fa-layer-group mr-1"></i>
+                                            <span class="inline-flex items-center bg-black text-white px-1.5 py-0.5 sm:px-3 sm:py-1.5 text-[9px] sm:text-xs">
+                                                <i class="fas fa-layer-group mr-1 text-[8px] sm:text-xs"></i>
                                                 <?= $variant_count ?> Variant<?= $variant_count !== 1 ? 's' : '' ?>
                                             </span>
                                         </div>
@@ -767,39 +747,40 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                     <?php endwhile; ?>
                 </div>
 
-                <!-- Pagination -->
+         <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
-                    <div class="p-8" data-aos="fade-up">
-                        <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div class="p-4 sm:p-8" data-aos="fade-up">
+                        <!-- Navigation Buttons -->
+                        <div class="flex items-center justify-between gap-2 sm:gap-4 mb-4">
                             <a href="?<?= http_build_query(array_merge($_GET, ['page' => max(1, $page - 1)])) ?>"
-                                class="pagination-btn px-6 py-3 text-sm  bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
-                                <i class="fas fa-chevron-left mr-2"></i>Previous
+                                class="pagination-btn px-3 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm bg-white text-gray-700 shadow-sm <?= $page <= 1 ? 'disabled' : '' ?>">
+                                <i class="fas fa-chevron-left mr-1 sm:mr-2 text-[10px] sm:text-xs"></i>Previous
                             </a>
 
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1 sm:gap-2">
                                 <?php
                                 $start = max(1, $page - 2);
                                 $end = min($total_pages, $page + 2);
                                 for ($i = $start; $i <= $end; $i++): ?>
                                     <a href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"
-                                        class="pagination-btn w-12 h-12 flex items-center justify-center  text-sm  <?= $page === $i ? 'active' : 'bg-white text-black' ?> shadow-sm">
+                                        class="pagination-btn w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center text-xs sm:text-sm <?= $page === $i ? 'active' : 'bg-white text-black' ?> shadow-sm">
                                         <?= $i ?>
                                     </a>
                                 <?php endfor; ?>
                             </div>
 
                             <a href="?<?= http_build_query(array_merge($_GET, ['page' => min($total_pages, $page + 1)])) ?>"
-                                class="pagination-btn px-6 py-3 text-sm  bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
-                                Next<i class="fas fa-chevron-right ml-2"></i>
+                                class="pagination-btn px-3 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm bg-white text-gray-700 shadow-sm <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                                Next<i class="fas fa-chevron-right ml-1 sm:ml-2 text-[10px] sm:text-xs"></i>
                             </a>
                         </div>
 
-
-                        <div class="flex items-center justify-center gap-3 mt-6">
-                            <label class="text-sm font-medium text-gray-700">Jump to page:</label>
+                        <!-- Jump to Page -->
+                        <div class="flex items-center justify-center gap-2 sm:gap-3">
+                            <label class="text-xs sm:text-sm font-medium text-gray-700">Jump to page:</label>
                             <input type="number" min="1" max="<?= $total_pages ?>" value="<?= $page ?>"
                                 onchange="jumpToPage(this.value)"
-                                class="w-20 px-3 py-2 border border-gray-300 focus:ring-2 focus:ring-primary text-center">
+                                class="w-16 sm:w-20 px-2 py-1.5 sm:px-3 sm:py-2 border border-gray-300 focus:ring-2 focus:ring-primary text-center text-xs sm:text-sm">
                         </div>
                     </div>
                 <?php endif; ?>

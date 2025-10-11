@@ -1000,14 +1000,7 @@ class ProductFilter {
                 </div>
             ` : ''}
             
-            ${hasMultipleVariants ? `
-                <div class="mb-3">
-                    <p class="text-xs text-gray-600 mb-2 font-medium">Size:</p>
-                    <div class="flex flex-wrap gap-2">
-                        ${variantButtons}
-                    </div>
-                </div>
-            ` : ''}
+     
 
             <div class="mb-3 space-y-1">
                 <div class="text-xs text-gray-600">

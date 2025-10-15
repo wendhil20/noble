@@ -823,6 +823,7 @@ if ($_POST['payment_method'] === 'PayMongo') {
         
         // ✅ REDIRECT to create PayMongo session using AJAX call
         ?>
+        
         <script>
         // Create PayMongo session via AJAX
         fetch('paymongo-create-sessions.php', {
@@ -859,6 +860,7 @@ if ($_POST['payment_method'] === 'PayMongo') {
             console.error('Error:', error);
         });
         </script>
+
         <?php
         exit; // Stop further execution
         

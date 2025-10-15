@@ -766,6 +766,68 @@ $avg_stmt->close();
           transform: translateY(-35px) scale(1.13);
         }
       }
+
+      /* Magnifier Container */
+      #magnifier-container {
+        position: relative;
+        cursor: crosshair;
+      }
+
+      /* Tracking Lens - Hidden by default */
+      #magnifier-lens {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: opacity 0.15s ease;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      #magnifier-lens.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Zoom Preview Panel - Hidden by default */
+      #zoom-preview-panel {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(-10px);
+      }
+
+      #zoom-preview-panel.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+      }
+
+      /* Mobile: Full screen modal */
+      @media (max-width: 1023px) {
+        #zoom-preview-panel {
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          width: 90vw !important;
+          height: 90vw !important;
+          max-width: 500px;
+          max-height: 500px;
+          z-index: 9999 !important;
+          margin: 0 !important;
+        }
+
+        #zoom-preview-panel.active {
+          transform: translate(-50%, -50%) !important;
+        }
+
+        /* Add backdrop for mobile */
+        #zoom-preview-panel::before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: -1;
+        }
+      }
     </style>
   </div>
 
@@ -789,37 +851,38 @@ $avg_stmt->close();
 
         <!-- Product Image & Info Section -->
         <div class="p-4 lg:p-8">
-          <!-- Product Image -->
-          <!-- Product Image -->
-          <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
-                 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0">
-            <!-- ✅ UPDATED: Now uses type_name in alt attribute -->
-            <img id="main-product-image"
-              src="../../<?= htmlspecialchars($display_image) ?>"
-              data-original-image="../../<?= htmlspecialchars($display_image) ?>"
-              data-original-name="<?= htmlspecialchars($display_name) ?>"
-              class="w-full h-full object-contain transition-all duration-300 hover:scale-105"
-              alt="<?= htmlspecialchars($display_name) ?>">
+          <div class="relative">
+            <!-- Product Image -->
+            <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
+       w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
+              id="magnifier-container">
 
+              <img id="main-product-image"
+                src="../../<?= htmlspecialchars($display_image) ?>"
+                data-original-image="../../<?= htmlspecialchars($display_image) ?>"
+                data-original-name="<?= htmlspecialchars($display_name) ?>"
+                class="w-full h-full object-contain transition-all duration-300"
+                alt="<?= htmlspecialchars($display_name) ?>">
 
-            <!-- Image Navigation Arrows (if sub images exist) -->
-            <?php if (!empty($sub_images)): ?>
-              <button id="prev-image" class="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 sm:p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-              </button>
-              <button id="next-image" class="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 sm:p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </button>
+              <!-- Tracking Lens - HIDDEN BY DEFAULT -->
+              <div id="magnifier-lens"
+                class="absolute hidden pointer-events-none bg-white/30 backdrop-blur-sm border-2 border-orange-400"
+                style="width: 100px; height: 100px;"></div>
+            </div>
 
-              <!-- Image Counter -->
-              <div class="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                <span id="current-image-index">1</span> / <span id="total-images"><?= count($sub_images) + 1 ?></span>
+            <!-- Preview Panel - HIDDEN BY DEFAULT, only shows on hover -->
+            <div id="zoom-preview-panel"
+              class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
+              <div class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
+                <div id="zoom-preview-content"
+                  class="w-full h-full bg-no-repeat"
+                  style="background-size: 250%;"></div>
+
+                <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
+                  <i class="fas fa-search-plus mr-1"></i> 2.5x Zoom
+                </div>
               </div>
-            <?php endif; ?>
+            </div>
           </div>
 
           <?php if (!empty($sub_images)): ?>
@@ -1826,6 +1889,99 @@ $avg_stmt->close();
 
 
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const container = document.getElementById('magnifier-container');
+      const img = document.getElementById('main-product-image');
+      const lens = document.getElementById('magnifier-lens');
+      const previewPanel = document.getElementById('zoom-preview-panel');
+      const previewContent = document.getElementById('zoom-preview-content');
+
+      if (!container || !img || !lens || !previewPanel || !previewContent) return;
+
+      const zoomLevel = 2.5;
+      let isActive = false;
+
+      // Show lens and preview when mouse enters image
+      container.addEventListener('mouseenter', function() {
+        isActive = true;
+
+        // Show lens and preview
+        lens.classList.remove('hidden');
+        lens.classList.add('active');
+        previewPanel.classList.remove('hidden');
+        previewPanel.classList.add('active');
+
+        // Setup preview image
+        if (img.complete) {
+          setupPreview();
+        } else {
+          img.addEventListener('load', setupPreview);
+        }
+      });
+
+      // Hide lens and preview when mouse leaves image
+      container.addEventListener('mouseleave', function() {
+        isActive = false;
+
+        // Hide with animation
+        lens.classList.remove('active');
+        previewPanel.classList.remove('active');
+
+        setTimeout(() => {
+          lens.classList.add('hidden');
+          previewPanel.classList.add('hidden');
+        }, 200);
+      });
+
+      function setupPreview() {
+        if (!isActive) return;
+        previewContent.style.backgroundImage = `url('${img.src}')`;
+      }
+
+      // Track mouse movement inside image
+      container.addEventListener('mousemove', function(e) {
+        if (!isActive) return;
+
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Position tracking lens
+        let lensX = x - (lens.offsetWidth / 2);
+        let lensY = y - (lens.offsetHeight / 2);
+
+        // Keep lens within image bounds
+        lensX = Math.max(0, Math.min(lensX, rect.width - lens.offsetWidth));
+        lensY = Math.max(0, Math.min(lensY, rect.height - lens.offsetHeight));
+
+        lens.style.left = lensX + 'px';
+        lens.style.top = lensY + 'px';
+
+        // Update preview panel zoom position
+        const percentX = (x / rect.width) * 100;
+        const percentY = (y / rect.height) * 100;
+
+        previewContent.style.backgroundPosition = `${percentX}% ${percentY}%`;
+        previewContent.style.backgroundSize = `${zoomLevel * 100}%`;
+      });
+
+      // Update preview when image source changes (e.g., color selection)
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+            if (isActive) {
+              previewContent.style.backgroundImage = `url('${img.src}')`;
+            }
+          }
+        });
+      });
+
+      observer.observe(img, {
+        attributes: true,
+        attributeFilter: ['src']
+      });
+    });
+
     // Mobile sidebar functionality
     document.addEventListener('DOMContentLoaded', function() {
       const sidebarToggle = document.getElementById('mobileSidebarToggle');

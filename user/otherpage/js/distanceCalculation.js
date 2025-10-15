@@ -14,13 +14,7 @@ function initializeDeliveryTypeSelection() {
                 if (deliverySection) deliverySection.classList.remove('hidden');
                 if (pickupSection) pickupSection.classList.add('hidden');
                 
-                // ✅ Hide dimensions until calculation
-                const dimensionsContainer = document.getElementById('orderDimensionsSummaryContainer');
-                if (dimensionsContainer) {
-                    dimensionsContainer.classList.add('hidden');
-                }
-                
-                // Hide vehicle details
+                // Hide vehicle details until calculation
                 const vehicleDetails = document.getElementById('assignedVehicleDetails');
                 if (vehicleDetails) {
                     vehicleDetails.classList.add('hidden');
@@ -33,7 +27,14 @@ function initializeDeliveryTypeSelection() {
                     continueBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
                 }
                 
-                showNotification('Please calculate delivery distance and fee', 'info');
+                showNotification('Calculating delivery cost...', 'info');
+                
+                // ✅ Auto-trigger calculation for delivery
+                if (typeof autoCalculateDelivery === 'function') {
+                    setTimeout(() => {
+                        autoCalculateDelivery();
+                    }, 500);
+                }
                 
             } else if (this.value === 'pickup') {
                 // Show pickup info
@@ -49,6 +50,18 @@ function initializeDeliveryTypeSelection() {
                 // Update totals to zero delivery
                 updateTotalsDisplay(0);
                 
+                // ✅ NEW: Calculate and show vehicle assignment for pickup too
+                if (window.cartItemsData && window.cartItemsData.length > 0) {
+                    console.log('Calculating vehicle assignment for pickup...');
+                    
+                    const vehicleAssignment = assignTransportifyVehicleJS(window.cartItemsData);
+                    
+                    if (vehicleAssignment && vehicleAssignment.vehicle) {
+                        // Show vehicle details with "For Information" message
+                        showPickupVehicleDetails(vehicleAssignment.vehicle, vehicleAssignment);
+                    }
+                }
+                
                 // Enable continue button
                 if (continueBtn) {
                     continueBtn.disabled = false;
@@ -61,8 +74,56 @@ function initializeDeliveryTypeSelection() {
         });
     });
     
-    // ✅ Don't calculate dimensions on load - wait for user to click Calculate button
     console.log('Delivery type selection initialized');
+}
+
+// ✅ NEW: Automatically calculate when address is selected
+function autoCalculateDelivery() {
+    if (!selectedAddress) {
+        console.log('No address selected yet');
+        return;
+    }
+    
+    const deliveryType = document.querySelector('input[name="delivery_type"]:checked');
+    if (!deliveryType || deliveryType.value !== 'delivery') {
+        console.log('Not in delivery mode');
+        return;
+    }
+    
+    // Show loading indicator
+    const loader = document.getElementById('autoCalculationLoader');
+    if (loader) {
+        loader.classList.remove('hidden');
+    }
+    
+    // Hide any previous results
+    const distanceResult = document.getElementById('distanceResult');
+    if (distanceResult) {
+        distanceResult.innerHTML = '';
+    }
+    
+    const vehicleDetails = document.getElementById('assignedVehicleDetails');
+    if (vehicleDetails) {
+        vehicleDetails.classList.add('hidden');
+    }
+    
+    const calculateBtn = document.getElementById('calculateDistance');
+    if (calculateBtn) {
+        console.log('Auto-triggering delivery calculation...');
+        
+        // Enable button temporarily to allow click
+        calculateBtn.disabled = false;
+        
+        // Trigger calculation
+        calculateBtn.click();
+        
+        // Hide loader after calculation (will be handled by the click event)
+        setTimeout(() => {
+            if (loader) {
+                loader.classList.add('hidden');
+            }
+        }, 1000);
+    }
 }
 
 // ✅ NEW: Calculate and display order dimensions
@@ -145,10 +206,16 @@ function initializeDistanceCalculation() {
             calculateDistanceBtn.disabled = true;
 
             try {
-                // Validate required data
-                if (!selectedAddress) {
-                    throw new Error('No delivery address selected');
-                }
+    // ✅ Hide auto-calculation loader
+    const loader = document.getElementById('autoCalculationLoader');
+    if (loader) {
+        loader.classList.add('hidden');
+    }
+    
+    // Validate required data
+    if (!selectedAddress) {
+        throw new Error('No delivery address selected');
+    }
                 if (!deliverySettings) {
                     throw new Error('Delivery settings not loaded');
                 }
@@ -213,13 +280,6 @@ function initializeDistanceCalculation() {
                 // Update totals
                 updateTotalsDisplay(deliveryResult.totalDeliveryCost);
 
-                // ✅ NEW: Show and calculate order dimensions after successful calculation
-                const dimensionsContainer = document.getElementById('orderDimensionsSummaryContainer');
-                if (dimensionsContainer) {
-                    dimensionsContainer.classList.remove('hidden');
-                }
-                calculateOrderDimensions();
-                
                 // Show assigned vehicle details
                 if (vehicleAssignment && vehicleAssignment.vehicle) {
                     showAssignedVehicleDetails(vehicleAssignment.vehicle, vehicleAssignment);
@@ -232,8 +292,6 @@ function initializeDistanceCalculation() {
                     continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
                 }
 
-                // Calculate and display order dimensions
-                calculateOrderDimensions();
                 
                 // Show assigned vehicle details
                 if (vehicleAssignment && vehicleAssignment.vehicle) {
@@ -244,7 +302,13 @@ function initializeDistanceCalculation() {
                 showNotification(successMessage, 'success');
 
             } catch (error) {
-                console.error('Delivery calculation error:', error);
+    console.error('Delivery calculation error:', error);
+    
+    // ✅ Hide loader on error
+    const loader = document.getElementById('autoCalculationLoader');
+    if (loader) {
+        loader.classList.add('hidden');
+    }
 
                 let errorMessage = 'Error calculating delivery fee. ';
                 if (error.message.includes('coordinates')) {
@@ -265,23 +329,6 @@ function initializeDistanceCalculation() {
         });
     }
 }
-
-// ✅ Enable continue button after successful calculation
-if (continueToPaymentBtn) {
-    continueToPaymentBtn.disabled = false;
-    continueToPaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-    continueToPaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-}
-
-const successMessage = `Delivery calculated: ${vehicleAssignment.vehicle.vehicle_type} - ₱${deliveryResult.totalDeliveryCost.toFixed(2)}`;
-showNotification(successMessage, 'success');
-
-// ✅ NEW: Log completion status
-console.log('✓ Delivery calculation complete and saved:', {
-    distance: distance.toFixed(2) + ' km',
-    fee: '₱' + deliveryResult.totalDeliveryCost.toFixed(2),
-    vehicle: vehicleAssignment.vehicle.vehicle_type
-});
 
 /**
  * Calculate cubic meters from dimensions
@@ -420,7 +467,7 @@ function calculateTransportifyDeliveryCostJS(distanceKm, vehicleAssignment) {
     
     const baseFare = parseFloat(vehicle.base_fare) || 0;
     const addPerKm = parseFloat(vehicle.add_per_km) || 0;
-    const perKmRate = parseFloat(vehicle.per_km_rate) || 1; // Start charging at this km
+    const perKmRate = 0; // ✅ CHANGED: Start charging from 0 km instead of 1 km
     
     let deliveryCost = baseFare;
     let chargeableKm = 0;
@@ -497,94 +544,202 @@ function updateDeliveryDisplay(deliveryResult, routeData, distance, vehicleAssig
     showAssignedVehicleDetails(vehicle, vehicleAssignment);
 }
 
-// ✅ NEW: Display assigned vehicle details with capacity usage
+// ✅ SIMPLIFIED: Display assigned vehicle details
 function showAssignedVehicleDetails(vehicle, vehicleAssignment) {
     const detailsContainer = document.getElementById('assignedVehicleDetails');
     const contentContainer = document.getElementById('vehicleDetailsContent');
     
     if (!detailsContainer || !contentContainer) return;
     
-    const vehicleMaxCubicM = parseFloat(vehicle.max_cubic_meter);
-    const vehicleMaxWeightKg = parseFloat(vehicle.max_weight_capacity);
-    const vehicleLength = parseFloat(vehicle.length) || 0;
-    const vehicleWidth = parseFloat(vehicle.width) || 0;
-    const vehicleHeight = parseFloat(vehicle.height) || 0;
-    
     const orderCubicM = vehicleAssignment.totalCubicMeters;
     const orderWeightKg = vehicleAssignment.totalWeightKg;
+    const maxCubicM = parseFloat(vehicle.max_cubic_meter);
+    const maxWeightKg = parseFloat(vehicle.max_weight_capacity);
     
-    // Calculate usage percentages
-    const volumeUsage = ((orderCubicM / vehicleMaxCubicM) * 100).toFixed(1);
-    const weightUsage = ((orderWeightKg / vehicleMaxWeightKg) * 100).toFixed(1);
+    // Calculate percentages
+    const volumePercentage = Math.min((orderCubicM / maxCubicM) * 100, 100);
+    const weightPercentage = Math.min((orderWeightKg / maxWeightKg) * 100, 100);
     
-    // Determine color based on usage
-    const getUsageColor = (usage) => {
-        if (usage <= 60) return 'green';
-        if (usage <= 85) return 'yellow';
-        return 'red';
+    // Determine bar colors based on usage
+    const getBarColor = (percentage) => {
+        if (percentage <= 50) return 'bg-green-500';
+        if (percentage <= 75) return 'bg-yellow-500';
+        if (percentage <= 90) return 'bg-orange-500';
+        return 'bg-red-500';
     };
     
-    const volumeColor = getUsageColor(volumeUsage);
-    const weightColor = getUsageColor(weightUsage);
+    const volumeBarColor = getBarColor(volumePercentage);
+    const weightBarColor = getBarColor(weightPercentage);
     
+    // ✅ Enhanced display with progress bars
     contentContainer.innerHTML = `
-        <div class="space-y-3">
-            <div class="bg-white rounded-lg p-3">
-                <div class="font-medium text-gray-700 mb-2 flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    Vehicle: ${vehicle.vehicle_type}
+                    <span class="font-semibold text-gray-800">${vehicle.vehicle_type}</span>
                 </div>
-                ${vehicle.vehicle_description ? `
-                <div class="text-xs text-gray-600">${vehicle.vehicle_description}</div>
-                ` : ''}
+                <span class="text-xs text-gray-500">${vehicle.vehicle_description || 'Small Vehicle'}</span>
             </div>
             
-            <div class="bg-white rounded-lg p-3">
-                <div class="font-medium text-gray-700 mb-2">Vehicle Dimensions:</div>
-                <div class="grid grid-cols-3 gap-2 text-xs text-gray-600">
-                    ${vehicleLength > 0 ? `<div>Length: <span class="font-semibold">${vehicleLength} ft</span></div>` : ''}
-                    ${vehicleWidth > 0 ? `<div>Width: <span class="font-semibold">${vehicleWidth} ft</span></div>` : ''}
-                    ${vehicleHeight > 0 ? `<div>Height: <span class="font-semibold">${vehicleHeight} ft</span></div>` : ''}
-                </div>
-            </div>
-        </div>
-        
-        <div class="space-y-3">
-            <!-- Volume Usage -->
-            <div class="bg-white rounded-lg p-3">
+            <!-- Volume Progress Bar -->
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm font-medium text-gray-700">Volume Capacity</span>
-                    <span class="text-xs font-semibold text-${volumeColor}-600">${volumeUsage}% used</span>
+                    <span class="text-xs font-semibold ${volumePercentage > 90 ? 'text-red-600' : 'text-gray-600'}">
+                        ${volumePercentage.toFixed(1)}%
+                    </span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div class="bg-${volumeColor}-500 h-2 rounded-full" style="width: ${Math.min(volumeUsage, 100)}%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div class="${volumeBarColor} h-3 rounded-full transition-all duration-500 ease-out" 
+                         style="width: ${volumePercentage}%"></div>
                 </div>
-                <div class="flex justify-between text-xs text-gray-600">
-                    <span>Your Load: ${orderCubicM.toFixed(3)} m³</span>
-                    <span>Max: ${vehicleMaxCubicM} m³</span>
+                <div class="flex justify-between mt-2 text-xs">
+                    <span class="text-green-700 font-semibold">${orderCubicM.toFixed(3)} m³</span>
+                    <span class="text-gray-500">of ${maxCubicM.toFixed(2)} m³</span>
                 </div>
             </div>
             
-            <!-- Weight Usage -->
-            <div class="bg-white rounded-lg p-3">
+            <!-- Weight Progress Bar -->
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm font-medium text-gray-700">Weight Capacity</span>
-                    <span class="text-xs font-semibold text-${weightColor}-600">${weightUsage}% used</span>
+                    <span class="text-xs font-semibold ${weightPercentage > 90 ? 'text-red-600' : 'text-gray-600'}">
+                        ${weightPercentage.toFixed(1)}%
+                    </span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div class="bg-${weightColor}-500 h-2 rounded-full" style="width: ${Math.min(weightUsage, 100)}%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div class="${weightBarColor} h-3 rounded-full transition-all duration-500 ease-out" 
+                         style="width: ${weightPercentage}%"></div>
                 </div>
-                <div class="flex justify-between text-xs text-gray-600">
-                    <span>Your Load: ${orderWeightKg.toFixed(2)} kg</span>
-                    <span>Max: ${vehicleMaxWeightKg} kg</span>
+                <div class="flex justify-between mt-2 text-xs">
+                    <span class="text-green-700 font-semibold">${orderWeightKg.toFixed(2)} kg</span>
+                    <span class="text-gray-500">of ${maxWeightKg.toFixed(2)} kg</span>
                 </div>
             </div>
+            
+            ${volumePercentage > 100 || weightPercentage > 100 ? `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div class="flex items-center text-red-700 text-xs">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <span class="font-semibold">Warning: Load exceeds vehicle capacity!</span>
+                    </div>
+                </div>
+            ` : ''}
         </div>
     `;
     
     detailsContainer.classList.remove('hidden');
+}
+
+// ✅ NEW: Show vehicle details for pickup mode (informational only)
+function showPickupVehicleDetails(vehicle, vehicleAssignment) {
+    const detailsContainer = document.getElementById('assignedVehicleDetails');
+    const contentContainer = document.getElementById('vehicleDetailsContent');
+    
+    if (!detailsContainer || !contentContainer) return;
+    
+    const orderCubicM = vehicleAssignment.totalCubicMeters;
+    const orderWeightKg = vehicleAssignment.totalWeightKg;
+    const maxCubicM = parseFloat(vehicle.max_cubic_meter);
+    const maxWeightKg = parseFloat(vehicle.max_weight_capacity);
+    
+    // Calculate percentages
+    const volumePercentage = Math.min((orderCubicM / maxCubicM) * 100, 100);
+    const weightPercentage = Math.min((orderWeightKg / maxWeightKg) * 100, 100);
+    
+    // Determine bar colors based on usage
+    const getBarColor = (percentage) => {
+        if (percentage <= 50) return 'bg-green-500';
+        if (percentage <= 75) return 'bg-yellow-500';
+        if (percentage <= 90) return 'bg-orange-500';
+        return 'bg-red-500';
+    };
+    
+    const volumeBarColor = getBarColor(volumePercentage);
+    const weightBarColor = getBarColor(weightPercentage);
+    
+    // ✅ Pickup-specific display with informational message
+    contentContainer.innerHTML = `
+        <div class="space-y-4">
+            <!-- Info Banner for Pickup -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div class="flex items-center text-blue-800 text-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <div class="font-semibold">For Your Information</div>
+                        <div class="text-xs">This vehicle would be used if you chose delivery instead</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                    </svg>
+                    <span class="font-semibold text-gray-800">${vehicle.vehicle_type}</span>
+                </div>
+                <span class="text-xs text-gray-500">${vehicle.vehicle_description || 'Vehicle'}</span>
+            </div>
+            
+            <!-- Volume Progress Bar -->
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-gray-700">Order Volume</span>
+                    <span class="text-xs font-semibold ${volumePercentage > 90 ? 'text-red-600' : 'text-gray-600'}">
+                        ${volumePercentage.toFixed(1)}% of capacity
+                    </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div class="${volumeBarColor} h-3 rounded-full transition-all duration-500 ease-out" 
+                         style="width: ${volumePercentage}%"></div>
+                </div>
+                <div class="flex justify-between mt-2 text-xs">
+                    <span class="text-gray-700 font-semibold">${orderCubicM.toFixed(3)} m³</span>
+                    <span class="text-gray-500">Max: ${maxCubicM.toFixed(2)} m³</span>
+                </div>
+            </div>
+            
+            <!-- Weight Progress Bar -->
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-gray-700">Order Weight</span>
+                    <span class="text-xs font-semibold ${weightPercentage > 90 ? 'text-red-600' : 'text-gray-600'}">
+                        ${weightPercentage.toFixed(1)}% of capacity
+                    </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div class="${weightBarColor} h-3 rounded-full transition-all duration-500 ease-out" 
+                         style="width: ${weightPercentage}%"></div>
+                </div>
+                <div class="flex justify-between mt-2 text-xs">
+                    <span class="text-gray-700 font-semibold">${orderWeightKg.toFixed(2)} kg</span>
+                    <span class="text-gray-500">Max: ${maxWeightKg.toFixed(2)} kg</span>
+                </div>
+            </div>
+            
+            ${volumePercentage > 100 || weightPercentage > 100 ? `
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div class="flex items-center text-yellow-700 text-xs">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <span class="font-semibold">Note: Your order would require special handling for delivery</span>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    detailsContainer.classList.remove('hidden');
+    console.log('✓ Pickup vehicle details displayed');
 }
 
 // Keep existing distance calculation functions
@@ -685,4 +840,14 @@ function updateTotalsDisplay(deliveryCost) {
     if (paymongoAmountElement) {
         paymongoAmountElement.textContent = `₱${totals.grandTotal.toFixed(2)}`;
     }
+
+
+    // ✅ Export functions to global scope for use in other scripts
+window.assignTransportifyVehicleJS = assignTransportifyVehicleJS;
+window.calculateTransportifyDeliveryCostJS = calculateTransportifyDeliveryCostJS;
+window.calculateCubicMetersJS = calculateCubicMetersJS;
+window.convertToKilogramsJS = convertToKilogramsJS;
+window.autoCalculateDelivery = autoCalculateDelivery; // ✅ NEW
+
+console.log('✓ Distance calculation functions exported to global scope');
 }

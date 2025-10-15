@@ -70,10 +70,24 @@ class PaymentSystem {
     const bankFields = document.getElementById('bankTransferFields');
     const paypalFields = document.getElementById('paypalFields'); 
     const paymongoFields = document.getElementById('paymongoFields');
+    const qrFields = document.getElementById('qrPaymentFields');
     
-    if (bankFields) bankFields.classList.add('hidden');
+    if (bankFields) {
+        bankFields.classList.add('hidden');
+        const bankRadios = bankFields.querySelectorAll('input[name="bank_selection"]');
+        bankRadios.forEach(radio => radio.removeAttribute('required'));
+        const screenshot = bankFields.querySelector('input[name="payment_screenshot"]');
+        if (screenshot) screenshot.removeAttribute('required');
+    }
     if (paypalFields) paypalFields.classList.add('hidden');
     if (paymongoFields) paymongoFields.classList.add('hidden');
+    if (qrFields) {
+        qrFields.classList.add('hidden');
+        const qrRadios = qrFields.querySelectorAll('input[name="qr_payment_selection"]');
+        qrRadios.forEach(radio => radio.removeAttribute('required'));
+        const qrScreenshot = qrFields.querySelector('input[name="qr_payment_screenshot"]');
+        if (qrScreenshot) qrScreenshot.removeAttribute('required');
+    }
 
     const placeOrderBtn = document.getElementById('placeOrderBtn');
 
@@ -82,8 +96,9 @@ class PaymentSystem {
         if (bankFields) {
             bankFields.classList.remove('hidden');
             this.renderBankTransferInterface();
+            const bankRadios = bankFields.querySelectorAll('input[name="bank_selection"]');
+            bankRadios.forEach(radio => radio.setAttribute('required', 'required'));
         }
-        // ✅ Don't enable button immediately - wait for bank selection
         if (placeOrderBtn) {
             placeOrderBtn.style.display = 'inline-block';
             placeOrderBtn.disabled = true;
@@ -93,26 +108,40 @@ class PaymentSystem {
         }
         
     } else if (method === 'PayPal') {
-    if (paypalFields) {
-        paypalFields.classList.remove('hidden');
-        this.renderPayPalInterface();
-    }
-    // ✅ Enable button immediately for PayPal (validation happens server-side)
-    if (placeOrderBtn) {
-        placeOrderBtn.style.display = 'inline-block';
-        placeOrderBtn.disabled = false;
-        placeOrderBtn.textContent = 'Continue to PayPal';
-        placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-        placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-    }
+        if (paypalFields) {
+            paypalFields.classList.remove('hidden');
+            this.renderPayPalInterface();
+        }
+        if (placeOrderBtn) {
+            placeOrderBtn.style.display = 'inline-block';
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.textContent = 'Continue to PayPal';
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
         
     } else if (method === 'PayMongo') {
         if (paymongoFields) {
             paymongoFields.classList.remove('hidden');
             this.renderPayMongoInterface();
         }
-        this.showPlaceOrderButton('Pay with PayMongo');
+        this.showPlaceOrderButton('Pay with PayMongo', true);
         this.updatePayMongoAmount();
+        
+    } else if (method === 'QR Payment') {
+        if (qrFields) {
+            qrFields.classList.remove('hidden');
+            this.renderQRPaymentInterface();
+            const qrRadios = qrFields.querySelectorAll('input[name="qr_payment_selection"]');
+            qrRadios.forEach(radio => radio.setAttribute('required', 'required'));
+        }
+        if (placeOrderBtn) {
+            placeOrderBtn.style.display = 'inline-block';
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.textContent = 'Place Order';
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        }
     }
 }
 
@@ -237,6 +266,165 @@ class PaymentSystem {
         });
     });
 }
+
+renderQRPaymentInterface() {
+    const qrFields = document.getElementById('qrPaymentFields');
+    if (!qrFields) return;
+
+    // Setup QR method selection listeners
+    const qrRadios = document.querySelectorAll('.qr-method-radio');
+    qrRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                const methodName = e.target.dataset.methodName;
+                const accountName = e.target.dataset.accountName;
+                const accountNumber = e.target.dataset.accountNumber;
+                const qrImage = e.target.dataset.qrImage;
+                const instructions = e.target.dataset.instructions;
+                
+                this.selectQRMethod(e.target.value, {
+                    methodName,
+                    accountName,
+                    accountNumber,
+                    qrImage,
+                    instructions
+                });
+            }
+        });
+    });
+}
+
+selectQRMethod(methodId, methodInfo) {
+    console.log('QR method selected:', methodId);
+    
+    const selectedQRInput = document.getElementById('selectedQRMethod');
+    if (selectedQRInput) {
+        selectedQRInput.value = methodId;
+    }
+
+    this.showQRDetails(methodInfo);
+}
+
+showQRDetails(methodInfo) {
+    const qrDetailsArea = document.getElementById('qrDetailsArea');
+    if (!qrDetailsArea) return;
+
+    const grandTotalElement = document.getElementById('grandTotalDisplay');
+    const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
+
+    qrDetailsArea.classList.remove('hidden');
+    qrDetailsArea.innerHTML = `
+        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mt-4">
+            <h6 class="font-bold text-indigo-800 mb-3 text-sm flex items-center">
+                <i class="fas fa-qrcode mr-2"></i>
+                ${methodInfo.methodName} Payment Details
+            </h6>
+            
+            <div class="grid md:grid-cols-2 gap-3">
+                <!-- QR Code Display - Compact -->
+                <div class="bg-white rounded-lg p-3 text-center">
+                    <img src="${methodInfo.qrImage}" 
+                         alt="${methodInfo.methodName} QR Code" 
+                         class="max-w-[180px] mx-auto rounded border border-indigo-200 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                         onclick="window.open('${methodInfo.qrImage}', '_blank')">
+                    <p class="text-xs text-gray-600 mt-2">
+                        <i class="fas fa-expand-alt mr-1"></i>
+                        Click to enlarge
+                    </p>
+                    <a href="${methodInfo.qrImage}" download class="inline-flex items-center justify-center w-full px-3 py-2 mt-2 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-download mr-1"></i>
+                        Download QR
+                    </a>
+                </div>
+                
+                <!-- Payment Details - Compact -->
+                <div class="space-y-2">
+                    <div class="bg-white rounded p-2 text-sm">
+                        <div class="text-gray-500 text-xs">Account Name</div>
+                        <div class="font-medium">${methodInfo.accountName}</div>
+                    </div>
+                    <div class="bg-white rounded p-2 text-sm">
+                        <div class="text-gray-500 text-xs">Account Number</div>
+                        <div class="font-medium">${methodInfo.accountNumber}</div>
+                    </div>
+                    <div class="bg-white rounded p-2 text-sm border-t-2 border-indigo-200">
+                        <div class="text-gray-700 font-medium text-xs">Amount to Pay</div>
+                        <div class="font-bold text-green-600 text-lg">${totalAmount}</div>
+                    </div>
+                    
+                    ${methodInfo.instructions ? `
+                        <div class="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            ${methodInfo.instructions}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <!-- Payment Screenshot Upload - Compact -->
+            <div class="mt-3">
+                <label class="block font-medium mb-1 text-sm">
+                    Payment Screenshot <span class="text-red-600">*</span>
+                </label>
+                <input type="file" 
+                       name="qr_payment_screenshot" 
+                       accept="image/*" 
+                       required 
+                       class="w-full border border-gray-300 px-2 py-2 rounded text-sm file-input" 
+                       onchange="window.paymentSystem.validateQRPaymentForm()" />
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-camera mr-1"></i>
+                    Upload payment confirmation
+                </p>
+            </div>
+            
+            <!-- Reference Number (Optional) - Compact -->
+            <div class="mt-2">
+                <label class="block font-medium mb-1 text-sm">Reference Number (Optional)</label>
+                <input type="text" 
+                       name="qr_reference_number_input" 
+                       id="qr_reference_number_input"
+                       class="w-full border border-gray-300 px-2 py-2 rounded text-sm" 
+                       placeholder="Enter transaction reference" 
+                       onchange="document.getElementById('qrReferenceNumber').value = this.value" />
+            </div>
+        </div>
+    `;
+}
+
+validateQRPaymentForm() {
+    const selectedQR = document.getElementById('selectedQRMethod');
+    const qrScreenshot = document.querySelector('input[name="qr_payment_screenshot"]');
+    
+    const qrSelected = selectedQR && selectedQR.value;
+    const screenshotUploaded = qrScreenshot && qrScreenshot.files && qrScreenshot.files.length > 0;
+    
+    console.log('QR Payment Validation:', {
+        qrSelected: qrSelected,
+        screenshot: screenshotUploaded
+    });
+    
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        if (qrSelected && screenshotUploaded) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            return true;
+        } else {
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            return false;
+        }
+    }
+    
+    return false;
+
+    
+}
+
+
 
     selectBank(bankCode, bankInfo) {
     console.log('Bank selected:', bankCode);
@@ -510,6 +698,32 @@ handlePayPalSubmission(form) {
             return true;
         }
 
+        // Handle QR Payment submission
+if (selectedMethod.value === 'QR Payment') {
+    e.preventDefault(); // Always prevent default for validation
+    
+    const selectedQR = document.getElementById('selectedQRMethod');
+    const qrScreenshot = document.querySelector('input[name="qr_payment_screenshot"]');
+    
+    // Check if QR method is selected
+    if (!selectedQR || !selectedQR.value) {
+        showNotification('Please select a QR payment method', 'error');
+        return false;
+    }
+    
+    // Check if screenshot is uploaded
+    if (!qrScreenshot || !qrScreenshot.files || !qrScreenshot.files.length) {
+        showNotification('Please upload payment screenshot', 'error');
+        return false;
+    }
+    
+    // ✅ If validation passes, submit normally
+    console.log('✓ QR Payment validated - submitting form');
+    this.isSubmitting = true;
+    checkoutForm.submit(); // Submit the form
+    return true;
+}
+
         // ✅ FIXED: Validate delivery calculation before submission
         const deliveryDistanceInput = document.getElementById('deliveryDistance');
         const deliveryFeeInput = document.getElementById('deliveryFee');
@@ -574,19 +788,86 @@ handlePayPalSubmission(form) {
     placeOrderBtn.textContent = 'Creating PayMongo session...';
 
     try {
-        // ✅ FIXED: Validate delivery calculation first
-        const deliveryDistanceInput = document.getElementById('deliveryDistance');
-        const deliveryFeeInput = document.getElementById('deliveryFee');
+        // ✅ Check delivery type
+        const deliveryTypeInput = document.querySelector('input[name="delivery_type"]:checked');
+        const deliveryType = deliveryTypeInput ? deliveryTypeInput.value : 'delivery';
         
-        if (!deliveryDistanceInput || !deliveryFeeInput) {
-            throw new Error('Delivery calculation fields not found');
-        }
+        console.log('PayMongo - Delivery Type:', deliveryType);
         
-        const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
-        const deliveryFee = parseFloat(deliveryFeeInput.value || '0');
+        let vehicleData = {
+            assigned_vehicle_id: null,
+            assigned_vehicle_type: null,
+            total_cubic_meters: 0,
+            total_weight_kg: 0,
+            total_width: 0,
+            total_height: 0,
+            total_length: 0
+        };
         
-        if (deliveryDistance <= 0) {
-            throw new Error('Please calculate delivery distance first');
+        let deliveryDistance = 0;
+        let deliveryFee = 0;
+        
+        // ✅ If delivery type is "delivery", validate and calculate vehicle assignment
+        if (deliveryType === 'delivery') {
+            // Validate delivery calculation first
+            const deliveryDistanceInput = document.getElementById('deliveryDistance');
+            const deliveryFeeInput = document.getElementById('deliveryFee');
+            
+            if (!deliveryDistanceInput || !deliveryFeeInput) {
+                throw new Error('Delivery calculation fields not found');
+            }
+            
+            deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+            deliveryFee = parseFloat(deliveryFeeInput.value || '0');
+            
+            if (deliveryDistance <= 0) {
+                throw new Error('Please calculate delivery distance first');
+            }
+            
+            // ✅ Calculate vehicle assignment for PayMongo
+            if (!window.cartItemsData || window.cartItemsData.length === 0) {
+                throw new Error('Cart items not found. Please refresh the page.');
+            }
+            
+            console.log('Calculating vehicle assignment for PayMongo...');
+            const vehicleAssignment = assignTransportifyVehicleJS(window.cartItemsData);
+            
+            if (!vehicleAssignment || !vehicleAssignment.vehicle) {
+                throw new Error('Unable to assign delivery vehicle. Please recalculate delivery.');
+            }
+            
+            // ✅ Calculate total dimensions
+            let totalWidth = 0, totalHeight = 0, totalLength = 0;
+            window.cartItemsData.forEach(item => {
+                const width = parseFloat(item.width) || 30;
+                const height = parseFloat(item.height) || 30;
+                const length = parseFloat(item.length) || 30;
+                const dimensionUnit = item.dimension_unit || 'cm';
+                const quantity = parseInt(item.quantity) || 1;
+                
+                const meters = {
+                    'cm': 0.01, 'm': 1, 'mm': 0.001, 'in': 0.0254, 'ft': 0.3048
+                };
+                const multiplier = meters[dimensionUnit.toLowerCase()] || 0.01;
+                
+                totalWidth += (width * multiplier * quantity);
+                totalHeight += (height * multiplier * quantity);
+                totalLength += (length * multiplier * quantity);
+            });
+            
+            vehicleData = {
+                assigned_vehicle_id: vehicleAssignment.vehicle.id,
+                assigned_vehicle_type: vehicleAssignment.vehicle.vehicle_type,
+                total_cubic_meters: vehicleAssignment.totalCubicMeters.toFixed(3),
+                total_weight_kg: vehicleAssignment.totalWeightKg.toFixed(2),
+                total_width: totalWidth.toFixed(2),
+                total_height: totalHeight.toFixed(2),
+                total_length: totalLength.toFixed(2)
+            };
+            
+            console.log('✓ PayMongo vehicle assignment data:', vehicleData);
+        } else {
+            console.log('✓ PayMongo pickup mode - vehicle data set to zero');
         }
 
         // Get total amount
@@ -611,17 +892,26 @@ handlePayPalSubmission(form) {
             // Extract all required form fields
             const formData = new FormData(checkoutForm);
             
-            // Create proper order details object
-            const orderDetails = {
-                customer_name: formData.get('customer_name') || '',
-                email: formData.get('email') || '',
-                mobile: formData.get('mobile') || '',
-                address: formData.get('address') || '',
-                zipcode: formData.get('zipcode') || '',
-                billing_address_id: formData.get('billing_address_id') || null,
-                delivery_distance: parseFloat(formData.get('delivery_distance')) || 0,
-                delivery_fee: parseFloat(formData.get('delivery_fee')) || 0,
-            };
+            // ✅ Create proper order details object with vehicle data
+        const orderDetails = {
+            customer_name: formData.get('customer_name') || '',
+            email: formData.get('email') || '',
+            mobile: formData.get('mobile') || '',
+            address: formData.get('address') || '',
+            zipcode: formData.get('zipcode') || '',
+            billing_address_id: formData.get('billing_address_id') || null,
+            delivery_distance: deliveryDistance,
+            delivery_fee: deliveryFee,
+            delivery_type: deliveryType,
+            // ✅ Add vehicle assignment data
+            assigned_vehicle_id: vehicleData.assigned_vehicle_id,
+            assigned_vehicle_type: vehicleData.assigned_vehicle_type,
+            total_cubic_meters: vehicleData.total_cubic_meters,
+            total_weight_kg: vehicleData.total_weight_kg,
+            total_width: vehicleData.total_width,
+            total_height: vehicleData.total_height,
+            total_length: vehicleData.total_length
+        };
 
             // ✅ VALIDATION: Check required fields
             const requiredFields = ['customer_name', 'email', 'mobile', 'address', 'zipcode'];
@@ -633,6 +923,9 @@ handlePayPalSubmission(form) {
 
             console.log('Creating PayMongo session with data:', {
                 amount: amount,
+                delivery_fee: deliveryFee,
+                delivery_type: deliveryType,
+                vehicle_data: vehicleData,
                 order_details: orderDetails
             });
 
@@ -712,9 +1005,16 @@ function showPayMongoOption() {
     }
 }
 
+function showQRPaymentOption() {
+    if (window.paymentSystem) {
+        window.paymentSystem.switchPaymentMethod('QR Payment');
+    }
+}
+
 window.showBankSelection = showBankSelection;
 window.showPayPalOption = showPayPalOption;
 window.showPayMongoOption = showPayMongoOption;
+window.showQRPaymentOption = showQRPaymentOption;
 
 // Initialize everything
 document.addEventListener('DOMContentLoaded', function() {

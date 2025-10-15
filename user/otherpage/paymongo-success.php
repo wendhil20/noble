@@ -62,35 +62,65 @@ try {
         $stmt->close();
         
         if ($order_found) {
-            // Check payment status and update if needed
-            if ($order['payment_status'] === 'pending') {
-                $payment_success = true;
-                $_SESSION['checkout_notice'] = 'Order already completed!';
-            } else if ($order['payment_status'] === 'pending_paymongo') {
-                // Update payment status to pending (successful payment)
-                $update_stmt = $conn->prepare("
-                    UPDATE orders 
-                    SET payment_status = 'pending', updated_at = NOW() 
-                    WHERE id = ? AND user_id = ?
-                ");
-                $update_stmt->bind_param("ii", $order['id'], $user_id);
-                
-                if ($update_stmt->execute()) {
-                    $payment_success = true;
-                    
-                    // Clear cart
-                    $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-                    $cart_stmt->bind_param("i", $user_id);
-                    $cart_stmt->execute();
-                    $cart_stmt->close();
-                    
-                    $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
-                } else {
-                    $error_message = "Failed to update payment status";
-                }
-                
-                $update_stmt->close();
-            }
+    // Check payment status and update if needed
+    if ($order['payment_status'] === 'pending_paymongo') {
+    // ✅ NEW PAYMENT - Update status and clear cart ONLY ONCE
+    $update_stmt = $conn->prepare("
+        UPDATE orders 
+        SET payment_status = 'pending', updated_at = NOW() 
+        WHERE id = ? AND user_id = ?
+    ");
+    $update_stmt->bind_param("ii", $order['id'], $user_id);
+    
+    if ($update_stmt->execute()) {
+        $payment_success = true;
+        
+        // ✅ ONLY clear cart when status was 'pending_paymongo' (first-time success)
+        $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
+        $cart_stmt->bind_param("i", $user_id);
+        $cart_stmt->execute();
+        $cart_stmt->close();
+        
+        $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
+    } else {
+        $error_message = "Failed to update payment status";
+    }
+    
+    $update_stmt->close();
+    
+} else if ($order['payment_status'] === 'pending') {
+    // ✅ Payment already completed - just show success (DON'T clear cart again)
+    $payment_success = true;
+    $_SESSION['checkout_notice'] = 'Order already completed!';
+        // ✅ NEW PAYMENT - Update status and clear cart ONLY ONCE
+        $update_stmt = $conn->prepare("
+            UPDATE orders 
+            SET payment_status = 'pending', updated_at = NOW() 
+            WHERE id = ? AND user_id = ?
+        ");
+        $update_stmt->bind_param("ii", $order['id'], $user_id);
+        
+        if ($update_stmt->execute()) {
+            $payment_success = true;
+            
+            // ✅ ONLY clear cart when status was 'pending_paymongo' (first-time success)
+            $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
+            $cart_stmt->bind_param("i", $user_id);
+            $cart_stmt->execute();
+            $cart_stmt->close();
+            
+            $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
+        } else {
+            $error_message = "Failed to update payment status";
+        }
+        
+        $update_stmt->close();
+        
+    } else if ($order['payment_status'] === 'cancelled' || $order['payment_status'] === 'failed') {
+        // ✅ Payment failed or cancelled - show error
+        $payment_success = false;
+        $error_message = "This payment was " . $order['payment_status'];
+    }
             
             // Get order items
             $items_stmt = $conn->prepare("SELECT * FROM order_items WHERE order_id = ?");

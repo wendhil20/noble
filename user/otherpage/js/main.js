@@ -159,8 +159,16 @@ window.addEventListener('error', function(event) {
         error: event.error
     });
     
-    // Don't show notification for every error to avoid spam
-    // Only log to console for debugging
+    // ✅ Show helpful error for undefined references
+    if (event.message && event.message.includes('is not defined')) {
+        const varName = event.message.match(/(\w+) is not defined/)?.[1];
+        if (varName) {
+            console.error(`❌ Variable "${varName}" is not defined. Check if it's declared in the correct scope.`);
+        }
+    }
+    
+    // Prevent default error display in console (we already logged it)
+    event.preventDefault();
 });
 
 /**

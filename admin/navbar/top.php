@@ -579,6 +579,15 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             </svg>
                                             <span>Add Driver</span>
                                         </a>
+                                        <a href="../truck_management/transpo_add_vehicle"
+   class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 13V7a2 2 0 012-2h10a2 2 0 012 2v6m-2 0h2l3 3v4a1 1 0 01-1 1h-1a3 3 0 01-6 0H9a3 3 0 01-6 0H2a1 1 0 01-1-1v-4l3-3h2z" />
+    </svg>
+    <span>Add Courier Vehicle</span>
+</a>
+
                                         <a href="../client/add_tracking"
                                             class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -671,27 +680,48 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
 
 
                                 <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
-                                    <div class=" uppercase">
-                                        <!-- Supplier Section -->
-                                        <div class="px-3 py-2">
-                                            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Accountant</div>
-                                            <a href="../accountant/accountantdashboard.php"
-                                                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+    <div class="uppercase">
+        <!-- Accountant Header -->
+        <div class="px-3 py-2">
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Accountant</div>
 
-                                                <span>Revenue Accountant</span>
-                                            </a>
-                                        </div>
+            <!-- Dashboard Accountant -->
+        <div class="px-3 py-2">
+            <a href="../accountant/accountant.php"
+                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3h18v4H3V3zm0 6h8v12H3V9zm10 0h8v8h-8V9z" />
+                </svg>
+                <span>Dashboard Accountant</span>
+            </a>
+        </div>
 
-                                        <!-- Supplier Section -->
-                                        <div class="px-3 py-2">
-                                            <a href="../accountant/accountant.php"
-                                                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+            <!-- Revenue Accountant -->
+            <a href="../accountant/accountantdashboard.php"
+                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 1.343-3 3 0 .863.376 1.64.978 2.182A2.996 2.996 0 0012 17v1m0-10V5m0 13v1m0 0a4 4 0 004-4h-2a2 2 0 11-4 0H8a4 4 0 004 4z" />
+                </svg>
+                <span>Revenue Accountant</span>
+            </a>
+        </div>
 
-                                                <span>Dashboard Accountant</span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+        <!-- Add QR Code -->
+        <div class="px-3 py-2">
+            <a href="../accountant/manage_qr_codes.php"
+                class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors duration-150">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 6v-3h3v-3h-3v-3h6v9h-6z" />
+                </svg>
+                <span>Add QR Code</span>
+            </a>
+        </div>
+    </div>
+<?php endif; ?>
+
                             </div>
                         </div>
                     </div>

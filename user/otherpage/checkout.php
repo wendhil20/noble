@@ -4,6 +4,17 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
+// Handle cancelled PayMongo payment
+if (isset($_GET['payment_cancelled']) && isset($_GET['order_id'])) {
+    $cancelled_order_id = intval($_GET['order_id']);
+    
+    // Delete the pending order
+    $conn->query("DELETE FROM order_items WHERE order_id = $cancelled_order_id");
+    $conn->query("DELETE FROM orders WHERE id = $cancelled_order_id");
+    
+    $error = "Payment was cancelled. Your cart items have been restored. Please try again.";
+}
+
 $tables = ['products', 'orders', 'order_items'];
 
 foreach ($tables as $table) {
@@ -121,6 +132,16 @@ if ($user_id) {
     $has_billing_addresses = count($billing_addresses) > 0;
     $stmt->close();
 }
+
+// ✅ Fetch active QR code payment methods
+$qr_payment_methods = [];
+$stmt = $conn->prepare("SELECT * FROM payment_qr_codes WHERE is_active = 1 ORDER BY display_order ASC, created_at DESC");
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $qr_payment_methods[] = $row;
+}
+$stmt->close();
 
 if ($user_id) {
     // ✅ Fetch cart items with dimensions and weight for vehicle assignment
@@ -316,16 +337,15 @@ function calculateTransportifyDeliveryCost($distance_km, $vehicleData) {
     
     $baseFare = floatval($vehicle['base_fare']);
     $addPerKm = floatval($vehicle['add_per_km']);
-    $perKmRate = floatval($vehicle['per_km_rate']); // Where per km charging starts (1 or 40)
+    $perKmRate = 0; // ✅ CHANGED: Start charging from 0 km instead of 1 km
     
     $deliveryCost = $baseFare;
     
-    // Check if distance exceeds the starting point for per-km rate
+    // Charge for all kilometers beyond the base
     if ($distance_km > $perKmRate) {
         $chargeableKm = $distance_km - $perKmRate;
         $deliveryCost += ($chargeableKm * $addPerKm);
     }
-    
     error_log("Delivery Calculation: Base=₱{$baseFare}, Distance={$distance_km}km, Rate starts at {$perKmRate}km, Add per km=₱{$addPerKm}, Total=₱{$deliveryCost}");
     
     return [
@@ -528,57 +548,77 @@ $total_length = 0;
 
 if ($delivery_type === 'delivery') {
     $vehicleAssignment = assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn);
-    if ($vehicleAssignment && $vehicleAssignment['vehicle']) {
+    
+    // ✅ FIX: Check the correct array keys
+    if ($vehicleAssignment && isset($vehicleAssignment['vehicle'])) {
         $assigned_vehicle_id = $vehicleAssignment['vehicle']['id'];
         $assigned_vehicle_type = $vehicleAssignment['vehicle']['vehicle_type'];
-        $total_cubic_meters = $vehicleAssignment['totalCubicMeters'];
-        $total_weight_kg = $vehicleAssignment['totalWeightKg'];
         
+        // ✅ FIX: Use correct array keys (with underscores)
+        $total_cubic_meters = $vehicleAssignment['total_cubic_meters'] ?? 0;
+        $total_weight_kg = $vehicleAssignment['total_weight_kg'] ?? 0;
+        
+        // ✅ Calculate total dimensions from all cart items
         foreach ($cart_items as $item) {
-            $width = floatval($item['width'] ?? 0);
-            $height = floatval($item['height'] ?? 0);
-            $length = floatval($item['length'] ?? 0);
+            $width = floatval($item['width'] ?? 30);  // Default 30cm if missing
+            $height = floatval($item['height'] ?? 30);
+            $length = floatval($item['length'] ?? 30);
             $dimensionUnit = $item['dimension_unit'] ?? 'cm';
+            $quantity = intval($item['quantity'] ?? 1);
             
+            // Convert to meters
             $meters = ['cm' => 0.01, 'm' => 1, 'mm' => 0.001, 'in' => 0.0254, 'ft' => 0.3048];
             $multiplier = $meters[strtolower($dimensionUnit)] ?? 0.01;
             
-            $total_width += ($width * $multiplier);
-            $total_height += ($height * $multiplier);
-            $total_length += ($length * $multiplier);
+            // Add dimensions (multiplied by quantity)
+            $total_width += ($width * $multiplier * $quantity);
+            $total_height += ($height * $multiplier * $quantity);
+            $total_length += ($length * $multiplier * $quantity);
         }
+        
+        // ✅ DEBUG: Log the calculated values
+        error_log("✓ PayPal Vehicle Assignment:");
+        error_log("  - Vehicle ID: " . $assigned_vehicle_id);
+        error_log("  - Vehicle Type: " . $assigned_vehicle_type);
+        error_log("  - Cubic Meters: " . $total_cubic_meters);
+        error_log("  - Weight (kg): " . $total_weight_kg);
+        error_log("  - Dimensions: " . round($total_width, 2) . "m x " . round($total_height, 2) . "m x " . round($total_length, 2) . "m");
+    } else {
+        error_log("⚠️ WARNING: Vehicle assignment failed for PayPal order");
     }
+} else {
+    error_log("✓ Pickup mode selected - No vehicle assignment needed");
 }
 
 $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $stmt->bind_param(
-    "ssssssdsiddiddsssiisddddds",
-    $name,
-    $email,
-    $mobile,
-    $address,
-    $zipcode,
-    $payment_method,
-    $grand_total,
-    $reference_no,
-    $billing_address_id,
-    $latitude,
-    $longitude,
-    $user_id,
-    $delivery_distance,
-    $delivery_fee,
-    $subtotal,
-    $payment_status,
-    $paypal_order_id,
-    $assigned_vehicle_id,
-    $assigned_vehicle_type,
-    $total_cubic_meters,
-    $total_weight_kg,
-    $total_width,
-    $total_height,
-    $total_length,
-    $delivery_type
+    "ssssssdsiddidddssisddddds",
+    $name,            // s
+    $email,          // s  
+    $mobile,                // s
+    $address,               // s
+    $zipcode,               // s
+    $payment_method,        // s
+    $grand_total,           // d
+    $reference_no,          // s
+    $billing_address_id,    // i
+    $latitude,              // d
+    $longitude,             // d
+    $user_id,               // i
+    $delivery_distance,     // d
+    $delivery_fee,          // d
+    $subtotal,              // d
+    $payment_status,        // s
+    $paypal_order_id,       // s ← CHECK THIS
+    $assigned_vehicle_id,   // i
+    $assigned_vehicle_type, // s
+    $total_cubic_meters,    // d
+    $total_weight_kg,       // d
+    $total_width,           // d
+    $total_height,          // d
+    $total_length,          // d
+    $delivery_type          // s
 );
 
                 if ($stmt->execute()) {
@@ -907,6 +947,46 @@ if ($_POST['payment_method'] === 'PayMongo') {
         }
     }
 
+    // Handle QR Payment specific data
+if ($payment_method === 'QR Payment') {
+    $qr_method_id = intval($_POST['selected_qr_method'] ?? 0);
+    $reference_number = trim($_POST['qr_reference_number'] ?? '');
+
+    // Handle screenshot upload
+    if (isset($_FILES['qr_payment_screenshot']) && $_FILES['qr_payment_screenshot']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = '../../uploads/payment_screenshots/';
+
+        // Create directory if it doesn't exist
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        // Generate unique filename
+        $file_extension = strtolower(pathinfo($_FILES['qr_payment_screenshot']['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (in_array($file_extension, $allowed_extensions)) {
+            $screenshot_filename = 'qr_payment_' . time() . '_' . mt_rand(1000, 9999) . '.' . $file_extension;
+
+            if (!move_uploaded_file($_FILES['qr_payment_screenshot']['tmp_name'], $upload_dir . $screenshot_filename)) {
+                $validation_errors[] = "Failed to upload screenshot";
+            }
+        } else {
+            $validation_errors[] = "Invalid file format. Please upload JPG, PNG, or GIF files only";
+        }
+    } elseif ($payment_method === 'QR Payment') {
+        $validation_errors[] = "Payment screenshot is required for QR payment";
+    }
+
+    // Validate QR method selection
+    if (empty($qr_method_id) || $qr_method_id <= 0) {
+        $validation_errors[] = "Please select a QR payment method";
+    }
+    
+    // Store QR method ID for database
+    $bank_type = 'QR_' . $qr_method_id; // Store as QR_1, QR_2, etc.
+}
+
     // Enhanced validation with specific error messages
     $validation_errors = [];
 
@@ -1041,7 +1121,7 @@ if ($delivery_type === 'delivery') {
             $grand_total = $subtotal + $vat_amount + $delivery_fee; // Items + VAT + Delivery
 
             // ✅ Save order (FIXED: Use correct number of placeholders - 19 placeholders)
-            $payment_status = ($payment_method === 'Bank Transfer') ? 'pending' : 'verified';
+            $payment_status = ($payment_method === 'Bank Transfer' || $payment_method === 'QR Payment') ? 'pending' : 'verified';
 
 $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -1552,76 +1632,62 @@ if (window.transportifyVehicles.length === 0) {
     <div id="deliveryCalculationSection" class="bg-white rounded-lg p-6">
         <h4 class="font-bold text-gray-800 mb-4">Delivery Distance Calculator</h4>
 
-        <!-- ✅ NEW: Order Dimensions Summary (hidden until calculation) -->
-<div id="orderDimensionsSummaryContainer" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h5 class="font-bold text-blue-800 mb-3 flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-                Your Order Dimensions
-            </h5>
-            <div id="orderDimensionsSummary" class="grid md:grid-cols-2 gap-4 text-sm">
-                <div>
-                    <div class="font-medium text-gray-700 mb-2">Total Size:</div>
-                    <div class="space-y-1 text-gray-600">
-                        <div>Volume: <span id="totalVolume" class="font-semibold">Calculating...</span></div>
-                        <div>Weight: <span id="totalWeight" class="font-semibold">Calculating...</span></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="font-medium text-gray-700 mb-2">Estimated Dimensions:</div>
-                    <div class="space-y-1 text-gray-600">
-                        <div>Width: <span id="totalWidth" class="font-semibold">Calculating...</span></div>
-                        <div>Height: <span id="totalHeight" class="font-semibold">Calculating...</span></div>
-                        <div>Length: <span id="totalLength" class="font-semibold">Calculating...</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-            <!-- Store Information -->
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <h5 class="font-bold text-gray-700 mb-3">Store Information</h5>
-                <p class="text-sm text-gray-600 mb-2">
-                    <strong>Location:</strong> <?= htmlspecialchars($delivery_settings['location_name']) ?>
-                </p>
-            </div>
+        <!-- ✅ UPDATED: Single column layout with Store Info and Vehicle below -->
+<div class="space-y-6 mb-6">
+    <!-- Store Information -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h5 class="font-bold text-gray-700 mb-3">Store Information</h5>
+        <p class="text-sm text-gray-600 mb-2">
+            <strong>Location:</strong> <?= htmlspecialchars($delivery_settings['location_name']) ?>
+        </p>
+    </div>
 
-            <!-- Distance Calculation -->
-            <div class="bg-blue-50 p-4 rounded-lg">
-                <h5 class="font-bold text-gray-700 mb-3">Distance Calculation</h5>
-                <div class="space-y-3">
-                    <button type="button" id="calculateDistance"
-                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-400"
-                        disabled>
-                        Calculate Distance & Fee
-                    </button>
-                    <button type="button" id="showMapModal"
-                        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
-                        disabled>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
-                        </svg>
-                        View on Map
-                    </button>
-                </div>
-                <div id="distanceResult" class="mt-4 text-sm"></div>
-            </div>
+    <!-- ✅ MOVED: Assigned Vehicle Details (shown after calculation) -->
+    <div id="assignedVehicleDetails" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+        <h5 class="font-bold text-green-800 mb-3 flex items-center">
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    Assigned Delivery Vehicle
+        </h5>
+        <div id="vehicleDetailsContent" class="text-sm">
+            <!-- Content populated by JavaScript -->
         </div>
+    </div>
 
-        <!-- ✅ NEW: Assigned Vehicle Details (shown after calculation) -->
-        <div id="assignedVehicleDetails" class="hidden bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <h5 class="font-bold text-green-800 mb-3 flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Assigned Vehicle
-            </h5>
-            <div id="vehicleDetailsContent" class="grid md:grid-cols-2 gap-4 text-sm">
-                <!-- Content populated by JavaScript -->
-            </div>
+    <!-- Distance Calculation -->
+    <div class="bg-blue-50 p-4 rounded-lg">
+        <h5 class="font-bold text-gray-700 mb-3">Distance Calculation</h5>
+        <div class="space-y-3">
+    <!-- ✅ HIDDEN: Auto-calculation trigger button (hidden from user) -->
+    <button type="button" id="calculateDistance" class="hidden" disabled>
+        Calculate Distance & Fee
+    </button>
+    
+    <!-- Loading indicator for auto-calculation -->
+    <div id="autoCalculationLoader" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center justify-center gap-3">
+            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-blue-700 font-medium">Calculating delivery cost...</span>
         </div>
+    </div>
+    
+    <button type="button" id="showMapModal"
+        class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
+        disabled>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+        </svg>
+        View on Map
+    </button>
+</div>
+        <div id="distanceResult" class="mt-4 text-sm"></div>
+    </div>
+</div>
 
         <!-- Hidden inputs for calculated values -->
         <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
@@ -1723,6 +1789,23 @@ if (window.transportifyVehicles.length === 0) {
                                 </div>
                             </label>
 
+                            <!-- QR Code Payment Option -->
+<label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-indigo-300 transition">
+    <input type="radio" name="payment_method" value="QR Payment" required class="mr-4" />
+    <div class="flex items-center">
+        <div class="text-indigo-600 mr-3">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd"/>
+                <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h2a1 1 0 110 2h-3a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM7 11a1 1 0 100-2H4a1 1 0 100 2h3zM17 13a1 1 0 01-1 1h-2a1 1 0 110-2h2a1 1 0 011 1zM16 17a1 1 0 100-2h-3a1 1 0 100 2h3z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="font-medium">QR Code Payment</div>
+            <div class="text-sm text-gray-600">Scan QR code to pay</div>
+        </div>
+    </div>
+</label>
+
                             <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition">
                                 <input type="radio" name="payment_method" value="PayPal" required class="mr-4" />
                                 <div class="flex items-center">
@@ -1766,6 +1849,58 @@ if (window.transportifyVehicles.length === 0) {
                                 <!-- Bank selection will be populated by JavaScript -->
                             </div>
                         </div>
+
+                        <!-- QR Payment Fields -->
+<div id="qrPaymentFields" class="hidden mt-6 p-4 bg-indigo-50 rounded-lg">
+    <input type="hidden" name="selected_qr_method" id="selectedQRMethod">
+    <input type="hidden" name="qr_reference_number" id="qrReferenceNumber">
+    
+    <div id="qrSelectionArea">
+        <h5 class="font-bold text-indigo-800 mb-4">Select Payment Method *</h5>
+        
+        <?php if (!empty($qr_payment_methods)): ?>
+            <div class="grid gap-4 mb-6">
+                <?php foreach ($qr_payment_methods as $qr): ?>
+                    <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition qr-method-option">
+                        <input type="radio" 
+                               name="qr_payment_selection" 
+                               value="<?= $qr['id'] ?>" 
+                               class="mt-2 mr-4 qr-method-radio" 
+                               required
+                               data-method-name="<?= htmlspecialchars($qr['payment_method']) ?>"
+                               data-account-name="<?= htmlspecialchars($qr['account_name']) ?>"
+                               data-account-number="<?= htmlspecialchars($qr['account_number']) ?>"
+                               data-qr-image="../../<?= htmlspecialchars($qr['qr_code_image']) ?>"
+                               data-instructions="<?= htmlspecialchars($qr['instructions']) ?>" />
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-qrcode text-indigo-600"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-lg"><?= htmlspecialchars($qr['payment_method']) ?></div>
+                                    <div class="text-sm text-gray-600"><?= htmlspecialchars($qr['account_name']) ?></div>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-2">
+                                <i class="fas fa-mobile-alt mr-1"></i>
+                                <?= htmlspecialchars($qr['account_number']) ?>
+                            </div>
+                        </div>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            
+            <div id="qrDetailsArea" class="hidden"></div>
+        <?php else: ?>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl mb-2"></i>
+                <p class="text-yellow-800 font-medium">No QR payment methods available at the moment.</p>
+                <p class="text-sm text-yellow-600 mt-1">Please choose another payment method.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
 
                         <div id="paypalFields" class="hidden mt-6 p-4 bg-blue-50 rounded-lg">
                             <div class="flex items-center gap-3 mb-4">

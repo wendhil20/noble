@@ -89,9 +89,32 @@ function initializeAddressSelection() {
                 }
 
                 // Success notification
-showNotification('Address selected successfully! You can proceed to delivery calculation.', 'success');
+showNotification('Address selected successfully! Calculating delivery...', 'success');
                 
-                console.log('✓ Address selection complete:', selectedAddress);
+console.log('✓ Address selection complete:', selectedAddress);
+
+// ✅ NEW: Auto-calculate delivery after address selection
+if (typeof autoCalculateDelivery === 'function') {
+    // Clear any previous calculation
+    const deliveryFeeInput = document.getElementById('deliveryFee');
+    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+    const continuePaymentBtn = document.getElementById('continueToPayment');
+    
+    if (deliveryFeeInput) deliveryFeeInput.value = '0';
+    if (deliveryDistanceInput) deliveryDistanceInput.value = '0';
+    if (continuePaymentBtn) {
+        continuePaymentBtn.disabled = true;
+        continuePaymentBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        continuePaymentBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+    }
+    
+    setTimeout(() => {
+        console.log('Auto-triggering delivery calculation...');
+        autoCalculateDelivery();
+    }, 500); // Reduced delay for faster response
+} else {
+    console.warn('autoCalculateDelivery function not found - manual calculation required');
+}
             }
         });
     });
@@ -100,3 +123,30 @@ showNotification('Address selected successfully! You can proceed to delivery cal
 }
 
 console.log('addressZone.js loaded (zone logic removed)');
+
+// ✅ NEW: Re-trigger calculation when returning to address selection
+function recheckSelectedAddress() {
+    const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
+    if (selectedRadio && typeof autoCalculateDelivery === 'function') {
+        console.log('Re-triggering calculation for previously selected address...');
+        
+        // Store the address data again
+        selectedAddress = {
+            id: selectedRadio.value,
+            latitude: parseFloat(selectedRadio.dataset.latitude),
+            longitude: parseFloat(selectedRadio.dataset.longitude),
+            address: selectedRadio.dataset.address,
+            postalCode: selectedRadio.dataset.postalCode,
+            fullName: selectedRadio.dataset.fullName,
+            phone: selectedRadio.dataset.phone
+        };
+        
+        // Trigger auto-calculation
+        setTimeout(() => {
+            autoCalculateDelivery();
+        }, 500);
+    }
+}
+
+// Export to global scope
+window.recheckSelectedAddress = recheckSelectedAddress;

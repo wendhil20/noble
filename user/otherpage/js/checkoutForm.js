@@ -50,7 +50,10 @@ function initializeCheckoutForm() {
             handlePayMongoSubmission(checkoutForm, placeOrderBtn);
         } else if (paymentMethod === 'Bank Transfer') {
             handleBankTransferSubmission(checkoutForm, placeOrderBtn);
-        } else {
+        } else if (paymentMethod === 'QR Payment') {
+    handleQRPaymentSubmission(checkoutForm, placeOrderBtn);
+}
+        else {
             showNotification('Invalid payment method selected.', 'error');
         }
     });
@@ -75,7 +78,7 @@ function validateAllSteps() {
     }
     
     if (!email || !email.value.trim()) {
-        showNotification('Email is required.', 'error');
+        showNotification('Order Placed Successfully...', 'success');
         goToStep(1);
         return false;
     }
@@ -119,6 +122,22 @@ function validateAllSteps() {
             return false;
         }
     }
+
+    // Validate QR Payment specific requirements
+if (selectedPayment.value === 'QR Payment') {
+    const selectedQR = document.getElementById('selectedQRMethod');
+    const qrScreenshot = document.querySelector('input[name="qr_payment_screenshot"]');
+    
+    if (!selectedQR || !selectedQR.value) {
+        showNotification('Please select a QR payment method.', 'error');
+        return false;
+    }
+    
+    if (!qrScreenshot || !qrScreenshot.files || !qrScreenshot.files[0]) {
+        showNotification('Please upload a payment screenshot.', 'error');
+        return false;
+    }
+}
 
     console.log('All steps validated successfully');
     return true;
@@ -229,12 +248,89 @@ function handleBankTransferSubmission(form, button) {
     button.textContent = 'Processing Order...';
     button.disabled = true;
 
-    // Validate delivery calculation one more time
-    if (!validateDeliveryCalculation()) {
-        button.textContent = originalText;
-        button.disabled = false;
-        return;
+    // ✅ Check delivery type
+    const deliveryTypeInput = document.querySelector('input[name="delivery_type"]:checked');
+    const deliveryType = deliveryTypeInput ? deliveryTypeInput.value : 'delivery';
+    
+    console.log('Delivery Type:', deliveryType);
+    
+    // ✅ If delivery type is "delivery", validate and calculate vehicle assignment
+    if (deliveryType === 'delivery') {
+        // Validate delivery calculation
+        if (!validateDeliveryCalculation()) {
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        // ✅ CRITICAL: Calculate vehicle assignment for Bank Transfer
+        if (!window.cartItemsData || window.cartItemsData.length === 0) {
+            showNotification('Cart items not found. Please refresh the page.', 'error');
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        console.log('Calculating vehicle assignment for Bank Transfer...');
+        const vehicleAssignment = assignTransportifyVehicleJS(window.cartItemsData);
+        
+        if (!vehicleAssignment || !vehicleAssignment.vehicle) {
+            showNotification('Unable to assign delivery vehicle. Please recalculate delivery.', 'error');
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        // ✅ Add hidden fields for vehicle assignment data
+        addOrUpdateHiddenField(form, 'assigned_vehicle_id', vehicleAssignment.vehicle.id);
+        addOrUpdateHiddenField(form, 'assigned_vehicle_type', vehicleAssignment.vehicle.vehicle_type);
+        addOrUpdateHiddenField(form, 'total_cubic_meters', vehicleAssignment.totalCubicMeters.toFixed(3));
+        addOrUpdateHiddenField(form, 'total_weight_kg', vehicleAssignment.totalWeightKg.toFixed(2));
+        
+        // ✅ Calculate total dimensions
+        let totalWidth = 0, totalHeight = 0, totalLength = 0;
+        window.cartItemsData.forEach(item => {
+            const width = parseFloat(item.width) || 30;
+            const height = parseFloat(item.height) || 30;
+            const length = parseFloat(item.length) || 30;
+            const dimensionUnit = item.dimension_unit || 'cm';
+            const quantity = parseInt(item.quantity) || 1;
+            
+            const meters = {
+                'cm': 0.01, 'm': 1, 'mm': 0.001, 'in': 0.0254, 'ft': 0.3048
+            };
+            const multiplier = meters[dimensionUnit.toLowerCase()] || 0.01;
+            
+            totalWidth += (width * multiplier * quantity);
+            totalHeight += (height * multiplier * quantity);
+            totalLength += (length * multiplier * quantity);
+        });
+        
+        addOrUpdateHiddenField(form, 'total_width', totalWidth.toFixed(2));
+        addOrUpdateHiddenField(form, 'total_height', totalHeight.toFixed(2));
+        addOrUpdateHiddenField(form, 'total_length', totalLength.toFixed(2));
+        
+        console.log('✓ Vehicle assignment data added:', {
+            vehicle: vehicleAssignment.vehicle.vehicle_type,
+            volume: vehicleAssignment.totalCubicMeters.toFixed(3) + ' m³',
+            weight: vehicleAssignment.totalWeightKg.toFixed(2) + ' kg',
+            dimensions: `${totalWidth.toFixed(2)} × ${totalHeight.toFixed(2)} × ${totalLength.toFixed(2)} m`
+        });
+    } else {
+        // ✅ For pickup, set all vehicle/dimension fields to 0 or null
+        addOrUpdateHiddenField(form, 'assigned_vehicle_id', '');
+        addOrUpdateHiddenField(form, 'assigned_vehicle_type', '');
+        addOrUpdateHiddenField(form, 'total_cubic_meters', '0');
+        addOrUpdateHiddenField(form, 'total_weight_kg', '0');
+        addOrUpdateHiddenField(form, 'total_width', '0');
+        addOrUpdateHiddenField(form, 'total_height', '0');
+        addOrUpdateHiddenField(form, 'total_length', '0');
+        
+        console.log('✓ Pickup mode - vehicle data set to zero');
     }
+    
+    // ✅ Add delivery_type to form
+    addOrUpdateHiddenField(form, 'delivery_type', deliveryType);
 
     const formData = new FormData(form);
 
@@ -395,3 +491,220 @@ function extractErrorFromHTML(htmlString) {
 }
 
 console.log('checkoutForm.js loaded successfully');
+
+/**
+ * Add or update hidden form field
+ */
+function addOrUpdateHiddenField(form, name, value) {
+    let input = form.querySelector(`input[name="${name}"]`);
+    
+    if (!input) {
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        form.appendChild(input);
+    }
+    
+    input.value = value;
+    console.log(`✓ Hidden field set: ${name} = ${value}`);
+}
+
+console.log('checkoutForm.js loaded successfully');
+
+/**
+ * Handle QR Payment submission
+ */
+function handleQRPaymentSubmission(form, button) {
+    console.log('Processing QR Payment order...');
+    
+    const originalText = button.textContent;
+    button.textContent = 'Processing Order...';
+    button.disabled = true;
+
+    // Check delivery type
+    const deliveryTypeInput = document.querySelector('input[name="delivery_type"]:checked');
+    const deliveryType = deliveryTypeInput ? deliveryTypeInput.value : 'delivery';
+    
+    console.log('Delivery Type:', deliveryType);
+    
+    // For delivery, validate and calculate vehicle assignment
+    if (deliveryType === 'delivery') {
+        if (!validateDeliveryCalculation()) {
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        if (!window.cartItemsData || window.cartItemsData.length === 0) {
+            showNotification('Cart items not found. Please refresh the page.', 'error');
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        console.log('Calculating vehicle assignment for QR Payment...');
+        const vehicleAssignment = assignTransportifyVehicleJS(window.cartItemsData);
+        
+        if (!vehicleAssignment || !vehicleAssignment.vehicle) {
+            showNotification('Unable to assign delivery vehicle. Please recalculate delivery.', 'error');
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        addOrUpdateHiddenField(form, 'assigned_vehicle_id', vehicleAssignment.vehicle.id);
+        addOrUpdateHiddenField(form, 'assigned_vehicle_type', vehicleAssignment.vehicle.vehicle_type);
+        addOrUpdateHiddenField(form, 'total_cubic_meters', vehicleAssignment.totalCubicMeters.toFixed(3));
+        addOrUpdateHiddenField(form, 'total_weight_kg', vehicleAssignment.totalWeightKg.toFixed(2));
+        
+        let totalWidth = 0, totalHeight = 0, totalLength = 0;
+        window.cartItemsData.forEach(item => {
+            const width = parseFloat(item.width) || 30;
+            const height = parseFloat(item.height) || 30;
+            const length = parseFloat(item.length) || 30;
+            const dimensionUnit = item.dimension_unit || 'cm';
+            const quantity = parseInt(item.quantity) || 1;
+            
+            const meters = {
+                'cm': 0.01, 'm': 1, 'mm': 0.001, 'in': 0.0254, 'ft': 0.3048
+            };
+            const multiplier = meters[dimensionUnit.toLowerCase()] || 0.01;
+            
+            totalWidth += (width * multiplier * quantity);
+            totalHeight += (height * multiplier * quantity);
+            totalLength += (length * multiplier * quantity);
+        });
+        
+        addOrUpdateHiddenField(form, 'total_width', totalWidth.toFixed(2));
+        addOrUpdateHiddenField(form, 'total_height', totalHeight.toFixed(2));
+        addOrUpdateHiddenField(form, 'total_length', totalLength.toFixed(2));
+        
+        console.log('✓ Vehicle assignment data added for QR Payment');
+    } else {
+        addOrUpdateHiddenField(form, 'assigned_vehicle_id', '');
+        addOrUpdateHiddenField(form, 'assigned_vehicle_type', '');
+        addOrUpdateHiddenField(form, 'total_cubic_meters', '0');
+        addOrUpdateHiddenField(form, 'total_weight_kg', '0');
+        addOrUpdateHiddenField(form, 'total_width', '0');
+        addOrUpdateHiddenField(form, 'total_height', '0');
+        addOrUpdateHiddenField(form, 'total_length', '0');
+        
+        console.log('✓ Pickup mode - vehicle data set to zero');
+    }
+    
+    addOrUpdateHiddenField(form, 'delivery_type', deliveryType);
+
+    const formData = new FormData(form);
+
+    console.log('Submitting QR Payment form data...');
+
+    // Send AJAX request (same as Bank Transfer)
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        if (response.redirected || (response.status >= 300 && response.status < 400)) {
+            console.log('Redirect detected:', response.url);
+            window.location.href = response.url;
+            return null;
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text();
+        }
+    })
+    .then(data => {
+        if (data === null) {
+            return;
+        }
+
+        if (typeof data === 'object' && data !== null) {
+            if (data.success) {
+                showNotification('Order placed successfully! Redirecting...', 'success');
+                
+                if (data.redirect_url) {
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
+                } else {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } else {
+                const errorMessage = data.message || data.error || 'An error occurred while processing your order.';
+                showNotification(errorMessage, 'error');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+            return;
+        }
+
+        if (typeof data === 'string') {
+            if (data.includes('order_receipt.php') || 
+                data.includes('success') || 
+                data.includes('Order placed')) {
+                
+                showNotification('Order placed successfully!', 'success');
+                
+                const urlMatch = data.match(/order_receipt\.php\?order_id=(\d+)/);
+                if (urlMatch) {
+                    setTimeout(() => {
+                        window.location.href = 'order_receipt.php?order_id=' + urlMatch[1];
+                    }, 1500);
+                } else {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+                return;
+            }
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, 'text/html');
+            const errorDiv = doc.querySelector('.bg-red-100, .alert-danger, .error-message');
+
+            if (errorDiv) {
+                let errorText = errorDiv.textContent
+                    .replace(/Error:/gi, '')
+                    .replace(/Warning:/gi, '')
+                    .trim();
+                
+                showNotification(errorText || 'An error occurred.', 'error');
+            } else {
+                showNotification('An unexpected error occurred. Please try again.', 'error');
+            }
+
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('QR Payment submission error:', error);
+        
+        let errorMessage = 'A network error occurred. Please check your connection and try again.';
+        
+        if (error.message.includes('HTTP')) {
+            errorMessage = 'Server error: ' + error.message;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showNotification(errorMessage, 'error');
+        button.textContent = originalText;
+        button.disabled = false;
+    });
+}

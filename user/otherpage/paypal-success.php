@@ -173,7 +173,7 @@ if (!$paypal_order_id) {
         
         // Strategy 3: Find recent pending PayPal order for user (last resort)
         if (!$order_data) {
-            $stmt = $conn->prepare("SELECT * FROM orders WHERE user_id = ? AND payment_status = 'pending' ORDER BY id DESC LIMIT 1");
+            $stmt = $conn->prepare("SELECT * FROM orders WHERE user_id = ? AND payment_status = 'pending_paypal' ORDER BY id DESC LIMIT 1");
             $stmt->bind_param("i", $user_id);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -192,10 +192,10 @@ if (!$paypal_order_id) {
             $stmt->close();
         }
         
-        $debug_info['found_order_id'] = $pending_order_id;
+        $debug_info['found_order_id'] = $pending_order_id ?? null;
         $debug_info['found_order_paypal_id'] = $order_data['paypal_order_id'] ?? 'NOT SET';
         
-        if (!$order_data) {
+        if (!$order_data || !$pending_order_id) {
             // ✅ DEBUGGING: Show what orders exist for this user
             $stmt = $conn->prepare("SELECT id, paypal_order_id, payment_status, created_at FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 5");
             $stmt->bind_param("i", $user_id);

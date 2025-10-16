@@ -328,6 +328,32 @@ $verified_today = 0;
 $total_revenue_today = 0;
 $rejected_payments = 0;
 
+// Get payment method breakdown
+$paymongo_pending = 0;
+$qr_pending = 0;
+$bank_pending = 0;
+$paypal_pending = 0;
+
+$result = $conn->query("SELECT mode_payment, COUNT(*) as count FROM orders WHERE payment_status = 'pending' GROUP BY mode_payment");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        switch ($row['mode_payment']) {
+            case 'PayMongo':
+                $paymongo_pending = $row['count'];
+                break;
+            case 'QR Payment':
+                $qr_pending = $row['count'];
+                break;
+            case 'Bank Transfer':
+                $bank_pending = $row['count'];
+                break;
+            case 'PayPal':
+                $paypal_pending = $row['count'];
+                break;
+        }
+    }
+}
+
 $result = $conn->query("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending'");
 if ($result) {
     $pending_payments = $result->fetch_assoc()['count'] ?? 0;
@@ -372,9 +398,13 @@ $orders_result = null;
 $where_condition = "";
 switch ($filter) {
     case 'pending':
-        // UPDATED: Include PayPal pending orders even without screenshots
-        $where_condition = "WHERE o.payment_status = 'pending' AND (o.payment_screenshot IS NOT NULL OR o.mode_payment = 'PayPal')";
-        break;
+    // UPDATED: Include all pending orders with screenshots OR online payments (PayPal, PayMongo)
+    $where_condition = "WHERE o.payment_status = 'pending' AND (
+        o.payment_screenshot IS NOT NULL 
+        OR o.mode_payment = 'PayPal' 
+        OR o.mode_payment = 'PayMongo'
+    )";
+    break;
     case 'verified':
         $where_condition = "WHERE o.payment_status = 'verified'";
         break;
@@ -557,9 +587,23 @@ $orders_result = $conn->query($orders_query);
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
                     <a href="?filter=pending" class="<?php echo $filter === 'pending' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-                        <i class="fas fa-clock mr-2"></i>
-                        Pending (<?php echo number_format($pending_payments); ?>)
-                    </a>
+    <i class="fas fa-clock mr-2"></i>
+    Pending (<?php echo number_format($pending_payments); ?>)
+    <?php if ($paymongo_pending > 0 || $qr_pending > 0): ?>
+        <span class="ml-2 inline-flex items-center">
+            <?php if ($paymongo_pending > 0): ?>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 ml-1">
+                    <i class="fas fa-mobile-alt mr-1"></i><?php echo $paymongo_pending; ?>
+                </span>
+            <?php endif; ?>
+            <?php if ($qr_pending > 0): ?>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 ml-1">
+                    <i class="fas fa-qrcode mr-1"></i><?php echo $qr_pending; ?>
+                </span>
+            <?php endif; ?>
+        </span>
+    <?php endif; ?>
+</a>
                     <a href="?filter=verified" class="<?php echo $filter === 'verified' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
                         <i class="fas fa-check-circle mr-2"></i>
                         Verified
@@ -635,16 +679,40 @@ $orders_result = $conn->query($orders_query);
                                             <div class="text-sm font-semibold text-gray-900">₱<?php echo number_format((float)$display_amount, 2); ?></div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 flex items-center">
-                                                <?php if ($order['mode_payment'] === 'PayPal'): ?>
-                                                    <i class="fab fa-paypal text-blue-600 mr-2"></i>
-                                                <?php endif; ?>
-                                                <?php echo htmlspecialchars($order['mode_payment'] ?: 'N/A'); ?>
-                                            </div>
-                                            <?php if ($order['bank_type']): ?>
-                                                <div class="text-sm text-gray-500"><?php echo htmlspecialchars($order['bank_type']); ?></div>
-                                            <?php endif; ?>
-                                        </td>
+    <div class="text-sm text-gray-900 flex items-center">
+        <?php if ($order['mode_payment'] === 'PayPal'): ?>
+            <i class="fab fa-paypal text-blue-600 mr-2"></i>
+        <?php elseif ($order['mode_payment'] === 'PayMongo'): ?>
+            <i class="fas fa-mobile-alt text-green-600 mr-2"></i>
+        <?php elseif ($order['mode_payment'] === 'QR Payment'): ?>
+            <i class="fas fa-qrcode text-indigo-600 mr-2"></i>
+        <?php elseif ($order['mode_payment'] === 'Bank Transfer'): ?>
+            <i class="fas fa-university text-purple-600 mr-2"></i>
+        <?php endif; ?>
+        <?php echo htmlspecialchars($order['mode_payment'] ?: 'N/A'); ?>
+    </div>
+    <?php if ($order['bank_type']): ?>
+        <div class="text-sm text-gray-500">
+            <?php 
+            // Handle QR Payment display
+            if (strpos($order['bank_type'], 'QR_') === 0) {
+                $qr_id = str_replace('QR_', '', $order['bank_type']);
+                // Fetch QR payment method name
+                $qr_stmt = $conn->prepare("SELECT payment_method FROM payment_qr_codes WHERE id = ?");
+                $qr_stmt->bind_param("i", $qr_id);
+                $qr_stmt->execute();
+                $qr_result = $qr_stmt->get_result();
+                if ($qr_row = $qr_result->fetch_assoc()) {
+                    echo htmlspecialchars($qr_row['payment_method']);
+                }
+                $qr_stmt->close();
+            } else {
+                echo htmlspecialchars($order['bank_type']);
+            }
+            ?>
+        </div>
+    <?php endif; ?>
+</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <code class="text-sm bg-gray-100 px-2 py-1 rounded">
                                                 <?php echo htmlspecialchars($order['reference_number'] ?: $order['reference_no'] ?: 'N/A'); ?>
@@ -706,78 +774,82 @@ $orders_result = $conn->query($orders_query);
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <?php if ($order['payment_status'] === 'pending'): ?>
-                                                <div class="flex space-x-2">
-                                                    <?php if ($order['payment_screenshot']): ?>
-                                                        <?php
-                                                        $screenshot_path = $order['payment_screenshot'];
-                                                        // Improved path handling for both old and new formats
-                                                        if ($screenshot_path) {
-                                                            // If it already contains the full uploads path, use as is
-                                                            if (strpos($screenshot_path, 'uploads/payment_screenshots/') !== false) {
-                                                                $full_screenshot_path = $screenshot_path;
-                                                            } else {
-                                                                // Old format - just filename, add the path prefix
-                                                                $full_screenshot_path = '../../uploads/payment_screenshots/' . $screenshot_path;
-                                                            }
-                                                        } else {
-                                                            $full_screenshot_path = '';
-                                                        }
-                                                        ?>
-                                                        <button onclick="viewPaymentScreenshot('<?php echo htmlspecialchars($full_screenshot_path); ?>', <?php echo $order['id']; ?>)"
-                                                            class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
-                                                            <i class="fas fa-eye mr-1"></i>
-                                                            View
-                                                        </button>
-                                                    <?php elseif ($order['mode_payment'] === 'PayPal'): ?>
-                                                        <!-- PayPal orders don't need screenshot -->
-                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
-                                                            <i class="fab fa-paypal mr-1"></i>
-                                                            PayPal Payment
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    
-                                                    <button onclick="verifyPayment(<?php echo $order['id']; ?>)"
-                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                                        <i class="fas fa-check mr-1"></i>
-                                                        Verify
-                                                    </button>
-                                                    <button onclick="showRejectModal(<?php echo $order['id']; ?>)"
-                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                                        <i class="fas fa-times mr-1"></i>
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            <?php elseif ($order['payment_screenshot']): ?>
-                                                <?php
-                                                $screenshot_path = $order['payment_screenshot'];
-                                                // Improved path handling for both old and new formats
-                                                if ($screenshot_path) {
-                                                    // If it already contains the full uploads path, use as is
-                                                    if (strpos($screenshot_path, 'uploads/payment_screenshots/') !== false) {
-                                                        $full_screenshot_path = $screenshot_path;
-                                                    } else {
-                                                        // Old format - just filename, add the path prefix
-                                                        $full_screenshot_path = '../../uploads/payment_screenshots/' . $screenshot_path;
-                                                    }
-                                                } else {
-                                                    $full_screenshot_path = '';
-                                                }
-                                                ?>
-                                                <button onclick="viewPaymentScreenshot('<?php echo htmlspecialchars($full_screenshot_path); ?>', <?php echo $order['id']; ?>)"
-                                                    class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
-                                                    <i class="fas fa-eye mr-1"></i>
-                                                    View
-                                                </button>
-                                            <?php elseif ($order['mode_payment'] === 'PayPal'): ?>
-                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
-                                                    <i class="fab fa-paypal mr-1"></i>
-                                                    PayPal Payment
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="text-xs text-gray-400">No screenshot</span>
-                                            <?php endif; ?>
-                                        </td>
+    <?php if ($order['payment_status'] === 'pending'): ?>
+        <div class="flex space-x-2">
+            <?php if ($order['payment_screenshot']): ?>
+                <?php
+                $screenshot_path = $order['payment_screenshot'];
+                // Improved path handling for both old and new formats
+                if ($screenshot_path) {
+                    if (strpos($screenshot_path, 'uploads/payment_screenshots/') !== false) {
+                        $full_screenshot_path = $screenshot_path;
+                    } else {
+                        $full_screenshot_path = '../../uploads/payment_screenshots/' . $screenshot_path;
+                    }
+                } else {
+                    $full_screenshot_path = '';
+                }
+                ?>
+                <button onclick="viewPaymentScreenshot('<?php echo htmlspecialchars($full_screenshot_path); ?>', <?php echo $order['id']; ?>, '<?php echo htmlspecialchars($order['mode_payment']); ?>')"
+                    class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
+                    <i class="fas fa-eye mr-1"></i>
+                    View
+                </button>
+            <?php elseif ($order['mode_payment'] === 'PayPal'): ?>
+                <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+                    <i class="fab fa-paypal mr-1"></i>
+                    PayPal Payment
+                </span>
+            <?php elseif ($order['mode_payment'] === 'PayMongo'): ?>
+                <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                    <i class="fas fa-mobile-alt mr-1"></i>
+                    PayMongo Paid
+                </span>
+            <?php endif; ?>
+            
+            <button onclick="verifyPayment(<?php echo $order['id']; ?>)"
+                class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <i class="fas fa-check mr-1"></i>
+                Verify
+            </button>
+            <button onclick="showRejectModal(<?php echo $order['id']; ?>)"
+                class="inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <i class="fas fa-times mr-1"></i>
+                Reject
+            </button>
+        </div>
+    <?php elseif ($order['payment_screenshot']): ?>
+        <?php
+        $screenshot_path = $order['payment_screenshot'];
+        if ($screenshot_path) {
+            if (strpos($screenshot_path, 'uploads/payment_screenshots/') !== false) {
+                $full_screenshot_path = $screenshot_path;
+            } else {
+                $full_screenshot_path = '../../uploads/payment_screenshots/' . $screenshot_path;
+            }
+        } else {
+            $full_screenshot_path = '';
+        }
+        ?>
+        <button onclick="viewPaymentScreenshot('<?php echo htmlspecialchars($full_screenshot_path); ?>', <?php echo $order['id']; ?>, '<?php echo htmlspecialchars($order['mode_payment']); ?>')"
+            class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-noble-orange">
+            <i class="fas fa-eye mr-1"></i>
+            View
+        </button>
+    <?php elseif ($order['mode_payment'] === 'PayPal'): ?>
+        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+            <i class="fab fa-paypal mr-1"></i>
+            PayPal Payment
+        </span>
+    <?php elseif ($order['mode_payment'] === 'PayMongo'): ?>
+        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+            <i class="fas fa-mobile-alt mr-1"></i>
+            PayMongo Paid
+        </span>
+    <?php else: ?>
+        <span class="text-xs text-gray-400">No screenshot</span>
+    <?php endif; ?>
+</td>
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
@@ -911,21 +983,23 @@ $orders_result = $conn->query($orders_query);
     </main>
 
     <!-- Payment Screenshot Modal -->
-    <div id="screenshotModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div class="flex items-center justify-between pb-3 border-b">
-                <h3 class="text-lg font-bold text-gray-900">Payment Screenshot - Order #<span id="modalOrderId"></span></h3>
-                <button onclick="closeScreenshotModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="mt-4">
-                <div class="flex justify-center">
-                    <img id="screenshotImage" src="" alt="Payment Screenshot" class="max-w-full max-h-96 object-contain rounded-lg shadow-md">
-                </div>
+<div id="screenshotModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="flex items-center justify-between pb-3 border-b">
+            <h3 class="text-lg font-bold text-gray-900">
+                <span id="modalPaymentType">Payment Screenshot</span> - Order #<span id="modalOrderId"></span>
+            </h3>
+            <button onclick="closeScreenshotModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="mt-4">
+            <div class="flex justify-center">
+                <img id="screenshotImage" src="" alt="Payment Screenshot" class="max-w-full max-h-96 object-contain rounded-lg shadow-md">
             </div>
         </div>
     </div>
+</div>
 
     <!-- Rejection Modal -->
     <div id="rejectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
@@ -977,32 +1051,48 @@ $orders_result = $conn->query($orders_query);
     <script>
         let currentOrderId = null;
 
-        // FIXED: Better error handling for screenshot viewing
-        function viewPaymentScreenshot(screenshotPath, orderId) {
-            try {
-                document.getElementById('modalOrderId').textContent = orderId;
-
-                let fullPath;
-                // Check if the path already contains the full uploads path
-                if (screenshotPath.includes('uploads/payment_screenshots/')) {
-                    fullPath = screenshotPath;
-                } else {
-                    fullPath = '../../uploads/payment_screenshots/' + screenshotPath;
-                }
-
-                const img = document.getElementById('screenshotImage');
-                img.onerror = function() {
-                    showAlert('error', 'Failed to load payment screenshot');
-                    closeScreenshotModal();
-                };
-                
-                img.src = fullPath;
-                document.getElementById('screenshotModal').classList.remove('hidden');
-            } catch (error) {
-                console.error('Error viewing screenshot:', error);
-                showAlert('error', 'Error opening screenshot viewer');
-            }
+        function viewPaymentScreenshot(screenshotPath, orderId, paymentMethod) {
+    try {
+        document.getElementById('modalOrderId').textContent = orderId;
+        
+        // Update modal title based on payment method
+        const modalPaymentType = document.getElementById('modalPaymentType');
+        let paymentIcon = '';
+        
+        if (paymentMethod === 'PayMongo') {
+            paymentIcon = '<i class="fas fa-mobile-alt text-green-600 mr-2"></i>';
+            modalPaymentType.innerHTML = paymentIcon + 'PayMongo Payment Screenshot';
+        } else if (paymentMethod === 'QR Payment') {
+            paymentIcon = '<i class="fas fa-qrcode text-indigo-600 mr-2"></i>';
+            modalPaymentType.innerHTML = paymentIcon + 'QR Payment Screenshot';
+        } else if (paymentMethod === 'Bank Transfer') {
+            paymentIcon = '<i class="fas fa-university text-purple-600 mr-2"></i>';
+            modalPaymentType.innerHTML = paymentIcon + 'Bank Transfer Screenshot';
+        } else {
+            modalPaymentType.textContent = 'Payment Screenshot';
         }
+
+        let fullPath;
+        // Check if the path already contains the full uploads path
+        if (screenshotPath.includes('uploads/payment_screenshots/')) {
+            fullPath = screenshotPath;
+        } else {
+            fullPath = '../../uploads/payment_screenshots/' + screenshotPath;
+        }
+
+        const img = document.getElementById('screenshotImage');
+        img.onerror = function() {
+            showAlert('error', 'Failed to load payment screenshot');
+            closeScreenshotModal();
+        };
+        
+        img.src = fullPath;
+        document.getElementById('screenshotModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error viewing screenshot:', error);
+        showAlert('error', 'Error opening screenshot viewer');
+    }
+}
 
         function closeScreenshotModal() {
             document.getElementById('screenshotModal').classList.add('hidden');

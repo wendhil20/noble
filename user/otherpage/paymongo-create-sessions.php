@@ -55,6 +55,16 @@ try {
     $latitude = !empty($order_details['latitude']) ? floatval($order_details['latitude']) : null;
     $longitude = !empty($order_details['longitude']) ? floatval($order_details['longitude']) : null;
     $delivery_distance = floatval($order_details['delivery_distance'] ?? 0);
+    $delivery_type = $order_details['delivery_type'] ?? 'delivery';
+$assigned_vehicle_id = !empty($order_details['assigned_vehicle_id']) ? intval($order_details['assigned_vehicle_id']) : null;
+$assigned_vehicle_type = $order_details['assigned_vehicle_type'] ?? null;
+$total_cubic_meters = !empty($order_details['total_cubic_meters']) ? floatval($order_details['total_cubic_meters']) : 0;
+$total_weight_kg = !empty($order_details['total_weight_kg']) ? floatval($order_details['total_weight_kg']) : 0;
+$total_width = !empty($order_details['total_width']) ? floatval($order_details['total_width']) : 0;
+$total_height = !empty($order_details['total_height']) ? floatval($order_details['total_height']) : 0;
+$total_length = !empty($order_details['total_length']) ? floatval($order_details['total_length']) : 0;
+
+error_log("PayMongo Vehicle Data: Vehicle ID=$assigned_vehicle_id, Type=$assigned_vehicle_type, Volume={$total_cubic_meters}m³, Weight={$total_weight_kg}kg");
 
     // Validate required fields
     if (empty($customer_name) || empty($email) || empty($mobile) || empty($address) || empty($zipcode)) {
@@ -75,9 +85,11 @@ try {
 
     // ✅ SIMPLIFIED INSERT - Test with minimal fields first
     $test_stmt = $conn->prepare("INSERT INTO orders (
-        user_id, customer_name, email, mobile, address, zipcode,
-        subtotal, delivery_fee, total, mode_payment, payment_status, reference_no
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    user_id, customer_name, email, mobile, address, zipcode,
+    subtotal, delivery_fee, total, mode_payment, payment_status, reference_no,
+    delivery_type, assigned_vehicle_id, assigned_vehicle_type,
+    total_cubic_meters, total_weight_kg, total_width, total_height, total_length
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     if (!$test_stmt) {
         throw new Exception('Failed to prepare order statement: ' . $conn->error);
@@ -102,20 +114,38 @@ try {
     
     error_log("Binding reference_no_var: '" . $reference_no_var . "' (length: " . strlen($reference_no_var) . ")");
     
-    $bind_success = $test_stmt->bind_param("isssssdddsss", 
-        $user_id_var,
-        $customer_name_var,
-        $email_var,
-        $mobile_var,
-        $address_var,
-        $zipcode_var,
-        $items_without_vat_var,
-        $delivery_fee_var,
-        $amount_var,
-        $payment_method_var,
-        $payment_status_var,
-        $reference_no_var
-    );
+    // ✅ Create variables for ALL fields including vehicle data
+$delivery_type_var = (string)$delivery_type;
+$assigned_vehicle_id_var = $assigned_vehicle_id;
+$assigned_vehicle_type_var = $assigned_vehicle_type;
+$total_cubic_meters_var = (float)$total_cubic_meters;
+$total_weight_kg_var = (float)$total_weight_kg;
+$total_width_var = (float)$total_width;
+$total_height_var = (float)$total_height;
+$total_length_var = (float)$total_length;
+
+$bind_success = $test_stmt->bind_param("isssssdddssssisddddd", 
+    $user_id_var,                // i - 1
+    $customer_name_var,          // s - 2
+    $email_var,                  // s - 3
+    $mobile_var,                 // s - 4
+    $address_var,                // s - 5
+    $zipcode_var,                // s - 6
+    $items_without_vat_var,      // d - 7
+    $delivery_fee_var,           // d - 8
+    $amount_var,                 // d - 9
+    $payment_method_var,         // s - 10
+    $payment_status_var,         // s - 11
+    $reference_no_var,           // s - 12
+    $delivery_type_var,          // s - 13
+    $assigned_vehicle_id_var,    // i - 14
+    $assigned_vehicle_type_var,  // s - 15
+    $total_cubic_meters_var,     // d - 16
+    $total_weight_kg_var,        // d - 17
+    $total_width_var,            // d - 18
+    $total_height_var,           // d - 19
+    $total_length_var            // d - 20
+);
     
     if (!$bind_success) {
         error_log("Bind failed: " . $test_stmt->error);
@@ -362,15 +392,6 @@ try {
         error_log("Failed to update order with PayMongo session ID: " . $update_stmt->error);
     }
     $update_stmt->close();
-
-    // ✅ CLEAR USER'S CART (since order is now created successfully)
-    $clear_cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-    if ($clear_cart_stmt) {
-        $user_id_clear = $user_id;
-        $clear_cart_stmt->bind_param("i", $user_id_clear);
-        $clear_cart_stmt->execute();
-        $clear_cart_stmt->close();
-    }
 
     // ✅ STORE ORDER INFO IN SESSION FOR SUCCESS PAGE
     $_SESSION['pending_paymongo_order'] = [

@@ -62,6 +62,53 @@ function goToStep(stepNumber) {
     showStep(stepNumber);
     updateStepIndicators();
 
+    // ✅ NEW: Auto-trigger calculation when entering Step 3
+    if (stepNumber === 3) {
+        const deliveryTypeRadio = document.querySelector('input[name="delivery_type"]:checked');
+        
+        // Only auto-calculate if in delivery mode
+        if (deliveryTypeRadio && deliveryTypeRadio.value === 'delivery') {
+            if (selectedAddress && selectedAddress.latitude && selectedAddress.longitude) {
+                console.log('Entering Step 3 - Auto-triggering delivery calculation...');
+                
+                // Trigger auto-calculation after a short delay
+                if (typeof autoCalculateDelivery === 'function') {
+                    setTimeout(() => {
+                        autoCalculateDelivery();
+                    }, 500);
+                } else {
+                    console.warn('autoCalculateDelivery function not available');
+                }
+            } else {
+                console.warn('No valid address selected for auto-calculation');
+            }
+        } else if (deliveryTypeRadio && deliveryTypeRadio.value === 'pickup') {
+            console.log('Pickup mode selected - No calculation needed');
+            
+            // Enable continue button for pickup
+            const continuePaymentBtn = document.getElementById('continueToPayment');
+            if (continuePaymentBtn) {
+                continuePaymentBtn.disabled = false;
+                continuePaymentBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                continuePaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            }
+        }
+    }
+
+    // ✅ NEW: When returning to Step 2, ensure buttons are properly enabled
+    if (stepNumber === 2) {
+        const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
+        if (selectedRadio) {
+            // Re-enable Step 2 continue button
+            const continueToDeliveryBtn = document.getElementById('continueToDelivery');
+            if (continueToDeliveryBtn) {
+                continueToDeliveryBtn.disabled = false;
+                continueToDeliveryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                continueToDeliveryBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            }
+        }
+    }
+
     // Scroll to top of form
     document.querySelector('.bg-white.p-6').scrollIntoView({
         behavior: 'smooth'
@@ -145,31 +192,14 @@ function validateStep(stepNumber) {
         return true;
     }
     
-    // If delivery, check if calculation is complete
-    const deliveryDistanceInput = document.getElementById('deliveryDistance');
-    const deliveryFeeInput = document.getElementById('deliveryFee');
-    
-    if (!deliveryDistanceInput || !deliveryFeeInput) {
-        showNotification('Delivery calculation fields not found.', 'error');
+    // ✅ For delivery mode, auto-calculation will handle it
+    // Just verify address is selected
+    if (!selectedAddress || !selectedAddress.latitude || !selectedAddress.longitude) {
+        showNotification('Please select a delivery address first.', 'error');
         return false;
     }
     
-    const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
-    const deliveryFee = parseFloat(deliveryFeeInput.value || '0');
-    
-    // Check if distance has been calculated
-    if (deliveryDistance <= 0) {
-        showNotification('Please calculate delivery distance and fee to continue.', 'error');
-        return false;
-    }
-    
-    // Delivery fee can be 0 or positive
-    if (deliveryFee < 0) {
-        showNotification('Invalid delivery fee. Please recalculate.', 'error');
-        return false;
-    }
-    
-    console.log('✓ Step 3 validated - Type:', deliveryTypeRadio.value, 'Distance:', deliveryDistance, 'Fee:', deliveryFee);
+    console.log('✓ Step 3 validation passed - Auto-calculation will run');
     return true;
 
         case 4:
@@ -250,3 +280,29 @@ function showNotification(message, type = 'info') {
         }
     }, 5000);
 }
+
+// ✅ NEW: Helper function to check if delivery calculation is needed
+function isDeliveryCalculationNeeded() {
+    const deliveryTypeRadio = document.querySelector('input[name="delivery_type"]:checked');
+    
+    if (!deliveryTypeRadio || deliveryTypeRadio.value !== 'delivery') {
+        return false;
+    }
+    
+    const deliveryDistanceInput = document.getElementById('deliveryDistance');
+    const deliveryFeeInput = document.getElementById('deliveryFee');
+    
+    if (!deliveryDistanceInput || !deliveryFeeInput) {
+        return true; // Fields not found, calculation needed
+    }
+    
+    const deliveryDistance = parseFloat(deliveryDistanceInput.value || '0');
+    
+    // If distance is 0 or not calculated, calculation is needed
+    return deliveryDistance <= 0;
+}
+
+// ✅ Export to global scope
+window.isDeliveryCalculationNeeded = isDeliveryCalculationNeeded;
+
+console.log('✓ Step navigation with auto-calculation initialized');

@@ -232,22 +232,7 @@ $is_verified = $user['is_verified'] ?? null;
 
 <body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
-
-    <!-- Breadcrumb -->
-    <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 py-3">
-            <div class="flex items-center space-x-2 text-sm">
-                <a href="index.php" class="text-blue-600 hover:text-blue-800 font-medium">
-                    <i class="fas fa-home mr-1"></i>Dashboard
-                </a>
-                <i class="fas fa-chevron-right text-gray-400"></i>
-                <span class="text-gray-600">Order Management</span>
-                <i class="fas fa-chevron-right text-gray-400"></i>
-                <span class="text-gray-900 font-medium">Order History</span>
-            </div>
-        </div>
-    </nav>
-
+    
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="professional-card rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
             <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
@@ -304,7 +289,7 @@ $is_verified = $user['is_verified'] ?? null;
                                         Account Verified
                                     </button>
                                 <?php else: ?>
-                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
+                                    <a href="settings.php" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-black font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base">
                                         <i class="fas fa-user-cog"></i>
                                         Complete Verification
                                     </a>

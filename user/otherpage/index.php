@@ -656,16 +656,16 @@ handleQueryError($conn, "New Status Query");
         </section>
     </div>
 
- <section class="bg-black hidden md:block border border-black/20">
-    <div class="px-4 sm:px-8 lg:px-9">
-        <!-- Clickable Banner Image - Left Aligned -->
-        <a href="shop.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
-            <img src="../img/exclusive1.png"
-                alt="Exclusive Discounts - Shop Now"
-                class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
-        </a>
-    </div>
-</section>
+    <section class="bg-black hidden md:block border border-black/20">
+        <div class="px-4 sm:px-8 lg:px-9">
+            <!-- Clickable Banner Image - Left Aligned -->
+            <a href="shop.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
+                <img src="../img/exclusive1.png"
+                    alt="Exclusive Discounts - Shop Now"
+                    class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
+            </a>
+        </div>
+    </section>
 
     <section class="py-5 tracking-wide px-4 hidden md:block">
         <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -1309,168 +1309,165 @@ handleQueryError($conn, "New Status Query");
             </div>
         </div>
     </section>
-
-<?php
+    <?php
     // MAIN query for bestseller items
     $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
     $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     ?>
 
-    <section class="py-2" id="bestseller-section">
-        <div class="max-w-[1700px] mx-auto w-full px-4 sm:px-6 lg:px-8">
+
+    <section class="py-6 md:py-8 lg:py-12" id="bestseller-section">
+        <div class="max-w-[1700px] mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8">
 
             <!-- Section Header -->
-            <div class="text-center mb-8" data-aos="fade-up">
-                <div class="flex items-center justify-center gap-3 mb-3">
-                    <h2 class="text-3xl md:text-4xl text-black tracking-wide">
+            <div class="text-center mb-4 md:mb-6 lg:mb-8" data-aos="fade-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black tracking-wide">
                         Best Seller
                     </h2>
-                    <svg class="w-7 h-7 md:w-8 md:h-8 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                 </div>
-                <p class="text-gray-600 text-base md:text-lg">
+                <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg px-2">
                     Save big on quality home improvement products
                 </p>
             </div>
 
-            <!-- Bestseller Tabs -->
-            <div>
-<!-- Navbar-style Tabs with Scroll Buttons -->
-                <div class="mb-8 relative">
-                    <div class="border-b border-gray-200 relative">
-                        <!-- Left Scroll Button -->
-                        <button
-                            onclick="scrollTabs('left')"
-                            id="scroll-left"
-                            class="hidden absolute left-0 top-0 bottom-0 w-12 items-center justify-center bg-gradient-to-r from-white to-transparent z-20 hover:from-gray-50 transition-all"
-                            style="display: none;">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-
-                        <!-- Right Scroll Button -->
-                        <button
-                            onclick="scrollTabs('right')"
-                            id="scroll-right"
-                            class="hidden absolute right-0 top-0 bottom-0 w-12 items-center justify-center bg-gradient-to-l from-white to-transparent z-20 hover:from-gray-50 transition-all"
-                            style="display: none;">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-
-                        <div class="flex overflow-x-auto scrollbar-hide gap-1 sm:gap-2 snap-x snap-mandatory scroll-smooth pb-px px-12 lg:px-14" id="bestseller-tabs">
+            <!-- Bestseller Tabs Navigation -->
+            <div class="mb-4 md:mb-6 lg:mb-8">
+                <div class="border-b border-gray-200 relative overflow-hidden">
+                    <!-- Swiper Container for Tabs -->
+                    <div class="swiper bestsellerTabsSwiper">
+                        <div class="swiper-wrapper pb-px">
                             <?php foreach ($bestsellerData as $index => $item): ?>
-                                <button
-                                    onclick="showBestseller(<?= $index ?>)"
-                                    id="tab-<?= $index ?>"
-                                    class="bestseller-tab tracking-wide whitespace-nowrap py-3 px-3 sm:px-4 md:px-6 border-b-2 uppercase text-xs sm:text-sm md:text-base transition-all duration-300 flex-shrink-0 snap-start <?= $index === 0 ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-black hover:text-gray-800 hover:border-gray-300' ?>">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </button>
+                                <div class="swiper-slide !w-auto">
+                                    <button
+                                        onclick="switchBestseller(<?= $index ?>)"
+                                        data-index="<?= $index ?>"
+                                        class="bestseller-tab tracking-wide whitespace-nowrap py-2.5 md:py-3 px-3 sm:px-4 md:px-5 lg:px-6 border-b-2 uppercase text-xs md:text-sm lg:text-base transition-all duration-300 w-full <?= $index === 0 ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-black hover:text-gray-800 hover:border-gray-300' ?>">
+                                        <?= htmlspecialchars($item['title']) ?>
+                                    </button>
+                                </div>
                             <?php endforeach; ?>
                         </div>
+
+                        <!-- Navigation Arrows (Desktop Only) -->
+                        <div class="swiper-button-prev"></div>
+                        <div class="swiper-button-next"></div>
                     </div>
                 </div>
-
-                <!-- Content Display Area - Full Width No Padding -->
-                <div class="relative" id="bestseller-content">
-                    <?php foreach ($bestsellerData as $index => $item): ?>
-                        <div
-                            id="content-<?= $index ?>"
-                            class="bestseller-content grid md:grid-cols-2 gap-4 lg:gap-8 items-center <?= $index === 0 ? '' : 'hidden' ?>">
-
-                            <!-- Image Side -->
-                            <div class="order-2 md:order-1" data-aos="fade-right">
-                                <div class="relative overflow-hidden shadow-2xl group">
-                                    <img
-                                        src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
-                                        alt="<?= htmlspecialchars($item['title']) ?>"
-                                        class="w-full h-[400px] sm:h-[500px] object-cover transition-transform duration-700">
-
-                                    <!-- Gradient Overlay -->
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
-                                    <!-- Badge -->
-                                    <div class="absolute top-4 right-4 bg-black text-white px-4 py-2 tracking-wide text-sm shadow-lg">
-                                        Best Seller
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Content Side -->
-                            <div class="order-1 md:order-2 space-y-6 px-6 md:px-8 lg:px-12" data-aos="fade-left">
-                                <div>
-                                    <h3 class="text-3xl sm:text-4xl text-gray-800 mb-4 uppercase">
-                                        <?= htmlspecialchars($item['title']) ?>
-                                    </h3>
-                                    <div class="w-20 h-1 bg-orange-500 rounded-full mb-6"></div>
-                                </div>
-
-                                <p class="text-gray-600 text-base sm:text-lg leading-relaxed">
-                                    <?= nl2br(htmlspecialchars($item['description'])) ?>
-                                </p>
-
-                                <!-- CTA Button -->
-                                <div class="pt-4">
-                                    <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                        class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white font-semibold px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                        <span>Learn More</span>
-                                        <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                                        </svg>
-                                    </a>
-                                </div>
-
-                                <!-- Additional Info -->
-                                <div class="flex items-center gap-4 pt-4 text-sm text-gray-500">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                        </svg>
-                                        <span>Top Rated</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        <span>Quality Guaranteed</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
             </div>
+
+            <!-- Content Display Area -->
+            <div class="relative overflow-hidden" id="bestseller-content">
+                <?php foreach ($bestsellerData as $index => $item): ?>
+                    <div
+                        id="content-<?= $index ?>"
+                        class="bestseller-content grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 items-center <?= $index === 0 ? '' : 'hidden' ?>">
+
+                        <!-- Image Side -->
+                        <div class="order-2 md:order-1" data-aos="fade-right">
+                            <div class="relative overflow-hidden shadow-md md:shadow-lg lg:shadow-2xl group">
+                                <img
+                                    src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
+                                    alt="<?= htmlspecialchars($item['title']) ?>"
+                                    class="w-full h-[240px] sm:h-[300px] md:h-[400px] lg:h-[500px] object-cover transition-transform duration-700">
+
+                                <!-- Gradient Overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                                <!-- Badge -->
+                                <div class="absolute top-3 right-3 md:top-4 md:right-4 bg-black text-white px-3 py-1.5 md:px-4 md:py-2 tracking-wide text-xs md:text-sm shadow-lg">
+                                    Best Seller
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Side -->
+                        <div class="order-1 md:order-2 space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4 md:px-6 lg:px-12" data-aos="fade-left">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-800 mb-2 md:mb-3 lg:mb-4 uppercase leading-tight">
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </h3>
+                                <div class="w-12 sm:w-16 md:w-20 h-1 bg-orange-500 rounded-full mb-3 md:mb-4 lg:mb-6"></div>
+                            </div>
+
+                            <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
+                                <?= nl2br(htmlspecialchars($item['description'])) ?>
+                            </p>
+
+                            <!-- CTA Button -->
+                            <div class="pt-1 sm:pt-2 md:pt-4">
+                                <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                                    class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white font-semibold px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                    <span>Learn More</span>
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    </svg>
+                                </a>
+                            </div>
+
+                            <!-- Additional Info -->
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 pt-1 sm:pt-2 md:pt-4 text-xs md:text-sm text-gray-500">
+                                <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                    </svg>
+                                    <span>Top Rated</span>
+                                </div>
+                                <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Quality Guaranteed</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
         </div>
     </section>
 
     <style>
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        /* Swiper Navigation Styling */
+        .bestsellerTabsSwiper .swiper-button-prev,
+        .bestsellerTabsSwiper .swiper-button-next {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
+        .bestsellerTabsSwiper .swiper-button-prev:after,
+        .bestsellerTabsSwiper .swiper-button-next:after {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
         }
 
-        /* Fade animation */
+        /* Hide arrows on mobile */
+        @media (max-width: 1023px) {
+
+            .bestsellerTabsSwiper .swiper-button-prev,
+            .bestsellerTabsSwiper .swiper-button-next {
+                display: none;
+            }
+        }
+
+        /* Smooth content transitions */
         .bestseller-content {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeInContent 0.4s ease-in-out;
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeInContent {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(10px);
             }
 
             to {
@@ -1478,136 +1475,136 @@ handleQueryError($conn, "New Status Query");
                 transform: translateY(0);
             }
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .bestseller-tab {
+                touch-action: manipulation;
+            }
+        }
     </style>
 
+
+
     <script>
-     function showBestseller(index) {
-    // Hide all content
-    const allContent = document.querySelectorAll('.bestseller-content');
-    allContent.forEach(content => {
-        content.classList.add('hidden');
-    });
+        // Initialize Tabs Swiper
+        let tabsSwiper;
 
-    // Remove active class from all tabs
-    const allTabs = document.querySelectorAll('.bestseller-tab');
-    allTabs.forEach(tab => {
-        tab.classList.remove('border-orange-500', 'text-orange-600', 'bg-orange-50');
-        tab.classList.add('border-transparent', 'text-gray-600');
-    });
-
-    // Show selected content
-    const selectedContent = document.getElementById('content-' + index);
-    if (selectedContent) {
-        selectedContent.classList.remove('hidden');
-    }
-
-    // Add active class to selected tab
-    const selectedTab = document.getElementById('tab-' + index);
-    if (selectedTab) {
-        selectedTab.classList.remove('border-transparent', 'text-gray-600');
-        selectedTab.classList.add('border-orange-500', 'text-orange-600', 'bg-orange-50');
-
-        // Auto-scroll to active tab on mobile
-        selectedTab.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'nearest'
+        document.addEventListener('DOMContentLoaded', function() {
+            tabsSwiper = new Swiper('.bestsellerTabsSwiper', {
+                slidesPerView: 'auto',
+                spaceBetween: 8,
+                freeMode: true,
+                grabCursor: true,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                breakpoints: {
+                    640: {
+                        spaceBetween: 8
+                    },
+                    768: {
+                        spaceBetween: 8
+                    },
+                    1024: {
+                        spaceBetween: 8
+                    }
+                },
+                on: {
+                    init: function() {
+                        updateNavigationButtons(this);
+                    },
+                    resize: function() {
+                        updateNavigationButtons(this);
+                    },
+                    slideChange: function() {
+                        updateNavigationButtons(this);
+                    },
+                    reachBeginning: function() {
+                        updateNavigationButtons(this);
+                    },
+                    reachEnd: function() {
+                        updateNavigationButtons(this);
+                    }
+                }
+            });
         });
-    }
-}
 
-function updateScrollButtons() {
-    const tabsContainer = document.getElementById('bestseller-tabs');
-    const leftButton = document.getElementById('scroll-left');
-    const rightButton = document.getElementById('scroll-right');
+        // Function to show/hide navigation buttons based on content
+        function updateNavigationButtons(swiper) {
+            const prevButton = document.querySelector('.bestsellerTabsSwiper .swiper-button-prev');
+            const nextButton = document.querySelector('.bestsellerTabsSwiper .swiper-button-next');
 
-    if (!tabsContainer || !leftButton || !rightButton) return;
+            if (!prevButton || !nextButton) return;
 
-    const isScrollable = tabsContainer.scrollWidth > tabsContainer.clientWidth;
-    const isAtStart = tabsContainer.scrollLeft <= 0;
-    const isAtEnd = tabsContainer.scrollLeft + tabsContainer.clientWidth >= tabsContainer.scrollWidth - 1;
+            // Check if content is scrollable (overflow)
+            const isScrollable = swiper.isEnd !== swiper.isBeginning;
 
-    // Show buttons ONLY if scrollable
-    if (isScrollable) {
-        // Left button: hide if at start, show if can scroll left
-        if (isAtStart) {
-            leftButton.classList.add('hidden');
-            leftButton.classList.remove('lg:flex');
-        } else {
-            leftButton.classList.remove('hidden');
-            leftButton.classList.add('lg:flex');
+            // Hide both buttons if content fits (not scrollable)
+            if (!isScrollable) {
+                prevButton.style.display = 'none';
+                nextButton.style.display = 'none';
+                return;
+            }
+
+            // Show buttons on desktop only when scrollable
+            if (window.innerWidth >= 1024) {
+                // Show/hide prev button
+                if (swiper.isBeginning) {
+                    prevButton.style.display = 'none';
+                } else {
+                    prevButton.style.display = 'flex';
+                }
+
+                // Show/hide next button
+                if (swiper.isEnd) {
+                    nextButton.style.display = 'none';
+                } else {
+                    nextButton.style.display = 'flex';
+                }
+            } else {
+                // Always hide on mobile
+                prevButton.style.display = 'none';
+                nextButton.style.display = 'none';
+            }
         }
 
-        // Right button: hide if at end, show if can scroll right
-        if (isAtEnd) {
-            rightButton.classList.add('hidden');
-            rightButton.classList.remove('lg:flex');
-        } else {
-            rightButton.classList.remove('hidden');
-            rightButton.classList.add('lg:flex');
+        // Function to switch bestseller content
+        function switchBestseller(index) {
+            // Hide all content
+            const allContent = document.querySelectorAll('.bestseller-content');
+            allContent.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Remove active class from all tabs
+            const allTabs = document.querySelectorAll('.bestseller-tab');
+            allTabs.forEach(tab => {
+                tab.classList.remove('border-orange-500', 'text-orange-600', 'bg-orange-50');
+                tab.classList.add('border-transparent', 'text-gray-600');
+            });
+
+            // Show selected content
+            const selectedContent = document.getElementById('content-' + index);
+            if (selectedContent) {
+                selectedContent.classList.remove('hidden');
+            }
+
+            // Add active class to selected tab
+            const selectedTab = document.querySelector('[data-index="' + index + '"]');
+            if (selectedTab) {
+                selectedTab.classList.remove('border-transparent', 'text-gray-600');
+                selectedTab.classList.add('border-orange-500', 'text-orange-600', 'bg-orange-50');
+            }
         }
-    } else {
-        // Not scrollable - hide both buttons completely
-        leftButton.classList.add('hidden');
-        leftButton.classList.remove('lg:flex');
-        rightButton.classList.add('hidden');
-        rightButton.classList.remove('lg:flex');
-    }
-}
 
-function scrollTabs(direction) {
-    const tabsContainer = document.getElementById('bestseller-tabs');
-    const scrollAmount = 200; // pixels to scroll
-
-    if (direction === 'left') {
-        tabsContainer.scrollBy({
-            left: -scrollAmount,
-            behavior: 'smooth'
+        // Update buttons on window resize
+        window.addEventListener('resize', function() {
+            if (tabsSwiper) {
+                updateNavigationButtons(tabsSwiper);
+            }
         });
-    } else {
-        tabsContainer.scrollBy({
-            left: scrollAmount,
-            behavior: 'smooth'
-        });
-    }
-
-    // Update button visibility after scroll
-    setTimeout(updateScrollButtons, 300);
-}
-
-// Initialize scroll buttons on load
-window.addEventListener('load', updateScrollButtons);
-window.addEventListener('resize', updateScrollButtons);
-
-// Update on scroll
-document.getElementById('bestseller-tabs')?.addEventListener('scroll', updateScrollButtons);
-
-// Optional: Add touch swipe support for mobile
-let touchStartX = 0;
-let touchEndX = 0;
-
-document.getElementById('bestseller-tabs')?.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].screenX;
-}, {
-    passive: true
-});
-
-document.getElementById('bestseller-tabs')?.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-}, {
-    passive: true
-});
-
-function handleSwipe() {
-    // Swipe gesture detection (optional enhancement)
-    if (touchEndX < touchStartX - 50) {
-        // Swiped left - could trigger something
-    }
-    if (touchEndX > touchStartX + 50) {
-        // Swiped right - could trigger something
-    }
-}
     </script>
 
     <section class="px-2 sm:px-4 lg:px-6 py-3 sm:py-2">

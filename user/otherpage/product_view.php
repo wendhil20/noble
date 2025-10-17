@@ -662,111 +662,7 @@ $avg_stmt->close();
   <?php include '../navbar/top.php'; ?>
 
   <!-- Hero Section with Bouncing Bubbles Background -->
-  <div class="bg-black text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
-    <!-- Bouncing Bubbles SVG Layer -->
-    <div class="absolute inset-0 pointer-events-none z-0">
-      <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
-        <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
-        <circle class="bubble bubble2" cx="25%" cy="90%" r="18" fill="#fff" fill-opacity="0.10" />
-        <circle class="bubble bubble3" cx="40%" cy="85%" r="24" fill="#fff" fill-opacity="0.09" />
-        <circle class="bubble bubble4" cx="60%" cy="92%" r="14" fill="#fff" fill-opacity="0.11" />
-        <circle class="bubble bubble5" cx="75%" cy="88%" r="28" fill="#fff" fill-opacity="0.12" />
-        <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
-      </svg>
-    </div>
-    <div class="container mx-auto px-4 relative z-10">
-      <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-center mb-2 sm:mb-4">Your Shopping</h1>
-      <p class="text-sm sm:text-lg lg:text-xl text-center opacity-90 max-w-2xl mx-auto">
-        Learn more about this item and check if it fits your needs.<br>
-        Discover detailed specifications, available options, and make the best choice for your home.
-      </p>
-    </div>
-    <style>
-      /* Bouncing animation for bubbles */
-      .bubble1 {
-        animation: bubble-bounce1 7s ease-in-out infinite alternate;
-      }
-
-      .bubble2 {
-        animation: bubble-bounce2 6s ease-in-out infinite alternate;
-      }
-
-      .bubble3 {
-        animation: bubble-bounce3 8s ease-in-out infinite alternate;
-      }
-
-      .bubble4 {
-        animation: bubble-bounce4 5.5s ease-in-out infinite alternate;
-      }
-
-      .bubble5 {
-        animation: bubble-bounce5 7.5s ease-in-out infinite alternate;
-      }
-
-      .bubble6 {
-        animation: bubble-bounce6 6.5s ease-in-out infinite alternate;
-      }
-
-      @keyframes bubble-bounce1 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-60px) scale(1.08);
-        }
-      }
-
-      @keyframes bubble-bounce2 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-40px) scale(1.12);
-        }
-      }
-
-      @keyframes bubble-bounce3 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-70px) scale(1.05);
-        }
-      }
-
-      @keyframes bubble-bounce4 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-30px) scale(1.15);
-        }
-      }
-
-      @keyframes bubble-bounce5 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-55px) scale(1.09);
-        }
-      }
-
-      @keyframes bubble-bounce6 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-35px) scale(1.13);
-        }
-      }
-
+  <style>
       /* Magnifier Container */
       #magnifier-container {
         position: relative;
@@ -829,7 +725,7 @@ $avg_stmt->close();
         }
       }
     </style>
-  </div>
+
 
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">

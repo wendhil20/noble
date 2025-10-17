@@ -545,7 +545,7 @@ handleQueryError($conn, "New Status Query");
     <?php endif; ?>
 
     <!-- Parent Wrapper -->
-    <div class="w-full flex flex-col lg:flex-row gap-4 px-2 sm:px-4  ">
+    <div class="w-full flex flex-col lg:flex-row gap-1 px-2 sm:px-4  ">
         <!-- LEFT: Main Swiper Container -->
         <section class="w-full lg:w-[65%] xl:w-[70%] overflow-hidden relative flex-shrink-0">
             <div class="mySwiper relative w-full">
@@ -615,7 +615,7 @@ handleQueryError($conn, "New Status Query");
         <!-- RIGHT: 2 Images Container -->
         <section class="w-full lg:w-[35%] xl:w-[30%] flex-shrink-0">
             <!-- Mobile: Horizontal Layout (2 images side by side) -->
-            <div class="flex lg:hidden gap-2 sm:gap-3 w-full h-[180px] xs:h-[230px] sm:h-[280px]">
+            <div class="flex lg:hidden gap-1 sm:gap-1 w-full h-[180px] xs:h-[230px] sm:h-[280px]">
                 <!-- Image 1 - Desktop -->
                 <div class="w-full flex-1 bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden border border-gray-200  shadow-sm hover:shadow-md transition-shadow duration-300 relative group">
                     <img src="../img/gif1.gif" alt="Promo 1" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
@@ -832,35 +832,41 @@ handleQueryError($conn, "New Status Query");
     ];
     ?>
 
-    <section class="py-10 bg-neutral-100 rounded-t-[100px] ">
+    <section class="py-8 md:py-10 lg:py-12 bg-white rounded-t-[60px] md:rounded-t-[80px] lg:rounded-t-[100px]">
         <!-- Minimal Header -->
-        <div class="mb-12 px-4 max-w-7xl mx-auto">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-1 h-8 bg-neutral-900"></div>
-                <h2 class="text-3xl lg:text-4xl font-bold text-neutral-900 tracking-wide">
-                    Shop by Department
-                </h2>
+        <div class="mb-8 md:mb-10 lg:mb-12 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-2 md:mb-3">
+                <div class="flex items-center gap-2 md:gap-3">
+                    <div class="w-1 h-6 md:h-7 lg:h-8 bg-black"></div>
+                    <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-black tracking-wide">
+                        Shop by Department
+                    </h2>
+                </div>
 
+                <!-- Navigation Buttons - Compact Top Right -->
+                <div class="hidden md:flex items-center gap-2">
+                    <button class="department-prev-btn w-9 h-9 bg-white border border-neutral-200 rounded-full shadow-sm flex items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-900 group-hover:text-white transition-colors">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <button class="department-next-btn w-9 h-9 bg-white border border-neutral-200 rounded-full shadow-sm flex items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-900 group-hover:text-white transition-colors">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <p class="text-neutral-600 text-base lg:text-lg ml-7 font-light">
+            <p class="text-black text-sm md:text-base lg:text-lg ml-5 md:ml-6 lg:ml-7 font-light">
                 Explore our complete range of products
             </p>
+            <hr class="border-t border-black mt-4 md:mt-5 lg:mt-6">
+
+
         </div>
 
         <!-- Categories Container -->
-        <div class="relative px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
-            <!-- Navigation Buttons -->
-            <button class="department-prev-btn hidden lg:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white border border-neutral-200 rounded-full shadow-sm items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-neutral-900 group-hover:text-white transition-colors">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </button>
-
-            <button class="department-next-btn hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white border border-neutral-200 rounded-full shadow-sm items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-neutral-900 group-hover:text-white transition-colors">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
+        <div class="relative px-3 sm:px-4 md:px-5 lg:px-6 max-w-[1800px] mx-auto">
 
             <div class="swiper department-swiper-container overflow-hidden">
                 <div class="swiper-wrapper pb-4">
@@ -893,18 +899,18 @@ handleQueryError($conn, "New Status Query");
                         <div class="swiper-slide">
                             <a href="shop?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block h-full">
                                 <!-- Card with Unique Rounded Corners -->
-                                <div class="h-full bg-white border border-neutral-200 group-hover:border-neutral-900 transition-all duration-500 overflow-hidden department-card group-hover:shadow-lg">
+                                <div class="h-full bg-white group-hover:border-neutral-900 transition-all duration-500 overflow-hidden department-card group-hover:shadow-lg">
                                     <!-- Image Container -->
-                                    <div class="relative h-52 sm:h-60 lg:h-64 bg-neutral-50 overflow-hidden">
+                                    <div class="relative h-48 sm:h-52 md:h-56 lg:h-64 bg-neutral-50 overflow-hidden">
                                         <img src="<?php echo htmlspecialchars($imagePath); ?>"
                                             alt="<?php echo htmlspecialchars($displayName); ?>"
-                                            class="copy w-full h-full object-contain p-3 transition-transform duration-700 "
+                                            class="copy w-full h-full object-contain p-2 sm:p-3 md:p-4 transition-transform duration-700 group-hover:scale-105"
                                             loading="lazy">
                                     </div>
 
                                     <!-- Text Content -->
-                                    <div class="py-3 px-4 text-center border-t border-neutral-100">
-                                        <h3 class="text-neutral-900 text-sm lg:text-base uppercase group-hover:text-neutral-600 transition-colors duration-300 tracking-wide">
+                                    <div class="py-2.5 md:py-3 px-3 md:px-4 text-center border-t border-neutral-100">
+                                        <h3 class="text-neutral-900 text-xs sm:text-sm md:text-base uppercase group-hover:text-neutral-600 transition-colors duration-300 tracking-wide font-medium">
                                             <?php echo htmlspecialchars($displayName); ?>
                                         </h3>
                                     </div>
@@ -918,25 +924,56 @@ handleQueryError($conn, "New Status Query");
     </section>
 
     <style>
-        /* Unique Rounded Corner Style */
+        /* Unique Rounded Corner Style - Responsive */
         .department-card {
-            border-radius: 40px 0 40px 0;
+            border-radius: 30px 0 30px 0;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .copy {
-            border-radius: 40px 0 40px 0;
+            border-radius: 30px 0 30px 0;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* Tablet and Desktop - Larger rounded corners */
+        @media (min-width: 768px) {
+            .department-card {
+                border-radius: 35px 0 35px 0;
+            }
+
+            .copy {
+                border-radius: 35px 0 35px 0;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .department-card {
+                border-radius: 40px 0 40px 0;
+            }
+
+            .copy {
+                border-radius: 40px 0 40px 0;
+            }
+        }
 
         /* Image optimization */
         .department-card img {
             image-rendering: -webkit-optimize-contrast;
         }
+
+        /* Swiper customization for responsive */
+        .department-swiper-container {
+            padding: 4px;
+        }
+
+        /* Hide nav buttons when not needed */
+        .swiper-button-disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
     </style>
 
-
+    <hr class="border-t border-gray-100 mt-2">
 
     <section class="px-4 sm:px-6 lg:px-8 py-10 ">
         <div class="max-w-full mx-auto">
@@ -1200,10 +1237,10 @@ handleQueryError($conn, "New Status Query");
         </style>
     </section>
 
-    <section class="py-5 px-4 sm:px-6 lg:px-8">
+    <section class="py-7 px-4 sm:px-6 lg:px-8">
         <div class="max-w-full mx-auto">
             <!-- Header -->
-            <div class="mb-12" data-aos="fade-up">
+            <div class="mb-8" data-aos="fade-up">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-1 h-8 bg-neutral-900"></div>
                     <h2 class="text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
@@ -1216,8 +1253,7 @@ handleQueryError($conn, "New Status Query");
             </div>
 
             <!-- 2x2 Grid Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <!-- Box 1 -->
                 <a href="link-1.php" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
                     <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
@@ -1309,12 +1345,12 @@ handleQueryError($conn, "New Status Query");
             </div>
         </div>
     </section>
+
     <?php
     // MAIN query for bestseller items
     $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
     $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     ?>
-
 
     <section class="py-6 md:py-8 lg:py-12" id="bestseller-section">
         <div class="max-w-[1700px] mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8">
@@ -1390,23 +1426,46 @@ handleQueryError($conn, "New Status Query");
                                 <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-800 mb-2 md:mb-3 lg:mb-4 uppercase leading-tight">
                                     <?= htmlspecialchars($item['title']) ?>
                                 </h3>
-                                <div class="w-12 sm:w-16 md:w-20 h-1 bg-orange-500 rounded-full mb-3 md:mb-4 lg:mb-6"></div>
+                                <div class="w-16 sm:w-16 md:w-20 h-1 bg-black rounded-full mb-3 md:mb-4 lg:mb-6"></div>
                             </div>
 
                             <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
                                 <?= nl2br(htmlspecialchars($item['description'])) ?>
                             </p>
-
                             <!-- CTA Button -->
                             <div class="pt-1 sm:pt-2 md:pt-4">
                                 <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                    class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white font-semibold px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                    <span>Learn More</span>
-                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    class="animated-learn-more inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base transition-all duration-300 group relative">
+                                    <span class="relative overflow-hidden">
+                                        <span class="block transition-transform duration-300 group-hover:-translate-y-full">Learn More</span>
+                                        <span class="absolute inset-0 block translate-y-full transition-transform duration-300 group-hover:translate-y-0 text-red-600">Learn More</span>
+                                    </span>
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:text-red-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                                     </svg>
                                 </a>
                             </div>
+
+                            <style>
+                                .animated-learn-more::after {
+                                    content: "";
+                                    position: absolute;
+                                    left: 0;
+                                    bottom: -4px;
+                                    width: 0;
+                                    height: 2px;
+                                    background-color: #c84747;
+                                    transition: width 0.3s ease-out;
+                                }
+
+                                .animated-learn-more:hover::after {
+                                    width: 100%;
+                                }
+                            </style>
 
                             <!-- Additional Info -->
                             <div class="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 pt-1 sm:pt-2 md:pt-4 text-xs md:text-sm text-gray-500">
@@ -1483,7 +1542,6 @@ handleQueryError($conn, "New Status Query");
             }
         }
     </style>
-
 
 
     <script>
@@ -1608,13 +1666,15 @@ handleQueryError($conn, "New Status Query");
     </script>
 
     <section class="px-2 sm:px-4 lg:px-6 py-3 sm:py-2">
-
         <!-- Header first -->
         <div class="flex items-center justify-between gap-4 mb-2 mt-2" data-aos="fade-up">
-            <!-- Left Side: Title with Arrow -->
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl text-black">
-                Bed Furniture
-            </h2>
+    <!-- Left Side: Bar + Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-neutral-900"></div>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
+                   Bed Furniture
+                </h2>
+            </div>
 
             <!-- Right Side: See All Button -->
             <a href="#" class="text-sm sm:text-base text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 transition-colors duration-200">
@@ -1757,28 +1817,13 @@ handleQueryError($conn, "New Status Query");
     <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-2">
         <!-- Header first -->
         <div class="flex items-center gap-2 mb-2 mt-2" data-aos="fade-up">
-            <!-- Details Button (as Title) -->
-            <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 font-light text-2xl sm:text-3xl lg:text-4xl text-black">
-                <span class="relative">
-                    <span class="block group-hover:text-orange-600 transition-colors duration-300">
-                        Building Materials
-                    </span>
-                    <!-- Animated overlay text -->
-                    <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
-                        Building Materials
-                    </span>
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24"
-                    stroke-width="2.5" stroke="currentColor"
-                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-                <!-- underline -->
-                <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
-            </a>
+        <!-- Left Side: Bar + Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-neutral-900"></div>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
+                    Building materials
+                </h2>
+            </div>
         </div>
 
         <div class="swiper mySwiper-products w-full">
@@ -2228,139 +2273,191 @@ handleQueryError($conn, "New Status Query");
             }
         }
     </style>
+<!-- Featured Categories Section -->
+<section class="p-6">
+    <div class="text-center mb-6">
+        <h1 class="text-2xl">Featured Categories</h1>
+        <p class="text-gray-600">Discover our top product categories just for you.</p>
+    </div>
 
-    <!-- Featured Categories Section -->
-    <section class="p-6">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl">Featured Categories</h1>
-            <p class="text-gray-600">Discover our top product categories just for you.</p>
-        </div>
-
-        <!-- Category Boxes - Clickable with Flex Layout -->
-        <div class="flex flex-wrap gap-4 justify-center">
-            <!-- Doors Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('doors')">
-                <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Doors</h2>
-                </div>
-            </div>
-
-            <!-- Aircon Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('aircon')">
-                <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Aircon</h2>
-                </div>
-            </div>
-
-            <!-- Bathroom Fixtures Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('bathroomfixtures')">
-                <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Bathroom Fixtures</h2>
-                </div>
-            </div>
-
-            <!-- Tiles Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('tiles')">
-                <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Tiles</h2>
-                </div>
+    <!-- Category Boxes - Clickable with Flex Layout -->
+    <div class="flex flex-wrap gap-4 justify-center">
+        <!-- Doors Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+            onclick="loadCategoryProducts('doors')">
+            <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl text-white">Doors</h2>
             </div>
         </div>
-    </section>
 
-    <!-- Sidebar Overlay (Hidden by default) -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
-
-    <!-- Sidebar for Products -->
-    <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
-        <!-- Sidebar Header -->
-        <div class="sticky top-0 bg-black border-b p-4 flex justify-between items-center z-1 0">
-            <div class="text-white">
-                <h2 class="text-xl  capitalize" id="sidebarTitle">Products</h2>
-                <p class="text-sm " id="sidebarSubtitle">Loading...</p>
+        <!-- Aircon Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+            onclick="loadCategoryProducts('aircon')">
+            <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl text-white">Aircon</h2>
             </div>
-            <button onclick="closeSidebar()" class="text-white hover:text-gray-900">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
         </div>
 
-        <!-- Sidebar Content -->
-        <div id="sidebarContent" class="p-4">
-            <div class="flex justify-center items-center h-40">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <!-- Bathroom Fixtures Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+            onclick="loadCategoryProducts('bathroomfixtures')">
+            <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl text-white">Bathroom Fixtures</h2>
+            </div>
+        </div>
+
+        <!-- Tiles Category -->
+        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+            onclick="loadCategoryProducts('tiles')">
+            <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
+            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                <h2 class="text-2xl text-white">Tiles</h2>
             </div>
         </div>
     </div>
+</section>
 
-    <script>
-        function loadCategoryProducts(category) {
-            // Open sidebar
-            document.getElementById('sidebarOverlay').classList.remove('hidden');
-            document.getElementById('productSidebar').classList.remove('translate-x-full');
+<!-- Sidebar Overlay (Hidden by default) -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
 
-            // Update title
-            document.getElementById('sidebarTitle').textContent = category.charAt(0).toUpperCase() + category.slice(1);
-            document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+<!-- Sidebar for Products -->
+<div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Sidebar Header (Fixed) -->
+    <div class="bg-black border-b p-4 flex justify-between items-center flex-shrink-0">
+        <div class="text-white">
+            <h2 class="text-xl capitalize" id="sidebarTitle">Products</h2>
+            <p class="text-sm" id="sidebarSubtitle">Loading...</p>
+        </div>
+        <button onclick="closeSidebar()" class="text-white hover:text-gray-300 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
 
-            // Show loading spinner
-            document.getElementById('sidebarContent').innerHTML = `
+    <!-- Scroll Buttons Container -->
+    <div class="flex gap-2 p-2 bg-gray-100 flex-shrink-0">
+        <button id="scrollUpBtn" onclick="scrollSidebarUp()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors hidden" title="Scroll Up">
+            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            </svg>
+        </button>
+        <button id="scrollDownBtn" onclick="scrollSidebarDown()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors" title="Scroll Down">
+            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Sidebar Content (Scrollable) -->
+    <div id="sidebarContent" class="flex-1 overflow-y-hidden p-4">
         <div class="flex justify-center items-center h-40">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
-    `;
+    </div>
+</div>
 
-            // Fetch products via AJAX
-            fetch('index_fetch_category_products.php?category=' + category)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('sidebarContent').innerHTML = data;
-                    document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
-                })
-                .catch(error => {
-                    document.getElementById('sidebarContent').innerHTML = `
-                <div class="text-center text-red-500 p-4">
-                    <p>Error loading products. Please try again.</p>
-                </div>
-            `;
-                });
+<script>
+    const scrollStep = 150;
+
+    function loadCategoryProducts(category) {
+        document.getElementById('sidebarOverlay').classList.remove('hidden');
+        document.getElementById('productSidebar').classList.remove('translate-x-full');
+
+        const categoryNames = {
+            'doors': 'Doors',
+            'aircon': 'Aircon',
+            'bathroomfixtures': 'Bathroom Fixtures',
+            'tiles': 'Tiles'
+        };
+        
+        document.getElementById('sidebarTitle').textContent = categoryNames[category] || category;
+        document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+        document.getElementById('sidebarContent').innerHTML = `
+            <div class="flex justify-center items-center h-40">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            </div>
+        `;
+
+        document.getElementById('sidebarContent').scrollTop = 0;
+        updateScrollButtons();
+
+        fetch('index_fetch_category_products.php?category=' + category)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('sidebarContent').innerHTML = data;
+                document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
+                updateScrollButtons();
+            })
+            .catch(error => {
+                document.getElementById('sidebarContent').innerHTML = `
+                    <div class="text-center text-red-500 p-4">
+                        <p>Error loading products. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+
+    function scrollSidebarUp() {
+        const content = document.getElementById('sidebarContent');
+        content.scrollBy({ top: -scrollStep, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 400);
+    }
+
+    function scrollSidebarDown() {
+        const content = document.getElementById('sidebarContent');
+        content.scrollBy({ top: scrollStep, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 400);
+    }
+
+    function updateScrollButtons() {
+        const content = document.getElementById('sidebarContent');
+        const scrollUpBtn = document.getElementById('scrollUpBtn');
+        const scrollDownBtn = document.getElementById('scrollDownBtn');
+
+        if (content.scrollTop > 0) {
+            scrollUpBtn.classList.remove('hidden');
+        } else {
+            scrollUpBtn.classList.add('hidden');
         }
 
-        function closeSidebar() {
-            document.getElementById('sidebarOverlay').classList.add('hidden');
-            document.getElementById('productSidebar').classList.add('translate-x-full');
+        if (content.scrollTop < content.scrollHeight - content.clientHeight - 10) {
+            scrollDownBtn.classList.remove('hidden');
+        } else {
+            scrollDownBtn.classList.add('hidden');
         }
+    }
 
-        // Close sidebar with ESC key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeSidebar();
-            }
-        });
-    </script>
+    function closeSidebar() {
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+        document.getElementById('productSidebar').classList.add('translate-x-full');
+    }
 
-    <style>
-        .category-box {
-            transition: all 0.3s ease;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSidebar();
         }
+    });
 
-        .category-box:hover {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
+    document.getElementById('sidebarContent').addEventListener('scroll', updateScrollButtons);
+</script>
 
-        .category-box:active {
-            transform: scale(0.98);
-        }
-    </style>
+<style>
+    .category-box {
+        transition: all 0.3s ease;
+    }
+
+    .category-box:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .category-box:active {
+        transform: scale(0.98);
+    }
+</style>
 
     <!-- Top Sales Section -->
     <section class="px-4 py-10">
@@ -3672,6 +3769,7 @@ handleQueryError($conn, "New Status Query");
                 spaceBetween: 12,
                 centeredSlides: false,
                 loop: deptSlideCount >= 4,
+                grabCursor: true,
                 navigation: {
                     nextEl: '.department-next-btn',
                     prevEl: '.department-prev-btn',
@@ -3682,19 +3780,38 @@ handleQueryError($conn, "New Status Query");
                     pauseOnMouseEnter: true
                 } : false,
                 breakpoints: {
+                    480: {
+                        slidesPerView: 2.5,
+                        spaceBetween: 14,
+                        loop: deptSlideCount >= 5
+                    },
                     640: {
                         slidesPerView: 3,
                         spaceBetween: 16,
                         loop: deptSlideCount >= 6
                     },
+                    768: {
+                        slidesPerView: 4,
+                        spaceBetween: 16,
+                        loop: deptSlideCount >= 8
+                    },
                     1024: {
-                        slidesPerView: 7,
-                        spaceBetween: 14,
+                        slidesPerView: 5,
+                        spaceBetween: 18,
                         loop: deptSlideCount >= 10
+                    },
+                    1280: {
+                        slidesPerView: 6,
+                        spaceBetween: 20,
+                        loop: deptSlideCount >= 12
+                    },
+                    1536: {
+                        slidesPerView: 7,
+                        spaceBetween: 20,
+                        loop: deptSlideCount >= 14
                     }
                 }
             });
-
 
             // ✅ MAIN HERO SWIPER
             const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;

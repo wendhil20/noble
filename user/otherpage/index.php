@@ -2273,48 +2273,54 @@ handleQueryError($conn, "New Status Query");
             }
         }
     </style>
-<!-- Featured Categories Section -->
-<section class="p-6">
-    <div class="text-center mb-6">
-        <h1 class="text-2xl">Featured Categories</h1>
-        <p class="text-gray-600">Discover our top product categories just for you.</p>
+
+   <!-- Featured Categories Section - Vertical Carousel -->
+<section class="w-full relative overflow-hidden bg-white py-12">
+    <!-- Header -->
+    <div class="text-center mb-8 px-4">
+        <h2 class="text-4xl md:text-5xl font-bold text-black mb-2 tracking-tight">Featured Collection</h2>
+        <p class="text-gray-600 text-lg">Explore our premium categories</p>
     </div>
 
-    <!-- Category Boxes - Clickable with Flex Layout -->
-    <div class="flex flex-wrap gap-4 justify-center">
+    <!-- Carousel Container -->
+    <div class="flex h-[600px] w-full" id="carouselContainer">
         <!-- Doors Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
             onclick="loadCategoryProducts('doors')">
-            <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl text-white">Doors</h2>
+            <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Doors</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
         </div>
 
         <!-- Aircon Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
             onclick="loadCategoryProducts('aircon')">
-            <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl text-white">Aircon</h2>
+            <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Aircon</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
         </div>
 
         <!-- Bathroom Fixtures Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
             onclick="loadCategoryProducts('bathroomfixtures')">
-            <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl text-white">Bathroom Fixtures</h2>
+            <img src="../img/category/10.png" alt="Bathroom Fixtures" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Bathroom</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
         </div>
 
         <!-- Tiles Category -->
-        <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
             onclick="loadCategoryProducts('tiles')">
-            <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
-            <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                <h2 class="text-2xl text-white">Tiles</h2>
+            <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Tiles</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
         </div>
     </div>
@@ -2448,10 +2454,6 @@ handleQueryError($conn, "New Status Query");
 <style>
     .category-box {
         transition: all 0.3s ease;
-    }
-
-    .category-box:hover {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
     .category-box:active {

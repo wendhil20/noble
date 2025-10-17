@@ -545,7 +545,7 @@ handleQueryError($conn, "New Status Query");
     <?php endif; ?>
 
     <!-- Parent Wrapper -->
-    <div class="w-full flex flex-col lg:flex-row gap-4 px-2 sm:px-4  ">
+    <div class="w-full flex flex-col lg:flex-row gap-1 px-2 sm:px-4  ">
         <!-- LEFT: Main Swiper Container -->
         <section class="w-full lg:w-[65%] xl:w-[70%] overflow-hidden relative flex-shrink-0">
             <div class="mySwiper relative w-full">
@@ -615,7 +615,7 @@ handleQueryError($conn, "New Status Query");
         <!-- RIGHT: 2 Images Container -->
         <section class="w-full lg:w-[35%] xl:w-[30%] flex-shrink-0">
             <!-- Mobile: Horizontal Layout (2 images side by side) -->
-            <div class="flex lg:hidden gap-2 sm:gap-3 w-full h-[180px] xs:h-[230px] sm:h-[280px]">
+            <div class="flex lg:hidden gap-1 sm:gap-1 w-full h-[180px] xs:h-[230px] sm:h-[280px]">
                 <!-- Image 1 - Desktop -->
                 <div class="w-full flex-1 bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden border border-gray-200  shadow-sm hover:shadow-md transition-shadow duration-300 relative group">
                     <img src="../img/gif1.gif" alt="Promo 1" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
@@ -656,16 +656,16 @@ handleQueryError($conn, "New Status Query");
         </section>
     </div>
 
- <section class="bg-black hidden md:block border border-black/20">
-    <div class="px-4 sm:px-8 lg:px-9">
-        <!-- Clickable Banner Image - Left Aligned -->
-        <a href="shop.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
-            <img src="../img/exclusive1.png"
-                alt="Exclusive Discounts - Shop Now"
-                class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
-        </a>
-    </div>
-</section>
+    <section class="bg-black hidden md:block border border-black/20">
+        <div class="px-4 sm:px-8 lg:px-9">
+            <!-- Clickable Banner Image - Left Aligned -->
+            <a href="shop.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
+                <img src="../img/exclusive1.png"
+                    alt="Exclusive Discounts - Shop Now"
+                    class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
+            </a>
+        </div>
+    </section>
 
     <section class="py-5 tracking-wide px-4 hidden md:block">
         <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -832,35 +832,41 @@ handleQueryError($conn, "New Status Query");
     ];
     ?>
 
-    <section class="py-10 bg-neutral-100 rounded-t-[100px] ">
+    <section class="py-8 md:py-10 lg:py-12 bg-white rounded-t-[60px] md:rounded-t-[80px] lg:rounded-t-[100px]">
         <!-- Minimal Header -->
-        <div class="mb-12 px-4 max-w-7xl mx-auto">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-1 h-8 bg-neutral-900"></div>
-                <h2 class="text-3xl lg:text-4xl font-bold text-neutral-900 tracking-wide">
-                    Shop by Department
-                </h2>
+        <div class="mb-8 md:mb-10 lg:mb-12 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-2 md:mb-3">
+                <div class="flex items-center gap-2 md:gap-3">
+                    <div class="w-1 h-6 md:h-7 lg:h-8 bg-black"></div>
+                    <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-black tracking-wide">
+                        Shop by Department
+                    </h2>
+                </div>
 
+                <!-- Navigation Buttons - Compact Top Right -->
+                <div class="hidden md:flex items-center gap-2">
+                    <button class="department-prev-btn w-9 h-9 bg-white border border-neutral-200 rounded-full shadow-sm flex items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-900 group-hover:text-white transition-colors">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <button class="department-next-btn w-9 h-9 bg-white border border-neutral-200 rounded-full shadow-sm flex items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-900 group-hover:text-white transition-colors">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <p class="text-neutral-600 text-base lg:text-lg ml-7 font-light">
+            <p class="text-black text-sm md:text-base lg:text-lg ml-5 md:ml-6 lg:ml-7 font-light">
                 Explore our complete range of products
             </p>
+            <hr class="border-t border-black mt-4 md:mt-5 lg:mt-6">
+
+
         </div>
 
         <!-- Categories Container -->
-        <div class="relative px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
-            <!-- Navigation Buttons -->
-            <button class="department-prev-btn hidden lg:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white border border-neutral-200 rounded-full shadow-sm items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-neutral-900 group-hover:text-white transition-colors">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </button>
-
-            <button class="department-next-btn hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white border border-neutral-200 rounded-full shadow-sm items-center justify-center hover:bg-neutral-900 hover:border-neutral-900 transition-all duration-300 group">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-neutral-900 group-hover:text-white transition-colors">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
+        <div class="relative px-3 sm:px-4 md:px-5 lg:px-6 max-w-[1800px] mx-auto">
 
             <div class="swiper department-swiper-container overflow-hidden">
                 <div class="swiper-wrapper pb-4">
@@ -893,18 +899,18 @@ handleQueryError($conn, "New Status Query");
                         <div class="swiper-slide">
                             <a href="shop?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block h-full">
                                 <!-- Card with Unique Rounded Corners -->
-                                <div class="h-full bg-white border border-neutral-200 group-hover:border-neutral-900 transition-all duration-500 overflow-hidden department-card group-hover:shadow-lg">
+                                <div class="h-full bg-white group-hover:border-neutral-900 transition-all duration-500 overflow-hidden department-card group-hover:shadow-lg">
                                     <!-- Image Container -->
-                                    <div class="relative h-52 sm:h-60 lg:h-64 bg-neutral-50 overflow-hidden">
+                                    <div class="relative h-48 sm:h-52 md:h-56 lg:h-64 bg-neutral-50 overflow-hidden">
                                         <img src="<?php echo htmlspecialchars($imagePath); ?>"
                                             alt="<?php echo htmlspecialchars($displayName); ?>"
-                                            class="copy w-full h-full object-contain p-3 transition-transform duration-700 "
+                                            class="copy w-full h-full object-contain p-2 sm:p-3 md:p-4 transition-transform duration-700 group-hover:scale-105"
                                             loading="lazy">
                                     </div>
 
                                     <!-- Text Content -->
-                                    <div class="py-3 px-4 text-center border-t border-neutral-100">
-                                        <h3 class="text-neutral-900 text-sm lg:text-base uppercase group-hover:text-neutral-600 transition-colors duration-300 tracking-wide">
+                                    <div class="py-2.5 md:py-3 px-3 md:px-4 text-center border-t border-neutral-100">
+                                        <h3 class="text-neutral-900 text-xs sm:text-sm md:text-base uppercase group-hover:text-neutral-600 transition-colors duration-300 tracking-wide font-medium">
                                             <?php echo htmlspecialchars($displayName); ?>
                                         </h3>
                                     </div>
@@ -918,25 +924,56 @@ handleQueryError($conn, "New Status Query");
     </section>
 
     <style>
-        /* Unique Rounded Corner Style */
+        /* Unique Rounded Corner Style - Responsive */
         .department-card {
-            border-radius: 40px 0 40px 0;
+            border-radius: 30px 0 30px 0;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .copy {
-            border-radius: 40px 0 40px 0;
+            border-radius: 30px 0 30px 0;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* Tablet and Desktop - Larger rounded corners */
+        @media (min-width: 768px) {
+            .department-card {
+                border-radius: 35px 0 35px 0;
+            }
+
+            .copy {
+                border-radius: 35px 0 35px 0;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .department-card {
+                border-radius: 40px 0 40px 0;
+            }
+
+            .copy {
+                border-radius: 40px 0 40px 0;
+            }
+        }
 
         /* Image optimization */
         .department-card img {
             image-rendering: -webkit-optimize-contrast;
         }
+
+        /* Swiper customization for responsive */
+        .department-swiper-container {
+            padding: 4px;
+        }
+
+        /* Hide nav buttons when not needed */
+        .swiper-button-disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
     </style>
 
-
+    <hr class="border-t border-gray-100 mt-2">
 
     <section class="px-4 sm:px-6 lg:px-8 py-10 ">
         <div class="max-w-full mx-auto">
@@ -1200,10 +1237,10 @@ handleQueryError($conn, "New Status Query");
         </style>
     </section>
 
-    <section class="py-5 px-4 sm:px-6 lg:px-8">
+    <section class="py-7 px-4 sm:px-6 lg:px-8">
         <div class="max-w-full mx-auto">
             <!-- Header -->
-            <div class="mb-12" data-aos="fade-up">
+            <div class="mb-8" data-aos="fade-up">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-1 h-8 bg-neutral-900"></div>
                     <h2 class="text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
@@ -1216,8 +1253,7 @@ handleQueryError($conn, "New Status Query");
             </div>
 
             <!-- 2x2 Grid Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <!-- Box 1 -->
                 <a href="link-1.php" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
                     <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
@@ -1310,167 +1346,187 @@ handleQueryError($conn, "New Status Query");
         </div>
     </section>
 
-<?php
+    <?php
     // MAIN query for bestseller items
     $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
     $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     ?>
 
-    <section class="py-2" id="bestseller-section">
-        <div class="max-w-[1700px] mx-auto w-full px-4 sm:px-6 lg:px-8">
+    <section class="py-6 md:py-8 lg:py-12" id="bestseller-section">
+        <div class="max-w-[1700px] mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8">
 
             <!-- Section Header -->
-            <div class="text-center mb-8" data-aos="fade-up">
-                <div class="flex items-center justify-center gap-3 mb-3">
-                    <h2 class="text-3xl md:text-4xl text-black tracking-wide">
+            <div class="text-center mb-4 md:mb-6 lg:mb-8" data-aos="fade-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black tracking-wide">
                         Best Seller
                     </h2>
-                    <svg class="w-7 h-7 md:w-8 md:h-8 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                 </div>
-                <p class="text-gray-600 text-base md:text-lg">
+                <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg px-2">
                     Save big on quality home improvement products
                 </p>
             </div>
 
-            <!-- Bestseller Tabs -->
-            <div>
-<!-- Navbar-style Tabs with Scroll Buttons -->
-                <div class="mb-8 relative">
-                    <div class="border-b border-gray-200 relative">
-                        <!-- Left Scroll Button -->
-                        <button
-                            onclick="scrollTabs('left')"
-                            id="scroll-left"
-                            class="hidden absolute left-0 top-0 bottom-0 w-12 items-center justify-center bg-gradient-to-r from-white to-transparent z-20 hover:from-gray-50 transition-all"
-                            style="display: none;">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-
-                        <!-- Right Scroll Button -->
-                        <button
-                            onclick="scrollTabs('right')"
-                            id="scroll-right"
-                            class="hidden absolute right-0 top-0 bottom-0 w-12 items-center justify-center bg-gradient-to-l from-white to-transparent z-20 hover:from-gray-50 transition-all"
-                            style="display: none;">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-
-                        <div class="flex overflow-x-auto scrollbar-hide gap-1 sm:gap-2 snap-x snap-mandatory scroll-smooth pb-px px-12 lg:px-14" id="bestseller-tabs">
+            <!-- Bestseller Tabs Navigation -->
+            <div class="mb-4 md:mb-6 lg:mb-8">
+                <div class="border-b border-gray-200 relative overflow-hidden">
+                    <!-- Swiper Container for Tabs -->
+                    <div class="swiper bestsellerTabsSwiper">
+                        <div class="swiper-wrapper pb-px">
                             <?php foreach ($bestsellerData as $index => $item): ?>
-                                <button
-                                    onclick="showBestseller(<?= $index ?>)"
-                                    id="tab-<?= $index ?>"
-                                    class="bestseller-tab tracking-wide whitespace-nowrap py-3 px-3 sm:px-4 md:px-6 border-b-2 uppercase text-xs sm:text-sm md:text-base transition-all duration-300 flex-shrink-0 snap-start <?= $index === 0 ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-black hover:text-gray-800 hover:border-gray-300' ?>">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </button>
+                                <div class="swiper-slide !w-auto">
+                                    <button
+                                        onclick="switchBestseller(<?= $index ?>)"
+                                        data-index="<?= $index ?>"
+                                        class="bestseller-tab tracking-wide whitespace-nowrap py-2.5 md:py-3 px-3 sm:px-4 md:px-5 lg:px-6 border-b-2 uppercase text-xs md:text-sm lg:text-base transition-all duration-300 w-full <?= $index === 0 ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-black hover:text-gray-800 hover:border-gray-300' ?>">
+                                        <?= htmlspecialchars($item['title']) ?>
+                                    </button>
+                                </div>
                             <?php endforeach; ?>
                         </div>
+
+                        <!-- Navigation Arrows (Desktop Only) -->
+                        <div class="swiper-button-prev"></div>
+                        <div class="swiper-button-next"></div>
                     </div>
                 </div>
-
-                <!-- Content Display Area - Full Width No Padding -->
-                <div class="relative" id="bestseller-content">
-                    <?php foreach ($bestsellerData as $index => $item): ?>
-                        <div
-                            id="content-<?= $index ?>"
-                            class="bestseller-content grid md:grid-cols-2 gap-4 lg:gap-8 items-center <?= $index === 0 ? '' : 'hidden' ?>">
-
-                            <!-- Image Side -->
-                            <div class="order-2 md:order-1" data-aos="fade-right">
-                                <div class="relative overflow-hidden shadow-2xl group">
-                                    <img
-                                        src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
-                                        alt="<?= htmlspecialchars($item['title']) ?>"
-                                        class="w-full h-[400px] sm:h-[500px] object-cover transition-transform duration-700">
-
-                                    <!-- Gradient Overlay -->
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
-                                    <!-- Badge -->
-                                    <div class="absolute top-4 right-4 bg-black text-white px-4 py-2 tracking-wide text-sm shadow-lg">
-                                        Best Seller
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Content Side -->
-                            <div class="order-1 md:order-2 space-y-6 px-6 md:px-8 lg:px-12" data-aos="fade-left">
-                                <div>
-                                    <h3 class="text-3xl sm:text-4xl text-gray-800 mb-4 uppercase">
-                                        <?= htmlspecialchars($item['title']) ?>
-                                    </h3>
-                                    <div class="w-20 h-1 bg-orange-500 rounded-full mb-6"></div>
-                                </div>
-
-                                <p class="text-gray-600 text-base sm:text-lg leading-relaxed">
-                                    <?= nl2br(htmlspecialchars($item['description'])) ?>
-                                </p>
-
-                                <!-- CTA Button -->
-                                <div class="pt-4">
-                                    <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                        class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white font-semibold px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                        <span>Learn More</span>
-                                        <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                                        </svg>
-                                    </a>
-                                </div>
-
-                                <!-- Additional Info -->
-                                <div class="flex items-center gap-4 pt-4 text-sm text-gray-500">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                        </svg>
-                                        <span>Top Rated</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        <span>Quality Guaranteed</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
             </div>
+
+            <!-- Content Display Area -->
+            <div class="relative overflow-hidden" id="bestseller-content">
+                <?php foreach ($bestsellerData as $index => $item): ?>
+                    <div
+                        id="content-<?= $index ?>"
+                        class="bestseller-content grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 items-center <?= $index === 0 ? '' : 'hidden' ?>">
+
+                        <!-- Image Side -->
+                        <div class="order-2 md:order-1" data-aos="fade-right">
+                            <div class="relative overflow-hidden shadow-md md:shadow-lg lg:shadow-2xl group">
+                                <img
+                                    src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
+                                    alt="<?= htmlspecialchars($item['title']) ?>"
+                                    class="w-full h-[240px] sm:h-[300px] md:h-[400px] lg:h-[500px] object-cover transition-transform duration-700">
+
+                                <!-- Gradient Overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                                <!-- Badge -->
+                                <div class="absolute top-3 right-3 md:top-4 md:right-4 bg-black text-white px-3 py-1.5 md:px-4 md:py-2 tracking-wide text-xs md:text-sm shadow-lg">
+                                    Best Seller
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Side -->
+                        <div class="order-1 md:order-2 space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4 md:px-6 lg:px-12" data-aos="fade-left">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-800 mb-2 md:mb-3 lg:mb-4 uppercase leading-tight">
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </h3>
+                                <div class="w-16 sm:w-16 md:w-20 h-1 bg-black rounded-full mb-3 md:mb-4 lg:mb-6"></div>
+                            </div>
+
+                            <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
+                                <?= nl2br(htmlspecialchars($item['description'])) ?>
+                            </p>
+                            <!-- CTA Button -->
+                            <div class="pt-1 sm:pt-2 md:pt-4">
+                                <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                                    class="animated-learn-more inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base transition-all duration-300 group relative">
+                                    <span class="relative overflow-hidden">
+                                        <span class="block transition-transform duration-300 group-hover:-translate-y-full">Learn More</span>
+                                        <span class="absolute inset-0 block translate-y-full transition-transform duration-300 group-hover:translate-y-0 text-red-600">Learn More</span>
+                                    </span>
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:text-red-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                    </svg>
+                                </a>
+                            </div>
+
+                            <style>
+                                .animated-learn-more::after {
+                                    content: "";
+                                    position: absolute;
+                                    left: 0;
+                                    bottom: -4px;
+                                    width: 0;
+                                    height: 2px;
+                                    background-color: #c84747;
+                                    transition: width 0.3s ease-out;
+                                }
+
+                                .animated-learn-more:hover::after {
+                                    width: 100%;
+                                }
+                            </style>
+
+                            <!-- Additional Info -->
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 pt-1 sm:pt-2 md:pt-4 text-xs md:text-sm text-gray-500">
+                                <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                    </svg>
+                                    <span>Top Rated</span>
+                                </div>
+                                <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Quality Guaranteed</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
         </div>
     </section>
 
     <style>
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        /* Swiper Navigation Styling */
+        .bestsellerTabsSwiper .swiper-button-prev,
+        .bestsellerTabsSwiper .swiper-button-next {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
+        .bestsellerTabsSwiper .swiper-button-prev:after,
+        .bestsellerTabsSwiper .swiper-button-next:after {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
         }
 
-        /* Fade animation */
+        /* Hide arrows on mobile */
+        @media (max-width: 1023px) {
+
+            .bestsellerTabsSwiper .swiper-button-prev,
+            .bestsellerTabsSwiper .swiper-button-next {
+                display: none;
+            }
+        }
+
+        /* Smooth content transitions */
         .bestseller-content {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeInContent 0.4s ease-in-out;
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeInContent {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(10px);
             }
 
             to {
@@ -1478,146 +1534,147 @@ handleQueryError($conn, "New Status Query");
                 transform: translateY(0);
             }
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .bestseller-tab {
+                touch-action: manipulation;
+            }
+        }
     </style>
 
+
     <script>
-     function showBestseller(index) {
-    // Hide all content
-    const allContent = document.querySelectorAll('.bestseller-content');
-    allContent.forEach(content => {
-        content.classList.add('hidden');
-    });
+        // Initialize Tabs Swiper
+        let tabsSwiper;
 
-    // Remove active class from all tabs
-    const allTabs = document.querySelectorAll('.bestseller-tab');
-    allTabs.forEach(tab => {
-        tab.classList.remove('border-orange-500', 'text-orange-600', 'bg-orange-50');
-        tab.classList.add('border-transparent', 'text-gray-600');
-    });
-
-    // Show selected content
-    const selectedContent = document.getElementById('content-' + index);
-    if (selectedContent) {
-        selectedContent.classList.remove('hidden');
-    }
-
-    // Add active class to selected tab
-    const selectedTab = document.getElementById('tab-' + index);
-    if (selectedTab) {
-        selectedTab.classList.remove('border-transparent', 'text-gray-600');
-        selectedTab.classList.add('border-orange-500', 'text-orange-600', 'bg-orange-50');
-
-        // Auto-scroll to active tab on mobile
-        selectedTab.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'nearest'
+        document.addEventListener('DOMContentLoaded', function() {
+            tabsSwiper = new Swiper('.bestsellerTabsSwiper', {
+                slidesPerView: 'auto',
+                spaceBetween: 8,
+                freeMode: true,
+                grabCursor: true,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                breakpoints: {
+                    640: {
+                        spaceBetween: 8
+                    },
+                    768: {
+                        spaceBetween: 8
+                    },
+                    1024: {
+                        spaceBetween: 8
+                    }
+                },
+                on: {
+                    init: function() {
+                        updateNavigationButtons(this);
+                    },
+                    resize: function() {
+                        updateNavigationButtons(this);
+                    },
+                    slideChange: function() {
+                        updateNavigationButtons(this);
+                    },
+                    reachBeginning: function() {
+                        updateNavigationButtons(this);
+                    },
+                    reachEnd: function() {
+                        updateNavigationButtons(this);
+                    }
+                }
+            });
         });
-    }
-}
 
-function updateScrollButtons() {
-    const tabsContainer = document.getElementById('bestseller-tabs');
-    const leftButton = document.getElementById('scroll-left');
-    const rightButton = document.getElementById('scroll-right');
+        // Function to show/hide navigation buttons based on content
+        function updateNavigationButtons(swiper) {
+            const prevButton = document.querySelector('.bestsellerTabsSwiper .swiper-button-prev');
+            const nextButton = document.querySelector('.bestsellerTabsSwiper .swiper-button-next');
 
-    if (!tabsContainer || !leftButton || !rightButton) return;
+            if (!prevButton || !nextButton) return;
 
-    const isScrollable = tabsContainer.scrollWidth > tabsContainer.clientWidth;
-    const isAtStart = tabsContainer.scrollLeft <= 0;
-    const isAtEnd = tabsContainer.scrollLeft + tabsContainer.clientWidth >= tabsContainer.scrollWidth - 1;
+            // Check if content is scrollable (overflow)
+            const isScrollable = swiper.isEnd !== swiper.isBeginning;
 
-    // Show buttons ONLY if scrollable
-    if (isScrollable) {
-        // Left button: hide if at start, show if can scroll left
-        if (isAtStart) {
-            leftButton.classList.add('hidden');
-            leftButton.classList.remove('lg:flex');
-        } else {
-            leftButton.classList.remove('hidden');
-            leftButton.classList.add('lg:flex');
+            // Hide both buttons if content fits (not scrollable)
+            if (!isScrollable) {
+                prevButton.style.display = 'none';
+                nextButton.style.display = 'none';
+                return;
+            }
+
+            // Show buttons on desktop only when scrollable
+            if (window.innerWidth >= 1024) {
+                // Show/hide prev button
+                if (swiper.isBeginning) {
+                    prevButton.style.display = 'none';
+                } else {
+                    prevButton.style.display = 'flex';
+                }
+
+                // Show/hide next button
+                if (swiper.isEnd) {
+                    nextButton.style.display = 'none';
+                } else {
+                    nextButton.style.display = 'flex';
+                }
+            } else {
+                // Always hide on mobile
+                prevButton.style.display = 'none';
+                nextButton.style.display = 'none';
+            }
         }
 
-        // Right button: hide if at end, show if can scroll right
-        if (isAtEnd) {
-            rightButton.classList.add('hidden');
-            rightButton.classList.remove('lg:flex');
-        } else {
-            rightButton.classList.remove('hidden');
-            rightButton.classList.add('lg:flex');
+        // Function to switch bestseller content
+        function switchBestseller(index) {
+            // Hide all content
+            const allContent = document.querySelectorAll('.bestseller-content');
+            allContent.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Remove active class from all tabs
+            const allTabs = document.querySelectorAll('.bestseller-tab');
+            allTabs.forEach(tab => {
+                tab.classList.remove('border-orange-500', 'text-orange-600', 'bg-orange-50');
+                tab.classList.add('border-transparent', 'text-gray-600');
+            });
+
+            // Show selected content
+            const selectedContent = document.getElementById('content-' + index);
+            if (selectedContent) {
+                selectedContent.classList.remove('hidden');
+            }
+
+            // Add active class to selected tab
+            const selectedTab = document.querySelector('[data-index="' + index + '"]');
+            if (selectedTab) {
+                selectedTab.classList.remove('border-transparent', 'text-gray-600');
+                selectedTab.classList.add('border-orange-500', 'text-orange-600', 'bg-orange-50');
+            }
         }
-    } else {
-        // Not scrollable - hide both buttons completely
-        leftButton.classList.add('hidden');
-        leftButton.classList.remove('lg:flex');
-        rightButton.classList.add('hidden');
-        rightButton.classList.remove('lg:flex');
-    }
-}
 
-function scrollTabs(direction) {
-    const tabsContainer = document.getElementById('bestseller-tabs');
-    const scrollAmount = 200; // pixels to scroll
-
-    if (direction === 'left') {
-        tabsContainer.scrollBy({
-            left: -scrollAmount,
-            behavior: 'smooth'
+        // Update buttons on window resize
+        window.addEventListener('resize', function() {
+            if (tabsSwiper) {
+                updateNavigationButtons(tabsSwiper);
+            }
         });
-    } else {
-        tabsContainer.scrollBy({
-            left: scrollAmount,
-            behavior: 'smooth'
-        });
-    }
-
-    // Update button visibility after scroll
-    setTimeout(updateScrollButtons, 300);
-}
-
-// Initialize scroll buttons on load
-window.addEventListener('load', updateScrollButtons);
-window.addEventListener('resize', updateScrollButtons);
-
-// Update on scroll
-document.getElementById('bestseller-tabs')?.addEventListener('scroll', updateScrollButtons);
-
-// Optional: Add touch swipe support for mobile
-let touchStartX = 0;
-let touchEndX = 0;
-
-document.getElementById('bestseller-tabs')?.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].screenX;
-}, {
-    passive: true
-});
-
-document.getElementById('bestseller-tabs')?.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-}, {
-    passive: true
-});
-
-function handleSwipe() {
-    // Swipe gesture detection (optional enhancement)
-    if (touchEndX < touchStartX - 50) {
-        // Swiped left - could trigger something
-    }
-    if (touchEndX > touchStartX + 50) {
-        // Swiped right - could trigger something
-    }
-}
     </script>
 
     <section class="px-2 sm:px-4 lg:px-6 py-3 sm:py-2">
-
         <!-- Header first -->
         <div class="flex items-center justify-between gap-4 mb-2 mt-2" data-aos="fade-up">
-            <!-- Left Side: Title with Arrow -->
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl text-black">
-                Bed Furniture
-            </h2>
+    <!-- Left Side: Bar + Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-neutral-900"></div>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
+                   Bed Furniture
+                </h2>
+            </div>
 
             <!-- Right Side: See All Button -->
             <a href="#" class="text-sm sm:text-base text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 transition-colors duration-200">
@@ -1760,28 +1817,13 @@ function handleSwipe() {
     <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-2">
         <!-- Header first -->
         <div class="flex items-center gap-2 mb-2 mt-2" data-aos="fade-up">
-            <!-- Details Button (as Title) -->
-            <a href="shop.php"
-                class="group relative inline-flex items-center gap-2 font-light text-2xl sm:text-3xl lg:text-4xl text-black">
-                <span class="relative">
-                    <span class="block group-hover:text-orange-600 transition-colors duration-300">
-                        Building Materials
-                    </span>
-                    <!-- Animated overlay text -->
-                    <span class="absolute inset-0 w-0 overflow-hidden text-orange-600 transition-all duration-300 group-hover:w-full">
-                        Building Materials
-                    </span>
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24"
-                    stroke-width="2.5" stroke="currentColor"
-                    class="w-7 h-7 transform transition-transform duration-300 group-hover:translate-x-1 group-hover:text-orange-600">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-                <!-- underline -->
-                <span class="absolute left-0 -bottom-1 h-0.5 w-0 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
-            </a>
+        <!-- Left Side: Bar + Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-neutral-900"></div>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
+                    Building materials
+                </h2>
+            </div>
         </div>
 
         <div class="swiper mySwiper-products w-full">
@@ -2232,138 +2274,192 @@ function handleSwipe() {
         }
     </style>
 
-    <!-- Featured Categories Section -->
-    <section class="p-6">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl">Featured Categories</h1>
-            <p class="text-gray-600">Discover our top product categories just for you.</p>
-        </div>
+   <!-- Featured Categories Section - Vertical Carousel -->
+<section class="w-full relative overflow-hidden bg-white py-12">
+    <!-- Header -->
+    <div class="text-center mb-8 px-4">
+        <h2 class="text-4xl md:text-5xl font-bold text-black mb-2 tracking-tight">Featured Collection</h2>
+        <p class="text-gray-600 text-lg">Explore our premium categories</p>
+    </div>
 
-        <!-- Category Boxes - Clickable with Flex Layout -->
-        <div class="flex flex-wrap gap-4 justify-center">
-            <!-- Doors Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('doors')">
-                <img src="../img/categ/cat1.png" alt="Doors" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Doors</h2>
-                </div>
-            </div>
-
-            <!-- Aircon Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('aircon')">
-                <img src="../img/categ/cat2.webp" alt="Aircon" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Aircon</h2>
-                </div>
-            </div>
-
-            <!-- Bathroom Fixtures Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('bathroomfixtures')">
-                <img src="../img/categ/cat3.png" alt="Bathroom Fixtures" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Bathroom Fixtures</h2>
-                </div>
-            </div>
-
-            <!-- Tiles Category -->
-            <div class="relative rounded-xl overflow-hidden hover:scale-105 transition cursor-pointer category-box w-64 h-48 group"
-                onclick="loadCategoryProducts('tiles')">
-                <img src="../img/categ/cat4.png" alt="Tiles" class="w-full h-full object-contain">
-                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <h2 class="text-2xl  text-white">Tiles</h2>
-                </div>
+    <!-- Carousel Container -->
+    <div class="flex h-[600px] w-full" id="carouselContainer">
+        <!-- Doors Category -->
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+            onclick="loadCategoryProducts('doors')">
+            <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Doors</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
         </div>
-    </section>
 
-    <!-- Sidebar Overlay (Hidden by default) -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
-
-    <!-- Sidebar for Products -->
-    <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
-        <!-- Sidebar Header -->
-        <div class="sticky top-0 bg-black border-b p-4 flex justify-between items-center z-1 0">
-            <div class="text-white">
-                <h2 class="text-xl  capitalize" id="sidebarTitle">Products</h2>
-                <p class="text-sm " id="sidebarSubtitle">Loading...</p>
+        <!-- Aircon Category -->
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+            onclick="loadCategoryProducts('aircon')">
+            <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Aircon</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
-            <button onclick="closeSidebar()" class="text-white hover:text-gray-900">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
         </div>
 
-        <!-- Sidebar Content -->
-        <div id="sidebarContent" class="p-4">
-            <div class="flex justify-center items-center h-40">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <!-- Bathroom Fixtures Category -->
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+            onclick="loadCategoryProducts('bathroomfixtures')">
+            <img src="../img/category/10.png" alt="Bathroom Fixtures" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Bathroom</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
+            </div>
+        </div>
+
+        <!-- Tiles Category -->
+        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+            onclick="loadCategoryProducts('tiles')">
+            <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-contain parallax-img">
+            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Tiles</h3>
+                <p class="text-base drop-shadow-lg">Browse collection</p>
             </div>
         </div>
     </div>
+</section>
 
-    <script>
-        function loadCategoryProducts(category) {
-            // Open sidebar
-            document.getElementById('sidebarOverlay').classList.remove('hidden');
-            document.getElementById('productSidebar').classList.remove('translate-x-full');
+<!-- Sidebar Overlay (Hidden by default) -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
 
-            // Update title
-            document.getElementById('sidebarTitle').textContent = category.charAt(0).toUpperCase() + category.slice(1);
-            document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+<!-- Sidebar for Products -->
+<div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Sidebar Header (Fixed) -->
+    <div class="bg-black border-b p-4 flex justify-between items-center flex-shrink-0">
+        <div class="text-white">
+            <h2 class="text-xl capitalize" id="sidebarTitle">Products</h2>
+            <p class="text-sm" id="sidebarSubtitle">Loading...</p>
+        </div>
+        <button onclick="closeSidebar()" class="text-white hover:text-gray-300 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
 
-            // Show loading spinner
-            document.getElementById('sidebarContent').innerHTML = `
+    <!-- Scroll Buttons Container -->
+    <div class="flex gap-2 p-2 bg-gray-100 flex-shrink-0">
+        <button id="scrollUpBtn" onclick="scrollSidebarUp()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors hidden" title="Scroll Up">
+            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            </svg>
+        </button>
+        <button id="scrollDownBtn" onclick="scrollSidebarDown()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors" title="Scroll Down">
+            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Sidebar Content (Scrollable) -->
+    <div id="sidebarContent" class="flex-1 overflow-y-hidden p-4">
         <div class="flex justify-center items-center h-40">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
-    `;
+    </div>
+</div>
 
-            // Fetch products via AJAX
-            fetch('index_fetch_category_products.php?category=' + category)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('sidebarContent').innerHTML = data;
-                    document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
-                })
-                .catch(error => {
-                    document.getElementById('sidebarContent').innerHTML = `
-                <div class="text-center text-red-500 p-4">
-                    <p>Error loading products. Please try again.</p>
-                </div>
-            `;
-                });
+<script>
+    const scrollStep = 150;
+
+    function loadCategoryProducts(category) {
+        document.getElementById('sidebarOverlay').classList.remove('hidden');
+        document.getElementById('productSidebar').classList.remove('translate-x-full');
+
+        const categoryNames = {
+            'doors': 'Doors',
+            'aircon': 'Aircon',
+            'bathroomfixtures': 'Bathroom Fixtures',
+            'tiles': 'Tiles'
+        };
+        
+        document.getElementById('sidebarTitle').textContent = categoryNames[category] || category;
+        document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+        document.getElementById('sidebarContent').innerHTML = `
+            <div class="flex justify-center items-center h-40">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            </div>
+        `;
+
+        document.getElementById('sidebarContent').scrollTop = 0;
+        updateScrollButtons();
+
+        fetch('index_fetch_category_products.php?category=' + category)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('sidebarContent').innerHTML = data;
+                document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
+                updateScrollButtons();
+            })
+            .catch(error => {
+                document.getElementById('sidebarContent').innerHTML = `
+                    <div class="text-center text-red-500 p-4">
+                        <p>Error loading products. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+
+    function scrollSidebarUp() {
+        const content = document.getElementById('sidebarContent');
+        content.scrollBy({ top: -scrollStep, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 400);
+    }
+
+    function scrollSidebarDown() {
+        const content = document.getElementById('sidebarContent');
+        content.scrollBy({ top: scrollStep, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 400);
+    }
+
+    function updateScrollButtons() {
+        const content = document.getElementById('sidebarContent');
+        const scrollUpBtn = document.getElementById('scrollUpBtn');
+        const scrollDownBtn = document.getElementById('scrollDownBtn');
+
+        if (content.scrollTop > 0) {
+            scrollUpBtn.classList.remove('hidden');
+        } else {
+            scrollUpBtn.classList.add('hidden');
         }
 
-        function closeSidebar() {
-            document.getElementById('sidebarOverlay').classList.add('hidden');
-            document.getElementById('productSidebar').classList.add('translate-x-full');
+        if (content.scrollTop < content.scrollHeight - content.clientHeight - 10) {
+            scrollDownBtn.classList.remove('hidden');
+        } else {
+            scrollDownBtn.classList.add('hidden');
         }
+    }
 
-        // Close sidebar with ESC key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeSidebar();
-            }
-        });
-    </script>
+    function closeSidebar() {
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+        document.getElementById('productSidebar').classList.add('translate-x-full');
+    }
 
-    <style>
-        .category-box {
-            transition: all 0.3s ease;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSidebar();
         }
+    });
 
-        .category-box:hover {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
+    document.getElementById('sidebarContent').addEventListener('scroll', updateScrollButtons);
+</script>
 
-        .category-box:active {
-            transform: scale(0.98);
-        }
-    </style>
+<style>
+    .category-box {
+        transition: all 0.3s ease;
+    }
+
+    .category-box:active {
+        transform: scale(0.98);
+    }
+</style>
 
     <!-- Top Sales Section -->
     <section class="px-4 py-10">
@@ -3675,6 +3771,7 @@ function handleSwipe() {
                 spaceBetween: 12,
                 centeredSlides: false,
                 loop: deptSlideCount >= 4,
+                grabCursor: true,
                 navigation: {
                     nextEl: '.department-next-btn',
                     prevEl: '.department-prev-btn',
@@ -3685,19 +3782,38 @@ function handleSwipe() {
                     pauseOnMouseEnter: true
                 } : false,
                 breakpoints: {
+                    480: {
+                        slidesPerView: 2.5,
+                        spaceBetween: 14,
+                        loop: deptSlideCount >= 5
+                    },
                     640: {
                         slidesPerView: 3,
                         spaceBetween: 16,
                         loop: deptSlideCount >= 6
                     },
+                    768: {
+                        slidesPerView: 4,
+                        spaceBetween: 16,
+                        loop: deptSlideCount >= 8
+                    },
                     1024: {
-                        slidesPerView: 7,
-                        spaceBetween: 14,
+                        slidesPerView: 5,
+                        spaceBetween: 18,
                         loop: deptSlideCount >= 10
+                    },
+                    1280: {
+                        slidesPerView: 6,
+                        spaceBetween: 20,
+                        loop: deptSlideCount >= 12
+                    },
+                    1536: {
+                        slidesPerView: 7,
+                        spaceBetween: 20,
+                        loop: deptSlideCount >= 14
                     }
                 }
             });
-
 
             // ✅ MAIN HERO SWIPER
             const heroSlideCount = document.querySelector('.mySwiper')?.querySelectorAll('.swiper-slide').length || 0;

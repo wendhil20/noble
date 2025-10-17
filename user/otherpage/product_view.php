@@ -2,10 +2,10 @@
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
-// ✅ Restore session from remember_token (email or mobile-based or Google)
+
+// ✅ STEP 1: SESSION RESTORE
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $token = $_COOKIE['remember_token'];
-
   $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
   $stmt->bind_param("s", $token);
   $stmt->execute();
@@ -13,65 +13,85 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
   if ($res->num_rows > 0) {
     $user = $res->fetch_assoc();
-
-    // 🔐 Store essential user session info
     $_SESSION['user_id']    = $user['id'];
     $_SESSION['user_name']  = $user['name'];
     $_SESSION['user_email'] = $user['email'] ?? '';
     $_SESSION['user_mobile'] = $user['mobile'] ?? '';
 
-    // 👤 Check if it's a Google account (optional)
     if (!empty($user['google_id'])) {
       $_SESSION['google_logged_in'] = true;
       $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
     }
   }
-
   $stmt->close();
 }
 
-// ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-  // Not logged in — redirect to login or Google auth
-  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+  header('Location: ../google-callback.php');
   exit;
 }
 
-// ✅ Retrieve user info
+// ✅ RETRIEVE USER INFO
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? 'example@example.com';
 $user_picture = $_SESSION['user_picture'] ?? null;
-// Initialize $is_logged_in variable
 $is_logged_in = isset($_SESSION['user_id']) || isset($_COOKIE['remember_token']);
 
-// Continue with your product code...
+// ✅ VALIDATE PRODUCT ID
 $product_id = $_GET['id'] ?? 0;
-
 if (!$product_id || !is_numeric($product_id) || $product_id <= 0) {
   echo "Invalid product ID.";
   exit;
 }
 
-// Fetch product with sub_images
-$stmt = $conn->prepare("SELECT id, product_name, codename, quantity, price, main_image, sub_images, description FROM products WHERE id = ? LIMIT 1");
+// ============================================================
+// FETCH ORDER: PRODUCTS → PRODUCT_TYPES → PRODUCT_COLORS → PRODUCT_VARIANTS
+// ============================================================
+
+// ✅ STEP 1: FETCH FROM PRODUCTS TABLE
+$stmt = $conn->prepare("
+  SELECT id, product_name, codename, quantity, price, main_image, sub_images, 
+         description, descrip1, descrip2, descrip3, descrip4, descrip5,
+         descrip6, descrip7, descrip8, descrip9, descrip10
+  FROM products 
+  WHERE id = ? 
+  LIMIT 1
+");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $product = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
 if (!$product) {
   echo "Product not found.";
   exit;
 }
 
-// ✅ NEW: Fetch the first type's image AND name to use as main display
+// ✅ CREATE BACKUP OF ORIGINAL PRODUCT DATA (To prevent overwriting)
+$ORIGINAL_PRODUCT = $product;
+
+// Debug log
+error_log("=== PRODUCT DATA FETCHED ===");
+error_log("Product ID: " . $product['id']);
+error_log("Product Name: " . $product['product_name']);
+error_log("Description: " . substr($product['description'], 0, 100));
+
+// ✅ STEP 2: FETCH FROM PRODUCT_TYPES TABLE
 $type_main_image = null;
 $type_main_name = null;
 
-$stmt = $conn->prepare("SELECT type_image, type_name FROM product_types WHERE product_id = ? ORDER BY id ASC LIMIT 1");
+$stmt = $conn->prepare("
+  SELECT id, type_name, type_image 
+  FROM product_types 
+  WHERE product_id = ? 
+  ORDER BY id ASC 
+  LIMIT 1
+");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
 if ($result->num_rows > 0) {
   $type_row = $result->fetch_assoc();
   $type_main_image = $type_row['type_image'];
@@ -79,10 +99,8 @@ if ($result->num_rows > 0) {
 }
 $stmt->close();
 
-// ✅ Use type image if available, fallback to product main_image
+// Determine display image and name
 $display_image = !empty($type_main_image) ? $type_main_image : $product['main_image'];
-
-// ✅ Use type name if available, fallback to product name
 $display_name = !empty($type_main_name) ? $type_main_name : $product['product_name'];
 
 // Process sub images
@@ -94,20 +112,29 @@ if (!empty($product['sub_images'])) {
   }
 }
 
-// Fetch product colors
-$stmt = $conn->prepare("SELECT id, color_name, color_code, price, image FROM product_colors WHERE product_id = ? ORDER BY color_name");
+// ✅ STEP 3: FETCH FROM PRODUCT_COLORS TABLE
+$stmt = $conn->prepare("
+  SELECT id, color_name, color_code, price, image 
+  FROM product_colors 
+  WHERE product_id = ? 
+  ORDER BY color_name
+");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $colors_result = $stmt->get_result();
+
 $product_colors = [];
 while ($row = $colors_result->fetch_assoc()) {
   $product_colors[] = $row;
 }
+$stmt->close();
 
-// Fetch product types and variants (UPDATED: added sku_info)
+// ✅ STEP 4: FETCH FROM PRODUCT_TYPES AND PRODUCT_VARIANTS TABLES
 $stmt = $conn->prepare("
   SELECT 
-    pt.*, 
+    pt.id as type_id,
+    pt.type_name,
+    pt.type_image,
     pv.id as variant_id, 
     pv.namevariant, 
     pv.color, 
@@ -117,9 +144,10 @@ $stmt = $conn->prepare("
     pv.discount, 
     pv.image as variant_image,
     pv.sku_info
-  FROM product_types pt 
+  FROM product_types pt
   LEFT JOIN product_variants pv ON pt.id = pv.type_id 
   WHERE pt.product_id = ?
+  ORDER BY pt.id ASC, pv.size ASC
 ");
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
@@ -130,9 +158,9 @@ while ($row = $types_result->fetch_assoc()) {
   $type_name = $row['type_name'];
   if (!isset($types_data[$type_name])) {
     $types_data[$type_name] = [
-      'id' => $row['id'],
+      'id' => $row['type_id'],
       'name' => $type_name,
-      'image' => $row['type_image'], // ✅ This is the type_image
+      'image' => $row['type_image'],
       'variants' => []
     ];
   }
@@ -140,31 +168,33 @@ while ($row = $types_result->fetch_assoc()) {
     $types_data[$type_name]['variants'][] = $row;
   }
 }
+$stmt->close();
 
-$codename = $product['codename']; // current product codename
-$stmt = $conn->prepare("SELECT id, product_name, codename, quantity, price, main_image, description, descrip6, descrip7
-                        FROM products 
-                        WHERE codename = ? AND id != ? 
-                        ORDER BY RAND() LIMIT 10");
+// ✅ FETCH RELATED PRODUCTS
+$codename = $product['codename'];
+$stmt = $conn->prepare("
+  SELECT id, product_name, codename, quantity, price, main_image, sub_images, description, descrip6, descrip7
+  FROM products 
+  WHERE codename = ? AND id != ? 
+  ORDER BY RAND()
+");
 $stmt->bind_param("si", $codename, $product_id);
 $stmt->execute();
 $related_products = $stmt->get_result();
-
-
-// Check if this product is in the "windows" category
-$is_windows_category = strtolower($product['codename']) === 'windows';
-
-// Fetch product specifications directly from products table
-$product_specs = null;
-$stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
-$stmt->bind_param("i", $product_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$product_specs = $result->fetch_assoc();
 $stmt->close();
 
-// Get average rating and count of raters
-$avg_stmt = $conn->prepare("SELECT ROUND(AVG(rating),1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+// ✅ CHECK IF WINDOWS CATEGORY
+$is_windows_category = strtolower($product['codename']) === 'windows';
+
+// ✅ USE ALREADY FETCHED PRODUCT DATA FOR SPECIFICATIONS
+$product_specs = $product;
+
+// ✅ GET AVERAGE RATING
+$avg_stmt = $conn->prepare("
+  SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters 
+  FROM product_ratings 
+  WHERE product_id = ?
+");
 $avg_stmt->bind_param("i", $product['id']);
 $avg_stmt->execute();
 $avg_data = $avg_stmt->get_result()->fetch_assoc();
@@ -172,8 +202,44 @@ $avg_rating = $avg_data['avg_rating'] ?? 0;
 $total_raters = $avg_data['total_raters'] ?? 0;
 $avg_stmt->close();
 
-?>
+// ✅ FINAL VALIDATION: Ensure product data is intact
+if (!isset($product['product_name']) || empty($product['product_name'])) {
+    error_log("⚠️ WARNING: Product name missing! Using backup data.");
+    $product = $ORIGINAL_PRODUCT;
+}
 
+// ============================================================
+// ALL DATA IS NOW READY - USE IT IN YOUR HTML/TEMPLATE
+// ============================================================
+
+
+// echo "<h2>Fetched Product Data:</h2>";
+// if ($product) {
+//   echo "<table border='1' cellpadding='10'>";
+//   echo "<tr><th>Field</th><th>Value</th></tr>";
+//   echo "<tr><td>ID</td><td>" . htmlspecialchars($product['id']) . "</td></tr>";
+//   echo "<tr><td>Product Name</td><td>" . htmlspecialchars($product['product_name']) . "</td></tr>";
+//   echo "<tr><td>Description</td><td>" . htmlspecialchars($product['description']) . "</td></tr>";
+//   echo "</table>";
+  
+//   echo "<hr>";
+//   echo "<h3>✅ SUCCESS - Correct product fetched!</h3>";
+// } else {
+//   echo "<p style='color:red;'>❌ NO PRODUCT FOUND with ID: $product_id</p>";
+// }
+
+// // Test other IDs
+// echo "<hr>";
+// echo "<h2>Test Other Products:</h2>";
+// echo "<ul>";
+// echo "<li><a href='?id=8'>Test ID 8 (Marine)</a></li>";
+// echo "<li><a href='?id=21'>Test ID 21 (Sliding Window)</a></li>";
+// echo "<li><a href='?id=43'>Test ID 43 (Modern Dining Table)</a></li>";
+// echo "<li><a href='?id=48'>Test ID 48 (Modern King Bed)</a></li>";
+// echo "<li><a href='?id=53'>Test ID 53 (Classic Tufted King Bed)</a></li>";
+// echo "</ul>";
+
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -849,209 +915,156 @@ $avg_stmt->close();
     <div class="bg-white rounded-xl overflow-hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-        <!-- Product Image & Info Section -->
-        <div class="p-4 lg:p-8">
-          <div class="relative">
-            <!-- Product Image -->
-            <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
-       w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
-              id="magnifier-container">
+ <!-- PRODUCT IMAGE & INFO SECTION -->
+<div class="p-4 lg:p-8">
+  <div class="relative">
+    <!-- Product Image Container -->
+    <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
+         w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
+      id="magnifier-container">
 
-              <img id="main-product-image"
-                src="../../<?= htmlspecialchars($display_image) ?>"
-                data-original-image="../../<?= htmlspecialchars($display_image) ?>"
-                data-original-name="<?= htmlspecialchars($display_name) ?>"
-                class="w-full h-full object-contain transition-all duration-300"
-                alt="<?= htmlspecialchars($display_name) ?>">
+      <img id="main-product-image"
+        src="../../<?= htmlspecialchars($display_image) ?>"
+        data-original-image="../../<?= htmlspecialchars($display_image) ?>"
+        data-original-name="<?= htmlspecialchars($display_name) ?>"
+        class="w-full h-full object-contain transition-all duration-300"
+        alt="<?= htmlspecialchars($display_name) ?>">
 
-              <!-- Tracking Lens - HIDDEN BY DEFAULT -->
-              <div id="magnifier-lens"
-                class="absolute hidden pointer-events-none bg-white/30 backdrop-blur-sm border-2 border-orange-400"
-                style="width: 100px; height: 100px;"></div>
-            </div>
+      <!-- Magnifier Lens - Hidden by default -->
+      <div id="magnifier-lens"
+        class="absolute hidden pointer-events-none bg-white/30 backdrop-blur-sm border-2 border-orange-400"
+        style="width: 100px; height: 100px;"></div>
+    </div>
 
-            <!-- Preview Panel - HIDDEN BY DEFAULT, only shows on hover -->
-            <div id="zoom-preview-panel"
-              class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
-              <div class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
-                <div id="zoom-preview-content"
-                  class="w-full h-full bg-no-repeat"
-                  style="background-size: 250%;"></div>
+    <!-- Zoom Preview Panel - Hidden by default -->
+    <div id="zoom-preview-panel"
+      class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
+      <div class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
+        <div id="zoom-preview-content"
+          class="w-full h-full bg-no-repeat"
+          style="background-size: 250%;"></div>
 
-                <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
-                  <i class="fas fa-search-plus mr-1"></i> 2.5x Zoom
-                </div>
-              </div>
-            </div>
+        <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
+          <i class="fas fa-search-plus mr-1"></i> 2.5x Zoom
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thumbnail Gallery -->
+  <?php if (!empty($sub_images)): ?>
+    <div class="thumbnail-gallery mt-3">
+      <div class="thumbnail-container overflow-x-auto scrollbar-hide">
+        <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
+
+          <!-- Main Thumbnail -->
+          <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
+            <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
+              class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
+              alt="Main Image">
           </div>
 
-          <?php if (!empty($sub_images)): ?>
-            <div class="thumbnail-gallery mt-3">
-              <!-- Scrollable Container -->
-              <div class="thumbnail-container overflow-x-auto scrollbar-hide">
-                <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
-
-                  <!-- ✅ UPDATED: Main Thumbnail now shows first type image -->
-                  <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
-                    <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
-                      class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
-                      alt="Main Image">
-                  </div>
-
-                  <!-- Sub Images Thumbnails -->
-                  <?php foreach ($sub_images as $index => $sub_image): ?>
-                    <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
-                      <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
-                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
-                        alt="Sub Image <?= $index + 1 ?>">
-                    </div>
-                  <?php endforeach; ?>
-                </div>
-              </div>
+          <!-- Sub Images Thumbnails -->
+          <?php foreach ($sub_images as $index => $sub_image): ?>
+            <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
+              <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
+                class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+                alt="Sub Image <?= $index + 1 ?>">
             </div>
-          <?php endif; ?>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 
-          <style>
-            /* Mobile-specific adjustments */
-            @media (max-width: 640px) {
-              .thumbnail-gallery {
-                max-width: 300px;
-                margin: 0 auto;
-              }
-            }
+  <!-- Product Info Section -->
+  <div class="space-y-4 lg:space-y-6">
+    <!-- Customer Rating -->
+    <div>
+      <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
+      <?php if ($total_raters > 0): ?>
+        <div class="flex items-center gap-2 text-yellow-400">
+          <div class="flex text-lg">
+            <?php
+            $full = floor($avg_rating);
+            $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+            $empty = 5 - $full - $half;
 
-            /* Hide scrollbar but keep functionality */
-            .scrollbar-hide {
-              -ms-overflow-style: none;
-              /* IE and Edge */
-              scrollbar-width: none;
-              /* Firefox */
-            }
+            for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+            if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+            for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+            ?>
+          </div>
+          <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
+          <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
+        </div>
+      <?php else: ?>
+        <p class="text-sm text-gray-500">No reviews yet</p>
+      <?php endif; ?>
+    </div>
 
-            .scrollbar-hide::-webkit-scrollbar {
-              display: none;
-              /* Chrome, Safari and Opera */
-            }
-
-            /* Smooth scrolling */
-            .thumbnail-container {
-              scroll-behavior: smooth;
-            }
-
-            /* Optional: Add fade effect on edges to indicate scrollability */
-            .thumbnail-container::before,
-            .thumbnail-container::after {
-              content: '';
-              position: absolute;
-              top: 0;
-              bottom: 0;
-              width: 20px;
-              pointer-events: none;
-              z-index: 1;
-            }
-
-            .thumbnail-container::before {
-              left: 0;
-              background: linear-gradient(to right, rgba(255, 255, 255, 0.8), transparent);
-            }
-
-            .thumbnail-container::after {
-              right: 0;
-              background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
-            }
-          </style>
-
-          <!-- Product Basic Info -->
-          <div class="space-y-4 lg:space-y-6">
-            <!-- Rating -->
-            <div>
-              <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
-              <?php if ($total_raters > 0): ?>
-                <div class="flex items-center gap-2 text-yellow-400">
-                  <div class="flex text-lg">
-                    <?php
-                    $full = floor($avg_rating);
-                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                    $empty = 5 - $full - $half;
-
-                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                    ?>
-                  </div>
-                  <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
-                  <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
-                </div>
-              <?php else: ?>
-                <p class="text-sm text-gray-500">No reviews yet</p>
-              <?php endif; ?>
+    <!-- Product Name & Price Display -->
+    <div>
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
+        <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
+          <?php
+          // ✅ USE ORIGINAL_PRODUCT if available, fallback to $product
+          $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
+          echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
+          ?>
+        </h1>
+        
+        <!-- Dynamic Price Display -->
+        <div id="product-price-display" class="hidden">
+          <div class="text-right">
+            <div id="original-price-container" class="hidden">
+              <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
             </div>
-
-            <!-- Product Name and Price -->
-            <div>
-              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
-                <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
-                  <?= htmlspecialchars($display_name ?? $product['product_name'] ?? 'Product') ?>
-                </h1>
-                <?php if (!empty($type_main_name) && !empty($product['product_name']) && $type_main_name !== $product['product_name']): ?>
-                  <p class="text-sm text-gray-500 mt-1">
-                    <?= htmlspecialchars($product['product_name']) ?>
-                  </p>
-                <?php endif; ?>
-                <!-- Dynamic Price Display -->
-                <div id="product-price-display" class="hidden">
-                  <div class="text-right">
-                    <!-- Original Price (with strikethrough if discount exists) -->
-                    <div id="original-price-container" class="hidden">
-                      <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
-                    </div>
-
-                    <!-- Final Price -->
-                    <div class="text-2xl lg:text-3xl text-black" id="final-price">₱0.00</div>
-
-                    <!-- Discount Badge -->
-                    <div id="discount-badge" class="hidden mt-1">
-                      <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        <span id="discount-percent">0</span>% OFF
-                      </span>
-                    </div>
-
-                    <!-- Selected Size Info -->
-                    <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
-                      Size: <span class="font-semibold" id="selected-size-text">-</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex flex-wrap gap-2 mb-3">
-                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-                  <?= htmlspecialchars($product['codename']) ?>
-                </span>
-              </div>
+            <div class="text-2xl lg:text-3xl text-black" id="final-price">₱0.00</div>
+            <div id="discount-badge" class="hidden mt-1">
+              <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                <span id="discount-percent">0</span>% OFF
+              </span>
             </div>
-
-            <!-- Description -->
-            <div>
-              <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
-                <?= htmlspecialchars($product['description'] ?? 'No description available.') ?>
-              </p>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-3 pt-4">
-              <a href="product_info.php?id=<?= $product['id'] ?>"
-                class="flex-1 bg-black hover:bg-orange-600 text-white text-center px-4 py-3 font-medium transition-colors">
-                <i class="fas fa-info-circle mr-2"></i>View Details
-              </a>
-              <button onclick="shareProduct()"
-                class="flex-1 bg-black hover:bg-gray-600 text-white px-4 py-3 font-medium transition-colors">
-                <i class="fas fa-share-alt mr-2"></i>Share
-              </button>
+            <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
+              Size: <span class="font-semibold" id="selected-size-text">-</span>
             </div>
           </div>
         </div>
+      </div>
 
+      <div class="flex flex-wrap gap-2 mb-3">
+        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+          <?php
+          $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
+          echo htmlspecialchars($safe_product['codename']);
+          ?>
+        </span>
+      </div>
+    </div>
+
+    <!-- Product Description -->
+    <div>
+      
+      <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
+        <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
+      </p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-3 pt-4">
+      <?php $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product; ?>
+      <a href="product_info.php?id=<?= $safe_product['id'] ?>"
+        class="flex-1 bg-black hover:bg-orange-600 text-white text-center px-4 py-3 font-medium transition-colors">
+        <i class="fas fa-info-circle mr-2"></i>View Details
+      </a>
+      <button onclick="shareProduct()"
+        class="flex-1 bg-black hover:bg-gray-600 text-white px-4 py-3 font-medium transition-colors">
+        <i class="fas fa-share-alt mr-2"></i>Share
+      </button>
+    </div>
+  </div>
+</div>
         <!-- Mobile Sidebar Toggle Button (Smaller Version) -->
         <button id="mobileSidebarToggle"
           class="lg:hidden fixed bottom-3 right-3 z-[90] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">

@@ -634,19 +634,79 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
             <!-- Products Section -->
             <div class="flex-1 lg:order-1">
 
-                <?php if (!empty($selected_categories)): ?>
-                    <div class="mb-10">
-                        <div class="flex flex-wrap items-center justify-center gap-4">
-                            <?php foreach ($selected_categories as $cat_key): ?>
-                                <?php if (isset($all_categories[$cat_key])): ?>
-                                    <span class="inline-block  text-black px-8 py-4 rounded-xl text-5xl uppercase tracking-wider underline">
-                                        <?= htmlspecialchars($all_categories[$cat_key]) ?>
-                                    </span>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </div>
+<?php if (!empty($selected_categories)): ?>
+    <div class="mb-8">
+        <!-- Filter Bar Container -->
+        <div class=" p-4 shadow-sm ">
+            <!-- Header with Count and Clear All -->
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                        <i class="fas fa-filter text-white text-sm"></i>
                     </div>
-                <?php endif; ?>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900">Active Filters</h3>
+                        <p class="text-xs text-gray-500"><?= count($selected_categories) ?> selected</p>
+                    </div>
+                </div>
+                
+                <button onclick="clearAllFilters()" 
+                        class="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-sm hover:shadow">
+                    <i class="fas fa-trash-alt"></i>
+                    <span class="hidden sm:inline">Clear All</span>
+                </button>
+            </div>
+
+            <!-- Pills Container with Scroll -->
+            <div class="overflow-x-auto scrollbar-hide -mx-2 px-2">
+                <div class="flex gap-2 min-w-max sm:flex-wrap sm:min-w-0">
+                    <?php foreach ($selected_categories as $cat_key): ?>
+                        <?php if (isset($all_categories[$cat_key])): ?>
+                            <div class="inline-flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-black px-4 py-2 rounded-xl text-sm font-medium text-gray-900 shadow-sm hover:shadow transition-all group whitespace-nowrap">
+                                <i class="fas fa-tag text-xs text-gray-400 group-hover:text-black transition-colors"></i>
+                                <span class="uppercase"><?= htmlspecialchars($all_categories[$cat_key]) ?></span>
+                                <a href="?<?= http_build_query(array_merge($_GET, ['category' => array_diff($selected_categories, [$cat_key]), 'page' => 1])) ?>" 
+                                   class="flex items-center justify-center w-5 h-5 bg-gray-100 hover:bg-black rounded-full transition-colors group-hover:bg-red-500">
+                                    <i class="fas fa-times text-[10px] text-gray-600 group-hover:text-white"></i>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
+<style>
+/* Hide scrollbar pero functional pa rin */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Smooth transitions */
+.transition-all {
+    transition: all 0.2s ease;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    .inline-flex {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .w-8.h-8 {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+}
+</style>
 
                 <!-- Controls -->
                 <div class="p-4 sm:p-6 mb-8 shadow-sm">
@@ -734,12 +794,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                                             </span>
                                         </div>
 
-                                        <!-- View Button (Desktop Only) -->
-                                        <div class="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button class="w-full bg-black text-white py-2.5 rounded-lg hover:bg-primary-dark transition-colors text-sm">
-                                                <i class="fas fa-shopping-cart mr-2"></i>View Product
-                                            </button>
-                                        </div>
+                                    
                                     </div>
                                 </div>
                             </a>

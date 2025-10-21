@@ -546,71 +546,42 @@ handleQueryError($conn, "New Status Query");
 
     <!-- Parent Wrapper -->
     <div class="w-full flex flex-col lg:flex-row gap-1 px-2 sm:px-4  ">
-        <!-- LEFT: Main Swiper Container -->
-        <section class="w-full lg:w-[65%] xl:w-[70%] overflow-hidden relative flex-shrink-0">
-            <div class="mySwiper relative w-full">
-                <div class="swiper-wrapper">
-                    <?php while ($row = $slideresult->fetch_assoc()): ?>
-                        <div class="swiper-slide h-[180px] xs:h-[220px] sm:h-[280px] md:h-[320px] lg:h-[280px] xl:h-[320px] relative bg-gradient-to-b from-gray-50 to-gray-100  overflow-hidden">
-                            <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
-                                alt="Discount"
-                                class="w-full h-full object-cover object-center" />
+       <!-- LEFT: Main Swiper Container -->
+<section class="w-full lg:w-[65%] xl:w-[70%] overflow-hidden relative flex-shrink-0">
+    <div class="mySwiper relative w-full">
+        <div class="swiper-wrapper">
+            <?php while ($row = $slideresult->fetch_assoc()): ?>
+                <div class="swiper-slide h-[180px] xs:h-[220px] sm:h-[280px] md:h-[320px] lg:h-[280px] xl:h-[320px] relative bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden">
+                    <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
+                        alt="Discount"
+                        class="w-full h-full object-cover object-center" />
 
-                            <!-- Blurred Gray Overlay for Pagination Area -->
-                            <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-100 via-gray-100/70 to-transparent backdrop-blur-xs z-[5]"></div>
-
-                            <div class="absolute inset-0 bg-black/5"></div>
-                        </div>
-                    <?php endwhile; ?>
+                    <div class="absolute inset-0 bg-black/5"></div>
                 </div>
+            <?php endwhile; ?>
+        </div>
 
-                <div class="swiper-pagination !bottom-2 relative z-10"></div>
-            </div>
+        <div class="swiper-pagination !bottom-0 relative z-10"></div>
+    </div>
 
-            <style>
-                .mySwiper .swiper-slide img {
-                    width: 100% !important;
-                    max-width: 1450px !important;
-                    height: 100% !important;
-                    object-fit: cover !important;
-                    object-position: center !important;
-                    margin: auto !important;
+    <style>
+        .mySwiper {
+            height: 100%;
+        }
+        
+        .mySwiper .swiper-slide img {
+            width: 100% !important;
+            max-width: 1450px !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            margin: 0 !important;
+            display: block !important;
+        }
 
-                }
-
-                /* Mobile - Extra Small */
-                @media (max-width: 480px) {
-                    .mySwiper .swiper-slide img {
-                        width: 98% !important;
-                        height: 96% !important;
-                    }
-                }
-
-                /* Mobile - Small */
-                @media (min-width: 481px) and (max-width: 640px) {
-                    .mySwiper .swiper-slide img {
-                        width: 96% !important;
-                        height: 94% !important;
-                    }
-                }
-
-                /* Tablet */
-                @media (min-width: 641px) and (max-width: 1024px) {
-                    .mySwiper .swiper-slide img {
-                        width: 92% !important;
-                        height: 90% !important;
-                    }
-                }
-
-                /* Desktop */
-                @media (min-width: 1025px) {
-                    .mySwiper .swiper-slide img {
-                        width: 100% !important;
-                        height: 100% !important;
-                    }
-                }
-            </style>
-        </section>
+        /* Remove all media query sizing - let it fill 100% always */
+    </style>
+</section>
 
         <!-- RIGHT: 2 Images Container -->
         <section class="w-full lg:w-[35%] xl:w-[30%] flex-shrink-0">
@@ -635,7 +606,7 @@ handleQueryError($conn, "New Status Query");
             </div>
 
             <!-- Desktop: Vertical Layout (stacked) -->
-            <div class="hidden lg:flex flex-col gap-2 w-full h-[280px] xl:h-[438px]">
+            <div class="hidden lg:flex flex-col w-full h-[280px] xl:h-[438px]">
                 <!-- Image 1 - Desktop -->
                 <div class="w-full flex-1 bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden border border-gray-200  shadow-sm hover:shadow-md transition-shadow duration-300 relative group">
                     <img src="../img/gif1.gif" alt="Promo 1" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />

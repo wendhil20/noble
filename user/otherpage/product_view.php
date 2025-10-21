@@ -204,14 +204,13 @@ $avg_stmt->close();
 
 // ✅ FINAL VALIDATION: Ensure product data is intact
 if (!isset($product['product_name']) || empty($product['product_name'])) {
-    error_log("⚠️ WARNING: Product name missing! Using backup data.");
-    $product = $ORIGINAL_PRODUCT;
+  error_log("⚠️ WARNING: Product name missing! Using backup data.");
+  $product = $ORIGINAL_PRODUCT;
 }
 
 // ============================================================
 // ALL DATA IS NOW READY - USE IT IN YOUR HTML/TEMPLATE
 // ============================================================
-
 
 // echo "<h2>Fetched Product Data:</h2>";
 // if ($product) {
@@ -221,7 +220,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 //   echo "<tr><td>Product Name</td><td>" . htmlspecialchars($product['product_name']) . "</td></tr>";
 //   echo "<tr><td>Description</td><td>" . htmlspecialchars($product['description']) . "</td></tr>";
 //   echo "</table>";
-  
+
 //   echo "<hr>";
 //   echo "<h3>✅ SUCCESS - Correct product fetched!</h3>";
 // } else {
@@ -238,7 +237,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 // echo "<li><a href='?id=48'>Test ID 48 (Modern King Bed)</a></li>";
 // echo "<li><a href='?id=53'>Test ID 53 (Classic Tufted King Bed)</a></li>";
 // echo "</ul>";
-
 ?>
 
 <!DOCTYPE html>
@@ -729,109 +727,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
   <!-- Hero Section with Bouncing Bubbles Background -->
   <div class="bg-black text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
-    <!-- Bouncing Bubbles SVG Layer -->
-    <div class="absolute inset-0 pointer-events-none z-0">
-      <svg width="100%" height="100%" class="w-full h-full" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
-        <circle class="bubble bubble1" cx="10%" cy="80%" r="32" fill="#fff" fill-opacity="0.13" />
-        <circle class="bubble bubble2" cx="25%" cy="90%" r="18" fill="#fff" fill-opacity="0.10" />
-        <circle class="bubble bubble3" cx="40%" cy="85%" r="24" fill="#fff" fill-opacity="0.09" />
-        <circle class="bubble bubble4" cx="60%" cy="92%" r="14" fill="#fff" fill-opacity="0.11" />
-        <circle class="bubble bubble5" cx="75%" cy="88%" r="28" fill="#fff" fill-opacity="0.12" />
-        <circle class="bubble bubble6" cx="90%" cy="80%" r="20" fill="#fff" fill-opacity="0.10" />
-      </svg>
-    </div>
-    <div class="container mx-auto px-4 relative z-10">
-      <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-center mb-2 sm:mb-4">Your Shopping</h1>
-      <p class="text-sm sm:text-lg lg:text-xl text-center opacity-90 max-w-2xl mx-auto">
-        Learn more about this item and check if it fits your needs.<br>
-        Discover detailed specifications, available options, and make the best choice for your home.
-      </p>
-    </div>
     <style>
-      /* Bouncing animation for bubbles */
-      .bubble1 {
-        animation: bubble-bounce1 7s ease-in-out infinite alternate;
-      }
-
-      .bubble2 {
-        animation: bubble-bounce2 6s ease-in-out infinite alternate;
-      }
-
-      .bubble3 {
-        animation: bubble-bounce3 8s ease-in-out infinite alternate;
-      }
-
-      .bubble4 {
-        animation: bubble-bounce4 5.5s ease-in-out infinite alternate;
-      }
-
-      .bubble5 {
-        animation: bubble-bounce5 7.5s ease-in-out infinite alternate;
-      }
-
-      .bubble6 {
-        animation: bubble-bounce6 6.5s ease-in-out infinite alternate;
-      }
-
-      @keyframes bubble-bounce1 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-60px) scale(1.08);
-        }
-      }
-
-      @keyframes bubble-bounce2 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-40px) scale(1.12);
-        }
-      }
-
-      @keyframes bubble-bounce3 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-70px) scale(1.05);
-        }
-      }
-
-      @keyframes bubble-bounce4 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-30px) scale(1.15);
-        }
-      }
-
-      @keyframes bubble-bounce5 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-55px) scale(1.09);
-        }
-      }
-
-      @keyframes bubble-bounce6 {
-        0% {
-          transform: translateY(0) scale(1);
-        }
-
-        100% {
-          transform: translateY(-35px) scale(1.13);
-        }
-      }
 
       /* Magnifier Container */
       #magnifier-container {
@@ -915,156 +811,156 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
     <div class="bg-white rounded-xl overflow-hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
- <!-- PRODUCT IMAGE & INFO SECTION -->
-<div class="p-4 lg:p-8">
-  <div class="relative">
-    <!-- Product Image Container -->
-    <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
+        <!-- PRODUCT IMAGE & INFO SECTION -->
+        <div class="p-4 lg:p-8">
+          <div class="relative">
+            <!-- Product Image Container -->
+            <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
          w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
-      id="magnifier-container">
+              id="magnifier-container">
 
-      <img id="main-product-image"
-        src="../../<?= htmlspecialchars($display_image) ?>"
-        data-original-image="../../<?= htmlspecialchars($display_image) ?>"
-        data-original-name="<?= htmlspecialchars($display_name) ?>"
-        class="w-full h-full object-contain transition-all duration-300"
-        alt="<?= htmlspecialchars($display_name) ?>">
+              <img id="main-product-image"
+                src="../../<?= htmlspecialchars($display_image) ?>"
+                data-original-image="../../<?= htmlspecialchars($display_image) ?>"
+                data-original-name="<?= htmlspecialchars($display_name) ?>"
+                class="w-full h-full object-contain transition-all duration-300"
+                alt="<?= htmlspecialchars($display_name) ?>">
 
-      <!-- Magnifier Lens - Hidden by default -->
-      <div id="magnifier-lens"
-        class="absolute hidden pointer-events-none bg-white/30 backdrop-blur-sm border-2 border-orange-400"
-        style="width: 100px; height: 100px;"></div>
-    </div>
-
-    <!-- Zoom Preview Panel - Hidden by default -->
-    <div id="zoom-preview-panel"
-      class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
-      <div class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
-        <div id="zoom-preview-content"
-          class="w-full h-full bg-no-repeat"
-          style="background-size: 250%;"></div>
-
-        <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
-          <i class="fas fa-search-plus mr-1"></i> 2.5x Zoom
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Thumbnail Gallery -->
-  <?php if (!empty($sub_images)): ?>
-    <div class="thumbnail-gallery mt-3">
-      <div class="thumbnail-container overflow-x-auto scrollbar-hide">
-        <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
-
-          <!-- Main Thumbnail -->
-          <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
-            <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
-              class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
-              alt="Main Image">
-          </div>
-
-          <!-- Sub Images Thumbnails -->
-          <?php foreach ($sub_images as $index => $sub_image): ?>
-            <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
-              <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
-                class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
-                alt="Sub Image <?= $index + 1 ?>">
+              <!-- Magnifier Lens - Hidden by default -->
+              <div id="magnifier-lens"
+                class="absolute hidden pointer-events-none bg-white/30 backdrop-blur-sm border-2 border-orange-400"
+                style="width: 100px; height: 100px;"></div>
             </div>
-          <?php endforeach; ?>
-        </div>
-      </div>
-    </div>
-  <?php endif; ?>
 
-  <!-- Product Info Section -->
-  <div class="space-y-4 lg:space-y-6">
-    <!-- Customer Rating -->
-    <div>
-      <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
-      <?php if ($total_raters > 0): ?>
-        <div class="flex items-center gap-2 text-yellow-400">
-          <div class="flex text-lg">
-            <?php
-            $full = floor($avg_rating);
-            $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-            $empty = 5 - $full - $half;
+            <!-- Zoom Preview Panel - Hidden by default -->
+            <div id="zoom-preview-panel"
+              class="hidden absolute top-0 left-full ml-6 w-96 h-96 z-50">
+              <div class="relative w-full h-full bg-gray-50 rounded-lg shadow-2xl overflow-hidden border-2 border-gray-200">
+                <div id="zoom-preview-content"
+                  class="w-full h-full bg-no-repeat"
+                  style="background-size: 250%;"></div>
 
-            for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-            if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-            for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-            ?>
-          </div>
-          <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
-          <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
-        </div>
-      <?php else: ?>
-        <p class="text-sm text-gray-500">No reviews yet</p>
-      <?php endif; ?>
-    </div>
-
-    <!-- Product Name & Price Display -->
-    <div>
-      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
-        <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
-          <?php
-          // ✅ USE ORIGINAL_PRODUCT if available, fallback to $product
-          $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
-          echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
-          ?>
-        </h1>
-        
-        <!-- Dynamic Price Display -->
-        <div id="product-price-display" class="hidden">
-          <div class="text-right">
-            <div id="original-price-container" class="hidden">
-              <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
-            </div>
-            <div class="text-2xl lg:text-3xl text-black" id="final-price">₱0.00</div>
-            <div id="discount-badge" class="hidden mt-1">
-              <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                <span id="discount-percent">0</span>% OFF
-              </span>
-            </div>
-            <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
-              Size: <span class="font-semibold" id="selected-size-text">-</span>
+                <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
+                  <i class="fas fa-search-plus mr-1"></i> 2.5x Zoom
+                </div>
+              </div>
             </div>
           </div>
+
+          <!-- Thumbnail Gallery -->
+          <?php if (!empty($sub_images)): ?>
+            <div class="thumbnail-gallery mt-3">
+              <div class="thumbnail-container overflow-x-auto scrollbar-hide">
+                <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
+
+                  <!-- Main Thumbnail -->
+                  <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
+                    <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
+                      class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
+                      alt="Main Image">
+                  </div>
+
+                  <!-- Sub Images Thumbnails -->
+                  <?php foreach ($sub_images as $index => $sub_image): ?>
+                    <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
+                      <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
+                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+                        alt="Sub Image <?= $index + 1 ?>">
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </div>
+          <?php endif; ?>
+
+          <!-- Product Info Section -->
+          <div class="space-y-4 lg:space-y-6">
+            <!-- Customer Rating -->
+            <div>
+              <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
+              <?php if ($total_raters > 0): ?>
+                <div class="flex items-center gap-2 text-yellow-400">
+                  <div class="flex text-lg">
+                    <?php
+                    $full = floor($avg_rating);
+                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                    $empty = 5 - $full - $half;
+
+                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                    ?>
+                  </div>
+                  <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
+                  <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
+                </div>
+              <?php else: ?>
+                <p class="text-sm text-gray-500">No reviews yet</p>
+              <?php endif; ?>
+            </div>
+
+            <!-- Product Name & Price Display -->
+            <div>
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
+                <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
+                  <?php
+                  // ✅ USE ORIGINAL_PRODUCT if available, fallback to $product
+                  $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
+                  echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
+                  ?>
+                </h1>
+
+                <!-- Dynamic Price Display -->
+                <div id="product-price-display" class="hidden">
+                  <div class="text-right">
+                    <div id="original-price-container" class="hidden">
+                      <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
+                    </div>
+                    <div class="text-2xl lg:text-3xl text-black" id="final-price">₱0.00</div>
+                    <div id="discount-badge" class="hidden mt-1">
+                      <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                        <span id="discount-percent">0</span>% OFF
+                      </span>
+                    </div>
+                    <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
+                      Size: <span class="font-semibold" id="selected-size-text">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <?php
+                  $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
+                  echo htmlspecialchars($safe_product['codename']);
+                  ?>
+                </span>
+              </div>
+            </div>
+
+            <!-- Product Description -->
+            <div>
+
+              <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
+                <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
+              </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+              <?php $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product; ?>
+              <a href="product_info.php?id=<?= $safe_product['id'] ?>"
+                class="flex-1 bg-black hover:bg-orange-600 text-white text-center px-4 py-3 font-medium transition-colors">
+                <i class="fas fa-info-circle mr-2"></i>View Details
+              </a>
+              <button onclick="shareProduct()"
+                class="flex-1 bg-black hover:bg-gray-600 text-white px-4 py-3 font-medium transition-colors">
+                <i class="fas fa-share-alt mr-2"></i>Share
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div class="flex flex-wrap gap-2 mb-3">
-        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-          <?php
-          $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
-          echo htmlspecialchars($safe_product['codename']);
-          ?>
-        </span>
-      </div>
-    </div>
-
-    <!-- Product Description -->
-    <div>
-      
-      <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
-        <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
-      </p>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row gap-3 pt-4">
-      <?php $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product; ?>
-      <a href="product_info.php?id=<?= $safe_product['id'] ?>"
-        class="flex-1 bg-black hover:bg-orange-600 text-white text-center px-4 py-3 font-medium transition-colors">
-        <i class="fas fa-info-circle mr-2"></i>View Details
-      </a>
-      <button onclick="shareProduct()"
-        class="flex-1 bg-black hover:bg-gray-600 text-white px-4 py-3 font-medium transition-colors">
-        <i class="fas fa-share-alt mr-2"></i>Share
-      </button>
-    </div>
-  </div>
-</div>
         <!-- Mobile Sidebar Toggle Button (Smaller Version) -->
         <button id="mobileSidebarToggle"
           class="lg:hidden fixed bottom-3 right-3 z-[90] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">

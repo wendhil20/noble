@@ -98,15 +98,28 @@ $total_price = 0;
 $error = null;
 $order_success = false;
 
-// ✅ Fetch Transportify vehicle list for automatic assignment
+// ✅ Fetch ALL couriers and their vehicles
 $transportify_vehicles = [];
-$stmt = $conn->prepare("SELECT * FROM transportify_vehicle_list ORDER BY base_fare ASC");
+$couriers_list = [];
+
+// Get all vehicles grouped by courier
+$stmt = $conn->prepare("SELECT * FROM transportify_vehicle_list ORDER BY courier_name ASC, base_fare ASC");
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $transportify_vehicles[] = $row;
+    
+    // Group vehicles by courier for easy access
+    $courier_name = $row['courier_name'];
+    if (!isset($couriers_list[$courier_name])) {
+        $couriers_list[$courier_name] = [];
+    }
+    $couriers_list[$courier_name][] = $row;
 }
 $stmt->close();
+
+// Get unique courier names for dropdown
+$unique_couriers = array_keys($couriers_list);
 
 // ✅ Fetch delivery settings (keep for store location)
 $delivery_settings = null;
@@ -1179,14 +1192,8 @@ $stmt = $conn->prepare("INSERT INTO order_items (
 foreach ($cart_items as $index => $item) {
     $subtotal_item = $item['price'] * $item['quantity'];
     $product_name = $item['product_name'] ?? $item['variant_name'];
-    $codename = $item['codename'] ?? '';
-    $type_name = $item['type_name'] ?? '';
-    $variant_color = $item['color_name'] ?: ($item['variant_name'] ?? '');
-    $size = $item['size'] ?? '';
-    $price = $item['price'];
-    $quantity = $item['quantity'];
-
-    // ✅ Calculate lead time dates
+    
+    // ✅ NEW: Calculate lead time dates
     $leadTimeRange = calculateLeadTimeRange(
         $item['lead_count'] ?? null,
         $item['lead_interval'] ?? null,
@@ -1346,13 +1353,27 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
 <body class="bg-gray-100 font-mont">
 
     <script>
-        // Initialize global configuration object with PHP data
+// Initialize global configuration object with PHP data
 window.checkoutConfig = {
     deliverySettings: <?= $delivery_settings ? json_encode($delivery_settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : 'null' ?>,
     transportifyVehicles: <?= json_encode($transportify_vehicles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+    couriersGrouped: <?= json_encode($couriers_list, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+    courierNames: <?= json_encode($unique_couriers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
     totalPrice: <?= (float)$total_price ?>,
     hasAddresses: <?= $has_billing_addresses ? 'true' : 'false' ?>
 };
+
+// ✅ CRITICAL: Assign vehicles and couriers to global scope
+window.transportifyVehicles = <?= json_encode($transportify_vehicles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+window.couriersGrouped = <?= json_encode($couriers_list, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+window.courierNames = <?= json_encode($unique_couriers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+// Debug: Verify data is loaded
+console.log('Total Vehicles Loaded:', window.transportifyVehicles.length);
+console.log('Couriers Available:', window.courierNames);
+Object.keys(window.couriersGrouped).forEach(courier => {
+    console.log(`  - ${courier}: ${window.couriersGrouped[courier].length} vehicles`);
+});
 
 // ✅ CRITICAL: Assign vehicles to global scope for access in distanceCalculation.js
 window.transportifyVehicles = <?= json_encode($transportify_vehicles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -1631,6 +1652,176 @@ if (window.transportifyVehicles.length === 0) {
     <!-- ✅ Delivery Calculation Section (shown only for delivery) -->
     <div id="deliveryCalculationSection" class="bg-white rounded-lg p-6">
         <h4 class="font-bold text-gray-800 mb-4">Delivery Distance Calculator</h4>
+
+        <!-- ✅ ENHANCED: Courier Selection with Modern Design -->
+<div class="bg-white border-2 border-orange-200 rounded-xl shadow-lg overflow-hidden mb-6 hover:shadow-xl transition-shadow duration-300">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="bg-white bg-opacity-20 rounded-lg p-2 mr-3">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-white font-bold text-lg">Select Courier Service</h3>
+                    <p class="text-orange-100 text-xs mt-0.5">Choose your preferred delivery partner</p>
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center bg-white bg-opacity-20 rounded-full px-3 py-1">
+                <span class="text-white text-xs font-medium">Step 3.1</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content Section -->
+    <div class="p-6">
+        <!-- Courier Dropdown with Icon -->
+        <div class="relative">
+            <label for="courierSelection" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                <span class="bg-orange-100 text-orange-700 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">1</span>
+                Choose Your Courier
+            </label>
+            
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                
+                <select id="courierSelection" name="courier_selection" 
+                        class="w-full pl-12 pr-10 py-4 border-2 border-gray-300 rounded-lg bg-white text-gray-700 font-medium
+                               focus:border-orange-500 focus:ring-4 focus:ring-orange-200 transition-all duration-200
+                               hover:border-orange-400 cursor-pointer appearance-none shadow-sm"
+                        required>
+                    <option value="" disabled selected>🚚 Select a delivery service...</option>
+                    <?php foreach ($unique_couriers as $courier): ?>
+                        <option value="<?= htmlspecialchars($courier) ?>" class="py-3">
+                            <?= htmlspecialchars($courier) ?> 
+                            • <?= count($couriers_list[$courier]) ?> vehicle<?= count($couriers_list[$courier]) > 1 ? 's' : '' ?> available
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                
+                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <p class="mt-2 text-xs text-gray-500 flex items-center">
+                <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Different couriers offer different vehicles and pricing
+            </p>
+        </div>
+        
+        <!-- Courier Info Card (Hidden by default) -->
+        <div id="courierInfo" class="hidden mt-4 animate-fadeIn">
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-4 shadow-md">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="bg-green-500 rounded-full p-2">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h4 class="text-green-800 font-bold text-sm mb-1 flex items-center">
+                            <span id="selectedCourierName">Courier</span> Selected
+                            <span class="ml-2 bg-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">✓ Active</span>
+                        </h4>
+                        <div class="space-y-2 mt-2">
+                            <div class="flex items-center text-sm text-green-700">
+                                <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <strong class="mr-1">Available Vehicles:</strong>
+                                <span id="courierVehicleCount" class="font-bold">0</span>
+                            </div>
+                            <div class="flex items-center text-xs text-green-600 bg-green-100 rounded px-2 py-1 inline-flex">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                Ready to calculate delivery cost
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Tip -->
+    <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+        <div class="flex items-center text-xs text-gray-600">
+            <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+            <span><strong>Pro Tip:</strong> We'll automatically select the best vehicle for your order size</span>
+        </div>
+    </div>
+</div>
+
+<!-- Add CSS Animation -->
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Custom Select Styling */
+    #courierSelection {
+        background-image: none;
+    }
+    
+    #courierSelection:hover {
+        box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.1), 0 2px 4px -1px rgba(249, 115, 22, 0.06);
+    }
+    
+    #courierSelection:focus {
+        outline: none;
+    }
+    
+    /* Option Styling */
+    #courierSelection option {
+        padding: 12px;
+        font-weight: 500;
+    }
+    
+    #courierSelection option:hover {
+        background-color: #fff7ed;
+    }
+    
+    /* Pulse animation for the step badge */
+    @keyframes pulse-orange {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+    
+    .animate-pulse-orange {
+        animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
 
 
         <!-- ✅ UPDATED: Single column layout with Store Info and Vehicle below -->
@@ -2066,27 +2257,36 @@ if (window.transportifyVehicles.length === 0) {
                 </div>
                 
                 <!-- ✅ NEW: Display Lead Time "Receive By" -->
-                <?php 
-                    $leadTimeRange = calculateLeadTimeRange(
-                        $item['lead_count'] ?? null,
-                        $item['lead_interval'] ?? null,
-                        $item['lead_gap'] ?? null
-                    );
-                    
-                    if ($leadTimeRange): 
-                ?>
-                    <div class="bg-green-50 border border-green-200 rounded p-2 mb-2">
-                        <div class="flex items-center gap-2 text-xs text-green-700">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <div>
-                                <strong>Receive By:</strong>
-                                <span class="font-semibold"><?= htmlspecialchars($leadTimeRange['display']) ?></span>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
+<?php 
+    $leadTimeRange = calculateLeadTimeRange(
+        $item['lead_count'] ?? null,
+        $item['lead_interval'] ?? null,
+        $item['lead_gap'] ?? null
+    );
+    
+    // Check if there are multiple different products
+    $hasMultipleProducts = count($cart_items) > 1;
+    
+    if ($leadTimeRange): 
+?>
+    <div class="bg-green-50 border border-green-200 rounded p-2 mb-2">
+        <div class="text-xs text-green-700">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <div>
+                    <span class="font-semibold">You can receive this item by <?= htmlspecialchars($leadTimeRange['display']) ?></span>
+                </div>
+            </div>
+            <?php if ($hasMultipleProducts): ?>
+            <div class="mt-1 pl-6 text-xs text-green-600 italic">
+                Note: If you want to receive it on this date, order this item separately (not with other products).
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
                 
                 <!-- Removed: Per-item delivery breakdown (now using single vehicle for entire order) -->
             </div>
@@ -2105,6 +2305,45 @@ if (window.transportifyVehicles.length === 0) {
     </div>
 <?php endforeach; ?>
                         </div>
+
+                        <!-- ✅ NEW: Expected Delivery Date Summary -->
+<?php
+$latestLeadTimeRange = null;
+$hasMultipleProducts = count($cart_items) > 1;
+
+foreach ($cart_items as $item) {
+    $leadTimeRange = calculateLeadTimeRange(
+        $item['lead_count'] ?? null,
+        $item['lead_interval'] ?? null,
+        $item['lead_gap'] ?? null
+    );
+    
+    if ($leadTimeRange) {
+        if (!$latestLeadTimeRange || $leadTimeRange['end_date'] > $latestLeadTimeRange['end_date']) {
+            $latestLeadTimeRange = $leadTimeRange;
+        }
+    }
+}
+
+if ($latestLeadTimeRange):
+?>
+<div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+    <div class="flex items-center gap-2 mb-2">
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <span class="font-bold text-green-800">Expected Delivery By:</span>
+    </div>
+    <div class="text-lg font-bold text-green-700 mb-2">
+        <?= $latestLeadTimeRange['start_date']->format('M d, Y') ?> - <?= $latestLeadTimeRange['end_date']->format('M d, Y') ?>
+    </div>
+    <?php if ($hasMultipleProducts): ?>
+    <div class="text-xs text-green-600 bg-green-100 rounded p-2">
+        <strong>Note:</strong> This is the latest estimated delivery date for your order. To receive items faster, you can order them separately instead of in a single order.
+    </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 
                         <!-- Total calculation -->
                         <div class="bg-gray-50 p-4 border-t">

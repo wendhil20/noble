@@ -186,12 +186,11 @@
             o.status,
             o.total,
             COUNT(DISTINCT oi.id) as item_count,
-            SUM(CASE 
-                WHEN (oi.supplier_id IS NOT NULL AND oi.supplier_id > 0) 
-                  OR (oi.supplier_id = 0 AND oi.manual_supplier_name IS NOT NULL AND oi.manual_supplier_name != '') 
-                THEN 1 
-                ELSE 0 
-            END) as assigned_count,
+            COUNT(DISTINCT CASE 
+    WHEN (oi.supplier_id IS NOT NULL AND oi.supplier_id > 0) 
+      OR (oi.supplier_id = 0 AND oi.manual_supplier_name IS NOT NULL AND oi.manual_supplier_name != '') 
+    THEN oi.id 
+END) as assigned_count,
             COUNT(DISTINCT poa.id) as po_attachment_count,
             COUNT(DISTINCT CASE WHEN rr.status = 'approved' THEN rr.id END) as approved_replacements_count
         FROM orders o

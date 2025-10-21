@@ -45,6 +45,13 @@ $prepared_by = $_SESSION['noble_name'] ?? 'Unknown User';
 $user_role = $_SESSION['noble_lvl'] ?? 'Unknown Role';
 $user_id = $_SESSION['noble_id'] ?? null;
 
+// Function to generate custom P.O. number
+function generateCustomPONumber($supplier_id) {
+    $date = date('mdY'); // format: 10202025
+    $time = date('Gis'); // format: 92233 (9:22:33)
+    return 'NH' . $date . $time . $supplier_id;
+}
+
 // Get order items with assigned suppliers and original price from product_variants
 $itemStmt = $conn->prepare("
     SELECT 
@@ -55,6 +62,7 @@ $itemStmt = $conn->prepare("
         oi.size,
         oi.variant_color,
         oi.codename,
+        oi.supplier_id,
         oi.descrip6,
         oi.descrip7,
         oi.price,
@@ -63,6 +71,7 @@ $itemStmt = $conn->prepare("
         oi.origin,
         oi.supplier_id,
         oi.manual_supplier_name,
+        oi.po_number,
         pv.original_price,
         COALESCE(pv.original_price, oi.price) as computed_price,
         (oi.quantity * COALESCE(pv.original_price, oi.price)) as computed_subtotal,
@@ -101,6 +110,18 @@ foreach ($allItems as $item) {
         'manual_' . $item['manual_supplier_name'];
     
     if (!isset($supplierGroups[$supplierKey])) {
+        // Check if any item has a P.O. number for this supplier
+        $existing_po = null;
+        foreach ($allItems as $checkItem) {
+            $checkKey = $checkItem['supplier_id'] ? 
+                strval($checkItem['supplier_id']) : 
+                'manual_' . $checkItem['manual_supplier_name'];
+            if ($checkKey === $supplierKey && !empty($checkItem['po_number'])) {
+                $existing_po = $checkItem['po_number'];
+                break;
+            }
+        }
+        
         $supplierGroups[$supplierKey] = [
             'supplier_info' => [
                 'name' => $item['supplier_id'] ? $item['business_name'] : $item['manual_supplier_name'],
@@ -108,7 +129,9 @@ foreach ($allItems as $item) {
                 'email' => $item['email_address'] ?? '',
                 'phone' => $item['phone_number'] ?? '',
                 'address' => $item['business_address'] ?? '',
-                'is_manual' => !$item['supplier_id']
+                'is_manual' => !$item['supplier_id'],
+                'supplier_id' => $item['supplier_id'] ?? 0,
+                'existing_po' => $existing_po
             ],
             'items' => []
         ];
@@ -264,18 +287,27 @@ foreach ($allItems as $item) {
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="suppliersGrid">
                 <?php foreach ($supplierGroups as $supplierKey => $supplierData): ?>
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer supplier-card" 
-                     data-supplier="<?php echo htmlspecialchars($supplierKey); ?>"
-                     onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')">
-                    
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierData['supplier_info']['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
-                            <?php echo $supplierData['supplier_info']['is_manual'] ? 'Manual' : 'Linked'; ?>
-                        </span>
-                        <div class="supplier-radio">
-                            <input type="radio" name="selected_supplier" value="<?php echo htmlspecialchars($supplierKey); ?>" class="text-primary-600">
-                        </div>
-                    </div>
+<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer supplier-card <?php echo !empty($supplierData['supplier_info']['existing_po']) ? 'border-green-400 bg-green-50' : ''; ?>" 
+     data-supplier="<?php echo htmlspecialchars($supplierKey); ?>"
+     data-has-po="<?php echo !empty($supplierData['supplier_info']['existing_po']) ? 'true' : 'false'; ?>"
+     data-po-number="<?php echo htmlspecialchars($supplierData['supplier_info']['existing_po'] ?? ''); ?>"
+     onclick="selectSupplier('<?php echo htmlspecialchars($supplierKey); ?>')">
+    
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center space-x-2">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <?php echo $supplierData['supplier_info']['is_manual'] ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?>">
+                <?php echo $supplierData['supplier_info']['is_manual'] ? 'Manual' : 'Linked'; ?>
+            </span>
+            <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                    <i class="fas fa-check-circle mr-1"></i>P.O. Generated
+                </span>
+            <?php endif; ?>
+        </div>
+        <div class="supplier-radio">
+            <input type="radio" name="selected_supplier" value="<?php echo htmlspecialchars($supplierKey); ?>" class="text-primary-600">
+        </div>
+    </div>
                     
                     <h4 class="font-semibold text-gray-900 mb-2"><?php echo htmlspecialchars($supplierData['supplier_info']['name']); ?></h4>
                     
@@ -294,17 +326,28 @@ foreach ($allItems as $item) {
                     <?php endif; ?>
                     
                     <div class="text-sm text-primary-600 font-medium">
-                        <?php echo count($supplierData['items']); ?> item(s)
-                    </div>
-                    
-                    <!-- Change supplier button (hidden by default) -->
-                    <button onclick="event.stopPropagation(); openSupplierChangeModal('<?php echo htmlspecialchars($supplierKey); ?>')"
-                            class="supplier-change-btn mt-2 w-full bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-sm transition-colors duration-200"
-                            style="display: none;">
-                        <i class="fas fa-exchange-alt mr-1"></i>Change Items Supplier
-                    </button>
-                </div>
-                <?php endforeach; ?>
+        <?php echo count($supplierData['items']); ?> item(s)
+    </div>
+    
+    <?php if (!empty($supplierData['supplier_info']['existing_po'])): ?>
+        <div class="mt-3 p-2 bg-white border border-green-300 rounded text-xs">
+            <div class="font-medium text-gray-700 mb-1">Existing P.O.:</div>
+            <div class="text-green-600 font-mono"><?php echo htmlspecialchars($supplierData['supplier_info']['existing_po']); ?></div>
+            <button onclick="event.stopPropagation(); resetPONumber('<?php echo htmlspecialchars($supplierKey); ?>')"
+                    class="mt-2 w-full bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition-colors duration-200">
+                <i class="fas fa-times-circle mr-1"></i>Reset P.O.
+            </button>
+        </div>
+    <?php endif; ?>
+    
+    <!-- Change supplier button (hidden by default) -->
+    <button onclick="event.stopPropagation(); openSupplierChangeModal('<?php echo htmlspecialchars($supplierKey); ?>')"
+            class="supplier-change-btn mt-2 w-full bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-sm transition-colors duration-200"
+            style="display: none;">
+        <i class="fas fa-exchange-alt mr-1"></i>Change Items Supplier
+    </button>
+</div>
+<?php endforeach; ?>
             </div>
         </div>
 
@@ -475,6 +518,42 @@ foreach ($allItems as $item) {
             // Update preview
             updateItemsPreview(supplierKey);
         }
+
+        function resetPONumber(supplierKey) {
+    if (!confirm('Are you sure you want to reset the P.O. number for this supplier? This will allow you to generate a new P.O.')) {
+        return;
+    }
+    
+    const supplier = supplierData[supplierKey];
+    if (!supplier) return;
+    
+    // Get all item IDs for this supplier
+    const itemIds = supplier.items.map(item => item.item_id);
+    
+    // Send request to reset P.O. number
+    fetch('reset_po_number.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            item_ids: itemIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('P.O. number reset successfully!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('Failed to reset P.O. number: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to reset P.O. number', 'error');
+    });
+}
 
         function openSupplierChangeModal(supplierKey) {
             const supplier = supplierData[supplierKey];
@@ -730,50 +809,66 @@ foreach ($allItems as $item) {
         }
 
         function generatePO() {
-            if (!selectedSupplier) {
-                showAlert('Please select a supplier first', 'error');
-                return;
-            }
-
-            const paymentTerms = document.getElementById('paymentTerms').value;
-            const deliveryDetails = document.getElementById('deliveryDetails').value;
-            const conditions = document.getElementById('conditions').value;
-            const additionalNotes = document.getElementById('additionalNotes').value;
-
-            // Debug: Log the selected supplier
-            console.log('Selected supplier key:', selectedSupplier);
-            console.log('Supplier data:', supplierData[selectedSupplier]);
-
-            // Create form and submit to Excel P.O. generator
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'generate_po_pdf.php';
-            form.target = '_blank';
-
-            const fields = [
-                ['order_id', <?php echo $order['id']; ?>],
-                ['supplier_key', selectedSupplier],
-                ['payment_terms', paymentTerms],
-                ['delivery_details', deliveryDetails],
-                ['conditions', conditions],
-                ['additional_notes', additionalNotes],
-                ['prepared_by', '<?php echo htmlspecialchars($prepared_by); ?>']
-            ];
-
-            fields.forEach(([name, value]) => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = name;
-                input.value = value;
-                form.appendChild(input);
-            });
-
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-
-            showAlert('Generating Purchase Order Excel file...', 'success');
+    if (!selectedSupplier) {
+        showAlert('Please select a supplier first', 'error');
+        return;
+    }
+    
+    // Check if supplier already has P.O.
+    const supplierCard = document.querySelector(`[data-supplier="${selectedSupplier}"]`);
+    const hasPO = supplierCard.dataset.hasPo === 'true';
+    const existingPO = supplierCard.dataset.poNumber;
+    
+    if (hasPO && existingPO) {
+        if (!confirm(`This supplier already has a P.O. number: ${existingPO}\n\nGenerating a new P.O. will overwrite the existing one. Continue?`)) {
+            return;
         }
+    }
+
+    const paymentTerms = document.getElementById('paymentTerms').value;
+    const deliveryDetails = document.getElementById('deliveryDetails').value;
+    const conditions = document.getElementById('conditions').value;
+    const additionalNotes = document.getElementById('additionalNotes').value;
+
+    // Debug: Log the selected supplier
+    console.log('Selected supplier key:', selectedSupplier);
+    console.log('Supplier data:', supplierData[selectedSupplier]);
+
+    // Create form and submit to Excel P.O. generator
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'generate_po_pdf.php';
+    form.target = '_blank';
+
+    const fields = [
+        ['order_id', <?php echo $order['id']; ?>],
+        ['supplier_key', selectedSupplier],
+        ['payment_terms', paymentTerms],
+        ['delivery_details', deliveryDetails],
+        ['conditions', conditions],
+        ['additional_notes', additionalNotes],
+        ['prepared_by', '<?php echo htmlspecialchars($prepared_by); ?>']
+    ];
+
+    fields.forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    showAlert('Generating Purchase Order Excel file... Page will reload shortly.', 'success');
+    
+    // Reload the page after 2 seconds to show the updated P.O. status
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+}
 
         // Close modal when clicking outside
         document.getElementById('supplierChangeModal').addEventListener('click', function(e) {

@@ -186,6 +186,15 @@ function validateStep(stepNumber) {
         showNotification('Please select a delivery method.', 'error');
         return false;
     }
+
+    // ✅ NEW: Check if courier is selected (for delivery mode)
+    if (deliveryTypeRadio.value === 'delivery') {
+        const courierSelect = document.getElementById('courierSelection');
+        if (!courierSelect || !courierSelect.value) {
+            showNotification('Please select a courier service.', 'error');
+            return false;
+        }
+    }
     
     // If pickup, always valid
     if (deliveryTypeRadio.value === 'pickup') {

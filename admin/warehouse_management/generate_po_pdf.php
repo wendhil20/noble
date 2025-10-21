@@ -151,16 +151,25 @@ try {
     }
     
     // Company info
-    $worksheet->setCellValue('E3', 'NHCC');
-    $worksheet->setCellValue('E4', 'Unit Floor MC Residence, Salcedo City Metro Manila');
-    $worksheet->setCellValue('E5', 'Mobile Number: +639974894523');
-    $worksheet->setCellValue('E6', 'Email: nhccbusinessmail@gmail.com');
-    
-    // P.O Details
-    $worksheet->setCellValue('A11', date('Y-m-d'));
-    $worksheet->setCellValue('B11', 'P.O# ' . str_pad($order_id, 6, '0', STR_PAD_LEFT));
-    $worksheet->setCellValue('D11', $payment_terms);
-    $worksheet->setCellValue('G11', $delivery_details);
+$worksheet->setCellValue('E3', 'NHCC');
+$worksheet->setCellValue('E4', 'Unit Floor MC Residence, Salcedo City Metro Manila');
+$worksheet->setCellValue('E5', 'Mobile Number: +639974894523');
+$worksheet->setCellValue('E6', 'Email: nhccbusinessmail@gmail.com');
+
+// Generate custom P.O. number
+$supplier_id_for_po = 0;
+foreach ($supplierItems as $item) {
+    if ($item['supplier_id']) {
+        $supplier_id_for_po = $item['supplier_id'];
+        break;
+    }
+}
+$custom_po_number = 'NH' . date('mdY') . date('Gis') . $supplier_id_for_po;
+
+// P.O Details
+$worksheet->setCellValue('A11', date('Y-m-d'));
+$worksheet->setCellValue('B11', 'P.O# ' . $custom_po_number);
+$worksheet->setCellValue('D11', $payment_terms);
     
     // DEFINE FIXED POSITIONS FOR DIFFERENT SECTIONS
     $startRow = 15;
@@ -288,12 +297,11 @@ try {
         $worksheet->getColumnDimension($columnID)->setAutoSize(true);
     }
     
-    // Generate filename with prepared by name for easier identification
-    $sanitizedPreparedBy = preg_replace('/[^A-Za-z0-9]/', '_', $prepared_by);
-    $filename = 'PO_' . str_pad($order_id, 6, '0', STR_PAD_LEFT) . '_' . 
-                preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
-                $sanitizedPreparedBy . '_' . 
-                date('Ymd_His') . '.xlsx';
+    // Generate filename with custom P.O. number
+$sanitizedPreparedBy = preg_replace('/[^A-Za-z0-9]/', '_', $prepared_by);
+$filename = 'PO_' . $custom_po_number . '_' . 
+            preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
+            $sanitizedPreparedBy . '.xlsx';
     
     // Set headers for download
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -304,9 +312,32 @@ try {
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
     
-    // Log the P.O generation for audit purposes
-    error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . ", Prepared By: $prepared_by, User Role: $user_role");
+    // Save the P.O. number to order_items for all items in this P.O.
+$itemIds = array_column($supplierItems, 'item_id');
+if (!empty($itemIds)) {
+    $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
+    $updateStmt = $conn->prepare("UPDATE order_items SET po_number = ? WHERE id IN ($placeholders)");
     
+    // Bind parameters: first the po_number, then all item IDs
+    $types = 's' . str_repeat('i', count($itemIds));
+    $params = array_merge([$custom_po_number], $itemIds);
+    
+    // Create references for bind_param
+    $bind_names = [$types];
+    for ($i = 0; $i < count($params); $i++) {
+        $bind_name = 'bind' . $i;
+        $$bind_name = $params[$i];
+        $bind_names[] = &$$bind_name;
+    }
+    call_user_func_array([$updateStmt, 'bind_param'], $bind_names);
+    
+    $updateStmt->execute();
+    $updateStmt->close();
+}
+
+// Log the P.O generation for audit purposes
+error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . ", Prepared By: $prepared_by, User Role: $user_role, P.O. Number: $custom_po_number");
+
 } catch (Exception $e) {
     error_log("Error generating P.O.: " . $e->getMessage());
     die('Error generating P.O.: ' . $e->getMessage());

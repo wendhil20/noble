@@ -84,6 +84,14 @@ function autoCalculateDelivery() {
         return;
     }
     
+    // ✅ NEW: Check if courier is selected
+    const courierSelect = document.getElementById('courierSelection');
+    if (!courierSelect || !courierSelect.value) {
+        console.log('No courier selected yet');
+        showNotification('Please select a courier service first.', 'warning');
+        return;
+    }
+    
     const deliveryType = document.querySelector('input[name="delivery_type"]:checked');
     if (!deliveryType || deliveryType.value !== 'delivery') {
         console.log('Not in delivery mode');
@@ -250,8 +258,16 @@ function initializeDistanceCalculation() {
                 routeData = await calculateRoutingDistance(storeLatLng, customerLatLng);
                 distance = routeData.distance || 0;
 
-                // NEW: Automatic Transportify vehicle assignment
-                const vehicleAssignment = assignTransportifyVehicleJS(window.cartItemsData);
+                // ✅ NEW: Get selected courier
+const courierSelect = document.getElementById('courierSelection');
+const selectedCourier = courierSelect ? courierSelect.value : null;
+
+if (!selectedCourier) {
+    throw new Error('Please select a courier service first');
+}
+
+// NEW: Automatic vehicle assignment with courier filter
+const vehicleAssignment = assignTransportifyVehicleJS(window.cartItemsData, selectedCourier);
                 
                 if (!vehicleAssignment || !vehicleAssignment.vehicle) {
                     throw new Error('Unable to assign suitable delivery vehicle');
@@ -328,6 +344,82 @@ function initializeDistanceCalculation() {
             }
         });
     }
+    // ✅ NEW: Add courier selection change handler
+    const courierSelect = document.getElementById('courierSelection');
+    if (courierSelect) {
+        courierSelect.addEventListener('change', function() {
+            const selectedCourier = this.value;
+            const courierInfo = document.getElementById('courierInfo');
+            const continuePaymentBtn = document.getElementById('continueToPayment');
+            const calculateBtn = document.getElementById('calculateDistance');
+            
+            if (selectedCourier) {
+    // Show courier info
+    if (courierInfo) {
+        const vehicleCount = window.couriersGrouped[selectedCourier]?.length || 0;
+        document.getElementById('courierVehicleCount').textContent = vehicleCount;
+        
+        // ✅ NEW: Update courier name display
+        const courierNameEl = document.getElementById('selectedCourierName');
+        if (courierNameEl) {
+            courierNameEl.textContent = selectedCourier;
+        }
+        
+        courierInfo.classList.remove('hidden');
+    }
+                
+                // Enable calculate button
+                if (calculateBtn) {
+                    calculateBtn.disabled = false;
+                    calculateBtn.classList.remove('bg-gray-400');
+                    calculateBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+                
+                // Reset calculation state
+                if (continuePaymentBtn) {
+                    continuePaymentBtn.disabled = true;
+                    continuePaymentBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    continuePaymentBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                }
+                
+                // Clear previous results
+                const distanceResult = document.getElementById('distanceResult');
+                if (distanceResult) {
+                    distanceResult.innerHTML = '<div class="text-sm text-blue-600 italic">Courier selected. Click "Calculate Distance & Fee" to continue.</div>';
+                }
+                
+                const vehicleDetails = document.getElementById('assignedVehicleDetails');
+                if (vehicleDetails) {
+                    vehicleDetails.classList.add('hidden');
+                }
+                
+                showNotification(`Selected: ${selectedCourier}. Please calculate delivery.`, 'info');
+                
+                // ✅ Auto-trigger calculation if address is already selected
+                if (selectedAddress && selectedAddress.latitude && selectedAddress.longitude) {
+                    setTimeout(() => {
+                        if (typeof autoCalculateDelivery === 'function') {
+                            autoCalculateDelivery();
+                        }
+                    }, 500);
+                }
+            } else {
+                // Hide courier info
+                if (courierInfo) {
+                    courierInfo.classList.add('hidden');
+                }
+                
+                // Disable calculate button
+                if (calculateBtn) {
+                    calculateBtn.disabled = true;
+                    calculateBtn.classList.add('bg-gray-400');
+                    calculateBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                }
+            }
+        });
+        
+        console.log('✓ Courier selection handler initialized');
+    }
 }
 
 /**
@@ -369,8 +461,9 @@ function convertToKilogramsJS(weight, unit, quantity = 1) {
 /**
  * Automatically assign Transportify vehicle based on cart items
  */
-function assignTransportifyVehicleJS(cartItems) {
+function assignTransportifyVehicleJS(cartItems, selectedCourier = null) {
     console.log('=== Starting Vehicle Assignment ===');
+    console.log('Selected Courier:', selectedCourier || 'None (using all vehicles)');
     
     let totalCubicMeters = 0;
     let totalWeightKg = 0;
@@ -378,30 +471,27 @@ function assignTransportifyVehicleJS(cartItems) {
     
     // Calculate total volume and weight
     cartItems.forEach((item, index) => {
-    // ✅ Use defaults if dimensions are missing or zero
-    let width = parseFloat(item.width) || 0;
-    let height = parseFloat(item.height) || 0;
-    let length = parseFloat(item.length) || 0;
-    let weight = parseFloat(item.weight) || 0;
-    
-    // ⚠️ If all dimensions are zero, use default small package size
-    if (width === 0 && height === 0 && length === 0) {
-        console.warn(`Item ${index} (${item.variant_name}) has no dimensions. Using default: 30x30x30cm`);
-        width = 30;
-        height = 30;
-        length = 30;
-    }
-    
-    // ⚠️ If weight is zero, estimate based on volume (assume 1kg per 10,000 cm³)
-    if (weight === 0) {
-        const volumeCm3 = width * height * length;
-        weight = Math.max(1, volumeCm3 / 10000); // Minimum 1kg
-        console.warn(`Item ${index} (${item.variant_name}) has no weight. Estimated: ${weight.toFixed(2)}kg`);
-    }
-    
-    const dimensionUnit = item.dimension_unit || 'cm';
-    const weightUnit = item.weight_unit || 'kg';
-    const quantity = parseInt(item.quantity) || 1;
+        let width = parseFloat(item.width) || 0;
+        let height = parseFloat(item.height) || 0;
+        let length = parseFloat(item.length) || 0;
+        let weight = parseFloat(item.weight) || 0;
+        
+        if (width === 0 && height === 0 && length === 0) {
+            console.warn(`Item ${index} (${item.variant_name}) has no dimensions. Using default: 30x30x30cm`);
+            width = 30;
+            height = 30;
+            length = 30;
+        }
+        
+        if (weight === 0) {
+            const volumeCm3 = width * height * length;
+            weight = Math.max(1, volumeCm3 / 10000);
+            console.warn(`Item ${index} (${item.variant_name}) has no weight. Estimated: ${weight.toFixed(2)}kg`);
+        }
+        
+        const dimensionUnit = item.dimension_unit || 'cm';
+        const weightUnit = item.weight_unit || 'kg';
+        const quantity = parseInt(item.quantity) || 1;
         
         const itemCubicM = calculateCubicMetersJS(width, height, length, dimensionUnit, quantity);
         const itemWeightKg = convertToKilogramsJS(weight, weightUnit, quantity);
@@ -424,13 +514,28 @@ function assignTransportifyVehicleJS(cartItems) {
     
     console.log(`Total Volume: ${totalCubicMeters.toFixed(3)}m³, Total Weight: ${totalWeightKg.toFixed(2)}kg`);
     
-    // Get available vehicles from window config
-    const availableVehicles = window.transportifyVehicles || [];
+    // ✅ NEW: Filter vehicles by selected courier
+    let availableVehicles = [];
+    
+    if (selectedCourier && window.couriersGrouped && window.couriersGrouped[selectedCourier]) {
+        availableVehicles = window.couriersGrouped[selectedCourier];
+        console.log(`Filtering by courier: ${selectedCourier} (${availableVehicles.length} vehicles)`);
+    } else {
+        availableVehicles = window.transportifyVehicles || [];
+        console.log(`Using all vehicles (${availableVehicles.length} total)`);
+    }
     
     if (availableVehicles.length === 0) {
-        console.error('No Transportify vehicles available');
+        console.error('No vehicles available for selected courier');
         return null;
     }
+    
+    // Sort by capacity (smallest first)
+    availableVehicles.sort((a, b) => {
+        const aCapacity = parseFloat(a.max_cubic_meter) || 0;
+        const bCapacity = parseFloat(b.max_cubic_meter) || 0;
+        return aCapacity - bCapacity;
+    });
     
     // Find suitable vehicle (smallest that fits)
     let assignedVehicle = null;
@@ -440,22 +545,22 @@ function assignTransportifyVehicleJS(cartItems) {
         
         if (totalCubicMeters <= maxCubicM && totalWeightKg <= maxWeightKg) {
             assignedVehicle = vehicle;
-            console.log(`✓ Assigned Vehicle: ${vehicle.vehicle_type} (Fits: ${maxCubicM}m³, ${maxWeightKg}kg)`);
+            console.log(`✓ Assigned Vehicle: ${vehicle.vehicle_type} from ${vehicle.courier_name} (Fits: ${maxCubicM}m³, ${maxWeightKg}kg)`);
             break;
         }
     }
     
     if (!assignedVehicle) {
-        // Use largest available vehicle
         assignedVehicle = availableVehicles[availableVehicles.length - 1];
-        console.warn(`⚠ No perfect fit. Using largest: ${assignedVehicle.vehicle_type}`);
+        console.warn(`⚠ No perfect fit. Using largest from ${selectedCourier || 'all couriers'}: ${assignedVehicle.vehicle_type}`);
     }
     
     return {
         vehicle: assignedVehicle,
         totalCubicMeters: totalCubicMeters,
         totalWeightKg: totalWeightKg,
-        itemVehicleData: itemVehicleData
+        itemVehicleData: itemVehicleData,
+        courierName: assignedVehicle.courier_name
     };
 }
 
@@ -498,47 +603,147 @@ function calculateTransportifyDeliveryCostJS(distanceKm, vehicleAssignment) {
 function updateDeliveryDisplay(deliveryResult, routeData, distance, vehicleAssignment) {
     const distanceResultElement = document.getElementById('distanceResult');
     if (!distanceResultElement) return;
+
+      // ✅ NEW: Calculate expected delivery date based on latest lead time
+let latestLeadTimeRange = null;
+let hasLeadTime = false;
+let hasMultipleProducts = window.cartItemsData && window.cartItemsData.length > 1;
+
+if (window.cartItemsData && window.cartItemsData.length > 0) {
+    window.cartItemsData.forEach(item => {
+        const leadTimeRange = calculateLeadTimeRangeJS(
+            item.lead_count,
+            item.lead_interval,
+            item.lead_gap
+        );
+        
+        if (leadTimeRange && leadTimeRange.end_date) {
+            hasLeadTime = true;
+            if (!latestLeadTimeRange || leadTimeRange.end_date > latestLeadTimeRange.end_date) {
+                latestLeadTimeRange = leadTimeRange;
+            }
+        }
+    });
+        /**
+ * Calculate lead time range in JavaScript (mirrors PHP function)
+ */
+function calculateLeadTimeRangeJS(leadCount, leadInterval, leadGap) {
+    if (!leadCount || !leadInterval) {
+        return null;
+    }
+    
+    const today = new Date();
+    const startDate = new Date(today);
+    
+    // Calculate start date based on interval
+    switch (leadInterval) {
+        case 'day':
+            startDate.setDate(startDate.getDate() + parseInt(leadCount));
+            break;
+        case 'week':
+            startDate.setDate(startDate.getDate() + (parseInt(leadCount) * 7));
+            break;
+        case 'month':
+            startDate.setMonth(startDate.getMonth() + parseInt(leadCount));
+            break;
+        case 'year':
+            startDate.setFullYear(startDate.getFullYear() + parseInt(leadCount));
+            break;
+    }
+    
+    // Calculate end date (start date + gap)
+    const endDate = new Date(startDate);
+    if (leadGap && parseInt(leadGap) > 0) {
+        endDate.setDate(endDate.getDate() + parseInt(leadGap));
+    }
+    
+    return {
+        start_date: startDate,
+        end_date: endDate,
+        display: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
+                 ' - ' + 
+                 endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+}
+
+// Export to global scope
+window.calculateLeadTimeRangeJS = calculateLeadTimeRangeJS;
+    }
+
+
     
     const vehicle = deliveryResult.vehicleInfo;
     const chargeableKm = deliveryResult.chargeableKm;
     
     distanceResultElement.innerHTML = `
-        <div class="bg-blue-100 border border-blue-300 rounded p-4">
-            <div class="font-bold text-blue-900 mb-3">🚚 ${vehicle.vehicle_type}</div>
+    <div class="bg-blue-100 border border-blue-300 rounded p-4">
+        <div class="font-bold text-blue-900 mb-3">🚚 ${vehicle.vehicle_type}</div>
+        
+        ${hasLeadTime && latestLeadTimeRange ? `
+<div class="bg-green-50 border border-green-300 rounded p-3 mb-3">
+    <div class="flex items-center gap-2 mb-2">
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <span class="font-bold text-green-800">Expected Delivery By:</span>
+    </div>
+    <div class="text-lg font-bold text-green-700 mb-2">
+        ${latestLeadTimeRange.start_date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        })} - ${latestLeadTimeRange.end_date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        })}
+    </div>
+    ${hasMultipleProducts ? `
+    <div class="text-xs text-green-600 bg-green-100 rounded p-2">
+        <div class="flex items-start gap-1">
+            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span><strong>Note:</strong> This is the latest estimated delivery date for your order. To receive items faster, you can order them separately instead of in a single order.</span>
+        </div>
+    </div>
+    ` : ''}
+</div>
+` : ''}
+        
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-700">Distance:</span>
+                <span class="font-medium">${distance.toFixed(2)} km</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-700">Est. Time:</span>
+                <span class="font-medium">${routeData.time} minutes</span>
+            </div>
             
-            <div class="space-y-2 text-sm">
+            <div class="border-t border-blue-200 pt-2 mt-2">
                 <div class="flex justify-between">
-                    <span class="text-gray-700">Distance:</span>
-                    <span class="font-medium">${distance.toFixed(2)} km</span>
+                    <span class="text-gray-700">Base Fare:</span>
+                    <span class="font-medium">₱${deliveryResult.baseFare.toFixed(2)}</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-700">Est. Time:</span>
-                    <span class="font-medium">${routeData.time} minutes</span>
+                ${deliveryResult.chargeableKm > 0 ? `
+                <div class="flex justify-between text-xs text-gray-600">
+                    <span>Additional (${deliveryResult.chargeableKm.toFixed(2)} km × ₱${parseFloat(vehicle.add_per_km).toFixed(2)}):</span>
+                    <span>₱${deliveryResult.perKmCharge.toFixed(2)}</span>
                 </div>
-                
-                <div class="border-t border-blue-200 pt-2 mt-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Base Fare:</span>
-                        <span class="font-medium">₱${deliveryResult.baseFare.toFixed(2)}</span>
-                    </div>
-                    ${chargeableKm > 0 ? `
-                    <div class="flex justify-between text-xs text-gray-600">
-                        <span>Additional (${chargeableKm.toFixed(2)} km × ₱${parseFloat(vehicle.add_per_km).toFixed(2)}):</span>
-                        <span>₱${deliveryResult.perKmCharge.toFixed(2)}</span>
-                    </div>
-                    ` : `
-                    <div class="text-xs text-green-600">
-                        ✓ Within ${vehicle.per_km_rate}km base coverage
-                    </div>
-                    `}
-                    <div class="flex justify-between font-bold text-blue-900 border-t border-blue-200 pt-2 mt-2">
-                        <span>Total Delivery:</span>
-                        <span>₱${deliveryResult.totalDeliveryCost.toFixed(2)}</span>
-                    </div>
+                ` : `
+                <div class="text-xs text-green-600">
+                    ✓ Within ${vehicle.per_km_rate}km base coverage
+                </div>
+                `}
+                <div class="flex justify-between font-bold text-blue-900 border-t border-blue-200 pt-2 mt-2">
+                    <span>Total Delivery:</span>
+                    <span>₱${deliveryResult.totalDeliveryCost.toFixed(2)}</span>
                 </div>
             </div>
         </div>
-    `;
+    </div>
+`;
     
     // ✅ NEW: Show assigned vehicle details with dimensions comparison
     showAssignedVehicleDetails(vehicle, vehicleAssignment);
@@ -573,16 +778,26 @@ function showAssignedVehicleDetails(vehicle, vehicleAssignment) {
     
     // ✅ Enhanced display with progress bars
     contentContainer.innerHTML = `
-        <div class="space-y-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span class="font-semibold text-gray-800">${vehicle.vehicle_type}</span>
-                </div>
-                <span class="text-xs text-gray-500">${vehicle.vehicle_description || 'Small Vehicle'}</span>
+    <div class="space-y-4">
+        <!-- ✅ NEW: Show Courier Name -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2">
+            <div class="flex items-center justify-center text-sm">
+                <svg class="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                </svg>
+                <span class="font-semibold text-blue-700">${vehicle.courier_name || 'Unknown Courier'}</span>
             </div>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="font-semibold text-gray-800">${vehicle.vehicle_type}</span>
+            </div>
+            <span class="text-xs text-gray-500">${vehicle.vehicle_description || 'Vehicle'}</span>
+        </div>
             
             <!-- Volume Progress Bar -->
             <div class="bg-white rounded-lg p-3 border border-gray-200">

@@ -16,7 +16,9 @@ $vehicle_msg = '';
 
 // Handle vehicle insert
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_vehicle'])) {
+    $courier_name = trim($_POST['courier_name']);
     $vehicle_type = trim($_POST['vehicle_type']);
+    $custom_vehicle_type = trim($_POST['custom_vehicle_type']);
     $vehicle_variant = trim($_POST['vehicle_variant']) ?: null;
     $vehicle_description = trim($_POST['vehicle_description']) ?: null;
     $base_fare = trim($_POST['base_fare']);
@@ -28,12 +30,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_vehicle'])) {
     $max_cubic_meter = trim($_POST['max_cubic_meter']) ?: null;
     $max_weight_capacity = trim($_POST['max_weight_capacity']) ?: null;
 
+    // Use custom vehicle type if "Other" is selected
+    if ($vehicle_type === 'Other' && !empty($custom_vehicle_type)) {
+        $vehicle_type = $custom_vehicle_type;
+    }
+
     // Validate required fields
-    if ($vehicle_type !== '' && $base_fare !== '' && $add_per_km !== '' && $per_km_rate !== '') {
+    if ($courier_name !== '' && $vehicle_type !== '' && $vehicle_type !== 'Other' && $base_fare !== '' && $add_per_km !== '' && $per_km_rate !== '') {
         
-        $stmt = $conn->prepare("INSERT INTO transportify_vehicle_list (vehicle_type, vehicle_variant, vehicle_description, base_fare, add_per_km, per_km_rate, length, width, height, max_cubic_meter, max_weight_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO transportify_vehicle_list (courier_name, vehicle_type, vehicle_variant, vehicle_description, base_fare, add_per_km, per_km_rate, length, width, height, max_cubic_meter, max_weight_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
-        $stmt->bind_param("sssdddddddd", 
+        $stmt->bind_param("ssssdddddddd", 
+            $courier_name,
             $vehicle_type,
             $vehicle_variant,
             $vehicle_description,
@@ -89,6 +97,9 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                 grid-template-columns: 1fr;
             }
         }
+        #customVehicleTypeDiv {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -107,13 +118,22 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
             <form method="POST" class="space-y-4 mb-8">
                 <input type="hidden" name="new_vehicle" value="1">
                 
+                <!-- Courier Name Section -->
+                <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-400">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">🚚 Courier Information</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Courier Name *</label>
+                        <input type="text" name="courier_name" required class="w-full border px-3 py-2 rounded mt-1" placeholder="e.g., Lalamove, Grab Express, MrSpeedy">
+                    </div>
+                </div>
+
                 <!-- Basic Vehicle Information Section -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Vehicle Type Information</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Vehicle Type *</label>
-                            <select name="vehicle_type" required class="w-full border px-3 py-2 rounded mt-1">
+                            <select name="vehicle_type" id="vehicleTypeSelect" required class="w-full border px-3 py-2 rounded mt-1">
                                 <option value="">Select vehicle type</option>
                                 <option value="Sedan">Sedan</option>
                                 <option value="MPV/SUV">MPV/SUV</option>
@@ -124,12 +144,20 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                 <option value="Open Truck">Open Truck</option>
                                 <option value="6w Fwd Truck">6w Fwd Truck</option>
                                 <option value="Wing Van">Wing Van</option>
+                                <option value="Motorcycle">Motorcycle</option>
+                                <option value="Bicycle">Bicycle</option>
+                                <option value="Other">➕ Other (Custom)</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Vehicle Variant</label>
                             <input type="text" name="vehicle_variant" class="w-full border px-3 py-2 rounded mt-1" placeholder="e.g., XL, Standard, Heavy Duty">
                         </div>
+                    </div>
+                    <div id="customVehicleTypeDiv" class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700">Custom Vehicle Type *</label>
+                        <input type="text" name="custom_vehicle_type" id="customVehicleTypeInput" class="w-full border px-3 py-2 rounded mt-1" placeholder="Enter your custom vehicle type (e.g., E-Bike, Cargo Van, etc.)">
+                        <p class="text-xs text-gray-500 mt-1">💡 Type your custom vehicle name here when "Other (Custom)" is selected</p>
                     </div>
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700">Vehicle Description</label>
@@ -212,6 +240,7 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                         <thead class="bg-gray-200">
                             <tr>
                                 <th class="px-3 py-2 border-b">#</th>
+                                <th class="px-3 py-2 border-b">Courier</th>
                                 <th class="px-3 py-2 border-b">Vehicle Type</th>
                                 <th class="px-3 py-2 border-b">Variant</th>
                                 <th class="px-3 py-2 border-b">Description</th>
@@ -228,6 +257,11 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                 <?php while ($row = $vehicles->fetch_assoc()): ?>
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-3 py-2 border-b"><?= $row['id'] ?></td>
+                                        <td class="px-3 py-2 border-b">
+                                            <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
+                                                <?= htmlspecialchars($row['courier_name'] ?? 'N/A') ?>
+                                            </span>
+                                        </td>
                                         <td class="px-3 py-2 border-b">
                                             <strong><?= htmlspecialchars($row['vehicle_type']) ?></strong>
                                         </td>
@@ -286,7 +320,7 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="10" class="text-center py-6 text-gray-500">No vehicle types found.</td>
+                                    <td colspan="11" class="text-center py-6 text-gray-500">No vehicle types found.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -297,14 +331,30 @@ $vehicles = $conn->query("SELECT * FROM transportify_vehicle_list ORDER BY id DE
     </div>
 
     <script>
+        // Show/hide custom vehicle type input
+        const vehicleTypeSelect = document.getElementById('vehicleTypeSelect');
+        const customVehicleTypeDiv = document.getElementById('customVehicleTypeDiv');
+        const customVehicleTypeInput = document.getElementById('customVehicleTypeInput');
+
+        vehicleTypeSelect.addEventListener('change', function() {
+            if (this.value === 'Other') {
+                customVehicleTypeDiv.style.display = 'block';
+                customVehicleTypeInput.required = true;
+            } else {
+                customVehicleTypeDiv.style.display = 'none';
+                customVehicleTypeInput.required = false;
+                customVehicleTypeInput.value = '';
+            }
+        });
+
         function viewVehicle(id) {
             // Implement view vehicle details functionality
             alert('View vehicle details for ID: ' + id);
         }
 
         function editVehicle(id) {
-            // Implement edit vehicle functionality
-            alert('Edit vehicle for ID: ' + id);
+            // Redirect to edit page
+            window.location.href = 'transpo_edit_vehicle.php?id=' + id;
         }
 
         // Auto-calculate cubic meter when dimensions are entered

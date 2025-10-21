@@ -8,26 +8,26 @@ include '../navbar/top.php';
 require_role(['sales', 'superadmin']);
 
 if (!isset($_SESSION['noble_user'])) {
-    header("Location: ../../loginpage/index.php");
-    exit();
+  header("Location: ../../loginpage/index.php");
+  exit();
 }
 
 if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset($_SESSION['noble_id'])) {
-    $email = $_SESSION['noble_user'];
-    $stmt = $conn->prepare("SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $stmt->bind_result($id, $name, $lvl);
-    if ($stmt->fetch()) {
-        $_SESSION['noble_id'] = $id;
-        $_SESSION['noble_name'] = $name;
-        $_SESSION['noble_lvl'] = $lvl;
-    } else {
-        $_SESSION['noble_id'] = 0;
-        $_SESSION['noble_name'] = "Unknown User";
-        $_SESSION['noble_lvl'] = "guest";
-    }
-    $stmt->close();
+  $email = $_SESSION['noble_user'];
+  $stmt = $conn->prepare("SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1");
+  $stmt->bind_param("s", $email);
+  $stmt->execute();
+  $stmt->bind_result($id, $name, $lvl);
+  if ($stmt->fetch()) {
+    $_SESSION['noble_id'] = $id;
+    $_SESSION['noble_name'] = $name;
+    $_SESSION['noble_lvl'] = $lvl;
+  } else {
+    $_SESSION['noble_id'] = 0;
+    $_SESSION['noble_name'] = "Unknown User";
+    $_SESSION['noble_lvl'] = "guest";
+  }
+  $stmt->close();
 }
 
 $sql = "SELECT id, customer_name, email, mobile, total, address FROM orders WHERE emp_id IS NULL OR emp_id = ''";
@@ -36,32 +36,35 @@ $result = $conn->query($sql);
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Unassigned Orders</title>
   <script src="https://cdn.tailwindcss.com"></script>
+   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 p-6 font-sans">
-  <div class="container mx-auto bg-white p-6 rounded-lg shadow-md">
-    <h1 class="text-2xl font-bold mb-4 text-orange-600">Unassigned Orders</h1>
+
+<body class="bg-gray-100 p-6 font-roboto">
+  <div class="container mx-auto  p-6 mt-2">
+    <h1 class="text-2xl mb-4 text-orange-600">Unassigned Orders</h1>
 
     <!-- Feedback Messages -->
     <?php if (isset($_GET['accepted']) && $_GET['accepted'] == "true"): ?>
       <div class="mb-4 p-3 bg-green-100 text-green-700 rounded">
-        ✅ Order accepted successfully!
+         Order accepted successfully!
       </div>
     <?php elseif (isset($_GET['error']) && $_GET['error'] == "already_accepted"): ?>
       <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
-        ❌ This order has already been accepted by another employee.
+         This order has already been accepted by another employee.
       </div>
     <?php elseif (isset($_GET['error']) && $_GET['error'] == "update_failed"): ?>
       <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
-        ❌ Failed to accept the order. Please try again.
+         Failed to accept the order. Please try again.
       </div>
     <?php endif; ?>
 
-    <table class="min-w-full border text-sm text-left">
-      <thead class="bg-orange-100 text-orange-800">
+    <table class="min-w-full border text-sm text-left mt-2" >
+      <thead class="bg-black text-white tracking-wider">
         <tr>
           <th class="py-2 px-4 border">Customer Name</th>
           <th class="py-2 px-4 border">Email</th>
@@ -73,12 +76,17 @@ $result = $conn->query($sql);
       </thead>
       <tbody>
         <?php if ($result->num_rows > 0): ?>
-          <?php while($row = $result->fetch_assoc()): ?>
+          <?php while ($row = $result->fetch_assoc()): ?>
             <tr class="border-b hover:bg-gray-50">
               <td class="py-2 px-4 border"><?php echo htmlspecialchars($row['customer_name']); ?></td>
               <td class="py-2 px-4 border"><?php echo htmlspecialchars($row['email']); ?></td>
               <td class="py-2 px-4 border"><?php echo htmlspecialchars($row['mobile']); ?></td>
-              <td class="py-2 px-4 border">₱<?php echo number_format($row['total'], 2); ?></td>
+             <td class="py-2 px-4 border text-white">
+  <span class="inline-block bg-red-600 rounded-full px-3 py-1">
+    ₱<?php echo number_format($row['total'], 2); ?>
+  </span>
+</td>
+
               <td class="py-2 px-4 border"><?php echo htmlspecialchars($row['address']); ?></td>
               <td class="py-2 px-4 border">
                 <form method="POST" action="accept_order.php">
@@ -102,7 +110,7 @@ $result = $conn->query($sql);
   <!-- Optional: Disable button on click -->
   <script>
     document.querySelectorAll("form").forEach(form => {
-      form.addEventListener("submit", function () {
+      form.addEventListener("submit", function() {
         const button = this.querySelector("button[type='submit']");
         button.disabled = true;
         button.textContent = "Accepting...";
@@ -110,4 +118,5 @@ $result = $conn->query($sql);
     });
   </script>
 </body>
+
 </html>

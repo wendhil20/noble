@@ -360,7 +360,7 @@ include '../navbar/top.php';
             <!-- Customer Information -->
             <div class="bg-gray-50 rounded-lg p-6">
               <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                <svg class="w-5 h-5 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-black mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 Customer Information
@@ -383,7 +383,7 @@ include '../navbar/top.php';
 
             <!-- Delivery Information -->
             <div class="bg-gray-50 rounded-lg p-6">
-              <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+              <h3 class="font-semibold text-black mb-4 flex items-center">
                 <svg class="w-5 h-5 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -407,7 +407,7 @@ include '../navbar/top.php';
         <!-- Order Items -->
         <div class="p-6 border-b border-gray-200">
           <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 text-orange-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-black mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
             </svg>
             Order Items (${order.items.length} items)

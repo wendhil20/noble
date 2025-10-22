@@ -29,15 +29,6 @@ function getWeekTaskCount($conn, $user_id, $week_start, $week_end) {
     return $result['count'];
 }
 
-function calculateDelayDays($end_date) {
-    $today = new DateTime();
-    $end = new DateTime($end_date);
-    if ($today > $end) {
-        return $today->diff($end)->days;
-    }
-    return 0;
-}
-
 function getRemainingDelayDays($delay_start_date, $initial_delay_days) {
     if (!$delay_start_date || $initial_delay_days <= 0) {
         return 0;
@@ -54,50 +45,43 @@ function getRemainingDelayDays($delay_start_date, $initial_delay_days) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_task'])) {
         $start_date = mysqli_real_escape_string($conn, $_POST['start_date']);
-        $task_week_start = getWeekStart($start_date);
-        $task_week_end = getWeekEnd($start_date);
-        $week_task_count = getWeekTaskCount($conn, $_SESSION['user_id'], $task_week_start, $task_week_end);
+        $title = mysqli_real_escape_string($conn, $_POST['task_title']);
+        $desc = mysqli_real_escape_string($conn, $_POST['task_description']);
+        $end = mysqli_real_escape_string($conn, $_POST['end_date']);
+        $status = mysqli_real_escape_string($conn, $_POST['status']);
+        $progress = (int)$_POST['progress_percentage'];
         
-        if ($week_task_count >= 5) {
-            $week_display = date('M d', strtotime($task_week_start)) . ' - ' . date('M d', strtotime($task_week_end));
-            $_SESSION['flash_message'] = "Week of $week_display already has 5 tasks!";
-            $_SESSION['flash_type'] = "error";
-        } else {
-            $title = mysqli_real_escape_string($conn, $_POST['task_title']);
-            $desc = mysqli_real_escape_string($conn, $_POST['task_description']);
-            $end = mysqli_real_escape_string($conn, $_POST['end_date']);
-            $status = mysqli_real_escape_string($conn, $_POST['status']);
-            $progress = (int)$_POST['progress_percentage'];
-            
-            $date1 = new DateTime($start_date);
-            $date2 = new DateTime($end);
-            $estimated_days = $date1->diff($date2)->days + 1;
-            
-            $delay_days = 0;
-            $delay_start_date = null;
-            if ($status === 'delayed' && isset($_POST['delay_days'])) {
-                $delay_days = (int)$_POST['delay_days'];
-                $delay_start_date = date('Y-m-d');
-            }
-            
-            $query = "INSERT INTO employee_tasks 
-                      (user_id, task_title, task_description, task_type, start_date, end_date, 
-                       estimated_days, status, progress_percentage, delay_days, delay_start_date) 
-                      VALUES ({$_SESSION['user_id']}, '$title', '$desc', 'ongoing', '$start_date', '$end', 
-                      $estimated_days, '$status', $progress, $delay_days, " . 
-                      ($delay_start_date ? "'$delay_start_date'" : "NULL") . ")";
-            
-            if (mysqli_query($conn, $query)) {
-                $_SESSION['flash_message'] = "Task added successfully!";
-                $_SESSION['flash_type'] = "success";
-            }
+        $date1 = new DateTime($start_date);
+        $date2 = new DateTime($end);
+        $estimated_days = $date1->diff($date2)->days + 1;
+        
+        $delay_days = 0;
+        $delay_start_date = null;
+        if ($status === 'delayed' && isset($_POST['delay_days'])) {
+            $delay_days = (int)$_POST['delay_days'];
+            $delay_start_date = date('Y-m-d');
         }
+        
+        $query = "INSERT INTO employee_tasks 
+                  (user_id, task_title, task_description, task_type, start_date, end_date, 
+                   estimated_days, status, progress_percentage, delay_days, delay_start_date) 
+                  VALUES ({$_SESSION['user_id']}, '$title', '$desc', 'ongoing', '$start_date', '$end', 
+                  $estimated_days, '$status', $progress, $delay_days, " . 
+                  ($delay_start_date ? "'$delay_start_date'" : "NULL") . ")";
+        
+        if (mysqli_query($conn, $query)) {
+            $_SESSION['flash_message'] = "Task added successfully!";
+            $_SESSION['flash_type'] = "success";
+        }
+        
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
     
     if (isset($_POST['update_task'])) {
         $task_id = (int)$_POST['task_id'];
+        $title = mysqli_real_escape_string($conn, $_POST['task_title']);
+        $desc = mysqli_real_escape_string($conn, $_POST['task_description']);
         $status = mysqli_real_escape_string($conn, $_POST['status']);
         $progress = (int)$_POST['progress_percentage'];
         $end_date = mysqli_real_escape_string($conn, $_POST['end_date']);
@@ -116,7 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $delay_start_date = null;
         }
         
-        $query = "UPDATE employee_tasks SET status='$status', progress_percentage=$progress, 
+        $query = "UPDATE employee_tasks SET task_title='$title', task_description='$desc', 
+                  status='$status', progress_percentage=$progress, 
                   end_date='$end_date', delay_days=$delay_days, 
                   delay_start_date=" . ($delay_start_date ? "'$delay_start_date'" : "NULL") . ", 
                   updated_at=NOW() 
@@ -258,11 +243,8 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                 </div>
                 <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-center">
                     <div class="text-3xl font-bold text-gray-900"><?php echo $current_task_count; ?></div>
-                    <div class="text-xs text-gray-600">of 5 tasks</div>
+                    <div class="text-xs text-gray-600">tasks</div>
                 </div>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div class="bg-gray-900 h-3 rounded-full transition-all duration-300" style="width: <?php echo ($current_task_count / 5) * 100; ?>%"></div>
             </div>
             <div class="mt-4 flex gap-6 text-sm">
                 <div class="flex items-center gap-2">
@@ -351,8 +333,10 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                                             <td class="py-4 px-4">
                                                 <span class="font-semibold text-gray-900"><?php echo $task['task_title']; ?></span>
                                             </td>
-                                            <td class="py-4 px-4">
-                                                <span class="text-sm text-gray-600"><?php echo $task['task_description'] ?: '-'; ?></span>
+                                            <td class="py-4 px-4 max-w-[200px] relative">
+                                                <span class="block text-sm text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis after:content-[''] after:absolute after:right-0 after:top-0 after:h-full after:w-10 after:bg-gradient-to-r after:from-transparent after:to-white">
+                                                    <?php echo htmlspecialchars($task['task_description'] ?: '-'); ?>
+                                                </span>
                                             </td>
                                             <td class="py-4 px-4 text-center">
                                                 <?php if ($task['status'] === 'delayed'): ?>
@@ -376,6 +360,8 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                                                         </svg>
                                                         <?php echo $display_delay_days; ?> day<?php echo $display_delay_days != 1 ? 's' : ''; ?>
                                                     </span>
+                                                <?php elseif ($task['status'] === 'completed'): ?>
+                                                    <span class="text-sm text-gray-400">-</span>
                                                 <?php else: ?>
                                                     <span class="text-sm font-medium text-gray-700"><?php echo $task['estimated_days']; ?> day<?php echo $task['estimated_days'] > 1 ? 's' : ''; ?></span>
                                                 <?php endif; ?>
@@ -432,13 +418,11 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                         Upcoming Tasks
                     </h3>
                     <?php 
-                    // Reset pointer for upcoming tasks
                     mysqli_data_seek($upcoming_weeks, 0);
                     if (mysqli_num_rows($upcoming_weeks) > 0): 
                     ?>
                         <div class="space-y-2">
                             <?php while ($task = mysqli_fetch_assoc($upcoming_weeks)): 
-                                // Fetch full task details for edit/delete
                                 $full_task_query = "SELECT * FROM employee_tasks WHERE id = {$task['id']} LIMIT 1";
                                 $full_task_result = mysqli_query($conn, $full_task_query);
                                 $full_task = mysqli_fetch_assoc($full_task_result);
@@ -487,27 +471,17 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                     </h3>
                     <?php if (mysqli_num_rows($previous_weeks) > 0): ?>
                         <div class="space-y-2">
-                            <?php while ($week = mysqli_fetch_assoc($previous_weeks)): 
-                                $is_complete = $week['task_count'] == 5 && $week['completed_count'] == 5;
-                            ?>
+                            <?php while ($week = mysqli_fetch_assoc($previous_weeks)): ?>
                                 <div class="bg-gray-50 border border-gray-200 rounded p-2.5 hover:border-gray-300 transition-colors">
                                     <div class="flex justify-between items-center">
                                         <span class="text-xs font-medium text-gray-700">
                                             <?php echo date('M d', strtotime($week['week_start'])); ?> - 
                                             <?php echo date('M d', strtotime($week['week_end'])); ?>
                                         </span>
-                                        <span class="text-xs <?php echo $is_complete ? 'font-semibold text-gray-900' : 'text-gray-600'; ?>">
-                                            <?php echo $week['completed_count']; ?>/<?php echo $week['task_count']; ?>
+                                        <span class="text-xs text-gray-600">
+                                            <?php echo $week['completed_count']; ?>/<?php echo $week['task_count']; ?> completed
                                         </span>
                                     </div>
-                                    <?php if ($is_complete): ?>
-                                        <div class="mt-1 flex items-center gap-1">
-                                            <svg class="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                            </svg>
-                                            <span class="text-xs text-gray-600">Complete</span>
-                                        </div>
-                                    <?php endif; ?>
                                 </div>
                             <?php endwhile; ?>
                         </div>
@@ -560,9 +534,6 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Progress (%)</label>
                         <input type="number" name="progress_percentage" min="0" max="100" value="0" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-gray-900 focus:outline-none transition-colors">
                     </div>
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <p class="text-xs text-gray-700">Maximum 5 tasks per week (Monday - Saturday)</p>
-                    </div>
                 </div>
                 <div class="flex gap-3 mt-6">
                     <button type="submit" name="add_task" class="flex-1 bg-gray-900 text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors">
@@ -584,6 +555,14 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
                 <input type="hidden" name="task_id" id="edit_task_id">
                 <input type="hidden" id="edit_task_start_date">
                 <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Task Title *</label>
+                        <input type="text" name="task_title" id="edit_task_title" required class="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-gray-900 focus:outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                        <textarea name="task_description" id="edit_task_description" rows="3" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-gray-900 focus:outline-none transition-colors resize-none"></textarea>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Status *</label>
                         <select name="status" id="edit_status" required class="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-gray-900 focus:outline-none transition-colors">
@@ -637,7 +616,6 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
             taskStartDate.setHours(0, 0, 0, 0);
             currentWeekStartDate.setHours(0, 0, 0, 0);
             
-            // Only check if task is from previous week (not for upcoming tasks)
             if (!isUpcoming && taskStartDate < currentWeekStartDate) {
                 alert('Cannot update tasks from previous weeks!\nTask started: ' + formatDate(task.start_date));
                 return;
@@ -645,6 +623,8 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
             
             document.getElementById('edit_task_id').value = task.id;
             document.getElementById('edit_task_start_date').value = task.start_date;
+            document.getElementById('edit_task_title').value = task.task_title;
+            document.getElementById('edit_task_description').value = task.task_description || '';
             document.getElementById('edit_status').value = task.status;
             document.getElementById('edit_progress').value = task.progress_percentage;
             document.getElementById('edit_end_date').value = task.end_date;
@@ -657,7 +637,6 @@ unset($_SESSION['flash_message'], $_SESSION['flash_type']);
             const todayStr = today.toISOString().split('T')[0];
             endDateInput.setAttribute('min', todayStr);
             
-            // Update warning message for upcoming tasks
             const warningDiv = document.querySelector('#editTaskModal .bg-amber-50');
             if (isUpcoming) {
                 warningDiv.innerHTML = `

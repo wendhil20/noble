@@ -73,7 +73,7 @@ if (!isset($_SESSION['noble_user'])) {
 </style>
 
 <!-- Header Section -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 font-roboto">
+<div class=" border border-gray-200 mb-6 font-roboto">
   <div class="p-4 md:p-6">
     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
       <div class="flex items-center space-x-4">
@@ -112,7 +112,7 @@ if (!isset($_SESSION['noble_user'])) {
 </div>
 
 <!-- Filter Section -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
+<div class="bg-white  p-4 md:p-6 mb-6">
   <div class="space-y-4">
     <!-- Status Filter -->
     <div class="flex flex-wrap items-center gap-3">
@@ -160,7 +160,7 @@ if (!isset($_SESSION['noble_user'])) {
       type="text"
       id="orderSearch"
       placeholder="Search orders by ID, customer name, email..."
-      class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white shadow-sm" />
+      class="w-full pl-10 pr-4 py-3 border border-gray-300  focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white shadow-sm" />
   </div>
 </div>
 
@@ -523,7 +523,7 @@ if (!isset($_SESSION['noble_user'])) {
       }
 
       container.innerHTML += `
-        <div class="order-item bg-white hover:shadow-md transition-all duration-200" id="order-${order.id}">
+        <div class="order-item hover:shadow-md transition-all duration-200" id="order-${order.id}">
           <div class="order-header p-3 md:p-4" onclick="toggleOrderDetails(${order.id})">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">

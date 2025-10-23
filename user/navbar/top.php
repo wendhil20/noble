@@ -530,12 +530,12 @@ $display_categories = getNavigationData($conn);
           </button>
         <?php endif; ?>
 
-        <a href="../otherpage/inspiration.php"
+        <a href="../otherpage/inspirationpage.php"
           class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
           Inspiration
         </a>
 
-        <a href="../otheepage/findpro.php"
+        <a href="../otherpage/findpropage.php"
           class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
           Find Pro
         </a>

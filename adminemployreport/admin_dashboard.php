@@ -56,6 +56,25 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Custom Scrollbar */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -127,6 +146,14 @@
                             </div>
                             <span class="text-gray-700 font-medium">Delayed</span>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-orange-100 border-2 border-orange-400 rounded-lg flex items-center justify-center shadow-sm">
+                                <svg class="w-4 h-4 text-orange-700" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700 font-medium">Rolled Over</span>
+                        </div>
                     </div>
                 </div>
 
@@ -136,11 +163,11 @@
                             <tr class="bg-gray-900 text-white">
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Employee</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Position</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold">Total</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Completed</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">In Progress</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Not Started</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Delayed</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Rolled Over</th>
                             </tr>
                         </thead>
                         <tbody id="allEmployeesTable"></tbody>
@@ -204,21 +231,26 @@
             'delayed': 'border-red-200'
         };
 
-        // Load data on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
-            
-            // Auto-refresh every 30 seconds (smooth background refresh)
-            setInterval(() => loadData(true), 30000);
+            setInterval(() => loadData(true), 5000);
         });
+
+        let expandedEmployees = new Set();
+        let expandedTasks = new Set();
 
         async function loadData(isRefresh = false) {
             try {
-                // Show loading only on first load, not on auto-refresh
+                if (isRefresh) {
+                    saveExpandedState();
+                }
+
                 if (!isRefresh) {
                     document.getElementById('loadingState').classList.remove('hidden');
                     document.getElementById('contentContainer').classList.add('hidden');
                 }
+                
+                console.log('Fetching data...', new Date().toLocaleTimeString());
                 
                 const response = await fetch('admin_ajax_employe.php', {
                     method: 'GET',
@@ -233,10 +265,15 @@
                 }
                 
                 const data = await response.json();
+                console.log('Data loaded:', data);
                 
                 renderAllEmployees(data.all_employees);
                 renderCurrentWeek(data.current_week);
                 renderNextWeek(data.next_week);
+                
+                if (isRefresh) {
+                    restoreExpandedState();
+                }
                 
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('contentContainer').classList.remove('hidden');
@@ -245,7 +282,6 @@
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('contentContainer').classList.remove('hidden');
                 
-                // Show error message without blocking
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
                 errorDiv.innerHTML = `
@@ -258,8 +294,55 @@
             }
         }
 
+        function saveExpandedState() {
+            expandedEmployees.clear();
+            expandedTasks.clear();
+
+            document.querySelectorAll('[id^="employee-"]').forEach(el => {
+                if (!el.classList.contains('hidden')) {
+                    expandedEmployees.add(el.id);
+                }
+            });
+
+            document.querySelectorAll('[id^="task-desc-"]').forEach(el => {
+                if (!el.classList.contains('hidden')) {
+                    expandedTasks.add(el.id);
+                }
+            });
+
+            console.log('Saved state:', {
+                employees: Array.from(expandedEmployees),
+                tasks: Array.from(expandedTasks)
+            });
+        }
+
+        function restoreExpandedState() {
+            expandedEmployees.forEach(id => {
+                const content = document.getElementById(id);
+                const arrowId = id.replace('employee-', 'arrow-');
+                const arrow = document.getElementById(arrowId);
+                
+                if (content && arrow) {
+                    content.classList.remove('hidden');
+                    arrow.classList.add('rotate-180');
+                }
+            });
+
+            expandedTasks.forEach(id => {
+                const content = document.getElementById(id);
+                const arrowId = id.replace('task-desc-', 'task-arrow-');
+                const arrow = document.getElementById(arrowId);
+                
+                if (content && arrow) {
+                    content.classList.remove('hidden');
+                    arrow.classList.add('rotate-90');
+                }
+            });
+
+            console.log('Restored state');
+        }
+
         function refreshData() {
-            // Visual feedback for manual refresh
             const btn = event.target.closest('button');
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `
@@ -285,15 +368,14 @@
                             <div class="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-sm">
                                 ${emp.username.substring(0, 2).toUpperCase()}
                             </div>
-                            <span class="font-semibold text-gray-900 uppercase">${emp.username}</span>
+                            <span class="font-semibold text-gray-900 uppercase cursor-pointer hover:text-blue-600 hover:underline transition-colors" 
+                                  onclick="window.location.href='admin_employee_daily_view.php?employee_id=${emp.id}'">
+                                ${emp.username}
+                            </span>
                         </div>
                     </td>
                     <td class="px-4 py-4 text-center text-sm text-gray-600">${emp.position}</td>
-                    <td class="px-4 py-4 text-center">
-                        <span class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg font-bold text-gray-900 border-2 border-gray-300 shadow-sm">
-                            ${emp.total_tasks}
-                        </span>
-                    </td>
+
                     <td class="px-4 py-4 text-center">
                         <span class="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg font-bold text-green-700 border-2 border-green-500 shadow-sm">
                             ${emp.completed_tasks}
@@ -313,6 +395,17 @@
                         ${emp.delayed_tasks > 0 ? `
                             <span class="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-lg font-bold text-red-700 border-2 border-red-500 shadow-sm animate-pulse-slow">
                                 ${emp.delayed_tasks}
+                            </span>
+                        ` : `
+                            <span class="inline-flex items-center justify-center w-12 h-12 bg-gray-50 rounded-lg font-bold text-gray-400 border-2 border-gray-200">
+                                0
+                            </span>
+                        `}
+                    </td>
+                    <td class="px-4 py-4 text-center">
+                        ${emp.rolled_over_tasks > 0 ? `
+                            <span class="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg font-bold text-orange-700 border-2 border-orange-400 shadow-sm">
+                                ${emp.rolled_over_tasks}
                             </span>
                         ` : `
                             <span class="inline-flex items-center justify-center w-12 h-12 bg-gray-50 rounded-lg font-bold text-gray-400 border-2 border-gray-200">
@@ -381,7 +474,7 @@
                                 <p class="text-gray-400 text-sm">No tasks</p>
                             </div>
                         ` : `
-                            <div class="p-3 space-y-2 bg-white">
+                            <div class="p-3 space-y-2 bg-white max-h-[600px] overflow-y-auto">
                                 ${item.tasks.map(task => renderTask(task, prefix)).join('')}
                             </div>
                         `}
@@ -393,16 +486,29 @@
         function renderTask(task, prefix) {
             const taskId = `${prefix}-${task.id}`;
             const duration = task.estimated_days || 0;
+            const isRolledOver = task.is_rolled_over == 1;
+            const rowBorderClass = isRolledOver ? 'border-orange-400' : borderColors[task.status];
+            const rowBgClass = isRolledOver ? 'bg-orange-50' : 'bg-gray-50';
             
             return `
-                <div class="bg-gray-50 rounded-lg border-2 ${borderColors[task.status]} overflow-hidden">
-                    <div class="p-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleTask('${taskId}')">
+                <div class="${rowBgClass} rounded-lg border-2 ${rowBorderClass} overflow-hidden">
+                    <div class="p-3 cursor-pointer hover:opacity-90 transition-opacity" onclick="toggleTask('${taskId}')">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex items-center gap-2 flex-1">
                                 <svg class="w-4 h-4 text-gray-400 transform transition-transform" id="task-arrow-${taskId}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
-                                <span class="font-bold text-black uppercase">${task.task_title}</span>
+                                <div class="flex items-center gap-2">
+                                    ${isRolledOver ? `
+                                        <span class="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            OVERDUE
+                                        </span>
+                                    ` : ''}
+                                    <span class="font-bold text-black uppercase">${task.task_title}</span>
+                                </div>
                             </div>
                             <span class="text-xs font-bold px-3 py-1.5 rounded-full ${statusColors[task.status]} flex items-center gap-1.5">
                                 <div class="status-dot dot-${task.status}"></div>
@@ -429,7 +535,7 @@
                         </div>
                     </div>
 
-                    <div id="task-desc-${taskId}" class="hidden border-t-2 ${borderColors[task.status]} bg-white">
+                    <div id="task-desc-${taskId}" class="hidden border-t-2 ${rowBorderClass} bg-white">
                         <div class="p-4 space-y-3">
                             <div>
                                 <label class="text-xs font-semibold text-gray-700 block mb-1">Description</label>
@@ -470,6 +576,23 @@
                                 </div>
                             </div>
 
+                            ${isRolledOver && task.original_week_start ? `
+                                <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-3">
+                                    <div class="flex items-start gap-2 text-orange-700">
+                                        <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <div class="text-sm">
+                                            <p class="font-semibold">Task Rolled Over</p>
+                                            <p class="text-xs mt-1">Originally from: ${new Date(task.original_week_start).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</p>
+                                            ${task.rollover_count > 1 ? `
+                                                <p class="text-xs mt-1 font-bold">Rolled over ${task.rollover_count} times</p>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+
                             ${task.status === 'delayed' && task.display_delay_days > 0 ? `
                                 <div class="bg-red-50 border-2 border-red-300 rounded-lg p-3">
                                     <div class="flex items-center gap-2 text-red-700">
@@ -507,4 +630,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -29,6 +29,31 @@ function getRemainingDelayDays($delay_start_date, $initial_delay_days)
     return max(0, $remaining);
 }
 
+// Function to auto-update status based on progress
+function autoUpdateTaskStatus($conn, $task_id, $progress_percentage, $current_status)
+{
+    $new_status = $current_status;
+    
+    // Auto-complete when reaching 100%
+    if ($progress_percentage == 100 && $current_status != 'completed') {
+        $new_status = 'completed';
+        $update_query = "UPDATE employee_tasks 
+                        SET status = 'completed' 
+                        WHERE id = $task_id";
+        mysqli_query($conn, $update_query);
+    }
+    // Set to in_progress if between 1-99%
+    elseif ($progress_percentage > 0 && $progress_percentage < 100 && $current_status == 'not_started') {
+        $new_status = 'in_progress';
+        $update_query = "UPDATE employee_tasks 
+                        SET status = 'in_progress' 
+                        WHERE id = $task_id";
+        mysqli_query($conn, $update_query);
+    }
+    
+    return $new_status;
+}
+
 $response = [];
 
 // Get all employees with their OVERALL task statistics
@@ -73,6 +98,9 @@ while ($employee = mysqli_fetch_assoc($current_employees)) {
     
     $tasks = [];
     while ($task = mysqli_fetch_assoc($tasks_result)) {
+        // Auto-update status based on progress
+        $task['status'] = autoUpdateTaskStatus($conn, $task['id'], $task['progress_percentage'], $task['status']);
+        
         $display_delay_days = 0;
         if ($task['status'] === 'delayed' && isset($task['delay_start_date'])) {
             $display_delay_days = getRemainingDelayDays($task['delay_start_date'], $task['delay_days']);
@@ -109,6 +137,9 @@ while ($employee = mysqli_fetch_assoc($next_employees)) {
     
     $tasks = [];
     while ($task = mysqli_fetch_assoc($tasks_result)) {
+        // Auto-update status based on progress
+        $task['status'] = autoUpdateTaskStatus($conn, $task['id'], $task['progress_percentage'], $task['status']);
+        
         $display_delay_days = 0;
         if ($task['status'] === 'delayed' && isset($task['delay_start_date'])) {
             $display_delay_days = getRemainingDelayDays($task['delay_start_date'], $task['delay_days']);

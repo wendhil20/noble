@@ -631,6 +631,17 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <i class="ri-archive-line text-lg"></i>
                                             <span>Assign Orders</span>
                                         </a>
+                                        <a href="../warehouse_management/view_po_items"
+    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+    <i class="ri-search-eye-line text-lg"></i>
+    <span>Search Items</span>
+</a>
+
+<a href="../warehouse_management/qr_scanner"
+    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+    <i class="ri-qr-code-line text-lg"></i>
+    <span>QR Scanner</span>
+</a>
                                     </div>
                                     <hr class="my-2 border-gray-200">
                                 <?php endif; ?>

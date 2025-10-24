@@ -13,52 +13,109 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 $order_id = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
-$item_id = isset($_GET['item_id']) ? (int)$_GET['item_id'] : 0;
-$origin = isset($_GET['origin']) ? $_GET['origin'] : '';
-$replacement_id = isset($_GET['replacement_id']) ? (int)$_GET['replacement_id'] : 0;
+$schedule_all = isset($_GET['schedule_all']) && $_GET['schedule_all'] === 'true';
 
 // Validate input parameters
-if ($order_id <= 0 || $item_id <= 0 || !in_array($origin, ['local', 'international', 'replacement'])) {
+if ($order_id <= 0 || !$schedule_all) {
     header("Location: order_list.php");
     exit();
 }
 
-// If it's a replacement request, validate replacement_id
-if ($origin === 'replacement' && $replacement_id <= 0) {
+// Get order details
+$orderSql = "SELECT * FROM orders WHERE id = ? LIMIT 1";
+$orderStmt = $conn->prepare($orderSql);
+$orderStmt->bind_param("i", $order_id);
+$orderStmt->execute();
+$order = $orderStmt->get_result()->fetch_assoc();
+$orderStmt->close();
+
+if (!$order) {
+    header("Location: order_list.php");
+    exit();
+}
+
+// Get all items in warehouse for this order (including replacements)
+$itemsSql = "
+    SELECT 
+        oi.id,
+        CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+        oi.quantity,
+        oi.price,
+        CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+        CAST(oi.tracking_status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
+        CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+        NULL as replacement_id,
+        CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+        oi.lt_from,
+        oi.lt_to
+    FROM order_items oi
+    WHERE oi.order_id = ? AND oi.tracking_status = 'In Warehouse'
+    
+    UNION ALL
+    
+    SELECT 
+        oi.id,
+        CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+        rr.replacement_quantity as quantity,
+        oi.price,
+        CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+        CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
+        CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+        rr.id as replacement_id,
+        CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+        oi.lt_from,
+        oi.lt_to
+    FROM replacement_requests rr
+    JOIN order_items oi ON rr.order_item_id = oi.id
+    WHERE rr.order_id = ? AND rr.status = 'In Warehouse'
+    
+    ORDER BY item_type, product_name
+";
+$itemsStmt = $conn->prepare($itemsSql);
+$itemsStmt->bind_param("ii", $order_id, $order_id);
+$itemsStmt->execute();
+$items = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$itemsStmt->close();
+
+// Calculate the latest lead time range from all items
+$latestLtFrom = null;
+$latestLtTo = null;
+
+foreach ($items as $item) {
+    if (!empty($item['lt_from']) && !empty($item['lt_to'])) {
+        $currentLtFrom = new DateTime($item['lt_from']);
+        $currentLtTo = new DateTime($item['lt_to']);
+        
+        // Find the latest lt_from date
+        if ($latestLtFrom === null || $currentLtFrom > $latestLtFrom) {
+            $latestLtFrom = $currentLtFrom;
+        }
+        
+        // Find the latest lt_to date
+        if ($latestLtTo === null || $currentLtTo > $latestLtTo) {
+            $latestLtTo = $currentLtTo;
+        }
+    }
+}
+
+// Format the expected delivery message
+$expectedDeliveryMessage = '';
+if ($latestLtFrom && $latestLtTo) {
+    $formattedLtFrom = $latestLtFrom->format('F j, Y');
+    $formattedLtTo = $latestLtTo->format('F j, Y');
+    $expectedDeliveryMessage = "Expected delivery: {$formattedLtFrom} - {$formattedLtTo}";
+}
+
+// Check if there are any items ready for scheduling
+if (empty($items)) {
     header("Location: order_tracking.php?order_id=$order_id");
     exit();
 }
 
-// Get order and item details
-if ($origin === 'replacement') {
-    // Get replacement request details with original item info
-    $itemSql = "SELECT rr.*, 
-                       oi.product_name, oi.price, oi.origin,
-                       o.customer_name, o.address, o.mobile 
-                FROM replacement_requests rr
-                JOIN order_items oi ON rr.order_item_id = oi.id
-                JOIN orders o ON rr.order_id = o.id 
-                WHERE rr.id = ? AND rr.order_id = ? AND rr.order_item_id = ? LIMIT 1";
-    $itemStmt = $conn->prepare($itemSql);
-    $itemStmt->bind_param("iii", $replacement_id, $order_id, $item_id);
-} else {
-    // Get original order item details
-    $itemSql = "SELECT oi.*, o.customer_name, o.address, o.mobile 
-                FROM order_items oi 
-                JOIN orders o ON oi.order_id = o.id 
-                WHERE oi.id = ? AND oi.order_id = ? LIMIT 1";
-    $itemStmt = $conn->prepare($itemSql);
-    $itemStmt->bind_param("ii", $item_id, $order_id);
-}
-
-$itemStmt->execute();
-$item = $itemStmt->get_result()->fetch_assoc();
-$itemStmt->close();
-
-if (!$item) {
-    header("Location: order_tracking.php?order_id=$order_id");
-    exit();
-}
+// Calculate totals
+$totalItems = count($items);
+$totalQuantity = array_sum(array_column($items, 'quantity'));
+$hasReplacements = !empty(array_filter($items, function($item) { return $item['item_type'] === 'replacement'; }));
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery'])) {
@@ -69,43 +126,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
     try {
         $conn->begin_transaction();
         
-        if ($origin === 'replacement') {
-            // Insert replacement delivery schedule
-            $scheduleSql = "INSERT INTO delivery_schedules (order_id, item_id, replacement_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 'replacement', ?, NOW())";
-            $scheduleStmt = $conn->prepare($scheduleSql);
-            $scheduleStmt->bind_param("iiissss", $order_id, $item_id, $replacement_id, $delivery_date, $delivery_time, $delivery_notes, $_SESSION['noble_user']);
-            $scheduleStmt->execute();
-            $scheduleStmt->close();
-            
-            // Update replacement request status
-            $new_status = 'ready_for_pickup';
-            $updateSql = "UPDATE replacement_requests SET status = ? WHERE id = ? AND order_id = ?";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->bind_param("sii", $new_status, $replacement_id, $order_id);
-            $updateStmt->execute();
-            $updateStmt->close();
-        } else {
-            // Insert original item delivery schedule
-            $scheduleSql = "INSERT INTO delivery_schedules (order_id, item_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) VALUES (?, ?, ?, ?, ?, 'original', ?, NOW())";
-            $scheduleStmt = $conn->prepare($scheduleSql);
-            $scheduleStmt->bind_param("iissss", $order_id, $item_id, $delivery_date, $delivery_time, $delivery_notes, $_SESSION['noble_user']);
-            $scheduleStmt->execute();
-            $scheduleStmt->close();
-            
-            // Update original item status based on origin
-            $new_status = ($origin === 'local') ? 'ready_for_pickup' : 'in_local_warehouse';
-            $updateSql = "UPDATE order_items SET tracking_status = ? WHERE id = ? AND order_id = ?";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->bind_param("sii", $new_status, $item_id, $order_id);
-            $updateStmt->execute();
-            $updateStmt->close();
-        }
+        // Insert ONE delivery schedule record for the entire order
+        $scheduleSql = "INSERT INTO delivery_schedules 
+                        (order_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) 
+                        VALUES (?, ?, ?, ?, 'original', ?, NOW())";
+        $scheduleStmt = $conn->prepare($scheduleSql);
+        $created_by = $_SESSION['noble_user'];
+        $scheduleStmt->bind_param("issss", $order_id, $delivery_date, $delivery_time, $delivery_notes, $created_by);
+        $scheduleStmt->execute();
+        $scheduleStmt->close();
         
-        $conn->commit();
-        
-        $success_message = ($origin === 'replacement') ? 
-            "Replacement item scheduled for delivery successfully!" : 
-            "Item scheduled for delivery successfully!";
+        // Update all items in warehouse to 'scheduled'
+// Update original items
+$updateOriginalSql = "UPDATE order_items 
+                     SET tracking_status = 'scheduled' 
+                     WHERE order_id = ? AND tracking_status = 'In Warehouse'";
+$updateOriginalStmt = $conn->prepare($updateOriginalSql);
+$updateOriginalStmt->bind_param("i", $order_id);
+$updateOriginalStmt->execute();
+$affectedOriginal = $updateOriginalStmt->affected_rows;
+$updateOriginalStmt->close();
+
+// Update replacement items
+$updateReplacementSql = "UPDATE replacement_requests 
+                        SET status = 'scheduled' 
+                        WHERE order_id = ? AND status = 'In Warehouse'";
+$updateReplacementStmt = $conn->prepare($updateReplacementSql);
+$updateReplacementStmt->bind_param("i", $order_id);
+$updateReplacementStmt->execute();
+$affectedReplacement = $updateReplacementStmt->affected_rows;
+$updateReplacementStmt->close();
+
+$conn->commit();
+
+$totalUpdated = $affectedOriginal + $affectedReplacement;
+$success_message = "Order delivery scheduled successfully! {$totalUpdated} item(s) updated to 'Scheduled'.";
         
         // Redirect after 2 seconds
         echo "<script>
@@ -136,26 +191,25 @@ foreach ($calendarData as $data) {
     $deliveryCountsByDate[$data['date']] = $data['count'];
 }
 
-// Get scheduled deliveries for the next 30 days (including replacements)
+// Get scheduled deliveries for the next 30 days (order-based)
+// Get scheduled deliveries for the next 30 days (including both original and replacement)
 $scheduleSql = "SELECT ds.*, 
-                       CASE 
-                           WHEN ds.item_type = 'replacement' THEN CONCAT(oi.product_name, ' (REPLACEMENT)')
-                           ELSE oi.product_name
-                       END as product_name,
-                       CASE 
-                           WHEN ds.item_type = 'replacement' THEN rr.replacement_quantity
-                           ELSE oi.quantity
-                       END as quantity,
-                       oi.price, o.customer_name, o.address,
-                       CASE 
-                           WHEN ds.item_type = 'replacement' THEN rr.reason
-                           ELSE NULL
-                       END as replacement_reason
+                       o.customer_name, 
+                       o.address,
+                       o.id as order_id,
+                       COUNT(DISTINCT oi.id) as original_count,
+                       SUM(oi.quantity) as original_quantity,
+                       COUNT(DISTINCT rr.id) as replacement_count,
+                       SUM(rr.replacement_quantity) as replacement_quantity
                 FROM delivery_schedules ds
-                JOIN order_items oi ON ds.item_id = oi.id
                 JOIN orders o ON ds.order_id = o.id
-                LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id AND ds.item_type = 'replacement'
-                WHERE ds.delivery_date >= CURDATE() AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                LEFT JOIN order_items oi ON oi.order_id = ds.order_id AND oi.tracking_status IN ('ready_for_pickup', 'out_for_delivery')
+                LEFT JOIN replacement_requests rr ON rr.order_id = ds.order_id AND rr.status IN ('ready_for_pickup', 'out_for_delivery')
+                WHERE ds.delivery_date >= CURDATE() 
+                  AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                  AND ds.item_type IN ('original', 'replacement')
+                GROUP BY ds.id, ds.order_id, ds.delivery_date, ds.delivery_time, ds.delivery_notes, 
+                         o.customer_name, o.address, ds.item_type
                 ORDER BY ds.delivery_date, ds.delivery_time";
 $scheduleStmt = $conn->prepare($scheduleSql);
 $scheduleStmt->execute();
@@ -172,13 +226,7 @@ foreach ($schedules as $schedule) {
     $schedulesByDate[$date][] = $schedule;
 }
 
-// Determine display values based on item type
-$isReplacement = ($origin === 'replacement');
-$displayProductName = $isReplacement ? 
-    htmlspecialchars($item['product_name']) . ' (REPLACEMENT)' : 
-    htmlspecialchars($item['product_name']);
-$displayQuantity = $isReplacement ? $item['replacement_quantity'] : $item['quantity'];
-$displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['reason'])) : '';
+
 ?>
 
 <!DOCTYPE html>
@@ -271,23 +319,42 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                     <a href="order_tracking.php?order_id=<?php echo $order_id; ?>" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-arrow-left text-gray-600"></i>
                     </a>
-                    <div class="bg-gradient-to-r <?php echo $isReplacement ? 'from-red-500 to-red-600' : 'from-blue-500 to-blue-600'; ?> p-3 rounded-xl shadow-lg">
-                        <i class="fas <?php echo $isReplacement ? 'fa-exchange-alt' : 'fa-calendar-plus'; ?> text-white text-2xl"></i>
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-calendar-check text-white text-2xl"></i>
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">
-                            Schedule <?php echo $isReplacement ? 'Replacement' : 'Item'; ?> for Delivery
+                            Schedule Order Delivery
                         </h1>
                         <p class="text-gray-600 mt-1">
-                            <?php echo $displayProductName; ?>
-                            <?php if ($isReplacement): ?>
-                                <span class="replacement-badge px-2 py-1 rounded-full text-xs font-medium ml-2">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>REPLACEMENT
+                            Order #<?php echo $order_id; ?> - <?php echo htmlspecialchars($order['customer_name']); ?>
+                            <?php if ($hasReplacements): ?>
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                    <i class="fas fa-sync-alt mr-1"></i>Includes Replacements
                                 </span>
                             <?php endif; ?>
                         </p>
                     </div>
                 </div>
+                <div class="flex flex-col space-y-2">
+    <div class="bg-blue-100 px-4 py-2 rounded-lg">
+        <span class="text-blue-900 font-semibold">
+            <i class="fas fa-boxes mr-2"></i><?php echo $totalItems; ?> Items
+        </span>
+    </div>
+    <div class="bg-green-100 px-4 py-2 rounded-lg">
+        <span class="text-green-900 font-semibold">
+            <i class="fas fa-cube mr-2"></i><?php echo $totalQuantity; ?> Total Qty
+        </span>
+    </div>
+    <?php if ($expectedDeliveryMessage): ?>
+    <div class="bg-orange-100 px-4 py-2 rounded-lg">
+        <span class="text-orange-900 font-semibold text-sm">
+            <i class="fas fa-calendar-alt mr-2"></i><?php echo $expectedDeliveryMessage; ?>
+        </span>
+    </div>
+    <?php endif; ?>
+</div>
             </div>
         </div>
     </div>
@@ -317,58 +384,80 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
             
             <!-- Left Column: Item Details & Schedule Form -->
             <div class="xl:col-span-1">
-                <!-- Item Information -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 <?php echo $isReplacement ? 'replacement-item' : ''; ?>">
+                <!-- Order Items Summary -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <i class="fas <?php echo $isReplacement ? 'fa-exchange-alt text-red-600' : 'fa-box text-blue-600'; ?> mr-3"></i>
-                        <?php echo $isReplacement ? 'Replacement' : 'Item'; ?> Details
+                        <i class="fas fa-boxes text-green-600 mr-3"></i>
+                        Order Items (<?php echo $totalItems; ?>)
                     </h3>
                     
-                    <?php if ($isReplacement): ?>
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                            <div class="flex items-center text-red-800">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                <span class="font-medium">Replacement Request</span>
+                    <div class="max-h-96 overflow-y-auto space-y-3">
+                        <?php foreach ($items as $item): ?>
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 <?php echo $item['item_type'] === 'replacement' ? 'border-l-4 border-l-red-500' : ''; ?>">
+                                <?php if ($item['item_type'] === 'replacement'): ?>
+                                    <div class="flex items-center mb-2">
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                            <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
+                                        </span>
+                                    </div>
+                                    <?php if ($item['replacement_reason']): ?>
+                                        <p class="text-red-600 text-xs mb-2">
+                                            Reason: <?php echo htmlspecialchars(ucfirst($item['replacement_reason'])); ?>
+                                        </p>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                
+                                <div class="font-medium text-gray-900 mb-1">
+                                    <?php echo htmlspecialchars($item['product_name']); ?>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-600">
+                                    <span>Qty: <?php echo $item['quantity']; ?></span>
+                                    <span>₱<?php echo number_format((float)$item['price'], 2); ?></span>
+                                </div>
                             </div>
-                            <p class="text-red-700 text-sm mt-1"><?php echo $displayReason; ?></p>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Product:</span>
-                            <span class="font-medium"><?php echo htmlspecialchars($item['product_name']); ?></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Quantity:</span>
-                            <span class="font-medium"><?php echo $displayQuantity; ?></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Price:</span>
-                            <span class="font-medium">₱<?php echo number_format((float)$item['price'], 2); ?></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Customer:</span>
-                            <span class="font-medium"><?php echo htmlspecialchars($item['customer_name']); ?></span>
-                        </div>
-                        <?php if ($isReplacement): ?>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Request Date:</span>
-                                <span class="font-medium"><?php echo date('M j, Y', strtotime($item['created_at'])); ?></span>
-                            </div>
-                        <?php endif; ?>
-                        <div class="pt-2 border-t">
-                            <span class="text-gray-600">Address:</span>
-                            <p class="font-medium mt-1"><?php echo htmlspecialchars($item['address']); ?></p>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+    <div class="space-y-2">
+        <div class="flex justify-between">
+            <span class="text-gray-600">Total Items:</span>
+            <span class="font-bold"><?php echo $totalItems; ?></span>
+        </div>
+        <div class="flex justify-between">
+            <span class="text-gray-600">Total Quantity:</span>
+            <span class="font-bold"><?php echo $totalQuantity; ?></span>
+        </div>
+        <div class="flex justify-between">
+            <span class="text-gray-600">Customer:</span>
+            <span class="font-medium"><?php echo htmlspecialchars($order['customer_name']); ?></span>
+        </div>
+        <?php if ($expectedDeliveryMessage): ?>
+        <div class="pt-2 border-t">
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div class="flex items-start">
+                    <i class="fas fa-clock text-orange-600 mr-2 mt-1"></i>
+                    <div>
+                        <span class="text-orange-900 font-semibold text-sm block">Estimated Delivery</span>
+                        <span class="text-orange-800 text-sm"><?php echo str_replace('Expected delivery: ', '', $expectedDeliveryMessage); ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        <div class="pt-2 border-t">
+            <span class="text-gray-600">Delivery Address:</span>
+            <p class="font-medium mt-1"><?php echo htmlspecialchars($order['address']); ?></p>
+        </div>
+    </div>
+</div>
                 </div>
 
                 <!-- Schedule Form -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <i class="fas fa-calendar-plus <?php echo $isReplacement ? 'text-red-600' : 'text-green-600'; ?> mr-3"></i>
-                        Schedule <?php echo $isReplacement ? 'Replacement' : ''; ?> Delivery
+                        <i class="fas fa-calendar-check text-green-600 mr-3"></i>
+                        Schedule Order Delivery
                     </h3>
                     
                     <form method="POST" class="space-y-4">
@@ -378,8 +467,8 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                                 Delivery Date
                             </label>
                             <input type="date" name="delivery_date" id="delivery_date" required 
-                                   min="<?php echo date('Y-m-d'); ?>"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 text-lg">
+       min="<?php echo date('Y-m-d'); ?>"
+       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 text-lg">
                             <p class="text-sm text-gray-500 mt-1">Click on calendar days to select dates</p>
                         </div>
                         
@@ -389,7 +478,7 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                                 Delivery Time
                             </label>
                             <select name="delivery_time" required 
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 text-lg">
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 text-lg">
                                 <option value="">Select time slot</option>
                                 <option value="08:00">8:00 AM - 9:00 AM</option>
                                 <option value="09:00">9:00 AM - 10:00 AM</option>
@@ -408,15 +497,15 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                                 Delivery Notes (Optional)
                             </label>
                             <textarea name="delivery_notes" rows="3" 
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $isReplacement ? 'red' : 'blue'; ?>-500" 
-                                      placeholder="Special instructions, contact details, or delivery preferences...<?php echo $isReplacement ? ' (Replacement delivery)' : ''; ?>"></textarea>
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500" 
+          placeholder="Special instructions, contact details, or delivery preferences...<?php echo $hasReplacements ? ' (Includes replacement items)' : ''; ?>"></textarea>
                         </div>
                         
                         <div class="pt-4">
                             <button type="submit" name="schedule_delivery" 
-                                    class="w-full bg-gradient-to-r <?php echo $isReplacement ? 'from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' : 'from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'; ?> text-white font-medium py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] text-lg">
-                                <i class="fas fa-calendar-plus mr-3"></i>
-                                Schedule This <?php echo $isReplacement ? 'Replacement' : 'Item'; ?> for Delivery
+                                    class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] text-lg shadow-lg">
+                                <i class="fas fa-calendar-check mr-3"></i>
+                                Schedule All <?php echo $totalItems; ?> Items for Delivery
                             </button>
                         </div>
                     </form>
@@ -498,7 +587,8 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
         // Calendar and scheduling data
         const deliveryCounts = <?php echo json_encode($deliveryCountsByDate); ?>;
         const schedules = <?php echo json_encode($schedules); ?>;
-        const isReplacement = <?php echo $isReplacement ? 'true' : 'false'; ?>;
+        const totalItems = <?php echo $totalItems; ?>;
+        const hasReplacements = <?php echo $hasReplacements ? 'true' : 'false'; ?>;
         
         let currentDate = new Date();
         let selectedDate = null;
@@ -602,8 +692,8 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
             const selectedDateSchedules = schedules.filter(s => s.delivery_date === selectedDate);
             
             itemsCountSpan.textContent = selectedDate ? 
-                `${selectedDateSchedules.length} items on ${formatDisplayDate(selectedDate)}` : 
-                `${schedules.length} items`;
+                `${selectedDateSchedules.length} orders on ${formatDisplayDate(selectedDate)}` : 
+                `${schedules.length} orders`;
             
             if (selectedDateSchedules.length === 0) {
                 scheduledItemsContainer.innerHTML = `
@@ -611,12 +701,12 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                         <div class="text-gray-400 mb-4">
                             <i class="fas fa-calendar-day text-6xl"></i>
                         </div>
-                        <h4 class="text-lg font-medium text-gray-600 mb-2">No Items Scheduled</h4>
+                        <h4 class="text-lg font-medium text-gray-600 mb-2">No Orders Scheduled</h4>
                         <p class="text-gray-500">No deliveries scheduled for ${formatDisplayDate(selectedDate)}</p>
                         <button type="button" onclick="showAllScheduledItems()" 
                                 class="mt-4 text-blue-600 hover:text-blue-800 font-medium">
                             <i class="fas fa-list mr-1"></i>
-                            View All Scheduled Items
+                            View All Scheduled Orders
                         </button>
                     </div>
                 `;
@@ -643,13 +733,13 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                             </h4>
                             <div class="flex items-center space-x-2">
                                 <span class="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                    ${daySchedules.length} items
-                                </span>
-                                <button type="button" onclick="showAllScheduledItems()" 
-                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    <i class="fas fa-list mr-1"></i>
-                                    View All
-                                </button>
+                                ${daySchedules.length} orders
+                            </span>
+                            <button type="button" onclick="showAllScheduledItems()" 
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                <i class="fas fa-list mr-1"></i>
+                                View All
+                            </button>
                             </div>
                         </div>
                     </div>
@@ -657,8 +747,7 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                 `;
                 
                 daySchedules.forEach(schedule => {
-                    const isReplacementItem = schedule.item_type === 'replacement';
-                    html += renderScheduleItem(schedule, isReplacementItem);
+                    html += renderScheduleItem(schedule);
                 });
                 
                 html += '</div>';
@@ -677,7 +766,7 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
             }
             selectedDate = null;
             
-            itemsCountSpan.textContent = `${schedules.length} items`;
+            itemsCountSpan.textContent = `${schedules.length} orders`;
             
             if (schedules.length === 0) {
                 scheduledItemsContainer.innerHTML = `
@@ -685,8 +774,8 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                         <div class="text-gray-400 mb-4">
                             <i class="fas fa-calendar-times text-6xl"></i>
                         </div>
-                        <h4 class="text-lg font-medium text-gray-600 mb-2">No Items Scheduled</h4>
-                        <p class="text-gray-500">Schedule your first item for delivery using the form.</p>
+                        <h4 class="text-lg font-medium text-gray-600 mb-2">No Orders Scheduled</h4>
+                        <p class="text-gray-500">Schedule your first order for delivery using the form.</p>
                     </div>
                 `;
                 return;
@@ -711,7 +800,7 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                                 ${formatDisplayDate(date)}
                             </h4>
                             <span class="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                ${daySchedules.length} items
+                                ${daySchedules.length} orders
                             </span>
                         </div>
                     </div>
@@ -719,8 +808,7 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
                 `;
                 
                 daySchedules.forEach(schedule => {
-                    const isReplacementItem = schedule.item_type === 'replacement';
-                    html += renderScheduleItem(schedule, isReplacementItem);
+                    html += renderScheduleItem(schedule);
                 });
                 
                 html += '</div>';
@@ -729,44 +817,47 @@ $displayReason = $isReplacement ? 'Reason: ' . htmlspecialchars(ucfirst($item['r
             scheduledItemsContainer.innerHTML = html;
         }
         
-        function renderScheduleItem(schedule, isReplacementItem) {
-            const itemClass = isReplacementItem ? 'replacement-item' : 'bg-gray-50';
-            const badgeClass = isReplacementItem ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-700';
-            const reasonText = isReplacementItem && schedule.replacement_reason ? 
-                `<p class="text-red-600 text-sm mt-1 bg-red-50 p-2 rounded">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    Replacement reason: ${escapeHtml(schedule.replacement_reason)}
-                </p>` : '';
-            
-            return `
-                <div class="item-card ${itemClass} border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex-1">
-                            <div class="flex items-center mb-1">
-                                <h5 class="font-semibold text-gray-900 text-lg">
-                                    ${escapeHtml(schedule.product_name)}
-                                </h5>
-                                ${isReplacementItem ? '<span class="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium"><i class="fas fa-exchange-alt mr-1"></i>REPLACEMENT</span>' : ''}
-                            </div>
-                            <p class="text-blue-600 font-medium mb-2">
-                                <i class="fas fa-clock mr-1"></i>
-                                ${formatTime(schedule.delivery_time)}
-                            </p>
-                            ${reasonText}
-                        </div>
-                        <span class="${badgeClass} px-3 py-1 rounded-full text-sm font-medium">
+        function renderScheduleItem(schedule) {
+    const originalCount = parseInt(schedule.original_count) || 0;
+    const replacementCount = parseInt(schedule.replacement_count) || 0;
+    const totalItems = originalCount + replacementCount;
+    const originalQty = parseInt(schedule.original_quantity) || 0;
+    const replacementQty = parseInt(schedule.replacement_quantity) || 0;
+    const totalQty = originalQty + replacementQty;
+    
+    return `
+        <div class="item-card bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <div class="flex items-center mb-1">
+                        <h5 class="font-semibold text-gray-900 text-lg">
                             Order #${schedule.order_id}
+                        </h5>
+                        <span class="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                            <i class="fas fa-boxes mr-1"></i>${totalItems} items
                         </span>
+                        ${replacementCount > 0 ? `
+                            <span class="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <i class="fas fa-sync-alt mr-1"></i>${replacementCount} replacement
+                            </span>
+                        ` : ''}
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                        <div>
-                            <span class="font-medium">Quantity:</span> ${schedule.quantity}
-                        </div>
-                        <div>
-                            <span class="font-medium">Price:</span> ₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </div>
-                    </div>
+                    <p class="text-green-600 font-medium mb-2">
+                        <i class="fas fa-clock mr-1"></i>
+                        ${formatTime(schedule.delivery_time)}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium block mb-1">
+                        Total: ${totalQty}
+                    </span>
+                    ${replacementCount > 0 ? `
+                        <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium block">
+                            +${replacementQty} replaced
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
                     
                     <div class="border-t border-gray-200 pt-3">
                         <p class="text-gray-700 font-medium mb-1">

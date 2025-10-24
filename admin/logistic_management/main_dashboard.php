@@ -16,14 +16,18 @@ if (!isset($_SESSION['noble_user'])) {
 $scheduleSql = "SELECT 
     ds.id as delivery_id,
     ds.order_id,
-    ds.item_id,
     ds.delivery_date,
     ds.delivery_time,
     ds.delivery_notes,
-    ds.assigned_truck,
+    db.courier_name,
+    db.vehicle_id,
+    db.booking_reference,
+    db.tracking_number,
+    db.booking_type,
+    db.booking_status,
+    db.delivery_proof_image,
+    db.actual_delivery_time,
     ds.delivery_type,
-    ds.delivery_proof,
-    ds.delivered_at,
     ds.created_by,
     ds.created_at,
     ds.item_type,
@@ -34,32 +38,30 @@ $scheduleSql = "SELECT
     o.address,
     o.status as order_status,
     o.final_total,
-    oi.product_name,
-    oi.codename,
-    oi.type_name,
-    oi.variant_color,
-    oi.price,
-    oi.quantity,
-    oi.subtotal,
-    oi.size,
-    oi.tracking_status,
+    (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id) as total_items,
+    (SELECT SUM(quantity) FROM order_items WHERE order_id = ds.order_id) as total_quantity,
     rr.reason as replacement_reason,
     rr.details as replacement_details,
     rr.replacement_quantity,
     rr.status as replacement_status,
     CASE 
-        WHEN ds.delivered_at IS NOT NULL THEN 'completed'
-        WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 'overdue'
-        WHEN ds.delivered_at IS NULL AND ds.delivery_date = CURDATE() THEN 'today_pending'
-        WHEN ds.delivered_at IS NULL AND ds.delivery_date > CURDATE() THEN 'upcoming'
+        WHEN db.booking_status IN ('delivered', 'picked_up') THEN 'completed'
+        WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+             AND ds.delivery_date < CURDATE() THEN 'overdue'
+        WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+             AND ds.delivery_date = CURDATE() THEN 'today_pending'
+        WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+             AND ds.delivery_date > CURDATE() THEN 'upcoming'
+        ELSE 'upcoming'
     END as delivery_status,
     CASE 
-        WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN DATEDIFF(CURDATE(), ds.delivery_date)
+        WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+             AND ds.delivery_date < CURDATE() THEN DATEDIFF(CURDATE(), ds.delivery_date)
         ELSE 0
     END as days_overdue
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
-INNER JOIN order_items oi ON ds.item_id = oi.id
+LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
 LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
@@ -74,10 +76,12 @@ $scheduleStmt->close();
 $countSql = "SELECT 
     DATE(ds.delivery_date) as date, 
     COUNT(*) as count,
-    COUNT(CASE WHEN ds.delivered_at IS NULL THEN 1 END) as pending_count,
-    COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_count,
-    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_count
+    COUNT(CASE WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) THEN 1 END) as pending_count,
+    COUNT(CASE WHEN db.booking_status IN ('delivered', 'picked_up') THEN 1 END) as completed_count,
+    COUNT(CASE WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+                AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_count
 FROM delivery_schedules ds
+LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
 GROUP BY DATE(ds.delivery_date)";
@@ -96,12 +100,16 @@ foreach ($deliveryCounts as $data) {
 // Get summary statistics including overdue
 $statsSql = "SELECT 
     COUNT(*) as total_scheduled,
-    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date >= CURDATE() THEN 1 END) as pending_deliveries,
-    COUNT(CASE WHEN ds.delivered_at IS NOT NULL THEN 1 END) as completed_deliveries,
-    COUNT(CASE WHEN ds.delivery_date = CURDATE() AND ds.delivered_at IS NULL THEN 1 END) as today_deliveries,
-    COUNT(CASE WHEN ds.delivered_at IS NULL AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_deliveries,
+    COUNT(CASE WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+                AND ds.delivery_date >= CURDATE() THEN 1 END) as pending_deliveries,
+    COUNT(CASE WHEN db.booking_status IN ('delivered', 'picked_up') THEN 1 END) as completed_deliveries,
+    COUNT(CASE WHEN ds.delivery_date = CURDATE() 
+                AND (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) THEN 1 END) as today_deliveries,
+    COUNT(CASE WHEN (db.booking_status IS NULL OR db.booking_status NOT IN ('delivered', 'picked_up')) 
+                AND ds.delivery_date < CURDATE() THEN 1 END) as overdue_deliveries,
     COUNT(CASE WHEN ds.item_type = 'replacement' THEN 1 END) as replacement_deliveries
 FROM delivery_schedules ds
+LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
 
 $statsStmt = $conn->prepare($statsSql);
@@ -553,13 +561,12 @@ $statsStmt->close();
         }
         
         function navigateToDetailedView() {
-            if (selectedDate) {
-                // You can change this URL to your target page
-                const targetPage = 'delivery_detailed_view.php';
-                const url = `${targetPage}?date=${selectedDate}`;
-                window.location.href = url;
-            }
-        }
+    if (selectedDate) {
+        const targetPage = 'delivery_date_orders.php';
+        const url = `${targetPage}?date=${selectedDate}`;
+        window.location.href = url;
+    }
+}
         
         function filterDeliveries(filterType) {
             currentFilter = filterType;
@@ -604,7 +611,7 @@ $statsStmt->close();
                 // Apply status filter
                 if (currentFilter === 'overdue') {
     filteredSchedules = schedules.filter(s => 
-        s.delivery_status === 'overdue' && s.delivered_at === null
+        s.delivery_status === 'overdue'
     );
     detailsTitle.textContent = 'Overdue Deliveries';
     filterStatus.textContent = 'Showing overdue items only';
@@ -703,12 +710,12 @@ $statsStmt->close();
                 let dateClass = '';
                 let dateIcon = 'fa-calendar';
                 
-                // Check if there are any actual overdue items (not delivered) for this date
-                const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules => 
-                    timeSchedules.some(schedule => 
-                        schedule.delivery_status === 'overdue' && schedule.delivered_at === null
-                    )
-                );
+                // Check if there are any actual overdue items for this date
+const hasOverdueItems = Object.values(dateSchedules).some(timeSchedules => 
+    timeSchedules.some(schedule => 
+        schedule.delivery_status === 'overdue'
+    )
+);
                 
                 if (hasOverdueItems) {
                     dateClass = 'bg-red-50 border-red-200';
@@ -758,138 +765,149 @@ $statsStmt->close();
                     `;
                     
                     timeSchedules.forEach(schedule => {
-                        const isCompleted = schedule.delivered_at !== null;
-                        // Only consider as overdue if not delivered and past due date
-                        const isOverdue = schedule.delivery_status === 'overdue' && !isCompleted;
-                        const isToday = schedule.delivery_status === 'today_pending';
-                        
-                        let statusClass, statusIcon, statusText, statusBg;
-                        
-                        if (isCompleted) {
-                            statusClass = 'bg-green-100 text-green-800 border-green-200';
-                            statusIcon = 'fa-check-circle';
-                            statusText = 'Delivered';
-                            statusBg = 'bg-green-50 border-green-200';
-                        } else if (isOverdue) {
-                            statusClass = 'bg-red-100 text-red-800 border-red-200';
-                            statusIcon = 'fa-exclamation-triangle';
-                            statusText = `Overdue (${schedule.days_overdue} days)`;
-                            statusBg = 'bg-red-50 border-red-200';
-                        } else if (isToday) {
-                            statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
-                            statusIcon = 'fa-clock';
-                            statusText = 'Due Today';
-                            statusBg = 'bg-blue-50 border-blue-200';
-                        } else {
-                            statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-                            statusIcon = 'fa-clock';
-                            statusText = 'Scheduled';
-                            statusBg = 'bg-yellow-50 border-yellow-200';
-                        }
-                        
-                        html += `
-                            <div class="item-card ${statusBg} border-2 rounded-lg p-4 hover:shadow-md">
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="flex-1">
-                                        <h6 class="font-semibold text-gray-900 text-lg mb-2 flex items-center">
-                                            ${schedule.item_type === 'replacement' ? `
-                                                <span class="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold mr-2">
-                                                    <i class="fas fa-exchange-alt mr-1"></i>REPLACEMENT
-                                                </span>
-                                            ` : ''}
-                                            ${escapeHtml(schedule.product_name)}
-                                        </h6>
-                                        <div class="flex items-center space-x-3 mb-2">
-                                            <span class="${statusClass} border px-3 py-1 rounded-full text-xs font-medium">
-                                                <i class="fas ${statusIcon} mr-1"></i>
-                                                ${statusText}
-                                            </span>
-                                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">
-                                                Order #${schedule.order_id}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="grid grid-cols-2 gap-3 text-sm text-gray-700 mb-3">
-                                    <div class="bg-white bg-opacity-50 p-2 rounded">
-                                        <span class="font-medium text-gray-600">Quantity:</span> 
-                                        <span class="font-semibold">${schedule.quantity}</span>
-                                    </div>
-                                    <div class="bg-white bg-opacity-50 p-2 rounded">
-                                        <span class="font-medium text-gray-600">Price:</span> 
-                                        <span class="font-semibold">₱${parseFloat(schedule.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                    </div>
-                                    ${schedule.variant_color ? `
-                                    <div class="bg-white bg-opacity-50 p-2 rounded">
-                                        <span class="font-medium text-gray-600">Color:</span> 
-                                        <span class="font-semibold">${escapeHtml(schedule.variant_color)}</span>
-                                    </div>
-                                    ` : ''}
-                                    ${schedule.size ? `
-                                    <div class="bg-white bg-opacity-50 p-2 rounded">
-                                        <span class="font-medium text-gray-600">Size:</span> 
-                                        <span class="font-semibold">${escapeHtml(schedule.size)}</span>
-                                    </div>
-                                    ` : ''}
-                                </div>
-                                
-                                <div class="bg-white bg-opacity-50 rounded-lg p-3 space-y-2">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-user mr-3 text-gray-500 w-4"></i>
-                                        <span class="font-medium text-gray-800">${escapeHtml(schedule.customer_name)}</span>
-                                    </div>
-                                    <div class="flex items-start">
-                                        <i class="fas fa-map-marker-alt mr-3 text-gray-500 w-4 mt-1"></i>
-                                        <span class="text-gray-700 text-sm flex-1">${escapeHtml(schedule.address)}</span>
-                                    </div>
-                                    ${schedule.mobile ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-phone mr-3 text-gray-500 w-4"></i>
-                                        <span class="text-gray-700 text-sm">${escapeHtml(schedule.mobile)}</span>
-                                    </div>
-                                    ` : ''}
-                                    ${schedule.assigned_truck ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-truck mr-3 text-gray-500 w-4"></i>
-                                        <span class="text-gray-700 text-sm">Truck: ${escapeHtml(schedule.assigned_truck)}</span>
-                                    </div>
-                                    ` : ''}
-                                    ${schedule.delivery_notes ? `
-                                    <div class="mt-2 bg-yellow-100 p-2 rounded border border-yellow-200">
-                                        <div class="flex items-start">
-                                            <i class="fas fa-sticky-note mr-2 text-yellow-600 mt-1"></i>
-                                            <span class="text-gray-700 text-sm flex-1">${escapeHtml(schedule.delivery_notes)}</span>
-                                        </div>
-                                    </div>
-                                    ` : ''}
-                                    ${isCompleted && schedule.delivered_at ? `
-                                    <div class="mt-2 bg-green-100 p-2 rounded border border-green-200">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-check-double mr-2 text-green-600"></i>
-                                            <span class="text-green-700 text-sm">
-                                                Delivered: ${formatDateTime(schedule.delivered_at)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    ` : ''}
-                                    ${schedule.item_type === 'replacement' && schedule.replacement_reason ? `
-                                    <div class="mt-3 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                        <h6 class="font-semibold text-orange-800 mb-2 flex items-center">
-                                            <i class="fas fa-info-circle mr-2"></i>Replacement Details
-                                        </h6>
-                                        <div class="space-y-1 text-sm text-gray-700">
-                                            <div><span class="font-medium">Reason:</span> ${escapeHtml(schedule.replacement_reason)}</div>
-                                            ${schedule.replacement_details ? `<div><span class="font-medium">Details:</span> ${escapeHtml(schedule.replacement_details)}</div>` : ''}
-                                            <div><span class="font-medium">Quantity:</span> ${schedule.replacement_quantity || schedule.quantity}</div>
-                                            ${schedule.replacement_status ? `<div><span class="font-medium">Status:</span> <span class="capitalize">${schedule.replacement_status.replace('_', ' ')}</span></div>` : ''}
-                                        </div>
-                                    </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
+    const isCompleted = schedule.booking_status === 'delivered' || schedule.booking_status === 'picked_up';
+    const isOverdue = schedule.delivery_status === 'overdue';
+    const isToday = schedule.delivery_status === 'today_pending';
+    
+    let statusClass, statusIcon, statusText, statusBg;
+    
+    if (isCompleted) {
+        statusClass = 'bg-green-100 text-green-800 border-green-200';
+        statusIcon = 'fa-check-circle';
+        statusText = 'Delivered';
+        statusBg = 'bg-green-50 border-green-200';
+    } else if (isOverdue) {
+        statusClass = 'bg-red-100 text-red-800 border-red-200';
+        statusIcon = 'fa-exclamation-triangle';
+        statusText = `Overdue (${schedule.days_overdue} days)`;
+        statusBg = 'bg-red-50 border-red-200';
+    } else if (isToday) {
+        statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
+        statusIcon = 'fa-clock';
+        statusText = 'Due Today';
+        statusBg = 'bg-blue-50 border-blue-200';
+    } else {
+        statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        statusIcon = 'fa-clock';
+        statusText = 'Scheduled';
+        statusBg = 'bg-yellow-50 border-yellow-200';
+    }
+    
+    html += `
+        <div class="item-card ${statusBg} border-2 rounded-lg p-4 hover:shadow-md">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <h6 class="font-semibold text-gray-900 text-xl mb-2 flex items-center">
+                        <i class="fas fa-shopping-cart mr-2 text-blue-600"></i>
+                        Order #${schedule.order_id}
+                        ${schedule.item_type === 'replacement' ? `
+                            <span class="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold ml-2">
+                                <i class="fas fa-exchange-alt mr-1"></i>REPLACEMENT
+                            </span>
+                        ` : ''}
+                    </h6>
+                    <div class="flex items-center space-x-3 mb-2">
+                        ${schedule.booking_status && schedule.booking_status !== 'pending' ? `
+<span class="bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1 rounded text-xs font-medium">
+    <i class="fas fa-info-circle mr-1"></i>${schedule.booking_status.replace('_', ' ').toUpperCase()}
+</span>
+` : ''}
+                        <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
+                            <i class="fas fa-boxes mr-1"></i>${schedule.total_items} item(s)
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 text-sm text-gray-700 mb-3">
+                <div class="bg-white bg-opacity-50 p-2 rounded">
+                    <span class="font-medium text-gray-600">Total Items:</span> 
+                    <span class="font-semibold">${schedule.total_items}</span>
+                </div>
+                <div class="bg-white bg-opacity-50 p-2 rounded">
+                    <span class="font-medium text-gray-600">Total Quantity:</span> 
+                    <span class="font-semibold">${schedule.total_quantity}</span>
+                </div>
+                <div class="bg-white bg-opacity-50 p-2 rounded col-span-2">
+                    <span class="font-medium text-gray-600">Order Total:</span> 
+                    <span class="font-semibold">₱${parseFloat(schedule.final_total).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+            </div>
+            
+            <div class="bg-white bg-opacity-50 rounded-lg p-3 space-y-2">
+                <div class="flex items-center">
+                    <i class="fas fa-user mr-3 text-gray-500 w-4"></i>
+                    <span class="font-medium text-gray-800">${escapeHtml(schedule.customer_name)}</span>
+                </div>
+                <div class="flex items-start">
+                    <i class="fas fa-map-marker-alt mr-3 text-gray-500 w-4 mt-1"></i>
+                    <span class="text-gray-700 text-sm flex-1">${escapeHtml(schedule.address)}</span>
+                </div>
+                ${schedule.mobile ? `
+                <div class="flex items-center">
+                    <i class="fas fa-phone mr-3 text-gray-500 w-4"></i>
+                    <span class="text-gray-700 text-sm">${escapeHtml(schedule.mobile)}</span>
+                </div>
+                ` : ''}
+                ${schedule.courier_name ? `
+<div class="flex items-center">
+    <i class="fas fa-shipping-fast mr-3 text-gray-500 w-4"></i>
+    <span class="text-gray-700 text-sm">Courier: ${escapeHtml(schedule.courier_name)}</span>
+</div>
+` : ''}
+${schedule.tracking_number ? `
+<div class="flex items-center">
+    <i class="fas fa-barcode mr-3 text-gray-500 w-4"></i>
+    <span class="text-gray-700 text-sm">Tracking: ${escapeHtml(schedule.tracking_number)}</span>
+</div>
+` : ''}
+${schedule.booking_reference ? `
+<div class="flex items-center">
+    <i class="fas fa-receipt mr-3 text-gray-500 w-4"></i>
+    <span class="text-gray-700 text-sm">Booking Ref: ${escapeHtml(schedule.booking_reference)}</span>
+</div>
+` : ''}
+${schedule.booking_type && schedule.booking_type !== 'delivery' ? `
+<div class="flex items-center">
+    <i class="fas fa-hand-holding-box mr-3 text-gray-500 w-4"></i>
+    <span class="text-gray-700 text-sm capitalize">Type: ${schedule.booking_type}</span>
+</div>
+` : ''}
+                ${schedule.delivery_notes ? `
+                <div class="mt-2 bg-yellow-100 p-2 rounded border border-yellow-200">
+                    <div class="flex items-start">
+                        <i class="fas fa-sticky-note mr-2 text-yellow-600 mt-1"></i>
+                        <span class="text-gray-700 text-sm flex-1">${escapeHtml(schedule.delivery_notes)}</span>
+                    </div>
+                </div>
+                ` : ''}
+                ${isCompleted && schedule.actual_delivery_time ? `
+<div class="mt-2 bg-green-100 p-2 rounded border border-green-200">
+    <div class="flex items-center">
+        <i class="fas fa-check-double mr-2 text-green-600"></i>
+        <span class="text-green-700 text-sm">
+            Delivered: ${formatDateTime(schedule.actual_delivery_time)}
+        </span>
+    </div>
+</div>
+` : ''}
+                ${schedule.item_type === 'replacement' && schedule.replacement_reason ? `
+                <div class="mt-3 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <h6 class="font-semibold text-orange-800 mb-2 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>Replacement Details
+                    </h6>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <div><span class="font-medium">Reason:</span> ${escapeHtml(schedule.replacement_reason)}</div>
+                        ${schedule.replacement_details ? `<div><span class="font-medium">Details:</span> ${escapeHtml(schedule.replacement_details)}</div>` : ''}
+                        <div><span class="font-medium">Quantity:</span> ${schedule.replacement_quantity}</div>
+                        ${schedule.replacement_status ? `<div><span class="font-medium">Status:</span> <span class="capitalize">${schedule.replacement_status.replace('_', ' ')}</span></div>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+});
                     
                     html += '</div>';
                 });

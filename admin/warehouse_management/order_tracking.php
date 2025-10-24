@@ -37,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $item_id = (int)$_POST['item_id'];
     $new_status = $_POST['tracking_status'];
     $item_type = $_POST['item_type'] ?? 'original';
+    
+    // Note: 'In Warehouse' status should be set via QR code scanning (scan_item.php)
+    // It is not included in manual updates for security and tracking accuracy
 
     if ($item_type === 'replacement') {
         $replacement_id = (int)$_POST['replacement_id'];
@@ -188,43 +191,101 @@ foreach ($items as $item) {
     $groupedItems[$origin][$supplier][$itemType][] = $item;
 }
 
+// Check if order has any scheduled deliveries
+$hasScheduledDeliveries = false;
+$scheduledCheckSql = "SELECT COUNT(*) as scheduled_count FROM delivery_schedules WHERE order_id = ?";
+$scheduledCheckStmt = $conn->prepare($scheduledCheckSql);
+$scheduledCheckStmt->bind_param("i", $order_id);
+$scheduledCheckStmt->execute();
+$scheduledResult = $scheduledCheckStmt->get_result()->fetch_assoc();
+$scheduledCheckStmt->close();
+
+if ($scheduledResult['scheduled_count'] > 0) {
+    $hasScheduledDeliveries = true;
+}
+
+$allItemsReadyForDelivery = true;
+$totalItems = count($items);
+$itemsReadyForDelivery = 0;
+
+if ($totalItems > 0) {
+    foreach ($items as $item) {
+        $isReady = false;
+        $itemType = $item['item_type'];
+        $origin = $item['origin'] ?? 'local';
+        $status = $item['current_status'];
+        
+        // Check if item meets delivery readiness criteria
+        if ($itemType === 'replacement') {
+            // Replacement items: must be in "In Warehouse" status
+            if ($status === 'In Warehouse') {
+                $isReady = true;
+            }
+        } elseif ($origin === 'local') {
+            // Local items: must be in "In Warehouse" status
+            if ($status === 'In Warehouse') {
+                $isReady = true;
+            }
+        } elseif ($origin === 'international') {
+            // International items: must be in "In Warehouse" status
+            if ($status === 'In Warehouse') {
+                $isReady = true;
+            }
+        }
+        
+        if ($isReady) {
+            $itemsReadyForDelivery++;
+        } else {
+            $allItemsReadyForDelivery = false;
+        }
+    }
+} else {
+    $allItemsReadyForDelivery = false;
+}
+
 // Status definitions
 $statusDefinitions = [
     'local' => [
-        'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed and being prepared', 'progress' => 25],
-        'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 50],
-        'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 75],
+        'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed and being prepared', 'progress' => 16],
+        'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Item received and stored in warehouse', 'progress' => 33],
+        'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 50],
+        'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 66],
+        'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 83],
         'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Customer received the item', 'progress' => 100],
         'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
     ],
     'international' => [
-        'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed, supplier preparing', 'progress' => 15],
-        'shipped_overseas' => ['icon' => 'fa-ship', 'color' => 'purple', 'label' => 'Shipped from Overseas', 'description' => 'Item has left the overseas supplier', 'progress' => 30],
-        'in_transit_international' => ['icon' => 'fa-plane', 'color' => 'yellow', 'label' => 'In Transit (International)', 'description' => 'Item is on the way (by sea/air)', 'progress' => 45],
-        'customs_clearance' => ['icon' => 'fa-file-signature', 'color' => 'orange', 'label' => 'Customs Clearance', 'description' => 'Item undergoing customs inspection', 'progress' => 60],
-        'in_local_warehouse' => ['icon' => 'fa-warehouse', 'color' => 'teal', 'label' => 'In Local Warehouse', 'description' => 'Item arrived and ready for dispatch', 'progress' => 75],
-        'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 90],
+    'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed, supplier preparing', 'progress' => 9],
+    'shipped_overseas' => ['icon' => 'fa-ship', 'color' => 'purple', 'label' => 'Shipped from Overseas', 'description' => 'Item has left the overseas supplier', 'progress' => 20],
+    'in_transit_international' => ['icon' => 'fa-plane', 'color' => 'yellow', 'label' => 'In Transit (International)', 'description' => 'Item is on the way (by sea/air)', 'progress' => 32],
+    'customs_clearance' => ['icon' => 'fa-file-signature', 'color' => 'orange', 'label' => 'Customs Clearance', 'description' => 'Item undergoing customs inspection', 'progress' => 44],
+    'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Item received and stored in local warehouse', 'progress' => 55],
+    'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 66],
+    'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Item ready for local delivery', 'progress' => 77],
+    'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Courier delivering to customer', 'progress' => 88],
         'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Customer received the item', 'progress' => 100],
         'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
     ]
 ];
 
 $replacementStatusDefinitions = [
-    'approved' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Approved', 'description' => 'Replacement request has been approved', 'progress' => 20],
-    'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Replacement being prepared', 'progress' => 40],
-    'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Replacement ready for delivery', 'progress' => 60],
-    'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Replacement being delivered', 'progress' => 80],
+    'approved' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Approved', 'description' => 'Replacement request has been approved', 'progress' => 14],
+    'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Replacement being prepared', 'progress' => 28],
+    'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Replacement received and stored in warehouse', 'progress' => 42],
+    'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Replacement delivery scheduled', 'progress' => 57],
+    'ready_for_pickup' => ['icon' => 'fa-truck', 'color' => 'yellow', 'label' => 'Ready for Pickup/Dispatch', 'description' => 'Replacement ready for delivery', 'progress' => 71],
+    'out_for_delivery' => ['icon' => 'fa-shipping-fast', 'color' => 'orange', 'label' => 'Out for Delivery', 'description' => 'Replacement being delivered', 'progress' => 85],
     'delivered' => ['icon' => 'fa-check-circle', 'color' => 'green', 'label' => 'Delivered', 'description' => 'Replacement delivered to customer', 'progress' => 100],
     'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Cancelled', 'description' => 'Replacement request cancelled', 'progress' => 0]
 ];
 
 // Define selectable statuses (limited as per requirements)
 $selectableStatuses = [
-    'local' => ['processing'], // Only processing can be manually updated
-    'international' => ['processing', 'shipped_overseas', 'in_transit_international', 'customs_clearance'] // Added customs_clearance
+    'local' => ['processing'], // Only processing can be manually updated (In Warehouse is auto-updated via QR scan)
+    'international' => ['processing', 'shipped_overseas', 'in_transit_international', 'customs_clearance'] // In Warehouse is auto-updated via QR scan
 ];
 
-$selectableReplacementStatuses = ['approved', 'processing']; // Only these can be manually updated
+$selectableReplacementStatuses = ['approved', 'processing']; // Only these can be manually updated (In Warehouse is auto-updated via QR scan)
 ?>
 
 <!DOCTYPE html>
@@ -326,6 +387,19 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                 right: 1rem;
             }
         }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .8;
+            }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
     </style>
 </head>
 
@@ -362,6 +436,35 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                                 <div class="text-green-900 font-bold text-lg"><?php echo count($items); ?></div>
                             </div>
                         </div>
+                        <?php if (!$hasScheduledDeliveries): ?>
+<div class="bg-gradient-to-r from-<?php echo $allItemsReadyForDelivery ? 'green' : 'blue'; ?>-100 to-<?php echo $allItemsReadyForDelivery ? 'green' : 'blue'; ?>-50 px-6 py-3 rounded-xl border border-<?php echo $allItemsReadyForDelivery ? 'green' : 'blue'; ?>-200">
+    <div class="text-center">
+        <span class="text-<?php echo $allItemsReadyForDelivery ? 'green' : 'blue'; ?>-700 font-semibold">
+            <i class="fas fa-warehouse mr-1"></i>Ready Items
+        </span>
+        <div class="text-<?php echo $allItemsReadyForDelivery ? 'green' : 'blue'; ?>-900 font-bold text-lg">
+            <?php echo $itemsReadyForDelivery; ?> / <?php echo $totalItems; ?>
+        </div>
+        <?php if ($allItemsReadyForDelivery): ?>
+        <div class="text-xs text-green-600 font-medium mt-1">
+            <i class="fas fa-check-circle mr-1"></i>Ready to Schedule
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php else: ?>
+<div class="bg-gradient-to-r from-purple-100 to-purple-50 px-6 py-3 rounded-xl border border-purple-200">
+    <div class="text-center">
+        <span class="text-purple-700 font-semibold">
+            <i class="fas fa-calendar-check mr-1"></i>Delivery Status
+        </span>
+        <div class="text-purple-900 font-bold text-lg">Scheduled</div>
+        <div class="text-xs text-purple-600 font-medium mt-1">
+            <i class="fas fa-truck mr-1"></i>In Progress
+        </div>
+    </div>
+</div>
+<?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -391,6 +494,124 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                 </div>
             </div>
         <?php endif; ?>
+
+
+       <!-- Delivery Readiness Banner -->
+<?php if ($totalItems > 0 && !$allItemsReadyForDelivery && !$hasScheduledDeliveries): ?>
+    <div class="mb-6 bg-blue-50 border-2 border-blue-300 rounded-xl p-6 shadow-sm">
+        <div class="flex items-start">
+            <div class="bg-blue-100 rounded-full p-3 mr-4">
+                <i class="fas fa-info-circle text-blue-600 text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-blue-900 font-bold text-lg mb-2">Waiting for Items to be Ready</h3>
+                <p class="text-blue-800 mb-3">
+                    Delivery can be scheduled once all items reach the required status:
+                </p>
+                <ul class="text-sm text-blue-700 mb-3 space-y-1 ml-4">
+                    <li><i class="fas fa-check-circle mr-2"></i><strong>Local items:</strong> In Warehouse</li>
+                    <li><i class="fas fa-check-circle mr-2"></i><strong>International items:</strong> In Warehouse</li>
+                    <li><i class="fas fa-check-circle mr-2"></i><strong>Replacements:</strong> In Warehouse</li>
+                </ul>
+                <div class="bg-white rounded-lg p-4 border border-blue-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-blue-900">Delivery Readiness</span>
+                        <span class="text-sm font-bold text-blue-600"><?php echo $itemsReadyForDelivery; ?> of <?php echo $totalItems; ?> items ready</span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-500" 
+                             style="width: <?php echo $totalItems > 0 ? round(($itemsReadyForDelivery / $totalItems) * 100) : 0; ?>%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php elseif ($allItemsReadyForDelivery && $totalItems > 0 && !$hasScheduledDeliveries): ?>
+    <div class="mb-6 bg-green-50 border-2 border-green-300 rounded-xl p-6 shadow-sm">
+        <div class="flex items-start">
+            <div class="bg-green-100 rounded-full p-3 mr-4 animate-pulse">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-green-900 font-bold text-lg mb-2">
+                    <i class="fas fa-warehouse mr-2"></i>All Items Ready for Delivery!
+                </h3>
+                <p class="text-green-800 mb-3">
+                    All items have been received and are now stored in the warehouse. You can now schedule the delivery.
+                </p>
+                <a href="delivery_schedule.php?order_id=<?php echo $order_id; ?>&schedule_all=true" 
+                   class="inline-flex items-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Schedule Delivery for All Items</span>
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+<?php elseif ($hasScheduledDeliveries && $totalItems > 0): ?>
+    <?php
+    // Get scheduled delivery details
+    $scheduleDetailSql = "SELECT delivery_date, delivery_time, delivery_notes 
+                          FROM delivery_schedules 
+                          WHERE order_id = ? 
+                          ORDER BY delivery_date, delivery_time 
+                          LIMIT 1";
+    $scheduleDetailStmt = $conn->prepare($scheduleDetailSql);
+    $scheduleDetailStmt->bind_param("i", $order_id);
+    $scheduleDetailStmt->execute();
+    $scheduleDetail = $scheduleDetailStmt->get_result()->fetch_assoc();
+    $scheduleDetailStmt->close();
+    
+    if ($scheduleDetail):
+        $deliveryDateTime = new DateTime($scheduleDetail['delivery_date'] . ' ' . $scheduleDetail['delivery_time']);
+        $formattedDate = $deliveryDateTime->format('l, F j, Y');
+        $formattedTime = $deliveryDateTime->format('g:i A');
+    ?>
+    <div class="mb-6 bg-purple-50 border-2 border-purple-300 rounded-xl p-6 shadow-sm">
+        <div class="flex items-start">
+            <div class="bg-purple-100 rounded-full p-3 mr-4">
+                <i class="fas fa-calendar-check text-purple-600 text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-purple-900 font-bold text-lg mb-2">
+                    <i class="fas fa-truck mr-2"></i>Delivery Scheduled
+                </h3>
+                <p class="text-purple-800 mb-3">
+                    This order has been scheduled for delivery. Items are being prepared for dispatch.
+                </p>
+                <div class="bg-white rounded-lg p-4 border border-purple-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center text-purple-700 mb-2">
+                                <i class="fas fa-calendar text-purple-600 mr-2"></i>
+                                <span class="text-sm font-medium">Scheduled Date</span>
+                            </div>
+                            <p class="text-purple-900 font-bold text-lg"><?php echo $formattedDate; ?></p>
+                        </div>
+                        <div>
+                            <div class="flex items-center text-purple-700 mb-2">
+                                <i class="fas fa-clock text-purple-600 mr-2"></i>
+                                <span class="text-sm font-medium">Scheduled Time</span>
+                            </div>
+                            <p class="text-purple-900 font-bold text-lg"><?php echo $formattedTime; ?></p>
+                        </div>
+                    </div>
+                    <?php if (!empty($scheduleDetail['delivery_notes'])): ?>
+                        <div class="mt-4 pt-4 border-t border-purple-200">
+                            <div class="flex items-center text-purple-700 mb-2">
+                                <i class="fas fa-sticky-note text-purple-600 mr-2"></i>
+                                <span class="text-sm font-medium">Delivery Notes</span>
+                            </div>
+                            <p class="text-purple-800"><?php echo htmlspecialchars($scheduleDetail['delivery_notes']); ?></p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+<?php endif; ?>
 
         <?php
         function renderItemGroup($items, $origin, $supplier, $statusDefinitions, $selectableStatuses, $replacementStatusDefinitions, $selectableReplacementStatuses, $order_id) {
@@ -495,31 +716,7 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
             
             echo "<div class='flex flex-col space-y-2'>";
             
-            // Schedule button logic based on requirements
-            $canSchedule = false;
-            if ($isReplacement) {
-                // For replacements: only show schedule button when status is 'processing'
-                $canSchedule = ($currentStatus === 'processing');
-            } else {
-                // For original items:
-                // Local: show when status is 'processing'  
-                // International: show only when status is 'customs_clearance'
-                if ($origin === 'local') {
-                    $canSchedule = ($currentStatus === 'processing');
-                } else {
-                    // International items: only show schedule button for customs_clearance
-                    $canSchedule = ($currentStatus === 'customs_clearance');
-                }
-            }
-            
-            if ($canSchedule) {
-                $scheduleOrigin = $isReplacement ? 'replacement' : $origin;
-                echo "<a href='delivery_schedule.php?order_id={$order_id}&item_id={$item['id']}&origin={$scheduleOrigin}" . ($isReplacement ? "&replacement_id={$item['replacement_id']}" : "") . "'";
-                echo " class='bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 hover:scale-105'>";
-                echo "<i class='fas fa-calendar-alt'></i>";
-                echo "<span>Schedule Delivery</span>";
-                echo "</a>";
-            }
+            // Individual item schedule buttons removed - replaced with single order-wide schedule button
             
             // Status update form - limited based on requirements
             $canUpdate = false;
@@ -685,8 +882,18 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
         </div>
     </div>
 
-    <!-- Floating Back Button -->
-    <div class="floating-action">
+    <!-- Floating Action Buttons -->
+    <div class="floating-action flex flex-col space-y-3">
+        <?php if ($allItemsReadyForDelivery && $totalItems > 0 && !$hasScheduledDeliveries): ?>
+        <!-- Schedule All Delivery Button - Only shows when all items are In Warehouse -->
+        <a href="delivery_schedule.php?order_id=<?php echo $order_id; ?>&schedule_all=true" 
+           class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center space-x-3 hover:scale-110 animate-pulse">
+            <i class="fas fa-calendar-check text-xl"></i>
+            <span class="font-bold">Schedule All Delivery</span>
+        </a>
+        <?php endif; ?>
+        
+        <!-- Back Button -->
         <a href="order_list.php" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 hover:scale-110">
             <i class="fas fa-list"></i>
             <span class="hidden sm:inline">All Orders</span>

@@ -1182,18 +1182,34 @@ $delivery_result = calculateTransportifyDeliveryCost($delivery_distance, $vehicl
 $delivery_fee = $delivery_result['total_delivery_cost'];
 $assigned_vehicle = $delivery_result['vehicle_info'];
 
-            // ✅ Simplified order items (no vehicle info)
+            // ✅ Insert order items - prepare statement once, use multiple times
 $stmt = $conn->prepare("INSERT INTO order_items (
     order_id, product_id, product_name, codename, type_name, variant_color, size, 
     price, quantity, subtotal, descrip6, descrip7, origin, 
     lt_from, lt_to
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
+if (!$stmt) {
+    throw new Exception("Failed to prepare order items statement: " . $conn->error);
+}
+
 foreach ($cart_items as $index => $item) {
     $subtotal_item = $item['price'] * $item['quantity'];
     $product_name = $item['product_name'] ?? $item['variant_name'];
     
-    // ✅ NEW: Calculate lead time dates
+    // ✅ Extract ALL required fields from cart item
+    $codename = $item['codename'] ?? '';
+    $type_name = $item['type_name'] ?? '';
+    $variant_color = $item['variant_color'] ?? '';
+    $size = $item['size'] ?? '';
+    $price = floatval($item['price'] ?? 0);
+    $quantity = intval($item['quantity'] ?? 1);
+    $desc6 = $item['descrip6'] ?? '';
+    $desc7 = $item['descrip7'] ?? '';
+    $origin = $item['origin'] ?? '';
+    $product_id = intval($item['product_id'] ?? 0);
+    
+    // ✅ Calculate lead time dates
     $leadTimeRange = calculateLeadTimeRange(
         $item['lead_count'] ?? null,
         $item['lead_interval'] ?? null,
@@ -1203,14 +1219,9 @@ foreach ($cart_items as $index => $item) {
     $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
     $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
 
-    // ✅ Get descrip6 and descrip7 directly from cart item
-    $desc6 = $item['descrip6'] ?? '';
-    $desc7 = $item['descrip7'] ?? '';
-    $origin = $item['origin'] ?? '';
-    $product_id = $item['product_id'] ?? null;
-
+    // ✅ Bind parameters (do NOT close statement inside loop)
     $stmt->bind_param(
-        "iisssssiiisssss",
+        "iisssssdiisssss",
         $order_id,
         $product_id,
         $product_name,
@@ -1229,9 +1240,13 @@ foreach ($cart_items as $index => $item) {
     );
 
     if (!$stmt->execute()) {
-        throw new Exception("Failed to save order item: " . $stmt->error);
+        $error_msg = "Failed to save order item: " . $stmt->error;
+        $stmt->close(); // Close before throwing exception
+        throw new Exception($error_msg);
     }
 }
+
+// ✅ Close statement AFTER loop completes
 $stmt->close();
 
             // ✅ Clear cart

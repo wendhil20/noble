@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin', 'sales', 'warehouse']);
+require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
@@ -15,10 +15,32 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Get user info
-$sessionUser = $_SESSION['noble_user'];
-$fullname = is_array($sessionUser) ? 
-    ($sessionUser['fullname'] ?? $sessionUser['name'] ?? 'User') : 'User';
+// Update last activity
+$_SESSION['last_activity'] = time();
+
+// Get user info from session or database
+if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset($_SESSION['noble_id'])) {
+    $email = $_SESSION['noble_user'];
+    $stmt = $conn->prepare("SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->bind_result($id, $name, $lvl);
+    if ($stmt->fetch()) {
+        $_SESSION['noble_id'] = $id;
+        $_SESSION['noble_name'] = $name;
+        $_SESSION['noble_lvl'] = $lvl;
+    } else {
+        $_SESSION['noble_id'] = null;
+        $_SESSION['noble_name'] = "Unknown User";
+        $_SESSION['noble_lvl'] = "guest";
+    }
+    $stmt->close();
+}
+
+// Set user variables
+$user_id = $_SESSION['noble_id'];
+$fullname = $_SESSION['noble_name'];
+$user_level = $_SESSION['noble_lvl'];
 
 $item_id = isset($_GET['item_id']) ? intval($_GET['item_id']) : 0;
 $itemInfo = null;
@@ -42,6 +64,7 @@ if ($item_id > 0) {
         oi.po_number,
         oi.qr_code,
         oi.warehouse_location,
+        oi.tracking_status,
         oi.supplier_id,
         oi.manual_supplier_name,
         sl.business_name,
@@ -133,11 +156,15 @@ if ($item_id > 0) {
                             <?php echo htmlspecialchars($fullname); ?>
                         </div>
                         <div class="text-xs text-gray-500">
+                            <i class="fas fa-shield-alt mr-1"></i>
+                            <?php echo htmlspecialchars(ucfirst($user_level)); ?>
+                        </div>
+                        <div class="text-xs text-gray-400">
                             <?php echo date('M j, Y g:i A'); ?>
                         </div>
                     </div>
-                    <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg">
-                        <span class="text-white font-bold text-sm">
+                    <div class="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+                        <span class="text-white font-bold text-lg">
                             <?php echo strtoupper(substr($fullname, 0, 1)); ?>
                         </span>
                     </div>
@@ -264,6 +291,65 @@ if ($item_id > 0) {
                         </div>
                     </div>
                     
+            <!-- Tracking Status Section -->
+                    <?php 
+                    $currentStatus = $itemInfo['tracking_status'] ?? 'Pending Receipt';
+                    $isInWarehouse = ($currentStatus === 'In Warehouse');
+                    ?>
+                    
+                    <div class="bg-gradient-to-r from-<?php echo $isInWarehouse ? 'green' : 'indigo'; ?>-50 to-<?php echo $isInWarehouse ? 'emerald' : 'purple'; ?>-50 border-2 border-<?php echo $isInWarehouse ? 'green' : 'indigo'; ?>-300 rounded-lg p-6 mb-6">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start flex-1">
+                                <div class="bg-<?php echo $isInWarehouse ? 'green' : 'indigo'; ?>-500 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-<?php echo $isInWarehouse ? 'warehouse' : 'shipping-fast'; ?> text-white text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm text-<?php echo $isInWarehouse ? 'green' : 'indigo'; ?>-700 font-medium mb-2">
+                                        TRACKING STATUS
+                                    </div>
+                                    <div class="text-2xl font-bold text-<?php echo $isInWarehouse ? 'green' : 'indigo'; ?>-900">
+                                        <?php echo htmlspecialchars($currentStatus); ?>
+                                    </div>
+                                    <div class="text-sm text-<?php echo $isInWarehouse ? 'green' : 'indigo'; ?>-600 mt-2">
+                                        <?php if ($isInWarehouse): ?>
+                                            <i class="fas fa-check-circle mr-1"></i>Package has been received and stored in warehouse
+                                        <?php elseif ($currentStatus === 'Pending Receipt'): ?>
+                                            <i class="fas fa-clock mr-1"></i>Awaiting receipt confirmation
+                                        <?php elseif ($currentStatus === 'In Transit'): ?>
+                                            <i class="fas fa-truck mr-1"></i>Package is on the way
+                                        <?php else: ?>
+                                            <i class="fas fa-info-circle mr-1"></i><?php echo htmlspecialchars($currentStatus); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <?php if ($isInWarehouse): ?>
+                                    <!-- Show received timestamp if available -->
+                                    <div class="text-xs text-green-500 mt-2 flex items-center">
+                                        <i class="fas fa-calendar-check mr-1"></i>
+                                        <span class="font-medium">Received and confirmed</span>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <?php if ($isInWarehouse): ?>
+                                <!-- Already in warehouse - show confirmation badge -->
+                                <div class="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg ml-4">
+                                    <i class="fas fa-check-circle text-xl"></i>
+                                    <span class="font-medium">Confirmed</span>
+                                </div>
+                            <?php elseif (strtolower($user_level) === 'warehouse' || strtolower($user_level) === 'superadmin'): ?>
+                                <!-- Not in warehouse AND user has warehouse access - show button -->
+                                <button onclick="updateTrackingStatus('In Warehouse')" 
+                                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg ml-4 hover:shadow-xl transform hover:scale-105">
+                                    <i class="fas fa-warehouse"></i>
+                                    <span>Mark as In Warehouse</span>
+                                </button>
+                            <?php endif; ?>
+                            <!-- If not warehouse user and not in warehouse, nothing shows -->
+                        </div>
+                    </div>
+
                     <!-- Warehouse Location - Highlighted -->
 <?php if (!empty($itemInfo['warehouse_location'])): ?>
 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
@@ -488,6 +574,46 @@ if ($item_id > 0) {
     
     <script>
     const itemId = <?php echo $item_id; ?>;
+    
+    function updateTrackingStatus(newStatus) {
+        if (!confirm('Are you sure you want to update the tracking status to "' + newStatus + '"?\n\nThis will indicate that the package has been received and is now stored in the warehouse.')) {
+            return;
+        }
+        
+        // Show loading state
+        const button = event.target.closest('button');
+        const originalContent = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+        
+        fetch('update_tracking_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                tracking_status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ Tracking status updated successfully!\n\nNew status: ' + newStatus);
+                window.location.reload();
+            } else {
+                alert('✗ Failed to update status: ' + (data.error || 'Unknown error'));
+                button.disabled = false;
+                button.innerHTML = originalContent;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('✗ Failed to update tracking status. Please try again.');
+            button.disabled = false;
+            button.innerHTML = originalContent;
+        });
+    }
     
     function openSetLocationModal() {
         document.getElementById('modalTitle').textContent = 'Set Location';

@@ -5,7 +5,7 @@ require_once '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 
 header('Content-Type: application/json');
-require_role(['superadmin']); // only superadmin allowed
+require_role(['superadmin','hr']); // only superadmin allowed
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : 0;
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 
-if (!$account_id || !in_array($action, ['set_head','remove_head'])) {
+if (!$account_id || !in_array($action, ['set_head','remove_head','update_subrole'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid parameters.']);
     exit;
 }
@@ -78,6 +78,22 @@ if ($action === 'remove_head') {
         echo json_encode(['success' => true, 'message' => 'Head removed successfully.']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to remove head.']);
+    }
+    exit;
+}
+
+if ($action === 'update_subrole') {
+    $subrole = isset($_POST['subrole']) ? trim($_POST['subrole']) : '';
+    
+    $stmt = $conn->prepare("UPDATE nobleaccount SET subrole = ? WHERE id = ?");
+    $stmt->bind_param("si", $subrole, $account_id);
+    $ok = $stmt->execute();
+    $stmt->close();
+
+    if ($ok) {
+        echo json_encode(['success' => true, 'message' => 'Subrole updated successfully.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to update subrole.']);
     }
     exit;
 }

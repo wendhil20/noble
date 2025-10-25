@@ -9,8 +9,24 @@ require_role(['superadmin','hr']); // only superadmin can manage heads
 // departments to manage (supplier removed)
 $departments = ['sales','accountant','hr','warehouse', 'logistic'];
 
+// Define subroles for each department (you can edit these)
+$department_subroles = [
+    'sales' => [
+    ],
+    'accountant' => [
+    ],
+    'hr' => [
+    ],
+    'warehouse' => [
+        'warehouse_receiver'
+    ],
+    'logistic' => [
+        'warehouse_dispatcher'
+    ]
+];
+
 // Fetch all accounts
-$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head
+$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head, subrole
       FROM nobleaccount
       ORDER BY lvl, fullname";
 $res = mysqli_query($conn, $q);
@@ -90,21 +106,25 @@ while ($r = mysqli_fetch_assoc($res)) {
                   $is_head = (int)$m['is_head'];
               ?>
                 <li data-id="<?= $id ?>" data-dept="<?= htmlspecialchars($dept) ?>" data-is-head="<?= $is_head ?>"
-                    class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
-                  <div>
-                    <div class="font-medium text-gray-900"><?= htmlspecialchars($m['fullname']) ?></div>
-                    <div class="text-xs text-gray-500"><?= htmlspecialchars($m['email']) ?></div>
-                  </div>
+    class="flex items-center justify-between bg-orange-50 rounded-lg p-3">
+  <div class="flex-1">
+    <div class="font-medium text-gray-900"><?= htmlspecialchars($m['fullname']) ?></div>
+    <div class="text-xs text-gray-500"><?= htmlspecialchars($m['email']) ?></div>
+    <?php if (!empty($m['subrole'])): ?>
+      <div class="text-xs text-blue-600 mt-1">Role: <?= htmlspecialchars($m['subrole']) ?></div>
+    <?php endif; ?>
+  </div>
 
-                  <div class="flex items-center gap-2">
-                    <?php if ($is_head === 1): ?>
-                      <span class="head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">Head</span>
-                      <button type="button" class="remove-head ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= $id ?>">Remove</button>
-                    <?php else: ?>
-                      <button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="<?= $id ?>">Set as Head</button>
-                    <?php endif; ?>
-                  </div>
-                </li>
+  <div class="flex items-center gap-2">
+    <?php if ($is_head === 1): ?>
+      <span class="head-badge inline-flex items-center gap-2 bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">Head</span>
+      <button type="button" class="remove-head ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-500 text-white text-sm" data-id="<?= $id ?>">Remove</button>
+    <?php else: ?>
+      <button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="<?= $id ?>">Set as Head</button>
+    <?php endif; ?>
+    <button type="button" class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm" data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
+  </div>
+</li>
               <?php endforeach; endif; ?>
             </ul>
           </section>
@@ -162,12 +182,46 @@ while ($r = mysqli_fetch_assoc($res)) {
     </div>
   </div>
 
+  <!-- Subrole modal -->
+<div id="subroleModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto p-5">
+    <h4 class="text-lg font-semibold text-gray-900">Edit Subrole</h4>
+    <p id="subroleDeptName" class="mt-2 text-sm text-gray-600">Select a role for this member</p>
+    
+    <div class="mt-3">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Select Role</label>
+      <select id="subroleSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">-- No Role --</option>
+      </select>
+    </div>
+    
+    <div class="mt-3">
+      <label class="flex items-center gap-2">
+        <input type="checkbox" id="subroleCustomToggle" class="rounded border-gray-300">
+        <span class="text-sm text-gray-700">Use custom role instead</span>
+      </label>
+    </div>
+    
+    <div id="subroleCustomContainer" class="mt-3 hidden">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Custom Role</label>
+      <input type="text" id="subroleCustomInput" placeholder="Enter custom role..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </div>
+    
+    <div class="mt-5 flex justify-end gap-3">
+      <button id="subroleCancel" type="button" class="px-4 py-2 rounded-md border bg-white">Cancel</button>
+      <button id="subroleSave" type="button" class="px-4 py-2 rounded-md bg-blue-600 text-white">Save</button>
+    </div>
+  </div>
+</div>
+
   <!-- toast -->
   <div id="toast" class="fixed top-6 right-6 z-50 hidden">
     <div id="toastContent" class="px-4 py-2 rounded-lg shadow bg-green-600 text-white"></div>
   </div>
 
 <script>
+  // Department subroles from PHP
+const departmentSubroles = <?= json_encode($department_subroles) ?>;
 document.addEventListener('DOMContentLoaded', function () {
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
@@ -181,6 +235,14 @@ document.addEventListener('DOMContentLoaded', function () {
   const confirmMessage = $('#confirmMessage');
   const confirmOk = $('#confirmOk');
   const confirmCancel = $('#confirmCancel');
+  const subroleModal = $('#subroleModal');
+const subroleSelect = $('#subroleSelect');
+const subroleCustomToggle = $('#subroleCustomToggle');
+const subroleCustomContainer = $('#subroleCustomContainer');
+const subroleCustomInput = $('#subroleCustomInput');
+const subroleDeptName = $('#subroleDeptName');
+const subroleSave = $('#subroleSave');
+const subroleCancel = $('#subroleCancel');
   const toast = $('#toast');
   const toastContent = $('#toastContent');
 
@@ -249,15 +311,18 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Send action to backend
-  async function sendAction(accountId, action) {
-    const body = `account_id=${encodeURIComponent(accountId)}&action=${encodeURIComponent(action)}`;
-    const resp = await fetch('manage_head_account.php', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body
-    });
-    return resp.json();
+async function sendAction(accountId, action, extraData = {}) {
+  let body = `account_id=${encodeURIComponent(accountId)}&action=${encodeURIComponent(action)}`;
+  for (const key in extraData) {
+    body += `&${encodeURIComponent(key)}=${encodeURIComponent(extraData[key])}`;
   }
+  const resp = await fetch('manage_head_account.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body
+  });
+  return resp.json();
+}
 
   // Confirm modal promise
   function confirmDialog(title, message) {
@@ -289,6 +354,119 @@ document.addEventListener('DOMContentLoaded', function () {
       applyFilter(filter);
       return;
     }
+
+    // Handle edit subrole button
+const editSubroleBtn = e.target.closest('.edit-subrole');
+if (editSubroleBtn) {
+  const id = editSubroleBtn.dataset.id;
+  const currentSubrole = editSubroleBtn.dataset.subrole || '';
+  const row = editSubroleBtn.closest('li[data-id]');
+  const dept = row ? row.dataset.dept : '';
+  
+  // Populate dropdown with department-specific roles
+  subroleSelect.innerHTML = '<option value="">-- No Role --</option>';
+  if (dept && departmentSubroles[dept]) {
+    departmentSubroles[dept].forEach(role => {
+      const opt = document.createElement('option');
+      opt.value = role;
+      opt.textContent = role;
+      if (role === currentSubrole) opt.selected = true;
+      subroleSelect.appendChild(opt);
+    });
+  }
+  
+  // Check if current subrole is custom (not in dropdown)
+  const isCustom = currentSubrole && dept && departmentSubroles[dept] && 
+                   !departmentSubroles[dept].includes(currentSubrole);
+  
+  if (isCustom) {
+    subroleCustomToggle.checked = true;
+    subroleCustomContainer.classList.remove('hidden');
+    subroleCustomInput.value = currentSubrole;
+    subroleSelect.disabled = true;
+  } else {
+    subroleCustomToggle.checked = false;
+    subroleCustomContainer.classList.add('hidden');
+    subroleCustomInput.value = '';
+    subroleSelect.disabled = false;
+  }
+  
+  subroleDeptName.textContent = `Select a role for this ${dept.replace(/\b\w/g, c => c.toUpperCase())} member`;
+  subroleModal.classList.remove('hidden');
+  
+  // Toggle custom input
+  const toggleHandler = () => {
+    if (subroleCustomToggle.checked) {
+      subroleCustomContainer.classList.remove('hidden');
+      subroleSelect.disabled = true;
+    } else {
+      subroleCustomContainer.classList.add('hidden');
+      subroleSelect.disabled = false;
+      subroleCustomInput.value = '';
+    }
+  };
+  
+  subroleCustomToggle.addEventListener('change', toggleHandler);
+  
+  // Save handler
+  const saveHandler = async () => {
+    const newSubrole = subroleCustomToggle.checked 
+      ? subroleCustomInput.value.trim() 
+      : subroleSelect.value;
+      
+    subroleSave.disabled = true;
+    subroleSave.textContent = 'Saving...';
+    
+    try {
+      const json = await sendAction(id, 'update_subrole', { subrole: newSubrole });
+      if (json && json.success) {
+        showToast(json.message || 'Subrole updated');
+        // Update the button and display
+        editSubroleBtn.dataset.subrole = newSubrole;
+        if (row) {
+          const existingRole = row.querySelector('.text-blue-600');
+          if (newSubrole) {
+            if (existingRole) {
+              existingRole.textContent = 'Role: ' + newSubrole;
+            } else {
+              const emailDiv = row.querySelector('.text-xs.text-gray-500');
+              const roleDiv = document.createElement('div');
+              roleDiv.className = 'text-xs text-blue-600 mt-1';
+              roleDiv.textContent = 'Role: ' + newSubrole;
+              emailDiv.after(roleDiv);
+            }
+          } else {
+            if (existingRole) existingRole.remove();
+          }
+        }
+        cleanup();
+      } else {
+        showToast((json && json.message) || 'Failed to update subrole', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error', 'error');
+    } finally {
+      subroleSave.disabled = false;
+      subroleSave.textContent = 'Save';
+    }
+  };
+  
+  const cancelHandler = () => {
+    cleanup();
+  };
+  
+  const cleanup = () => {
+    subroleModal.classList.add('hidden');
+    subroleCustomToggle.removeEventListener('change', toggleHandler);
+    subroleSave.removeEventListener('click', saveHandler);
+    subroleCancel.removeEventListener('click', cancelHandler);
+  };
+  
+  subroleSave.addEventListener('click', saveHandler);
+  subroleCancel.addEventListener('click', cancelHandler);
+  return;
+}
 
     if (gotoBtn) {
       const id = gotoBtn.dataset.id;

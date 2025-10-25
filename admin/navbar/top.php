@@ -8,6 +8,12 @@ function hasAnyRole($roles)
     return in_array($_SESSION['noble_lvl'], $roles);
 }
 
+function hasSubrole($subrole)
+{
+    if (!isset($_SESSION['noble_subrole'])) return false;
+    return $_SESSION['noble_subrole'] === $subrole;
+}
+
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();
@@ -15,20 +21,22 @@ if (!isset($_SESSION['noble_user'])) {
 
 $_SESSION['last_activity'] = time();
 
-if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset($_SESSION['noble_id'])) {
+if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset($_SESSION['noble_id']) || !isset($_SESSION['noble_subrole'])) {
     $email = $_SESSION['noble_user'];
-    $stmt = $conn->prepare("SELECT id, fullname, lvl FROM nobleaccount WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, fullname, lvl, subrole FROM nobleaccount WHERE email = ? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
-    $stmt->bind_result($id, $name, $lvl);
+    $stmt->bind_result($id, $name, $lvl, $subrole);
     if ($stmt->fetch()) {
         $_SESSION['noble_id'] = $id;
         $_SESSION['noble_name'] = $name;
         $_SESSION['noble_lvl'] = $lvl;
+        $_SESSION['noble_subrole'] = $subrole ?? '';
     } else {
         $_SESSION['noble_id'] = null;
         $_SESSION['noble_name'] = "Unknown User";
         $_SESSION['noble_lvl'] = "guest";
+        $_SESSION['noble_subrole'] = '';
     }
     $stmt->close();
 }
@@ -164,7 +172,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
         @click.away="sidebarOpen = false"
         x-cloak
         class="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 md:hidden sidebar overflow-y-auto custom-scrollbar">
-        
+
         <!-- Sidebar Header -->
         <div class="sticky top-0 bg-white z-10 border-b border-gray-200">
             <div class="p-5">
@@ -286,14 +294,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             <div class="pt-4 border-t border-gray-200 mt-4"></div>
 
             <!-- Profile & Settings -->
-            <a href="../../loginpage/profile" 
+            <a href="../../loginpage/profile"
                 @click="sidebarOpen = false"
                 class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-gray-700 hover:bg-gray-50">
                 <i class="ri-user-settings-line text-xl"></i>
                 <span>Profile Settings</span>
             </a>
-            
-            <a href="../../loginpage/logout" 
+
+            <a href="../../loginpage/logout"
                 @click="sidebarOpen = false"
                 class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-red-600 hover:bg-red-50">
                 <i class="ri-logout-box-line text-xl"></i>
@@ -626,22 +634,26 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <?php if (hasAnyRole(['superadmin', 'warehouse'])): ?>
                                     <div class="px-3 py-2">
                                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Warehouse</div>
-                                        <a href="../warehouse_management/order_list"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-archive-line text-lg"></i>
-                                            <span>Assign Orders</span>
-                                        </a>
-                                        <a href="../warehouse_management/view_po_items"
-    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-    <i class="ri-search-eye-line text-lg"></i>
-    <span>Search Items</span>
-</a>
 
-<a href="../warehouse_management/qr_scanner"
-    class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-    <i class="ri-qr-code-line text-lg"></i>
-    <span>QR Scanner</span>
-</a>
+                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole('warehouse_receiver')): ?>
+                                            <a href="../warehouse_management/order_list"
+                                                class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                <i class="ri-archive-line text-lg"></i>
+                                                <span>Assign Orders</span>
+                                            </a>
+                                        <?php endif; ?>
+
+                                        <a href="../warehouse_management/view_po_items"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                            <i class="ri-search-eye-line text-lg"></i>
+                                            <span>Search Items</span>
+                                        </a>
+
+                                        <a href="../warehouse_management/qr_scanner"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                            <i class="ri-qr-code-line text-lg"></i>
+                                            <span>QR Scanner</span>
+                                        </a>
                                     </div>
                                     <hr class="my-2 border-gray-200">
                                 <?php endif; ?>
@@ -688,4 +700,5 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
     </nav>
 
 </body>
+
 </html>

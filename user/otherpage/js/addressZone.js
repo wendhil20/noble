@@ -1,151 +1,187 @@
 // addressZone.js - Address selection (zone logic removed)
 
 function initializeAddressSelection() {
-    console.log('Initializing address selection...');
-    
-    const billingRadios = document.querySelectorAll('input[name="billing_address_id"]');
-    const continueToDeliveryBtn = document.getElementById('continueToDelivery');
-    const calculateDistanceBtn = document.getElementById('calculateDistance');
-    const showMapBtn = document.getElementById('showMapModal');
+  console.log("Initializing address selection...");
 
-    const mobileInput = document.getElementById('mobileInput');
-    const addressInput = document.getElementById('addressInput');
-    const zipcodeInput = document.getElementById('zipcodeInput');
+  const billingRadios = document.querySelectorAll(
+    'input[name="billing_address_id"]'
+  );
+  const continueToDeliveryBtn = document.getElementById("continueToDelivery");
+  const calculateDistanceBtn = document.getElementById("calculateDistance");
+  const showMapBtn = document.getElementById("showMapModal");
 
-    if (billingRadios.length === 0) {
-        console.warn('No billing address radios found');
-        return;
-    }
+  const mobileInput = document.getElementById("mobileInput");
+  const addressInput = document.getElementById("addressInput");
+  const zipcodeInput = document.getElementById("zipcodeInput");
 
-    // Handle billing address selection
-    billingRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.checked) {
-                console.log('Address selected:', this.dataset.address);
-                
-                // Store selected address globally
-                selectedAddress = {
-                    id: this.value,
-                    latitude: parseFloat(this.dataset.latitude),
-                    longitude: parseFloat(this.dataset.longitude),
-                    address: this.dataset.address,
-                    postalCode: this.dataset.postalCode,
-                    fullName: this.dataset.fullName,
-                    phone: this.dataset.phone
-                };
+  if (billingRadios.length === 0) {
+    console.warn("No billing address radios found");
+    return;
+  }
 
-                // Validate coordinates
-                if (isNaN(selectedAddress.latitude) || isNaN(selectedAddress.longitude)) {
-                    showNotification('Invalid address coordinates. Please select a different address.', 'error');
-                    return;
-                }
+  // Handle billing address selection
+  billingRadios.forEach((radio) => {
+    radio.addEventListener("change", function () {
+      if (this.checked) {
+        console.log("Address selected:", this.dataset.address);
 
-                // Clean and format mobile number
-                let phone = this.dataset.phone || '';
-                phone = phone.replace(/[\s\-\(\)\+]/g, '');
-                
-                // Convert +63 format to 09 format
-                if (phone.match(/^63([0-9]{10})$/)) {
-                    phone = '0' + phone.substring(2);
-                }
+        // Store selected address globally
+        selectedAddress = {
+          id: this.value,
+          latitude: parseFloat(this.dataset.latitude),
+          longitude: parseFloat(this.dataset.longitude),
+          address: this.dataset.address,
+          postalCode: this.dataset.postalCode,
+          fullName: this.dataset.fullName,
+          phone: this.dataset.phone,
+        };
 
-                // Populate the fields
-                if (mobileInput) {
-                    mobileInput.value = phone;
-                    mobileInput.disabled = false;
-                    mobileInput.readOnly = true;
-                }
-                
-                if (addressInput) {
-                    addressInput.value = this.dataset.address || '';
-                    addressInput.disabled = false;
-                    addressInput.readOnly = true;
-                }
-                
-                if (zipcodeInput) {
-                    zipcodeInput.value = this.dataset.postalCode || '';
-                    zipcodeInput.disabled = false;
-                    zipcodeInput.readOnly = true;
-                }
+        // Validate coordinates
+        if (
+          isNaN(selectedAddress.latitude) ||
+          isNaN(selectedAddress.longitude)
+        ) {
+          showNotification(
+            "Invalid address coordinates. Please select a different address.",
+            "error"
+          );
+          return;
+        }
 
-                // Enable Step 2 continue button
-                if (continueToDeliveryBtn) {
-                    continueToDeliveryBtn.disabled = false;
-                    continueToDeliveryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                    continueToDeliveryBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-                }
+        // Clean and format mobile number
+        let phone = this.dataset.phone || "";
+        phone = phone.replace(/[\s\-\(\)\+]/g, "");
 
-                // Enable Step 3 buttons
-                if (calculateDistanceBtn) {
-                    calculateDistanceBtn.disabled = false;
-                    calculateDistanceBtn.classList.remove('bg-gray-400');
-                    calculateDistanceBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                }
+        // Convert +63 format to 09 format
+        if (phone.match(/^63([0-9]{10})$/)) {
+          phone = "0" + phone.substring(2);
+        }
 
-                if (showMapBtn) {
-                    showMapBtn.disabled = false;
-                    showMapBtn.classList.remove('bg-gray-400');
-                    showMapBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                }
+        // Populate the fields
+        if (mobileInput) {
+          mobileInput.value = phone;
+          mobileInput.disabled = false;
+          mobileInput.readOnly = true;
+        }
 
-                // Success notification
-showNotification('Address selected successfully! Calculating delivery...', 'success');
-                
-console.log('✓ Address selection complete:', selectedAddress);
+        if (addressInput) {
+          addressInput.value = this.dataset.address || "";
+          addressInput.disabled = false;
+          addressInput.readOnly = true;
+        }
 
-// ✅ NEW: Auto-calculate delivery after address selection
-if (typeof autoCalculateDelivery === 'function') {
-    // Clear any previous calculation
-    const deliveryFeeInput = document.getElementById('deliveryFee');
-    const deliveryDistanceInput = document.getElementById('deliveryDistance');
-    const continuePaymentBtn = document.getElementById('continueToPayment');
-    
-    if (deliveryFeeInput) deliveryFeeInput.value = '0';
-    if (deliveryDistanceInput) deliveryDistanceInput.value = '0';
-    if (continuePaymentBtn) {
-        continuePaymentBtn.disabled = true;
-        continuePaymentBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-        continuePaymentBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
-    }
-    
-    setTimeout(() => {
-        console.log('Auto-triggering delivery calculation...');
-        autoCalculateDelivery();
-    }, 500); // Reduced delay for faster response
-} else {
-    console.warn('autoCalculateDelivery function not found - manual calculation required');
-}
-            }
-        });
+        if (zipcodeInput) {
+          zipcodeInput.value = this.dataset.postalCode || "";
+          zipcodeInput.disabled = false;
+          zipcodeInput.readOnly = true;
+        }
+
+        // Enable Step 2 continue button
+        if (continueToDeliveryBtn) {
+          continueToDeliveryBtn.disabled = false;
+          continueToDeliveryBtn.classList.remove(
+            "bg-gray-400",
+            "cursor-not-allowed"
+          );
+          continueToDeliveryBtn.classList.add(
+            "bg-orange-600",
+            "hover:bg-orange-700"
+          );
+        }
+
+        // Enable Step 3 buttons
+        if (calculateDistanceBtn) {
+          calculateDistanceBtn.disabled = false;
+          calculateDistanceBtn.classList.remove("bg-gray-400");
+          calculateDistanceBtn.classList.add(
+            "bg-blue-600",
+            "hover:bg-blue-700"
+          );
+        }
+
+        if (showMapBtn) {
+          showMapBtn.disabled = false;
+          showMapBtn.classList.remove("bg-gray-400");
+          showMapBtn.classList.add("bg-green-600", "hover:bg-green-700");
+        }
+
+        // Success notification
+        showNotification(
+          "Address selected successfully! Calculating delivery...",
+          "success"
+        );
+
+        console.log("✓ Address selection complete:", selectedAddress);
+
+        // ✅ NEW: Auto-calculate delivery after address selection
+        if (typeof autoCalculateDelivery === "function") {
+          // Clear any previous calculation
+          const deliveryFeeInput = document.getElementById("deliveryFee");
+          const deliveryDistanceInput =
+            document.getElementById("deliveryDistance");
+          const continuePaymentBtn =
+            document.getElementById("continueToPayment");
+
+          if (deliveryFeeInput) deliveryFeeInput.value = "0";
+          if (deliveryDistanceInput) deliveryDistanceInput.value = "0";
+          if (continuePaymentBtn) {
+            continuePaymentBtn.disabled = true;
+            continuePaymentBtn.classList.add(
+              "bg-gray-400",
+              "cursor-not-allowed"
+            );
+            continuePaymentBtn.classList.remove(
+              "bg-orange-600",
+              "hover:bg-orange-700"
+            );
+          }
+
+          setTimeout(() => {
+            console.log("Auto-triggering delivery calculation...");
+            autoCalculateDelivery();
+          }, 500); // Reduced delay for faster response
+        } else {
+          console.warn(
+            "autoCalculateDelivery function not found - manual calculation required"
+          );
+        }
+      }
     });
+  });
 
-    console.log('Address selection initialized with', billingRadios.length, 'addresses');
+  console.log(
+    "Address selection initialized with",
+    billingRadios.length,
+    "addresses"
+  );
 }
 
-console.log('addressZone.js loaded (zone logic removed)');
+console.log("addressZone.js loaded (zone logic removed)");
 
 // ✅ NEW: Re-trigger calculation when returning to address selection
 function recheckSelectedAddress() {
-    const selectedRadio = document.querySelector('input[name="billing_address_id"]:checked');
-    if (selectedRadio && typeof autoCalculateDelivery === 'function') {
-        console.log('Re-triggering calculation for previously selected address...');
-        
-        // Store the address data again
-        selectedAddress = {
-            id: selectedRadio.value,
-            latitude: parseFloat(selectedRadio.dataset.latitude),
-            longitude: parseFloat(selectedRadio.dataset.longitude),
-            address: selectedRadio.dataset.address,
-            postalCode: selectedRadio.dataset.postalCode,
-            fullName: selectedRadio.dataset.fullName,
-            phone: selectedRadio.dataset.phone
-        };
-        
-        // Trigger auto-calculation
-        setTimeout(() => {
-            autoCalculateDelivery();
-        }, 500);
-    }
+  const selectedRadio = document.querySelector(
+    'input[name="billing_address_id"]:checked'
+  );
+  if (selectedRadio && typeof autoCalculateDelivery === "function") {
+    console.log("Re-triggering calculation for previously selected address...");
+
+    // Store the address data again
+    selectedAddress = {
+      id: selectedRadio.value,
+      latitude: parseFloat(selectedRadio.dataset.latitude),
+      longitude: parseFloat(selectedRadio.dataset.longitude),
+      address: selectedRadio.dataset.address,
+      postalCode: selectedRadio.dataset.postalCode,
+      fullName: selectedRadio.dataset.fullName,
+      phone: selectedRadio.dataset.phone,
+    };
+
+    // Trigger auto-calculation
+    setTimeout(() => {
+      autoCalculateDelivery();
+    }, 500);
+  }
 }
 
 // Export to global scope

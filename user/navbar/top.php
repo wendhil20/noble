@@ -439,7 +439,7 @@ $display_categories = getNavigationData($conn);
     <div class="flex justify-between items-center py-3 sm:py-4">
       <div class="flex items-center space-x-4 sm:space-x-6">
         <!-- Logo ONLY -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index')"
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-page-1-A-B-C-D-E')"
           class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
           <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
             <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
@@ -459,7 +459,7 @@ $display_categories = getNavigationData($conn);
       <div class="flex items-center space-x-3 lg:hidden">
 
         <!-- Mobile Cart Icon -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/cart_view')"
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
           class="relative p-2 hover:bg-gray-100 rounded-full transition">
           <img src="../img/ecommerce.png" alt="Cart" class="w-5 h-5 object-contain" />
           <span class="cart-count absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
@@ -490,7 +490,7 @@ $display_categories = getNavigationData($conn);
               <div class="py-2 px-3 text-sm text-gray-700 border-b">
                 <span class="block truncate"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
               </div>
-              <a href="../otherpage/profilepersonal.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+              <a href="../otherpage/index-profilepersonal-page-7.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Profile
               </a>
               <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
@@ -530,12 +530,12 @@ $display_categories = getNavigationData($conn);
           </button>
         <?php endif; ?>
 
-        <a href="../otherpage/inspirationpage.php"
+        <a href="../otherpage/index-inspirationpage-page-11.php"
           class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
           Inspiration
         </a>
 
-        <a href="../otherpage/findpropage.php"
+        <a href="../otherpage/index-findpropage-page-10.php"
           class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
           Find Pro
         </a>
@@ -594,7 +594,7 @@ $display_categories = getNavigationData($conn);
 
 
             <!-- Inspiration -->
-            <a href="../inspiration/index.php"
+            <a href="../otherpage/index-inspirationpage-page-11.php"
               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -603,7 +603,7 @@ $display_categories = getNavigationData($conn);
             </a>
 
             <!-- Find Professionals -->
-            <a href="../findpro/index.php"
+            <a href="../otherpage/index-findpropage-page-10.php"
               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -643,7 +643,7 @@ $display_categories = getNavigationData($conn);
             return;
           }
           this.isLoading = true;
-          fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
+          fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
             .then(res => res.json())
             .then(data => {
               this.results = data;
@@ -732,7 +732,7 @@ $display_categories = getNavigationData($conn);
                     Found <span x-text="results.length"></span> result(s)
                   </p>
                   <template x-for="item in results" :key="item.id">
-                    <a :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
+                    <a :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
                       class="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-200 group">
                       <div class="flex-shrink-0">
                         <img :src="item.main_image"
@@ -791,7 +791,7 @@ $display_categories = getNavigationData($conn);
             this.results = [];
             return;
         }
-        fetch(`search_ajax.php?search=${encodeURIComponent(this.search)}`)
+        fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
             .then(res => res.json())
             .then(data => {
                 this.results = data;
@@ -835,7 +835,7 @@ $display_categories = getNavigationData($conn);
               <template x-for="item in results" :key="item.id">
                 <li class="border-b last:border-0">
                   <a
-                    :href="'shop.php?search=' + encodeURIComponent(item.product_name)"
+                    :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
                     class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
                     <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
                     <span x-text="item.product_name"></span>
@@ -866,6 +866,7 @@ $display_categories = getNavigationData($conn);
               transform: rotate(360deg);
             }
           }
+
           /* Keyboard shortcut styling */
           kbd {
             font-family: monospace;
@@ -897,71 +898,71 @@ $display_categories = getNavigationData($conn);
           }
         </style>
 
-    <!-- Products/Shop Dropdown with Hover -->
-<div class="relative" x-data="{ 
+        <!-- Products/Shop Dropdown with Hover -->
+        <div class="relative" x-data="{ 
     productsOpen: false, 
     selectedCategory: null,
     selectedCategoryData: null,
     subcategorySlideIndex: 0,
     hoverTimeout: null
 }">
- <!-- Shop Link with Hover Functionality -->
-  <a href="javascript:void(0)" 
-     onclick="navigateWithLoading('../otherpage/shop')"
-     @mouseenter="
+          <!-- Shop Link with Hover Functionality -->
+          <a href="javascript:void(0)"
+            onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
+            @mouseenter="
        clearTimeout(hoverTimeout);
        hoverTimeout = setTimeout(() => { productsOpen = true; }, 150);
      "
-     @mouseleave="
+            @mouseleave="
        clearTimeout(hoverTimeout);
        hoverTimeout = setTimeout(() => { productsOpen = false; selectedCategory = null; }, 200);
      "
-     class="<?= basename($_SERVER['PHP_SELF']) == 'shop.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 text-sm font-mont uppercase relative top-1">
-    <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
-    Shop
-  </a>
-
-  <!-- Overlay -->
-  <div x-show="productsOpen"
-    @click="productsOpen = false"
-    x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0"
-    x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-200"
-    x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0"
-    class="fixed inset-0 bg-black bg-opacity-30 z-40"
-    style="top: 80px; pointer-events: none;"
-    x-cloak>
-  </div>
-
-  <!-- Dropdown Menu -->
-  <div x-show="productsOpen"
-    @mouseenter="clearTimeout(hoverTimeout); productsOpen = true;"
-    @mouseleave="hoverTimeout = setTimeout(() => { productsOpen = false; selectedCategory = null; }, 200);"
-    x-transition x-cloak
-    class="fixed left-[150px] right-0 bg-white shadow-lg z-50 border border-gray-200 max-w-4xl mx-auto"
-    style="top: 80px; max-height: 550px;"
-    @click.outside="productsOpen = false">
-
-    <div class="h-full flex">
-      <!-- Left Side - Categories List -->
-      <div class="w-1/3 border-r border-gray-200 p-2 bg-gray-50 overflow-y-scroll scrollbar-thin"
-        style="max-height: 550px;"
-        @wheel.stop>
-        <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
-          <h3 class="font-roboto text-xs text-black uppercase">Products</h3>
-          <a href="../otherpage/shop.php"
-            class="text-[11px] text-orange-500 hover:text-orange-600 font-medium transition-all">
-            View All →
+            class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 text-sm font-mont uppercase relative top-1">
+            <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
+            Shop
           </a>
-        </div>
 
-        <div class="space-y-0.5">
-          <?php if (!empty($display_categories)): ?>
-            <?php foreach ($display_categories as $category): ?>
-              <button
-                @click="
+          <!-- Overlay -->
+          <div x-show="productsOpen"
+            @click="productsOpen = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-black bg-opacity-30 z-40"
+            style="top: 80px; pointer-events: none;"
+            x-cloak>
+          </div>
+
+          <!-- Dropdown Menu -->
+          <div x-show="productsOpen"
+            @mouseenter="clearTimeout(hoverTimeout); productsOpen = true;"
+            @mouseleave="hoverTimeout = setTimeout(() => { productsOpen = false; selectedCategory = null; }, 200);"
+            x-transition x-cloak
+            class="fixed left-[150px] right-0 bg-white shadow-lg z-50 border border-gray-200 max-w-4xl mx-auto"
+            style="top: 80px; max-height: 550px;"
+            @click.outside="productsOpen = false">
+
+            <div class="h-full flex">
+              <!-- Left Side - Categories List -->
+              <div class="w-1/3 border-r border-gray-200 p-2 bg-gray-50 overflow-y-scroll scrollbar-thin"
+                style="max-height: 550px;"
+                @wheel.stop>
+                <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
+                  <h3 class="font-roboto text-xs text-black uppercase">Products</h3>
+                  <a href="../otherpage/index-shop-page-2.php"
+                    class="text-[11px] text-orange-500 hover:text-orange-600 font-medium transition-all">
+                    View All →
+                  </a>
+                </div>
+
+                <div class="space-y-0.5">
+                  <?php if (!empty($display_categories)): ?>
+                    <?php foreach ($display_categories as $category): ?>
+                      <button
+                        @click="
                   selectedCategory = 'cat_<?= $category['id'] ?>';
                   selectedCategoryData = <?= htmlspecialchars(json_encode($category)) ?>;
                   subcategorySlideIndex = 0;
@@ -971,166 +972,166 @@ $display_categories = getNavigationData($conn);
                     }
                   });
                 "
-                class="w-full p-1.5 rounded hover:bg-white text-left transition-all duration-200 group flex items-center gap-1.5"
-                :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
+                        class="w-full p-1.5 rounded hover:bg-white text-left transition-all duration-200 group flex items-center gap-1.5"
+                        :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
-                <!-- Category Image -->
-                <?php if (!empty($category['image_path'])): ?>
-                  <div class="flex-shrink-0">
-                    <img
-                      src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
-                      alt="<?= htmlspecialchars($category['name']) ?>"
-                      class="w-8 h-8 object-contain rounded"
-                      onerror="this.style.display='none'">
-                  </div>
-                <?php endif; ?>
+                        <!-- Category Image -->
+                        <?php if (!empty($category['image_path'])): ?>
+                          <div class="flex-shrink-0">
+                            <img
+                              src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                              alt="<?= htmlspecialchars($category['name']) ?>"
+                              class="w-8 h-8 object-contain rounded"
+                              onerror="this.style.display='none'">
+                          </div>
+                        <?php endif; ?>
 
-                <!-- Text Content -->
-                <div class="flex-1 min-w-0">
-                  <div class="font-roboto text-xs group-hover:text-orange-500 truncate uppercase"
-                    :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-800'">
-                    <?= htmlspecialchars($category['name']) ?>
-                  </div>
-                  <div class="text-[9px] text-gray-500">
-                    <?= count($category['subcategories'] ?? []) ?> variants
+                        <!-- Text Content -->
+                        <div class="flex-1 min-w-0">
+                          <div class="font-roboto text-xs group-hover:text-orange-500 truncate uppercase"
+                            :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-800'">
+                            <?= htmlspecialchars($category['name']) ?>
+                          </div>
+                          <div class="text-[9px] text-gray-500">
+                            <?= count($category['subcategories'] ?? []) ?> variants
+                          </div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <svg class="w-3 h-3 flex-shrink-0 transition-colors"
+                          :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-400'"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <div class="text-center py-4">
+                      <p class="text-gray-500 italic text-xs">No categories available</p>
+                    </div>
+                  <?php endif; ?>
+                </div>
+              </div>
+
+              <!-- Right Side - Subcategories Panel -->
+              <div class="w-2/3 p-2 bg-white overflow-y-scroll scrollbar-thin relative"
+                style="max-height: 450px;"
+                @wheel.stop
+                x-ref="subcategoryPanel">
+                <!-- Default State -->
+                <div x-show="!selectedCategory" class="flex items-center justify-center py-12">
+                  <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <p class="text-gray-500 text-xs">Select a category to view subcategories</p>
                   </div>
                 </div>
 
-                <!-- Arrow -->
-                <svg class="w-3 h-3 flex-shrink-0 transition-colors"
-                  :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-400'"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            <?php endforeach; ?>
-          <?php else: ?>
-            <div class="text-center py-4">
-              <p class="text-gray-500 italic text-xs">No categories available</p>
-            </div>
-          <?php endif; ?>
-        </div>
-      </div>
+                <!-- Subcategories Content -->
+                <?php if (!empty($display_categories)): ?>
+                  <?php foreach ($display_categories as $category): ?>
+                    <div x-show="selectedCategory === 'cat_<?= $category['id'] ?>'"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0 translate-y-2"
+                      x-transition:enter-end="opacity-100 translate-y-0"
+                      x-transition:leave="transition ease-in duration-150"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="absolute inset-0 p-2"
+                      x-cloak>
 
-      <!-- Right Side - Subcategories Panel -->
-      <div class="w-2/3 p-2 bg-white overflow-y-scroll scrollbar-thin relative"
-        style="max-height: 450px;"
-        @wheel.stop
-        x-ref="subcategoryPanel">
-        <!-- Default State -->
-        <div x-show="!selectedCategory" class="flex items-center justify-center py-12">
-          <div class="text-center">
-            <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-            <p class="text-gray-500 text-xs">Select a category to view subcategories</p>
-          </div>
-        </div>
-
-        <!-- Subcategories Content -->
-        <?php if (!empty($display_categories)): ?>
-          <?php foreach ($display_categories as $category): ?>
-            <div x-show="selectedCategory === 'cat_<?= $category['id'] ?>'"
-              x-transition:enter="transition ease-out duration-200"
-              x-transition:enter-start="opacity-0 translate-y-2"
-              x-transition:enter-end="opacity-100 translate-y-0"
-              x-transition:leave="transition ease-in duration-150"
-              x-transition:leave-start="opacity-100"
-              x-transition:leave-end="opacity-0"
-              class="absolute inset-0 p-2"
-              x-cloak>
-
-              <div class="flex justify-between items-center mb-2 sticky top-0 bg-white pb-1 z-10">
-                <h4 class="text-xs text-black uppercase">
-                  <?= htmlspecialchars($category['name']) ?> Subcategories
-                </h4>
-              </div>
-
-              <!-- Subcategories List -->
-              <div class="space-y-0.5">
-                <?php if (!empty($category['subcategories'])): ?>
-                  <?php foreach ($category['subcategories'] as $sub): ?>
-                    <a href="../otherpage/allproductsub_variant.php?subcategory_id=<?= $sub['id'] ?>"
-                      class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 transition-all duration-200 group cursor-pointer">
-
-                      <!-- Subcategory Image -->
-                      <?php if (!empty($sub['image_path'])): ?>
-                        <div class="flex-shrink-0">
-                          <img
-                            src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
-                            alt="<?= htmlspecialchars($sub['name']) ?>"
-                            class="w-9 h-9 object-cover rounded"
-                            onerror="this.style.display='none'">
-                        </div>
-                      <?php endif; ?>
-
-                      <div class="flex-1">
-                        <div class="text-xs group-hover:text-orange-500 transition text-black">
-                          <?= htmlspecialchars($sub['name']) ?>
-                        </div>
+                      <div class="flex justify-between items-center mb-2 sticky top-0 bg-white pb-1 z-10">
+                        <h4 class="text-xs text-black uppercase">
+                          <?= htmlspecialchars($category['name']) ?> Subcategories
+                        </h4>
                       </div>
 
-                      <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </a>
+                      <!-- Subcategories List -->
+                      <div class="space-y-0.5">
+                        <?php if (!empty($category['subcategories'])): ?>
+                          <?php foreach ($category['subcategories'] as $sub): ?>
+                            <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?subcategory_id=<?= $sub['id'] ?>"
+                              class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 transition-all duration-200 group cursor-pointer">
+
+                              <!-- Subcategory Image -->
+                              <?php if (!empty($sub['image_path'])): ?>
+                                <div class="flex-shrink-0">
+                                  <img
+                                    src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
+                                    alt="<?= htmlspecialchars($sub['name']) ?>"
+                                    class="w-9 h-9 object-cover rounded"
+                                    onerror="this.style.display='none'">
+                                </div>
+                              <?php endif; ?>
+
+                              <div class="flex-1">
+                                <div class="text-xs group-hover:text-orange-500 transition text-black">
+                                  <?= htmlspecialchars($sub['name']) ?>
+                                </div>
+                              </div>
+
+                              <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                              </svg>
+                            </a>
+                          <?php endforeach; ?>
+                        <?php else: ?>
+                          <div class="text-center py-4">
+                            <p class="text-gray-500 italic text-xs">No subcategories available</p>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+                    </div>
                   <?php endforeach; ?>
-                <?php else: ?>
-                  <div class="text-center py-4">
-                    <p class="text-gray-500 italic text-xs">No subcategories available</p>
-                  </div>
                 <?php endif; ?>
               </div>
             </div>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>
-</div>
+          </div>
+        </div>
 
-<style>
-  /* x-cloak helper */
-  [x-cloak] {
-    display: none !important;
-  }
+        <style>
+          /* x-cloak helper */
+          [x-cloak] {
+            display: none !important;
+          }
 
-  /* Simplified scrollbar styling */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 4px;
-  }
+          /* Simplified scrollbar styling */
+          .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+          }
 
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
+          .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f1f1;
+          }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 2px;
-  }
+          .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 2px;
+          }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
+          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #555;
+          }
 
-  /* Ensure smooth scrolling */
-  .overflow-y-scroll {
-    overflow-y: scroll !important;
-    -webkit-overflow-scrolling: touch;
-  }
-</style>
+          /* Ensure smooth scrolling */
+          .overflow-y-scroll {
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch;
+          }
+        </style>
 
         <?php
         $current_page = basename($_SERVER['PHP_SELF']);
         $hidden_pages = ['help.php', 'about.php'];
         ?>
 
-  <!-- Cart Link with Hover Modal -->
+        <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
-           <?php if (!in_array($current_page, $hidden_pages)): ?>
+          <?php if (!in_array($current_page, $hidden_pages)): ?>
             <a href="javascript:void(0)"
-              onclick="navigateWithLoading('../otherpage/cart_view')"
-              class="<?= $current_page == 'cart_view.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+              onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
+              class="<?= $current_page == 'index-cart_view-page-8.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
               id="cart-link">
               <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
               Cart
@@ -1243,7 +1244,7 @@ $display_categories = getNavigationData($conn);
                 <div class="text-center py-8">
                   <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
                   <p class="text-gray-500 text-sm">Your cart is empty</p>
-                  <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm ">
+                  <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm ">
                     Start Shopping
                   </a>
                 </div>
@@ -1272,11 +1273,11 @@ $display_categories = getNavigationData($conn);
 
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-2 gap-2">
-                  <a href="../otherpage/cart_view.php"
+                  <a href="../otherpage/index-cart_view-page-8.php"
                     class=" text-white px-3 py-2 text-xs sm:text-sm  text-center  transition">
                     View Cart
                   </a>
-                  <a href="../otherpage/checkout.php"
+                  <a href="../otherpage/index-checkout-page-12.php"
                     class="text-white px-3 py-2 text-xs sm:text-sm  text-center  transition">
                     Checkout
                   </a>
@@ -1289,14 +1290,14 @@ $display_categories = getNavigationData($conn);
 
 
         <!-- Profile Link -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
-          class="<?= strpos($_SERVER['REQUEST_URI'], 'profile') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition  text-sm">
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
+          class="<?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition  text-sm">
           Orders
         </a>
 
 
         <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
-         
+
           <!-- Notifications -->
           <div class="relative">
             <button
@@ -1348,8 +1349,8 @@ $display_categories = getNavigationData($conn);
               </ul>
             </div>
           </div>
-           <div x-data="chatNotif" x-init="init()" class="relative">
-            <a href="../otherpage/Chat_main.php"
+          <div x-data="chatNotif" x-init="init()" class="relative">
+            <a href="../otherpage/index-chat_main-page-9.php"
               class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
               <i class="fas fa-envelope"></i>
               <!-- Badge -->
@@ -1567,7 +1568,7 @@ $display_categories = getNavigationData($conn);
               <div class="py-2 px-2 text-sm text-gray-700 border-b max-w-full overflow-x-auto whitespace-nowrap">
                 <span class="block w-max"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
               </div>
-              <a href="../otherpage/profilepersonal.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+              <a href="../otherpage/index-profilepersonal-page-7.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 profile
               </a>
               <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
@@ -1806,7 +1807,7 @@ $display_categories = getNavigationData($conn);
           this.searchOpen = false;
           return;
         }
-        fetch(`../otherpage/search_ajax.php?search=${encodeURIComponent(this.search)}`)
+        fetch(`../otherpage/backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
             .then(res => res.json())
             .then(data => {
                 this.results = data;
@@ -1830,7 +1831,7 @@ $display_categories = getNavigationData($conn);
           <div x-show="searchOpen && results.length > 0" x-cloak x-transition @click.away="searchOpen = false"
             class="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
             <template x-for="item in results" :key="item.id">
-              <a :href="'../otherpage/shop.php?search=' + encodeURIComponent(item.product_name)"
+              <a :href="'../otherpage/index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
                 class="flex items-center gap-3 px-4 py-3 hover:bg-orange-50 border-b last:border-0">
                 <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-200">
                 <span x-text="item.product_name" class="text-sm text-gray-700 flex-1"></span>
@@ -1859,7 +1860,7 @@ $display_categories = getNavigationData($conn);
           <?php endif; ?>
 
           <!-- INSPIRATION LINK - Mobile -->
-          <a href="../inspiration/index.php"
+          <a href="../otherpage/index-inspirationpage-page-11.php"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -1868,7 +1869,7 @@ $display_categories = getNavigationData($conn);
           </a>
 
           <!-- FIND PROFESSIONALS LINK - Mobile -->
-          <a href="../findpro/index.php"
+          <a href="../otherpage/index-findpropage-page-10.php"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -1878,7 +1879,7 @@ $display_categories = getNavigationData($conn);
 
 
           <!-- Orders -->
-          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/profile')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -1887,7 +1888,7 @@ $display_categories = getNavigationData($conn);
           </a>
 
           <!-- Shop -->
-          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/shop')"
+          <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
             <img src="../img/shopping-cart.png" alt="Shop" class="w-5 h-5 object-contain" />
             <span class="font-medium">Shop</span>
@@ -1933,7 +1934,7 @@ $display_categories = getNavigationData($conn);
                     <div x-show="subOpen" x-collapse class="bg-white">
                       <?php if (!empty($category['subcategories'])): ?>
                         <?php foreach ($category['subcategories'] as $sub): ?>
-                          <a href="../otherpage/allproductsub_variant.php?subcategory_id=<?= $sub['id'] ?>"
+                          <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?subcategory_id=<?= $sub['id'] ?>"
                             class="flex items-center gap-2 px-10 py-2 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition">
                             <?php if (!empty($sub['image_path'])): ?>
                               <img src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
@@ -1957,7 +1958,7 @@ $display_categories = getNavigationData($conn);
           </div>
 
           <!-- Messages -->
-          <a href="../otherpage/Chat_main.php"
+          <a href="../otherpage/index-chat_main-page-9.php"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-t border-gray-200">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -1996,7 +1997,7 @@ $display_categories = getNavigationData($conn);
         <?php else: ?>
           <!-- Logout Button -->
           <div class="border-t border-gray-200 p-4">
-            <a href="../otherpage/profilepersonal.php"
+            <a href="../otherpage/index-profilepersonal-page-7.php"
               class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition rounded-lg mb-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -2129,7 +2130,7 @@ $display_categories = getNavigationData($conn);
                     <?php endif; ?>
 
                     <!-- Action Button -->
-                    <form action="product_view" method="GET" class="mt-2">
+                    <form action="index-product_view-page-4-AA" method="GET" class="mt-2">
                       <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
                       <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-eye"></i>
@@ -2374,250 +2375,250 @@ $display_categories = getNavigationData($conn);
     </div>
   </div>
 
-<!-- New Products Modal - List Style with Scroll Buttons -->
-<?php if (count($newProducts) > 0): ?>
-  <!-- Modal Overlay -->
-  <div x-show="newProductsModal"
-    x-cloak
-    @click.self="newProductsModal = false"
-    x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0"
-    x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-200"
-    x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0"
-    class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
-
-    <!-- Modal Content -->
+  <!-- New Products Modal - List Style with Scroll Buttons -->
+  <?php if (count($newProducts) > 0): ?>
+    <!-- Modal Overlay -->
     <div x-show="newProductsModal"
+      x-cloak
+      @click.self="newProductsModal = false"
       x-transition:enter="transition ease-out duration-300"
-      x-transition:enter-start="opacity-0 scale-95"
-      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
       x-transition:leave="transition ease-in duration-200"
-      x-transition:leave-start="opacity-100 scale-100"
-      x-transition:leave-end="opacity-0 scale-95"
-      @click.stop
-      x-data="{ showScrollUp: false, showScrollDown: true }"
-      class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative">
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
 
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
-        <div class="flex items-center gap-3">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-          </svg>
-          <div>
-            <h2 class="text-base sm:text-lg">New Products</h2>
-            <p class="text-xs text-white">Latest additions to our store</p>
+      <!-- Modal Content -->
+      <div x-show="newProductsModal"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        @click.stop
+        x-data="{ showScrollUp: false, showScrollDown: true }"
+        class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative">
+
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+            <div>
+              <h2 class="text-base sm:text-lg">New Products</h2>
+              <p class="text-xs text-white">Latest additions to our store</p>
+            </div>
           </div>
+          <button @click="newProductsModal = false"
+            class="text-white hover:text-orange-200 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
+            ×
+          </button>
         </div>
-        <button @click="newProductsModal = false"
-          class="text-white hover:text-orange-200 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
-          ×
+
+        <!-- Scroll Up Button -->
+        <button x-show="showScrollUp"
+          x-transition
+          @click="$refs.modalBody.scrollBy({ top: -300, behavior: 'smooth' })"
+          class="absolute top-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+          </svg>
         </button>
-      </div>
 
-      <!-- Scroll Up Button -->
-      <button x-show="showScrollUp"
-        x-transition
-        @click="$refs.modalBody.scrollBy({ top: -300, behavior: 'smooth' })"
-        class="absolute top-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-        </svg>
-      </button>
-
-      <!-- Modal Body - List View -->
-      <div x-ref="modalBody"
-        @scroll="
+        <!-- Modal Body - List View -->
+        <div x-ref="modalBody"
+          @scroll="
           showScrollUp = $el.scrollTop > 100;
           showScrollDown = $el.scrollTop < ($el.scrollHeight - $el.clientHeight - 100);
         "
-        class="flex-1 overflow-y-auto" 
-        style="-webkit-overflow-scrolling: touch;">
-        <div class="divide-y divide-gray-200">
-          <?php foreach ($newProducts as $index => $product): ?>
-            <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
-              <div class="flex gap-4">
-                <!-- Product Image -->
-                <div class="flex-shrink-0 relative">
-                  <?php if (!empty($product['main_image'])): ?>
-                    <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
-                      alt="<?php echo htmlspecialchars($product['name']); ?>"
-                      class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
-                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg hidden items-center justify-center border border-gray-200">
-                      <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  <?php else: ?>
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                      <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  <?php endif; ?>
-                  
-                  <!-- NEW Badge -->
-                  <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">
-                    NEW
-                  </span>
-                </div>
-
-                <!-- Product Info -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-start justify-between gap-2 mb-2">
-                    <h3 class="uppercase text-sm sm:text-base text-gray-900 group-hover:text-orange-600 transition line-clamp-2">
-                      <?php echo htmlspecialchars($product['name']); ?>
-                    </h3>
-                    
-                    <!-- Stock Status Badge -->
-                    <?php if ($product['stock_status'] === 'In Stock'): ?>
-                      <span class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                        <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
-                        In Stock
-                      </span>
+          class="flex-1 overflow-y-auto"
+          style="-webkit-overflow-scrolling: touch;">
+          <div class="divide-y divide-gray-200">
+            <?php foreach ($newProducts as $index => $product): ?>
+              <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
+                <div class="flex gap-4">
+                  <!-- Product Image -->
+                  <div class="flex-shrink-0 relative">
+                    <?php if (!empty($product['main_image'])): ?>
+                      <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                        alt="<?php echo htmlspecialchars($product['name']); ?>"
+                        class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg hidden items-center justify-center border border-gray-200">
+                        <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
                     <?php else: ?>
-                      <span class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                        <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                        Out of Stock
-                      </span>
+                      <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                        <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
                     <?php endif; ?>
-                  </div>
 
-                  <?php if (!empty($product['description'])): ?>
-                    <p class="text-xs text-gray-600 mb-2 line-clamp-2">
-                      <?php echo htmlspecialchars($product['description']); ?>
-                    </p>
-                  <?php endif; ?>
-
-                  <!-- Meta Info -->
-                  <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
-                    <span class="flex items-center gap-1">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                      <?php echo htmlspecialchars($product['codename']); ?>
-                    </span>
-                    <span class="text-gray-300">•</span>
-                    <span class="flex items-center gap-1">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                    <!-- NEW Badge -->
+                    <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">
+                      NEW
                     </span>
                   </div>
 
-                  <!-- Action Button -->
-                  <form action="product_view" method="GET">
-                    <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-                    <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                      </svg>
-                      View Details
-                    </button>
-                  </form>
+                  <!-- Product Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                      <h3 class="uppercase text-sm sm:text-base text-gray-900 group-hover:text-orange-600 transition line-clamp-2">
+                        <?php echo htmlspecialchars($product['name']); ?>
+                      </h3>
+
+                      <!-- Stock Status Badge -->
+                      <?php if ($product['stock_status'] === 'In Stock'): ?>
+                        <span class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                          <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                          In Stock
+                        </span>
+                      <?php else: ?>
+                        <span class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                          <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
+                          Out of Stock
+                        </span>
+                      <?php endif; ?>
+                    </div>
+
+                    <?php if (!empty($product['description'])): ?>
+                      <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                        <?php echo htmlspecialchars($product['description']); ?>
+                      </p>
+                    <?php endif; ?>
+
+                    <!-- Meta Info -->
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <?php echo htmlspecialchars($product['codename']); ?>
+                      </span>
+                      <span class="text-gray-300">•</span>
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
+                      </span>
+                    </div>
+
+                    <!-- Action Button -->
+                    <form action="index-product_view-page-4-AA" method="GET">
+                      <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                      <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        View Details
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
-            </div>
-          <?php endforeach; ?>
+            <?php endforeach; ?>
+          </div>
         </div>
-      </div>
 
-      <!-- Scroll Down Button -->
-      <button x-show="showScrollDown"
-        x-transition
-        @click="$refs.modalBody.scrollBy({ top: 300, behavior: 'smooth' })"
-        class="absolute bottom-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+        <!-- Scroll Down Button -->
+        <button x-show="showScrollDown"
+          x-transition
+          @click="$refs.modalBody.scrollBy({ top: 300, behavior: 'smooth' })"
+          class="absolute bottom-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-      <!-- Modal Footer -->
-      <div class="p-4 bg-gray-50 border-t shrink-0">
-        <div class="flex flex-col sm:flex-row gap-2">
-          <button onclick="window.location.href='allproduct'"
-            class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            View All Products
-          </button>
-          <button @click="newProductsModal = false"
-            class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all text-sm">
-            Close
-          </button>
+        <!-- Modal Footer -->
+        <div class="p-4 bg-gray-50 border-t shrink-0">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button onclick="window.location.href='allproduct'"
+              class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              View All Products
+            </button>
+            <button @click="newProductsModal = false"
+              class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all text-sm">
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <style>
-    /* Modal specific styles */
-    [x-cloak] {
-      display: none !important;
-    }
+    <style>
+      /* Modal specific styles */
+      [x-cloak] {
+        display: none !important;
+      }
 
-    /* Smooth scrollbar for modal */
-    .overflow-y-auto::-webkit-scrollbar {
-      width: 6px;
-    }
+      /* Smooth scrollbar for modal */
+      .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+      }
 
-    .overflow-y-auto::-webkit-scrollbar-track {
-      background: #f9fafb;
-    }
+      .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f9fafb;
+      }
 
-    .overflow-y-auto::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 3px;
-    }
+      .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+      }
 
-    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-      background: #9ca3af;
-    }
+      .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+      }
 
-    /* Line clamp utilities */
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
+      /* Line clamp utilities */
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
 
-    /* Hover effect for list items */
-    .group:hover {
-      background-color: #fff7ed;
-    }
-  </style>
+      /* Hover effect for list items */
+      .group:hover {
+        background-color: #fff7ed;
+      }
+    </style>
 
-  <script>
-    // Auto-refresh new products count
-    setInterval(function() {
-      fetch(window.location.pathname + '?action=get_new_products_count')
-        .then(response => {
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return response.json();
-          }
-          throw new Error('Not JSON');
-        })
-        .then(data => {
-          const badge = document.querySelector('button[\\@click="newProductsModal = true"] span');
-          if (badge && data.count !== undefined) {
-            badge.textContent = data.count;
-            badge.style.display = data.count > 0 ? 'inline-flex' : 'none';
-          }
-        })
-        .catch(error => {
-          console.log('Silent error:', error);
-        });
-    }, 30000); // Every 30 seconds
-  </script>
-<?php endif; ?>
+    <script>
+      // Auto-refresh new products count
+      setInterval(function() {
+        fetch(window.location.pathname + '?action=get_new_products_count')
+          .then(response => {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return response.json();
+            }
+            throw new Error('Not JSON');
+          })
+          .then(data => {
+            const badge = document.querySelector('button[\\@click="newProductsModal = true"] span');
+            if (badge && data.count !== undefined) {
+              badge.textContent = data.count;
+              badge.style.display = data.count > 0 ? 'inline-flex' : 'none';
+            }
+          })
+          .catch(error => {
+            console.log('Silent error:', error);
+          });
+      }, 30000); // Every 30 seconds
+    </script>
+  <?php endif; ?>
 
 </nav>
 
@@ -2696,7 +2697,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
       },
 
       fetchUnread() {
-        fetch('../otherpage/chat_get_unread.php', {
+        fetch('../otherpage/chat-chat_get_unread-page-9-A.php', {
             credentials: 'include' // Added credentials
           })
           .then(res => {
@@ -2755,7 +2756,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
       },
 
       fetchUnread() {
-        fetch('../otherpage/chat_get_unread.php', {
+        fetch('../otherpage/chat-chat_get_unread-page-9-A.php', {
             credentials: 'include' // Added credentials
           })
           .then(res => {

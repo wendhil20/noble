@@ -487,7 +487,7 @@ handleQueryError($conn, "New Status Query");
 
     <?php include '../navbar/top.php'; ?>
 
-    <?php include 'flash_notification.php'; ?>
+    <?php include 'index-flash_notification-D.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-lg px-4 py-2 rounded shadow-lg z-50">
@@ -630,7 +630,7 @@ handleQueryError($conn, "New Status Query");
     <section class="bg-black hidden md:block border border-black/20">
         <div class="px-4 sm:px-8 lg:px-9">
             <!-- Clickable Banner Image - Left Aligned -->
-            <a href="shop.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
+            <a href="index-shop-page-2.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
                 <img src="../img/exclusive1.png"
                     alt="Exclusive Discounts - Shop Now"
                     class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
@@ -688,7 +688,7 @@ handleQueryError($conn, "New Status Query");
 
             <!-- Single Image Display -->
             <div class="relative overflow-hidden">
-                <a href="allproduct.php?discount=20" class="relative group flex items-center justify-center">
+                <a href="index-allproduct-page-3.php?discount=20" class="relative group flex items-center justify-center">
                     <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
                         <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
@@ -868,7 +868,7 @@ handleQueryError($conn, "New Status Query");
                         }
                         ?>
                         <div class="swiper-slide">
-                            <a href="shop?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block h-full">
+                            <a href="index-shop-page-2?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block h-full">
                                 <!-- Card with Unique Rounded Corners -->
                                 <div class="h-full bg-white group-hover:border-neutral-900 transition-all duration-500 overflow-hidden department-card group-hover:shadow-lg">
                                     <!-- Image Container -->
@@ -1071,7 +1071,7 @@ handleQueryError($conn, "New Status Query");
                                     </div>
 
                                     <!-- Clickable entire card -->
-                                    <a href="product_view?id=<?= (int)$row['id'] ?>"
+                                    <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                                         class="block h-full">
 
                                         <div class="absolute top-0 left-0 z-10">
@@ -1148,7 +1148,7 @@ handleQueryError($conn, "New Status Query");
 
                                             <!-- Action Button - Desktop Only -->
                                             <div class="mt-1.5 hidden lg:flex justify-start">
-                                                <form action="product_view" method="GET" class="pointer-events-auto">
+                                                <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                                     <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                                     <button type="submit"
                                                         class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[10px]">
@@ -1310,7 +1310,7 @@ handleQueryError($conn, "New Status Query");
                     return;
                 }
                 
-                window.location.href = 'shopcompare.php?products=' + compareProducts.join(',');
+                window.location.href = 'index-shopcompare-C.php?products=' + compareProducts.join(',');
             }
 
             // Show toast notification
@@ -1572,7 +1572,7 @@ handleQueryError($conn, "New Status Query");
                             </p>
                             <!-- CTA Button -->
                             <div class="pt-1 sm:pt-2 md:pt-4">
-                                <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                                <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
                                     class="animated-learn-more inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base transition-all duration-300 group relative">
                                     <span class="relative overflow-hidden">
                                         <span class="block transition-transform duration-300 group-hover:-translate-y-full">Learn More</span>
@@ -1865,7 +1865,7 @@ handleQueryError($conn, "New Status Query");
                             $empty = 5 - $full - $half;
                             ?>
                             <div class="swiper-slide p-1">
-                                <a href="product_view?id=<?= (int)$row['id'] ?>"
+                                <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                                     class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px]">
 
                                     <div class="absolute top-0 left-0 z-10">
@@ -1933,7 +1933,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <div class="mt-1.5 hidden lg:flex justify-start">
-                                            <form action="product_view" method="GET" class="pointer-events-auto">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                                 <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                                 <button type="submit"
                                                     class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[10px]">
@@ -1989,7 +1989,7 @@ handleQueryError($conn, "New Status Query");
                     ?>
                     <div class="swiper-slide p-1">
                         <!-- Clickable entire card for both mobile and desktop -->
-                        <a href="product_view?id=<?= (int)$row['id'] ?>"
+                        <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                             class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[280px] sm:h-[340px] lg:h-[450px]">
 
                             <div class="absolute top-0 left-0 z-10">
@@ -2066,7 +2066,7 @@ handleQueryError($conn, "New Status Query");
 
                                 <!-- Action Button - Desktop Only -->
                                 <div class="mt-3 hidden lg:flex justify-start">
-                                    <form action="product_view" method="GET" class="pointer-events-auto">
+                                    <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                         <button type="submit"
                                             class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
@@ -2227,7 +2227,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <!-- View Button -->
-                                        <form action="product_view" method="GET">
+                                        <form action="index-product_view-page-4-AA" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -2253,7 +2253,7 @@ handleQueryError($conn, "New Status Query");
 
                                         <!-- Buttons -->
                                         <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
                                                     <i class="fa-solid fa-bag-shopping"></i>
@@ -2529,7 +2529,7 @@ handleQueryError($conn, "New Status Query");
         document.getElementById('sidebarContent').scrollTop = 0;
         updateScrollButtons();
 
-        fetch('index_fetch_category_products.php?category=' + category)
+        fetch('index-index_fetch_category_products-A.php?category=' + category)
             .then(response => response.text())
             .then(data => {
                 document.getElementById('sidebarContent').innerHTML = data;
@@ -2677,7 +2677,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <!-- View Button -->
-                                        <form action="product_view" method="GET">
+                                        <form action="index-product_view-page-4-AA" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -2703,7 +2703,7 @@ handleQueryError($conn, "New Status Query");
 
                                         <!-- Buttons -->
                                         <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
                                                     <i class="fa-solid fa-bag-shopping"></i>
@@ -2938,7 +2938,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <!-- View Button -->
-                                        <form action="product_view" method="GET">
+                                        <form action="index-product_view-page-4-AA" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -2964,7 +2964,7 @@ handleQueryError($conn, "New Status Query");
 
                                         <!-- Buttons -->
                                         <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
                                                     <i class="fa-solid fa-bag-shopping"></i>
@@ -3660,7 +3660,7 @@ handleQueryError($conn, "New Status Query");
 
             async function loadReviews() {
                 try {
-                    const res = await fetch("profilefetch_reviews.php");
+                    const res = await fetch("index-profilefetch_reviews-E.php");
                     const reviews = await res.json();
 
                     reviewWrapper.innerHTML = "";

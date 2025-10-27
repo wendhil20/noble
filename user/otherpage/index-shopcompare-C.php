@@ -444,7 +444,7 @@ if (!empty($product_ids)) {
                     if (productIds.length > 0) {
                         window.location.href = '?products=' + productIds.join(',');
                     } else {
-                        window.location.href = 'shop';
+                        window.location.href = 'index-shop-page-2';
                     }
                 }
             }
@@ -454,7 +454,7 @@ if (!empty($product_ids)) {
         function clearAllComparisons() {
             if (confirm('Clear all product comparisons?')) {
                 localStorage.removeItem('compareProducts');
-                window.location.href = 'shop';
+                window.location.href = 'index-shop-page-2';
             }
         }
 

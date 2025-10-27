@@ -930,7 +930,7 @@ if (selectedMethod.value === 'QR Payment') {
             });
 
             // ✅ FIXED: Send complete data to PHP
-            const response = await fetch('paymongo-create-sessions.php', {
+            const response = await fetch('checkout-paymongo-create-sessions-page-12-A.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json'
@@ -949,7 +949,7 @@ if (selectedMethod.value === 'QR Payment') {
 
             // Check if it's HTML (error page)
             if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-                throw new Error('Server error: Check paymongo-create-sessions.php file for syntax errors.');
+                throw new Error('Server error: Check checkout-paymongo-create-sessions-page-12-A.php file for syntax errors.');
             }
 
             const data = JSON.parse(responseText);

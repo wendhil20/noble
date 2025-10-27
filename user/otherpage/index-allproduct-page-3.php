@@ -1036,7 +1036,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             </div>
             
             <div class="space-y-2">
-                <form action="product_view" method="GET">
+                <form action="index-product_view-page-4-AA" method="GET">
                     <input type="hidden" name="id" value="${product.id}">
                     <button type="submit" class="w-full bg-black text-white py-2 hover:bg-orange-500 text-sm transition rounded">
                         View Product

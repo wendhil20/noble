@@ -94,7 +94,7 @@ try {
     }
 
     $response['success'] = true;
-    $response['redirect'] = '../otherpage/index.php';
+    $response['redirect'] = '../otherpage/index-page-1-A-B-C-D-E.php';
 } catch (Exception $e) {
     $response['message'] = $e->getMessage();
 }

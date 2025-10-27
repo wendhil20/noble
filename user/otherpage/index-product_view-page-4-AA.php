@@ -1380,7 +1380,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                       </span>
                     </button>
 
-                    <button type="button" onclick="window.location.href='cart_view.php'"
+                    <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
                       class="flex-1 py-2.5 lg:py-4  text-xs lg:text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
                       <span class="flex items-center justify-center gap-1 lg:gap-2">
                         <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
@@ -1611,7 +1611,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                 while ($row = $related_products->fetch_assoc()):
                 ?>
                   <div class="group">
-                    <a href="product_view.php?id=<?= $row['id'] ?>"
+                    <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
                       class="block bg-white  hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full  hover:border-orange-300">
 
                       <!-- Product Image -->

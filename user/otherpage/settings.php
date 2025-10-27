@@ -75,7 +75,7 @@ if ($verification_result->num_rows > 0) {
         $_SESSION['verification_bypass_message'] = "<div class='mb-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-700 rounded'>
                                                          Your account is already verified! You have been redirected to your profile.
                                                      </div>";
-        header('Location: index.php'); // or wherever verified users should go
+        header('Location: index-page-1-A-B-C-D-E.php'); // or wherever verified users should go
         exit;
     }
 }
@@ -329,7 +329,7 @@ if ($detail['is_verified'] == 1) {
                                                          <strong>Account Already Verified:</strong> Your profile has been approved and you have full access to all features.
                                                      </div>
                                                  </div>";
-    header('Location: index.php'); // Redirect to dashboard or main profile page
+    header('Location: index-page-1-A-B-C-D-E.php'); // Redirect to dashboard or main profile page
     exit;
 }
 
@@ -452,7 +452,7 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="../img/favicon.ico">
     <title><?php echo $show_waiting_message ? 'Verification Pending' : 'Complete Your Profile'; ?> - Step by Step</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <?php if (!$show_waiting_message): ?>
@@ -689,7 +689,7 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
 
                         <!-- Action Buttons -->
                         <div class="flex gap-3 mt-8">
-                            <a href="index.php" class="flex-1 bg-orange-400 text-white py-3 px-6 rounded-lg font-semibold text-center hover:bg-blue-700 transition">
+                            <a href="index-page-1-A-B-C-D-E.php" class="flex-1 bg-orange-400 text-white py-3 px-6 rounded-lg font-semibold text-center hover:bg-blue-700 transition">
                                 Go to Dashboard
                             </a>
                             <button onclick="window.location.reload()" class="bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition">
@@ -719,8 +719,6 @@ $completion_percentage = ($fields_completed / $total_fields) * 100;
                     </div>
                 </div>
             <?php else: ?>
-
-
 
 
                 <!-- Header Section -->

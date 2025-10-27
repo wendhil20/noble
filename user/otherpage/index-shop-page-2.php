@@ -461,7 +461,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
         <!-- Two Container Buttons with Background Images -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <!-- Explore Products Container -->
-            <a href="allproduct" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <a href="index-allproduct-page-3" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/a.png');">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
@@ -481,7 +481,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
             </a>
 
             <!-- On Sale Products Container -->
-            <a href="allproductsub" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <a href="index-allproductsub-page-5" class="group relative overflow-hidden h-40 sm:h-52 lg:h-64 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('../img/saleandexplore/b.png');">
                     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/80 transition-all duration-300"></div>
@@ -739,7 +739,7 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                         ?>
 
                         <div class="card-hover bg-white overflow-hidden flex flex-col">
-                            <a href="product_view.php?id=<?= $product_id ?>" class="flex flex-col h-full">
+                            <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
                                 <!-- Image Container - Fixed Square -->
                                 <div class="relative w-full " style="padding-bottom: 100%;">
                                     <div class="absolute inset-0 p-2 sm:p-4">

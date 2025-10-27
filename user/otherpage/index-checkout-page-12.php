@@ -1275,12 +1275,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode([
                     'success' => true,
                     'message' => 'Order placed successfully!',
-                    'redirect_url' => 'order_receipt.php?order_id=' . $order_id
+                    'redirect_url' => 'checkout-order_receipt-page-12-A.php?order_id=' . $order_id
                 ]);
                 exit;
             } else {
                 // Regular form submission - redirect normally
-                header('Location: order_receipt.php?order_id=' . $order_id);
+                header('Location: checkout-order_receipt-page-12-A.php?order_id=' . $order_id);
                 exit;
             }
         } catch (Exception $e) {

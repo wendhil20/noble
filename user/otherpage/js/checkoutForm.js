@@ -476,7 +476,7 @@ function handleBankTransferSubmission(form, button) {
           showNotification("Order placed successfully!", "success");
 
           // Try to extract redirect URL
-          const urlMatch = data.match(/order_receipt\.php\?order_id=(\d+)/);
+          const urlMatch = data.match(/checkout-order_receipt-page-12-A\.php\?order_id=(\d+)/);
           if (urlMatch) {
             setTimeout(() => {
               window.location.href =
@@ -777,7 +777,7 @@ function handleQRPaymentSubmission(form, button) {
         ) {
           showNotification("Order placed successfully!", "success");
 
-          const urlMatch = data.match(/order_receipt\.php\?order_id=(\d+)/);
+          const urlMatch = data.match(/checkout-order_receipt-page-12-A\.php\?order_id=(\d+)/);
           if (urlMatch) {
             setTimeout(() => {
               window.location.href =

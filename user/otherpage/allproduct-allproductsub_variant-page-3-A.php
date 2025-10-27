@@ -59,7 +59,7 @@ if ($subcategory_id > 0) {
         $category_name = $subcategory_data['category_name'];
         $category_id = $subcategory_data['category_id'];
     } else {
-        header('Location: subcategories.php');
+        header('Location: allproduct-allproductsub_variant-page-3-A.php');
         exit;
     }
     $stmt->close();
@@ -189,15 +189,15 @@ $page_label = $show_sale ? 'SALE ITEMS' : 'PRODUCTS';
                 <nav class="flex justify-center" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-2 text-sm">
                         <li>
-                            <a href="index.php" class="text-white hover:text-white">Home</a>
+                            <a href="index-page-1-A-B-C-D-E.php" class="text-white hover:text-white">Home</a>
                         </li>
                         <li><i class="fas fa-chevron-right text-white mx-2"></i></li>
                         <li>
-                            <a href="allproductsub.php" class="text-white hover:text-white"><?php echo $show_sale ? 'Sale' : 'All'; ?> Categories</a>
+                            <a href="index-allproductsub-page-5.php" class="text-white hover:text-white"><?php echo $show_sale ? 'Sale' : 'All'; ?> Categories</a>
                         </li>
                         <li><i class="fas fa-chevron-right text-white mx-2"></i></li>
                         <li>
-                            <a href="allproductsub.php?category_id=<?php echo $category_id; ?>"
+                            <a href="index-allproductsub-page-5.php?category_id=<?php echo $category_id; ?>"
                                 class="text-white hover:text-white"><?php echo htmlspecialchars($category_name); ?></a>
                         </li>
                         <li><i class="fas fa-chevron-right text-red-300 mx-2"></i></li>
@@ -237,7 +237,7 @@ $page_label = $show_sale ? 'SALE ITEMS' : 'PRODUCTS';
                             Show <?php echo $show_sale ? 'Regular' : 'Sale'; ?> Items
                         </a>
                         
-                        <a href="allproductsub.php"
+                        <a href="index-allproductsub-page-5.php"
                             class="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors uppercase text-sm">
                             <i class="fas fa-arrow-left mr-2"></i>
                             Back to Categories
@@ -334,7 +334,7 @@ $page_label = $show_sale ? 'SALE ITEMS' : 'PRODUCTS';
                             <?php endif; ?>
 
                             <!-- View Product Button -->
-                            <form action="product_view.php" method="GET" class="mt-2">
+                            <form action="index-product_view-page-4-AA.php" method="GET" class="mt-2">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
                                 <button type="submit" class="w-full bg-black text-white py-2 px-3 rounded-lg hover:bg-<?php echo $show_sale ? 'red' : 'gray'; ?>-700 transition-colors duration-200 text-sm font-semibold">
                                     <i class="fa-solid fa-bag-shopping mr-1"></i>
@@ -389,7 +389,7 @@ $page_label = $show_sale ? 'SALE ITEMS' : 'PRODUCTS';
                         <i class="fas fa-<?php echo $show_sale ? 'list' : 'tag'; ?> mr-2"></i>
                         View <?php echo $show_sale ? 'Regular' : 'Sale'; ?> Products
                     </a>
-                    <a href="allproductsub.php"
+                    <a href="index-allproductsub-page-5.php"
                         class="inline-flex items-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Browse Categories
@@ -469,7 +469,7 @@ $page_label = $show_sale ? 'SALE ITEMS' : 'PRODUCTS';
                                 </div>
                             <?php endif; ?>
 
-                            <form action="product_view.php" method="GET">
+                            <form action="index-product_view-page-4-AA.php" method="GET">
                                 <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
                                 <button type="submit" class="w-full bg-black text-white py-1.5 px-3 rounded hover:bg-<?php echo $show_sale ? 'red' : 'gray'; ?>-700 transition-colors duration-200 text-xs font-semibold">
                                     <i class="fa-solid fa-bag-shopping mr-1"></i>

@@ -34,6 +34,8 @@ $sql = "SELECT
     o.status as order_status,
     tv.vehicle_type,
     tv.courier_name,
+    dispatcher.fullname as dispatcher_name,
+    dispatcher.email as dispatcher_email,
     (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id) as total_items,
     (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'ready_for_pickup') as ready_items,
     (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded') as loaded_items
@@ -41,6 +43,7 @@ FROM delivery_bookings db
 INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
 INNER JOIN orders o ON db.order_id = o.id
 LEFT JOIN transportify_vehicle_list tv ON db.vehicle_id = tv.id
+LEFT JOIN nobleaccount dispatcher ON db.dispatcher_id = dispatcher.id
 WHERE db.id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -62,8 +65,43 @@ $itemsStmt->execute();
 $items = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $itemsStmt->close();
 
+// Get available warehouse dispatchers
+$dispatchersSql = "SELECT 
+    id, 
+    fullname, 
+    email,
+    (SELECT COUNT(*) FROM delivery_bookings WHERE dispatcher_id = nobleaccount.id AND booking_status NOT IN ('delivered', 'picked_up', 'cancelled')) as active_bookings
+FROM nobleaccount 
+WHERE lvl = 'logistic' 
+AND subrole = 'dispatcher' 
+AND status = 'active'
+ORDER BY active_bookings ASC, fullname ASC";
+$dispatchersResult = $conn->query($dispatchersSql);
+$dispatchers = $dispatchersResult->fetch_all(MYSQLI_ASSOC);
+
 // Handle item status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+
+    if ($_POST['action'] === 'assign_dispatcher') {
+        $dispatcher_id = !empty($_POST['dispatcher_id']) ? intval($_POST['dispatcher_id']) : null;
+        
+        $updateDispatcher = $conn->prepare("UPDATE delivery_bookings SET dispatcher_id = ? WHERE id = ?");
+        $updateDispatcher->bind_param("ii", $dispatcher_id, $booking_id);
+        
+        if ($updateDispatcher->execute()) {
+            if ($dispatcher_id) {
+                $_SESSION['success_message'] = "Dispatcher assigned successfully!";
+            } else {
+                $_SESSION['success_message'] = "Dispatcher unassigned successfully!";
+            }
+        } else {
+            $_SESSION['error_message'] = "Failed to assign dispatcher";
+        }
+        $updateDispatcher->close();
+        
+        header("Location: delivery_tracking.php?booking_id=" . $booking_id);
+        exit();
+    }
     
     if ($_POST['action'] === 'toggle_item_loaded') {
         $item_id = intval($_POST['item_id']);
@@ -329,10 +367,83 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                             <p class="font-semibold text-lg text-purple-900"><?php echo htmlspecialchars($booking['courier_name']); ?></p>
                         </div>
                         <?php if ($booking['booking_reference']): ?>
-                        <div class="bg-green-50 rounded-lg p-4 md:col-span-2">
+                        <div class="bg-green-50 rounded-lg p-4">
                             <span class="text-sm text-green-700">Booking Reference</span>
                             <p class="font-semibold text-green-900"><?php echo htmlspecialchars($booking['booking_reference']); ?></p>
                         </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($booking['booking_type'] === 'pickup' && ($booking['pickup_person_name'] || $booking['pickup_person_contact'])): ?>
+                            <?php if ($booking['pickup_person_name']): ?>
+                            <div class="bg-indigo-50 rounded-lg p-4">
+                                <span class="text-sm text-indigo-700">Pickup Person</span>
+                                <p class="font-semibold text-lg text-indigo-900"><?php echo htmlspecialchars($booking['pickup_person_name']); ?></p>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($booking['pickup_person_contact']): ?>
+                            <div class="bg-indigo-50 rounded-lg p-4">
+                                <span class="text-sm text-indigo-700">Contact Number</span>
+                                <p class="font-semibold text-lg text-indigo-900"><?php echo htmlspecialchars($booking['pickup_person_contact']); ?></p>
+                            </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php if ($booking['booking_type'] === 'delivery' && $booking['driver_name']): ?>
+                        <div class="bg-amber-50 rounded-lg p-4">
+                            <span class="text-sm text-amber-700">Driver Name</span>
+                            <p class="font-semibold text-lg text-amber-900"><?php echo htmlspecialchars($booking['driver_name']); ?></p>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($booking['vehicle_plate_number']): ?>
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <span class="text-sm text-orange-700">Vehicle Plate Number</span>
+                            <p class="font-mono font-bold text-lg text-orange-900"><?php echo htmlspecialchars($booking['vehicle_plate_number']); ?></p>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Dispatcher Assignment Section -->
+                    <div class="mt-6 border-t pt-6">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-user-tie text-indigo-600 mr-2"></i>
+                            Assigned Dispatcher
+                        </h4>
+                        
+                        <?php if (!$isCompleted): ?>
+                        <form method="POST" class="space-y-4">
+                            <input type="hidden" name="action" value="assign_dispatcher">
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Select Dispatcher
+                                </label>
+                                <select name="dispatcher_id" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        onchange="this.form.submit()">
+                                    <option value="">-- Unassigned --</option>
+                                    <?php foreach ($dispatchers as $dispatcher): ?>
+                                    <option value="<?php echo $dispatcher['id']; ?>" 
+                                            <?php echo $booking['dispatcher_id'] == $dispatcher['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($dispatcher['fullname']); ?> 
+                                        (<?php echo $dispatcher['active_bookings']; ?> active)
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Shows number of active bookings per dispatcher</p>
+                            </div>
+                        </form>
+                        <?php else: ?>
+                            <?php if ($booking['dispatcher_name']): ?>
+                            <div class="bg-indigo-50 rounded-lg p-4">
+                                <span class="text-sm text-indigo-700">Dispatcher</span>
+                                <p class="font-semibold text-lg text-indigo-900"><?php echo htmlspecialchars($booking['dispatcher_name']); ?></p>
+                                <p class="text-sm text-indigo-600"><?php echo htmlspecialchars($booking['dispatcher_email']); ?></p>
+                            </div>
+                            <?php else: ?>
+                            <p class="text-gray-500 italic">No dispatcher assigned</p>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                     
@@ -528,6 +639,13 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                             <span class="text-sm text-gray-700"><?php echo ucfirst($booking['booking_type']); ?> Type</span>
                             <span class="font-semibold text-green-900 capitalize"><?php echo $booking['booking_type']; ?></span>
                         </div>
+                        
+                        <?php if ($booking['dispatcher_name']): ?>
+                        <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                            <span class="text-sm text-gray-700">Dispatcher</span>
+                            <span class="font-semibold text-indigo-900"><?php echo htmlspecialchars($booking['dispatcher_name']); ?></span>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 

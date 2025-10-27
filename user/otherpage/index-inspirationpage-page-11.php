@@ -1,3 +1,38 @@
+<?php
+session_name("nobleuser");
+session_start();
+include '../../connection/connect.php';
+
+// ✅ Restore session from remember_token (normal account or Google)
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['name'];
+        $_SESSION['user_email'] = $user['email'];
+
+        // Check if the account is Google-based (optional flag or logic)
+        if (!empty($user['google_id'])) {
+            $_SESSION['google_logged_in'] = true;
+            $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
+        }
+    }
+    $stmt->close();
+}
+
+// ✅ Final check if logged in (either normal or Google)
+if (!isset($_SESSION['user_id'])) {
+    // Not logged in, redirect to login/Google callback
+    header('Location: ../google-callback.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,9 +43,9 @@
 </head>
 <body class="bg-gray-50">
     <?php include '../navbar/top.php' ?>
-    
     <!-- Not Available Message -->
     <div class="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">
+
         <div class="text-center">
             <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-200 rounded-full mb-4">
                 <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,5 +56,6 @@
             <p class="text-gray-600">This content is currently unavailable. Please check back later.</p>
         </div>
     </div>
+    
 </body>
 </html>

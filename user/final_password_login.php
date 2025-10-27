@@ -57,7 +57,7 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Login successful.',
-        'redirect' => 'otherpage/index.php'
+        'redirect' => 'otherpage/index-page-1-A-B-C-D-E.php'
     ]);
 
 } catch (Exception $e) {

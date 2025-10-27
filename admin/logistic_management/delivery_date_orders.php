@@ -37,6 +37,10 @@ $ordersSql = "SELECT
     o.address,
     o.status as order_status,
     o.final_total,
+    o.delivery_fee,
+    o.delivery_type,
+    o.total_weight_kg,
+    o.total_cubic_meters,
     o.assigned_vehicle_id,
     o.assigned_vehicle_type,
     (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id) as total_items,
@@ -48,7 +52,7 @@ $ordersSql = "SELECT
     db.id as booking_id,
     db.tracking_number,
     db.booking_status,
-    db.courier_name,
+    db.courier_name as booking_courier_name,
     db.booking_reference,
     CASE 
         WHEN db.id IS NOT NULL THEN 'booked'
@@ -70,10 +74,12 @@ $stmt->close();
 
 // Get statistics for this date
 $totalOrders = count($orders);
+$deliveryOrders = count(array_filter($orders, fn($o) => $o['delivery_type'] === 'delivery'));
+$pickupOrders = count(array_filter($orders, fn($o) => $o['delivery_type'] === 'pickup'));
 $completedOrders = count(array_filter($orders, fn($o) => in_array($o['booking_status'], ['delivered', 'picked_up'])));
 $pendingOrders = count(array_filter($orders, fn($o) => !in_array($o['booking_status'], ['delivered', 'picked_up'])));
 $bookedOrders = count(array_filter($orders, fn($o) => $o['booking_id'] !== null));
-$overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] === 'overdue' && $o['delivered_at'] === null));
+$overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] === 'overdue'));
 
 ?>
 
@@ -85,335 +91,555 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
     <title>Deliveries for <?php echo date('M d, Y', strtotime($selectedDate)); ?> - Noble Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-                            800: '#9a3412', 900: '#7c2d12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        .order-card {
+        @keyframes slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in { animation: slide-in 0.3s ease-out; }
+        
+        .order-row:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+            transform: translateX(4px);
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn {
             transition: all 0.3s ease;
         }
-        .order-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        
+        .filter-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
     
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-[1920px] mx-auto px-6 lg:px-12 py-6">
         
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <a href="main_dashboard.php" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-2">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Dashboard
-                    </a>
-                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                        <i class="fas fa-calendar-day text-blue-600 mr-3"></i>
-                        Deliveries for <?php echo date('l, F d, Y', strtotime($selectedDate)); ?>
-                    </h1>
+        <div class="mb-6">
+            <a href="main_dashboard.php" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3 text-sm font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Dashboard
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calendar-day text-blue-600 mr-3"></i>
+                Deliveries for <?php echo date('l, F d, Y', strtotime($selectedDate)); ?>
+            </h1>
+        </div>
+        
+        <!-- Filter Buttons -->
+        <div class="mb-6 flex flex-wrap gap-3">
+            <button onclick="filterOrders('all')" 
+                    class="filter-btn active px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2"
+                    id="filter-all">
+                <i class="fas fa-list"></i>
+                All Orders
+                <span class="bg-white text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $totalOrders; ?></span>
+            </button>
+            
+            <button onclick="filterOrders('delivery')" 
+                    class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
+                    id="filter-delivery">
+                <i class="fas fa-truck"></i>
+                Delivery
+                <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $deliveryOrders; ?></span>
+            </button>
+            
+            <button onclick="filterOrders('pickup')" 
+                    class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
+                    id="filter-pickup">
+                <i class="fas fa-hand-holding"></i>
+                Pickup
+                <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $pickupOrders; ?></span>
+            </button>
+        </div>
+            
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <i class="fas fa-shopping-cart text-blue-500 text-xl"></i>
+                    <p class="text-2xl font-bold text-gray-900" id="stat-total"><?php echo $totalOrders; ?></p>
                 </div>
+                <p class="text-xs text-gray-600 mt-2">Total Orders</p>
             </div>
             
-            <!-- Statistics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white rounded-lg border-2 border-blue-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <i class="fas fa-shopping-cart text-blue-500 text-2xl"></i>
-                        <p class="text-3xl font-bold text-gray-900"><?php echo $totalOrders; ?></p>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">Total Orders</p>
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                    <p class="text-2xl font-bold text-gray-900" id="stat-completed"><?php echo $completedOrders; ?></p>
                 </div>
-                
-                <div class="bg-white rounded-lg border-2 border-green-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
-                        <p class="text-3xl font-bold text-gray-900"><?php echo $completedOrders; ?></p>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">Completed</p>
+                <p class="text-xs text-gray-600 mt-2">Completed</p>
+            </div>
+            
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <i class="fas fa-book text-purple-500 text-xl"></i>
+                    <p class="text-2xl font-bold text-gray-900" id="stat-booked"><?php echo $bookedOrders; ?></p>
                 </div>
-                
-                <div class="bg-white rounded-lg border-2 border-yellow-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <i class="fas fa-clock text-yellow-500 text-2xl"></i>
-                        <p class="text-3xl font-bold text-gray-900"><?php echo $pendingOrders; ?></p>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">Pending</p>
+                <p class="text-xs text-gray-600 mt-2">Booked</p>
+            </div>
+            
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <i class="fas fa-clock text-yellow-500 text-xl"></i>
+                    <p class="text-2xl font-bold text-gray-900" id="stat-pending"><?php echo $pendingOrders; ?></p>
                 </div>
-                
-                <?php if ($overdueOrders > 0): ?>
-                <div class="bg-white rounded-lg border-2 border-red-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
-                        <p class="text-3xl font-bold text-gray-900"><?php echo $overdueOrders; ?></p>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">Overdue</p>
+                <p class="text-xs text-gray-600 mt-2">Pending</p>
+            </div>
+            
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                    <p class="text-2xl font-bold text-gray-900" id="stat-overdue"><?php echo $overdueOrders; ?></p>
                 </div>
-                <div class="bg-white rounded-lg border-2 border-purple-200 p-4">
-    <div class="flex items-center justify-between">
-        <i class="fas fa-book text-purple-500 text-2xl"></i>
-        <p class="text-3xl font-bold text-gray-900"><?php echo $bookedOrders; ?></p>
-    </div>
-    <p class="text-sm text-gray-600 mt-2">Booked</p>
-</div>
-                <?php endif; ?>
+                <p class="text-xs text-gray-600 mt-2">Overdue</p>
             </div>
         </div>
 
-        <!-- Orders List -->
+        <!-- Orders Table -->
         <?php if (empty($orders)): ?>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <div class="text-gray-400 mb-4">
-                    <i class="fas fa-calendar-times text-6xl"></i>
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-700 mb-2">No Deliveries Scheduled</h3>
-                <p class="text-gray-500 mb-6">There are no deliveries scheduled for this date.</p>
-                <a href="logistics_dashboard_view.php" class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Return to Dashboard
-                </a>
+            <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">No Deliveries Scheduled</h3>
+                <p class="text-gray-500">There are no deliveries scheduled for this date.</p>
             </div>
         <?php else: ?>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-xl font-bold text-gray-900">
-                        <i class="fas fa-list mr-2"></i>
-                        Orders List (<?php echo $totalOrders; ?>)
-                    </h2>
-                </div>
-                
-                <div class="divide-y divide-gray-200">
-                    <?php foreach ($orders as $order): ?>
-    <?php
-$hasBooking = $order['booking_id'] !== null;
-$isCompleted = in_array($order['booking_status'], ['delivered', 'picked_up']);
-$isBooked = $order['booking_id'] !== null;
-$canBook = !$hasBooking && in_array($order['computed_status'], ['ready_for_booking', 'scheduled']);
-$isToday = $order['delivery_status'] === 'today_pending';
-$isOverdue = $order['delivery_status'] === 'overdue';
-
-if ($isCompleted) {
-                                $statusClass = 'bg-green-100 text-green-800 border-green-200';
-                                $statusIcon = 'fa-check-circle';
-                                $statusText = 'Delivered';
-                                $cardBg = 'bg-green-50';
-                                $borderColor = 'border-green-200';
-                            } elseif ($isOverdue) {
-                                $statusClass = 'bg-red-100 text-red-800 border-red-200';
-                                $statusIcon = 'fa-exclamation-triangle';
-                                $statusText = 'Overdue (' . $order['days_overdue'] . ' days)';
-                                $cardBg = 'bg-red-50';
-                                $borderColor = 'border-red-200';
-                            } elseif ($isToday) {
-                                $statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
-                                $statusIcon = 'fa-clock';
-                                $statusText = 'Due Today';
-                                $cardBg = 'bg-blue-50';
-                                $borderColor = 'border-blue-200';
-                            } else {
-                                $statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-                                $statusIcon = 'fa-clock';
-                                $statusText = 'Scheduled';
-                                $cardBg = 'bg-yellow-50';
-                                $borderColor = 'border-yellow-200';
-                            }
-                        ?>
-                        
-                        <div class="order-card p-6 <?php echo $cardBg; ?> hover:bg-opacity-50">
-    <div class="flex items-start justify-between mb-4">
-        <div class="flex-1">
-                                    <!-- Order Header -->
-                                    <div class="flex items-center space-x-3 mb-3">
-                                        <h3 class="text-xl font-bold text-gray-900">
-                                            <i class="fas fa-shopping-cart mr-2 text-blue-600"></i>
-                                            Order #<?php echo $order['order_id']; ?>
-                                        </h3>
-                                        
-                                        <?php if ($order['item_type'] === 'replacement'): ?>
-                                            <span class="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                                                <i class="fas fa-exchange-alt mr-1"></i>REPLACEMENT
-                                            </span>
-                                        <?php endif; ?>
-                                        
-                                        <span class="<?php echo $statusClass; ?> border px-3 py-1 rounded-full text-xs font-medium">
-                                            <i class="fas <?php echo $statusIcon; ?> mr-1"></i>
-                                            <?php echo $statusText; ?>
-                                        </span>
-                                    </div>
-                                    
-                                    <!-- Customer Info -->
-                                    <div class="bg-white bg-opacity-70 rounded-lg p-4 mb-4 border-2 <?php echo $borderColor; ?>">
-                                        <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
-                                            <i class="fas fa-user-circle mr-2 text-blue-600"></i>
-                                            Customer Information
-                                        </h4>
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                            <div>
-                                                <span class="font-medium text-gray-600">Name:</span>
-                                                <p class="text-gray-900 font-semibold"><?php echo htmlspecialchars($order['customer_name']); ?></p>
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Items</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight/Volume</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <?php foreach ($orders as $order): ?>
+                                <?php
+                                $hasBooking = $order['booking_id'] !== null;
+                                $isCompleted = in_array($order['booking_status'], ['delivered', 'picked_up']);
+                                $canBook = !$hasBooking && in_array($order['computed_status'], ['ready_for_booking', 'scheduled']);
+                                
+                                if ($isCompleted) {
+                                    $statusBadge = '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>Delivered</span>';
+                                } elseif ($order['delivery_status'] === 'overdue') {
+                                    $statusBadge = '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-exclamation-triangle mr-1"></i>Overdue</span>';
+                                } elseif ($hasBooking) {
+                                    $statusBadge = '<span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-shipping-fast mr-1"></i>Booked</span>';
+                                } else {
+                                    $statusBadge = '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-clock mr-1"></i>Scheduled</span>';
+                                }
+                                
+                                $deliveryTypeBadge = $order['delivery_type'] === 'pickup' 
+                                    ? '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-hand-holding mr-1"></i>Pickup</span>'
+                                    : '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-truck mr-1"></i>Delivery</span>';
+                                ?>
+                                
+                                <tr class="order-row cursor-pointer" 
+                                    data-delivery-type="<?php echo $order['delivery_type']; ?>"
+                                    onclick="openDetailsModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-shopping-cart text-blue-600"></i>
                                             </div>
-                                            <?php if ($order['mobile']): ?>
-                                            <div>
-                                                <span class="font-medium text-gray-600">Mobile:</span>
-                                                <p class="text-gray-900"><?php echo htmlspecialchars($order['mobile']); ?></p>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-bold text-gray-900">#<?php echo $order['order_id']; ?></div>
+                                                <?php if ($order['item_type'] === 'replacement'): ?>
+                                                    <span class="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">Replacement</span>
+                                                <?php endif; ?>
                                             </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($order['customer_name']); ?></div>
+                                        <div class="text-xs text-gray-500"><?php echo htmlspecialchars($order['mobile']); ?></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <?php echo $deliveryTypeBadge; ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-gray-900"><?php echo date('g:i A', strtotime($order['delivery_time'])); ?></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <span class="font-semibold"><?php echo $order['total_items']; ?></span> items
+                                        </div>
+                                        <div class="text-xs text-gray-500"><?php echo $order['total_quantity']; ?> pcs total</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs text-gray-900">
+                                            <div><i class="fas fa-weight text-orange-500 mr-1"></i><?php echo number_format($order['total_weight_kg'], 2); ?> kg</div>
+                                            <div class="mt-1"><i class="fas fa-cube text-orange-500 mr-1"></i><?php echo number_format($order['total_cubic_meters'], 3); ?> m³</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-bold text-green-600">₱<?php echo number_format($order['final_total'], 2); ?></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <?php echo $statusBadge; ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end gap-2">
+                                            <?php if ($canBook): ?>
+                                                <a href="delivery_booking.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>" 
+                                                   onclick="event.stopPropagation()"
+                                                   class="text-blue-600 hover:text-blue-800" title="Book Delivery">
+                                                    <i class="fas fa-calendar-check text-lg"></i>
+                                                </a>
+                                            <?php elseif ($hasBooking && !$isCompleted): ?>
+                                                <a href="delivery_tracking.php?booking_id=<?php echo $order['booking_id']; ?>" 
+                                                   onclick="event.stopPropagation()"
+                                                   class="text-purple-600 hover:text-purple-800" title="Manage Delivery">
+                                                    <i class="fas fa-tasks text-lg"></i>
+                                                </a>
                                             <?php endif; ?>
-                                            <div class="md:col-span-2">
-                                                <span class="font-medium text-gray-600">Address:</span>
-                                                <p class="text-gray-900"><?php echo htmlspecialchars($order['address']); ?></p>
-                                            </div>
+                                            
+                                            <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>" 
+                                               onclick="event.stopPropagation()"
+                                               class="text-green-600 hover:text-green-800" title="View Items">
+                                                <i class="fas fa-list text-lg"></i>
+                                            </a>
+                                            
+                                            <?php if (!$isCompleted): ?>
+                                                <button onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');" 
+                                                        class="text-orange-600 hover:text-orange-800" title="Reschedule">
+                                                    <i class="fas fa-calendar-alt text-lg"></i>
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
-                                    </div>
-
-                                    <!-- Booking Information (if exists) -->
-<?php if ($hasBooking): ?>
-<div class="bg-purple-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
-    <h4 class="font-semibold text-purple-900 mb-3 flex items-center">
-        <i class="fas fa-shipping-fast mr-2"></i>
-        Booking Information
-    </h4>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-        <?php if ($order['tracking_number']): ?>
-        <div>
-            <span class="font-medium text-purple-700">Tracking #:</span>
-            <p class="text-purple-900 font-mono font-bold"><?php echo htmlspecialchars($order['tracking_number']); ?></p>
-        </div>
-        <?php endif; ?>
-        <?php if ($order['courier_name']): ?>
-        <div>
-            <span class="font-medium text-purple-700">Courier:</span>
-            <p class="text-purple-900 font-semibold"><?php echo htmlspecialchars($order['courier_name']); ?></p>
-        </div>
-        <?php endif; ?>
-        <?php if ($order['booking_reference']): ?>
-        <div class="md:col-span-2">
-            <span class="font-medium text-purple-700">Reference:</span>
-            <p class="text-purple-900"><?php echo htmlspecialchars($order['booking_reference']); ?></p>
-        </div>
-        <?php endif; ?>
-        <div>
-            <span class="font-medium text-purple-700">Booking Status:</span>
-            <p class="text-purple-900 font-semibold capitalize">
-                <?php echo str_replace('_', ' ', $order['booking_status']); ?>
-            </p>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Items Loading Status -->
-<div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
-    <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
-        <i class="fas fa-boxes mr-2"></i>
-        Items Status
-    </h4>
-    <div class="grid grid-cols-3 gap-3">
-        <div class="bg-white rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-gray-900"><?php echo $order['total_items']; ?></div>
-            <div class="text-xs text-gray-600 mt-1">Total Items</div>
-        </div>
-        <div class="bg-white rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-yellow-600"><?php echo $order['ready_items']; ?></div>
-            <div class="text-xs text-gray-600 mt-1">Ready</div>
-        </div>
-        <div class="bg-white rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-green-600"><?php echo $order['loaded_items']; ?></div>
-            <div class="text-xs text-gray-600 mt-1">Loaded</div>
-        </div>
-    </div>
-</div>
-                                    
-                                    <!-- Order Details -->
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                        <div class="bg-white bg-opacity-70 p-3 rounded-lg border <?php echo $borderColor; ?>">
-                                            <span class="text-xs text-gray-600">Delivery Time</span>
-                                            <p class="font-semibold text-gray-900">
-                                                <?php echo date('g:i A', strtotime($order['delivery_time'])); ?>
-                                            </p>
-                                        </div>
-                                        <div class="bg-white bg-opacity-70 p-3 rounded-lg border <?php echo $borderColor; ?>">
-                                            <span class="text-xs text-gray-600">Total Items</span>
-                                            <p class="font-semibold text-gray-900"><?php echo $order['total_items']; ?></p>
-                                        </div>
-                                        <div class="bg-white bg-opacity-70 p-3 rounded-lg border <?php echo $borderColor; ?>">
-                                            <span class="text-xs text-gray-600">Total Quantity</span>
-                                            <p class="font-semibold text-gray-900"><?php echo $order['total_quantity']; ?></p>
-                                        </div>
-                                        <div class="bg-white bg-opacity-70 p-3 rounded-lg border <?php echo $borderColor; ?>">
-                                            <span class="text-xs text-gray-600">Order Total</span>
-                                            <p class="font-semibold text-gray-900">
-                                                ₱<?php echo number_format($order['final_total'], 2); ?>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Additional Info -->
-                                    <div class="flex flex-wrap gap-4 text-sm">
-                                        <?php if (isset($order['assigned_vehicle_type']) && $order['assigned_vehicle_type']): ?>
-<div class="flex items-center text-gray-700">
-    <i class="fas fa-truck mr-2 text-gray-500"></i>
-    <span>Vehicle: <strong><?php echo htmlspecialchars($order['assigned_vehicle_type']); ?></strong></span>
-</div>
-<?php endif; ?>
-                                    </div>
-                                    
-                                    <?php if ($order['delivery_notes']): ?>
-                                    <div class="mt-3 bg-yellow-100 border border-yellow-300 rounded-lg p-3">
-                                        <div class="flex items-start">
-                                            <i class="fas fa-sticky-note text-yellow-600 mr-2 mt-1"></i>
-                                            <div>
-                                                <span class="font-semibold text-yellow-800">Notes:</span>
-                                                <p class="text-gray-700 text-sm"><?php echo htmlspecialchars($order['delivery_notes']); ?></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Action Buttons -->
-        <div class="mt-4 flex flex-wrap gap-3">
-            <?php if ($canBook): ?>
-                <a href="delivery_booking.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>" 
-                   class="inline-flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
-                    <i class="fas fa-calendar-check mr-2"></i>
-                    Book <?php echo $order['delivery_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?>
-                </a>
-            <?php elseif ($hasBooking && !$isCompleted): ?>
-                <a href="delivery_tracking.php?booking_id=<?php echo $order['booking_id']; ?>" 
-                   class="inline-flex items-center bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
-                    <i class="fas fa-tasks mr-2"></i>
-                    Manage <?php echo $order['delivery_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?>
-                </a>
-            <?php endif; ?>
-            
-            <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>" 
-               class="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
-                <i class="fas fa-list mr-2"></i>
-                View Items (<?php echo $order['total_items']; ?>)
-            </a>
-        </div>
-    </div>
-</div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+            
+            <!-- No Results Message (hidden by default) -->
+            <div id="noResultsMessage" class="hidden bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">No Orders Found</h3>
+                <p class="text-gray-500">No orders match the selected filter.</p>
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Order Details Modal -->
+    <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-t-xl z-10">
+                <div class="flex items-center justify-between text-white">
+                    <h3 class="text-2xl font-bold flex items-center">
+                        <i class="fas fa-info-circle mr-3"></i>
+                        Order Details
+                    </h3>
+                    <button onclick="closeDetailsModal()" class="text-white hover:text-gray-200 transition-colors">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6" id="modalContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule Modal -->
+    <div id="rescheduleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-t-xl">
+                <div class="flex items-center justify-between text-white">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        Reschedule Delivery
+                    </h3>
+                    <button onclick="closeRescheduleModal()" class="text-white hover:text-gray-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="rescheduleForm" class="p-6">
+                <input type="hidden" id="reschedule_delivery_id" name="delivery_id">
+                <input type="hidden" id="reschedule_order_id" name="order_id">
+                
+                <div class="mb-5 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-sm text-blue-900 font-semibold">Order #<span id="modal_order_id"></span></p>
+                    <p class="text-xs text-blue-700 mt-1">Customer: <span id="modal_customer_name"></span></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-calendar text-orange-500 mr-2"></i>New Date
+                    </label>
+                    <input type="date" id="new_delivery_date" name="new_delivery_date" required
+                           min="<?php echo date('Y-m-d'); ?>"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-clock text-orange-500 mr-2"></i>New Time
+                    </label>
+                    <input type="time" id="new_delivery_time" name="new_delivery_time" required
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+                </div>
+                
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-comment-alt text-orange-500 mr-2"></i>Reason (Optional)
+                    </label>
+                    <textarea id="reschedule_reason" name="reschedule_reason" rows="3"
+                              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 resize-none"></textarea>
+                </div>
+                
+                <div id="rescheduleError" class="hidden mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <p class="text-sm text-red-700" id="rescheduleErrorMessage"></p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeRescheduleModal()"
+                            class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 font-semibold">
+                        Confirm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    let currentFilter = 'all';
+    const allOrders = <?php echo json_encode($orders); ?>;
+    
+    function filterOrders(type) {
+        currentFilter = type;
+        const rows = document.querySelectorAll('.order-row');
+        const noResultsMsg = document.getElementById('noResultsMessage');
+        const ordersTable = document.querySelector('.bg-white.rounded-lg.border.border-gray-200.overflow-hidden');
+        let visibleCount = 0;
+        
+        // Update button styles
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active', 'bg-blue-600', 'text-white');
+            btn.classList.add('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+        });
+        
+        const activeBtn = document.getElementById(`filter-${type}`);
+        activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+        activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+        
+        // Filter rows
+        rows.forEach(row => {
+            const deliveryType = row.getAttribute('data-delivery-type');
+            if (type === 'all' || deliveryType === type) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Show/hide no results message
+        if (visibleCount === 0) {
+            ordersTable.classList.add('hidden');
+            noResultsMsg.classList.remove('hidden');
+        } else {
+            ordersTable.classList.remove('hidden');
+            noResultsMsg.classList.add('hidden');
+        }
+        
+        // Update statistics based on filter
+        updateStatistics(type);
+    }
+    
+    function updateStatistics(type) {
+        let filteredOrders = allOrders;
+        if (type !== 'all') {
+            filteredOrders = allOrders.filter(o => o.delivery_type === type);
+        }
+        
+        const total = filteredOrders.length;
+        const completed = filteredOrders.filter(o => ['delivered', 'picked_up'].includes(o.booking_status)).length;
+        const booked = filteredOrders.filter(o => o.booking_id !== null).length;
+        const pending = filteredOrders.filter(o => !['delivered', 'picked_up'].includes(o.booking_status)).length;
+        const overdue = filteredOrders.filter(o => o.delivery_status === 'overdue').length;
+        
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-completed').textContent = completed;
+        document.getElementById('stat-booked').textContent = booked;
+        document.getElementById('stat-pending').textContent = pending;
+        document.getElementById('stat-overdue').textContent = overdue;
+    }
+    
+    function openDetailsModal(order) {
+        const modal = document.getElementById('detailsModal');
+        const content = document.getElementById('modalContent');
+        
+        const hasBooking = order.booking_id !== null;
+        const deliveryTypeLabel = order.delivery_type === 'pickup' 
+            ? '<span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-hand-holding mr-2"></i>Pickup</span>'
+            : '<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-truck mr-2"></i>Delivery</span>';
+        
+        const bookingSection = hasBooking ? `
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-5 mb-4">
+                <h4 class="font-bold text-purple-900 mb-3 flex items-center">
+                    <i class="fas fa-shipping-fast mr-2"></i>Booking Information
+                </h4>
+                <div class="grid grid-cols-2 gap-4">
+                    ${order.tracking_number ? `<div><span class="text-sm text-purple-700">Tracking:</span><p class="font-bold text-purple-900">${order.tracking_number}</p></div>` : ''}
+                    ${order.booking_courier_name ? `<div><span class="text-sm text-purple-700">Courier:</span><p class="font-bold text-purple-900">${order.booking_courier_name}</p></div>` : ''}
+                    ${order.booking_reference ? `<div><span class="text-sm text-purple-700">Reference:</span><p class="font-bold text-purple-900">${order.booking_reference}</p></div>` : ''}
+                    ${order.booking_status ? `<div><span class="text-sm text-purple-700">Status:</span><p class="font-bold text-purple-900 capitalize">${order.booking_status.replace('_', ' ')}</p></div>` : ''}
+                </div>
+            </div>
+        ` : '';
+        
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-5">
+                    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+                        <i class="fas fa-user-circle text-blue-600 mr-2"></i>Customer Information
+                    </h4>
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div><span class="text-gray-600">Name:</span><p class="font-semibold text-gray-900">${order.customer_name}</p></div>
+                        <div><span class="text-gray-600">Mobile:</span><p class="font-semibold text-gray-900">${order.mobile || 'N/A'}</p></div>
+                        <div><span class="text-gray-600">Type:</span><p class="mt-1">${deliveryTypeLabel}</p></div>
+                        <div class="col-span-3"><span class="text-gray-600">Address:</span><p class="font-semibold text-gray-900">${order.address}</p></div>
+                    </div>
+                </div>
+                
+                ${bookingSection}
+                
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-5">
+                    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+                        <i class="fas fa-box text-orange-600 mr-2"></i>Order Details
+                    </h4>
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-blue-600">${order.total_items}</div><div class="text-xs text-gray-600">Items</div></div>
+                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-green-600">${order.total_quantity}</div><div class="text-xs text-gray-600">Quantity</div></div>
+                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-orange-600">${parseFloat(order.total_weight_kg).toFixed(2)} kg</div><div class="text-xs text-gray-600">Weight</div></div>
+                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-orange-600">${parseFloat(order.total_cubic_meters).toFixed(3)} m³</div><div class="text-xs text-gray-600">Volume</div></div>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 border border-green-200 rounded-lg p-5">
+                    <h4 class="font-bold text-gray-900 mb-3">Payment Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span>Subtotal:</span><span class="font-semibold">₱${parseFloat(order.final_total - (order.delivery_fee || 0)).toFixed(2)}</span></div>
+                        <div class="flex justify-between"><span>Delivery Fee:</span><span class="font-semibold text-blue-600">₱${parseFloat(order.delivery_fee || 0).toFixed(2)}</span></div>
+                        <div class="flex justify-between pt-2 border-t border-green-300"><span class="font-bold">Total:</span><span class="text-xl font-bold text-green-600">₱${parseFloat(order.final_total).toFixed(2)}</span></div>
+                    </div>
+                </div>
+                
+                ${order.delivery_notes ? `<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4"><i class="fas fa-sticky-note text-yellow-600 mr-2"></i><span class="font-semibold">Notes:</span> ${order.delivery_notes}</div>` : ''}
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeDetailsModal() {
+        document.getElementById('detailsModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    
+    function openRescheduleModal(deliveryId, orderId, customerName, currentDate, currentTime) {
+        document.getElementById('reschedule_delivery_id').value = deliveryId;
+        document.getElementById('reschedule_order_id').value = orderId;
+        document.getElementById('modal_order_id').textContent = orderId;
+        document.getElementById('modal_customer_name').textContent = customerName;
+        document.getElementById('new_delivery_date').value = currentDate;
+        document.getElementById('new_delivery_time').value = currentTime;
+        document.getElementById('rescheduleModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeRescheduleModal() {
+        document.getElementById('rescheduleModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        document.getElementById('rescheduleForm').reset();
+        document.getElementById('rescheduleError').classList.add('hidden');
+    }
+    
+    // Close modals when clicking outside
+    document.getElementById('detailsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDetailsModal();
+    });
+    
+    document.getElementById('rescheduleModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRescheduleModal();
+    });
+    
+    // Handle reschedule form submission
+    document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rescheduling...';
+        document.getElementById('rescheduleError').classList.add('hidden');
+        
+        fetch('process_reschedule.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const successMsg = document.createElement('div');
+                successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in';
+                successMsg.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-3 text-xl"></i>
+                        <div>
+                            <p class="font-semibold">Reschedule Successful!</p>
+                            <p class="text-sm">Delivery has been rescheduled.</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(successMsg);
+                
+                setTimeout(() => {
+                    closeRescheduleModal();
+                    location.reload();
+                }, 1500);
+            } else {
+                document.getElementById('rescheduleErrorMessage').textContent = data.message || 'Failed to reschedule delivery.';
+                document.getElementById('rescheduleError').classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('rescheduleErrorMessage').textContent = 'An error occurred. Please try again.';
+            document.getElementById('rescheduleError').classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    });
+    </script>
 </body>
 </html>

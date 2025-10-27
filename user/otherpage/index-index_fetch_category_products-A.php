@@ -169,7 +169,7 @@ while ($row = mysqli_fetch_assoc($result)):
             </div>
             
             <!-- View Button -->
-            <form action="product_view" method="GET" class="w-full">
+            <form action="index-product_view-page-4-AA" method="GET" class="w-full">
                 <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                 <button type="submit" class="w-full bg-black text-white py-1.5 px-2 rounded text-xs hover:bg-gray-800 transition-colors duration-300 flex items-center justify-center space-x-1">
                       <i class="fa-solid fa-bag-shopping"></i>

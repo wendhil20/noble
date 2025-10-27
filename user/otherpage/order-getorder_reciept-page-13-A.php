@@ -148,7 +148,7 @@ ob_start();
 
     <!-- Action Buttons -->
     <div class="flex gap-2 pt-4">
-        <a href="order_receipt.php?order_id=<?= $order['id'] ?>" 
+        <a href="checkout-order_receipt-page-12-A.php?order_id=<?= $order['id'] ?>" 
            class="flex-1 bg-orange-600 text-white text-center py-2 rounded-lg hover:bg-orange-700 transition">
             View Full Receipt
         </a>

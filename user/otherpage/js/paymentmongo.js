@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Creating PayMongo session for amount:', amount);
 
             // Create PayMongo session using your working approach
-            const response = await fetch('../paymongo-create-session.php', {
+            const response = await fetch('../checkout-paymongo-create-sessions-page-12-A.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json'

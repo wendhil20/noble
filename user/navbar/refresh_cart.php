@@ -115,11 +115,11 @@ try {
         </div>
 
         <div class="grid grid-cols-2 gap-2">
-            <a href="../otherpage/cart_view.php"
+            <a href="../otherpage/index-cart_view-page-8.php"
                 class="bg-black text-white px-3 py-2  text-xs sm:text-sm  text-center transition">
                 View Cart
             </a>
-            <a href="checkout.php"
+            <a href="index-checkout-page-12.php"
                 class="bg-black text-white px-3 py-2  text-xs sm:text-sm  text-center  transition">
                 Checkout
             </a>

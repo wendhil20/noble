@@ -132,19 +132,19 @@ if (isset($_GET['code'])) {
         // Set remember token cookie
         setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), "/", "", false, true);
         
-        header("Location: otherpage/index.php");
+        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
         exit;
         
     } catch (Exception $e) {
         error_log("Google OAuth callback error: " . $e->getMessage());
         $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage(); // Show specific error
-        header("Location: otherpage/index.php");
+        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
         exit;
     }
     
 } else {
     $_SESSION['login_needed'] = 'Please sign in first.';
-    header("Location: otherpage/index.php");
+    header("Location: otherpage/index-page-1-A-B-C-D-E.php");
     exit;
 }
 ?>

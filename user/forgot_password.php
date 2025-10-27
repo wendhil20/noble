@@ -231,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <!-- Back to Login -->
         <div class="text-center">
-            <a href="otherpage/index.php" class="text-sm text-orange-500 hover:underline">
+            <a href="otherpage/index-page-1-A-B-C-D-E.php" class="text-sm text-orange-500 hover:underline">
                 ← Back to Login
             </a>
         </div>

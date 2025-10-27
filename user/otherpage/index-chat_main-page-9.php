@@ -436,7 +436,7 @@ function getUserOnlineStatus($conn, $userId)
               // Inform parent to close modal
               window.parent.postMessage({
                 action: 'closeModal',
-                redirect: 'index.php'
+                redirect: 'index-page-1-A-B-C-D-E.php'
               }, '*');
 
               // Backup: Close modal directly if accessible
@@ -459,12 +459,12 @@ function getUserOnlineStatus($conn, $userId)
 
               // Then redirect parent page
               setTimeout(() => {
-                window.parent.location.href = 'index.php';
+                window.parent.location.href = 'index-page-1-A-B-C-D-E.php';
               }, 500);
 
             } else {
               // Fallback: Direct redirect if not in iframe
-              window.location.href = 'index.php';
+              window.location.href = 'index-page-1-A-B-C-D-E.php';
             }
           }
 
@@ -889,7 +889,7 @@ function getUserOnlineStatus($conn, $userId)
 
         loadSalesReps() {
           console.log('Loading sales representatives...');
-          fetch('chat_fetch_sales.php', {
+          fetch('chat-chat_fetch_sales-page-9-A.php', {
               credentials: 'include'
             })
             .then(res => {
@@ -939,7 +939,7 @@ function getUserOnlineStatus($conn, $userId)
         },
 
         markMessagesAsRead(salesId) {
-          fetch('chat_mark_read.php', {
+          fetch('chat-chat_mark_read-page-9-A.php', {
               method: 'POST',
               credentials: 'include',
               headers: {
@@ -973,7 +973,7 @@ function getUserOnlineStatus($conn, $userId)
             console.log('No sales rep selected, skipping message fetch');
             return;
           }
-          const url = `chat_getmessage.php?receiver_noble_id=${encodeURIComponent(this.selectedSales.id)}`;
+          const url = `chat-chat_getmessage-page-9-A.php?receiver_noble_id=${encodeURIComponent(this.selectedSales.id)}`;
           console.log('Fetching messages from:', url);
           fetch(url, {
               credentials: 'include'
@@ -1035,7 +1035,7 @@ function getUserOnlineStatus($conn, $userId)
             message: this.newMessage.trim()
           };
           console.log('Sending message:', messageData);
-          fetch('chat_sendmessage.php', {
+          fetch('chat-chat_sendmessage-page-9-A.php', {
               method: 'POST',
               credentials: 'include',
               headers: {

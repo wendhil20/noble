@@ -21,7 +21,7 @@ $department_subroles = [
         'warehouse_receiver'
     ],
     'logistic' => [
-        'warehouse_dispatcher'
+        'dispatcher'
     ]
 ];
 

@@ -314,7 +314,7 @@ function getLatestOrderStatus($conn, $order_id)
                             </div>
                             <h4 class="text-lg  text-gray-900 mb-2">No Orders Found</h4>
                             <p class="text-gray-600 mb-6">You haven't placed any orders yet. Start exploring our products!</p>
-                            <a href="index.php" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors ">
+                            <a href="index-page-1-A-B-C-D-E.php" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors ">
                                 <i class="fas fa-shopping-cart"></i>
                                 Browse Products
                             </a>

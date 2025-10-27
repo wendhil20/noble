@@ -125,7 +125,7 @@ if ($_POST && isset($_POST['add_address'])) {
                             if (document.referrer && document.referrer !== window.location.href) {
                                 window.location.href = document.referrer;
                             } else {
-                                window.location.href = 'checkout.php';
+                                window.location.href = 'index-checkout-page-12.php';
                             }
                         }, 2000);
                     });
@@ -354,7 +354,7 @@ if ($_POST && isset($_POST['add_address'])) {
         <!-- Header -->
         <div class="mb-8 fade-in">
             <div class="flex items-center gap-4 mb-4">
-                <a href="profile.php" class="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors">
+                <a href="index-profilepersonal-page-7.php" class="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -612,7 +612,7 @@ if ($_POST && isset($_POST['add_address'])) {
                                 Add Delivery Address
                             </button>
                             <a
-                                href="profile.php"
+                                href="index-profilepersonal-page-7.php"
                                 class="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 text-center">
                                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -652,7 +652,7 @@ if ($_POST && isset($_POST['add_address'])) {
                     searchIcon.style.display = 'none';
 
                     // Use PHP search proxy instead of direct API calls
-                    const response = await fetch(`update_billing_search.php?q=${encodeURIComponent(query)}&limit=5`);
+                    const response = await fetch(`update-update_billing_search-page-7-A-B.php?q=${encodeURIComponent(query)}&limit=5`);
 
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1089,7 +1089,7 @@ if ($_POST && isset($_POST['add_address'])) {
                 addressField.classList.add('geocode-loading');
 
                 // Use your PHP proxy instead of direct Nominatim call
-                const response = await fetch(`update_billing_proxy.php?lat=${lat}&lon=${lng}`);
+                const response = await fetch(`update-update_billing_proxy-page-7-A-B.php?lat=${lat}&lon=${lng}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);

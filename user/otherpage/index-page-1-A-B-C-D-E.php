@@ -487,7 +487,7 @@ handleQueryError($conn, "New Status Query");
 
     <?php include '../navbar/top.php'; ?>
 
-    <?php include 'flash_notification.php'; ?>
+    <?php include 'index-flash_notification-D.php'; ?>
 
     <?php if (isset($_SESSION['toast'])): ?>
         <div id="toast" class="fixed top-5 right-5 bg-<?= $_SESSION['toast']['type'] === 'error' ? 'red' : 'green' ?>-500 text-white text-lg px-4 py-2 rounded shadow-lg z-50">
@@ -630,7 +630,7 @@ handleQueryError($conn, "New Status Query");
     <section class="bg-black hidden md:block border border-black/20">
         <div class="px-4 sm:px-8 lg:px-9">
             <!-- Clickable Banner Image - Left Aligned -->
-            <a href="shop.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
+            <a href="index-shop-page-2.php" class="block hover:opacity-90 transition-opacity duration-300 w-fit">
                 <img src="../img/exclusive1.png"
                     alt="Exclusive Discounts - Shop Now"
                     class="h-auto object-contain max-h-[30px] sm:max-h-[40px] md:max-h-[50px] lg:max-h-[60px]">
@@ -688,7 +688,7 @@ handleQueryError($conn, "New Status Query");
 
             <!-- Single Image Display -->
             <div class="relative overflow-hidden">
-                <a href="allproduct.php?discount=20" class="relative group flex items-center justify-center">
+                <a href="index-allproduct-page-3.php?discount=20" class="relative group flex items-center justify-center">
                     <img src="../img/sale/c.png" alt="Special Sale" class="max-w-full max-h-[80vh] object-contain">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300 flex items-end justify-center pb-8">
                         <span class="text-white text-4xl font-extrabold tracking-wide">Shop Now!</span>
@@ -868,7 +868,7 @@ handleQueryError($conn, "New Status Query");
                         }
                         ?>
                         <div class="swiper-slide">
-                            <a href="shop?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block h-full">
+                            <a href="index-shop-page-2?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block h-full">
                                 <!-- Card with Unique Rounded Corners -->
                                 <div class="h-full bg-white group-hover:border-neutral-900 transition-all duration-500 overflow-hidden department-card group-hover:shadow-lg">
                                     <!-- Image Container -->
@@ -982,7 +982,7 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
+<section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
 
         <!-- Header with proper alignment -->
         <div class="flex items-center justify-between mb-6 mt-2" data-aos="fade-up">
@@ -994,13 +994,22 @@ handleQueryError($conn, "New Status Query");
                 </h2>
             </div>
 
-            <!-- Right Side: See All Button -->
-            <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
-                See All
-                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                </svg>
-            </a>
+            <!-- Right Side: Compare Button + See All -->
+            <div class="flex items-center gap-3">
+                <!-- Compare Button (Shows when products selected) -->
+                <button id="compareBtn" onclick="goToComparison()" 
+                    class="hidden items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white transition-all duration-300 text-sm font-normal">
+                    <i class="fas fa-balance-scale"></i>
+                    Compare (<span id="compareCount">0</span>)
+                </button>
+                
+                <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
+                    See All
+                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
 
         <!-- Products Layout: Featured Image + Product Grid -->
@@ -1046,95 +1055,111 @@ handleQueryError($conn, "New Status Query");
                             $empty = 5 - $full - $half;
                             ?>
                             <div class="swiper-slide p-1">
-                                <!-- Clickable entire card for both mobile and desktop -->
-                                <a href="product_view?id=<?= (int)$row['id'] ?>"
-                                    class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px]">
+                                <!-- Product Card -->
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px]">
+                                    
+                                    <!-- Compare Checkbox - Top Right -->
+                                    <div class="absolute top-2 right-2 z-20">
+                                        <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
+                                            <input type="checkbox" 
+                                                class="compare-checkbox hidden" 
+                                                data-product-id="<?= (int)$row['id'] ?>"
+                                                onchange="toggleCompare(this, <?= (int)$row['id'] ?>)">
+                                            <i class="fas fa-plus text-black text-xs compare-icon"></i>
+                                            <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
+                                        </label>
+                                    </div>
 
-                                    <div class="absolute top-0 left-0 z-10">
-                                        <div class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 relative">
-                                            <img src="../img/icon/d.png" alt="Icon" class="absolute top-0.5 left-0.5 w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7 object-cover" />
+                                    <!-- Clickable entire card -->
+                                    <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
+                                        class="block h-full">
+
+                                        <div class="absolute top-0 left-0 z-10">
+                                            <div class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 relative">
+                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-0.5 left-0.5 w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7 object-cover" />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Image Container with Overlay -->
-                                    <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                        <!-- Gradient Overlay -->
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+                                        <!-- Image Container with Overlay -->
+                                        <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
+                                            <!-- Gradient Overlay -->
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
-                                        <?php if (!empty($row['main_image'])): ?>
-                                            <img src="../../<?= $row['main_image'] ?>"
-                                                loading="lazy"
-                                                alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
-                                        <?php else: ?>
-                                            <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                                <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                </svg>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <!-- Content Section -->
-                                    <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[90px] sm:h-[110px] lg:h-[120px]">
-
-                                        <!-- Product Info -->
-                                        <div class="space-y-0.5 sm:space-y-1">
-                                            <!-- Title -->
-                                            <div class="relative w-full max-w-xs">
-                                                <h3 class="text-[10px] sm:text-[11px] font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
-                                                    <?= htmlspecialchars($row['product_name']) ?>
-                                                </h3>
-                                                <!-- Fade overlay - desktop only -->
-                                                <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
-                                            </div>
-
-                                            <!-- Rating Section -->
-                                            <div class="flex items-center justify-between">
-                                                <?php if ($total_raters > 0): ?>
-                                                    <div class="flex items-center space-x-0.5">
-                                                        <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
-                                                            <?php
-                                                            for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                            if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                            for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
-                                                            ?>
-                                                        </div>
-                                                        <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
-                                                    </div>
-                                                    <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
-                                                <?php else: ?>
-                                                    <div class="flex items-center space-x-0.5">
-                                                        <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
-                                                            <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                                                        </div>
-                                                        <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-                                            <!-- Description -->
-                                            <?php if (!empty($row['description'])): ?>
-                                                <p class="text-[8px] sm:text-[9px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
-                                                    <?= htmlspecialchars($row['description']) ?>
-                                                </p>
+                                            <?php if (!empty($row['main_image'])): ?>
+                                                <img src="../../<?= $row['main_image'] ?>"
+                                                    loading="lazy"
+                                                    alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                                    class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
                                             <?php else: ?>
-                                                <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
+                                                <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
 
-                                        <!-- Action Button - Desktop Only -->
-                                        <div class="mt-1.5 hidden lg:flex justify-start">
-                                            <form action="product_view" method="GET" class="pointer-events-auto">
-                                                <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                                <button type="submit"
-                                                    class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[10px]">
-                                                    <i class="fa-solid fa-bag-shopping text-[10px]"></i>
-                                                    <span>View</span>
-                                                </button>
-                                            </form>
+                                        <!-- Content Section -->
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[90px] sm:h-[110px] lg:h-[120px]">
+
+                                            <!-- Product Info -->
+                                            <div class="space-y-0.5 sm:space-y-1">
+                                                <!-- Title -->
+                                                <div class="relative w-full max-w-xs">
+                                                    <h3 class="text-[10px] sm:text-[11px] font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                        <?= htmlspecialchars($row['product_name']) ?>
+                                                    </h3>
+                                                    <!-- Fade overlay - desktop only -->
+                                                    <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
+                                                </div>
+
+                                                <!-- Rating Section -->
+                                                <div class="flex items-center justify-between">
+                                                    <?php if ($total_raters > 0): ?>
+                                                        <div class="flex items-center space-x-0.5">
+                                                            <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
+                                                                <?php
+                                                                for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                                if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                                for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                                ?>
+                                                            </div>
+                                                            <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                                        </div>
+                                                        <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
+                                                    <?php else: ?>
+                                                        <div class="flex items-center space-x-0.5">
+                                                            <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
+                                                                <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                            </div>
+                                                            <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <!-- Description -->
+                                                <?php if (!empty($row['description'])): ?>
+                                                    <p class="text-[8px] sm:text-[9px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
+                                                        <?= htmlspecialchars($row['description']) ?>
+                                                    </p>
+                                                <?php else: ?>
+                                                    <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Action Button - Desktop Only -->
+                                            <div class="mt-1.5 hidden lg:flex justify-start">
+                                                <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
+                                                    <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
+                                                    <button type="submit"
+                                                        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[10px]">
+                                                        <i class="fa-solid fa-bag-shopping text-[10px]"></i>
+                                                        <span>View</span>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
-                                    </div>
-                                </a>
+                                    </a>
+                                </div>
                             </div>
                         <?php endwhile; ?>
                     </div>
@@ -1143,6 +1168,36 @@ handleQueryError($conn, "New Status Query");
         </div>
 
         <style>
+            /* Compare checkbox styles */
+            .compare-checkbox:checked ~ .compare-icon {
+                display: none !important;
+            }
+            
+            .compare-checkbox:checked ~ .compare-icon-checked {
+                display: inline-block !important;
+            }
+            
+            .compare-icon-checked {
+                display: none;
+            }
+            
+            .compare-checkbox:checked ~ .compare-icon,
+            .compare-checkbox:checked ~ .compare-icon-checked {
+                animation: scaleIn 0.3s ease;
+            }
+            
+            @keyframes scaleIn {
+                0% {
+                    transform: scale(0);
+                }
+                50% {
+                    transform: scale(1.2);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+
             /* From Uiverse.io by vinodjangid07 */
             .Btn {
                 display: flex;
@@ -1206,6 +1261,118 @@ handleQueryError($conn, "New Status Query");
                 transform: translate(2px, 2px);
             }
         </style>
+
+        <script>
+            // Store selected products for comparison
+            let compareProducts = JSON.parse(localStorage.getItem('compareProducts') || '[]');
+
+            // Update compare button visibility and count
+            function updateCompareButton() {
+                const compareBtn = document.getElementById('compareBtn');
+                const compareCount = document.getElementById('compareCount');
+                
+                if (compareProducts.length > 0) {
+                    compareBtn.classList.remove('hidden');
+                    compareBtn.classList.add('flex');
+                    compareCount.textContent = compareProducts.length;
+                } else {
+                    compareBtn.classList.add('hidden');
+                    compareBtn.classList.remove('flex');
+                }
+            }
+
+            // Toggle product in comparison list
+            function toggleCompare(checkbox, productId) {
+                // Prevent click from propagating to the link
+                event.stopPropagation();
+                
+                if (checkbox.checked) {
+                    // Add to comparison (NO LIMIT - compare unlimited products)
+                    if (!compareProducts.includes(productId)) {
+                        compareProducts.push(productId);
+                        showToast('Product added to comparison');
+                    }
+                } else {
+                    // Remove from comparison
+                    compareProducts = compareProducts.filter(id => id !== productId);
+                    showToast('Product removed from comparison');
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('compareProducts', JSON.stringify(compareProducts));
+                updateCompareButton();
+            }
+
+            // Navigate to comparison page
+            function goToComparison() {
+                if (compareProducts.length < 2) {
+                    alert('Please select at least 2 products to compare.');
+                    return;
+                }
+                
+                window.location.href = 'index-shopcompare-C.php?products=' + compareProducts.join(',');
+            }
+
+            // Show toast notification
+            function showToast(message) {
+                // Create toast element
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
+                toast.textContent = message;
+                
+                document.body.appendChild(toast);
+                
+                // Remove after 2 seconds
+                setTimeout(() => {
+                    toast.style.animation = 'slide-down 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 2000);
+            }
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Restore checked state from localStorage
+                document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
+                    const productId = parseInt(checkbox.dataset.productId);
+                    if (compareProducts.includes(productId)) {
+                        checkbox.checked = true;
+                    }
+                });
+                
+                updateCompareButton();
+            });
+
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slide-up {
+                    from {
+                        transform: translateY(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes slide-down {
+                    from {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateY(100%);
+                        opacity: 0;
+                    }
+                }
+                
+                .animate-slide-up {
+                    animation: slide-up 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+        </script>
     </section>
 
     <section class="py-7 px-4 sm:px-6 lg:px-8">
@@ -1405,7 +1572,7 @@ handleQueryError($conn, "New Status Query");
                             </p>
                             <!-- CTA Button -->
                             <div class="pt-1 sm:pt-2 md:pt-4">
-                                <a href="bestseller-detail.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                                <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
                                     class="animated-learn-more inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base transition-all duration-300 group relative">
                                     <span class="relative overflow-hidden">
                                         <span class="block transition-transform duration-300 group-hover:-translate-y-full">Learn More</span>
@@ -1698,7 +1865,7 @@ handleQueryError($conn, "New Status Query");
                             $empty = 5 - $full - $half;
                             ?>
                             <div class="swiper-slide p-1">
-                                <a href="product_view?id=<?= (int)$row['id'] ?>"
+                                <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                                     class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px]">
 
                                     <div class="absolute top-0 left-0 z-10">
@@ -1766,7 +1933,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <div class="mt-1.5 hidden lg:flex justify-start">
-                                            <form action="product_view" method="GET" class="pointer-events-auto">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                                 <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                                 <button type="submit"
                                                     class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[10px]">
@@ -1822,7 +1989,7 @@ handleQueryError($conn, "New Status Query");
                     ?>
                     <div class="swiper-slide p-1">
                         <!-- Clickable entire card for both mobile and desktop -->
-                        <a href="product_view?id=<?= (int)$row['id'] ?>"
+                        <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                             class="block relative rounded overflow-hidden group hover:shadow-2xl hover:scale-100 transition-all duration-500 ease-out h-[280px] sm:h-[340px] lg:h-[450px]">
 
                             <div class="absolute top-0 left-0 z-10">
@@ -1899,7 +2066,7 @@ handleQueryError($conn, "New Status Query");
 
                                 <!-- Action Button - Desktop Only -->
                                 <div class="mt-3 hidden lg:flex justify-start">
-                                    <form action="product_view" method="GET" class="pointer-events-auto">
+                                    <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                         <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                         <button type="submit"
                                             class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
@@ -2060,7 +2227,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <!-- View Button -->
-                                        <form action="product_view" method="GET">
+                                        <form action="index-product_view-page-4-AA" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -2086,7 +2253,7 @@ handleQueryError($conn, "New Status Query");
 
                                         <!-- Buttons -->
                                         <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
                                                     <i class="fa-solid fa-bag-shopping"></i>
@@ -2362,7 +2529,7 @@ handleQueryError($conn, "New Status Query");
         document.getElementById('sidebarContent').scrollTop = 0;
         updateScrollButtons();
 
-        fetch('index_fetch_category_products.php?category=' + category)
+        fetch('index-index_fetch_category_products-A.php?category=' + category)
             .then(response => response.text())
             .then(data => {
                 document.getElementById('sidebarContent').innerHTML = data;
@@ -2510,7 +2677,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <!-- View Button -->
-                                        <form action="product_view" method="GET">
+                                        <form action="index-product_view-page-4-AA" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -2536,7 +2703,7 @@ handleQueryError($conn, "New Status Query");
 
                                         <!-- Buttons -->
                                         <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
                                                     <i class="fa-solid fa-bag-shopping"></i>
@@ -2771,7 +2938,7 @@ handleQueryError($conn, "New Status Query");
                                         </div>
 
                                         <!-- View Button -->
-                                        <form action="product_view" method="GET">
+                                        <form action="index-product_view-page-4-AA" method="GET">
                                             <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                             <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -2797,7 +2964,7 @@ handleQueryError($conn, "New Status Query");
 
                                         <!-- Buttons -->
                                         <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="product_view" method="GET" class="w-full flex justify-center">
+                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
                                                 <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
                                                 <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
                                                     <i class="fa-solid fa-bag-shopping"></i>
@@ -3493,7 +3660,7 @@ handleQueryError($conn, "New Status Query");
 
             async function loadReviews() {
                 try {
-                    const res = await fetch("profilefetch_reviews.php");
+                    const res = await fetch("index-profilefetch_reviews-E.php");
                     const reviews = await res.json();
 
                     reviewWrapper.innerHTML = "";

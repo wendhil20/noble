@@ -299,7 +299,7 @@ $is_verified = $user['is_verified'] ?? null;
                             <!-- Feedback Form -->
                             <div class="mt-4 sm:mt-6 p-3 sm:p-4 border rounded-lg bg-gray-50">
                                 <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3">Comment on this Website</h3>
-                                <form action="profilerate.php" method="POST" class="space-y-3">
+                                <form action="profile-profilerate-page-7-A.php" method="POST" class="space-y-3">
                                     <input type="hidden" name="user_id" value="<?= $user_id; ?>">
 
                                     <!-- Rating -->
@@ -376,14 +376,14 @@ $is_verified = $user['is_verified'] ?? null;
                             </button>
                         </div>
 
-                        <button onclick="window.location.href='update_billing_add.php'" class="w-full px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
+                        <button onclick="window.location.href='profile-update_billing_add-page-7-A.php'" class="w-full px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
                             <i class="fas fa-plus mr-2"></i>Add New Address
                         </button>
                     </div>
 
                     <!-- Order History Button -->
                     <div>
-                        <a href="order_history.php" class="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base font-medium">
+                        <a href="index-order_history-page-13.php" class="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base font-medium">
                             <i class="fas fa-history mr-2"></i>View Order History
                         </a>
                     </div>
@@ -411,7 +411,7 @@ $is_verified = $user['is_verified'] ?? null;
 
                 <!-- Add New Address Button -->
                 <div class="mb-6">
-                    <button onclick="window.location.href='update_billing_add.php'" class="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-medium">
+                    <button onclick="window.location.href='profile-update_billing_add-page-7-A.php'" class="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-medium">
                         <i class="fas fa-plus"></i>
                         Add New Address
                     </button>
@@ -426,7 +426,7 @@ $is_verified = $user['is_verified'] ?? null;
                             </div>
                             <h4 class="text-lg font-semibold text-gray-900 mb-2">No Addresses Saved</h4>
                             <p class="text-gray-600 mb-6">Add your first delivery address for faster checkout</p>
-                            <button onclick="window.location.href='update_billing_add.php'" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            <button onclick="window.location.href='profile-update_billing_add-page-7-A.php'" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                 <i class="fas fa-plus"></i>
                                 Add Address
                             </button>
@@ -509,7 +509,7 @@ $is_verified = $user['is_verified'] ?? null;
     <script>
         function editAddress(addressId) {
             // Redirect to edit page with address ID
-            window.location.href = `update_billing_add.php?edit=${addressId}`;
+            window.location.href = `profile-update_billing_add-page-7-A.php?edit=${addressId}`;
         }
 
         function deleteAddress(addressId, fullName) {
@@ -522,7 +522,7 @@ $is_verified = $user['is_verified'] ?? null;
                 button.disabled = true;
 
                 // Send delete request
-                fetch('delete_billing_address.php', {
+                fetch('profile-delete_billing_address-page-7-A.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

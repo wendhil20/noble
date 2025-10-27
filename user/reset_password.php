@@ -137,7 +137,7 @@ $show_debug = false; // Set to false in production
                     <div>
                         <?= htmlspecialchars($message) ?>
                         <div class="mt-3">
-                            <a href="otherpage/index.php" class="text-sm text-green-600 underline font-semibold">Go to Login →</a>
+                            <a href="otherpage/index-page-1-A-B-C-D-E.php" class="text-sm text-green-600 underline font-semibold">Go to Login →</a>
                         </div>
                     </div>
                 </div>
@@ -206,7 +206,7 @@ $show_debug = false; // Set to false in production
 
         <!-- Back to Login -->
         <div class="text-center">
-            <a href="otherpage/index.php" class="text-sm text-orange-500 hover:underline">
+            <a href="otherpage/index-page-1-A-B-C-D-E.php" class="text-sm text-orange-500 hover:underline">
                 ← Back to Login
             </a>
         </div>

@@ -77,24 +77,24 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
 
     <?php include '../navbar/top.php'; ?>
 
-   
 
-<!-- Hero -->
-<section class="relative min-h-[400px] lg:h-[50vh] bg-black overflow-hidden">
-    <!-- Background Image -->
-    <img src="<?= htmlspecialchars($bestseller['image']) ?>"
-        alt="<?= htmlspecialchars($bestseller['title']) ?>"
-        class="absolute inset-0 w-full h-full object-contain opacity-50">
-    
-    <!-- Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30"></div>
 
-    <?php
-    // Fetch product data ONCE before using it
-    $product = null;
-    if (!empty($bestseller['product_id'])) {
-        $product_id = (int)$bestseller['product_id'];
-        $product_query = $conn->query("
+    <!-- Hero -->
+    <section class="relative min-h-[400px] lg:h-[50vh] bg-black overflow-hidden">
+        <!-- Background Image -->
+        <img src="<?= htmlspecialchars($bestseller['image']) ?>"
+            alt="<?= htmlspecialchars($bestseller['title']) ?>"
+            class="absolute inset-0 w-full h-full object-contain opacity-50">
+
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30"></div>
+
+        <?php
+        // Fetch product data ONCE before using it
+        $product = null;
+        if (!empty($bestseller['product_id'])) {
+            $product_id = (int)$bestseller['product_id'];
+            $product_query = $conn->query("
             SELECT 
                 pv.*,
                 pt.type_name,
@@ -110,67 +110,67 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
             LIMIT 1
         ");
 
-        if ($product_query && $product_query->num_rows > 0) {
-            $product = $product_query->fetch_assoc();
+            if ($product_query && $product_query->num_rows > 0) {
+                $product = $product_query->fetch_assoc();
+            }
         }
-    }
-    ?>
+        ?>
 
-    <!-- Content Container -->
-    <div class="relative h-full flex flex-col">
-        <div class="flex-1 flex items-center lg:items-end">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:pb-12">
-                
-                <!-- Title and Description -->
-                <div class="max-w-4xl mx-auto text-center lg:text-left">
-                    <!-- Bestseller Badge -->
-                    <div class="flex justify-center lg:justify-start mb-3 sm:mb-4">
-                        <span class="font-roboto inline-flex items-center gap-2 px-4 py-2 bg-red-500/90 backdrop-blur-sm text-white text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-full">
-                   <i class="fa-solid fa-bag-shopping"></i>
-                            Bestseller
-                        </span>
-                    </div>
+        <!-- Content Container -->
+        <div class="relative h-full flex flex-col">
+            <div class="flex-1 flex items-center lg:items-end">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:pb-12">
 
-                    <!-- Title -->
-                    <h1 class="font-roboto text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-white leading-tight mb-3 sm:mb-4 lg:mb-5">
-                        <?= htmlspecialchars($bestseller['title']) ?>
-                    </h1>
+                    <!-- Title and Description -->
+                    <div class="max-w-4xl mx-auto text-center lg:text-left">
+                        <!-- Bestseller Badge -->
+                        <div class="flex justify-center lg:justify-start mb-3 sm:mb-4">
+                            <span class="font-roboto inline-flex items-center gap-2 px-4 py-2 bg-red-500/90 backdrop-blur-sm text-white text-xs sm:text-sm font-semibold tracking-wider uppercase rounded-full">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                                Bestseller
+                            </span>
+                        </div>
 
-                    <!-- Description -->
-                    <p class="font-roboto text-sm sm:text-base lg:text-lg text-gray-200 leading-relaxed max-w-3xl mx-auto lg:mx-0 mb-6 lg:mb-8">
-                        <?= htmlspecialchars($bestseller['description']) ?>
-                    </p>
+                        <!-- Title -->
+                        <h1 class="font-roboto text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-white leading-tight mb-3 sm:mb-4 lg:mb-5">
+                            <?= htmlspecialchars($bestseller['title']) ?>
+                        </h1>
 
-                    <!-- View Button - Always show -->
-                    <div class="flex justify-center lg:justify-start">
-                        <?php if ($product): ?>
-                            <form action="product_view" method="GET" class="w-full sm:w-auto max-w-md">
-                                <input type="hidden" name="id" value="<?= (int)$product['product_id'] ?>">
-                                <button type="submit" 
-                                    class="w-full text-white px-8 py-3.5 lg:py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 text-sm sm:text-base shadow-lg hover:shadow-xl hover:scale-105 group">
-                           <i class="fa-solid fa-bag-shopping"></i>
-                                    View Product
-                                    <svg class="w-4 h-4 lg:w-5 lg:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        <!-- Description -->
+                        <p class="font-roboto text-sm sm:text-base lg:text-lg text-gray-200 leading-relaxed max-w-3xl mx-auto lg:mx-0 mb-6 lg:mb-8">
+                            <?= htmlspecialchars($bestseller['description']) ?>
+                        </p>
+
+                        <!-- View Button - Always show -->
+                        <div class="flex justify-center lg:justify-start">
+                            <?php if ($product): ?>
+                                <form action="product_view" method="GET" class="w-full sm:w-auto max-w-md">
+                                    <input type="hidden" name="id" value="<?= (int)$product['product_id'] ?>">
+                                    <button type="submit"
+                                        class="w-full text-white px-8 py-3.5 lg:py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 text-sm sm:text-base shadow-lg hover:shadow-xl hover:scale-105 group">
+                                        <i class="fa-solid fa-bag-shopping"></i>
+                                        View Product
+                                        <svg class="w-4 h-4 lg:w-5 lg:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <!-- Fallback button if no product -->
+                                <button class="w-full sm:w-auto bg-gray-600 text-white px-8 py-3.5 lg:py-4 rounded-xl font-semibold cursor-not-allowed opacity-50 flex items-center justify-center gap-3 text-sm sm:text-base">
+                                    <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
+                                    Product Not Available
                                 </button>
-                            </form>
-                        <?php else: ?>
-                            <!-- Fallback button if no product -->
-                            <button class="w-full sm:w-auto bg-gray-600 text-white px-8 py-3.5 lg:py-4 rounded-xl font-semibold cursor-not-allowed opacity-50 flex items-center justify-center gap-3 text-sm sm:text-base">
-                                <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Product Not Available
-                            </button>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
 
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
 
     <!-- Content with Sidebar -->
@@ -193,37 +193,37 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
                                         </h2>
                                     <?php endif; ?>
 
-                               <?php if ($section['content']): ?>
-    <div class="text-gray-700 leading-relaxed space-y-3">
-        <div id="section-content" 
-             class="overflow-hidden relative" 
-             style="max-height: 120px;">
-            <?= nl2br(htmlspecialchars($section['content'])) ?>
-        </div>
+                                    <?php if ($section['content']): ?>
+                                        <div class="text-gray-700 leading-relaxed space-y-3">
+                                            <div id="section-content"
+                                                class="overflow-hidden relative"
+                                                style="max-height: 120px;">
+                                                <?= nl2br(htmlspecialchars($section['content'])) ?>
+                                            </div>
 
-        <button id="toggle-content" 
-                class="text-blue-500 font-semibold hover:underline mt-2">
-            See more
-        </button>
-    </div>
+                                            <button id="toggle-content"
+                                                class="text-blue-500 font-semibold hover:underline mt-2">
+                                                See more
+                                            </button>
+                                        </div>
 
-    <script>
-        const content = document.getElementById("section-content");
-        const toggleBtn = document.getElementById("toggle-content");
-        let expanded = false;
+                                        <script>
+                                            const content = document.getElementById("section-content");
+                                            const toggleBtn = document.getElementById("toggle-content");
+                                            let expanded = false;
 
-        toggleBtn.addEventListener("click", () => {
-            if (!expanded) {
-                content.style.maxHeight = "none";  // expand
-                toggleBtn.textContent = "See less";
-            } else {
-                content.style.maxHeight = "120px"; // collapse
-                toggleBtn.textContent = "See more";
-            }
-            expanded = !expanded;
-        });
-    </script>
-<?php endif; ?>
+                                            toggleBtn.addEventListener("click", () => {
+                                                if (!expanded) {
+                                                    content.style.maxHeight = "none"; // expand
+                                                    toggleBtn.textContent = "See less";
+                                                } else {
+                                                    content.style.maxHeight = "120px"; // collapse
+                                                    toggleBtn.textContent = "See more";
+                                                }
+                                                expanded = !expanded;
+                                            });
+                                        </script>
+                                    <?php endif; ?>
 
                                 </div>
                                 <!-- Right: Images Sidebar (1 column) -->
@@ -258,7 +258,7 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
             <?php endif; ?>
         </div>
     </section>
- <section class="py-8 bg-white overflow-hidden">
+    <section class="py-8 bg-white overflow-hidden">
         <?php
         // Fetch categories with subcategory count
         $fetchCategoriesQuery = "SELECT c.id, c.name, c.image_path, COUNT(ps.id) as subcategory_count 

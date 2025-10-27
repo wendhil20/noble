@@ -493,7 +493,7 @@ $onsale_result = $conn->query($onsale_query);
                 </div>
             `;
 
-            fetch(`allproduct_get.php?category_id=${categoryId}`)
+            fetch(`allproduct-allproduct_get-page-3-A.php?category_id=${categoryId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.subcategories.length > 0) {
@@ -505,7 +505,7 @@ $onsale_result = $conn->query($onsale_query);
 
                             // ✅ IMPORTANT: Add &sale=1 parameter here for SALE items
                             html += `
-                                <a href="allproductsub_variant.php?subcategory_id=${sub.id}&sale=1" 
+                                <a href="allproduct-allproductsub_variant-page-3-A.php?subcategory_id=${sub.id}&sale=1" 
                                    class="subcategory-card bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-black hover:shadow-xl cursor-pointer group">
                                     <div class="aspect-square overflow-hidden bg-gray-50 relative">
                                         ${imagePath 

@@ -66,11 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['register_error'] = "Something went wrong. Try again.";
         }
 
-        header("Location: otherpage/index.php");
+        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
         exit();
     } else {
         $_SESSION['register_error'] = implode("<br>", $errors);
-        header("Location: otherpage/index.php");
+        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
         exit();
     }
 }

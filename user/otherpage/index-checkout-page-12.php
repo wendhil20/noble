@@ -7,77 +7,58 @@ include '../../connection/connect.php';
 // Handle cancelled PayMongo payment
 if (isset($_GET['payment_cancelled']) && isset($_GET['order_id'])) {
     $cancelled_order_id = intval($_GET['order_id']);
-
-    // Delete the pending order
     $conn->query("DELETE FROM order_items WHERE order_id = $cancelled_order_id");
     $conn->query("DELETE FROM orders WHERE id = $cancelled_order_id");
-
     $error = "Payment was cancelled. Your cart items have been restored. Please try again.";
 }
 
 $tables = ['products', 'orders', 'order_items'];
-
 foreach ($tables as $table) {
-    // Get the current highest ID that exists
     $result = $conn->query("SELECT MAX(id) AS max_id FROM $table");
     $row = $result->fetch_assoc();
     $max_id = (int)$row['max_id'];
-
-    // Reset AUTO_INCREMENT to max_id + 1
     $next_id = $max_id > 0 ? $max_id + 1 : 1;
     $conn->query("ALTER TABLE $table AUTO_INCREMENT = $next_id");
 }
 
-// ✅ Restore session from remember_token (email or mobile-based or Google)
+// Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
-
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $res = $stmt->get_result();
-
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-
-        // 🔐 Store essential user session info
         $_SESSION['user_id']    = $user['id'];
         $_SESSION['user_name']  = $user['name'];
         $_SESSION['user_email'] = $user['email'] ?? '';
         $_SESSION['user_mobile'] = $user['mobile'] ?? '';
-
-        // 👤 Check if it's a Google account (optional)
         if (!empty($user['google_id'])) {
             $_SESSION['google_logged_in'] = true;
             $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
         }
     }
-
     $stmt->close();
 }
 
-// ✅ Final session check
 if (!isset($_SESSION['user_id'])) {
-    // Not logged in — redirect to login or Google auth
-    header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
+    header('Location: ../google-callback.php');
     exit;
 }
 
-// PayPal configuration for sandbox
+// PayPal configuration
 $paypal_config = [
-    'mode' => 'sandbox', // Change to 'live' for production
+    'mode' => 'sandbox',
     'client_id' => 'AT1LmhSbRH3yOGHNRFYZb_WhRkFIUlsdUEIQcNNr_0BXnb6LapA61CTycE7xq0c5W6XrHMpetIfpP-Kd',
     'client_secret' => 'EHkB3XnpMB-mjaw8VeOmWR9dmDoDoIZwLwBoEvWdabiGfgd2kTb6VYfOq4WvuJVEUfVaOmm3rBMfS-QT',
     'currency' => 'PHP'
 ];
 
-
-
 $userName = $_SESSION['user_name'] ?? '';
 $userEmail = '';
-$userMobile = '';  // ✅ Added mobile variable
+$userMobile = '';
 
-// Fetch the correct email and mobile from database
 if (isset($_SESSION['user_id'])) {
     $user_id_temp = $_SESSION['user_id'];
     $stmt = $conn->prepare("SELECT email, mobile FROM users WHERE id = ?");
@@ -87,7 +68,7 @@ if (isset($_SESSION['user_id'])) {
     if ($result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $userEmail = $user_data['email'];
-        $userMobile = $user_data['mobile'];  // ✅ Get mobile from database
+        $userMobile = $user_data['mobile'];
     }
     $stmt->close();
 }
@@ -98,18 +79,14 @@ $total_price = 0;
 $error = null;
 $order_success = false;
 
-// ✅ Fetch ALL couriers and their vehicles
+// Fetch transportify vehicles
 $transportify_vehicles = [];
 $couriers_list = [];
-
-// Get all vehicles grouped by courier
 $stmt = $conn->prepare("SELECT * FROM transportify_vehicle_list ORDER BY courier_name ASC, base_fare ASC");
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $transportify_vehicles[] = $row;
-
-    // Group vehicles by courier for easy access
     $courier_name = $row['courier_name'];
     if (!isset($couriers_list[$courier_name])) {
         $couriers_list[$courier_name] = [];
@@ -117,11 +94,9 @@ while ($row = $result->fetch_assoc()) {
     $couriers_list[$courier_name][] = $row;
 }
 $stmt->close();
-
-// Get unique courier names for dropdown
 $unique_couriers = array_keys($couriers_list);
 
-// ✅ Fetch delivery settings (keep for store location)
+// Fetch delivery settings
 $delivery_settings = null;
 $stmt = $conn->prepare("SELECT * FROM delivery_settings ORDER BY created_at DESC LIMIT 1");
 $stmt->execute();
@@ -131,7 +106,7 @@ if ($result->num_rows > 0) {
 }
 $stmt->close();
 
-// ✅ Fetch billing addresses for the user
+// Fetch billing addresses
 $billing_addresses = [];
 $has_billing_addresses = false;
 if ($user_id) {
@@ -146,7 +121,7 @@ if ($user_id) {
     $stmt->close();
 }
 
-// ✅ Fetch active QR code payment methods
+// Fetch QR payment methods
 $qr_payment_methods = [];
 $stmt = $conn->prepare("SELECT * FROM payment_qr_codes WHERE is_active = 1 ORDER BY display_order ASC, created_at DESC");
 $stmt->execute();
@@ -156,26 +131,20 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Fetch cart items
 if ($user_id) {
-    // ✅ Fetch cart items with dimensions and weight for vehicle assignment
     $stmt = $conn->prepare("
-    SELECT uci.*, 
-           COALESCE(pv.origin, '') as origin,
-           pv.width,
-           pv.height,
-           pv.length,
-           pv.dimension_unit,
-           pv.weight,
-           pv.weight_unit,
-           pv.lead_count,
-           pv.lead_interval,
-           pv.lead_gap,
-           p.product_name
-    FROM user_cart_items uci 
-    LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
-    LEFT JOIN products p ON uci.product_id = p.id
-    WHERE uci.user_id = ?
-");
+        SELECT uci.*, 
+               COALESCE(pv.origin, '') as origin,
+               pv.width, pv.height, pv.length, pv.dimension_unit,
+               pv.weight, pv.weight_unit,
+               pv.lead_count, pv.lead_interval, pv.lead_gap,
+               p.product_name
+        FROM user_cart_items uci 
+        LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
+        LEFT JOIN products p ON uci.product_id = p.id
+        WHERE uci.user_id = ?
+    ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -188,27 +157,100 @@ if ($user_id) {
 
 function generateReferenceNumber()
 {
-    return 'NH' . mt_rand(9800000, 9899999); // Customize range if needed
+    return 'NH' . mt_rand(9800000, 9899999);
 }
 
-/**
- * Calculate delivery date range based on lead time settings
- * @param int $leadCount - Number of intervals
- * @param string $leadInterval - Type of interval (day/week/month/year)
- * @param int $leadGap - Additional days gap
- * @return array|null ['start_date' => DateTime, 'end_date' => DateTime, 'display' => string]
- */
+// ============================================
+// ✅ TIERED PRICING FUNCTION
+// ============================================
+function getCartTieredDiscount($conn, $cart_items)
+{
+    $result = [
+        'has_discount' => false,
+        'discount_percent' => 0,
+        'discount_amount' => 0,
+        'free_shipping' => false,
+        'tier_details' => []
+    ];
+
+    $product_totals = [];
+    foreach ($cart_items as $item) {
+        $product_id = $item['product_id'];
+        $item_total = $item['price'] * $item['quantity'];
+
+        if (!isset($product_totals[$product_id])) {
+            $product_totals[$product_id] = [
+                'total' => 0,
+                'name' => $item['product_name']
+            ];
+        }
+        $product_totals[$product_id]['total'] += $item_total;
+    }
+
+    foreach ($product_totals as $product_id => $data) {
+        $product_total = $data['total'];
+
+        $stmt = $conn->prepare("
+            SELECT * FROM product_tiers 
+            WHERE product_id = ? AND min_amount <= ?
+            ORDER BY min_amount DESC 
+            LIMIT 1
+        ");
+
+        $stmt->bind_param("id", $product_id, $product_total);
+        $stmt->execute();
+        $tier_result = $stmt->get_result();
+
+        if ($tier_result->num_rows > 0) {
+            $tier = $tier_result->fetch_assoc();
+            $discount_percent = floatval($tier['discount_percent']);
+
+            if ($discount_percent > 0) {
+                $discount_amt = $product_total * ($discount_percent / 100);
+
+                $result['has_discount'] = true;
+                $result['discount_amount'] += $discount_amt;
+
+                if ($discount_percent > $result['discount_percent']) {
+                    $result['discount_percent'] = $discount_percent;
+                }
+
+                if ($tier['free_shipping'] == 1) {
+                    $result['free_shipping'] = true;
+                }
+
+                $result['tier_details'][] = [
+                    'product_name' => $data['name'],
+                    'product_total' => $product_total,
+                    'discount_percent' => $discount_percent,
+                    'discount_amount' => $discount_amt,
+                    'min_amount' => $tier['min_amount'],
+                    'free_shipping' => $tier['free_shipping']
+                ];
+            }
+        }
+        $stmt->close();
+    }
+
+    return $result;
+}
+
+// ============================================
+// ✅ CALCULATE TIERED DISCOUNT
+// ============================================
+$tiered_discount = getCartTieredDiscount($conn, $cart_items);
+$items_subtotal = $total_price;
+$discount_amount = $tiered_discount['discount_amount'];
+$subtotal_after_discount = $items_subtotal - $discount_amount;
+
 function calculateLeadTimeRange($leadCount, $leadInterval, $leadGap)
 {
     if (empty($leadCount) || empty($leadInterval)) {
         return null;
     }
-
     $today = new DateTime();
     $startDate = clone $today;
     $endDate = clone $today;
-
-    // Calculate start date (first delivery)
     switch ($leadInterval) {
         case 'day':
             $startDate->modify("+{$leadCount} days");
@@ -224,13 +266,10 @@ function calculateLeadTimeRange($leadCount, $leadInterval, $leadGap)
             $startDate->modify("+{$leadCount} years");
             break;
     }
-
-    // Calculate end date (start date + gap)
     $endDate = clone $startDate;
     if ($leadGap > 0) {
         $endDate->modify("+{$leadGap} days");
     }
-
     return [
         'start_date' => $startDate,
         'end_date' => $endDate,
@@ -238,57 +277,29 @@ function calculateLeadTimeRange($leadCount, $leadInterval, $leadGap)
     ];
 }
 
-
-
-/**
- * Calculate cubic meters from dimensions
- */
 function calculateCubicMeters($width, $height, $length, $unit, $quantity = 1)
 {
-    // Convert all to meters
-    $meters = [
-        'cm' => 0.01,
-        'm' => 1,
-        'mm' => 0.001,
-        'in' => 0.0254,
-        'ft' => 0.3048
-    ];
-
-    $multiplier = $meters[strtolower($unit)] ?? 0.01; // Default cm
-
+    $meters = ['cm' => 0.01, 'm' => 1, 'mm' => 0.001, 'in' => 0.0254, 'ft' => 0.3048];
+    $multiplier = $meters[strtolower($unit)] ?? 0.01;
     $widthM = ($width * $multiplier);
     $heightM = ($height * $multiplier);
     $lengthM = ($length * $multiplier);
-
     return ($widthM * $heightM * $lengthM) * $quantity;
 }
 
-/**
- * Convert weight to kilograms
- */
 function convertToKilograms($weight, $unit, $quantity = 1)
 {
-    $kgConversion = [
-        'kg' => 1,
-        'g' => 0.001,
-        'lb' => 0.453592,
-        'oz' => 0.0283495
-    ];
-
-    $multiplier = $kgConversion[strtolower($unit)] ?? 1; // Default kg
+    $kgConversion = ['kg' => 1, 'g' => 0.001, 'lb' => 0.453592, 'oz' => 0.0283495];
+    $multiplier = $kgConversion[strtolower($unit)] ?? 1;
     return ($weight * $multiplier) * $quantity;
 }
 
-/**
- * Automatically assign the best Transportify vehicle for cart items
- */
 function assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn)
 {
     $totalCubicMeters = 0;
     $totalWeightKg = 0;
     $itemVehicleData = [];
 
-    // Calculate total volume and weight
     foreach ($cart_items as $item) {
         $width = floatval($item['width'] ?? 0);
         $height = floatval($item['height'] ?? 0);
@@ -298,7 +309,6 @@ function assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn)
         $weightUnit = $item['weight_unit'] ?? 'kg';
         $quantity = intval($item['quantity'] ?? 1);
 
-        // Calculate for this item
         $itemCubicM = calculateCubicMeters($width, $height, $length, $dimensionUnit, $quantity);
         $itemWeightKg = convertToKilograms($weight, $weightUnit, $quantity);
 
@@ -312,31 +322,21 @@ function assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn)
             'cubic_meters' => $itemCubicM,
             'weight_kg' => $itemWeightKg
         ];
-
-        error_log("Item: {$item['variant_name']}, Volume: {$itemCubicM}m³, Weight: {$itemWeightKg}kg");
     }
 
-    error_log("Total Volume: {$totalCubicMeters}m³, Total Weight: {$totalWeightKg}kg");
-
-    // Find suitable vehicle (smallest that can fit)
     $assignedVehicle = null;
     foreach ($transportify_vehicles as $vehicle) {
         $maxCubicM = floatval($vehicle['max_cubic_meter'] ?? 0);
         $maxWeightKg = floatval($vehicle['max_weight_capacity'] ?? 0);
-
         if ($totalCubicMeters <= $maxCubicM && $totalWeightKg <= $maxWeightKg) {
             $assignedVehicle = $vehicle;
-            break; // Get the smallest suitable vehicle
+            break;
         }
     }
 
     if (!$assignedVehicle) {
-        // No single vehicle fits - use largest available
         $assignedVehicle = end($transportify_vehicles);
-        error_log("WARNING: No vehicle fits perfectly. Using largest: {$assignedVehicle['vehicle_type']}");
     }
-
-    error_log("Assigned Vehicle: {$assignedVehicle['vehicle_type']} (Max: {$assignedVehicle['max_cubic_meter']}m³, {$assignedVehicle['max_weight_capacity']}kg)");
 
     return [
         'vehicle' => $assignedVehicle,
@@ -346,25 +346,18 @@ function assignTransportifyVehicle($cart_items, $transportify_vehicles, $conn)
     ];
 }
 
-/**
- * Calculate delivery cost based on Transportify vehicle and distance
- */
 function calculateTransportifyDeliveryCost($distance_km, $vehicleData)
 {
     $vehicle = $vehicleData['vehicle'];
-
     $baseFare = floatval($vehicle['base_fare']);
     $addPerKm = floatval($vehicle['add_per_km']);
-    $perKmRate = 0; // ✅ CHANGED: Start charging from 0 km instead of 1 km
-
+    $perKmRate = 0;
     $deliveryCost = $baseFare;
 
-    // Charge for all kilometers beyond the base
     if ($distance_km > $perKmRate) {
         $chargeableKm = $distance_km - $perKmRate;
         $deliveryCost += ($chargeableKm * $addPerKm);
     }
-    error_log("Delivery Calculation: Base=₱{$baseFare}, Distance={$distance_km}km, Rate starts at {$perKmRate}km, Add per km=₱{$addPerKm}, Total=₱{$deliveryCost}");
 
     return [
         'total_delivery_cost' => $deliveryCost,
@@ -377,6 +370,7 @@ function calculateTransportifyDeliveryCost($distance_km, $vehicleData)
     ];
 }
 
+// POST Handler
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['customer_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -384,12 +378,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = trim($_POST['address'] ?? '');
     $zipcode = trim($_POST['zipcode'] ?? '');
     $payment_method = trim($_POST['payment_method'] ?? '');
-    $billing_address_id = trim($_POST['billing_address_id'] ?? ''); // New billing address ID
+    $billing_address_id = trim($_POST['billing_address_id'] ?? '');
     $latitude = null;
     $longitude = null;
     $delivery_distance = (float) ($_POST['delivery_distance'] ?? 0);
     $delivery_fee = (float) ($_POST['delivery_fee'] ?? 0);
+    $reference_no = generateReferenceNumber();
+    $bank_type = null;
+    $reference_number = null;
+    $screenshot_filename = null;
 
+    // ============================================
+    // ✅ RECALCULATE WITH TIERED DISCOUNT
+    // ============================================
+    $tiered_discount = getCartTieredDiscount($conn, $cart_items);
+    $discount_amount = $tiered_discount['discount_amount'];
+    $has_free_shipping = $tiered_discount['free_shipping'];
+
+    $items_subtotal = $total_price;
+    $subtotal_after_discount = $items_subtotal - $discount_amount;
+
+    $delivery_type = trim($_POST['delivery_type'] ?? 'delivery');
+
+    // Apply free shipping if eligible
+    if ($has_free_shipping && $delivery_type === 'delivery') {
+        $delivery_fee = 0.00;
+    }
+
+    if ($delivery_type === 'pickup') {
+        $delivery_fee = 0.00;
+        $delivery_distance = 0.00;
+    }
+
+    $subtotal_with_delivery = $subtotal_after_discount + $delivery_fee;
+    $vat_amount = $subtotal_with_delivery * 0.12;
+    $grand_total = $subtotal_with_delivery + $vat_amount;
     $reference_no = generateReferenceNumber();
 
     // ✅ ADD THIS BLOCK FOR BANK TRANSFER HANDLING
@@ -1290,41 +1313,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
-
 function formatItemDetails($item)
 {
     $details = [];
-    if (!empty($item['type_name'])) {
-        $details[] = $item['type_name'];
-    }
-    if (!empty($item['size']) && trim($item['size']) !== '') {
-        $details[] = 'Size: ' . $item['size'];
-    }
-    if (!empty($item['materials'])) {
-        $details[] = $item['materials'];
-    }
-    if (!empty($item['color_name'])) {
-        $details[] = 'Color: ' . $item['color_name'];
-    } elseif (!empty($item['variant_name'])) {
-        $details[] = $item['variant_name'];
-    }
-    if (!empty($item['codename'])) {
-        $details[] = 'Code: ' . $item['codename'];
-    }
-    // ADD THIS LINE:
-    if (!empty($item['origin'])) {
-        $details[] = 'Origin: ' . $item['origin'];
-    }
-    if (!empty($item['descrip6'])) {
-        $details[] = ' ' . $item['descrip6'];
-    }
-    if (!empty($item['descrip7'])) {
-        $details[] = ' ' . $item['descrip7'];
-    }
+    if (!empty($item['type_name'])) $details[] = $item['type_name'];
+    if (!empty($item['size']) && trim($item['size']) !== '') $details[] = 'Size: ' . $item['size'];
+    if (!empty($item['materials'])) $details[] = $item['materials'];
+    if (!empty($item['color_name'])) $details[] = 'Color: ' . $item['color_name'];
+    elseif (!empty($item['variant_name'])) $details[] = $item['variant_name'];
+    if (!empty($item['codename'])) $details[] = 'Code: ' . $item['codename'];
+    if (!empty($item['origin'])) $details[] = 'Origin: ' . $item['origin'];
+    if (!empty($item['descrip6'])) $details[] = ' ' . $item['descrip6'];
+    if (!empty($item['descrip7'])) $details[] = ' ' . $item['descrip7'];
     return implode('<br>', array_map('htmlspecialchars', $details));
 }
-
 // SIMPLIFIED: Function to get descrip6 and descrip7 for display
 function getProductDescription($conn, $codename, $variant_name = '', $variant_id = null)
 {
@@ -2331,6 +2333,59 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             <?php endforeach; ?>
                         </div>
 
+                        <?php if ($tiered_discount['has_discount']): ?>
+<div class=" p-4 mb-4">
+    <div class="flex items-center gap-2 mb-3">
+        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h4 class="font-bold text-green-800"> Discounted</h4>
+    </div>
+    
+    <div class="space-y-2">
+        <?php foreach ($tiered_discount['tier_details'] as $tier): ?>
+        <div class="bg-white rounded-lg p-3 border border-green-200">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="font-semibold text-gray-800 text-sm">
+                        <?= htmlspecialchars($tier['product_name']) ?>
+                    </div>
+                    <div class="text-xs mt-1">
+                        <span class="bg-green-600 text-white px-2 py-1 rounded font-bold">
+                            <?= number_format($tier['discount_percent'], 1) ?>% OFF
+                        </span>
+                        <span class="text-gray-600 ml-2">
+                            (Min: ₱<?= number_format($tier['min_amount'], 0) ?>)
+                        </span>
+                    </div>
+                    <?php if ($tier['free_shipping']): ?>
+                    <div class="text-xs text-blue-700 mt-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                        <span class="font-semibold">FREE SHIPPING included</span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="text-right">
+                    <div class="text-green-600 font-bold">
+                        -₱<?= number_format($tier['discount_amount'], 2) ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <div class="mt-3 pt-3 border-t border-green-300 flex justify-between items-center">
+        <span class="font-bold text-green-800">Total Discount:</span>
+        <span class="text-xl font-bold text-green-600">
+            -₱<?= number_format($discount_amount, 2) ?>
+        </span>
+    </div>
+</div>
+<?php endif; ?>
+
                         <!-- ✅ NEW: Expected Delivery Date Summary -->
                         <?php
                         $latestLeadTimeRange = null;
@@ -2370,35 +2425,99 @@ function getProductDescription($conn, $codename, $variant_name = '', $variant_id
                             </div>
                         <?php endif; ?>
 
-                        <!-- Total calculation -->
                         <div class="bg-gray-50 p-4 border-t">
                             <div class="space-y-2 text-sm">
-                                <div class="flex justify-between">
+
+                                <!-- Items Subtotal (Original) -->
+                                <div class="flex justify-between <?= $tiered_discount['has_discount'] ? 'text-gray-500' : '' ?>">
                                     <span>Items Subtotal:</span>
-                                    <span class="font-medium">₱<?= number_format($total_price, 2) ?></span>
+                                    <span class="font-medium <?= $tiered_discount['has_discount'] ? 'line-through' : '' ?>">
+                                        ₱<?= number_format($items_subtotal, 2) ?>
+                                    </span>
                                 </div>
+
+                                <!-- Tiered Discount (if applicable) -->
+                                <?php if ($tiered_discount['has_discount']): ?>
+                                    <div class="flex justify-between text-green-600 font-semibold">
+                                        <span>Volume Discount:</span>
+                                        <span>-₱<?= number_format($discount_amount, 2) ?></span>
+                                    </div>
+
+                                    <div class="flex justify-between font-medium text-orange-600">
+                                        <span>Subtotal After Discount:</span>
+                                        <span>₱<?= number_format($subtotal_after_discount, 2) ?></span>
+                                    </div>
+                                <?php endif; ?>
+
+                                <!-- Delivery Cost -->
                                 <div class="flex justify-between">
-                                    <span>Total Delivery Cost:</span>
-                                    <span class="font-medium" id="totalDeliveryCostDisplay">₱0.00</span>
+                                    <span>Total Delivery Cost:
+                                        <?php if ($tiered_discount['free_shipping']): ?>
+                                            <span class="text-green-600 font-semibold ml-1">FREE! 🎉</span>
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="font-medium <?= $tiered_discount['free_shipping'] ? 'line-through text-gray-400' : '' ?>" id="totalDeliveryCostDisplay">₱0.00</span>
                                 </div>
+
+                                <!-- Subtotal with Delivery -->
                                 <div class="border-t pt-2">
                                     <div class="flex justify-between">
                                         <span>Subtotal (Items + Delivery):</span>
-                                        <span class="font-medium" id="subtotalBeforeVAT">₱<?= number_format($total_price, 2) ?></span>
+                                        <span class="font-medium" id="subtotalBeforeVAT">
+                                            ₱<?= number_format($subtotal_after_discount, 2) ?>
+                                        </span>
                                     </div>
                                 </div>
+
+                                <!-- VAT -->
                                 <div class="flex justify-between">
                                     <span>VAT (12%):</span>
                                     <span class="font-medium text-orange-600" id="vatAmount">₱0.00</span>
                                 </div>
+
+                                <!-- Grand Total -->
                                 <div class="border-t pt-2">
                                     <div class="flex justify-between text-lg font-bold">
                                         <span>Grand Total (with VAT):</span>
-                                        <span class="text-green-700" id="grandTotalDisplay">₱<?= number_format($total_price, 2) ?></span>
+                                        <span class="text-green-700" id="grandTotalDisplay">
+                                            ₱<?= number_format($subtotal_after_discount, 2) ?>
+                                        </span>
                                     </div>
                                 </div>
+
+                                <!-- Savings Summary (if discount applied) -->
+                                <?php if ($tiered_discount['has_discount']): ?>
+                                    <div class="bg-green-100 border border-green-300 rounded-lg p-3 mt-3">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="font-bold text-green-800">You're Saving Today!</span>
+                                        </div>
+                                        <div class="text-sm text-green-700">
+                                            <div class="flex justify-between">
+                                                <span>Volume Discount:</span>
+                                                <span class="font-semibold">₱<?= number_format($discount_amount, 2) ?></span>
+                                            </div>
+                                            <?php if ($tiered_discount['free_shipping']): ?>
+                                                <div class="flex justify-between">
+                                                    <span>Free Shipping:</span>
+                                                    <span class="font-semibold" id="freeShippingSavings">₱0.00</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="flex justify-between pt-2 border-t border-green-300 mt-2 font-bold text-base">
+                                                <span>Total Savings:</span>
+                                                <span class="text-green-600" id="totalSavingsDisplay">
+                                                    ₱<?= number_format($discount_amount, 2) ?>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
                             </div>
                         </div>
+
                     </div>
                 </div>
 

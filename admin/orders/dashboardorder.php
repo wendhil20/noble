@@ -1,8 +1,8 @@
-<?php 
-session_name("nobleadmin"); 
-include '../../connection/connect.php'; 
-include '../role/roleaccount.php'; 
-require_role(['sales', 'superadmin']); 
+<?php
+session_name("nobleadmin");
+include '../../connection/connect.php';
+include '../role/roleaccount.php';
+require_role(['sales', 'superadmin']);
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
@@ -210,10 +210,11 @@ $recentVerifications = $conn->query("
 ");
 
 // ✅ Helper functions
-function formatPeriodName($start, $end) {
+function formatPeriodName($start, $end)
+{
     $start_ts = strtotime($start);
     $end_ts = strtotime($end);
-    
+
     if ($start === $end) {
         return date('F j, Y', $start_ts);
     } elseif (date('Y-m', $start_ts) === date('Y-m', $end_ts)) {
@@ -223,13 +224,15 @@ function formatPeriodName($start, $end) {
     }
 }
 
-function calculatePercentageChange($current, $previous) {
+function calculatePercentageChange($current, $previous)
+{
     if (!$previous || $previous == 0) return $current > 0 ? 100 : 0;
     return round((($current - $previous) / $previous) * 100, 1);
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -237,8 +240,9 @@ function calculatePercentageChange($current, $previous) {
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
-<?php include '../navbar/top.php'; ?>
+    <?php include '../navbar/top.php'; ?>
 
     <div class="max-w-7xl mx-auto mt-6 px-4">
         <!-- Header -->
@@ -250,42 +254,42 @@ function calculatePercentageChange($current, $previous) {
         <!-- Date Filter Section -->
         <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Main Date Range Filters</h2>
-            
+
             <form method="GET" class="space-y-4">
                 <!-- Quick Filters -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Quick Filters:</label>
                     <div class="flex flex-wrap gap-2">
-                        <button type="submit" name="quick_filter" value="today" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'today' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="today"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'today' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             Today
                         </button>
-                        <button type="submit" name="quick_filter" value="yesterday" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'yesterday' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="yesterday"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'yesterday' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             Yesterday
                         </button>
-                        <button type="submit" name="quick_filter" value="this_week" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'this_week' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="this_week"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'this_week' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             This Week
                         </button>
-                        <button type="submit" name="quick_filter" value="last_week" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_week' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="last_week"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_week' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             Last Week
                         </button>
-                        <button type="submit" name="quick_filter" value="this_month" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'this_month' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="this_month"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'this_month' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             This Month
                         </button>
-                        <button type="submit" name="quick_filter" value="last_month" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_month' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="last_month"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_month' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             Last Month
                         </button>
-                        <button type="submit" name="quick_filter" value="last_30_days" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_30_days' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="last_30_days"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_30_days' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             Last 30 Days
                         </button>
-                        <button type="submit" name="quick_filter" value="last_90_days" 
-                                class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_90_days' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
+                        <button type="submit" name="quick_filter" value="last_90_days"
+                            class="px-3 py-1 text-sm rounded-full <?= $quick_filter === 'last_90_days' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
                             Last 90 Days
                         </button>
                     </div>
@@ -295,26 +299,26 @@ function calculatePercentageChange($current, $previous) {
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Start Date:</label>
-                        <input type="date" name="start_date" value="<?= $start_date ?>" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" name="start_date" value="<?= $start_date ?>"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">End Date:</label>
-                        <input type="date" name="end_date" value="<?= $end_date ?>" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" name="end_date" value="<?= $end_date ?>"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Compare With:</label>
-                        <select name="comparison_period" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select name="comparison_period"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="previous_period" <?= $comparison_period === 'previous_period' ? 'selected' : '' ?>>Previous Period</option>
                             <option value="same_period_last_month" <?= $comparison_period === 'same_period_last_month' ? 'selected' : '' ?>>Same Period Last Month</option>
                             <option value="same_period_last_year" <?= $comparison_period === 'same_period_last_year' ? 'selected' : '' ?>>Same Period Last Year</option>
                         </select>
                     </div>
                     <div class="flex items-end">
-                        <button type="submit" 
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200">
+                        <button type="submit"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200">
                             Apply Filter
                         </button>
                     </div>
@@ -334,13 +338,13 @@ function calculatePercentageChange($current, $previous) {
                     </span>
                 <?php endif; ?>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Orders Verified -->
                 <div class="text-center bg-blue-50 rounded-lg p-4">
                     <p class="text-3xl font-bold text-blue-600"><?= number_format($mainPeriodData['count'] ?? 0) ?></p>
                     <p class="text-sm text-gray-600">Orders Verified</p>
-                    <?php if ($comparisonData): 
+                    <?php if ($comparisonData):
                         $change = calculatePercentageChange($mainPeriodData['count'], $comparisonData['count']);
                     ?>
                         <p class="text-xs mt-1 <?= $change >= 0 ? 'text-green-600' : 'text-red-600' ?>">
@@ -353,7 +357,7 @@ function calculatePercentageChange($current, $previous) {
                 <div class="text-center bg-green-50 rounded-lg p-4">
                     <p class="text-3xl font-bold text-green-600">₱<?= number_format($mainPeriodData['total_amount'] ?? 0, 2) ?></p>
                     <p class="text-sm text-gray-600">Total Value</p>
-                    <?php if ($comparisonData): 
+                    <?php if ($comparisonData):
                         $change = calculatePercentageChange($mainPeriodData['total_amount'], $comparisonData['total_amount']);
                     ?>
                         <p class="text-xs mt-1 <?= $change >= 0 ? 'text-green-600' : 'text-red-600' ?>">
@@ -366,7 +370,7 @@ function calculatePercentageChange($current, $previous) {
                 <div class="text-center bg-purple-50 rounded-lg p-4">
                     <p class="text-2xl font-bold text-purple-600">₱<?= number_format($mainPeriodData['avg_amount'] ?? 0, 2) ?></p>
                     <p class="text-sm text-gray-600">Average per Order</p>
-                    <?php if ($comparisonData): 
+                    <?php if ($comparisonData):
                         $change = calculatePercentageChange($mainPeriodData['avg_amount'], $comparisonData['avg_amount']);
                     ?>
                         <p class="text-xs mt-1 <?= $change >= 0 ? 'text-green-600' : 'text-red-600' ?>">
@@ -379,7 +383,7 @@ function calculatePercentageChange($current, $previous) {
                 <div class="text-center bg-orange-50 rounded-lg p-4">
                     <p class="text-2xl font-bold text-orange-600"><?= number_format($mainPeriodData['avg_verification_minutes'] ?? 0, 1) ?></p>
                     <p class="text-sm text-gray-600">Avg Minutes to Verify</p>
-                    <?php if ($comparisonData): 
+                    <?php if ($comparisonData):
                         $change = calculatePercentageChange($mainPeriodData['avg_verification_minutes'], $comparisonData['avg_verification_minutes']);
                     ?>
                         <p class="text-xs mt-1 <?= $change <= 0 ? 'text-green-600' : 'text-red-600' ?>">
@@ -398,33 +402,33 @@ function calculatePercentageChange($current, $previous) {
                     <h3 class="text-xl font-bold text-gray-800">Daily Verification paid</h3>
                     <span class="text-xs text-gray-500" id="dailyChartPeriod"><?= formatPeriodName($start_date, $end_date) ?></span>
                 </div>
-                
+
                 <!-- Individual Date Filter for Daily Chart -->
                 <div class="mb-4 p-3 bg-gray-50 rounded-lg">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Start Date:</label>
-                            <input type="date" id="dailyChartStart" value="<?= $start_date ?>" 
-                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <input type="date" id="dailyChartStart" value="<?= $start_date ?>"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">End Date:</label>
-                            <input type="date" id="dailyChartEnd" value="<?= $end_date ?>" 
-                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <input type="date" id="dailyChartEnd" value="<?= $end_date ?>"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div class="flex gap-1">
-                            <button onclick="updateDailyChart()" 
-                                    class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition duration-200">
+                            <button onclick="updateDailyChart()"
+                                class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition duration-200">
                                 Update
                             </button>
-                            <button onclick="resetDailyChart()" 
-                                    class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-200">
+                            <button onclick="resetDailyChart()"
+                                class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-200">
                                 Reset
                             </button>
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="height: 300px;">
                     <canvas id="dailyTrendChart"></canvas>
                 </div>
@@ -436,33 +440,33 @@ function calculatePercentageChange($current, $previous) {
                     <h3 class="text-xl font-bold text-gray-800">Hourly Verification Pattern</h3>
                     <span class="text-xs text-gray-500" id="hourlyChartPeriod"><?= formatPeriodName($start_date, $end_date) ?></span>
                 </div>
-                
+
                 <!-- Individual Date Filter for Hourly Chart -->
                 <div class="mb-4 p-3 bg-gray-50 rounded-lg">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Start Date:</label>
-                            <input type="date" id="hourlyChartStart" value="<?= $start_date ?>" 
-                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <input type="date" id="hourlyChartStart" value="<?= $start_date ?>"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">End Date:</label>
-                            <input type="date" id="hourlyChartEnd" value="<?= $end_date ?>" 
-                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <input type="date" id="hourlyChartEnd" value="<?= $end_date ?>"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div class="flex gap-1">
-                            <button onclick="updateHourlyChart()" 
-                                    class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1 rounded transition duration-200">
+                            <button onclick="updateHourlyChart()"
+                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1 rounded transition duration-200">
                                 Update
                             </button>
-                            <button onclick="resetHourlyChart()" 
-                                    class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-200">
+                            <button onclick="resetHourlyChart()"
+                                class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-200">
                                 Reset
                             </button>
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="height: 300px;">
                     <canvas id="hourlyPatternChart"></canvas>
                 </div>
@@ -475,42 +479,42 @@ function calculatePercentageChange($current, $previous) {
                 <h3 class="text-xl font-bold text-gray-800">Employee Performance</h3>
                 <span class="text-xs text-gray-500" id="employeeChartPeriod"><?= formatPeriodName($start_date, $end_date) ?></span>
             </div>
-            
+
             <!-- Individual Date Filter for Employee Chart -->
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Start Date:</label>
-                        <input type="date" id="employeeChartStart" value="<?= $start_date ?>" 
-                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <input type="date" id="employeeChartStart" value="<?= $start_date ?>"
+                            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">End Date:</label>
-                        <input type="date" id="employeeChartEnd" value="<?= $end_date ?>" 
-                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <input type="date" id="employeeChartEnd" value="<?= $end_date ?>"
+                            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">View:</label>
-                        <select id="employeeChartView" 
-                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <select id="employeeChartView"
+                            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                             <option value="count">Order Count</option>
                             <option value="amount">Total Amount</option>
                             <option value="avg">Average Amount</option>
                         </select>
                     </div>
                     <div class="flex gap-1">
-                        <button onclick="updateEmployeeChart()" 
-                                class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded transition duration-200">
+                        <button onclick="updateEmployeeChart()"
+                            class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded transition duration-200">
                             Update
                         </button>
-                        <button onclick="resetEmployeeChart()" 
-                                class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-200">
+                        <button onclick="resetEmployeeChart()"
+                            class="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded transition duration-200">
                             Reset
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <div style="height: 300px;">
                 <canvas id="employeePerformanceChart"></canvas>
             </div>
@@ -534,39 +538,39 @@ function calculatePercentageChange($current, $previous) {
                     </thead>
                     <tbody>
                         <?php while ($row = $recentVerifications->fetch_assoc()): ?>
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-2 font-bold text-blue-600">#<?= $row['id'] ?></td>
-                            <td class="px-4 py-2"><?= htmlspecialchars($row['customer_name']) ?></td>
-                            <td class="px-4 py-2 text-right font-semibold">₱<?= number_format($row['final_total'], 2) ?></td>
-                            <td class="px-4 py-2 text-center">
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-semibold">
-                                    Employee <?= $row['verified_by'] ?>
-                                </span>
-                            </td>
-                            <td class="px-4 py-2 text-center text-sm">
-                                <?= date('M j, Y', strtotime($row['confirmed_at'])) ?><br>
-                                <span class="text-xs text-gray-500"><?= date('g:i A', strtotime($row['confirmed_at'])) ?></span>
-                            </td>
-                            <td class="px-4 py-2 text-center">
-                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                                    <?php
-                                    $minutes = $row['verification_time_minutes'];
-                                    if ($minutes > 60) {
-                                        $hours = floor($minutes / 60);
-                                        $mins = $minutes % 60;
-                                        echo $hours . 'h ' . $mins . 'm';
-                                    } else {
-                                        echo $minutes . ' min';
-                                    }
-                                    ?>
-                                </span>
-                            </td>
-                            <td class="px-4 py-2 text-center">
-                                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
-                                    <?= ucfirst($row['mode_payment']) ?>
-                                </span>
-                            </td>
-                        </tr>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-4 py-2 font-bold text-blue-600">#<?= $row['id'] ?></td>
+                                <td class="px-4 py-2"><?= htmlspecialchars($row['customer_name']) ?></td>
+                                <td class="px-4 py-2 text-right font-semibold">₱<?= number_format($row['final_total'], 2) ?></td>
+                                <td class="px-4 py-2 text-center">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-semibold">
+                                        Employee <?= $row['verified_by'] ?>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2 text-center text-sm">
+                                    <?= date('M j, Y', strtotime($row['confirmed_at'])) ?><br>
+                                    <span class="text-xs text-gray-500"><?= date('g:i A', strtotime($row['confirmed_at'])) ?></span>
+                                </td>
+                                <td class="px-4 py-2 text-center">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                                        <?php
+                                        $minutes = $row['verification_time_minutes'];
+                                        if ($minutes > 60) {
+                                            $hours = floor($minutes / 60);
+                                            $mins = $minutes % 60;
+                                            echo $hours . 'h ' . $mins . 'm';
+                                        } else {
+                                            echo $minutes . ' min';
+                                        }
+                                        ?>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2 text-center">
+                                    <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+                                        <?= ucfirst($row['mode_payment']) ?>
+                                    </span>
+                                </td>
+                            </tr>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
@@ -578,52 +582,75 @@ function calculatePercentageChange($current, $previous) {
             <!-- Peak Hours -->
             <div class="bg-white shadow-xl rounded-2xl p-6">
                 <h4 class="text-lg font-bold text-gray-800 mb-3">Peak Activity Hours</h4>
-                <?php 
-                $maxHour = array_keys($hourlyData, max($hourlyData))[0];
-                $minHour = array_keys($hourlyData, min(array_filter($hourlyData)))[0];
+                <?php
+                // Filter out zero values and check if we have any data
+                $nonZeroHourlyData = array_filter($hourlyData);
+
+                if (!empty($nonZeroHourlyData)) {
+                    $maxHour = array_keys($hourlyData, max($hourlyData))[0];
+                    $minHour = array_keys($nonZeroHourlyData, min($nonZeroHourlyData))[0];
                 ?>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Busiest Hour:</span>
-                        <span class="font-semibold text-green-600"><?= sprintf('%02d:00', $maxHour) ?> (<?= $hourlyData[$maxHour] ?> orders)</span>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Busiest Hour:</span>
+                            <span class="font-semibold text-green-600"><?= sprintf('%02d:00', $maxHour) ?> (<?= $hourlyData[$maxHour] ?> orders)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Slowest Hour:</span>
+                            <span class="font-semibold text-red-600"><?= sprintf('%02d:00', $minHour) ?> (<?= $hourlyData[$minHour] ?> orders)</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Slowest Hour:</span>
-                        <span class="font-semibold text-red-600"><?= sprintf('%02d:00', $minHour) ?> (<?= $hourlyData[$minHour] ?> orders)</span>
+                <?php } else { ?>
+                    <div class="text-center py-4">
+                        <p class="text-gray-500 text-sm">No verification data available for this period</p>
                     </div>
-                </div>
+                <?php } ?>
             </div>
 
             <!-- Verification Speed -->
             <div class="bg-white shadow-xl rounded-2xl p-6">
                 <h4 class="text-lg font-bold text-gray-800 mb-3">Verification Speed</h4>
-                <?php 
-                $fastestHour = array_keys($hourlyVerificationTimes, min(array_filter($hourlyVerificationTimes)))[0];
-                $slowestHour = array_keys($hourlyVerificationTimes, max($hourlyVerificationTimes))[0];
+                <?php
+                // Filter out zero values for verification times
+                $nonZeroVerificationTimes = array_filter($hourlyVerificationTimes);
+
+                if (!empty($nonZeroVerificationTimes)) {
+                    $fastestHour = array_keys($nonZeroVerificationTimes, min($nonZeroVerificationTimes))[0];
+                    $slowestHour = array_keys($nonZeroVerificationTimes, max($nonZeroVerificationTimes))[0];
                 ?>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Fastest Hour:</span>
-                        <span class="font-semibold text-green-600"><?= sprintf('%02d:00', $fastestHour) ?> (<?= $hourlyVerificationTimes[$fastestHour] ?>m)</span>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Fastest Hour:</span>
+                            <span class="font-semibold text-green-600"><?= sprintf('%02d:00', $fastestHour) ?> (<?= $hourlyVerificationTimes[$fastestHour] ?>m)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Slowest Hour:</span>
+                            <span class="font-semibold text-red-600"><?= sprintf('%02d:00', $slowestHour) ?> (<?= $hourlyVerificationTimes[$slowestHour] ?>m)</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Slowest Hour:</span>
-                        <span class="font-semibold text-red-600"><?= sprintf('%02d:00', $slowestHour) ?> (<?= $hourlyVerificationTimes[$slowestHour] ?>m)</span>
+                <?php } else { ?>
+                    <div class="text-center py-4">
+                        <p class="text-gray-500 text-sm">No verification time data available for this period</p>
                     </div>
-                </div>
+                <?php } ?>
             </div>
 
             <!-- Period Summary -->
             <div class="bg-white shadow-xl rounded-2xl p-6">
                 <h4 class="text-lg font-bold text-gray-800 mb-3">Period Summary</h4>
+                <?php
+                $totalDays = ceil((strtotime($end_date) - strtotime($start_date)) / (60 * 60 * 24)) + 1;
+                $totalOrders = $mainPeriodData['count'] ?? 0;
+                $avgPerDay = $totalDays > 0 ? $totalOrders / $totalDays : 0;
+                ?>
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600">Total Days:</span>
-                        <span class="font-semibold"><?= ceil((strtotime($end_date) - strtotime($start_date)) / (60*60*24)) + 1 ?></span>
+                        <span class="font-semibold"><?= $totalDays ?></span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600">Avg per Day:</span>
-                        <span class="font-semibold text-blue-600"><?= number_format(($mainPeriodData['count'] ?? 0) / (ceil((strtotime($end_date) - strtotime($start_date)) / (60*60*24)) + 1), 1) ?> orders</span>
+                        <span class="font-semibold text-blue-600"><?= number_format($avgPerDay, 1) ?> orders</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600">Active Days:</span>
@@ -677,9 +704,9 @@ function calculatePercentageChange($current, $previous) {
             amounts: [],
             avgAmounts: []
         };
-        
+
         // Populate employee data
-        <?php 
+        <?php
         $employeeLabels = [];
         $employeeCounts = [];
         $employeeAmounts = [];
@@ -691,7 +718,7 @@ function calculatePercentageChange($current, $previous) {
             $employeeAvgAmounts[] = (float)$row['avg_amount'];
         }
         ?>
-        
+
         originalEmployeeData.labels = <?= json_encode($employeeLabels) ?>;
         originalEmployeeData.counts = <?= json_encode($employeeCounts) ?>;
         originalEmployeeData.amounts = <?= json_encode($employeeAmounts) ?>;
@@ -868,12 +895,12 @@ function calculatePercentageChange($current, $previous) {
         async function updateDailyChart() {
             const startDate = document.getElementById('dailyChartStart').value;
             const endDate = document.getElementById('dailyChartEnd').value;
-            
+
             if (!startDate || !endDate) {
                 alert('Please select both start and end dates');
                 return;
             }
-            
+
             if (startDate > endDate) {
                 alert('Start date cannot be later than end date');
                 return;
@@ -889,14 +916,14 @@ function calculatePercentageChange($current, $previous) {
                 // Fetch new data
                 const response = await fetch(`dashboardchart.php?type=daily&start_date=${startDate}&end_date=${endDate}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     dailyTrendChart.data.labels = data.labels;
                     dailyTrendChart.data.datasets[0].data = data.orders;
                     dailyTrendChart.data.datasets[1].data = data.amounts;
                     dailyTrendChart.options.plugins.title.text = `Daily Trend (${formatDateRange(startDate, endDate)})`;
                     dailyTrendChart.update();
-                    
+
                     document.getElementById('dailyChartPeriod').textContent = formatDateRange(startDate, endDate);
                 } else {
                     alert('Failed to load data: ' + (data.message || 'Unknown error'));
@@ -913,12 +940,12 @@ function calculatePercentageChange($current, $previous) {
         async function updateHourlyChart() {
             const startDate = document.getElementById('hourlyChartStart').value;
             const endDate = document.getElementById('hourlyChartEnd').value;
-            
+
             if (!startDate || !endDate) {
                 alert('Please select both start and end dates');
                 return;
             }
-            
+
             if (startDate > endDate) {
                 alert('Start date cannot be later than end date');
                 return;
@@ -933,13 +960,13 @@ function calculatePercentageChange($current, $previous) {
                 // Fetch new data
                 const response = await fetch(`get_chart_data.php?type=hourly&start_date=${startDate}&end_date=${endDate}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     hourlyPatternChart.data.datasets[0].data = data.orders;
                     hourlyPatternChart.data.datasets[1].data = data.times;
                     hourlyPatternChart.options.plugins.title.text = `Hourly Pattern (${formatDateRange(startDate, endDate)})`;
                     hourlyPatternChart.update();
-                    
+
                     document.getElementById('hourlyChartPeriod').textContent = formatDateRange(startDate, endDate);
                 } else {
                     alert('Failed to load data: ' + (data.message || 'Unknown error'));
@@ -957,12 +984,12 @@ function calculatePercentageChange($current, $previous) {
             const startDate = document.getElementById('employeeChartStart').value;
             const endDate = document.getElementById('employeeChartEnd').value;
             const viewType = document.getElementById('employeeChartView').value;
-            
+
             if (!startDate || !endDate) {
                 alert('Please select both start and end dates');
                 return;
             }
-            
+
             if (startDate > endDate) {
                 alert('Start date cannot be later than end date');
                 return;
@@ -977,17 +1004,17 @@ function calculatePercentageChange($current, $previous) {
                 // Fetch new data
                 const response = await fetch(`get_chart_data.php?type=employee&start_date=${startDate}&end_date=${endDate}&view=${viewType}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     employeePerformanceChart.data.labels = data.labels;
                     employeePerformanceChart.data.datasets[0].data = data.values;
-                    
+
                     // Update chart title and axis label based on view type
                     let titleText = 'Employee Performance - ';
                     let yAxisLabel = '';
                     let backgroundColor = 'rgba(34, 197, 94, 0.8)';
-                    
-                    switch(viewType) {
+
+                    switch (viewType) {
                         case 'count':
                             titleText += 'Order Count';
                             yAxisLabel = 'Orders Count';
@@ -1004,12 +1031,12 @@ function calculatePercentageChange($current, $previous) {
                             backgroundColor = 'rgba(168, 85, 247, 0.8)';
                             break;
                     }
-                    
+
                     employeePerformanceChart.data.datasets[0].backgroundColor = backgroundColor;
                     employeePerformanceChart.options.plugins.title.text = `${titleText} (${formatDateRange(startDate, endDate)})`;
                     employeePerformanceChart.options.scales.y.title.text = yAxisLabel;
                     employeePerformanceChart.update();
-                    
+
                     document.getElementById('employeeChartPeriod').textContent = formatDateRange(startDate, endDate);
                 } else {
                     alert('Failed to load data: ' + (data.message || 'Unknown error'));
@@ -1029,7 +1056,7 @@ function calculatePercentageChange($current, $previous) {
             dailyTrendChart.data.datasets[1].data = originalDailyData.amounts;
             dailyTrendChart.options.plugins.title.text = 'Daily Verification Trend';
             dailyTrendChart.update();
-            
+
             document.getElementById('dailyChartStart').value = '<?= $start_date ?>';
             document.getElementById('dailyChartEnd').value = '<?= $end_date ?>';
             document.getElementById('dailyChartPeriod').textContent = '<?= formatPeriodName($start_date, $end_date) ?>';
@@ -1041,7 +1068,7 @@ function calculatePercentageChange($current, $previous) {
             hourlyPatternChart.data.datasets[1].data = originalHourlyData.times;
             hourlyPatternChart.options.plugins.title.text = 'Hourly Verification Pattern';
             hourlyPatternChart.update();
-            
+
             document.getElementById('hourlyChartStart').value = '<?= $start_date ?>';
             document.getElementById('hourlyChartEnd').value = '<?= $end_date ?>';
             document.getElementById('hourlyChartPeriod').textContent = '<?= formatPeriodName($start_date, $end_date) ?>';
@@ -1055,7 +1082,7 @@ function calculatePercentageChange($current, $previous) {
             employeePerformanceChart.options.plugins.title.text = 'Employee Performance - Order Count';
             employeePerformanceChart.options.scales.y.title.text = 'Orders Count';
             employeePerformanceChart.update();
-            
+
             document.getElementById('employeeChartStart').value = '<?= $start_date ?>';
             document.getElementById('employeeChartEnd').value = '<?= $end_date ?>';
             document.getElementById('employeeChartView').value = 'count';
@@ -1066,12 +1093,23 @@ function calculatePercentageChange($current, $previous) {
         function formatDateRange(start, end) {
             const startDate = new Date(start);
             const endDate = new Date(end);
-            
+
             if (start === end) {
-                return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return startDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
             } else {
-                return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
-                       ' - ' + endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return startDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                    }) +
+                    ' - ' + endDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
             }
         }
 
@@ -1097,23 +1135,23 @@ function calculatePercentageChange($current, $previous) {
                 ['Recent Verifications'],
                 ['Order ID', 'Customer', 'Amount', 'Verified By', 'Date', 'Verification Time', 'Payment Method']
             ];
-            
+
             // Add recent verifications data
-            <?php 
+            <?php
             $recentVerifications->data_seek(0);
-            while ($row = $recentVerifications->fetch_assoc()): 
+            while ($row = $recentVerifications->fetch_assoc()):
                 $minutes = $row['verification_time_minutes'];
                 $timeStr = $minutes > 60 ? floor($minutes / 60) . 'h ' . ($minutes % 60) . 'm' : $minutes . ' min';
             ?>
-            data.push([
-                '#<?= $row['id'] ?>',
-                '<?= htmlspecialchars($row['customer_name']) ?>',
-                '<?= number_format($row['final_total'], 2) ?>',
-                'Employee <?= $row['verified_by'] ?>',
-                '<?= date('M j, Y g:i A', strtotime($row['confirmed_at'])) ?>',
-                '<?= $timeStr ?>',
-                '<?= ucfirst($row['mode_payment']) ?>'
-            ]);
+                data.push([
+                    '#<?= $row['id'] ?>',
+                    '<?= htmlspecialchars($row['customer_name']) ?>',
+                    '<?= number_format($row['final_total'], 2) ?>',
+                    'Employee <?= $row['verified_by'] ?>',
+                    '<?= date('M j, Y g:i A', strtotime($row['confirmed_at'])) ?>',
+                    '<?= $timeStr ?>',
+                    '<?= ucfirst($row['mode_payment']) ?>'
+                ]);
             <?php endwhile; ?>
 
             let csvContent = "data:text/csv;charset=utf-8," + data.map(e => e.join(",")).join("\n");
@@ -1129,7 +1167,7 @@ function calculatePercentageChange($current, $previous) {
         // Add keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
+                switch (e.key) {
                     case 'p':
                         e.preventDefault();
                         window.print();
@@ -1150,17 +1188,17 @@ function calculatePercentageChange($current, $previous) {
         function validateDateInputs(startId, endId) {
             const startDate = document.getElementById(startId).value;
             const endDate = document.getElementById(endId).value;
-            
+
             if (startDate && endDate && startDate > endDate) {
                 alert('Start date cannot be later than end date');
                 return false;
             }
-            
+
             const today = new Date().toISOString().split('T')[0];
             if (endDate > today) {
                 return confirm('End date is in the future. Continue anyway?');
             }
-            
+
             return true;
         }
 
@@ -1183,4 +1221,5 @@ function calculatePercentageChange($current, $previous) {
         document.head.appendChild(style);
     </script>
 </body>
+
 </html>

@@ -35,7 +35,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// NEW: Check if user account is verified
+// Check if user account is verified
 $user_id = $_SESSION['user_id'];
 $verify_stmt = $conn->prepare("SELECT ud.is_verified FROM user_details ud WHERE ud.user_id = ?");
 $verify_stmt->bind_param("i", $user_id);
@@ -71,6 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $selected_variant = trim($_POST['selected_variant'] ?? '');
         $selected_color_id = (int)($_POST['selected_color_id'] ?? 0);
         $variant_id = (int)($_POST['variant_id'] ?? 0);
+        
+        // ✅ GET QUANTITY FROM POST (Default to 1 if not provided)
+        $quantity = (int)($_POST['quantity'] ?? 1);
+        if ($quantity < 1) $quantity = 1;
+        if ($quantity > 9999) $quantity = 9999;
 
         if (!$product_id) throw new Exception('Product ID is required.');
 
@@ -178,31 +183,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check_stmt->close();
 
         if ($existing) {
-            $new_qty = $existing['quantity'] + 1;
+            // ✅ ADD THE REQUESTED QUANTITY to existing quantity
+            $new_qty = $existing['quantity'] + $quantity;
             $update_stmt = $conn->prepare("UPDATE user_cart_items SET quantity = ?, price = ?, added_at = NOW() WHERE id = ?");
             $update_stmt->bind_param("idi", $new_qty, $price, $existing['id']);
             $update_stmt->execute();
             $update_stmt->close();
+            
+            $final_quantity = $new_qty;
+            $action_message = "Added $quantity more piece(s) to cart. Total: $new_qty";
         } else {
+            // ✅ INSERT WITH THE REQUESTED QUANTITY
             $insert_stmt = $conn->prepare("
                 INSERT INTO user_cart_items (
                     user_id, product_id, color_id, variant_id, quantity, price,
                     type_name, variant_name, color_name, size, codename, descrip6, descrip7, added_at
-                ) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             $insert_stmt->bind_param(
-                "iiiiisssssss",
-                $user_id, $product_id, $color_id, $variant_id_db, $price,
+                "iiiidssssssss",
+                $user_id, $product_id, $color_id, $variant_id_db, $quantity, $price,
                 $type_name, $variant_name, $color_name, $size, $codename,
                 $unit, $specification
             );
             $insert_stmt->execute();
             $insert_stmt->close();
+            
+            $final_quantity = $quantity;
+            $action_message = "Added $quantity piece(s) to cart";
         }
 
         echo json_encode([
             'success' => true,
-            'message' => 'Added to cart',
+            'message' => $action_message,
             'cart_count' => getCartCount($conn, $user_id),
             'item_added' => [
                 'name' => $product['product_name'],
@@ -213,7 +226,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'unit' => $unit ?: '—',
                 'specification' => $specification ?: '—',
                 'price' => $price,
-                'quantity' => $existing ? $new_qty : 1
+                'quantity' => $final_quantity,
+                'quantity_added' => $quantity
             ]
         ]);
     } catch (Exception $e) {

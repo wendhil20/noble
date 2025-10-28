@@ -61,7 +61,7 @@
                       <div class="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                   </h3>
                   <nav class="space-y-3">
-                      <a href="index" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
+                      <a href="index-page-1-A-B-C-D-E" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Home</a>
                       <a href="../rules/terms.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Terms of use</a>
                       <a href="../rules/policy.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">Policy</a>
                       <a href="../about/about.php" class="block text-gray-300 hover:text-white link-hover transition-all duration-300 font-medium">About</a>

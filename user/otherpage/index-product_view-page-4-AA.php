@@ -53,7 +53,7 @@ if (!$product_id || !is_numeric($product_id) || $product_id <= 0) {
 $stmt = $conn->prepare("
   SELECT id, product_name, codename, quantity, price, main_image, sub_images, 
          description, descrip1, descrip2, descrip3, descrip4, descrip5,
-         descrip6, descrip7, descrip8, descrip9, descrip10
+         descrip6, descrip7, descrip8, descrip9, descrip10 ,  guide_enabled
   FROM products 
   WHERE id = ? 
   LIMIT 1
@@ -728,7 +728,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
   <!-- Hero Section with Bouncing Bubbles Background -->
   <div class="bg-black text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
     <style>
-
       /* Magnifier Container */
       #magnifier-container {
         position: relative;
@@ -1036,7 +1035,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                   <!-- Product Image - Mobile Sidebar Only -->
                   <h3 class="text-base lg:text-xl  text-gray-800">Choose type</h3>
                   <div class="text-xs lg:text-sm text-gray-500">Required</div>
-                  <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
                     <!-- Product Image - Mobile Sidebar Only -->
                     <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
                       <div class="aspect-square w-32 mx-auto overflow-hidden">
@@ -1051,10 +1049,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                         <?= htmlspecialchars($product['product_name']) ?>
                       </h3>
                     </div>
-                    <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
-                      <?= htmlspecialchars($product['product_name']) ?>
-
-                    </h3>
                   </div>
                 </div>
 
@@ -1082,7 +1076,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                   </div>
                 </div>
 
-                <div id="color-disabled-message" class="text-center p-4 lg:p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg">
+                <div id="color-disabled-message" class="text-center p-4 lg:p-6 bg-white rounded-lg">
                   <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
                   <p class="text-sm lg:text-base text-gray-500">Please select an item type first</p>
                 </div>
@@ -1139,6 +1133,345 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                   <?php endif; ?>
                 </div>
               <?php endforeach; ?>
+
+
+
+              <!-- Calculator Guide Display (Only shows if guide_enabled = 1) -->
+              <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
+                <div class="mb-4 lg:mb-6 bg-white rounded p-3 lg:p-4 ">
+                  <div class="flex items-center gap-2 mb-4">
+                    <div>
+                      <h3 class="text-base text-gray-900">Area </h3>
+                      <p class="text-xs text-gray-600">Calculate required pieces for your project</p>
+                    </div>
+                  </div>
+
+                  <!-- Variant/Size Selection -->
+                  <div class="mb-4">
+                    <label class="block text-xs text-gray-900 uppercase mb-2">Select Size/Variant</label>
+                    <select id="calculatorVariantSelect" onchange="updateCalculatorDimensions()"
+                      class="w-full px-3 py-2 rounded text-sm bg-gray-50 border border-gray-200">
+                      <option value="">Choose a size...</option>
+                      <?php
+                      // Fetch variants for this product
+                      $variant_query = "SELECT id, size, width, height, length FROM product_variants WHERE product_id = ? ORDER BY size ASC";
+                      $stmt = $conn->prepare($variant_query);
+                      $stmt->bind_param("i", $product['id']);
+                      $stmt->execute();
+                      $variants_result = $stmt->get_result();
+
+                      while ($variant = $variants_result->fetch_assoc()):
+                      ?>
+                        <option value="<?= $variant['id'] ?>"
+                          data-width="<?= htmlspecialchars($variant['width']) ?>"
+                          data-height="<?= htmlspecialchars($variant['height']) ?>"
+                          data-length="<?= htmlspecialchars($variant['length']) ?>">
+                          <?= htmlspecialchars($variant['size']) ?>
+                        </option>
+                      <?php endwhile; ?>
+                    </select>
+                  </div>
+
+                  <!-- Dimensions Display -->
+                  <div id="calculatorDimensionsDisplay" class="hidden mb-4">
+                    <div class="grid grid-cols-3 gap-3">
+                      <div class="text-center">
+                        <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
+                        <div class="bg-gray-50 rounded px-3 py-2">
+                          <div id="calcLength" class="text-sm text-gray-900">-</div>
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
+                        <div class="bg-gray-50 rounded px-3 py-2">
+                          <div id="calcHeight" class="text-sm text-gray-900">-</div>
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
+                        <div class="bg-gray-50 rounded px-3 py-2">
+                          <div id="calcWidth" class="text-sm text-gray-900">-</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Calculator Input -->
+                  <div class="mb-4">
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1">
+                        <label class="block text-xs text-black mb-1">Area (m²)</label>
+                        <div class="bg-gray-50 rounded">
+                          <input type="number" id="userArea" step="0.01" placeholder="0"
+                            oninput="calculateUserPieces()"
+                            class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200">
+                        </div>
+                      </div>
+                      <div class="text-gray-400 text-xl pt-5">=</div>
+                      <div class="flex-1">
+                        <label class="block text-xs text-black mb-1">Pcs</label>
+                        <div class="bg-gray-50 rounded">
+                          <div id="userBlocksNeeded" class="px-3 py-2 text-center text-sm text-gray-900">0</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Additional Results -->
+                  <div id="userCalculationResults" class="hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="text-center">
+                        <label class="block text-xs text-black mb-1">Adhesive</label>
+                        <div class="bg-gray-50 rounded px-3 py-2 border border-gray-200">
+                          <div class="text-sm text-gray-900 ">
+                            <span id="userAdhesiveNeeded">0</span> pcs
+                          </div>
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        <label class="block text-xs text-black mb-1">Brackets</label>
+                        <div class="bg-gray-50 rounded px-3 py-2 border border-gray-200">
+                          <div class="text-sm text-gray-900 ">
+                            <span id="userBracketsNeeded">0</span> pcs
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <script>
+                  let selectedVariantDimensions = {
+                    width: 0,
+                    height: 0,
+                    length: 0
+                  };
+
+                  function updateCalculatorDimensions() {
+                    const select = document.getElementById('calculatorVariantSelect');
+                    const selectedOption = select.options[select.selectedIndex];
+
+                    if (selectedOption.value) {
+                      const width = parseFloat(selectedOption.dataset.width) || 0;
+                      const height = parseFloat(selectedOption.dataset.height) || 0;
+                      const length = parseFloat(selectedOption.dataset.length) || 0;
+
+                      selectedVariantDimensions = {
+                        width,
+                        height,
+                        length
+                      };
+
+                      // Display dimensions
+                      document.getElementById('calcWidth').textContent = width;
+                      document.getElementById('calcHeight').textContent = height;
+                      document.getElementById('calcLength').textContent = length;
+
+                      document.getElementById('calculatorDimensionsDisplay').classList.remove('hidden');
+                    } else {
+                      document.getElementById('calculatorDimensionsDisplay').classList.add('hidden');
+                      selectedVariantDimensions = {
+                        width: 0,
+                        height: 0,
+                        length: 0
+                      };
+                    }
+
+                    // Clear previous results
+                    document.getElementById('userCalculationResults').classList.add('hidden');
+                    document.getElementById('userArea').value = '';
+                    document.getElementById('userBlocksNeeded').textContent = '0';
+                  }
+
+                  function calculateUserPieces() {
+                    const area = parseFloat(document.getElementById('userArea').value);
+
+                    // Hide results if no valid input
+                    if (!area || area <= 0) {
+                      document.getElementById('userCalculationResults').classList.add('hidden');
+                      document.getElementById('userBlocksNeeded').textContent = '0';
+                      return;
+                    }
+
+                    if (!selectedVariantDimensions.length || !selectedVariantDimensions.height) {
+                      document.getElementById('userCalculationResults').classList.add('hidden');
+                      document.getElementById('userBlocksNeeded').textContent = '0';
+                      return;
+                    }
+
+                    // Convert dimensions from mm to meters
+                    // Face area = LENGTH × HEIGHT (for wall coverage)
+                    const length = selectedVariantDimensions.length / 1000; // 600mm → 0.6m
+                    const height = selectedVariantDimensions.height / 1000; // 200mm → 0.2m
+
+                    // Calculate area per block (length × height for wall face area)
+                    const areaPerBlock = length * height; // 0.6 × 0.2 = 0.12 m²
+
+                    if (areaPerBlock <= 0) {
+                      document.getElementById('userCalculationResults').classList.add('hidden');
+                      document.getElementById('userBlocksNeeded').textContent = '0';
+                      return;
+                    }
+
+                    // Calculate blocks needed (rounded up)
+                    const blocksNeeded = Math.ceil(area / areaPerBlock);
+
+                    // Adhesive (30% of AREA in sqm)
+                    const adhesiveNeeded = (area * 0.30).toFixed(2);
+
+                    // Brackets (25% of BLOCKS in pieces)
+                    const bracketsNeeded = Math.ceil(blocksNeeded * 0.25);
+
+                    // Update display
+                    document.getElementById('userBlocksNeeded').textContent = blocksNeeded.toLocaleString();
+                    document.getElementById('userAdhesiveNeeded').textContent = adhesiveNeeded;
+                    document.getElementById('userBracketsNeeded').textContent = bracketsNeeded.toLocaleString();
+
+                    // Show results
+                    document.getElementById('userCalculationResults').classList.remove('hidden');
+                  }
+                </script>
+              <?php endif; ?>
+
+
+        <section>
+  <!-- Compact Quantity Selection -->
+  <div class="mb-3 bg-white rounded p-2">
+    <div class="flex items-center justify-center mb-2">
+      <h3 class="text-xs font-semibold text-gray-900">Quantity</h3>
+    </div>
+
+    <!-- Quantity Controls - Compact -->
+    <div class="flex items-center justify-center gap-2">
+      <button type="button"
+        onclick="decreaseQuantity()"
+        class="w-7 h-7 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded flex items-center justify-center"
+        id="decreaseBtn">
+        <i class="fas fa-minus text-xs"></i>
+      </button>
+
+      <input type="number"
+        id="quantityInput"
+        name="quantity"
+        value="1"
+        min="1"
+        max="9999"
+        class="w-16 text-center text-sm font-semibold border border-gray-300 rounded py-1 focus:outline-none focus:border-orange-500"
+        onchange="validateQuantity()"
+        oninput="validateQuantity()">
+
+      <button type="button"
+        onclick="increaseQuantity()"
+        class="w-7 h-7 bg-orange-500 hover:bg-orange-600 text-white rounded flex items-center justify-center"
+        id="increaseBtn">
+        <i class="fas fa-plus text-xs"></i>
+      </button>
+    </div>
+
+    <!-- Quick Buttons - Smaller -->
+    <div class="mt-2 flex flex-wrap gap-1 justify-center">
+      <button type="button" onclick="setQuantity(5)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">5</button>
+      <button type="button" onclick="setQuantity(10)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">10</button>
+      <button type="button" onclick="setQuantity(25)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">25</button>
+      <button type="button" onclick="setQuantity(50)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">50</button>
+      <button type="button" onclick="setQuantity(100)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">100</button>
+    </div>
+
+    <!-- Preview - Compact -->
+    <div id="quantityPricePreview" class="mt-2 p-1.5 hidden">
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-gray-600"><span id="previewQty">1</span> pcs:</span>
+        <span class="font-bold text-blue-600" id="previewTotal">₱0.00</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function increaseQuantity() {
+      const input = document.getElementById('quantityInput');
+      const val = parseInt(input.value) || 1;
+      if (val < 9999) {
+        input.value = val + 1;
+        validateQuantity();
+        updateQuantityPreview();
+      }
+    }
+
+    function decreaseQuantity() {
+      const input = document.getElementById('quantityInput');
+      const val = parseInt(input.value) || 1;
+      if (val > 1) {
+        input.value = val - 1;
+        validateQuantity();
+        updateQuantityPreview();
+      }
+    }
+
+    function setQuantity(amount) {
+      const input = document.getElementById('quantityInput');
+      if (amount >= 1 && amount <= 9999) {
+        input.value = amount;
+        validateQuantity();
+        updateQuantityPreview();
+      }
+    }
+
+    function validateQuantity() {
+      const input = document.getElementById('quantityInput');
+      const decreaseBtn = document.getElementById('decreaseBtn');
+      const increaseBtn = document.getElementById('increaseBtn');
+      let val = parseInt(input.value) || 1;
+      val = Math.max(1, Math.min(9999, val));
+      input.value = val;
+      if (decreaseBtn) decreaseBtn.disabled = val <= 1;
+      if (increaseBtn) increaseBtn.disabled = val >= 9999;
+      updateQuantityPreview();
+    }
+
+    function updateQuantityPreview() {
+      const quantityInput = document.getElementById('quantityInput');
+      const previewContainer = document.getElementById('quantityPricePreview');
+      const previewQty = document.getElementById('previewQty');
+      const previewTotal = document.getElementById('previewTotal');
+      if (!quantityInput || !previewContainer) return;
+      const quantity = parseInt(quantityInput.value) || 1;
+      if (window.productSelector && window.productSelector.selectedVariantData) {
+        const unitPrice = window.productSelector.calculateTotalPrice().totalPrice;
+        const totalPrice = unitPrice * quantity;
+        previewQty.textContent = quantity;
+        previewTotal.textContent = `₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        previewContainer.classList.remove('hidden');
+      } else {
+        previewContainer.classList.add('hidden');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      validateQuantity();
+      const quantityInput = document.getElementById('quantityInput');
+      if (quantityInput) {
+        quantityInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur();
+          }
+        });
+        quantityInput.addEventListener('input', updateQuantityPreview);
+      }
+    });
+  </script>
+
+  <style>
+    #quantityInput::-webkit-outer-spin-button,
+    #quantityInput::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    #quantityInput[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</section>
 
               <!-- SKU Info Display Section (Below size buttons) -->
               <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200">
@@ -2586,6 +2919,13 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
         // Update price display next to product name
         this.updateProductHeaderPrice();
+
+        // ✅ UPDATE QUANTITY PREVIEW WHEN VARIANT IS SELECTED
+        setTimeout(() => {
+          if (typeof updateQuantityPreview === 'function') {
+            updateQuantityPreview();
+          }
+        }, 100);
       }
 
       unselectVariant(button) {
@@ -2902,8 +3242,9 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           formData.append('selected_color', this.selectedColorData.name);
         }
 
-        // Add quantity (default to 1 if not specified)
-        const quantity = document.querySelector('[name="quantity"]')?.value || '1';
+        // ✅ GET QUANTITY FROM INPUT (NOT FROM FORM FIELD)
+        const quantityInput = document.getElementById('quantityInput');
+        const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
         formData.append('quantity', quantity);
 
         // Add any additional form fields
@@ -3193,6 +3534,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
     };
   </script>
+
 </body>
 
 </html>

@@ -403,7 +403,7 @@ function getUserOnlineStatus($conn, $userId)
 </head>
 
 
-<body class="bg-orange-400">
+<body class="">
 
   <?php include '../navbar/top.php'; ?>
 
@@ -411,8 +411,8 @@ function getUserOnlineStatus($conn, $userId)
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-4 sm:mb-8">
-        <h1 class="text-2xl sm:text-4xl font-bold text-white mb-2">Customer Support</h1>
-        <p class="text-white/80 text-sm sm:text-lg px-4">Connect with our sales representatives for assistance</p>
+        <h1 class="text-2xl sm:text-4xl font-bold text-black mb-2">Customer Support</h1>
+        <p class="text-black text-sm sm:text-lg px-4">Connect with our sales representatives for assistance</p>
       </div>
 
       <?php if (!$isLoggedIn): ?>
@@ -483,7 +483,7 @@ function getUserOnlineStatus($conn, $userId)
       <?php else: ?>
 
         <!-- Main Chat Container -->
-        <div x-data="chatSupport()" x-init="init()" class="main-container rounded-2xl overflow-hidden shadow-2xl">
+        <div x-data="chatSupport()" x-init="init()" class="main-container overflow-hidden ">
 
           <!-- Mobile Menu Button (visible only on mobile) -->
           <div class="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">

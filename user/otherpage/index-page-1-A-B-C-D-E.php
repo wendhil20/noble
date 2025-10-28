@@ -546,42 +546,42 @@ handleQueryError($conn, "New Status Query");
 
     <!-- Parent Wrapper -->
     <div class="w-full flex flex-col lg:flex-row gap-1 px-2 sm:px-4  ">
-       <!-- LEFT: Main Swiper Container -->
-<section class="w-full lg:w-[65%] xl:w-[70%] overflow-hidden relative flex-shrink-0">
-    <div class="mySwiper relative w-full">
-        <div class="swiper-wrapper">
-            <?php while ($row = $slideresult->fetch_assoc()): ?>
-                <div class="swiper-slide h-[180px] xs:h-[220px] sm:h-[280px] md:h-[320px] lg:h-[280px] xl:h-[320px] relative bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden">
-                    <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
-                        alt="Discount"
-                        class="w-full h-full object-cover object-center" />
+        <!-- LEFT: Main Swiper Container -->
+        <section class="w-full lg:w-[65%] xl:w-[70%] overflow-hidden relative flex-shrink-0">
+            <div class="mySwiper relative w-full">
+                <div class="swiper-wrapper">
+                    <?php while ($row = $slideresult->fetch_assoc()): ?>
+                        <div class="swiper-slide h-[180px] xs:h-[220px] sm:h-[280px] md:h-[320px] lg:h-[280px] xl:h-[320px] relative bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden">
+                            <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
+                                alt="Discount"
+                                class="w-full h-full object-cover object-center" />
 
-                    <div class="absolute inset-0 bg-black/5"></div>
+                            <div class="absolute inset-0 bg-black/5"></div>
+                        </div>
+                    <?php endwhile; ?>
                 </div>
-            <?php endwhile; ?>
-        </div>
 
-        <div class="swiper-pagination !bottom-0 relative z-10"></div>
-    </div>
+                <div class="swiper-pagination !bottom-0 relative z-10"></div>
+            </div>
 
-    <style>
-        .mySwiper {
-            height: 100%;
-        }
-        
-        .mySwiper .swiper-slide img {
-            width: 100% !important;
-            max-width: 1450px !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            object-position: center !important;
-            margin: 0 !important;
-            display: block !important;
-        }
+            <style>
+                .mySwiper {
+                    height: 100%;
+                }
 
-        /* Remove all media query sizing - let it fill 100% always */
-    </style>
-</section>
+                .mySwiper .swiper-slide img {
+                    width: 100% !important;
+                    max-width: 1450px !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                    object-position: center !important;
+                    margin: 0 !important;
+                    display: block !important;
+                }
+
+                /* Remove all media query sizing - let it fill 100% always */
+            </style>
+        </section>
 
         <!-- RIGHT: 2 Images Container -->
         <section class="w-full lg:w-[35%] xl:w-[30%] flex-shrink-0">
@@ -982,7 +982,7 @@ handleQueryError($conn, "New Status Query");
     </section>
 
 
-<section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
+    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
 
         <!-- Header with proper alignment -->
         <div class="flex items-center justify-between mb-6 mt-2" data-aos="fade-up">
@@ -997,12 +997,12 @@ handleQueryError($conn, "New Status Query");
             <!-- Right Side: Compare Button + See All -->
             <div class="flex items-center gap-3">
                 <!-- Compare Button (Shows when products selected) -->
-                <button id="compareBtn" onclick="goToComparison()" 
+                <button id="compareBtn" onclick="goToComparison()"
                     class="hidden items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white transition-all duration-300 text-sm font-normal">
                     <i class="fas fa-balance-scale"></i>
                     Compare (<span id="compareCount">0</span>)
                 </button>
-                
+
                 <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
                     See All
                     <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
@@ -1057,12 +1057,12 @@ handleQueryError($conn, "New Status Query");
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
                                 <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px]">
-                                    
+
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
                                         <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
-                                            <input type="checkbox" 
-                                                class="compare-checkbox hidden" 
+                                            <input type="checkbox"
+                                                class="compare-checkbox hidden"
                                                 data-product-id="<?= (int)$row['id'] ?>"
                                                 onchange="toggleCompare(this, <?= (int)$row['id'] ?>)">
                                             <i class="fas fa-plus text-black text-xs compare-icon"></i>
@@ -1169,30 +1169,32 @@ handleQueryError($conn, "New Status Query");
 
         <style>
             /* Compare checkbox styles */
-            .compare-checkbox:checked ~ .compare-icon {
+            .compare-checkbox:checked~.compare-icon {
                 display: none !important;
             }
-            
-            .compare-checkbox:checked ~ .compare-icon-checked {
+
+            .compare-checkbox:checked~.compare-icon-checked {
                 display: inline-block !important;
             }
-            
+
             .compare-icon-checked {
                 display: none;
             }
-            
-            .compare-checkbox:checked ~ .compare-icon,
-            .compare-checkbox:checked ~ .compare-icon-checked {
+
+            .compare-checkbox:checked~.compare-icon,
+            .compare-checkbox:checked~.compare-icon-checked {
                 animation: scaleIn 0.3s ease;
             }
-            
+
             @keyframes scaleIn {
                 0% {
                     transform: scale(0);
                 }
+
                 50% {
                     transform: scale(1.2);
                 }
+
                 100% {
                     transform: scale(1);
                 }
@@ -1270,7 +1272,7 @@ handleQueryError($conn, "New Status Query");
             function updateCompareButton() {
                 const compareBtn = document.getElementById('compareBtn');
                 const compareCount = document.getElementById('compareCount');
-                
+
                 if (compareProducts.length > 0) {
                     compareBtn.classList.remove('hidden');
                     compareBtn.classList.add('flex');
@@ -1285,7 +1287,7 @@ handleQueryError($conn, "New Status Query");
             function toggleCompare(checkbox, productId) {
                 // Prevent click from propagating to the link
                 event.stopPropagation();
-                
+
                 if (checkbox.checked) {
                     // Add to comparison (NO LIMIT - compare unlimited products)
                     if (!compareProducts.includes(productId)) {
@@ -1297,7 +1299,7 @@ handleQueryError($conn, "New Status Query");
                     compareProducts = compareProducts.filter(id => id !== productId);
                     showToast('Product removed from comparison');
                 }
-                
+
                 // Save to localStorage
                 localStorage.setItem('compareProducts', JSON.stringify(compareProducts));
                 updateCompareButton();
@@ -1309,7 +1311,7 @@ handleQueryError($conn, "New Status Query");
                     alert('Please select at least 2 products to compare.');
                     return;
                 }
-                
+
                 window.location.href = 'index-shopcompare-C.php?products=' + compareProducts.join(',');
             }
 
@@ -1319,9 +1321,9 @@ handleQueryError($conn, "New Status Query");
                 const toast = document.createElement('div');
                 toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
                 toast.textContent = message;
-                
+
                 document.body.appendChild(toast);
-                
+
                 // Remove after 2 seconds
                 setTimeout(() => {
                     toast.style.animation = 'slide-down 0.3s ease';
@@ -1338,7 +1340,7 @@ handleQueryError($conn, "New Status Query");
                         checkbox.checked = true;
                     }
                 });
-                
+
                 updateCompareButton();
             });
 
@@ -1806,11 +1808,11 @@ handleQueryError($conn, "New Status Query");
     <section class="px-2 sm:px-4 lg:px-6 py-3 sm:py-2">
         <!-- Header first -->
         <div class="flex items-center justify-between gap-4 mb-2 mt-2" data-aos="fade-up">
-    <!-- Left Side: Bar + Title -->
+            <!-- Left Side: Bar + Title -->
             <div class="flex items-center gap-3">
                 <div class="w-1 h-8 bg-neutral-900"></div>
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
-                   Bed Furniture
+                    Bed Furniture
                 </h2>
             </div>
 
@@ -1955,7 +1957,7 @@ handleQueryError($conn, "New Status Query");
     <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-2">
         <!-- Header first -->
         <div class="flex items-center gap-2 mb-2 mt-2" data-aos="fade-up">
-        <!-- Left Side: Bar + Title -->
+            <!-- Left Side: Bar + Title -->
             <div class="flex items-center gap-3">
                 <div class="w-1 h-8 bg-neutral-900"></div>
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
@@ -2412,192 +2414,198 @@ handleQueryError($conn, "New Status Query");
         }
     </style>
 
-   <!-- Featured Categories Section - Vertical Carousel -->
-<section class="w-full relative overflow-hidden bg-white py-12">
-    <!-- Header -->
-    <div class="text-center mb-8 px-4">
-        <h2 class="text-4xl md:text-5xl font-bold text-black mb-2 tracking-tight">Featured Collection</h2>
-        <p class="text-gray-600 text-lg">Explore our premium categories</p>
-    </div>
+    <!-- Featured Categories Section - Vertical Carousel -->
+    <section class="w-full relative overflow-hidden bg-white py-12">
+        <!-- Header -->
+        <div class="text-center mb-8 px-4">
+            <h2 class="text-4xl md:text-5xl font-bold text-black mb-2 tracking-tight">Featured Collection</h2>
+            <p class="text-gray-600 text-lg">Explore our premium categories</p>
+        </div>
 
-    <!-- Carousel Container -->
-    <div class="flex h-[600px] w-full" id="carouselContainer">
-        <!-- Doors Category -->
-        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
-            onclick="loadCategoryProducts('doors')">
-            <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-contain parallax-img">
-            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
-                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Doors</h3>
-                <p class="text-base drop-shadow-lg">Browse collection</p>
+        <!-- Carousel Container -->
+        <div class="flex h-[600px] w-full" id="carouselContainer">
+            <!-- Doors Category -->
+            <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+                onclick="loadCategoryProducts('doors')">
+                <img src="../img/category/7.png" alt="Doors" class="w-full h-full object-contain parallax-img">
+                <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                    <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Doors</h3>
+                    <p class="text-base drop-shadow-lg">Browse collection</p>
+                </div>
+            </div>
+
+            <!-- Aircon Category -->
+            <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+                onclick="loadCategoryProducts('aircon')">
+                <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-contain parallax-img">
+                <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                    <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Aircon</h3>
+                    <p class="text-base drop-shadow-lg">Browse collection</p>
+                </div>
+            </div>
+
+            <!-- Bathroom Fixtures Category -->
+            <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+                onclick="loadCategoryProducts('bathroomfixtures')">
+                <img src="../img/category/10.png" alt="Bathroom Fixtures" class="w-full h-full object-contain parallax-img">
+                <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                    <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Bathroom</h3>
+                    <p class="text-base drop-shadow-lg">Browse collection</p>
+                </div>
+            </div>
+
+            <!-- Tiles Category -->
+            <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
+                onclick="loadCategoryProducts('tiles')">
+                <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-contain parallax-img">
+                <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
+                    <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Tiles</h3>
+                    <p class="text-base drop-shadow-lg">Browse collection</p>
+                </div>
             </div>
         </div>
+    </section>
 
-        <!-- Aircon Category -->
-        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
-            onclick="loadCategoryProducts('aircon')">
-            <img src="../img/category/6.png" alt="Aircon" class="w-full h-full object-contain parallax-img">
-            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
-                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Aircon</h3>
-                <p class="text-base drop-shadow-lg">Browse collection</p>
+    <!-- Sidebar Overlay (Hidden by default) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar for Products -->
+    <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- Sidebar Header (Fixed) -->
+        <div class="bg-black border-b p-4 flex justify-between items-center flex-shrink-0">
+            <div class="text-white">
+                <h2 class="text-xl capitalize" id="sidebarTitle">Products</h2>
+                <p class="text-sm" id="sidebarSubtitle">Loading...</p>
+            </div>
+            <button onclick="closeSidebar()" class="text-white hover:text-gray-300 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Scroll Buttons Container -->
+        <div class="flex gap-2 p-2 bg-gray-100 flex-shrink-0">
+            <button id="scrollUpBtn" onclick="scrollSidebarUp()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors hidden" title="Scroll Up">
+                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
+            <button id="scrollDownBtn" onclick="scrollSidebarDown()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors" title="Scroll Down">
+                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Sidebar Content (Scrollable) -->
+        <div id="sidebarContent" class="flex-1 overflow-y-hidden p-4">
+            <div class="flex justify-center items-center h-40">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
         </div>
-
-        <!-- Bathroom Fixtures Category -->
-        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
-            onclick="loadCategoryProducts('bathroomfixtures')">
-            <img src="../img/category/10.png" alt="Bathroom Fixtures" class="w-full h-full object-contain parallax-img">
-            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
-                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Bathroom</h3>
-                <p class="text-base drop-shadow-lg">Browse collection</p>
-            </div>
-        </div>
-
-        <!-- Tiles Category -->
-        <div class="relative flex-shrink-0 w-full md:w-1/4 h-full group cursor-pointer overflow-hidden transition-all duration-500 hover:flex-grow"
-            onclick="loadCategoryProducts('tiles')">
-            <img src="../img/category/8.png" alt="Tiles" class="w-full h-full object-contain parallax-img">
-            <div class="absolute inset-0 bg-black bg-opacity-50 group-hover:bg-opacity-15 text-white group-hover:text-black transition-all duration-300 flex flex-col items-center justify-end p-8">
-                <h3 class="text-4xl font-bold drop-shadow-2xl mb-2">Tiles</h3>
-                <p class="text-base drop-shadow-lg">Browse collection</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Sidebar Overlay (Hidden by default) -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
-
-<!-- Sidebar for Products -->
-<div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
-    <!-- Sidebar Header (Fixed) -->
-    <div class="bg-black border-b p-4 flex justify-between items-center flex-shrink-0">
-        <div class="text-white">
-            <h2 class="text-xl capitalize" id="sidebarTitle">Products</h2>
-            <p class="text-sm" id="sidebarSubtitle">Loading...</p>
-        </div>
-        <button onclick="closeSidebar()" class="text-white hover:text-gray-300 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
     </div>
 
-    <!-- Scroll Buttons Container -->
-    <div class="flex gap-2 p-2 bg-gray-100 flex-shrink-0">
-        <button id="scrollUpBtn" onclick="scrollSidebarUp()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors hidden" title="Scroll Up">
-            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-            </svg>
-        </button>
-        <button id="scrollDownBtn" onclick="scrollSidebarDown()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors" title="Scroll Down">
-            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-        </button>
-    </div>
+    <script>
+        const scrollStep = 150;
 
-    <!-- Sidebar Content (Scrollable) -->
-    <div id="sidebarContent" class="flex-1 overflow-y-hidden p-4">
-        <div class="flex justify-center items-center h-40">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-        </div>
-    </div>
-</div>
+        function loadCategoryProducts(category) {
+            document.getElementById('sidebarOverlay').classList.remove('hidden');
+            document.getElementById('productSidebar').classList.remove('translate-x-full');
 
-<script>
-    const scrollStep = 150;
+            const categoryNames = {
+                'doors': 'Doors',
+                'aircon': 'Aircon',
+                'bathroomfixtures': 'Bathroom Fixtures',
+                'tiles': 'Tiles'
+            };
 
-    function loadCategoryProducts(category) {
-        document.getElementById('sidebarOverlay').classList.remove('hidden');
-        document.getElementById('productSidebar').classList.remove('translate-x-full');
-
-        const categoryNames = {
-            'doors': 'Doors',
-            'aircon': 'Aircon',
-            'bathroomfixtures': 'Bathroom Fixtures',
-            'tiles': 'Tiles'
-        };
-        
-        document.getElementById('sidebarTitle').textContent = categoryNames[category] || category;
-        document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
-        document.getElementById('sidebarContent').innerHTML = `
+            document.getElementById('sidebarTitle').textContent = categoryNames[category] || category;
+            document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+            document.getElementById('sidebarContent').innerHTML = `
             <div class="flex justify-center items-center h-40">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
         `;
 
-        document.getElementById('sidebarContent').scrollTop = 0;
-        updateScrollButtons();
+            document.getElementById('sidebarContent').scrollTop = 0;
+            updateScrollButtons();
 
-        fetch('index-index_fetch_category_products-A.php?category=' + category)
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('sidebarContent').innerHTML = data;
-                document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
-                updateScrollButtons();
-            })
-            .catch(error => {
-                document.getElementById('sidebarContent').innerHTML = `
+            fetch('index-index_fetch_category_products-A.php?category=' + category)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('sidebarContent').innerHTML = data;
+                    document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
+                    updateScrollButtons();
+                })
+                .catch(error => {
+                    document.getElementById('sidebarContent').innerHTML = `
                     <div class="text-center text-red-500 p-4">
                         <p>Error loading products. Please try again.</p>
                     </div>
                 `;
+                });
+        }
+
+        function scrollSidebarUp() {
+            const content = document.getElementById('sidebarContent');
+            content.scrollBy({
+                top: -scrollStep,
+                behavior: 'smooth'
             });
-    }
-
-    function scrollSidebarUp() {
-        const content = document.getElementById('sidebarContent');
-        content.scrollBy({ top: -scrollStep, behavior: 'smooth' });
-        setTimeout(updateScrollButtons, 400);
-    }
-
-    function scrollSidebarDown() {
-        const content = document.getElementById('sidebarContent');
-        content.scrollBy({ top: scrollStep, behavior: 'smooth' });
-        setTimeout(updateScrollButtons, 400);
-    }
-
-    function updateScrollButtons() {
-        const content = document.getElementById('sidebarContent');
-        const scrollUpBtn = document.getElementById('scrollUpBtn');
-        const scrollDownBtn = document.getElementById('scrollDownBtn');
-
-        if (content.scrollTop > 0) {
-            scrollUpBtn.classList.remove('hidden');
-        } else {
-            scrollUpBtn.classList.add('hidden');
+            setTimeout(updateScrollButtons, 400);
         }
 
-        if (content.scrollTop < content.scrollHeight - content.clientHeight - 10) {
-            scrollDownBtn.classList.remove('hidden');
-        } else {
-            scrollDownBtn.classList.add('hidden');
+        function scrollSidebarDown() {
+            const content = document.getElementById('sidebarContent');
+            content.scrollBy({
+                top: scrollStep,
+                behavior: 'smooth'
+            });
+            setTimeout(updateScrollButtons, 400);
         }
-    }
 
-    function closeSidebar() {
-        document.getElementById('sidebarOverlay').classList.add('hidden');
-        document.getElementById('productSidebar').classList.add('translate-x-full');
-    }
+        function updateScrollButtons() {
+            const content = document.getElementById('sidebarContent');
+            const scrollUpBtn = document.getElementById('scrollUpBtn');
+            const scrollDownBtn = document.getElementById('scrollDownBtn');
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeSidebar();
+            if (content.scrollTop > 0) {
+                scrollUpBtn.classList.remove('hidden');
+            } else {
+                scrollUpBtn.classList.add('hidden');
+            }
+
+            if (content.scrollTop < content.scrollHeight - content.clientHeight - 10) {
+                scrollDownBtn.classList.remove('hidden');
+            } else {
+                scrollDownBtn.classList.add('hidden');
+            }
         }
-    });
 
-    document.getElementById('sidebarContent').addEventListener('scroll', updateScrollButtons);
-</script>
+        function closeSidebar() {
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+            document.getElementById('productSidebar').classList.add('translate-x-full');
+        }
 
-<style>
-    .category-box {
-        transition: all 0.3s ease;
-    }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        });
 
-    .category-box:active {
-        transform: scale(0.98);
-    }
-</style>
+        document.getElementById('sidebarContent').addEventListener('scroll', updateScrollButtons);
+    </script>
+
+    <style>
+        .category-box {
+            transition: all 0.3s ease;
+        }
+
+        .category-box:active {
+            transform: scale(0.98);
+        }
+    </style>
 
     <!-- Top Sales Section -->
     <section class="px-4 py-10">

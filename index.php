@@ -6,7 +6,7 @@
   <title>Redirecting...</title>
   <script>
     // Magre-redirect agad sa user/otherpage/index.php
-    window.location.href = "user/otherpage/index-page-1";
+    window.location.href = "user/otherpage/index-page-1-A-B-C-D-E";
   </script>
 </head>
 <body>

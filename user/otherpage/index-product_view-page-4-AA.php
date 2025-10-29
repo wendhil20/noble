@@ -129,7 +129,7 @@ while ($row = $colors_result->fetch_assoc()) {
 }
 $stmt->close();
 
-// ✅ STEP 4: FETCH FROM PRODUCT_TYPES AND PRODUCT_VARIANTS TABLES
+// ✅ STEP 4: FETCH FROM PRODUCT_TYPES AND PRODUCT_VARIANTS TABLES (FIXED)
 $stmt = $conn->prepare("
   SELECT 
     pt.id as type_id,
@@ -143,7 +143,10 @@ $stmt = $conn->prepare("
     pv.percent, 
     pv.discount, 
     pv.image as variant_image,
-    pv.sku_info
+    pv.sku_info,
+    pv.width,
+    pv.height,
+    pv.length
   FROM product_types pt
   LEFT JOIN product_variants pv ON pt.id = pv.type_id 
   WHERE pt.product_id = ?
@@ -165,11 +168,24 @@ while ($row = $types_result->fetch_assoc()) {
     ];
   }
   if ($row['variant_id']) {
-    $types_data[$type_name]['variants'][] = $row;
+    // ✅ ADD dimensions to variant data
+    $types_data[$type_name]['variants'][] = [
+      'variant_id' => $row['variant_id'],
+      'namevariant' => $row['namevariant'],
+      'color' => $row['color'],
+      'size' => $row['size'],
+      'variant_price' => $row['variant_price'],
+      'percent' => $row['percent'],
+      'discount' => $row['discount'],
+      'variant_image' => $row['variant_image'],
+      'sku_info' => $row['sku_info'],
+      'width' => $row['width'] ?? 0,
+      'height' => $row['height'] ?? 0,
+      'length' => $row['length'] ?? 0
+    ];
   }
 }
 $stmt->close();
-
 // ✅ FETCH RELATED PRODUCTS
 $codename = $product['codename'];
 $stmt = $conn->prepare("
@@ -903,7 +919,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
               <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
                 <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
                   <?php
-                  // ✅ USE ORIGINAL_PRODUCT if available, fallback to $product
                   $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                   echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
                   ?>
@@ -929,7 +944,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
               </div>
 
               <div class="flex flex-wrap gap-2 mb-3">
-                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium uppercase">
                   <?php
                   $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                   echo htmlspecialchars($safe_product['codename']);
@@ -940,7 +955,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
             <!-- Product Description -->
             <div>
-
               <p class="text-gray-700 leading-relaxed text-sm lg:text-base">
                 <?= htmlspecialchars($safe_product['description'] ?? 'No description available.') ?>
               </p>
@@ -960,13 +974,13 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
             </div>
           </div>
         </div>
-        <!-- Mobile Sidebar Toggle Button (Smaller Version) -->
+
+        <!-- Mobile Sidebar Toggle Button -->
         <button id="mobileSidebarToggle"
           class="lg:hidden fixed bottom-3 right-3 z-[90] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:bg-orange-600 transition-all active:scale-95">
           <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
           <span>Add to Cart</span>
         </button>
-
 
         <!-- Overlay for mobile sidebar -->
         <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden lg:hidden"></div>
@@ -985,22 +999,24 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
             </button>
           </div>
 
+          <div class="p-2 flex flex-col space-y-6 lg:space-y-8">
 
-          <div class="p-4 lg:p-8 flex flex-col">
-
-            <!-- STEP 1: TYPE SELECTION FIRST -->
+            <!-- STEP 1: TYPE SELECTION -->
             <?php if (!empty($types_data)): ?>
-              <div class="mb-6 lg:mb-10">
+              <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-base lg:text-xl  text-gray-800">Click Item</h3>
-                  <div class="text-xs lg:text-sm text-gray-500">Required</div>
+                  <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                    <span class="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs rounded-full mr-2">1</span>
+                    Click Item Type
+                  </h3>
+                  <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   <?php foreach ($types_data as $index => $type): ?>
                     <button type="button"
                       onclick="showVariants(<?= $type['id'] ?>, '<?= addslashes($type['name']) ?>')"
-                      class="type-btn border border-gray-300 p-2 hover:border-orange-500 transition-all duration-200 bg-white rounded focus:outline-none focus:ring-2 focus:ring-orange-300">
+                      class="type-btn border-2 border-gray-300 p-2 hover:border-orange-500 transition-all duration-200 bg-white rounded focus:outline-none focus:ring-2 focus:ring-orange-300">
 
                       <div class="aspect-square mb-1.5 overflow-hidden bg-gray-50 flex items-center justify-center relative rounded">
                         <?php if (!empty($type['image']) && file_exists("../../" . $type['image'])): ?>
@@ -1030,53 +1046,52 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
             <!-- STEP 2: COLOR SELECTION -->
             <?php if (!empty($product_colors)): ?>
-              <div class="mb-6 lg:mb-10" id="color-selection-section">
+              <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
-                  <!-- Product Image - Mobile Sidebar Only -->
-                  <h3 class="text-base lg:text-xl  text-gray-800">Choose type</h3>
-                  <div class="text-xs lg:text-sm text-gray-500">Required</div>
-                    <!-- Product Image - Mobile Sidebar Only -->
-                    <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100">
-                      <div class="aspect-square w-32 mx-auto overflow-hidden">
-                        <h1 class="text-center">Display</h1>
-                        <!-- ✅ UPDATED: Sidebar image also uses first type image -->
-                        <img id="sidebar-product-image"
-                          src="../../<?= htmlspecialchars($display_image) ?>"
-                          class="w-full h-full object-contain"
-                          alt="<?= htmlspecialchars($product['product_name']) ?>">
-                      </div>
-                      <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
-                        <?= htmlspecialchars($product['product_name']) ?>
-                      </h3>
-                    </div>
+                  <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                    <span class="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs rounded-full mr-2">2</span>
+                    Choose Color
+                  </h3>
+                  <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
+                </div>
+
+                <!-- Product Image - Mobile Sidebar Only -->
+                <div class="lg:hidden py-3 px-0 bg-white border-b border-gray-100 mb-4">
+                  <div class="aspect-square w-32 mx-auto overflow-hidden">
+                    <h1 class="text-center mb-2 text-xs text-gray-600">Display</h1>
+                    <img id="sidebar-product-image"
+                      src="../../<?= htmlspecialchars($display_image) ?>"
+                      class="w-full h-full object-contain"
+                      alt="<?= htmlspecialchars($product['product_name']) ?>">
                   </div>
+                  <h3 class="text-center mt-2 font-semibold text-gray-800 text-xs line-clamp-2">
+                    <?= htmlspecialchars($product['product_name']) ?>
+                  </h3>
                 </div>
 
                 <div id="color-selection-container" class="opacity-50 pointer-events-none">
-                  <div class="p-3">
-                    <div class="max-h-60 lg:max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
-                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1" id="all-colors-grid">
-                        <?php foreach ($product_colors as $color): ?>
-                          <button type="button"
-                            onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
-                            class="color-btn border border-black hover:border-orange-500 bg-white rounded
+                  <div class="max-h-60 lg:max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1" id="all-colors-grid">
+                      <?php foreach ($product_colors as $color): ?>
+                        <button type="button"
+                          onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
+                          class="color-btn border-2 border-gray-300 hover:border-orange-500 bg-white rounded
                            px-2 py-1.5 text-xs transition-all duration-200 text-center
                            disabled:opacity-50 disabled:cursor-not-allowed w-full min-h-[32px]"
-                            data-color-id="<?= $color['id'] ?>"
-                            data-color-name="<?= addslashes($color['color_name']) ?>"
-                            data-price="<?= $color['price'] ?>"
-                            data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
-                            data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
-                            disabled>
-                            <span class="text-black block truncate text-[10px] lg:text-[11px] leading-tight uppercase"><?= htmlspecialchars($color['color_name']) ?></span>
-                          </button>
-                        <?php endforeach; ?>
-                      </div>
+                          data-color-id="<?= $color['id'] ?>"
+                          data-color-name="<?= addslashes($color['color_name']) ?>"
+                          data-price="<?= $color['price'] ?>"
+                          data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
+                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
+                          disabled>
+                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium"><?= htmlspecialchars($color['color_name']) ?></span>
+                        </button>
+                      <?php endforeach; ?>
                     </div>
                   </div>
                 </div>
 
-                <div id="color-disabled-message" class="text-center p-4 lg:p-6 bg-white rounded-lg">
+                <div id="color-disabled-message" class="text-center p-4 lg:p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                   <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
                   <p class="text-sm lg:text-base text-gray-500">Please select an item type first</p>
                 </div>
@@ -1084,13 +1099,16 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
             <?php endif; ?>
 
             <!-- STEP 3: SIZE/VARIANT SELECTION -->
-            <div class="mb-6 lg:mb-8" id="size-selection-section">
+            <div class="step-section">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base lg:text-xl text-gray-800">Choose Size</h3>
-                <div class="text-xs lg:text-sm text-gray-500">Required</div>
+                <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                  <span class="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs rounded-full mr-2">3</span>
+                  Choose Size
+                </h3>
+                <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
               </div>
 
-              <div id="variant-container" class="text-gray-500 p-4 bg-white text-center rounded-lg">
+              <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
                 <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
                 <p class="text-sm lg:text-base">Please select a color first</p>
               </div>
@@ -1098,7 +1116,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
               <?php foreach ($types_data as $type): ?>
                 <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
                   <?php if (!empty($type['variants'])): ?>
-                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1 p-3">
+                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
                       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
                         <?php foreach ($type['variants'] as $variant): ?>
                           <?php
@@ -1107,18 +1125,19 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                           $discount = floatval($variant['discount'] ?? 0);
                           $priceWithMarkup = $price + ($price * $percent / 100);
                           $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-
-                          // Parse SKU info
                           $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
                           ?>
                           <button type="button"
-                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this);"
-                            class="variant-btn border border-gray-300 hover:border-orange-500 bg-white rounded
-                       px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
+                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this);"
+                            class="variant-btn border-2 border-gray-300 hover:border-orange-500 bg-white rounded
+                   px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
                             data-price="<?= $price ?>"
                             data-percent="<?= $percent ?>"
                             data-discount="<?= $discount ?>"
                             data-variant-id="<?= $variant['variant_id'] ?>"
+                            data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
+                            data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
+                            data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
                             data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'>
                             <div class="text-gray-700 text-[11px] font-medium leading-tight">
                               <?= htmlspecialchars($variant['size']) ?>
@@ -1134,63 +1153,54 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                 </div>
               <?php endforeach; ?>
 
-
-
-              <!-- Calculator Guide Display (Only shows if guide_enabled = 1) -->
+              <!-- Calculator Guide Display -->
               <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
-                <div class="mb-4 lg:mb-6 bg-white rounded p-3 lg:p-4 ">
+                <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
                   <div class="flex items-center gap-2 mb-4">
                     <div>
-                      <h3 class="text-base text-gray-900">Area </h3>
-                      <p class="text-xs text-gray-600">Calculate required pieces for your project</p>
+                      <h3 class="text-base text-gray-900 font-semibold">Area</h3>
+                      <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
                     </div>
                   </div>
 
-                  <!-- Variant/Size Selection -->
-                  <div class="mb-4">
-                    <label class="block text-xs text-gray-900 uppercase mb-2">Select Size/Variant</label>
-                    <select id="calculatorVariantSelect" onchange="updateCalculatorDimensions()"
-                      class="w-full px-3 py-2 rounded text-sm bg-gray-50 border border-gray-200">
-                      <option value="">Choose a size...</option>
-                      <?php
-                      // Fetch variants for this product
-                      $variant_query = "SELECT id, size, width, height, length FROM product_variants WHERE product_id = ? ORDER BY size ASC";
-                      $stmt = $conn->prepare($variant_query);
-                      $stmt->bind_param("i", $product['id']);
-                      $stmt->execute();
-                      $variants_result = $stmt->get_result();
-
-                      while ($variant = $variants_result->fetch_assoc()):
-                      ?>
-                        <option value="<?= $variant['id'] ?>"
-                          data-width="<?= htmlspecialchars($variant['width']) ?>"
-                          data-height="<?= htmlspecialchars($variant['height']) ?>"
-                          data-length="<?= htmlspecialchars($variant['length']) ?>">
-                          <?= htmlspecialchars($variant['size']) ?>
-                        </option>
-                      <?php endwhile; ?>
-                    </select>
+                  <!-- Selected Size Display -->
+                  <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
+                        <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
+                      </div>
+                      <div class="text-xs text-gray-600">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Dimensions Display -->
-                  <div id="calculatorDimensionsDisplay" class="hidden mb-4">
-                    <div class="grid grid-cols-3 gap-3">
+                  <div id="calculatorDimensionsDisplay" class="mb-4">
+                    <div class="grid grid-cols-4 gap-2">
                       <div class="text-center">
                         <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
-                        <div class="bg-gray-50 rounded px-3 py-2">
-                          <div id="calcLength" class="text-sm text-gray-900">-</div>
+                        <div class="bg-gray-50 rounded px-2 py-2">
+                          <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
                         </div>
                       </div>
                       <div class="text-center">
                         <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
-                        <div class="bg-gray-50 rounded px-3 py-2">
-                          <div id="calcHeight" class="text-sm text-gray-900">-</div>
+                        <div class="bg-gray-50 rounded px-2 py-2">
+                          <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
                         </div>
                       </div>
                       <div class="text-center">
                         <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
-                        <div class="bg-gray-50 rounded px-3 py-2">
-                          <div id="calcWidth" class="text-sm text-gray-900">-</div>
+                        <div class="bg-gray-50 rounded px-2 py-2">
+                          <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
+                        <div class="bg-gray-200 rounded px-2 py-2">
+                          <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
                         </div>
                       </div>
                     </div>
@@ -1200,18 +1210,26 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                   <div class="mb-4">
                     <div class="flex items-center gap-3">
                       <div class="flex-1">
-                        <label class="block text-xs text-black mb-1">Area (m²)</label>
+                        <label class="block text-xs font-semibold text-gray-900 mb-1">
+                          <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
+                          Area (m²)
+                        </label>
                         <div class="bg-gray-50 rounded">
-                          <input type="number" id="userArea" step="0.01" placeholder="0"
-                            oninput="calculateUserPieces()"
-                            class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200">
+                          <input type="number" id="userArea" step="0.01" placeholder="Enter area"
+                            oninput="calculateFromArea()"
+                            class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
                         </div>
                       </div>
-                      <div class="text-gray-400 text-xl pt-5">=</div>
+                      <div class="text-gray-700 text-xl pt-5">
+                        <i class="fas fa-arrow-right"></i>
+                      </div>
                       <div class="flex-1">
-                        <label class="block text-xs text-black mb-1">Pcs</label>
-                        <div class="bg-gray-50 rounded">
-                          <div id="userBlocksNeeded" class="px-3 py-2 text-center text-sm text-gray-900">0</div>
+                        <label class="block text-xs font-semibold text-gray-900 mb-1">
+                          <i class="fas fa-box text-gray-700 mr-1"></i>
+                          Pieces
+                        </label>
+                        <div class="bg-gray-100 rounded border border-gray-300">
+                          <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
                         </div>
                       </div>
                     </div>
@@ -1219,19 +1237,21 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
                   <!-- Additional Results -->
                   <div id="userCalculationResults" class="hidden">
-                    <div class="grid grid-cols-2 gap-3">
-                      <div class="text-center">
-                        <label class="block text-xs text-black mb-1">Adhesive</label>
-                        <div class="bg-gray-50 rounded px-3 py-2 border border-gray-200">
-                          <div class="text-sm text-gray-900 ">
+                    <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
+                      <h4 class="text-xs font-semibold text-gray-900 mb-2">
+                        <i class="fas fa-tools text-gray-700 mr-1"></i>
+                        Additional Materials Needed
+                      </h4>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+                          <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
+                          <div class="text-sm font-bold text-gray-900">
                             <span id="userAdhesiveNeeded">0</span> pcs
                           </div>
                         </div>
-                      </div>
-                      <div class="text-center">
-                        <label class="block text-xs text-black mb-1">Brackets</label>
-                        <div class="bg-gray-50 rounded px-3 py-2 border border-gray-200">
-                          <div class="text-sm text-gray-900 ">
+                        <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+                          <label class="block text-xs text-gray-600 mb-1">Brackets</label>
+                          <div class="text-sm font-bold text-gray-900">
                             <span id="userBracketsNeeded">0</span> pcs
                           </div>
                         </div>
@@ -1244,148 +1264,310 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                   let selectedVariantDimensions = {
                     width: 0,
                     height: 0,
-                    length: 0
+                    length: 0,
+                    size: '',
+                    areaPerPiece: 0
                   };
 
-                  function updateCalculatorDimensions() {
-                    const select = document.getElementById('calculatorVariantSelect');
-                    const selectedOption = select.options[select.selectedIndex];
+                  function updateCalculatorFromVariant(button) {
+                    const width = parseFloat(button.dataset.width) || 0;
+                    const height = parseFloat(button.dataset.height) || 0;
+                    const length = parseFloat(button.dataset.length) || 0;
+                    const size = button.querySelector('.text-gray-700').textContent.trim();
 
-                    if (selectedOption.value) {
-                      const width = parseFloat(selectedOption.dataset.width) || 0;
-                      const height = parseFloat(selectedOption.dataset.height) || 0;
-                      const length = parseFloat(selectedOption.dataset.length) || 0;
+                    // Convert mm to meters
+                    const widthM = width / 1000;
+                    const heightM = height / 1000;
+                    const areaPerPiece = widthM * heightM;
 
-                      selectedVariantDimensions = {
-                        width,
-                        height,
-                        length
-                      };
+                    // Store dimensions
+                    selectedVariantDimensions = {
+                      width,
+                      height,
+                      length,
+                      size,
+                      areaPerPiece
+                    };
 
-                      // Display dimensions
-                      document.getElementById('calcWidth').textContent = width;
-                      document.getElementById('calcHeight').textContent = height;
-                      document.getElementById('calcLength').textContent = length;
-
-                      document.getElementById('calculatorDimensionsDisplay').classList.remove('hidden');
-                    } else {
-                      document.getElementById('calculatorDimensionsDisplay').classList.add('hidden');
-                      selectedVariantDimensions = {
-                        width: 0,
-                        height: 0,
-                        length: 0
-                      };
+                    // Show calculator section
+                    const calcSection = document.getElementById('calculatorSection');
+                    if (calcSection) {
+                      calcSection.classList.remove('hidden');
                     }
 
-                    // Clear previous results
-                    document.getElementById('userCalculationResults').classList.add('hidden');
-                    document.getElementById('userArea').value = '';
-                    document.getElementById('userBlocksNeeded').textContent = '0';
+                    // SET SIZE ONCE - THIS WILL NOT CHANGE
+                    const sizeDisplay = document.getElementById('selectedSizeDisplay');
+                    if (sizeDisplay) {
+                      sizeDisplay.textContent = size;
+                    }
+
+                    // Update dimension displays
+                    const widthEl = document.getElementById('calcWidth');
+                    const heightEl = document.getElementById('calcHeight');
+                    const lengthEl = document.getElementById('calcLength');
+                    const areaEl = document.getElementById('calcAreaPerPiece');
+
+                    if (widthEl) widthEl.textContent = width;
+                    if (heightEl) heightEl.textContent = height;
+                    if (lengthEl) lengthEl.textContent = length;
+                    if (areaEl) areaEl.textContent = areaPerPiece.toFixed(4) + ' m²';
+
+                    // Clear previous calculations
+                    const areaInput = document.getElementById('userArea');
+                    const piecesDisplay = document.getElementById('piecesFromArea');
+                    const resultsSection = document.getElementById('userCalculationResults');
+
+                    if (areaInput) areaInput.value = '';
+                    if (piecesDisplay) piecesDisplay.textContent = '0';
+                    if (resultsSection) resultsSection.classList.add('hidden');
                   }
 
-                  function calculateUserPieces() {
-                    const area = parseFloat(document.getElementById('userArea').value);
+                  function calculateFromArea() {
+                    const areaInput = document.getElementById('userArea');
+                    const piecesDisplay = document.getElementById('piecesFromArea');
+                    const resultsSection = document.getElementById('userCalculationResults');
+                    const adhesiveEl = document.getElementById('userAdhesiveNeeded');
+                    const bracketsEl = document.getElementById('userBracketsNeeded');
 
-                    // Hide results if no valid input
+                    if (!areaInput || !piecesDisplay) return;
+
+                    const area = parseFloat(areaInput.value);
+
+                    // Validation
                     if (!area || area <= 0) {
-                      document.getElementById('userCalculationResults').classList.add('hidden');
-                      document.getElementById('userBlocksNeeded').textContent = '0';
+                      piecesDisplay.textContent = '0';
+                      if (resultsSection) resultsSection.classList.add('hidden');
                       return;
                     }
 
-                    if (!selectedVariantDimensions.length || !selectedVariantDimensions.height) {
-                      document.getElementById('userCalculationResults').classList.add('hidden');
-                      document.getElementById('userBlocksNeeded').textContent = '0';
+                    if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
+                      piecesDisplay.textContent = '0';
+                      if (resultsSection) resultsSection.classList.add('hidden');
                       return;
                     }
 
-                    // Convert dimensions from mm to meters
-                    // Face area = LENGTH × HEIGHT (for wall coverage)
-                    const length = selectedVariantDimensions.length / 1000; // 600mm → 0.6m
-                    const height = selectedVariantDimensions.height / 1000; // 200mm → 0.2m
+                    // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
+                    const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
 
-                    // Calculate area per block (length × height for wall face area)
-                    const areaPerBlock = length * height; // 0.6 × 0.2 = 0.12 m²
-
-                    if (areaPerBlock <= 0) {
-                      document.getElementById('userCalculationResults').classList.add('hidden');
-                      document.getElementById('userBlocksNeeded').textContent = '0';
-                      return;
-                    }
-
-                    // Calculate blocks needed (rounded up)
-                    const blocksNeeded = Math.ceil(area / areaPerBlock);
-
-                    // Adhesive (30% of AREA in sqm)
+                    // CALCULATE ADDITIONAL MATERIALS
                     const adhesiveNeeded = (area * 0.30).toFixed(2);
+                    const bracketsNeeded = Math.ceil(piecesNeeded * 0.25);
 
-                    // Brackets (25% of BLOCKS in pieces)
-                    const bracketsNeeded = Math.ceil(blocksNeeded * 0.25);
+                    // UPDATE DISPLAY - SIZE DOES NOT CHANGE
+                    piecesDisplay.textContent = piecesNeeded.toLocaleString();
 
-                    // Update display
-                    document.getElementById('userBlocksNeeded').textContent = blocksNeeded.toLocaleString();
-                    document.getElementById('userAdhesiveNeeded').textContent = adhesiveNeeded;
-                    document.getElementById('userBracketsNeeded').textContent = bracketsNeeded.toLocaleString();
+                    if (adhesiveEl) adhesiveEl.textContent = adhesiveNeeded;
+                    if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
+                    if (resultsSection) resultsSection.classList.remove('hidden');
+                  }
 
-                    // Show results
-                    document.getElementById('userCalculationResults').classList.remove('hidden');
+                  // ✅ ✅ ✅ FINAL FIX - DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUT
+                  document.addEventListener('keydown', function(e) {
+                    // ✅ GET ACTIVE ELEMENT
+                    const activeElement = document.activeElement;
+
+                    // ✅ ✅ ✅ CRITICAL FIX: CHECK IF ANY INPUT/TEXTAREA IS FOCUSED
+                    if (activeElement &&
+                      (activeElement.tagName === 'INPUT' ||
+                        activeElement.tagName === 'TEXTAREA' ||
+                        activeElement.isContentEditable)) {
+                      // ❌ ❌ ❌ DO NOTHING - LET THE USER TYPE FREELY
+                      return;
+                    }
+
+                    // ESC key to close modals (only when NOT typing)
+                    if (e.key === 'Escape') {
+                      if (typeof closeContactModal === 'function') {
+                        closeContactModal();
+                      }
+                    }
+
+                    // ✅ Number keys to select variants (ONLY when NOT in ANY input field)
+                    if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                      const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
+                      const index = parseInt(e.key) - 1;
+                      if (variantButtons[index]) {
+                        e.preventDefault(); // Prevent default number input behavior
+                        e.stopPropagation(); // Stop event from bubbling
+                        variantButtons[index].click();
+                      }
+                    }
+                  });
+
+                  // ✅ ADDITIONAL FIX: Prevent keydown on area input from triggering shortcuts
+                  const areaInput = document.getElementById('userArea');
+                  if (areaInput) {
+                    areaInput.addEventListener('keydown', function(e) {
+                      // Stop the event from propagating to document level
+                      e.stopPropagation();
+                    });
+                  }
+
+                  // CLEAR CALCULATOR FUNCTION
+                  function clearCalculator() {
+                    const calcSection = document.getElementById('calculatorSection');
+                    const areaInput = document.getElementById('userArea');
+                    const piecesDisplay = document.getElementById('piecesFromArea');
+                    const resultsSection = document.getElementById('userCalculationResults');
+
+                    if (calcSection) calcSection.classList.add('hidden');
+                    if (areaInput) areaInput.value = '';
+                    if (piecesDisplay) piecesDisplay.textContent = '0';
+                    if (resultsSection) resultsSection.classList.add('hidden');
+
+                    selectedVariantDimensions = {
+                      width: 0,
+                      height: 0,
+                      length: 0,
+                      size: '',
+                      areaPerPiece: 0
+                    };
                   }
                 </script>
               <?php endif; ?>
 
+              <!-- SKU Info Display Section -->
+              <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
+                  </div>
+                  <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
+                    <i class="fas fa-times text-lg"></i>
+                  </button>
+                </div>
 
-        <section>
-  <!-- Compact Quantity Selection -->
-  <div class="mb-3 bg-white rounded p-2">
-    <div class="flex items-center justify-center mb-2">
-      <h3 class="text-xs font-semibold text-gray-900">Quantity</h3>
-    </div>
+                <!-- Content container with collapse functionality -->
+                <div id="sku-info-content-wrapper">
+                  <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
+                    <!-- Content will be inserted here -->
+                  </div>
 
-    <!-- Quantity Controls - Compact -->
-    <div class="flex items-center justify-center gap-2">
-      <button type="button"
-        onclick="decreaseQuantity()"
-        class="w-7 h-7 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded flex items-center justify-center"
-        id="decreaseBtn">
-        <i class="fas fa-minus text-xs"></i>
-      </button>
+                  <!-- See More / See Less button -->
+                  <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
+                    <span id="toggle-sku-text">See More</span>
+                    <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
 
-      <input type="number"
-        id="quantityInput"
-        name="quantity"
-        value="1"
-        min="1"
-        max="9999"
-        class="w-16 text-center text-sm font-semibold border border-gray-300 rounded py-1 focus:outline-none focus:border-orange-500"
-        onchange="validateQuantity()"
-        oninput="validateQuantity()">
+            <!-- STEP 4: QUANTITY SELECTION -->
+            <div class="step-section">
+              <div class="flex items-center justify-center mb-3">
+                <h3 class="text-base lg:text-lg font-semibold text-gray-900">
+                  <span class="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs rounded-full mr-2">4</span>
+                  Quantity
+                </h3>
+              </div>
 
-      <button type="button"
-        onclick="increaseQuantity()"
-        class="w-7 h-7 bg-orange-500 hover:bg-orange-600 text-white rounded flex items-center justify-center"
-        id="increaseBtn">
-        <i class="fas fa-plus text-xs"></i>
-      </button>
-    </div>
+              <!-- Quantity Controls -->
+              <div class="flex items-center justify-center gap-2 mb-3">
+                <button type="button"
+                  onclick="decreaseQuantity()"
+                  class="w-9 h-9 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center justify-center transition"
+                  id="decreaseBtn">
+                  <i class="fas fa-minus text-sm"></i>
+                </button>
 
-    <!-- Quick Buttons - Smaller -->
-    <div class="mt-2 flex flex-wrap gap-1 justify-center">
-      <button type="button" onclick="setQuantity(5)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">5</button>
-      <button type="button" onclick="setQuantity(10)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">10</button>
-      <button type="button" onclick="setQuantity(25)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">25</button>
-      <button type="button" onclick="setQuantity(50)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">50</button>
-      <button type="button" onclick="setQuantity(100)" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded">100</button>
-    </div>
+                <input type="number"
+                  id="quantityInput"
+                  name="quantity"
+                  value="1"
+                  min="1"
+                  max="9999"
+                  class="w-20 text-center text-base font-semibold border-2 border-gray-300 rounded-lg py-2 focus:outline-none focus:border-orange-500"
+                  onchange="validateQuantity()"
+                  oninput="validateQuantity()">
 
-    <!-- Preview - Compact -->
-    <div id="quantityPricePreview" class="mt-2 p-1.5 hidden">
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-gray-600"><span id="previewQty">1</span> pcs:</span>
-        <span class="font-bold text-blue-600" id="previewTotal">₱0.00</span>
+                <button type="button"
+                  onclick="increaseQuantity()"
+                  class="w-9 h-9 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center transition"
+                  id="increaseBtn">
+                  <i class="fas fa-plus text-sm"></i>
+                </button>
+              </div>
+
+              <!-- Quick Buttons -->
+              <div class="flex flex-wrap gap-2 justify-center">
+                <button type="button" onclick="setQuantity(5)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">5</button>
+                <button type="button" onclick="setQuantity(10)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">10</button>
+                <button type="button" onclick="setQuantity(25)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">25</button>
+                <button type="button" onclick="setQuantity(50)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">50</button>
+                <button type="button" onclick="setQuantity(100)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">100</button>
+              </div>
+
+              <!-- Preview -->
+              <div id="quantityPricePreview" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-gray-700 font-medium"><span id="previewQty">1</span> pcs:</span>
+                  <span class="font-bold text-blue-600 text-lg" id="previewTotal">₱0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PURCHASE SECTION -->
+            <div class="mt-6 p-2 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none">
+              <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
+                <input type="hidden" name="product_id" value="<?= $product_id ?>" />
+                <input type="hidden" name="selected_color_id" id="selected_color_id">
+                <input type="hidden" name="selected_color" id="selected_color">
+                <input type="hidden" name="selected_type" id="selected_type">
+                <input type="hidden" name="selected_variant" id="selected_variant">
+                <input type="hidden" name="variant_id" id="variant_id">
+                <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
+
+                <!-- Total Price Display -->
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-2 lg:p-5 ">
+                  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                    <div>
+                      <p class="text-xs lg:text-sm text-gray-600 mb-1 font-medium">Total Price</p>
+                      <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
+                    </div>
+                    <div id="selectionStatus" class="text-xs lg:text-sm text-gray-500 sm:text-right">
+                      Complete steps 1-3 to see price
+                    </div>
+                  </div>
+                </div>
+
+                <?php if ($is_windows_category): ?>
+                  <button type="button" id="contactUsBtn" onclick="openContactModal()"
+                    disabled
+                    class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
+                    <span id="contactBtnText" class="flex items-center justify-center gap-2">
+                      <i class="fas fa-phone"></i>
+                      Complete Steps to Contact Us
+                    </span>
+                  </button>
+                <?php else: ?>
+                  <div class="flex gap-2 lg:gap-3 w-full">
+                    <button type="submit" id="addToCartBtn"
+                      disabled
+                      class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
+                      <span id="btnText" class="flex items-center justify-center gap-2">
+                        <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
+                        Add to Cart
+                      </span>
+                    </button>
+
+                    <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
+                      class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
+                      <span class="flex items-center justify-center gap-2">
+                        <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
+                        View Cart
+                      </span>
+                    </button>
+                  </div>
+                <?php endif; ?>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+<!-- JavaScript Functions -->
   <script>
     function increaseQuantity() {
       const input = document.getElementById('quantityInput');
@@ -1446,477 +1628,423 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
     }
 
+    let isExpanded = false;
+
+    function showSkuInfo(button) {
+      const display = document.getElementById('sku-info-display');
+      const content = document.getElementById('sku-info-content');
+      const toggleBtn = document.getElementById('toggle-sku-btn');
+      const skuInfoJson = button.getAttribute('data-sku-info');
+
+      isExpanded = false;
+      content.classList.remove('collapsed', 'expanded');
+      toggleBtn.classList.add('hidden');
+
+      if (!skuInfoJson) {
+        display.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const skuInfo = JSON.parse(skuInfoJson);
+        let html = '';
+
+        if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
+          html = `
+          <div class="bg-white p-4 rounded-lg">
+            <div class="whitespace-pre-wrap text-gray-800">${escapeHtml(skuInfo.notes)}</div>
+          </div>
+        `;
+        } else {
+          html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
+          for (const [key, value] of Object.entries(skuInfo)) {
+            const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+            html += `
+            <div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+              <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(label)}:</span>
+              <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
+            </div>
+          `;
+          }
+          html += '</div></div>';
+        }
+
+        content.innerHTML = html;
+        display.classList.remove('hidden');
+
+        setTimeout(() => {
+          if (content.scrollHeight > 120) {
+            content.classList.add('collapsed');
+            toggleBtn.classList.remove('hidden');
+            updateToggleButton();
+          }
+        }, 50);
+
+      } catch (e) {
+        console.error('Error parsing SKU info:', e);
+        display.classList.add('hidden');
+      }
+    }
+
+    function toggleSkuContent() {
+      const content = document.getElementById('sku-info-content');
+      isExpanded = !isExpanded;
+
+      if (isExpanded) {
+        content.classList.remove('collapsed');
+        content.classList.add('expanded');
+      } else {
+        content.classList.remove('expanded');
+        content.classList.add('collapsed');
+      }
+
+      updateToggleButton();
+    }
+
+    function updateToggleButton() {
+      const toggleText = document.getElementById('toggle-sku-text');
+      const toggleIcon = document.getElementById('toggle-sku-icon');
+
+      if (isExpanded) {
+        toggleText.textContent = 'See Less';
+        toggleIcon.classList.remove('fa-chevron-down');
+        toggleIcon.classList.add('fa-chevron-up');
+      } else {
+        toggleText.textContent = 'See More';
+        toggleIcon.classList.remove('fa-chevron-up');
+        toggleIcon.classList.add('fa-chevron-down');
+      }
+    }
+
+    function hideSkuInfo() {
+      const display = document.getElementById('sku-info-display');
+      display.classList.add('hidden');
+      isExpanded = false;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ✅ ✅ ✅ FIXED VERSION - Prevents Enter key and keyboard shortcuts
     document.addEventListener('DOMContentLoaded', function() {
       validateQuantity();
       const quantityInput = document.getElementById('quantityInput');
       if (quantityInput) {
-        quantityInput.addEventListener('keypress', function(e) {
+        // ✅ Prevent ALL keyboard events from bubbling up
+        quantityInput.addEventListener('keydown', function(e) {
+          e.stopPropagation(); // Prevent shortcuts from triggering
           if (e.key === 'Enter') {
             e.preventDefault();
             this.blur();
+            return false;
           }
         });
+        
+        // ✅ Double protection for Enter key
+        quantityInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            return false;
+          }
+        });
+        
         quantityInput.addEventListener('input', updateQuantityPreview);
       }
     });
   </script>
 
   <style>
+    /* Step Section Spacing */
+    .step-section {
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .step-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    @media (min-width: 1024px) {
+      .step-section {
+        padding-bottom: 2rem;
+        margin-bottom: 2rem;
+      }
+    }
+
+    /* Custom scrollbar styling */
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+
+    /* Selected state for buttons */
+    .type-btn.selected,
+    .color-btn.selected,
+    .variant-btn.selected {
+      border-color: #f97316 !important;
+      background-color: #fff7ed !important;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+
+    /* Smooth slide animation */
+    #sku-info-display {
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Collapsed state */
+    #sku-info-content.collapsed {
+      max-height: 120px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #sku-info-content.collapsed::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(to bottom, transparent, #f9fafb);
+      pointer-events: none;
+    }
+
+    #sku-info-content.expanded {
+      max-height: none;
+    }
+
+    /* Remove spinner from number input */
     #quantityInput::-webkit-outer-spin-button,
     #quantityInput::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
+
     #quantityInput[type=number] {
       -moz-appearance: textfield;
     }
   </style>
-</section>
 
-              <!-- SKU Info Display Section (Below size buttons) -->
-              <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200">
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
-                  </div>
-                  <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
-                    <i class="fas fa-times text-lg"></i>
-                  </button>
-                </div>
 
-                <!-- Content container with collapse functionality -->
-                <div id="sku-info-content-wrapper">
-                  <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
-                    <!-- Content will be inserted here -->
-                  </div>
+  <!-- Contact Modal -->
+  <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
+      <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
 
-                  <!-- See More / See Less button -->
-                  <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
-                    <span id="toggle-sku-text">See More</span>
-                    <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
+      <div class="mb-6">
+        <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
+        <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
+      </div>
 
-            <style>
-              /* Custom scrollbar styling */
-              .scrollbar-thin::-webkit-scrollbar {
-                width: 6px;
-              }
+      <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+        <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
+        <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">No specific options selected</div>
+        <div id="selectedPriceText" class="text-lg font-bold text-green-600"></div>
+      </div>
 
-              .scrollbar-thin::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 10px;
-              }
+      <div class="space-y-4">
+        <a id="emailLink"
+          href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
+          class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+          <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
+        </a>
 
-              .scrollbar-thin::-webkit-scrollbar-thumb {
-                background: #d1d5db;
-                border-radius: 10px;
-              }
-
-              .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-                background: #9ca3af;
-              }
-
-              /* Smooth slide animation */
-              #sku-info-display {
-                animation: slideDown 0.3s ease-out;
-              }
-
-              @keyframes slideDown {
-                from {
-                  opacity: 0;
-                  transform: translateY(-10px);
-                }
-
-                to {
-                  opacity: 1;
-                  transform: translateY(0);
-                }
-              }
-
-              /* Collapsed state */
-              #sku-info-content.collapsed {
-                max-height: 120px;
-                overflow: hidden;
-                position: relative;
-              }
-
-              #sku-info-content.collapsed::after {
-                content: '';
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 40px;
-                background: linear-gradient(to bottom, transparent, #f9fafb);
-                pointer-events: none;
-              }
-
-              #sku-info-content.expanded {
-                max-height: none;
-              }
-            </style>
-
-            <script>
-              let isExpanded = false;
-
-              function showSkuInfo(button) {
-                const display = document.getElementById('sku-info-display');
-                const content = document.getElementById('sku-info-content');
-                const toggleBtn = document.getElementById('toggle-sku-btn');
-                const skuInfoJson = button.getAttribute('data-sku-info');
-
-                // Reset state
-                isExpanded = false;
-                content.classList.remove('collapsed', 'expanded');
-                toggleBtn.classList.add('hidden');
-
-                // If no SKU info, hide the display
-                if (!skuInfoJson) {
-                  display.classList.add('hidden');
-                  return;
-                }
-
-                try {
-                  const skuInfo = JSON.parse(skuInfoJson);
-
-                  // Build content HTML
-                  let html = '';
-
-                  // Check if it's plain text (only has 'notes' field)
-                  if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
-                    html = `
-        <div class="bg-white p-4 rounded-lg">
-          <div class="whitespace-pre-wrap text-gray-800">${escapeHtml(skuInfo.notes)}</div>
-        </div>
-      `;
-                  } else {
-                    // Structured data display as list
-                    html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
-
-                    for (const [key, value] of Object.entries(skuInfo)) {
-                      const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
-                      html += `
-          <div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
-            <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(label)}:</span>
-            <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
-          </div>
-        `;
-                    }
-
-                    html += '</div></div>';
-                  }
-
-                  content.innerHTML = html;
-                  display.classList.remove('hidden');
-
-                  // Check if content height exceeds 120px and show toggle button
-                  setTimeout(() => {
-                    if (content.scrollHeight > 120) {
-                      content.classList.add('collapsed');
-                      toggleBtn.classList.remove('hidden');
-                      updateToggleButton();
-                    }
-                  }, 50);
-
-                } catch (e) {
-                  console.error('Error parsing SKU info:', e);
-                  display.classList.add('hidden');
-                }
-              }
-
-              function toggleSkuContent() {
-                const content = document.getElementById('sku-info-content');
-                isExpanded = !isExpanded;
-
-                if (isExpanded) {
-                  content.classList.remove('collapsed');
-                  content.classList.add('expanded');
-                } else {
-                  content.classList.remove('expanded');
-                  content.classList.add('collapsed');
-                }
-
-                updateToggleButton();
-              }
-
-              function updateToggleButton() {
-                const toggleText = document.getElementById('toggle-sku-text');
-                const toggleIcon = document.getElementById('toggle-sku-icon');
-
-                if (isExpanded) {
-                  toggleText.textContent = 'See Less';
-                  toggleIcon.classList.remove('fa-chevron-down');
-                  toggleIcon.classList.add('fa-chevron-up');
-                } else {
-                  toggleText.textContent = 'See More';
-                  toggleIcon.classList.remove('fa-chevron-up');
-                  toggleIcon.classList.add('fa-chevron-down');
-                }
-              }
-
-              function hideSkuInfo() {
-                const display = document.getElementById('sku-info-display');
-                display.classList.add('hidden');
-                isExpanded = false;
-              }
-
-              function escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-              }
-            </script>
-            <!-- PURCHASE SECTION -->
-            <div class="mt-4 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none p-4">
-              <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
-                <input type="hidden" name="product_id" value="<?= $product_id ?>" />
-                <input type="hidden" name="selected_color_id" id="selected_color_id">
-                <input type="hidden" name="selected_color" id="selected_color">
-                <input type="hidden" name="selected_type" id="selected_type">
-                <input type="hidden" name="selected_variant" id="selected_variant">
-                <input type="hidden" name="variant_id" id="variant_id">
-                <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
-
-                <!-- Total Price Display -->
-                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-3 lg:p-4 border border-green-200">
-                  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                    <div>
-                      <p class="text-xs lg:text-sm text-gray-600 mb-1">Total Price</p>
-                      <p id="totalPrice" class="text-xl lg:text-3xl text-green-600">₱0.00</p>
-                    </div>
-                    <div id="selectionStatus" class="text-xs lg:text-sm text-gray-500 sm:text-right">
-                      Follow steps 1-3 to see total price
-                    </div>
-                  </div>
-                </div>
-
-                <?php if ($is_windows_category): ?>
-                  <button type="button" id="contactUsBtn" onclick="openContactModal()"
-                    disabled
-                    class="w-full py-3 lg:py-4 text-sm lg:text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 rounded-lg">
-                    <span id="contactBtnText" class="flex items-center justify-center gap-2">
-                      <i class="fas fa-phone"></i>
-                      Complete Steps 1-3 to Contact Us
-                    </span>
-                  </button>
-                <?php else: ?>
-                  <div class="flex gap-2 lg:gap-3 w-full">
-                    <button type="submit" id="addToCartBtn"
-                      disabled
-                      class="flex-1 py-2.5 lg:py-4  text-xs lg:text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
-                      <span id="btnText" class="flex items-center justify-center gap-1 lg:gap-2">
-                        <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
-                        Add to Cart
-                      </span>
-                    </button>
-
-                    <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
-                      class="flex-1 py-2.5 lg:py-4  text-xs lg:text-lg transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
-                      <span class="flex items-center justify-center gap-1 lg:gap-2">
-                        <i class="fas fa-shopping-cart text-xs lg:text-base"></i>
-                        View Cart
-                      </span>
-                    </button>
-                  </div>
-                <?php endif; ?>
-              </form>
-            </div>
-          </div>
+        <div class="text-center">
+          <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
+          <a href="tel:+639922394563" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
+            <i class="fas fa-phone mr-2"></i>(02) 8822-1295 / +63992-239-4563
+          </a>
         </div>
 
-        <!-- Contact Modal -->
-        <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-          <div class="bg-white rounded-xl p-6 lg:p-8 max-w-md w-full mx-4 relative">
-            <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
+        <a href="https://wa.me/639922394563" target="_blank"
+          class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
+          <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
+        </a>
+      </div>
 
-            <div class="mb-6">
-              <h3 class="text-xl lg:text-2xl font-bold text-gray-800 mb-2">Contact Us for Quote</h3>
-              <p class="text-gray-600 text-sm">Get a personalized quote for your selected windows.</p>
-            </div>
+      <div class="mt-6 text-center text-sm text-gray-500">
+        <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
+      </div>
+    </div>
+  </div>
 
-            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h4 class="font-semibold text-gray-700 mb-2">Product: <?= htmlspecialchars($product['product_name']) ?></h4>
-              <div id="selectedOptionsText" class="text-sm text-gray-600 mb-2">No specific options selected</div>
-              <div id="selectedPriceText" class="text-lg font-bold text-green-600"></div>
-            </div>
+  <style>
+    /* Sidebar animations */
+    #productOptionsContainer.sidebar-open {
+      transform: translateX(0);
+    }
 
-            <div class="space-y-4">
-              <a id="emailLink"
-                href="mailto:noblehomeconst.ph@gmail.com?subject=Windows Quote Request&body=Hi, I'm interested in getting a quote."
-                class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-                <i class="fas fa-envelope mr-2"></i>Send Email Quote Request
-              </a>
+    /* Button styles */
+    .type-btn,
+    .color-btn,
+    .variant-btn {
+      position: relative;
+      transition: all 0.2s ease;
+    }
 
-              <div class="text-center">
-                <p class="text-sm text-gray-600 mb-2">Or call us directly:</p>
-                <a href="tel:+639922394563" class="text-orange-500 font-semibold text-lg hover:text-orange-600 transition-colors">
-                  <i class="fas fa-phone mr-2"></i>(02) 8822-1295 / +63992-239-4563
-                </a>
-              </div>
+    .type-btn:hover,
+    .color-btn:hover,
+    .variant-btn:hover {
+      transform: translateY(-1px);
+    }
 
-              <a href="https://wa.me/639922394563" target="_blank"
-                class="block w-full bg-green-500 hover:bg-green-600 text-white text-center px-4 py-3 rounded-lg font-medium transition-colors">
-                <i class="fab fa-whatsapp mr-2"></i>Chat on WhatsApp
-              </a>
-            </div>
+    .type-btn:active,
+    .color-btn:active,
+    .variant-btn:active {
+      transform: translateY(0);
+    }
 
-            <div class="mt-6 text-center text-sm text-gray-500">
-              <p>We'll get back to you within 24 hours with detailed pricing and installation information.</p>
-            </div>
+    /* Selected states */
+    .type-btn.selected,
+    .color-btn.selected,
+    .variant-btn.selected {
+      border-color: #f97316 !important;
+      background-color: #fff7ed !important;
+    }
+
+    .variant-btn.selected .text-gray-700,
+    .color-btn.selected span {
+      color: #000000 !important;
+      font-weight: 600;
+    }
+
+    /* Custom scrollbar */
+    .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: #d1d5db #f9fafb;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f9fafb;
+      border-radius: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+
+    /* Modal animations */
+    #contactModal {
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    #contactModal>div {
+      transform: translateY(-20px);
+      animation: slideUp 0.3s ease-out forwards;
+    }
+
+    @keyframes slideUp {
+      to {
+        transform: translateY(0);
+      }
+    }
+  </style>
+
+
+  <?php if (!empty($product_specs)): ?>
+    <section class="mt-6 lg:mt-8">
+      <div class="bg-white rounded-xl p-4 lg:p-8">
+        <h2 class="text-xl sm:text-2xl lg:text-3xl text-black mb-4 lg:mb-6 flex items-center gap-3">
+          <i class="fas fa-list-alt"></i>
+          Product Specifications
+        </h2>
+
+        <div class="mb-4 lg:mb-6">
+          <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
+            <dl class="space-y-3">
+              <?php for ($i = 1; $i <= 10; $i++):
+                $key = "descrip$i";
+                if (!empty($product_specs[$key])):
+              ?>
+                  <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
+                    <dd class="text-black text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
+                  </div>
+              <?php endif;
+              endfor; ?>
+            </dl>
           </div>
         </div>
-
-        <style>
-          /* Sidebar animations */
-          #productOptionsContainer.sidebar-open {
-            transform: translateX(0);
-          }
-
-          /* Button styles */
-          .type-btn,
-          .color-btn,
-          .variant-btn {
-            position: relative;
-            transition: all 0.2s ease;
-          }
-
-          .type-btn:hover,
-          .color-btn:hover,
-          .variant-btn:hover {
-            transform: translateY(-1px);
-          }
-
-          .type-btn:active,
-          .color-btn:active,
-          .variant-btn:active {
-            transform: translateY(0);
-          }
-
-          /* Selected states */
-          .type-btn.selected,
-          .color-btn.selected,
-          .variant-btn.selected {
-            border-color: #f97316 !important;
-            background-color: #fff7ed !important;
-          }
-
-          .variant-btn.selected .text-gray-700,
-          .color-btn.selected span {
-            color: #000000 !important;
-            font-weight: 600;
-          }
-
-          /* Custom scrollbar */
-          .scrollbar-thin {
-            scrollbar-width: thin;
-            scrollbar-color: #d1d5db #f9fafb;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar-track {
-            background: #f9fafb;
-            border-radius: 3px;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 3px;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
-          }
-
-          /* Modal animations */
-          #contactModal {
-            animation: modalFadeIn 0.3s ease-out;
-          }
-
-          @keyframes modalFadeIn {
-            from {
-              opacity: 0;
-              transform: scale(0.95);
-            }
-
-            to {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-
-          #contactModal>div {
-            transform: translateY(-20px);
-            animation: slideUp 0.3s ease-out forwards;
-          }
-
-          @keyframes slideUp {
-            to {
-              transform: translateY(0);
-            }
-          }
-        </style>
+      </div>
+    </section>
+  <?php endif; ?>
 
 
+  <?php if ($related_products->num_rows > 0): ?>
+    <!-- Mobile Bottom Bar Trigger (Smaller & Side Floating) -->
+    <button id="relatedProductsTrigger"
+      class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
+      <i class="fas fa-th-large text-sm"></i>
+      <span>Related (<?= $related_products->num_rows ?>)</span>
+    </button>
 
-        <?php if (!empty($product_specs)): ?>
-          <section class="mt-6 lg:mt-8">
-            <div class="bg-white rounded-xl p-4 lg:p-8">
-              <h2 class="text-xl sm:text-2xl lg:text-3xl text-black mb-4 lg:mb-6 flex items-center gap-3">
-                <i class="fas fa-list-alt"></i>
-                Product Specifications
-              </h2>
+    <!-- Desktop Sidebar Trigger (Fixed on right side) -->
+    <button id="desktopSidebarTrigger"
+      class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-black text-white px-3 py-6 rounded-l-lg shadow-lg hover:bg-gray-200 hover:text-black transition-all hover:px-4 flex-col items-center gap-2 group">
+      <span class="text-xs writing-mode-vertical transform rotate-180">Related Products</span>
+      <span class="text-xs bg-white text-orange-600 rounded-full w-6 h-6 flex items-center justify-center "><?= $related_products->num_rows ?></span>
+    </button>
 
-              <div class="mb-4 lg:mb-6">
-                <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
-                  <dl class="space-y-3">
-                    <?php for ($i = 1; $i <= 10; $i++):
-                      $key = "descrip$i";
-                      if (!empty($product_specs[$key])):
-                    ?>
-                        <div class="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 last:border-b-0">
-                          <dd class="text-black text-sm lg:text-base"><?= htmlspecialchars($product_specs[$key]) ?></dd>
-                        </div>
-                    <?php endif;
-                    endfor; ?>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </section>
-        <?php endif; ?>
+    <!-- Overlay for sidebars -->
+    <div id="relatedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden transition-opacity duration-300"></div>
 
-
-        <?php if ($related_products->num_rows > 0): ?>
-          <!-- Mobile Bottom Bar Trigger (Smaller & Side Floating) -->
-          <button id="relatedProductsTrigger"
-            class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
-            <i class="fas fa-th-large text-sm"></i>
-            <span>Related (<?= $related_products->num_rows ?>)</span>
-          </button>
-
-          <!-- Desktop Sidebar Trigger (Fixed on right side) -->
-          <button id="desktopSidebarTrigger"
-            class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[80] bg-black text-white px-3 py-6 rounded-l-lg shadow-lg hover:bg-gray-200 hover:text-black transition-all hover:px-4 flex-col items-center gap-2 group">
-            <span class="text-xs writing-mode-vertical transform rotate-180">Related Products</span>
-            <span class="text-xs bg-white text-orange-600 rounded-full w-6 h-6 flex items-center justify-center "><?= $related_products->num_rows ?></span>
-          </button>
-
-          <!-- Overlay for sidebars -->
-          <div id="relatedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden transition-opacity duration-300"></div>
-
-          <!-- Related Products Section - Bottom Sheet on Mobile, Right Sidebar on Desktop -->
-          <section id="relatedProductsContainer"
-            class="fixed bottom-0 lg:top-0 lg:bottom-auto left-0 lg:left-auto right-0 lg:right-0 
+    <!-- Related Products Section - Bottom Sheet on Mobile, Right Sidebar on Desktop -->
+    <section id="relatedProductsContainer"
+      class="fixed bottom-0 lg:top-0 lg:bottom-auto left-0 lg:left-auto right-0 lg:right-0 
            lg:h-full lg:w-80
            transform translate-y-full lg:translate-y-0 lg:translate-x-full
            transition-transform duration-300 ease-out
@@ -1924,211 +2052,205 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
            shadow-2xl rounded-t-3xl lg:rounded-none 
            max-h-[80vh] lg:max-h-full overflow-hidden flex flex-col">
 
-            <!-- Header (Mobile & Desktop) -->
-            <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
-              <div>
-                <h2 class="text-base lg:text-lg">Related Products</h2>
-                <p class="text-xs text-white">Similar items you may like</p>
-              </div>
-              <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
-                <i class="fas fa-times text-lg"></i>
-              </button>
-            </div>
-
-            <!-- Products Grid (Scrollable) -->
-            <div class="overflow-y-auto flex-1 p-3 bg-gray-50">
-              <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
-                <?php
-                // Reset the result pointer to iterate again
-                $related_products->data_seek(0);
-                while ($row = $related_products->fetch_assoc()):
-                ?>
-                  <div class="group">
-                    <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-                      class="block bg-white  hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full  hover:border-orange-300">
-
-                      <!-- Product Image -->
-                      <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
-                        <?php if ($row['main_image']): ?>
-                          <img src="../../<?= $row['main_image'] ?>"
-                            loading="lazy"
-                            class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                            alt="<?= htmlspecialchars($row['product_name']) ?>">
-                        <?php else: ?>
-                          <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                            <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span class="text-xs">No Image</span>
-                          </div>
-                        <?php endif; ?>
-                      </div>
-
-                      <!-- Product Information -->
-                      <div class="p-2.5">
-                        <!-- Product Name -->
-                        <h3 class=" text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight">
-                          <?= htmlspecialchars($row['product_name']) ?>
-                        </h3>
-
-                        <!-- Product Description -->
-                        <div class="mb-2">
-                          <p class="text-gray-600 text-xs line-clamp-1 mb-1">
-                            <?= htmlspecialchars($row['description']) ?>
-                          </p>
-
-                          <?php if (!empty($row['descrip6'])): ?>
-                            <p class="text-gray-500 text-xs line-clamp-1">
-                              • <?= htmlspecialchars($row['descrip6']) ?>
-                            </p>
-                          <?php endif; ?>
-                        </div>
-
-                        <!-- Product Code -->
-                        <div class="flex items-center justify-between">
-                          <span class="text-xs px-2 py-0.5 bg-black text-white">
-                            <?= htmlspecialchars($row['codename']) ?>
-                          </span>
-                          <span class="text-xs text-gray-400">
-                            <i class="fas fa-arrow-right"></i>
-                          </span>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                <?php endwhile; ?>
-              </div>
-            </div>
-          </section>
-
-          <style>
-            /* Sidebar animations */
-            #relatedProductsContainer.sidebar-open {
-              transform: translateX(0) translateY(0);
-            }
-
-            /* Smooth scrolling */
-            #relatedProductsContainer {
-              -webkit-overflow-scrolling: touch;
-            }
-
-            /* Custom scrollbar */
-            #relatedProductsContainer::-webkit-scrollbar {
-              width: 6px;
-            }
-
-            #relatedProductsContainer::-webkit-scrollbar-track {
-              background: #f1f1f1;
-            }
-
-            #relatedProductsContainer::-webkit-scrollbar-thumb {
-              background: #cbd5e0;
-              border-radius: 3px;
-            }
-
-            #relatedProductsContainer::-webkit-scrollbar-thumb:hover {
-              background: #a0aec0;
-            }
-
-            /* Prevent body scroll when sidebar is open */
-            body.related-sidebar-open {
-              overflow: hidden;
-            }
-
-            /* Vertical text for desktop trigger */
-            .writing-mode-vertical {
-              writing-mode: vertical-rl;
-            }
-          </style>
-
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              const mobileTrigger = document.getElementById('relatedProductsTrigger');
-              const desktopTrigger = document.getElementById('desktopSidebarTrigger');
-              const closeBtn = document.getElementById('closeRelatedProducts');
-              const overlay = document.getElementById('relatedOverlay');
-              const container = document.getElementById('relatedProductsContainer');
-
-              function openSidebar() {
-                container.classList.add('sidebar-open');
-                overlay.classList.remove('hidden');
-                document.body.classList.add('related-sidebar-open');
-
-                setTimeout(() => {
-                  overlay.style.opacity = '1';
-                }, 10);
-              }
-
-              function closeSidebar() {
-                container.classList.remove('sidebar-open');
-                overlay.style.opacity = '0';
-                document.body.classList.remove('related-sidebar-open');
-
-                setTimeout(() => {
-                  overlay.classList.add('hidden');
-                }, 300);
-              }
-
-              if (mobileTrigger) {
-                mobileTrigger.addEventListener('click', openSidebar);
-              }
-
-              if (desktopTrigger) {
-                desktopTrigger.addEventListener('click', openSidebar);
-              }
-
-              if (closeBtn) {
-                closeBtn.addEventListener('click', closeSidebar);
-              }
-
-              if (overlay) {
-                overlay.addEventListener('click', closeSidebar);
-              }
-
-              // Close on swipe down (mobile only)
-              let touchStartY = 0;
-              let touchEndY = 0;
-
-              if (container) {
-                container.addEventListener('touchstart', (e) => {
-                  touchStartY = e.changedTouches[0].screenY;
-                }, {
-                  passive: true
-                });
-
-                container.addEventListener('touchend', (e) => {
-                  touchEndY = e.changedTouches[0].screenY;
-                  handleSwipe();
-                }, {
-                  passive: true
-                });
-
-                function handleSwipe() {
-                  const scrollTop = container.querySelector('.overflow-y-auto').scrollTop;
-                  if (scrollTop === 0 && touchEndY > touchStartY + 50) {
-                    closeSidebar();
-                  }
-                }
-              }
-
-              // Close with Escape key
-              document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && container.classList.contains('sidebar-open')) {
-                  closeSidebar();
-                }
-              });
-            });
-          </script>
-        <?php endif; ?>
-
+      <!-- Header (Mobile & Desktop) -->
+      <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
+        <div>
+          <h2 class="text-base lg:text-lg">Related Products</h2>
+          <p class="text-xs text-white">Similar items you may like</p>
+        </div>
+        <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
+          <i class="fas fa-times text-lg"></i>
+        </button>
       </div>
-    </div>
-  </div>
 
+      <!-- Products Grid (Scrollable) -->
+      <div class="overflow-y-auto flex-1 p-3 bg-gray-50">
+        <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+          <?php
+          // Reset the result pointer to iterate again
+          $related_products->data_seek(0);
+          while ($row = $related_products->fetch_assoc()):
+          ?>
+            <div class="group">
+              <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+                class="block bg-white  hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full  hover:border-orange-300">
+
+                <!-- Product Image -->
+                <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
+                  <?php if ($row['main_image']): ?>
+                    <img src="../../<?= $row['main_image'] ?>"
+                      loading="lazy"
+                      class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                      alt="<?= htmlspecialchars($row['product_name']) ?>">
+                  <?php else: ?>
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                      <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="text-xs">No Image</span>
+                    </div>
+                  <?php endif; ?>
+                </div>
+
+                <!-- Product Information -->
+                <div class="p-2.5">
+                  <!-- Product Name -->
+                  <h3 class=" text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight">
+                    <?= htmlspecialchars($row['product_name']) ?>
+                  </h3>
+
+                  <!-- Product Description -->
+                  <div class="mb-2">
+                    <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                      <?= htmlspecialchars($row['description']) ?>
+                    </p>
+
+                    <?php if (!empty($row['descrip6'])): ?>
+                      <p class="text-gray-500 text-xs line-clamp-1">
+                        • <?= htmlspecialchars($row['descrip6']) ?>
+                      </p>
+                    <?php endif; ?>
+                  </div>
+
+                  <!-- Product Code -->
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs px-2 py-0.5 bg-black text-white">
+                      <?= htmlspecialchars($row['codename']) ?>
+                    </span>
+                    <span class="text-xs text-gray-400">
+                      <i class="fas fa-arrow-right"></i>
+                    </span>
+                  </div>
+                </div>
+              </a>
+            </div>
+          <?php endwhile; ?>
+        </div>
+      </div>
+    </section>
+
+    <style>
+      /* Sidebar animations */
+      #relatedProductsContainer.sidebar-open {
+        transform: translateX(0) translateY(0);
+      }
+
+      /* Smooth scrolling */
+      #relatedProductsContainer {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Custom scrollbar */
+      #relatedProductsContainer::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+      }
+
+      /* Prevent body scroll when sidebar is open */
+      body.related-sidebar-open {
+        overflow: hidden;
+      }
+
+      /* Vertical text for desktop trigger */
+      .writing-mode-vertical {
+        writing-mode: vertical-rl;
+      }
+    </style>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileTrigger = document.getElementById('relatedProductsTrigger');
+        const desktopTrigger = document.getElementById('desktopSidebarTrigger');
+        const closeBtn = document.getElementById('closeRelatedProducts');
+        const overlay = document.getElementById('relatedOverlay');
+        const container = document.getElementById('relatedProductsContainer');
+
+        function openSidebar() {
+          container.classList.add('sidebar-open');
+          overlay.classList.remove('hidden');
+          document.body.classList.add('related-sidebar-open');
+
+          setTimeout(() => {
+            overlay.style.opacity = '1';
+          }, 10);
+        }
+
+        function closeSidebar() {
+          container.classList.remove('sidebar-open');
+          overlay.style.opacity = '0';
+          document.body.classList.remove('related-sidebar-open');
+
+          setTimeout(() => {
+            overlay.classList.add('hidden');
+          }, 300);
+        }
+
+        if (mobileTrigger) {
+          mobileTrigger.addEventListener('click', openSidebar);
+        }
+
+        if (desktopTrigger) {
+          desktopTrigger.addEventListener('click', openSidebar);
+        }
+
+        if (closeBtn) {
+          closeBtn.addEventListener('click', closeSidebar);
+        }
+
+        if (overlay) {
+          overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close on swipe down (mobile only)
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        if (container) {
+          container.addEventListener('touchstart', (e) => {
+            touchStartY = e.changedTouches[0].screenY;
+          }, {
+            passive: true
+          });
+
+          container.addEventListener('touchend', (e) => {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+          }, {
+            passive: true
+          });
+
+          function handleSwipe() {
+            const scrollTop = container.querySelector('.overflow-y-auto').scrollTop;
+            if (scrollTop === 0 && touchEndY > touchStartY + 50) {
+              closeSidebar();
+            }
+          }
+        }
+
+        // Close with Escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && container.classList.contains('sidebar-open')) {
+            closeSidebar();
+          }
+        });
+      });
+    </script>
+  <?php endif; ?>
 
   <?php include '../navbar/footer.php'; ?>
-
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {

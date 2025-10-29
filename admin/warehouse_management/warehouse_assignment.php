@@ -260,7 +260,10 @@ $ordersQuery = "
         SUM(CASE WHEN oi.supplier_id = 0 AND oi.manual_supplier_name IS NOT NULL THEN 1 ELSE 0 END) as assigned_manual_count
     FROM orders o
     LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN nobleaccount wh ON o.warehouse_employee_id = wh.id AND wh.lvl = 'warehouse'
+    LEFT JOIN nobleaccount wh ON o.warehouse_employee_id = wh.id 
+    AND wh.lvl = 'warehouse' 
+    AND wh.is_head = 0 
+    AND wh.subrole = 'warehouse_staff'
     $whereClause
     GROUP BY o.id, o.customer_name, o.email, o.created_at, o.status, o.total, o.warehouse_employee_id, wh.fullname, wh.email
     ORDER BY 
@@ -292,16 +295,19 @@ foreach ($statusCounts as $status) {
     $totalOngoingOrders += $status['count'];
 }
 
-// Get warehouse employees for assignment dropdown
+// Get warehouse employees for assignment dropdown (exclude heads, only show warehouse_staff)
 $warehouseEmployeesQuery = "
     SELECT id, fullname, email 
     FROM nobleaccount 
-    WHERE lvl = 'warehouse' AND status = 'active'
+    WHERE lvl = 'warehouse' 
+    AND status = 'active' 
+    AND is_head = 0 
+    AND subrole = 'warehouse_staff'
     ORDER BY fullname ASC
 ";
 $warehouseEmployees = $conn->query($warehouseEmployeesQuery)->fetch_all(MYSQLI_ASSOC);
 
-// Get warehouse assignment counts only for ongoing orders
+// Get warehouse assignment counts only for ongoing orders (exclude heads, only show warehouse_staff)
 $warehouseCountsQuery = "
     SELECT 
         wh.id,
@@ -309,7 +315,10 @@ $warehouseCountsQuery = "
         COUNT(o.id) as order_count
     FROM nobleaccount wh
     LEFT JOIN orders o ON wh.id = o.warehouse_employee_id AND o.status = 'ongoing'
-    WHERE wh.lvl = 'warehouse' AND wh.status = 'active'
+    WHERE wh.lvl = 'warehouse' 
+    AND wh.status = 'active' 
+    AND wh.is_head = 0 
+    AND wh.subrole = 'warehouse_staff'
     GROUP BY wh.id, wh.fullname
     ORDER BY wh.fullname ASC
 ";

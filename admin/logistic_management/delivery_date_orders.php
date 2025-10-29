@@ -7,6 +7,12 @@ include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
+// Redirect dispatchers to their own dashboard
+if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
+    header("Location: dispatcher_dashboard.php");
+    exit();
+}
+
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();
@@ -64,10 +70,20 @@ INNER JOIN orders o ON ds.order_id = o.id
 LEFT JOIN transportify_vehicle_list tv ON o.assigned_vehicle_id = tv.id
 LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
 WHERE ds.delivery_date = ?
+AND (
+    ? = '' OR 
+    ds.order_id LIKE ? OR 
+    o.customer_name LIKE ? OR 
+    db.tracking_number LIKE ?
+)
 ORDER BY ds.delivery_time ASC, ds.order_id ASC";
 
+// Get search query from URL
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+$searchParam = '%' . $searchQuery . '%';
+
 $stmt = $conn->prepare($ordersSql);
-$stmt->bind_param("s", $selectedDate);
+$stmt->bind_param("sssss", $selectedDate, $searchQuery, $searchParam, $searchParam, $searchParam);
 $stmt->execute();
 $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -129,6 +145,33 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 <i class="fas fa-calendar-day text-blue-600 mr-3"></i>
                 Deliveries for <?php echo date('l, F d, Y', strtotime($selectedDate)); ?>
             </h1>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <form method="GET" action="" class="relative">
+                <input type="hidden" name="date" value="<?php echo htmlspecialchars($selectedDate); ?>">
+                <div class="relative">
+                    <input type="text" 
+                           name="search" 
+                           value="<?php echo htmlspecialchars($searchQuery); ?>"
+                           placeholder="Search by Order ID, Customer Name, or Tracking Number..."
+                           class="w-full px-12 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg">
+                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
+                    <?php if ($searchQuery): ?>
+                    <a href="?date=<?php echo $selectedDate; ?>" 
+                       class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <?php if ($searchQuery): ?>
+                <p class="text-sm text-gray-600 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Showing results for: <strong><?php echo htmlspecialchars($searchQuery); ?></strong>
+                </p>
+                <?php endif; ?>
+            </form>
         </div>
         
         <!-- Filter Buttons -->
@@ -215,6 +258,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                         <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
@@ -262,6 +306,16 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                                 <?php endif; ?>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <?php if ($order['tracking_number']): ?>
+                                            <div class="font-mono text-xs bg-purple-50 text-purple-800 px-3 py-2 rounded-lg border border-purple-200">
+                                                <i class="fas fa-barcode mr-1"></i>
+                                                <?php echo htmlspecialchars($order['tracking_number']); ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <span class="text-xs text-gray-400 italic">Not booked</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($order['customer_name']); ?></div>

@@ -393,25 +393,105 @@ if ($paypal_transactions) {
     }
 }
 
-// Get orders based on filter - UPDATED TO USE nobleaccount TABLE
+// Get orders based on filter - UPDATED TO USE nobleaccount TABLE WITH PAYMENT METHOD FILTERING
 $orders_result = null;
 $where_condition = "";
+$payment_method_filter = isset($_GET['method']) ? $_GET['method'] : null;
+$bank_type_filter = isset($_GET['bank_type']) ? $_GET['bank_type'] : null;
+$qr_type_filter = isset($_GET['qr_type']) ? $_GET['qr_type'] : null;
+
 switch ($filter) {
     case 'pending':
-    // UPDATED: Include all pending orders with screenshots OR online payments (PayPal, PayMongo)
-    $where_condition = "WHERE o.payment_status = 'pending' AND (
-        o.payment_screenshot IS NOT NULL 
-        OR o.mode_payment = 'PayPal' 
-        OR o.mode_payment = 'PayMongo'
-    )";
-    break;
+        $where_condition = "WHERE o.payment_status = 'pending' AND (
+            o.payment_screenshot IS NOT NULL 
+            OR o.mode_payment = 'PayPal' 
+            OR o.mode_payment = 'PayMongo'
+        )";
+        
+        // Add payment method filtering
+        if ($payment_method_filter) {
+            switch ($payment_method_filter) {
+                case 'paymongo':
+                    $where_condition .= " AND o.mode_payment = 'PayMongo'";
+                    break;
+                case 'qr':
+                    $where_condition .= " AND o.mode_payment = 'QR Payment'";
+                    // Add QR type filtering if specified
+                    if ($qr_type_filter) {
+                        $where_condition .= " AND o.bank_type = '" . $conn->real_escape_string($qr_type_filter) . "'";
+                    }
+                    break;
+                case 'bank':
+                    $where_condition .= " AND o.mode_payment = 'Bank Transfer'";
+                    // Add bank type filtering if specified
+                    if ($bank_type_filter) {
+                        $where_condition .= " AND o.bank_type = '" . $conn->real_escape_string($bank_type_filter) . "'";
+                    }
+                    break;
+                case 'paypal':
+                    $where_condition .= " AND o.mode_payment = 'PayPal'";
+                    break;
+            }
+        }
+        break;
     case 'verified':
         $where_condition = "WHERE o.payment_status = 'verified'";
+        
+        // Add payment method filtering for verified
+        if ($payment_method_filter) {
+            switch ($payment_method_filter) {
+                case 'paymongo':
+                    $where_condition .= " AND o.mode_payment = 'PayMongo'";
+                    break;
+                case 'qr':
+                    $where_condition .= " AND o.mode_payment = 'QR Payment'";
+                    if ($qr_type_filter) {
+                        $where_condition .= " AND o.bank_type = '" . $conn->real_escape_string($qr_type_filter) . "'";
+                    }
+                    break;
+                case 'bank':
+                    $where_condition .= " AND o.mode_payment = 'Bank Transfer'";
+                    if ($bank_type_filter) {
+                        $where_condition .= " AND o.bank_type = '" . $conn->real_escape_string($bank_type_filter) . "'";
+                    }
+                    break;
+                case 'paypal':
+                    $where_condition .= " AND o.mode_payment = 'PayPal'";
+                    break;
+            }
+        }
         break;
     case 'rejected':
         $where_condition = "WHERE o.payment_status = 'rejected'";
+        
+        // Add payment method filtering for rejected
+        if ($payment_method_filter) {
+            switch ($payment_method_filter) {
+                case 'paymongo':
+                    $where_condition .= " AND o.mode_payment = 'PayMongo'";
+                    break;
+                case 'qr':
+                    $where_condition .= " AND o.mode_payment = 'QR Payment'";
+                    if ($qr_type_filter) {
+                        $where_condition .= " AND o.bank_type = '" . $conn->real_escape_string($qr_type_filter) . "'";
+                    }
+                    break;
+                case 'bank':
+                    $where_condition .= " AND o.mode_payment = 'Bank Transfer'";
+                    if ($bank_type_filter) {
+                        $where_condition .= " AND o.bank_type = '" . $conn->real_escape_string($bank_type_filter) . "'";
+                    }
+                    break;
+                case 'paypal':
+                    $where_condition .= " AND o.mode_payment = 'PayPal'";
+                    break;
+            }
+        }
         break;
     case 'paypal':
+        // This will be handled separately below
+        break;
+    case 'paymongo':
         // This will be handled separately below
         break;
     default:
@@ -583,47 +663,412 @@ $orders_result = $conn->query($orders_query);
         </div>
 
         <!-- Filter Tabs -->
-        <div class="bg-white rounded-xl shadow-sm mb-6">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-                    <a href="?filter=pending" class="<?php echo $filter === 'pending' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-    <i class="fas fa-clock mr-2"></i>
-    Pending (<?php echo number_format($pending_payments); ?>)
-    <?php if ($paymongo_pending > 0 || $qr_pending > 0): ?>
-        <span class="ml-2 inline-flex items-center">
-            <?php if ($paymongo_pending > 0): ?>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 ml-1">
-                    <i class="fas fa-mobile-alt mr-1"></i><?php echo $paymongo_pending; ?>
-                </span>
-            <?php endif; ?>
-            <?php if ($qr_pending > 0): ?>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 ml-1">
-                    <i class="fas fa-qrcode mr-1"></i><?php echo $qr_pending; ?>
-                </span>
-            <?php endif; ?>
-        </span>
-    <?php endif; ?>
+<div class="bg-white rounded-xl shadow-sm mb-6">
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
+            <a href="?filter=pending" class="<?php echo $filter === 'pending' && !isset($_GET['method']) ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                <i class="fas fa-clock mr-2"></i>
+                Pending (<?php echo number_format($pending_payments); ?>)
+            </a>
+            <a href="?filter=verified" class="<?php echo $filter === 'verified' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                Verified
+            </a>
+            <a href="?filter=rejected" class="<?php echo $filter === 'rejected' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                <i class="fas fa-times-circle mr-2"></i>
+                Rejected (<?php echo number_format($rejected_payments); ?>)
+            </a>
+            <a href="?filter=all" class="<?php echo $filter === 'all' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                <i class="fas fa-list mr-2"></i>
+                All
+            </a>
+            <a href="?filter=paypal" class="<?php echo $filter === 'paypal' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+    <i class="fab fa-paypal mr-2"></i>
+    PayPal History
 </a>
-                    <a href="?filter=verified" class="<?php echo $filter === 'verified' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        Verified
+<a href="?filter=paymongo" class="<?php echo $filter === 'paymongo' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+    <i class="fas fa-mobile-alt mr-2"></i>
+    PayMongo History
+</a>
+        </nav>
+    </div>
+</div>
+
+<!-- Payment Method Filter Buttons (Shows only when Pending is selected) -->
+<?php if ($filter === 'pending'): ?>
+    <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Filter by Payment Method:</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- PayMongo Button -->
+            <a href="?filter=pending&method=paymongo" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'paymongo') ? 'bg-green-500 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-mobile-alt text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'paymongo') ? 'text-white' : 'text-green-600'; ?>"></i>
+                <div class="font-semibold text-sm">PayMongo</div>
+                <div class="text-xs mt-1 opacity-75"><?php echo $paymongo_pending; ?> pending</div>
+            </a>
+            
+            <!-- QR Payment Button -->
+            <a href="?filter=pending&method=qr" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'qr') ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:bg-indigo-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-qrcode text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'qr') ? 'text-white' : 'text-indigo-600'; ?>"></i>
+                <div class="font-semibold text-sm">QR Payment</div>
+                <div class="text-xs mt-1 opacity-75"><?php echo $qr_pending; ?> pending</div>
+            </a>
+            
+            <!-- Bank Transfer Button -->
+            <a href="?filter=pending&method=bank" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'bank') ? 'bg-purple-500 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:border-purple-500 hover:bg-purple-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-university text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'bank') ? 'text-white' : 'text-purple-600'; ?>"></i>
+                <div class="font-semibold text-sm">Bank Transfer</div>
+                <div class="text-xs mt-1 opacity-75"><?php echo $bank_pending; ?> pending</div>
+            </a>
+            
+            <!-- PayPal Button -->
+            <a href="?filter=pending&method=paypal" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'paypal') ? 'bg-blue-500 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:bg-blue-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fab fa-paypal text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'paypal') ? 'text-white' : 'text-blue-600'; ?>"></i>
+                <div class="font-semibold text-sm">PayPal</div>
+                <div class="text-xs mt-1 opacity-75"><?php echo $paypal_pending; ?> pending</div>
+            </a>
+        </div>
+        
+        <!-- "Show All" button if a method is selected -->
+        <?php if (isset($_GET['method'])): ?>
+            <div class="mt-4 text-center">
+                <a href="?filter=pending" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
+                    <i class="fas fa-times mr-2"></i>
+                    Clear Filter - Show All Pending
+                </a>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
+<!-- Bank Type Sub-Filter (shown only when Bank Transfer is selected) -->
+<?php if ($filter === 'pending' && isset($_GET['method']) && $_GET['method'] === 'bank'): ?>
+    <?php
+    // Get available bank types for pending orders
+    $bank_types_query = "SELECT DISTINCT bank_type, COUNT(*) as count 
+                         FROM orders 
+                         WHERE payment_status = 'pending' 
+                         AND mode_payment = 'Bank Transfer' 
+                         AND bank_type IS NOT NULL 
+                         GROUP BY bank_type";
+    $bank_types_result = $conn->query($bank_types_query);
+    ?>
+    
+    <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-filter mr-2 text-purple-600"></i>
+            Filter by Specific Bank:
+        </h3>
+        <div class="flex flex-wrap gap-2">
+            <a href="?filter=pending&method=bank" 
+               class="<?php echo !isset($_GET['bank_type']) ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fas fa-university mr-1"></i>
+                All Banks
+            </a>
+            <?php if ($bank_types_result && $bank_types_result->num_rows > 0): ?>
+                <?php while ($bank_type_row = $bank_types_result->fetch_assoc()): ?>
+                    <a href="?filter=pending&method=bank&bank_type=<?php echo urlencode($bank_type_row['bank_type']); ?>" 
+                       class="<?php echo (isset($_GET['bank_type']) && $_GET['bank_type'] === $bank_type_row['bank_type']) ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <?php echo htmlspecialchars($bank_type_row['bank_type']); ?>
+                        <span class="ml-1 text-xs opacity-75">(<?php echo $bank_type_row['count']; ?>)</span>
                     </a>
-                    <a href="?filter=rejected" class="<?php echo $filter === 'rejected' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-                        <i class="fas fa-times-circle mr-2"></i>
-                        Rejected (<?php echo number_format($rejected_payments); ?>)
+                <?php endwhile; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+<!-- QR Payment Sub-Filter (shown only when QR Payment is selected) -->
+<?php if ($filter === 'pending' && isset($_GET['method']) && $_GET['method'] === 'qr'): ?>
+    <?php
+    // Get available QR payment methods
+    $qr_types_query = "SELECT DISTINCT 
+                            REPLACE(o.bank_type, 'QR_', '') as qr_id,
+                            pqc.payment_method,
+                            COUNT(*) as count 
+                       FROM orders o
+                       LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type, 'QR_', '') = pqc.id
+                       WHERE o.payment_status = 'pending' 
+                       AND o.mode_payment = 'QR Payment' 
+                       AND o.bank_type IS NOT NULL
+                       AND o.bank_type LIKE 'QR_%'
+                       GROUP BY o.bank_type, pqc.payment_method";
+    $qr_types_result = $conn->query($qr_types_query);
+    ?>
+    
+    <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-filter mr-2 text-indigo-600"></i>
+            Filter by QR Payment Method:
+        </h3>
+        <div class="flex flex-wrap gap-2">
+            <a href="?filter=pending&method=qr" 
+               class="<?php echo !isset($_GET['qr_type']) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fas fa-qrcode mr-1"></i>
+                All QR Methods
+            </a>
+            <?php if ($qr_types_result && $qr_types_result->num_rows > 0): ?>
+                <?php while ($qr_row = $qr_types_result->fetch_assoc()): ?>
+                    <a href="?filter=pending&method=qr&qr_type=QR_<?php echo urlencode($qr_row['qr_id']); ?>" 
+                       class="<?php echo (isset($_GET['qr_type']) && $_GET['qr_type'] === 'QR_'.$qr_row['qr_id']) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <?php echo htmlspecialchars($qr_row['payment_method'] ?: 'QR Payment'); ?>
+                        <span class="ml-1 text-xs opacity-75">(<?php echo $qr_row['count']; ?>)</span>
                     </a>
-                    <a href="?filter=all" class="<?php echo $filter === 'all' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-                        <i class="fas fa-list mr-2"></i>
-                        All
-                    </a>
-                    <!-- Add this after the "All" tab -->
-                    <a href="?filter=paypal" class="<?php echo $filter === 'paypal' ? 'border-noble-orange text-noble-orange' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'; ?> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
-                        <i class="fab fa-paypal mr-2"></i>
-                        PayPal History
-                    </a>
-                </nav>
+                <?php endwhile; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+<!-- Payment Method Filter for Verified Tab -->
+<?php if ($filter === 'verified'): ?>
+    <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Filter Verified Payments by Method:</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- PayMongo Button -->
+            <a href="?filter=verified&method=paymongo" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'paymongo') ? 'bg-green-500 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-mobile-alt text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'paymongo') ? 'text-white' : 'text-green-600'; ?>"></i>
+                <div class="font-semibold text-sm">PayMongo</div>
+            </a>
+            
+            <!-- QR Payment Button -->
+            <a href="?filter=verified&method=qr" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'qr') ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:bg-indigo-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-qrcode text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'qr') ? 'text-white' : 'text-indigo-600'; ?>"></i>
+                <div class="font-semibold text-sm">QR Payment</div>
+            </a>
+            
+            <!-- Bank Transfer Button -->
+            <a href="?filter=verified&method=bank" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'bank') ? 'bg-purple-500 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:border-purple-500 hover:bg-purple-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-university text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'bank') ? 'text-white' : 'text-purple-600'; ?>"></i>
+                <div class="font-semibold text-sm">Bank Transfer</div>
+            </a>
+            
+            <!-- PayPal Button -->
+            <a href="?filter=verified&method=paypal" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'paypal') ? 'bg-blue-500 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:bg-blue-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fab fa-paypal text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'paypal') ? 'text-white' : 'text-blue-600'; ?>"></i>
+                <div class="font-semibold text-sm">PayPal</div>
+            </a>
+        </div>
+        
+        <?php if (isset($_GET['method'])): ?>
+            <div class="mt-4 text-center">
+                <a href="?filter=verified" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
+                    <i class="fas fa-times mr-2"></i>
+                    Clear Filter - Show All Verified
+                </a>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Bank Type Sub-Filter for Verified -->
+    <?php if (isset($_GET['method']) && $_GET['method'] === 'bank'): ?>
+        <?php
+        $bank_types_verified = "SELECT DISTINCT bank_type, COUNT(*) as count 
+                                FROM orders 
+                                WHERE payment_status = 'verified' 
+                                AND mode_payment = 'Bank Transfer' 
+                                AND bank_type IS NOT NULL 
+                                GROUP BY bank_type";
+        $bank_types_verified_result = $conn->query($bank_types_verified);
+        ?>
+        
+        <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-filter mr-2 text-purple-600"></i>
+                Filter by Specific Bank:
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <a href="?filter=verified&method=bank" 
+                   class="<?php echo !isset($_GET['bank_type']) ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-university mr-1"></i>
+                    All Banks
+                </a>
+                <?php if ($bank_types_verified_result && $bank_types_verified_result->num_rows > 0): ?>
+                    <?php while ($bank_row = $bank_types_verified_result->fetch_assoc()): ?>
+                        <a href="?filter=verified&method=bank&bank_type=<?php echo urlencode($bank_row['bank_type']); ?>" 
+                           class="<?php echo (isset($_GET['bank_type']) && $_GET['bank_type'] === $bank_row['bank_type']) ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <?php echo htmlspecialchars($bank_row['bank_type']); ?>
+                            <span class="ml-1 text-xs opacity-75">(<?php echo $bank_row['count']; ?>)</span>
+                        </a>
+                    <?php endwhile; ?>
+                <?php endif; ?>
             </div>
         </div>
+    <?php endif; ?>
+
+    <!-- QR Type Sub-Filter for Verified -->
+    <?php if (isset($_GET['method']) && $_GET['method'] === 'qr'): ?>
+        <?php
+        $qr_types_verified = "SELECT DISTINCT 
+                                REPLACE(o.bank_type, 'QR_', '') as qr_id,
+                                pqc.payment_method,
+                                COUNT(*) as count 
+                            FROM orders o
+                            LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type, 'QR_', '') = pqc.id
+                            WHERE o.payment_status = 'verified' 
+                            AND o.mode_payment = 'QR Payment' 
+                            AND o.bank_type IS NOT NULL
+                            AND o.bank_type LIKE 'QR_%'
+                            GROUP BY o.bank_type, pqc.payment_method";
+        $qr_types_verified_result = $conn->query($qr_types_verified);
+        ?>
+        
+        <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-filter mr-2 text-indigo-600"></i>
+                Filter by QR Payment Method:
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <a href="?filter=verified&method=qr" 
+                   class="<?php echo !isset($_GET['qr_type']) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-qrcode mr-1"></i>
+                    All QR Methods
+                </a>
+                <?php if ($qr_types_verified_result && $qr_types_verified_result->num_rows > 0): ?>
+                    <?php while ($qr_row = $qr_types_verified_result->fetch_assoc()): ?>
+                        <a href="?filter=verified&method=qr&qr_type=QR_<?php echo urlencode($qr_row['qr_id']); ?>" 
+                           class="<?php echo (isset($_GET['qr_type']) && $_GET['qr_type'] === 'QR_'.$qr_row['qr_id']) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <?php echo htmlspecialchars($qr_row['payment_method'] ?: 'QR Payment'); ?>
+                            <span class="ml-1 text-xs opacity-75">(<?php echo $qr_row['count']; ?>)</span>
+                        </a>
+                    <?php endwhile; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+
+<!-- Payment Method Filter for Rejected Tab -->
+<?php if ($filter === 'rejected'): ?>
+    <div class="bg-white rounded-xl shadow-sm mb-6 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Filter Rejected Payments by Method:</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- PayMongo Button -->
+            <a href="?filter=rejected&method=paymongo" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'paymongo') ? 'bg-green-500 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-mobile-alt text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'paymongo') ? 'text-white' : 'text-green-600'; ?>"></i>
+                <div class="font-semibold text-sm">PayMongo</div>
+            </a>
+            
+            <!-- QR Payment Button -->
+            <a href="?filter=rejected&method=qr" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'qr') ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:bg-indigo-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-qrcode text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'qr') ? 'text-white' : 'text-indigo-600'; ?>"></i>
+                <div class="font-semibold text-sm">QR Payment</div>
+            </a>
+            
+            <!-- Bank Transfer Button -->
+            <a href="?filter=rejected&method=bank" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'bank') ? 'bg-purple-500 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:border-purple-500 hover:bg-purple-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fas fa-university text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'bank') ? 'text-white' : 'text-purple-600'; ?>"></i>
+                <div class="font-semibold text-sm">Bank Transfer</div>
+            </a>
+            
+            <!-- PayPal Button -->
+            <a href="?filter=rejected&method=paypal" 
+               class="<?php echo (isset($_GET['method']) && $_GET['method'] === 'paypal') ? 'bg-blue-500 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:bg-blue-50'; ?> border-2 rounded-lg p-4 text-center transition-all transform hover:scale-105 shadow-sm">
+                <i class="fab fa-paypal text-3xl mb-2 <?php echo (isset($_GET['method']) && $_GET['method'] === 'paypal') ? 'text-white' : 'text-blue-600'; ?>"></i>
+                <div class="font-semibold text-sm">PayPal</div>
+            </a>
+        </div>
+        
+        <?php if (isset($_GET['method'])): ?>
+            <div class="mt-4 text-center">
+                <a href="?filter=rejected" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
+                    <i class="fas fa-times mr-2"></i>
+                    Clear Filter - Show All Rejected
+                </a>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Bank Type Sub-Filter for Rejected -->
+    <?php if (isset($_GET['method']) && $_GET['method'] === 'bank'): ?>
+        <?php
+        $bank_types_rejected = "SELECT DISTINCT bank_type, COUNT(*) as count 
+                                FROM orders 
+                                WHERE payment_status = 'rejected' 
+                                AND mode_payment = 'Bank Transfer' 
+                                AND bank_type IS NOT NULL 
+                                GROUP BY bank_type";
+        $bank_types_rejected_result = $conn->query($bank_types_rejected);
+        ?>
+        
+        <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-filter mr-2 text-purple-600"></i>
+                Filter by Specific Bank:
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <a href="?filter=rejected&method=bank" 
+                   class="<?php echo !isset($_GET['bank_type']) ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-university mr-1"></i>
+                    All Banks
+                </a>
+                <?php if ($bank_types_rejected_result && $bank_types_rejected_result->num_rows > 0): ?>
+                    <?php while ($bank_row = $bank_types_rejected_result->fetch_assoc()): ?>
+                        <a href="?filter=rejected&method=bank&bank_type=<?php echo urlencode($bank_row['bank_type']); ?>" 
+                           class="<?php echo (isset($_GET['bank_type']) && $_GET['bank_type'] === $bank_row['bank_type']) ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <?php echo htmlspecialchars($bank_row['bank_type']); ?>
+                            <span class="ml-1 text-xs opacity-75">(<?php echo $bank_row['count']; ?>)</span>
+                        </a>
+                    <?php endwhile; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- QR Type Sub-Filter for Rejected -->
+    <?php if (isset($_GET['method']) && $_GET['method'] === 'qr'): ?>
+        <?php
+        $qr_types_rejected = "SELECT DISTINCT 
+                                REPLACE(o.bank_type, 'QR_', '') as qr_id,
+                                pqc.payment_method,
+                                COUNT(*) as count 
+                            FROM orders o
+                            LEFT JOIN payment_qr_codes pqc ON REPLACE(o.bank_type, 'QR_', '') = pqc.id
+                            WHERE o.payment_status = 'rejected' 
+                            AND o.mode_payment = 'QR Payment' 
+                            AND o.bank_type IS NOT NULL
+                            AND o.bank_type LIKE 'QR_%'
+                            GROUP BY o.bank_type, pqc.payment_method";
+        $qr_types_rejected_result = $conn->query($qr_types_rejected);
+        ?>
+        
+        <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-filter mr-2 text-indigo-600"></i>
+                Filter by QR Payment Method:
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <a href="?filter=rejected&method=qr" 
+                   class="<?php echo !isset($_GET['qr_type']) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-qrcode mr-1"></i>
+                    All QR Methods
+                </a>
+                <?php if ($qr_types_rejected_result && $qr_types_rejected_result->num_rows > 0): ?>
+                    <?php while ($qr_row = $qr_types_rejected_result->fetch_assoc()): ?>
+                        <a href="?filter=rejected&method=qr&qr_type=QR_<?php echo urlencode($qr_row['qr_id']); ?>" 
+                           class="<?php echo (isset($_GET['qr_type']) && $_GET['qr_type'] === 'QR_'.$qr_row['qr_id']) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?> px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <?php echo htmlspecialchars($qr_row['payment_method'] ?: 'QR Payment'); ?>
+                            <span class="ml-1 text-xs opacity-75">(<?php echo $qr_row['count']; ?>)</span>
+                        </a>
+                    <?php endwhile; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
 
         <!-- Orders Table -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -631,7 +1076,7 @@ $orders_result = $conn->query($orders_query);
                 <h2 class="text-lg font-semibold text-gray-900">Payment Verification Queue</h2>
                 <p class="text-sm text-gray-600">Review and verify customer payments</p>
             </div>
-            <?php if ($filter !== 'paypal'): ?>
+            <?php if ($filter !== 'paypal' && $filter !== 'paymongo'): ?>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -971,6 +1416,133 @@ $orders_result = $conn->query($orders_query);
                                             <i class="fas fa-exclamation-triangle text-4xl text-gray-300 mb-4"></i>
                                             <h3 class="text-lg font-medium text-gray-900 mb-1">Unable to fetch PayPal data</h3>
                                             <p class="text-sm text-gray-500">There was an error connecting to PayPal API.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
+        <!-- PayMongo Transactions Table (show only when filter is 'paymongo') -->
+        <?php if ($filter === 'paymongo'): ?>
+            <?php
+            // Fetch PayMongo transaction history
+            $paymongo_query = "SELECT o.*, 
+                                      vb.fullname as verified_by_name
+                               FROM orders o 
+                               LEFT JOIN nobleaccount vb ON o.verified_by = vb.id
+                               WHERE o.mode_payment = 'PayMongo'
+                               ORDER BY o.created_at DESC 
+                               LIMIT 100";
+            $paymongo_result = $conn->query($paymongo_query);
+            ?>
+            
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden mt-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-mobile-alt text-green-600 mr-2"></i>
+                        PayMongo Transaction History
+                    </h2>
+                    <p class="text-sm text-gray-600">All PayMongo payment transactions</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified By</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php if ($paymongo_result && $paymongo_result->num_rows > 0): ?>
+                                <?php while ($transaction = $paymongo_result->fetch_assoc()): ?>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="bg-gray-100 px-2 py-1 rounded-md text-sm font-medium">#<?php echo $transaction['id']; ?></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                                    <span class="text-green-600 text-xs font-semibold">
+                                                        <?php echo strtoupper(substr($transaction['customer_name'] ?: 'U', 0, 1)); ?>
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        <?php echo htmlspecialchars($transaction['customer_name'] ?: 'N/A'); ?>
+                                                    </div>
+                                                    <div class="text-sm text-gray-500"><?php echo htmlspecialchars($transaction['email']); ?></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php
+                                            $display_amount = $transaction['total'];
+                                            if ($transaction['payment_status'] === 'verified' && isset($transaction['final_total']) && $transaction['final_total'] !== null && $transaction['final_total'] !== '') {
+                                                $display_amount = $transaction['final_total'];
+                                            }
+                                            ?>
+                                            <div class="text-sm font-semibold text-gray-900">₱<?php echo number_format((float)$display_amount, 2); ?></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <code class="text-sm bg-gray-100 px-2 py-1 rounded">
+                                                <?php echo htmlspecialchars($transaction['reference_number'] ?: $transaction['reference_no'] ?: 'N/A'); ?>
+                                            </code>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php
+                                            $status_colors = [
+                                                'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                'verified' => 'bg-green-100 text-green-800 border-green-200',
+                                                'rejected' => 'bg-red-100 text-red-800 border-red-200'
+                                            ];
+                                            $status = $transaction['payment_status'];
+                                            $status_icons = [
+                                                'pending' => 'fas fa-clock',
+                                                'verified' => 'fas fa-check-circle',
+                                                'rejected' => 'fas fa-times-circle'
+                                            ];
+                                            ?>
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border <?php echo $status_colors[$status] ?? 'bg-gray-100 text-gray-800 border-gray-200'; ?>">
+                                                <i class="<?php echo $status_icons[$status] ?? 'fas fa-question'; ?> mr-1"></i>
+                                                <?php echo ucfirst($status); ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">
+                                                <?php echo htmlspecialchars($transaction['verified_by_name'] ?: 'N/A'); ?>
+                                            </div>
+                                            <?php if ($transaction['confirmed_at']): ?>
+                                                <div class="text-xs text-gray-500">
+                                                    <?php echo date('M d, H:i', strtotime($transaction['confirmed_at'])); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">
+                                                <?php echo date('M d, Y', strtotime($transaction['created_at'])); ?>
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                <?php echo date('H:i', strtotime($transaction['created_at'])); ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="7" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <i class="fas fa-mobile-alt text-4xl text-gray-300 mb-4"></i>
+                                            <h3 class="text-lg font-medium text-gray-900 mb-1">No PayMongo transactions found</h3>
+                                            <p class="text-sm text-gray-500">No transactions found for PayMongo payment method.</p>
                                         </div>
                                     </td>
                                 </tr>

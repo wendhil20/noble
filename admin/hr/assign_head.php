@@ -18,7 +18,7 @@ $department_subroles = [
     'hr' => [
     ],
     'warehouse' => [
-        'warehouse_receiver'
+        'warehouse_receiver','warehouse_staff'
     ],
     'logistic' => [
         'dispatcher'

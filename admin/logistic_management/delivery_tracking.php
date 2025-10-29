@@ -7,6 +7,12 @@ include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
+// Redirect dispatchers to their own dashboard
+if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
+    header("Location: dispatcher_dashboard.php");
+    exit();
+}
+
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();
@@ -103,100 +109,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit();
     }
     
-    if ($_POST['action'] === 'toggle_item_loaded') {
-        $item_id = intval($_POST['item_id']);
-        $current_status = $_POST['current_status'];
-        
-        $new_status = ($current_status === 'ready_for_pickup') ? 'item_is_loaded' : 'ready_for_pickup';
-        
-        $updateItem = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE id = ?");
-        $updateItem->bind_param("si", $new_status, $item_id);
-        
-        if ($updateItem->execute()) {
-            $_SESSION['success_message'] = "Item status updated!";
-        }
-        $updateItem->close();
-        
-        header("Location: delivery_tracking.php?booking_id=" . $booking_id);
-        exit();
-    }
-    
-    if ($_POST['action'] === 'mark_all_loaded') {
-        $updateAll = $conn->prepare("UPDATE order_items SET tracking_status = 'item_is_loaded' WHERE order_id = ?");
-        $updateAll->bind_param("i", $booking['order_id']);
-        
-        if ($updateAll->execute()) {
-            $_SESSION['success_message'] = "All items marked as loaded!";
-        }
-        $updateAll->close();
-        
-        header("Location: delivery_tracking.php?booking_id=" . $booking_id);
-        exit();
-    }
-    
-    if ($_POST['action'] === 'update_status') {
-        $new_booking_status = $_POST['booking_status'];
-        $actual_pickup = !empty($_POST['actual_pickup_time']) ? $_POST['actual_pickup_time'] : null;
-        $actual_delivery = !empty($_POST['actual_delivery_time']) ? $_POST['actual_delivery_time'] : null;
-        
-        $conn->begin_transaction();
-        
-        try {
-            // Update booking
-            $updateBooking = $conn->prepare("
-                UPDATE delivery_bookings 
-                SET booking_status = ?,
-                    actual_pickup_time = ?,
-                    actual_delivery_time = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ");
-            $updateBooking->bind_param("sssi", $new_booking_status, $actual_pickup, $actual_delivery, $booking_id);
-            $updateBooking->execute();
-            $updateBooking->close();
-            
-            // Update order status based on booking status
-            $order_status = 'Ready for Pickup';
-            if ($new_booking_status === 'in_transit') {
-                $order_status = 'Out for Delivery';
-            } elseif ($new_booking_status === 'delivered') {
-                $order_status = 'Delivered';
-            } elseif ($new_booking_status === 'picked_up') {
-                $order_status = 'Picked Up';
-            }
-            
-            $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-            $updateOrder->bind_param("si", $order_status, $booking['order_id']);
-            $updateOrder->execute();
-            $updateOrder->close();
-            
-            // Update delivery schedule
-            $ds_status = 'booked';
-            if ($new_booking_status === 'in_transit') {
-                $ds_status = 'out_for_delivery';
-            } elseif ($new_booking_status === 'delivered') {
-                $ds_status = 'delivered';
-            } elseif ($new_booking_status === 'picked_up') {
-                $ds_status = 'picked_up';
-            }
-            
-            $updateDS = $conn->prepare("UPDATE delivery_schedules SET delivery_status = ? WHERE id = ?");
-            $updateDS->bind_param("si", $ds_status, $booking['delivery_schedule_id']);
-            $updateDS->execute();
-            $updateDS->close();
-            
-            $conn->commit();
-            $_SESSION['success_message'] = "Status updated successfully!";
-            
-        } catch (Exception $e) {
-            $conn->rollback();
-            $_SESSION['error_message'] = "Error updating status: " . $e->getMessage();
-        }
-        
-        header("Location: delivery_tracking.php?booking_id=" . $booking_id);
-        exit();
-    }
-    
     if ($_POST['action'] === 'upload_proof') {
         if (isset($_FILES['delivery_proof']) && $_FILES['delivery_proof']['error'] === UPLOAD_ERR_OK) {
             $upload_dir = '../../uploads/delivery_proofs/';
@@ -284,7 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 $isCompleted = in_array($booking['booking_status'], ['delivered', 'picked_up']);
-$canMarkLoaded = $booking['ready_items'] > 0;
 $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['total_items'] > 0;
 
 ?>
@@ -447,41 +358,33 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                         <?php endif; ?>
                     </div>
                     
-                    <!-- Status Update Form -->
-                    <?php if (!$isCompleted): ?>
-                    <form method="POST" class="mt-6 border-t pt-6">
-                        <input type="hidden" name="action" value="update_status">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Booking Status
-                                </label>
-                                <select name="booking_status" 
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <option value="confirmed" <?php echo $booking['booking_status'] === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
-                                    <option value="in_transit" <?php echo $booking['booking_status'] === 'in_transit' ? 'selected' : ''; ?>>In Transit</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Actual Pickup Time
-                                </label>
-                                <input type="datetime-local" 
-                                       name="actual_pickup_time"
-                                       value="<?php echo $booking['actual_pickup_time'] ? date('Y-m-d\TH:i', strtotime($booking['actual_pickup_time'])) : ''; ?>"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                        
-                        <button type="submit" 
-                                class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold">
-                            <i class="fas fa-sync-alt mr-2"></i>
-                            Update Status
-                        </button>
-                    </form>
-                    <?php endif; ?>
+                    <!-- Status Information (Read-only) -->
+<div class="mt-6 border-t pt-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-blue-50 rounded-lg p-4">
+            <span class="text-sm text-blue-700">Booking Status</span>
+            <p class="font-semibold text-lg text-blue-900 capitalize">
+                <?php echo str_replace('_', ' ', $booking['booking_status']); ?>
+            </p>
+        </div>
+        
+        <?php if ($booking['actual_pickup_time']): ?>
+        <div class="bg-green-50 rounded-lg p-4">
+            <span class="text-sm text-green-700">Actual Pickup Time</span>
+            <p class="font-semibold text-lg text-green-900">
+                <?php echo date('M d, Y g:i A', strtotime($booking['actual_pickup_time'])); ?>
+            </p>
+        </div>
+        <?php else: ?>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <span class="text-sm text-gray-700">Actual Pickup Time</span>
+            <p class="font-semibold text-lg text-gray-500 italic">
+                Not yet picked up
+            </p>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
                     
                     <!-- Delivery Proof Upload -->
                     <?php if ($allLoaded && !$booking['delivery_proof_image']): ?>
@@ -529,19 +432,8 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-xl font-bold text-gray-900 flex items-center">
                             <i class="fas fa-boxes text-orange-600 mr-2"></i>
-                            Items Loading Status
+                            Order Items
                         </h3>
-                        
-                        <?php if ($canMarkLoaded && !$allLoaded && !$isCompleted): ?>
-                        <form method="POST" class="inline">
-                            <input type="hidden" name="action" value="mark_all_loaded">
-                            <button type="submit" 
-                                    class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm font-semibold">
-                                <i class="fas fa-check-double mr-1"></i>
-                                Mark All Loaded
-                            </button>
-                        </form>
-                        <?php endif; ?>
                     </div>
                     
                     <!-- Progress Bar -->
@@ -583,28 +475,16 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                                 </div>
                                 
                                 <div class="flex items-center gap-3">
-                                    <?php if ($isFinal): ?>
-                                        <span class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">
-                                            <i class="fas fa-check-circle mr-1"></i>
-                                            <?php echo ucfirst(str_replace('_', ' ', $item['tracking_status'])); ?>
-                                        </span>
-                                    <?php elseif (!$isCompleted): ?>
-                                        <form method="POST" class="inline">
-                                            <input type="hidden" name="action" value="toggle_item_loaded">
-                                            <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                            <input type="hidden" name="current_status" value="<?php echo $item['tracking_status']; ?>">
-                                            <button type="submit" 
-                                                    class="<?php echo $isLoaded ? 'bg-blue-500 hover:bg-blue-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold">
-                                                <i class="fas <?php echo $isLoaded ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
-                                                <?php echo $isLoaded ? 'Loaded' : 'Ready'; ?>
-                                            </button>
-                                        </form>
-                                    <?php else: ?>
-                                        <span class="<?php echo $isLoaded ? 'bg-blue-500' : 'bg-yellow-500'; ?> text-white px-4 py-2 rounded-lg font-semibold">
-                                            <i class="fas <?php echo $isLoaded ? 'fa-check' : 'fa-clock'; ?> mr-1"></i>
-                                            <?php echo ucfirst(str_replace('_', ' ', $item['tracking_status'])); ?>
-                                        </span>
-                                    <?php endif; ?>
+                                    <span class="<?php 
+                                        echo $isFinal ? 'bg-green-500' : 
+                                             ($isLoaded ? 'bg-blue-500' : 'bg-yellow-500'); 
+                                    ?> text-white px-4 py-2 rounded-lg font-semibold">
+                                        <i class="fas <?php 
+                                            echo $isFinal ? 'fa-check-circle' : 
+                                                 ($isLoaded ? 'fa-check' : 'fa-clock'); 
+                                        ?> mr-1"></i>
+                                        <?php echo ucfirst(str_replace('_', ' ', $item['tracking_status'])); ?>
+                                    </span>
                                 </div>
                             </div>
                         <?php endforeach; ?>

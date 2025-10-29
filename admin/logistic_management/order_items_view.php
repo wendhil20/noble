@@ -7,6 +7,12 @@ include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
+// Redirect dispatchers to their own dashboard
+if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
+    header("Location: dispatcher_dashboard.php");
+    exit();
+}
+
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
     exit();

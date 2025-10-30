@@ -400,19 +400,28 @@ if ($itemInfo && $itemInfo['order_id']) {
                                     </div>
 
                                     <?php if ($isInWarehouse): ?>
-                                        <div class="text-xs text-green-500 mt-1 sm:mt-2 flex items-center">
-                                            <i class="fas fa-calendar-check mr-1"></i>
-                                            <span class="font-medium">Received and confirmed</span>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+                        <div class="text-xs text-green-500 mt-1 sm:mt-2 flex items-center">
+                            <i class="fas fa-calendar-check mr-1"></i>
+                            <span class="font-medium">Received and confirmed</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
-                            <?php if ($isInWarehouse): ?>
-                                <div class="bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
-                                    <i class="fas fa-check-circle text-base sm:text-xl"></i>
-                                    <span class="font-medium text-sm sm:text-base">Confirmed</span>
-                                </div>
+            <?php if ($isInWarehouse): ?>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
+                        <i class="fas fa-check-circle text-base sm:text-xl"></i>
+                        <span class="font-medium text-sm sm:text-base">Confirmed</span>
+                    </div>
+                    <!-- ADD DEFECT REPORT BUTTON -->
+                    <button onclick="openDefectReportModal()"
+                        class="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto text-sm sm:text-base">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Report Defect</span>
+                    </button>
+                </div>
+            <?php elseif ($hasBooking): ?>
                             <?php elseif ($hasBooking): ?>
                                 <div class="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
                                     <i class="fas fa-calendar-check text-base sm:text-xl"></i>
@@ -962,6 +971,220 @@ if ($itemInfo && $itemInfo['order_id']) {
                 closeLocationModal();
             }
         });
+
+        // Defect Reporting Functions
+        function openDefectReportModal() {
+            // Check if modal already exists
+            let modal = document.getElementById('defectReportModal');
+            if (!modal) {
+                // Create modal HTML
+                const modalHTML = `
+                <div id="defectReportModal" class="modal">
+                    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-3 sm:mx-4 max-h-[90vh] overflow-auto">
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 px-4 sm:px-6 py-3 sm:py-4 rounded-t-xl sticky top-0 z-10">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg sm:text-xl font-bold text-white">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>Report Item Defect
+                                </h3>
+                                <button onclick="closeDefectReportModal()" class="text-white hover:text-gray-200">
+                                    <i class="fas fa-times text-lg sm:text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-4 sm:p-6">
+                            <form id="defectReportForm" class="space-y-4">
+                                <!-- Defect Type -->
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-tag mr-1 text-red-600"></i>Defect Type *
+                                    </label>
+                                    <select id="defectType" required
+                                        class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base">
+                                        <option value="">Select defect type...</option>
+                                        <option value="damaged">Damaged/Broken</option>
+                                        <option value="wrong_item">Wrong Item</option>
+                                        <option value="missing_parts">Missing Parts</option>
+                                        <option value="quality_issue">Quality Issue</option>
+                                        <option value="size_mismatch">Size/Color Mismatch</option>
+                                        <option value="manufacturing_defect">Manufacturing Defect</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <!-- Quantity Defective -->
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-boxes mr-1 text-red-600"></i>Quantity Defective *
+                                    </label>
+                                    <input type="number" id="quantityDefective" min="1" value="1" required
+                                        class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base">
+                                </div>
+
+                                <!-- Severity -->
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-exclamation-circle mr-1 text-red-600"></i>Severity Level *
+                                    </label>
+                                    <select id="severity" required
+                                        class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base">
+                                        <option value="minor">Minor - Cosmetic issues only</option>
+                                        <option value="moderate" selected>Moderate - Affects functionality</option>
+                                        <option value="severe">Severe - Item unusable</option>
+                                    </select>
+                                </div>
+
+                                <!-- Description -->
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-comment-alt mr-1 text-red-600"></i>Detailed Description *
+                                    </label>
+                                    <textarea id="defectDescription" rows="4" required
+                                        placeholder="Describe the defect in detail..."
+                                        class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base resize-none"></textarea>
+                                    <p class="text-xs text-gray-500 mt-1">Provide as much detail as possible about the defect</p>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-gray-200">
+                                    <button type="submit"
+                                        class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 sm:py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base">
+                                        <i class="fas fa-paper-plane"></i>
+                                        <span>Submit Report</span>
+                                    </button>
+                                    <button type="button" onclick="closeDefectReportModal()"
+                                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2.5 sm:py-2 rounded-lg transition-colors duration-200 text-sm sm:text-base">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                `;
+                
+                // Insert modal into body
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                modal = document.getElementById('defectReportModal');
+                
+                // Setup form submission
+                document.getElementById('defectReportForm').addEventListener('submit', handleDefectReportSubmit);
+                
+                // Close on outside click
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeDefectReportModal();
+                    }
+                });
+            }
+            
+            modal.classList.add('active');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeDefectReportModal() {
+            const modal = document.getElementById('defectReportModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.classList.remove('overflow-hidden');
+                // Reset form
+                document.getElementById('defectReportForm').reset();
+            }
+        }
+
+        function handleDefectReportSubmit(e) {
+            e.preventDefault();
+            
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            const originalContent = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+            
+            const reportData = {
+                item_id: itemId,
+                defect_type: document.getElementById('defectType').value,
+                quantity_defective: parseInt(document.getElementById('quantityDefective').value),
+                severity: document.getElementById('severity').value,
+                defect_description: document.getElementById('defectDescription').value
+            };
+            
+            fetch('report_defect.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reportData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Defect report submitted successfully!\n\nThe report has been logged and will be reviewed.');
+                    closeDefectReportModal();
+                    // Reload to show defect indicator
+                    window.location.reload();
+                } else {
+                    alert('✗ Failed to submit report: ' + (data.error || 'Unknown error'));
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('✗ Failed to submit defect report. Please try again.');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalContent;
+            });
+        }
+
+        // Load and display defect reports for this item
+        function loadDefectReports() {
+            fetch(`report_defect.php?item_id=${itemId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.defects && data.defects.length > 0) {
+                        displayDefectWarning(data.defects);
+                    }
+                })
+                .catch(error => console.error('Error loading defects:', error));
+        }
+
+        function displayDefectWarning(defects) {
+            const trackingSection = document.querySelector('.bg-gradient-to-r.from-green-50, .bg-gradient-to-r.from-indigo-50');
+            if (trackingSection && defects.length > 0) {
+                const warningHTML = `
+                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                        <div class="flex items-start">
+                            <div class="bg-red-500 p-2 sm:p-3 rounded-lg mr-3 sm:mr-4 flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-white text-lg sm:text-2xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs sm:text-sm text-red-700 font-medium mb-1 sm:mb-2">
+                                    DEFECT REPORTED
+                                </div>
+                                <div class="text-lg sm:text-xl font-bold text-red-900 mb-2">
+                                    ${defects.length} Defect Report${defects.length > 1 ? 's' : ''} on Record
+                                </div>
+                                <div class="space-y-2">
+                                    ${defects.map(d => `
+                                        <div class="bg-white rounded p-2 text-sm">
+                                            <div class="font-semibold text-red-800">${d.defect_type}</div>
+                                            <div class="text-gray-600">${d.defect_description}</div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                Reported by ${d.reporter_name} on ${new Date(d.reported_at).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                trackingSection.insertAdjacentHTML('beforebegin', warningHTML);
+            }
+        }
+
+        // Load defects on page load
+        document.addEventListener('DOMContentLoaded', loadDefectReports);
     </script>
 </body>
 

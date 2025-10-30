@@ -318,9 +318,9 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                     <!-- Dispatcher Assignment Section -->
                     <div class="mt-6 border-t pt-6">
                         <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-user-tie text-indigo-600 mr-2"></i>
-                            Assigned Dispatcher
-                        </h4>
+    <i class="fas fa-camera text-green-600 mr-2"></i>
+    Upload <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> Proof
+</h4>
                         
                         <?php if (!$isCompleted): ?>
                         <form method="POST" class="space-y-4">
@@ -417,9 +417,9 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                     <?php if ($booking['delivery_proof_image']): ?>
                     <div class="mt-6 border-t pt-6">
                         <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                            Delivery Proof
-                        </h4>
+    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+    <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> Proof
+</h4>
                         <img src="../../uploads/delivery_proofs/<?php echo htmlspecialchars($booking['delivery_proof_image']); ?>" 
                              alt="Delivery Proof"
                              class="w-full rounded-lg shadow-lg">

@@ -246,6 +246,7 @@ if ($totalItems > 0) {
 // Status definitions
 $statusDefinitions = [
     'local' => [
+        'pending' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'pending', 'description' => 'Order confirmed and being prepared', 'progress' => 16],
         'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed and being prepared', 'progress' => 16],
         'In Warehouse' => ['icon' => 'fa-warehouse', 'color' => 'indigo', 'label' => 'In Warehouse', 'description' => 'Item received and stored in warehouse', 'progress' => 33],
         'scheduled' => ['icon' => 'fa-calendar-check', 'color' => 'purple', 'label' => 'Scheduled', 'description' => 'Delivery has been scheduled', 'progress' => 50],
@@ -255,6 +256,7 @@ $statusDefinitions = [
         'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red', 'label' => 'Returned', 'description' => 'Order cancelled or returned', 'progress' => 0]
     ],
     'international' => [
+        'pending' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'pending', 'description' => 'Order confirmed, supplier preparing', 'progress' => 9],
         'processing' => ['icon' => 'fa-cog', 'color' => 'blue', 'label' => 'Processing', 'description' => 'Order confirmed, supplier preparing', 'progress' => 9],
         'shipped_overseas' => ['icon' => 'fa-ship', 'color' => 'purple', 'label' => 'Shipped from Overseas', 'description' => 'Item has left the overseas supplier', 'progress' => 20],
         'in_transit_international' => ['icon' => 'fa-plane', 'color' => 'yellow', 'label' => 'In Transit (International)', 'description' => 'Item is on the way (by sea/air)', 'progress' => 32],
@@ -281,8 +283,8 @@ $replacementStatusDefinitions = [
 
 // Define selectable statuses (limited as per requirements)
 $selectableStatuses = [
-    'local' => ['processing'], // Only processing can be manually updated (In Warehouse is auto-updated via QR scan)
-    'international' => ['processing', 'shipped_overseas', 'in_transit_international', 'customs_clearance'] // Can edit up to customs_clearance (In Warehouse is auto-updated via QR scan)
+    'local' => ['pending','processing'], // Only processing can be manually updated (In Warehouse is auto-updated via QR scan)
+    'international' => ['pending','processing', 'shipped_overseas', 'in_transit_international', 'customs_clearance'] // Can edit up to customs_clearance (In Warehouse is auto-updated via QR scan)
 ];
 
 $selectableReplacementStatuses = ['approved', 'processing']; // Only these can be manually updated (In Warehouse is auto-updated via QR scan)
@@ -678,94 +680,132 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
         }
 
         function renderSingleItem($item, $origin, $statusDef, $selectableStatuses, $order_id, $isReplacement)
-        {
-            $currentStatus = $item['current_status'];
-            $statusInfo = $statusDef[$currentStatus] ?? ($isReplacement ? $statusDef['approved'] : $statusDef['processing']);
+{
+    global $conn; // Add this to access database connection
+    
+    $currentStatus = $item['current_status'];
+    $statusInfo = $statusDef[$currentStatus] ?? ($isReplacement ? $statusDef['approved'] : $statusDef['processing']);
 
-            $itemClass = $isReplacement ? 'replacement-item' : '';
+    $itemClass = $isReplacement ? 'replacement-item' : '';
+    
+    // Check for defect reports
+    $defectCountSql = "SELECT COUNT(*) as defect_count FROM defect_reports WHERE order_item_id = ?";
+    $defectCountStmt = $conn->prepare($defectCountSql);
+    $defectCountStmt->bind_param("i", $item['id']);
+    $defectCountStmt->execute();
+    $defectCountResult = $defectCountStmt->get_result()->fetch_assoc();
+    $defectCountStmt->close();
+    $hasDefects = (int)$defectCountResult['defect_count'] > 0;
 
-            echo "<div class='status-card bg-white rounded-xl p-6 border border-gray-200 cursor-pointer {$itemClass}' onclick=\"openProgressModal('{$item['id']}', '{$origin}', '{$currentStatus}', " . ($isReplacement ? 'true' : 'false') . ")\">";
+    echo "<div class='status-card bg-white rounded-xl p-6 border border-gray-200 cursor-pointer {$itemClass}' onclick=\"openProgressModal('{$item['id']}', '{$origin}', '{$currentStatus}', " . ($isReplacement ? 'true' : 'false') . ")\">";
 
-            if ($isReplacement) {
-                echo "<div class='mb-4 flex items-center justify-between'>";
-                echo "<div class='flex items-center space-x-2'>";
-                echo "<span class='bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold'>";
-                echo "<i class='fas fa-sync-alt mr-1'></i>REPLACEMENT ITEM";
-                echo "</span>";
-                echo "</div>";
-                echo "<div class='text-sm text-gray-600'>";
-                echo "<span class='font-medium'>Reason:</span> " . htmlspecialchars(ucfirst($item['replacement_reason']));
-                echo "</div>";
-                echo "</div>";
-            }
+    if ($isReplacement) {
+        echo "<div class='mb-4 flex items-center justify-between'>";
+        echo "<div class='flex items-center space-x-2'>";
+        echo "<span class='bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold'>";
+        echo "<i class='fas fa-sync-alt mr-1'></i>REPLACEMENT ITEM";
+        echo "</span>";
+        echo "</div>";
+        echo "<div class='text-sm text-gray-600'>";
+        echo "<span class='font-medium'>Reason:</span> " . htmlspecialchars(ucfirst($item['replacement_reason']));
+        echo "</div>";
+        echo "</div>";
+    }
+    
+    // ADD DEFECT WARNING
+    if ($hasDefects) {
+        echo "<div class='mb-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3'>";
+        echo "<div class='flex items-center space-x-2'>";
+        echo "<i class='fas fa-exclamation-triangle text-orange-600 text-lg'></i>";
+        echo "<span class='text-orange-800 font-semibold'>Defect Reported</span>";
+        echo "<button onclick='event.stopPropagation(); viewItemDefects({$item['id']});' class='ml-auto text-orange-600 hover:text-orange-700 underline text-sm'>";
+        echo "View Details";
+        echo "</button>";
+        echo "</div>";
+        echo "</div>";
+    }
 
-            echo "<div class='flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0'>";
-            echo "<div class='flex-1 min-w-0'>";
-            echo "<h4 class='font-bold text-gray-900 text-lg mb-2'>" . htmlspecialchars($item['product_name']) . "</h4>";
-            echo "<div class='flex flex-wrap items-center gap-4 text-sm text-gray-600'>";
-            echo "<span class='flex items-center'><i class='fas fa-boxes mr-2'></i>Qty: <strong class='ml-1'>{$item['quantity']}</strong></span>";
-            echo "<span class='flex items-center'><i class='fas fa-peso-sign mr-2'></i>Price: <strong class='ml-1'>" . number_format((float)$item['price'], 2) . "</strong></span>";
-            if ($item['codename']) {
-                echo "<span class='flex items-center'><i class='fas fa-tag mr-2'></i>Code: <strong class='ml-1'>" . htmlspecialchars($item['codename']) . "</strong></span>";
-            }
-            echo "</div>";
-            echo "</div>";
+    echo "<div class='flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0'>";
+    echo "<div class='flex-1 min-w-0'>";
+    echo "<h4 class='font-bold text-gray-900 text-lg mb-2'>" . htmlspecialchars($item['product_name']) . "</h4>";
+    echo "<div class='flex flex-wrap items-center gap-4 text-sm text-gray-600'>";
+    echo "<span class='flex items-center'><i class='fas fa-boxes mr-2'></i>Qty: <strong class='ml-1'>{$item['quantity']}</strong></span>";
+    echo "<span class='flex items-center'><i class='fas fa-peso-sign mr-2'></i>Price: <strong class='ml-1'>" . number_format((float)$item['price'], 2) . "</strong></span>";
+    if ($item['codename']) {
+        echo "<span class='flex items-center'><i class='fas fa-tag mr-2'></i>Code: <strong class='ml-1'>" . htmlspecialchars($item['codename']) . "</strong></span>";
+    }
+    echo "</div>";
+    echo "</div>";
 
-            echo "<div class='flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4' onclick='event.stopPropagation();'>";
+    echo "<div class='flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4' onclick='event.stopPropagation();'>";
 
-            // Status badge
-            echo "<div class='text-center'>";
-            echo "<div class='status-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold mb-2' style='--bg-from: rgb(var(--{$statusInfo['color']}-100)); --bg-to: rgb(var(--{$statusInfo['color']}-50));'>";
-            echo "<i class='fas {$statusInfo['icon']} mr-2 text-{$statusInfo['color']}-600'></i>";
-            echo "<span class='text-{$statusInfo['color']}-800'>{$statusInfo['label']}</span>";
-            echo "</div>";
-            echo "<div class='text-xs text-gray-600'>{$statusInfo['description']}</div>";
-            echo "</div>";
+    // Status badge
+    echo "<div class='text-center'>";
+    echo "<div class='status-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold mb-2' style='--bg-from: rgb(var(--{$statusInfo['color']}-100)); --bg-to: rgb(var(--{$statusInfo['color']}-50));'>";
+    echo "<i class='fas {$statusInfo['icon']} mr-2 text-{$statusInfo['color']}-600'></i>";
+    echo "<span class='text-{$statusInfo['color']}-800'>{$statusInfo['label']}</span>";
+    echo "</div>";
+    echo "<div class='text-xs text-gray-600'>{$statusInfo['description']}</div>";
+    echo "</div>";
 
-            echo "<div class='flex flex-col space-y-2'>";
+    echo "<div class='flex flex-col space-y-2'>";
 
-            // Individual item schedule buttons removed - replaced with single order-wide schedule button
+    // Status update form
+    $canUpdate = false;
+    if ($isReplacement) {
+        global $selectableReplacementStatuses;
+        $canUpdate = in_array($currentStatus, $selectableReplacementStatuses);
+        $statusOptionsToUse = $selectableReplacementStatuses;
+    } else {
+        $canUpdate = in_array($currentStatus, $selectableStatuses);
+        $statusOptionsToUse = $selectableStatuses;
+    }
 
-            // Status update form - limited based on requirements
-            $canUpdate = false;
-            if ($isReplacement) {
-                // For replacements: only allow updates for 'approved' and 'processing'
-                global $selectableReplacementStatuses;
-                $canUpdate = in_array($currentStatus, $selectableReplacementStatuses);
-                $statusOptionsToUse = $selectableReplacementStatuses;
-            } else {
-                // For original items: limited status updates only
-                $canUpdate = in_array($currentStatus, $selectableStatuses);
-                $statusOptionsToUse = $selectableStatuses;
-            }
-
-            if ($canUpdate) {
-                echo "<form method='POST' class='flex items-center space-x-2'>";
-                echo "<input type='hidden' name='item_id' value='{$item['id']}'>";
-                if ($isReplacement) {
-                    echo "<input type='hidden' name='item_type' value='replacement'>";
-                    echo "<input type='hidden' name='replacement_id' value='{$item['replacement_id']}'>";
-                }
-                echo "<select name='tracking_status' class='px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>";
-
-                foreach ($statusOptionsToUse as $status) {
-                    $info = $statusDef[$status];
-                    $selected = ($currentStatus === $status) ? 'selected' : '';
-                    echo "<option value='{$status}' {$selected}>{$info['label']}</option>";
-                }
-                echo "</select>";
-                echo "<button type='submit' name='update_status' class='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 hover:scale-105'>";
-                echo "<i class='fas fa-sync-alt'></i>";
-                echo "<span>Update</span>";
-                echo "</button>";
-                echo "</form>";
-            }
-
-            echo "</div>";
-            echo "</div>";
-            echo "</div>";
-            echo "</div>";
+    if ($canUpdate) {
+        echo "<form method='POST' class='flex items-center space-x-2'>";
+        echo "<input type='hidden' name='item_id' value='{$item['id']}'>";
+        if ($isReplacement) {
+            echo "<input type='hidden' name='item_type' value='replacement'>";
+            echo "<input type='hidden' name='replacement_id' value='{$item['replacement_id']}'>";
         }
+        echo "<select name='tracking_status' class='px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>";
+
+        foreach ($statusOptionsToUse as $status) {
+            $info = $statusDef[$status];
+            $selected = ($currentStatus === $status) ? 'selected' : '';
+            echo "<option value='{$status}' {$selected}>{$info['label']}</option>";
+        }
+        echo "</select>";
+        echo "<button type='submit' name='update_status' class='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 hover:scale-105'>";
+        echo "<i class='fas fa-sync-alt'></i>";
+        echo "<span>Update</span>";
+        echo "</button>";
+        echo "</form>";
+    }
+    
+    // ADD REQUEST REPLACEMENT BUTTON (only for original items with defects, not already replaced)
+    if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
+        // Check if replacement already exists
+        $replCheckSql = "SELECT COUNT(*) as repl_count FROM replacement_requests WHERE order_item_id = ? AND status IN ('pending', 'approved', 'processing', 'ready_for_pickup', 'out_for_delivery', 'delivered')";
+        $replCheckStmt = $conn->prepare($replCheckSql);
+        $replCheckStmt->bind_param("i", $item['id']);
+        $replCheckStmt->execute();
+        $replCheckResult = $replCheckStmt->get_result()->fetch_assoc();
+        $replCheckStmt->close();
+        
+        if ((int)$replCheckResult['repl_count'] === 0) {
+            echo "<button onclick='event.stopPropagation(); requestReplacement({$item['id']}, {$order_id});' class='bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2'>";
+            echo "<i class='fas fa-exchange-alt'></i>";
+            echo "<span>Request Replacement</span>";
+            echo "</button>";
+        }
+    }
+
+    echo "</div>";
+    echo "</div>";
+    echo "</div>";
+    echo "</div>";
+}
         ?>
 
         <!-- Local Products Section -->
@@ -1028,6 +1068,184 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
                     }
                 }
             });
+        });
+
+        // Defect viewing functions
+        function viewItemDefects(itemId) {
+            fetch(`report_defect.php?item_id=${itemId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.defects) {
+                        showDefectsModal(data.defects);
+                    } else {
+                        alert('Failed to load defect reports');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load defect reports');
+                });
+        }
+
+        function showDefectsModal(defects) {
+            let modalHTML = `
+                <div id="defectsViewModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-red-50">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-3 text-orange-600"></i>
+                                Defect Reports (${defects.length})
+                            </h3>
+                            <button onclick="closeDefectsModal()" class="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-6">
+                            <div class="space-y-4">
+            `;
+
+            defects.forEach((defect, index) => {
+                const severityColors = {
+                    'minor': 'yellow',
+                    'moderate': 'orange',
+                    'severe': 'red'
+                };
+                const color = severityColors[defect.severity] || 'gray';
+                const statusColors = {
+                    'pending': 'yellow',
+                    'acknowledged': 'blue',
+                    'replacement_requested': 'purple',
+                    'resolved': 'green'
+                };
+                const statusColor = statusColors[defect.status] || 'gray';
+
+                modalHTML += `
+                    <div class="bg-${color}-50 border-2 border-${color}-200 rounded-xl p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-${color}-100 text-${color}-800">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>
+                                        ${defect.severity.toUpperCase()}
+                                    </span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-${statusColor}-100 text-${statusColor}-800">
+                                        ${defect.status.replace('_', ' ').toUpperCase()}
+                                    </span>
+                                </div>
+                                <h4 class="font-bold text-${color}-900 text-lg">${defect.defect_type}</h4>
+                            </div>
+                            <div class="text-right text-sm text-gray-600">
+                                <div><i class="fas fa-boxes mr-1"></i>Qty: <strong>${defect.quantity_defective}</strong></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-3 mb-3">
+                            <div class="text-sm text-gray-700">${defect.defect_description}</div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-xs text-gray-600">
+                            <div>
+                                <i class="fas fa-user mr-1"></i>
+                                Reported by <strong>${defect.reporter_name}</strong>
+                            </div>
+                            <div>
+                                <i class="fas fa-calendar mr-1"></i>
+                                ${new Date(defect.reported_at).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            modalHTML += `
+                            </div>
+                        </div>
+                        <div class="p-6 border-t border-gray-200 bg-gray-50">
+                            <button onclick="closeDefectsModal()" 
+                                class="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('defectsViewModal');
+            if (existingModal) existingModal.remove();
+
+            // Add new modal
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            document.body.classList.add('overflow-hidden');
+
+            // Close on outside click
+            document.getElementById('defectsViewModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeDefectsModal();
+                }
+            });
+        }
+
+        function closeDefectsModal() {
+            const modal = document.getElementById('defectsViewModal');
+            if (modal) {
+                modal.remove();
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        // Request Replacement Function
+        function requestReplacement(itemId, orderId) {
+            if (!confirm('Request a replacement for this defective item?\n\nThis will create a replacement request that needs to be approved.')) {
+                return;
+            }
+
+            // First, get defect details to use as reason
+            fetch(`report_defect.php?item_id=${itemId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.defects && data.defects.length > 0) {
+                        const defect = data.defects[0]; // Use first defect
+                        const reason = `Defective item: ${defect.defect_type} - ${defect.defect_description}`;
+                        
+                        // Create replacement request
+                        return fetch('create_replacement_request.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                order_item_id: itemId,
+                                order_id: orderId,
+                                reason: reason,
+                                quantity: defect.quantity_defective,
+                                auto_approve: false
+                            })
+                        });
+                    } else {
+                        throw new Error('No defect reports found');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✓ Replacement request created successfully!\n\nThe request will be reviewed for approval.');
+                        window.location.reload();
+                    } else {
+                        alert('✗ Failed to create replacement request: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('✗ Failed to create replacement request. Please try again.');
+                });
+        }
+
+        // Handle escape key for all modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDefectsModal();
+            }
         });
     </script>
 </body>

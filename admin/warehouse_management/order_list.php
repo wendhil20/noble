@@ -574,6 +574,27 @@ foreach ($statusCounts as $row) {
                                             <i class="fas fa-exclamation-triangle"></i><span>Handle Replacements</span>
                                         </a>
                                     <?php endif; ?>
+
+                                    <!-- Defect Reports Button -->
+                                    <?php
+                                    // Check if order has defect reports
+                                    $defectCountSql = "SELECT COUNT(*) as defect_count FROM defect_reports WHERE order_id = ?";
+                                    $defectCountStmt = $conn->prepare($defectCountSql);
+                                    $defectCountStmt->bind_param("i", $order['id']);
+                                    $defectCountStmt->execute();
+                                    $defectCountResult = $defectCountStmt->get_result()->fetch_assoc();
+                                    $defectCountStmt->close();
+                                    $defectCount = (int)$defectCountResult['defect_count'];
+                                    
+                                    if ($defectCount > 0):
+                                    ?>
+                                        <a href="view_defects.php?order_id=<?php echo urlencode($order['id']); ?>" 
+                                           class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm pulse-notification relative">
+                                            <i class="fas fa-tools"></i>
+                                            <span>View Defects (<?php echo $defectCount; ?>)</span>
+                                            <span class="absolute -top-1 -right-1 h-3 w-3 bg-orange-500 border-2 border-white rounded-full animate-ping"></span>
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

@@ -23,6 +23,13 @@ $is_head = false;
 
 $sessionUser = $_SESSION['noble_user'];
 
+// Initialize variables
+$user_id = null;
+$fullname = '';
+$user_lvl = '';
+$is_head = false;
+
+// Check if session is an array
 if (is_array($sessionUser)) {
     if (isset($sessionUser['id'])) {
         $user_id = (int)$sessionUser['id'];
@@ -34,11 +41,30 @@ if (is_array($sessionUser)) {
     $is_head = isset($sessionUser['is_head']) && (int)$sessionUser['is_head'] === 1;
 }
 
-// Lookup user if needed
-if (empty($user_id) || empty($user_lvl)) {
+// If session is just an email or string, look up user by email or id
+if (empty($user_id)) {
     if (!is_array($sessionUser)) {
-        if (ctype_digit((string)$sessionUser)) {
-            $candidate = (int)$sessionUser;
+        $lookupValue = $sessionUser;
+        
+        // Check if it's an email
+        if (filter_var($lookupValue, FILTER_VALIDATE_EMAIL)) {
+            $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE email = ? LIMIT 1";
+            if ($s = $conn->prepare($sql)) {
+                $s->bind_param("s", $lookupValue);
+                $s->execute();
+                $r = $s->get_result()->fetch_assoc();
+                $s->close();
+                if ($r) {
+                    $user_id = (int)$r['id'];
+                    $fullname = $r['fullname'];
+                    $user_lvl = $r['lvl'];
+                    $is_head = (int)$r['is_head'] === 1;
+                }
+            }
+        }
+        // Check if it's a numeric ID
+        elseif (ctype_digit((string)$lookupValue)) {
+            $candidate = (int)$lookupValue;
             $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE id = ? LIMIT 1";
             if ($s = $conn->prepare($sql)) {
                 $s->bind_param("i", $candidate);
@@ -85,13 +111,22 @@ $whereParts = ["1=1"]; // Start with always true condition
 $params = [];
 $types = '';
 
-// Unassigned orders filter
-if ($show_unassigned) {
-    $whereParts[] = "(o.warehouse_employee_id IS NULL OR o.warehouse_employee_id = 0)";
-} elseif ($employee_filter > 0) {
+// IMPORTANT: Heads see ALL orders, regular employees see only their assigned orders
+if (!$is_head && !$show_unassigned) {
+    // Regular warehouse employee: only show their assigned orders
     $whereParts[] = "o.warehouse_employee_id = ?";
-    $params[] = $employee_filter;
+    $params[] = $user_id;
     $types .= 'i';
+} else {
+    // Head: apply filters based on GET parameters
+    if ($show_unassigned) {
+        $whereParts[] = "(o.warehouse_employee_id IS NULL OR o.warehouse_employee_id = 0)";
+    } elseif ($employee_filter > 0) {
+        $whereParts[] = "o.warehouse_employee_id = ?";
+        $params[] = $employee_filter;
+        $types .= 'i';
+    }
+    // If no filter, heads see ALL orders (no additional WHERE needed)
 }
 
 if ($status_filter !== '') {
@@ -332,12 +367,14 @@ if ($empStatsResult) {
                         <i class="fas fa-crown text-yellow-300 text-3xl"></i>
                     </div>
                     <div>
-                        <div class="flex items-center space-x-2">
-                            <h1 class="text-3xl font-bold">Warehouse Head Dashboard</h1>
-                            <span class="px-3 py-1 bg-yellow-300 text-red-800 rounded-full text-sm font-bold">
-                                <i class="fas fa-shield-alt mr-1"></i>HEAD ACCESS
-                            </span>
-                        </div>
+                        <p class="text-red-100 mt-1">
+    Viewing: <strong>ALL WAREHOUSE ORDERS</strong> 
+    <?php if ($employee_filter > 0): ?>
+        - Filtered by employee
+    <?php elseif ($show_unassigned): ?>
+        - Unassigned only
+    <?php endif; ?>
+</p>
                         <p class="text-red-100 mt-1">Complete overview of all warehouse orders and assignments</p>
                     </div>
                 </div>

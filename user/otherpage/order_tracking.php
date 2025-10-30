@@ -55,9 +55,7 @@ $stmt = $conn->prepare("
            rr.reason as replacement_reason,
            rr.created_at as replacement_requested_at,
            ds.id as replacement_delivery_id,
-           ds.delivery_status as replacement_delivery_status,
-           ds.delivered_at as replacement_delivered_at,
-           ds.delivery_proof as replacement_delivery_proof
+           ds.delivery_status as replacement_delivery_status
     FROM order_items oi
     LEFT JOIN replacement_requests rr ON oi.id = rr.order_item_id
     LEFT JOIN delivery_schedules ds ON rr.id = ds.replacement_id
@@ -73,9 +71,9 @@ while ($row = $items_result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Function to get order level status steps - FIXED
-function getOrderStatusSteps() {
-    return [
+// Function to get order level status steps
+function getOrderStatusSteps($delivery_type = 'delivery') {
+    $steps = [
         'pending' => [
             'name' => 'Order Pending',
             'description' => 'Order placed and awaiting confirmation',
@@ -91,43 +89,107 @@ function getOrderStatusSteps() {
             'description' => 'Items are being prepared',
             'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
         ],
-        'completed' => [
-            'name' => 'Order Completed',
-            'description' => 'All items have been delivered',
+        'ready_for_pickup' => [
+            'name' => 'Ready',
+            'description' => $delivery_type === 'pickup' ? 'Ready for pickup' : 'Ready for delivery',
             'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
         ]
     ];
+    
+    // Add delivery/pickup in progress step
+    if ($delivery_type === 'pickup') {
+        $steps['out_for_pickup'] = [
+            'name' => 'Out for Pickup',
+            'description' => 'Order ready to be picked up',
+            'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
+        ];
+    } else {
+        $steps['out_for_delivery'] = [
+            'name' => 'Out for Delivery',
+            'description' => 'Order is being delivered',
+            'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
+        ];
+    }
+    
+    // Add final completion step
+    if ($delivery_type === 'pickup') {
+        $steps['picked_up'] = [
+            'name' => 'Order Picked Up',
+            'description' => 'All items have been picked up',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    } else {
+        $steps['delivered'] = [
+            'name' => 'Order Delivered',
+            'description' => 'All items have been delivered',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    }
+    
+    return $steps;
 }
 
 // Function to get status steps for local products
-function getLocalStatusSteps() {
-    return [
+function getLocalStatusSteps($delivery_type = 'delivery') {
+    $steps = [
+        'pending' => [
+            'name' => 'Pending',
+            'description' => 'Order placed',
+            'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+        ],
         'processing' => [
             'name' => 'Processing',
             'description' => 'Item being prepared',
             'icon' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4'
         ],
+        'in_warehouse' => [
+            'name' => 'In Warehouse',
+            'description' => 'Item in warehouse',
+            'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'
+        ],
+        'scheduled' => [
+            'name' => 'Scheduled',
+            'description' => $delivery_type === 'pickup' ? 'Pickup scheduled' : 'Delivery scheduled',
+            'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+        ],
         'ready_for_pickup' => [
-            'name' => 'Ready for Pickup',
-            'description' => 'Ready for delivery',
+            'name' => 'Ready',
+            'description' => $delivery_type === 'pickup' ? 'Ready for pickup' : 'Ready for delivery',
             'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
         ],
-        'out_for_delivery' => [
-            'name' => 'Out for Delivery',
-            'description' => 'Being delivered',
+        'item_is_loaded' => [
+            'name' => $delivery_type === 'pickup' ? 'Out for Pickup' : 'Out for Delivery',
+            'description' => $delivery_type === 'pickup' ? 'Ready to be picked up' : 'Being delivered',
             'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
-        ],
-        'delivered' => [
-            'name' => 'Delivered',
-            'description' => 'Item received',
-            'icon' => 'M5 13l4 4L19 7'
         ]
     ];
+    
+    // Add final step based on delivery type
+    if ($delivery_type === 'pickup') {
+        $steps['picked_up'] = [
+            'name' => 'Picked Up',
+            'description' => 'Item picked up',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    } else {
+        $steps['delivered'] = [
+            'name' => 'Delivered',
+            'description' => 'Item delivered',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    }
+    
+    return $steps;
 }
 
 // Function to get status steps for international products
-function getInternationalStatusSteps() {
-    return [
+function getInternationalStatusSteps($delivery_type = 'delivery') {
+    $steps = [
+        'pending' => [
+            'name' => 'Pending',
+            'description' => 'Order placed',
+            'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+        ],
         'processing' => [
             'name' => 'Processing',
             'description' => 'Supplier preparing',
@@ -148,27 +210,49 @@ function getInternationalStatusSteps() {
             'description' => 'Customs inspection',
             'icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
         ],
-        'in_local_warehouse' => [
-            'name' => 'Local Warehouse',
-            'description' => 'Ready for dispatch',
+        'in_warehouse' => [
+            'name' => 'In Warehouse',
+            'description' => 'In local warehouse',
             'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'
         ],
-        'out_for_delivery' => [
-            'name' => 'Out for Delivery',
-            'description' => 'Being delivered',
-            'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
+        'scheduled' => [
+            'name' => 'Scheduled',
+            'description' => $delivery_type === 'pickup' ? 'Pickup scheduled' : 'Delivery scheduled',
+            'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
         ],
-        'delivered' => [
-            'name' => 'Delivered',
-            'description' => 'Item received',
-            'icon' => 'M5 13l4 4L19 7'
+        'ready_for_pickup' => [
+            'name' => 'Ready',
+            'description' => $delivery_type === 'pickup' ? 'Ready for pickup' : 'Ready for delivery',
+            'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+        ],
+        'item_is_loaded' => [
+            'name' => $delivery_type === 'pickup' ? 'Out for Pickup' : 'Out for Delivery',
+            'description' => $delivery_type === 'pickup' ? 'Ready to be picked up' : 'Being delivered',
+            'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
         ]
     ];
+    
+    // Add final step based on delivery type
+    if ($delivery_type === 'pickup') {
+        $steps['picked_up'] = [
+            'name' => 'Picked Up',
+            'description' => 'Item picked up',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    } else {
+        $steps['delivered'] = [
+            'name' => 'Delivered',
+            'description' => 'Item delivered',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    }
+    
+    return $steps;
 }
 
 // Function to get replacement status steps
-function getReplacementStatusSteps() {
-    return [
+function getReplacementStatusSteps($delivery_type = 'delivery') {
+    $steps = [
         'pending' => [
             'name' => 'Request Pending',
             'description' => 'Replacement request submitted',
@@ -185,21 +269,33 @@ function getReplacementStatusSteps() {
             'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
         ],
         'ready_for_pickup' => [
-            'name' => 'Ready for Delivery',
-            'description' => 'Ready for pickup',
+            'name' => 'Ready',
+            'description' => $delivery_type === 'pickup' ? 'Ready for pickup' : 'Ready for delivery',
             'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
         ],
-        'out_for_delivery' => [
-            'name' => 'Out for Delivery',
-            'description' => 'Replacement being delivered',
+        'item_is_loaded' => [
+            'name' => $delivery_type === 'pickup' ? 'Out for Pickup' : 'Out for Delivery',
+            'description' => $delivery_type === 'pickup' ? 'Ready to be picked up' : 'Replacement being delivered',
             'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'
-        ],
-        'delivered' => [
-            'name' => 'Replacement Delivered',
-            'description' => 'Replacement received',
-            'icon' => 'M5 13l4 4L19 7'
         ]
     ];
+    
+    // Add final step based on delivery type
+    if ($delivery_type === 'pickup') {
+        $steps['picked_up'] = [
+            'name' => 'Picked Up',
+            'description' => 'Replacement picked up',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    } else {
+        $steps['delivered'] = [
+            'name' => 'Delivered',
+            'description' => 'Replacement delivered',
+            'icon' => 'M5 13l4 4L19 7'
+        ];
+    }
+    
+    return $steps;
 }
 
 // Function to get current step index
@@ -210,27 +306,36 @@ function getCurrentStepIndex($status, $steps) {
     return $index !== false ? $index : 0;
 }
 
-// Function to get order step index - FIXED
-function getOrderStepIndex($status) {
-    $status = strtolower($status);
-    $steps = ['pending', 'ongoing', 'processing', 'completed']; // Updated to include all 4 statuses
+// Function to get order step index
+function getOrderStepIndex($status, $delivery_type = 'delivery') {
+    // Normalize status: convert to lowercase and replace spaces with underscores
+    $status = strtolower(str_replace(' ', '_', $status));
+    
+    if ($delivery_type === 'pickup') {
+        $steps = ['pending', 'ongoing', 'processing', 'ready_for_pickup', 'out_for_pickup', 'picked_up'];
+    } else {
+        $steps = ['pending', 'ongoing', 'processing', 'ready_for_pickup', 'out_for_delivery', 'delivered'];
+    }
+    
     $index = array_search($status, $steps);
     return $index !== false ? $index : 0;
 }
-
 // Function to check if item is eligible for replacement
 function isEligibleForReplacement($item, $order) {
     $item_status = strtolower($item['tracking_status'] ?? 'processing');
+    $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
     
-    // Check if item is delivered - that's the only requirement
-    if ($item_status === 'delivered') {
+    // Check if item is delivered or picked up based on delivery type
+    $final_status = ($delivery_type === 'pickup') ? 'picked_up' : 'delivered';
+    
+    if ($item_status === $final_status) {
         // Optional: Add time window check if needed (7 days)
-        $delivery_date = $item['delivered_at'] ?? null;
-        if ($delivery_date) {
-            $days_since_delivery = (time() - strtotime($delivery_date)) / (60 * 60 * 24);
-            return $days_since_delivery <= 7; // 7 days replacement window
+        $completion_date = $item['delivered_at'] ?? $item['picked_up_at'] ?? null;
+        if ($completion_date) {
+            $days_since_completion = (time() - strtotime($completion_date)) / (60 * 60 * 24);
+            return $days_since_completion <= 7; // 7 days replacement window
         }
-        // If no delivery date, still allow replacement for delivered items
+        // If no date, still allow replacement for completed items
         return true;
     }
     
@@ -467,6 +572,27 @@ $show_map = $delivery_settings &&
                             ?>">
                             Pay: <?= ucfirst($payment_status) ?>
                         </span>
+                        
+                        <!-- Order Status -->
+<span class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full
+    <?php
+    // Normalize status for comparison
+    $order_status = strtolower(str_replace(' ', '_', $order['status']));
+    if (in_array($order_status, ['delivered', 'picked_up'])) {
+        echo 'bg-green-100 text-green-800';
+    } elseif (in_array($order_status, ['out_for_delivery', 'out_for_pickup', 'ready_for_pickup'])) {
+        echo 'bg-blue-100 text-blue-800';
+    } elseif ($order_status === 'processing') {
+        echo 'bg-yellow-100 text-yellow-800';
+    } else {
+        echo 'bg-gray-100 text-gray-800';
+    }
+    ?>">
+    <?php
+    // Display the status nicely formatted
+    echo htmlspecialchars($order['status']);
+    ?>
+</span>
                     </div>
                 </div>
             </div>
@@ -524,8 +650,9 @@ $show_map = $delivery_settings &&
             <!-- Desktop/Tablet Horizontal Steps -->
             <div class="hidden sm:flex items-center justify-between relative">
                 <?php 
-                $order_steps = getOrderStatusSteps();
-                $current_order_index = getOrderStepIndex($order['status']);
+                $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
+                $order_steps = getOrderStatusSteps($delivery_type);
+                $current_order_index = getOrderStepIndex($order['status'], $delivery_type);
                 $step_count = 0;
                 $total_steps = count($order_steps);
                 
@@ -585,8 +712,9 @@ $show_map = $delivery_settings &&
             <!-- Mobile Vertical Steps -->
             <div class="sm:hidden">
                 <?php 
-                $order_steps = getOrderStatusSteps();
-                $current_order_index = getOrderStepIndex($order['status']);
+                $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
+                $order_steps = getOrderStatusSteps($delivery_type);
+                $current_order_index = getOrderStepIndex($order['status'], $delivery_type);
                 $step_count = 0;
                 $total_steps = count($order_steps);
                 
@@ -670,6 +798,7 @@ $show_map = $delivery_settings &&
                     <?php
                     $origin = strtolower($item['origin'] ?? 'local');
                     $current_status = $item['tracking_status'] ?? 'processing';
+                    $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
                     
                     // Check replacement eligibility and status
                     $is_eligible_for_replacement = isEligibleForReplacement($item, $order);
@@ -679,15 +808,15 @@ $show_map = $delivery_settings &&
                     // Determine if we should show replacement tracking
                     $show_replacement_tracking = $has_replacement_request && 
                                                $item['replacement_delivery_id'] && 
-                                               in_array($item['replacement_status'], ['approved', 'processing', 'ready_for_pickup', 'out_for_delivery', 'delivered']);
+                                               in_array($item['replacement_status'], ['approved', 'processing', 'ready_for_pickup', 'item_is_loaded', 'delivered', 'picked_up']);
                     
                     if ($origin === 'local') {
-                        $steps = getLocalStatusSteps();
+                        $steps = getLocalStatusSteps($delivery_type);
                         $origin_icon = '🏠';
                         $origin_label = 'Local';
                         $origin_color = 'bg-green-100 text-green-800';
                     } else {
-                        $steps = getInternationalStatusSteps();
+                        $steps = getInternationalStatusSteps($delivery_type);
                         $origin_icon = '🌏';
                         $origin_label = 'International';
                         $origin_color = 'bg-blue-100 text-blue-800';
@@ -723,12 +852,12 @@ $show_map = $delivery_settings &&
                                         $replacement_delivery_status = $item['replacement_delivery_status'] ?? 'scheduled';
                                         
                                         // Determine current replacement status for display
-                                        if ($replacement_delivery_status === 'delivered') {
+                                        if ($replacement_delivery_status === 'delivered' || $replacement_delivery_status === 'picked_up') {
                                             $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = '✅ Replacement Delivered';
-                                        } elseif ($replacement_delivery_status === 'out_for_delivery') {
+                                            $status_text = $replacement_delivery_status === 'picked_up' ? '✅ Replacement Picked Up' : '✅ Replacement Delivered';
+                                        } elseif ($replacement_delivery_status === 'item_is_loaded') {
                                             $status_color = 'bg-blue-100 text-blue-800';
-                                            $status_text = '🚚 Replacement Out for Delivery';
+                                            $status_text = $delivery_type === 'pickup' ? '📦 Replacement Out for Pickup' : '🚚 Replacement Out for Delivery';
                                         } elseif ($replacement_status === 'ready_for_pickup') {
                                             $status_color = 'bg-purple-100 text-purple-800';
                                             $status_text = '📦 Replacement Ready';
@@ -776,10 +905,10 @@ $show_map = $delivery_settings &&
                                 <?php
                                 // Determine replacement tracking status
                                 $replacement_tracking_status = 'pending';
-                                if ($item['replacement_delivery_status'] === 'delivered') {
-                                    $replacement_tracking_status = 'delivered';
-                                } elseif ($item['replacement_delivery_status'] === 'out_for_delivery') {
-                                    $replacement_tracking_status = 'out_for_delivery';
+                                if ($item['replacement_delivery_status'] === 'delivered' || $item['replacement_delivery_status'] === 'picked_up') {
+                                    $replacement_tracking_status = $item['replacement_delivery_status'];
+                                } elseif ($item['replacement_delivery_status'] === 'item_is_loaded') {
+                                    $replacement_tracking_status = 'item_is_loaded';
                                 } elseif ($item['replacement_status'] === 'ready_for_pickup') {
                                     $replacement_tracking_status = 'ready_for_pickup';
                                 } elseif ($item['replacement_status'] === 'processing') {
@@ -788,7 +917,7 @@ $show_map = $delivery_settings &&
                                     $replacement_tracking_status = 'approved';
                                 }
                                 
-                                $replacement_steps = getReplacementStatusSteps();
+                                $replacement_steps = getReplacementStatusSteps($delivery_type);
                                 $replacement_current_index = getCurrentStepIndex($replacement_tracking_status, $replacement_steps);
                                 ?>
                                 
@@ -885,11 +1014,7 @@ $show_map = $delivery_settings &&
                                 </div>
                                 
                                 <!-- Replacement Details -->
-                                <?php if ($item['replacement_delivered_at']): ?>
-                                <div class="mt-2 text-xs text-green-700">
-                                    <strong>Delivered:</strong> <?= date('M j, Y g:i A', strtotime($item['replacement_delivered_at'])) ?>
-                                </div>
-                                <?php elseif ($item['replacement_requested_at']): ?>
+                                <?php if ($item['replacement_requested_at']): ?>
                                 <div class="mt-2 text-xs text-orange-700">
                                     <strong>Requested:</strong> <?= date('M j, Y g:i A', strtotime($item['replacement_requested_at'])) ?>
                                 </div>

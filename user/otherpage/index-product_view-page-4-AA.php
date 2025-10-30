@@ -1567,7 +1567,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
     </div>
   </div>
 
-<!-- JavaScript Functions -->
+  <!-- JavaScript Functions -->
   <script>
     function increaseQuantity() {
       const input = document.getElementById('quantityInput');
@@ -1742,7 +1742,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
             return false;
           }
         });
-        
+
         // ✅ Double protection for Enter key
         quantityInput.addEventListener('keypress', function(e) {
           if (e.key === 'Enter') {
@@ -1750,7 +1750,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
             return false;
           }
         });
-        
+
         quantityInput.addEventListener('input', updateQuantityPreview);
       }
     });
@@ -1847,11 +1847,14 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
     #quantityInput::-webkit-outer-spin-button,
     #quantityInput::-webkit-inner-spin-button {
       -webkit-appearance: none;
+      appearance: none;
       margin: 0;
     }
 
     #quantityInput[type=number] {
+      -webkit-appearance: textfield;
       -moz-appearance: textfield;
+      appearance: textfield;
     }
   </style>
 
@@ -2674,7 +2677,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
     });
 
-    // Product Selection State Management - Fixed for your HTML structure
+    // Product Selection State Management - All Steps Visible Version
     class ProductSelector {
       constructor() {
         this.selectedTypeId = null;
@@ -2687,8 +2690,8 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         this.initializeElements();
         this.bindEvents();
 
-        // Set initial states for step flow
-        this.initializeStepFlow();
+        // ✅ Enable all sections from start
+        this.initializeAllSectionsEnabled();
       }
 
       initializeElements() {
@@ -2703,7 +2706,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           contactUsBtn: document.getElementById('contactUsBtn'),
           contactBtnText: document.getElementById('contactBtnText'),
           productForm: document.getElementById('productForm'),
-          // Hidden inputs
           selectedColorId: document.getElementById('selected_color_id'),
           selectedColor: document.getElementById('selected_color'),
           selectedType: document.getElementById('selected_type'),
@@ -2713,12 +2715,10 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
 
       bindEvents() {
-        // Form submission
         if (this.elements.productForm) {
           this.elements.productForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
         }
 
-        // Touch event handling for mobile
         document.addEventListener('DOMContentLoaded', () => {
           const buttons = document.querySelectorAll('.color-btn, .type-btn, .variant-btn');
           buttons.forEach(button => {
@@ -2729,16 +2729,75 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         });
       }
 
-      // Initialize step flow states
-      initializeStepFlow() {
-        // Initially disable color selection (until type is selected)
-        this.disableColorSelection();
-
-        // Initially hide variant container
-        this.hideVariantContainer();
+      // ✅ NEW: Enable all sections from start
+      initializeAllSectionsEnabled() {
+        this.enableColorSelection();
+        this.showAllVariantGroups();
+        this.updateDisplay();
       }
 
-      // STEP 1: Type Selection Methods
+      // ✅ MODIFIED: Enable colors immediately (no type requirement)
+      enableColorSelection() {
+        const container = document.getElementById('color-selection-container');
+        const message = document.getElementById('color-disabled-message');
+
+        if (container && message) {
+          container.classList.remove('opacity-50', 'pointer-events-none');
+          message.style.display = 'none';
+        }
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50');
+        });
+      }
+
+      // ✅ NEW: Show all variant groups at once
+      showAllVariantGroups() {
+        // Hide default message
+        if (this.elements.variantContainer) {
+          this.elements.variantContainer.style.display = 'none';
+        }
+
+        // Show all variant groups
+        document.querySelectorAll('.variant-group').forEach(group => {
+          group.classList.remove('hidden');
+        });
+
+        // Enable/disable based on selections
+        this.updateVariantAvailability();
+      }
+
+      // ✅ MODIFIED: Update which variants are clickable
+      updateVariantAvailability() {
+        document.querySelectorAll('.variant-group').forEach(group => {
+          const variantButtons = group.querySelectorAll('.variant-btn');
+
+          if (!this.selectedTypeId) {
+            // If no type selected, disable all variants
+            variantButtons.forEach(btn => {
+              btn.disabled = true;
+              btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+          } else {
+            // Enable variants only for selected type
+            const groupTypeId = group.id.replace('variants-', '');
+            if (parseInt(groupTypeId) === parseInt(this.selectedTypeId)) {
+              variantButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+              });
+            } else {
+              variantButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+              });
+            }
+          }
+        });
+      }
+
+      // ✅ TYPE SELECTION
       showVariants(typeId, typeName) {
         const clickedButton = event.currentTarget;
         const isCurrentlySelected = clickedButton.classList.contains('selected');
@@ -2753,11 +2812,11 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
 
       setTypeSelection(button, typeId, typeName) {
-        // Update type selection indicators
         document.querySelectorAll('.type-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
         });
+
         button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
         button.classList.remove('border-gray-200', 'bg-white');
 
@@ -2766,19 +2825,16 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           this.elements.selectedType.value = typeName;
         }
 
-        // Enable color selection after type is selected
-        this.enableColorSelection();
-
-        // Clear previous color and variant selections
-        this.clearColorSelection(false); // Don't disable color selection
+        // Clear variant selection when type changes
         this.clearVariantSelection();
-        this.hideVariantContainer();
+
+        // Update which variants are enabled
+        this.updateVariantAvailability();
 
         this.updateDisplay();
       }
 
       unselectType(button) {
-        // Remove selection indicators
         button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
         button.classList.add('border-gray-200', 'bg-white');
 
@@ -2787,66 +2843,12 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           this.elements.selectedType.value = '';
         }
 
-        // Disable color and variant selection when no type is selected
-        this.disableColorSelection();
-        this.hideVariantContainer();
-
-        // Clear color and variant selections
-        this.clearColorSelection(false);
         this.clearVariantSelection();
-
+        this.updateVariantAvailability();
         this.updateDisplay();
       }
 
-      // STEP 2: Color Selection Methods
-      enableColorSelection() {
-        const container = document.getElementById('color-selection-container');
-        const message = document.getElementById('color-disabled-message');
-
-        if (container && message) {
-          container.classList.remove('opacity-50', 'pointer-events-none');
-          message.style.display = 'none';
-        }
-
-        // Enable all color buttons
-        document.querySelectorAll('.color-btn').forEach(btn => {
-          btn.disabled = false;
-          btn.classList.remove('opacity-50');
-        });
-
-        // Update info message
-        const infoElement = document.getElementById('color-selection-info');
-        if (infoElement) {
-          infoElement.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select a color to continue';
-        }
-      }
-
-      disableColorSelection() {
-        const container = document.getElementById('color-selection-container');
-        const message = document.getElementById('color-disabled-message');
-
-        if (container && message) {
-          container.classList.add('opacity-50', 'pointer-events-none');
-          message.style.display = 'block';
-        }
-
-        // Disable all color buttons
-        document.querySelectorAll('.color-btn').forEach(btn => {
-          btn.disabled = true;
-          btn.classList.add('opacity-50');
-          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
-          btn.classList.add('border-gray-200', 'bg-white');
-        });
-
-        // Update info message
-        const infoElement = document.getElementById('color-selection-info');
-        if (infoElement) {
-          infoElement.innerHTML = '<i class="fas fa-info-circle text-orange-500 mr-2"></i>Select an item type first';
-        }
-      }
-
-      // Add this inside your ProductSelector class, sa setColorFromGrid method:
-
+      // ✅ COLOR SELECTION
       setColorFromGrid(colorId, colorName, price, image, colorCode) {
         this.selectedColorData = {
           id: colorId,
@@ -2854,7 +2856,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           price: parseFloat(price)
         };
 
-        // Update hidden fields
         if (this.elements.selectedColorId) {
           this.elements.selectedColorId.value = colorId;
         }
@@ -2862,42 +2863,26 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           this.elements.selectedColor.value = colorName;
         }
 
-        // Update BOTH images if color has an image
+        // Update images
         if (image) {
-          let imagePath;
+          let imagePath = image.startsWith('../../') ? image : `../../${image}`;
 
-          if (image.startsWith('../../')) {
-            imagePath = image;
-          } else {
-            imagePath = `../../${image}`;
-          }
-
-          console.log('Setting image path:', imagePath);
-
-          // Update main product image
           if (this.elements.mainImage) {
             this.elements.mainImage.src = imagePath;
           }
 
-          // ✅ UPDATE SIDEBAR IMAGE TOO
           const sidebarImage = document.getElementById('sidebar-product-image');
           if (sidebarImage) {
             sidebarImage.src = imagePath;
           }
         }
 
-        // Enable variant selection if type is also selected
-        if (this.selectedTypeId) {
-          this.showVariantGroup(this.selectedTypeId);
-        }
-
         this.updateDisplay();
       }
 
-      clearColorSelection(shouldDisable = true) {
+      clearColorSelection() {
         this.selectedColorData = null;
 
-        // Clear hidden fields
         if (this.elements.selectedColorId) {
           this.elements.selectedColorId.value = '';
         }
@@ -2905,90 +2890,20 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           this.elements.selectedColor.value = '';
         }
 
-        // Remove selection from all color buttons
         document.querySelectorAll('.color-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
           btn.classList.add('border-gray-200', 'bg-white');
         });
 
-        // Reset to original image
         if (this.elements.mainImage) {
-          const originalSrc = this.elements.mainImage.dataset.originalSrc ||
-            this.elements.mainImage.src.split('?')[0]; // Remove any query params
+          const originalSrc = this.elements.mainImage.dataset.originalSrc || this.elements.mainImage.src.split('?')[0];
           this.elements.mainImage.src = originalSrc;
         }
 
-        // Optionally disable color selection
-        if (shouldDisable) {
-          this.disableColorSelection();
-        }
-
-        // Clear variant selection and hide variants
-        this.clearVariantSelection();
-        this.hideVariantContainer();
-
-        // Update display
         this.updateDisplay();
       }
 
-      // STEP 3: Variant Selection Methods
-      showVariantGroup(typeId) {
-        // Hide all variant groups first
-        document.querySelectorAll('.variant-group').forEach(group => {
-          group.classList.add('hidden');
-        });
-
-        // Hide the default variant container message
-        if (this.elements.variantContainer) {
-          this.elements.variantContainer.style.display = 'none';
-        }
-
-        // Show the specific variant group for the selected type
-        const targetGroup = document.getElementById(`variants-${typeId}`);
-        if (targetGroup) {
-          targetGroup.classList.remove('hidden');
-        }
-
-        // Update variant buttons to enable only those for selected type
-        this.updateVariantAvailability(typeId);
-      }
-
-      hideVariantContainer() {
-        // Hide all variant groups
-        document.querySelectorAll('.variant-group').forEach(group => {
-          group.classList.add('hidden');
-        });
-
-        // Show default message
-        if (this.elements.variantContainer) {
-          this.elements.variantContainer.style.display = 'block';
-          this.elements.variantContainer.innerHTML = `
-        <i class="fas fa-arrow-up text-orange-500 mb-2 text-xl"></i>
-        <p>Please select a color first</p>
-      `;
-        }
-
-        // Disable all variant buttons
-        document.querySelectorAll('.variant-btn').forEach(btn => {
-          btn.disabled = true;
-          btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
-          btn.classList.add('border-gray-200', 'bg-white', 'opacity-50');
-        });
-      }
-
-      updateVariantAvailability(selectedTypeId) {
-        // This method enables only variants that belong to the selected type
-        // Since your PHP generates separate variant groups, we just need to enable buttons in the visible group
-        const activeGroup = document.getElementById(`variants-${selectedTypeId}`);
-        if (activeGroup) {
-          const variantButtons = activeGroup.querySelectorAll('.variant-btn');
-          variantButtons.forEach(btn => {
-            btn.disabled = false;
-            btn.classList.remove('opacity-50');
-          });
-        }
-      }
-
+      // ✅ VARIANT SELECTION
       selectVariant(button, size, color = null) {
         const isCurrentlySelected = button.classList.contains('selected');
 
@@ -3002,13 +2917,11 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
 
       setVariantSelection(button, size, color = null) {
-        // Remove previous selection indicators from all variant buttons
         document.querySelectorAll('.variant-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
         });
 
-        // Add selection indicators to clicked button
         button.classList.add('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
         button.classList.remove('border-gray-200', 'bg-white');
 
@@ -3031,7 +2944,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           color: color || ''
         };
 
-        // Update hidden fields
         if (this.elements.selectedVariant) {
           this.elements.selectedVariant.value = size;
         }
@@ -3039,10 +2951,8 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           this.elements.variantId.value = variantId;
         }
 
-        // Update price display next to product name
         this.updateProductHeaderPrice();
 
-        // ✅ UPDATE QUANTITY PREVIEW WHEN VARIANT IS SELECTED
         setTimeout(() => {
           if (typeof updateQuantityPreview === 'function') {
             updateQuantityPreview();
@@ -3051,7 +2961,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
 
       unselectVariant(button) {
-        // Remove selection indicators
         button.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-1', 'ring-orange-500');
         button.classList.add('border-gray-200', 'bg-white');
 
@@ -3063,7 +2972,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           this.elements.variantId.value = '';
         }
 
-        // Hide price display in product header
         this.hideProductHeaderPrice();
       }
 
@@ -3081,8 +2989,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         });
       }
 
-
-      // Price and Display Methods
+      // ✅ PRICE CALCULATIONS
       calculateTotalPrice() {
         let totalPrice = 0;
         const hasSelections = this.selectedColorData || this.selectedVariantData;
@@ -3090,12 +2997,10 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         if (hasSelections) {
           totalPrice = this.basePrice;
 
-          // Add color price if selected
           if (this.selectedColorData) {
             totalPrice += this.selectedColorData.price;
           }
 
-          // Use variant price if selected
           if (this.selectedVariantData) {
             totalPrice = this.selectedVariantData.finalPrice;
             if (this.selectedColorData) {
@@ -3110,12 +3015,8 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         };
       }
 
-      // New method to update product header price display
       updateProductHeaderPrice() {
-        if (!this.selectedVariantData) {
-          console.log('No variant data available');
-          return;
-        }
+        if (!this.selectedVariantData) return;
 
         const priceDisplay = document.getElementById('product-price-display');
         const originalPriceContainer = document.getElementById('original-price-container');
@@ -3125,70 +3026,48 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         const discountPercent = document.getElementById('discount-percent');
         const selectedSizeText = document.getElementById('selected-size-text');
 
-        if (!priceDisplay || !finalPriceElement) {
-          console.error('Required price display elements not found');
-          return;
+        if (!priceDisplay || !finalPriceElement) return;
+
+        priceDisplay.classList.remove('hidden');
+
+        let finalPrice = parseFloat(this.selectedVariantData.priceWithMarkup) || 0;
+
+        if (this.selectedColorData && this.selectedColorData.price) {
+          finalPrice += parseFloat(this.selectedColorData.price);
         }
 
-        try {
-          // Show the price display
-          priceDisplay.classList.remove('hidden');
+        if (selectedSizeText && this.selectedVariantData.size) {
+          selectedSizeText.textContent = this.selectedVariantData.size;
+        }
 
-          // Calculate prices - start with variant price with markup
-          let finalPrice = parseFloat(this.selectedVariantData.priceWithMarkup) || 0;
+        const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
 
-          // Add color price if selected
-          if (this.selectedColorData && this.selectedColorData.price) {
-            finalPrice += parseFloat(this.selectedColorData.price);
+        if (discountValue > 0) {
+          const originalPrice = finalPrice;
+          const discountedPrice = originalPrice - (originalPrice * discountValue / 100);
+
+          if (originalPriceContainer && originalPriceElement) {
+            originalPriceContainer.classList.remove('hidden');
+            originalPriceElement.textContent = `₱${originalPrice.toFixed(2)}`;
           }
 
-          console.log('Final price calculation:', {
-            variantPrice: this.selectedVariantData.priceWithMarkup,
-            colorPrice: this.selectedColorData?.price || 0,
-            finalPrice: finalPrice
-          });
+          finalPriceElement.textContent = `₱${discountedPrice.toFixed(2)}`;
 
-          // Update size info
-          if (selectedSizeText && this.selectedVariantData.size) {
-            selectedSizeText.textContent = this.selectedVariantData.size;
+          if (discountBadge && discountPercent) {
+            discountBadge.classList.remove('hidden');
+            discountPercent.textContent = discountValue.toFixed(0);
           }
-
-          // Check if there's a discount
-          const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
-
-          if (discountValue > 0) {
-            // Show original price with strikethrough
-            const originalPrice = finalPrice;
-            const discountedPrice = originalPrice - (originalPrice * discountValue / 100);
-
-            if (originalPriceContainer && originalPriceElement) {
-              originalPriceContainer.classList.remove('hidden');
-              originalPriceElement.textContent = `₱${originalPrice.toFixed(2)}`;
-            }
-
-            finalPriceElement.textContent = `₱${discountedPrice.toFixed(2)}`;
-
-            // Show discount badge
-            if (discountBadge && discountPercent) {
-              discountBadge.classList.remove('hidden');
-              discountPercent.textContent = discountValue.toFixed(0);
-            }
-          } else {
-            // No discount, just show final price
-            if (originalPriceContainer) {
-              originalPriceContainer.classList.add('hidden');
-            }
-            finalPriceElement.textContent = `₱${finalPrice.toFixed(2)}`;
-            if (discountBadge) {
-              discountBadge.classList.add('hidden');
-            }
+        } else {
+          if (originalPriceContainer) {
+            originalPriceContainer.classList.add('hidden');
           }
-        } catch (error) {
-          console.error('Error updating product header price:', error);
+          finalPriceElement.textContent = `₱${finalPrice.toFixed(2)}`;
+          if (discountBadge) {
+            discountBadge.classList.add('hidden');
+          }
         }
       }
 
-      // New method to hide product header price
       hideProductHeaderPrice() {
         const priceDisplay = document.getElementById('product-price-display');
         if (priceDisplay) {
@@ -3210,15 +3089,13 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           }
         }
 
-        // Update selection status
         const status = [];
         if (this.selectedTypeId && this.elements.selectedType) status.push(`Type: ${this.elements.selectedType.value}`);
         if (this.selectedColorData) status.push(`Color: ${this.selectedColorData.name}`);
         if (this.selectedVariantData) status.push(`Size: ${this.selectedVariantData.size}`);
 
         if (this.elements.selectionStatus) {
-          this.elements.selectionStatus.textContent =
-            status.length > 0 ? status.join(', ') : 'Follow steps 1-3 to see total price';
+          this.elements.selectionStatus.textContent = status.length > 0 ? status.join(', ') : 'Select options to see total price';
         }
       }
 
@@ -3226,7 +3103,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         const hasRequiredSelections = this.selectedTypeId && this.selectedColorData && this.selectedVariantData;
 
         if (this.isWindows) {
-          // Handle Contact Us button for windows
           const contactBtn = this.elements.contactUsBtn;
           const contactBtnText = this.elements.contactBtnText;
 
@@ -3237,24 +3113,23 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
               contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
             } else {
               contactBtn.disabled = true;
-              contactBtn.className = 'w-full py-3 lg:py-4  text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-              contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Complete Steps 1-3 to Contact Us';
+              contactBtn.className = 'w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+              contactBtnText.innerHTML = '<i class="fas fa-phone mr-2"></i>Select all options to contact us';
             }
           }
         } else {
-          // Handle regular Add to Cart button
           const addToCartBtn = this.elements.addToCartBtn;
           const btnText = this.elements.btnText;
 
           if (addToCartBtn && btnText) {
             if (hasRequiredSelections) {
               addToCartBtn.disabled = false;
-              addToCartBtn.className = 'flex-1 py-3 lg:py-4  text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
+              addToCartBtn.className = 'flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white';
               btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
             } else {
               addToCartBtn.disabled = true;
-              addToCartBtn.className = 'flex-1 py-3 lg:py-4  text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
-              btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to cart';
+              addToCartBtn.className = 'flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75';
+              btnText.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Select all options first';
             }
           }
         }
@@ -3263,43 +3138,31 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       updateDisplay() {
         this.updateTotalPrice();
         this.updatePurchaseButton();
+        this.updateVariantAvailability();
       }
 
-      // Form Submission Methods
+      // ✅ FORM SUBMISSION
       validateSelections() {
         const errors = [];
-
-        if (!this.selectedTypeId) {
-          errors.push('Please select an item type');
-        }
-
-        if (!this.selectedColorData) {
-          errors.push('Please select a color');
-        }
-
-        if (!this.selectedVariantData) {
-          errors.push('Please select a size');
-        }
-
+        if (!this.selectedTypeId) errors.push('Please select an item type');
+        if (!this.selectedColorData) errors.push('Please select a color');
+        if (!this.selectedVariantData) errors.push('Please select a size');
         return errors;
       }
 
       handleFormSubmit(e) {
         e.preventDefault();
-
         const errors = this.validateSelections();
         if (errors.length > 0) {
           this.showNotification(errors.join(', '), 'error');
           return;
         }
-
         this.submitToCart();
       }
 
       async submitToCart() {
         try {
           const formData = this.buildFormData();
-
           const response = await fetch('../cart/add_to_cart.php', {
             method: 'POST',
             body: formData
@@ -3310,20 +3173,14 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           if (data.success) {
             this.showNotification(data.message || 'Product added to cart!', 'success');
             this.updateCartCount(data.cart_count);
-
-            if (data.item_added) {
-              console.log('Item added:', data.item_added);
-            }
           } else {
             if (data.message === 'You must be logged in to pre-order.') {
               this.showNotification('Please log in to pre-order.', 'error');
-
               const loginDropdown = document.querySelector('#authDropdown');
               if (loginDropdown) {
                 const alpineData = Alpine?.$data(loginDropdown);
                 if (alpineData) {
                   alpineData.loginOpen = true;
-
                   setTimeout(() => {
                     const emailInput = loginDropdown.querySelector('input[type="email"]');
                     if (emailInput) emailInput.focus();
@@ -3334,7 +3191,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
               throw new Error(data.message || 'Add to cart failed.');
             }
           }
-
         } catch (error) {
           this.showNotification('' + error.message, 'error');
           console.error('Add to cart error:', error);
@@ -3345,9 +3201,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         const formData = new FormData();
         const productId = document.querySelector('[name="product_id"]')?.value;
 
-        if (productId) {
-          formData.append('product_id', productId);
-        }
+        if (productId) formData.append('product_id', productId);
 
         if (this.selectedVariantData) {
           formData.append('variant_id', this.selectedVariantData.variantId);
@@ -3364,34 +3218,26 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           formData.append('selected_color', this.selectedColorData.name);
         }
 
-        // ✅ GET QUANTITY FROM INPUT (NOT FROM FORM FIELD)
         const quantityInput = document.getElementById('quantityInput');
         const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
         formData.append('quantity', quantity);
 
-        // Add any additional form fields
         const additionalFields = ['is_windows', 'base_price'];
         additionalFields.forEach(fieldName => {
           const field = document.querySelector(`[name="${fieldName}"]`);
-          if (field) {
-            formData.append(fieldName, field.value);
-          }
+          if (field) formData.append(fieldName, field.value);
         });
 
         return formData;
       }
 
-      // Notification Methods
       showNotification(message, type = 'success') {
-        // Remove existing notifications
         const existingNotifications = document.querySelectorAll('.notification-toast');
         existingNotifications.forEach(notification => notification.remove());
 
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification-toast fixed top-4 right-4 z-[150] px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
 
-        // Set colors based on type
         if (type === 'success') {
           notification.classList.add('bg-green-500', 'text-white');
         } else if (type === 'error') {
@@ -3400,10 +3246,8 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           notification.classList.add('bg-blue-500', 'text-white');
         }
 
-        // Add icon based on type
         const iconClass = type === 'success' ? 'fas fa-check-circle' :
-          type === 'error' ? 'fas fa-exclamation-circle' :
-          'fas fa-info-circle';
+          type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
 
         notification.innerHTML = `
       <div class="flex items-center">
@@ -3415,15 +3259,12 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       </div>
     `;
 
-        // Add to document
         document.body.appendChild(notification);
 
-        // Animate in
         setTimeout(() => {
           notification.classList.remove('translate-x-full');
         }, 100);
 
-        // Auto-remove after 5 seconds
         setTimeout(() => {
           notification.classList.add('translate-x-full');
           setTimeout(() => {
@@ -3434,14 +3275,11 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         }, 5000);
       }
 
-      // Cart count update method
       updateCartCount(newCount) {
         const cartCountElements = document.querySelectorAll('.cart-count, #cartCount');
         cartCountElements.forEach(element => {
           if (element) {
             element.textContent = newCount;
-
-            // Add animation effect
             element.classList.add('animate-bounce');
             setTimeout(() => {
               element.classList.remove('animate-bounce');
@@ -3449,7 +3287,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           }
         });
 
-        // Update cart badge visibility
         const cartBadges = document.querySelectorAll('.cart-badge');
         cartBadges.forEach(badge => {
           if (newCount > 0) {
@@ -3460,31 +3297,26 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         });
       }
 
-      // Utility method to reset all selections
       resetAllSelections() {
         this.selectedTypeId = null;
         this.selectedColorData = null;
         this.selectedVariantData = null;
 
-        // Clear all visual selections
         document.querySelectorAll('.type-btn, .color-btn, .variant-btn').forEach(btn => {
           btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50', 'ring-2', 'ring-orange-500');
           btn.classList.add('border-gray-200', 'bg-white');
         });
 
-        // Clear hidden fields
         Object.values(this.elements).forEach(element => {
           if (element && element.tagName === 'INPUT' && element.type === 'hidden') {
             element.value = '';
           }
         });
 
-        // Reset step flow
-        this.initializeStepFlow();
+        this.initializeAllSectionsEnabled();
         this.updateDisplay();
       }
 
-      // Method to get current selection summary
       getSelectionSummary() {
         return {
           hasType: !!this.selectedTypeId,
@@ -3500,7 +3332,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
     }
 
-    // Global functions for HTML onclick handlers
+    // ✅ GLOBAL FUNCTIONS
     function showVariants(typeId, typeName) {
       if (window.productSelector) {
         window.productSelector.showVariants(typeId, typeName);
@@ -3514,39 +3346,32 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
     }
 
     function selectColorFromGrid(colorId, colorName, price, image, colorCode) {
-      // Remove selection from all color buttons
       document.querySelectorAll('.color-btn').forEach(btn => {
         btn.classList.remove('selected', 'border-orange-500', 'bg-orange-50');
         btn.classList.add('border-gray-200', 'bg-white');
       });
 
-      // Add selection to clicked button
       const clickedButton = event.currentTarget;
       clickedButton.classList.add('selected', 'border-orange-500', 'bg-orange-50');
       clickedButton.classList.remove('border-gray-200', 'bg-white');
 
-      // Update product selector
       if (window.productSelector) {
         window.productSelector.setColorFromGrid(colorId, colorName, price, image, colorCode);
       }
     }
 
-    // Share product function
     function shareProduct() {
       const productName = document.querySelector('h1')?.textContent || 'Product';
       const currentUrl = window.location.href;
 
       if (navigator.share) {
-        // Use native sharing if available
         navigator.share({
           title: productName,
           text: `Check out this product: ${productName}`,
           url: currentUrl
         }).catch(err => console.log('Error sharing:', err));
       } else {
-        // Fallback: copy to clipboard
         navigator.clipboard.writeText(currentUrl).then(() => {
-          // Show notification that link was copied
           if (window.productSelector) {
             window.productSelector.showNotification('Product link copied to clipboard!', 'success');
           } else {
@@ -3559,95 +3384,47 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       }
     }
 
-    // Initialize ProductSelector when DOM is ready
+    // ✅ INITIALIZE
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the product selector
       if (typeof ProductSelector !== 'undefined') {
         window.productSelector = new ProductSelector();
 
-        // Store original image src for reset functionality
         const mainImage = document.getElementById('main-product-image');
         if (mainImage) {
           mainImage.dataset.originalSrc = mainImage.src;
         }
 
-        console.log('ProductSelector initialized');
+        console.log('ProductSelector initialized - All sections visible');
       } else {
         console.error('ProductSelector class not found');
       }
     });
 
-    // Keyboard shortcuts for better UX
+    // ✅ KEYBOARD SHORTCUTS
     document.addEventListener('keydown', function(e) {
-      // ESC key to close modals
-      if (e.key === 'Escape') {
-        closeContactModal();
+      const activeElement = document.activeElement;
+
+      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable)) {
+        return;
       }
 
-      // Number keys to select variants quickly (1-9)
+      if (e.key === 'Escape') {
+        if (typeof closeContactModal === 'function') {
+          closeContactModal();
+        }
+      }
+
       if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
         const index = parseInt(e.key) - 1;
         if (variantButtons[index]) {
+          e.preventDefault();
+          e.stopPropagation();
           variantButtons[index].click();
         }
       }
     });
 
-    // Touch and mobile optimizations
-    document.addEventListener('DOMContentLoaded', function() {
-      // Add touch feedback for buttons
-      const buttons = document.querySelectorAll('.type-btn, .color-btn, .variant-btn');
-      buttons.forEach(button => {
-        button.addEventListener('touchstart', function() {
-          this.style.transform = 'scale(0.95)';
-        });
-
-        button.addEventListener('touchend', function() {
-          this.style.transform = 'scale(1)';
-          this.blur(); // Remove focus outline on mobile
-        });
-
-        button.addEventListener('touchcancel', function() {
-          this.style.transform = 'scale(1)';
-        });
-      });
-    });
-
-    // Performance optimization: Debounce rapid button clicks
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
-
-    // Add loading states for async operations
-    function setLoadingState(button, isLoading = true) {
-      if (!button) return;
-
-      if (isLoading) {
-        button.disabled = true;
-        const originalText = button.innerHTML;
-        button.dataset.originalText = originalText;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
-      } else {
-        button.disabled = false;
-        button.innerHTML = button.dataset.originalText || button.innerHTML;
-      }
-    }
-
-    // Error handling for missing elements
-    window.addEventListener('error', function(e) {
-      console.error('JavaScript Error:', e.error);
-    });
-
-    // Debug function to check selector state (remove in production)
     window.debugProductSelector = function() {
       if (window.productSelector) {
         console.log('ProductSelector State:', window.productSelector.getSelectionSummary());

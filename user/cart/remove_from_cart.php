@@ -4,7 +4,7 @@ session_start();
 include '../../connection/connect.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../otherpage/cart_view.php");
+    header("Location: ../otherpage/index-cart_view-page-8.php");
     exit;
 }
 
@@ -12,7 +12,7 @@ $user_id = $_SESSION['user_id'];
 $key = $_GET['key'] ?? '';
 
 if (!$key) {
-    header("Location: ../otherpage/cart_view.php");
+    header("Location: ../otherpage/index-cart_view-page-8.php");
     exit;
 }
 
@@ -60,5 +60,5 @@ if (is_numeric($key)) {
     $stmt->close();
 }
 
-header("Location: ../otherpage/cart_view.php");
+header("Location: ../otherpage/index-cart_view-page-8.php");
 exit;

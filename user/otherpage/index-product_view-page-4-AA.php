@@ -741,8 +741,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 <body class="font-roboto">
   <?php include '../navbar/top.php'; ?>
 
-  <!-- Hero Section with Bouncing Bubbles Background -->
-  <div class="bg-black text-white py-6 sm:py-7 lg:py-8 relative overflow-hidden">
+ 
     <style>
       /* Magnifier Container */
       #magnifier-container {
@@ -806,13 +805,12 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
         }
       }
     </style>
-  </div>
 
   <!-- Breadcrumb -->
   <nav class="bg-white border-b border-gray-200 px-4 py-3">
     <div class="container mx-auto">
       <div class="flex items-center space-x-2 text-sm">
-        <a href="index" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+        <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
           <i class="fas fa-home mr-1"></i>Home
         </a>
         <i class="fas fa-chevron-right text-gray-400"></i>

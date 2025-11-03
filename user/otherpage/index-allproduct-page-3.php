@@ -210,18 +210,20 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             transition: transform 0.3s;
         }
 
-.notification.success {
-    background-color: #28a745; /* Verification green */
-    color: #ffffff;
-    padding: 12px 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    font-weight: 500;
-    transition: 0.3s ease;
-}
+        .notification.success {
+            background-color: #28a745;
+            /* Verification green */
+            color: #ffffff;
+            padding: 12px 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            font-weight: 500;
+            transition: 0.3s ease;
+        }
 
-.notification.success:hover {
-    background-color: #1e7e34; /* Slightly darker on hover */
-}
+        .notification.success:hover {
+            background-color: #1e7e34;
+            /* Slightly darker on hover */
+        }
 
 
 
@@ -686,7 +688,64 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 this.noResults = document.getElementById('noResults');
 
                 this.debouncedFilter = Utils.debounce(() => this.applyFilters(), CONFIG.DEBOUNCE_DELAY);
+                this.fuzzyThreshold = 0.65; // 65% similarity required for fuzzy match
                 this.init();
+            }
+
+            // Levenshtein Distance Algorithm for Fuzzy Matching
+            levenshteinDistance(str1, str2) {
+                const len1 = str1.length;
+                const len2 = str2.length;
+                const matrix = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(0));
+
+                for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+                for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+
+                for (let j = 1; j <= len2; j++) {
+                    for (let i = 1; i <= len1; i++) {
+                        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                        matrix[j][i] = Math.min(
+                            matrix[j][i - 1] + 1, // deletion
+                            matrix[j - 1][i] + 1, // insertion
+                            matrix[j - 1][i - 1] + cost // substitution
+                        );
+                    }
+                }
+
+                return matrix[len2][len1];
+            }
+
+            // Calculate similarity percentage between two strings
+            calculateSimilarity(str1, str2) {
+                const longer = str1.length > str2.length ? str1 : str2;
+                const shorter = str1.length > str2.length ? str2 : str1;
+
+                if (longer.length === 0) return 1.0;
+
+                const distance = this.levenshteinDistance(longer, shorter);
+                return (longer.length - distance) / longer.length;
+            }
+
+            // Fuzzy match a search word against a target word
+            fuzzyMatch(searchWord, targetWord) {
+                searchWord = searchWord.toLowerCase();
+                targetWord = targetWord.toLowerCase();
+
+                // Exact match or contains (fastest check first)
+                if (targetWord.includes(searchWord)) return true;
+
+                // If search word is very short (1-2 chars), only do exact/contains match
+                if (searchWord.length <= 2) return false;
+
+                // Fuzzy matching for longer words
+                const similarity = this.calculateSimilarity(searchWord, targetWord);
+                return similarity >= this.fuzzyThreshold;
+            }
+
+            // Check if search word fuzzy matches any word in the text
+            fuzzyMatchInText(searchWord, text) {
+                const textWords = text.split(/\s+/);
+                return textWords.some(textWord => this.fuzzyMatch(searchWord, textWord));
             }
 
             init() {
@@ -785,10 +844,22 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 const searchTerm = this.filters.search;
                 const initial = p.initial_variant || {};
 
-                return p.name.toLowerCase().includes(searchTerm) ||
-                    (p.color_name && p.color_name.toLowerCase().includes(searchTerm)) ||
-                    (initial.size && initial.size.toLowerCase().includes(searchTerm)) ||
-                    (p.variants && p.variants.some(v => v.size.toLowerCase().includes(searchTerm)));
+                // Split search term into words for flexible matching
+                const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
+
+                // Create searchable text from product data
+                const searchableText = [
+                    p.name,
+                    p.color_name,
+                    initial.size,
+                    initial.origin,
+                    ...(p.variants || []).map(v => v.size)
+                ].filter(Boolean).join(' ').toLowerCase();
+
+                // FUZZY MATCHING: Check if ANY search word fuzzy matches ANY part of the searchable text
+                return searchWords.some(searchWord =>
+                    this.fuzzyMatchInText(searchWord, searchableText)
+                );
             }
 
             matchesOrigin(p) {
@@ -866,7 +937,10 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 this.renderPagination(totalPages);
 
                 // Scroll to top smoothly
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             }
 
             renderPagination(totalPages) {
@@ -943,7 +1017,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             goToPage(page) {
                 const totalPages = Math.ceil(this.filteredProducts.length / this.productsPerPage);
                 if (page < 1 || page > totalPages) return;
-                
+
                 this.currentPage = page;
                 this.renderPage();
             }
@@ -978,7 +1052,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             ` : ''}
             
             <div class="aspect-square mb-3 overflow-hidden rounded-lg">
-                <img src="${product.color_image}" alt="${product.name}" class="w-full h-full object-cover product-image">
+                <img src="${product.color_image}" alt="${product.name}" class="w-full h-full object-contain product-image">
             </div>
             
             <h3 class="text-lg font-semibold mb-2 line-clamp-2 product-name">${product.name}</h3>
@@ -1166,6 +1240,10 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
 
                     if (data.success) {
                         this.showNotification(data.message || 'Added to cart!', 'success');
+
+                        // UPDATE CART COUNT - This is what's missing!
+                        this.updateCartCount(data.cart_count || data.total_items);
+
                         button.innerHTML = '✓ Added!';
                         setTimeout(() => {
                             button.innerHTML = originalContent;
@@ -1179,6 +1257,30 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                     this.showNotification(error.message, 'error');
                     button.innerHTML = originalContent;
                     button.disabled = false;
+                }
+            }
+
+            // NEW METHOD: Update cart count badge
+            updateCartCount(count) {
+                // Update all cart count elements
+                const cartCountElements = document.querySelectorAll('[data-cart-count], .cart-count');
+                cartCountElements.forEach(el => {
+                    el.textContent = count;
+                    // Show/hide badge based on count
+                    const badge = el.closest('.cart-count');
+                    if (badge) {
+                        if (count > 0) {
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                });
+
+                // Update modal cart count if exists
+                const modalCartCount = document.getElementById('modal-cart-count');
+                if (modalCartCount) {
+                    modalCartCount.textContent = `${count} items`;
                 }
             }
 

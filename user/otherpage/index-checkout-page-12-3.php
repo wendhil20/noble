@@ -401,17 +401,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div id="vehicleDetailsContent" class="text-sm"></div>
                 </div>
 
-       <!-- Distance Calculation Button - Hidden (Auto-triggered) -->
-<button type="button" id="calculateDistance"
-    class="hidden w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
-    disabled>
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-    </svg>
-    Calculate Distance & Fee
-</button>
+                <!-- Distance Calculation Button - Hidden (Auto-triggered) -->
+                <button type="button" id="calculateDistance"
+                    class="hidden w-full bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
+                    disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    Calculate Distance & Fee
+                </button>
 
-<div id="distanceResult" class="mt-4 text-sm"></div>
+                <div id="distanceResult" class="mt-4 text-sm"></div>
 
                 <!-- Hidden inputs for form submission -->
                 <input type="hidden" name="delivery_distance" id="deliveryDistance" value="0">
@@ -667,10 +667,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 
     <!-- Core Scripts (Order Matters!) -->
-    <script src="js/index-checkout-main-page-12-3.js"></script>
-    <script src="js/index-checkout-stepNavigation-page-12-3.js"></script>
-    <script src="js/index-checkout-distanceCalculation-page-12-3.js"></script>
-    <script src="js/index-checkout-mapModal-page-12-3.js"></script>
+    <script src="js/index-checkout-main-page-12-3.js?v=<?= filemtime('js/index-checkout-main-page-12-3.js')?>"></script>
+    <script src="js/index-checkout-stepNavigation-page-12-3.js?v=<?= filemtime('js/index-stepNavigation-page-12-3.js')?>"></script>
+    <script src="js/index-checkout-distanceCalculation-page-12-3.js?v=<?= filemtime('js/index-checkout-distanceCalculation-page-12-3.js')?>"></script>
+    <script src="js/index-checkout-mapModal-page-12-3.js?v=<?= filemtime('js/index-checkout-mapModal-page-12-3.js')?>"></script>
 
     <!-- Initialize Step 3 -->
     <script>

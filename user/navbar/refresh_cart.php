@@ -2,18 +2,14 @@
 session_name("nobleuser");
 session_start();
 
-// Prevent any HTML output
 ob_start();
 ob_clean();
 
-// Set JSON headers
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
-// Database connection - adjust path as needed
 require_once '../../connection/connect.php';
 
-// Get user ID from session
 $user_id = $_SESSION['user_id'] ?? null;
 
 if (!$user_id) {
@@ -22,12 +18,20 @@ if (!$user_id) {
 }
 
 try {
-    // Get cart items with product information including descrip6 and descrip7 from products table
+    // UPDATED: Added product_colors join for color image
     $stmt = $conn->prepare("
-        SELECT c.*, t.type_image, p.descrip6, p.descrip7, p.product_name
+        SELECT 
+            c.*, 
+            t.type_image, 
+            p.descrip6, 
+            p.descrip7, 
+            p.product_name, 
+            p.main_image,
+            pc.image as pc_image
         FROM user_cart_items c
         LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
         LEFT JOIN products p ON c.product_id = p.id
+        LEFT JOIN product_colors pc ON pc.id = c.color_id
         WHERE c.user_id = ?
         ORDER BY c.added_at DESC
     ");
@@ -54,12 +58,15 @@ try {
         foreach ($cart_items as $item) {
             $unit_price = floatval($item['price']);
             $quantity = intval($item['quantity']);
-            // Use codename from user_cart_items table (this column exists based on your screenshot)
-            $display_name = htmlspecialchars($item['codename'] ?? $item['product_name'] ?? 'Product');
+            $display_name = htmlspecialchars($item['product_name'] ?? $item['codename'] ?? 'Product');
             ?>
             <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                <?php if (!empty($item['type_image'])): ?>
-                    <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0">
+                <?php if (!empty($item['pc_image'])): ?>
+                    <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+                <?php elseif (!empty($item['type_image'])): ?>
+                    <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+                <?php elseif (!empty($item['main_image'])): ?>
+                    <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
                 <?php else: ?>
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-image text-gray-400 text-xs"></i>
@@ -72,9 +79,17 @@ try {
                         <?= htmlspecialchars($item['variant_name'] ?? '') ?>
                         <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
                         <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        <?= !empty($item['descrip6']) ? ', ' . htmlspecialchars($item['descrip6']) : '' ?>
-                        <?= !empty($item['descrip7']) ? ', ' . htmlspecialchars($item['descrip7']) : '' ?>
                     </p>
+                    
+                    <!-- Display descrip6 and descrip7 if available -->
+                    <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
+                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
+                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
+                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
+                        </p>
+                    <?php endif; ?>
+                    
                     <div class="flex items-center justify-between mt-1">
                         <span class="text-xs sm:text-sm text-black">₱<?= number_format($unit_price, 2) ?></span>
                         <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
@@ -93,7 +108,7 @@ try {
         <div class="text-center py-8">
             <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
             <p class="text-gray-500 text-sm">Your cart is empty</p>
-            <a href="shop.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
+            <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm font-medium">
                 Start Shopping
             </a>
         </div>
@@ -108,19 +123,19 @@ try {
         ob_start();
         ?>
         <div class="flex justify-between items-center mb-3">
-            <span class=" text-sm text-gray-700">Total:</span>
-            <span class=" text-base sm:text-lg text-black" id="cart-total">
+            <span class="text-sm text-gray-700">Total:</span>
+            <span class="text-base sm:text-lg text-black" id="cart-total">
                 ₱<?= number_format($total, 2) ?>
             </span>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
             <a href="../otherpage/index-cart_view-page-8.php"
-                class="bg-black text-white px-3 py-2  text-xs sm:text-sm  text-center transition">
+                class="text-white px-3 py-2 text-xs sm:text-sm text-center transition bg-black">
                 View Cart
             </a>
-            <a href="index-checkout-page-12.php"
-                class="bg-black text-white px-3 py-2  text-xs sm:text-sm  text-center  transition">
+            <a href="../otherpage/index-checkout-page-12.php"
+                class="text-white px-3 py-2 text-xs sm:text-sm text-center transition bg-black" >
                 Checkout
             </a>
         </div>
@@ -128,30 +143,20 @@ try {
         $footer_html = ob_get_clean();
     }
     
-    // Return JSON response
     echo json_encode([
         'success' => true,
         'total_items' => count($cart_items),
         'cart_html' => $cart_html,
         'footer_html' => $footer_html,
-        'total' => number_format($total, 2),
-        'debug' => [
-            'user_id' => $user_id,
-            'items_found' => count($cart_items)
-        ]
+        'total' => number_format($total, 2)
     ]);
     
 } catch (Exception $e) {
-    // Log the error for debugging
     error_log("Cart refresh error: " . $e->getMessage());
     
     echo json_encode([
         'success' => false,
-        'message' => 'Database error: ' . $e->getMessage(),
-        'debug' => [
-            'error_line' => $e->getLine(),
-            'error_file' => basename($e->getFile())
-        ]
+        'message' => 'Database error: ' . $e->getMessage()
     ]);
 }
 ?>

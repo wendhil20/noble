@@ -1176,8 +1176,8 @@ foreach ($cart_items as $item) {
 
     <?php include '../navbar/footer.php'; ?>
 
-    <script src="js/index-checkout-paymentquickFixPayment-page-12-4.js"></script>
-    <script src="js/index-bank-qr-payment-module-page-12-4.js"></script>
+    <script src="js/index-checkout-paymentquickFixPayment-page-12-4.js?v=<?= filemtime('js/index-checkout-paymentquickFixPayment-page-12-4.js') ?>"></script>
+    <script src="js/index-bank-qr-payment-module-page-12-4.js?v=<?= filemtime('js/index-bank-qr-payment-module-page-12-4.js')?>"></script>
     <script>
         // Pass data to JavaScript
         window.grandTotal = <?= $grand_total ?>;

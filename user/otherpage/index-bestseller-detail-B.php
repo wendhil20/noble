@@ -73,11 +73,9 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
     </style>
 </head>
 
-<body class="">
+<body class="font-roboto">
 
     <?php include '../navbar/top.php'; ?>
-
-
 
     <!-- Hero -->
     <section class="relative min-h-[400px] lg:h-[50vh] bg-black overflow-hidden">
@@ -144,7 +142,7 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
                         <!-- View Button - Always show -->
                         <div class="flex justify-center lg:justify-start">
                             <?php if ($product): ?>
-                                <form action="product_view" method="GET" class="w-full sm:w-auto max-w-md">
+                                <form action="index-product_view-page-4-AA" method="GET" class="w-full sm:w-auto max-w-md">
                                     <input type="hidden" name="id" value="<?= (int)$product['product_id'] ?>">
                                     <button type="submit"
                                         class="w-full text-white px-8 py-3.5 lg:py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 text-sm sm:text-base shadow-lg hover:shadow-xl hover:scale-105 group">
@@ -313,7 +311,7 @@ $sections = $conn->query("SELECT * FROM bestsellertwo WHERE bestseller_id = {$be
                         }
 
                         // Build link - always go to allproductsub_variant.php with category_id
-                        $categoryPageLink = 'allproductsub_variant.php?category_id=' . $currentCategory['id'];
+                        $categoryPageLink = 'allproduct-allproductsub_variant-page-3-A.php?category_id=' . $currentCategory['id'];
                     ?>
                         <div class="swiper-slide">
                             <a href="<?php echo htmlspecialchars($categoryPageLink); ?>" class="group block">

@@ -147,11 +147,6 @@ function generateSlug($string)
 }
 
 $display_categories = getNavigationData($conn);
-$current_page_navigation = basename($_SERVER['PHP_SELF']);
-$hidden_pages_navigation = ['help.php', 'about.php'];
-
-     $current_page = basename($_SERVER['PHP_SELF']);
-        $hidden_pages = ['help.php', 'about.php'];
 ?>
 
 
@@ -159,12 +154,11 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 
 <!-- Tailwind + Alpine CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 
 
 <style>
@@ -443,15 +437,15 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 
   <div class="max-w-full mx-auto px-3 sm:px-4 lg:px-6">
     <div class="flex justify-between items-center py-3 sm:py-4">
-      <div class="flex items-center space-x-4 sm:space-x-6 flex-1">
-        <!-- Logo -->
+      <div class="flex items-center space-x-4 sm:space-x-6">
+        <!-- Logo ONLY -->
         <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-page-1-A-B-C-D-E')"
           class="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition duration-200 flex-shrink-0">
           <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 overflow-hidden">
             <img src="../img/logo.png" alt="Noble Home Logo" class="w-full h-full object-contain">
           </div>
           <div class="leading-snug">
-            <span class="block text-sm  text-orange-400 tracking-tight font-roboto">
+            <span class="block text-sm sm:text-lg lg:text-xl text-orange-400 tracking-tight font-roboto">
               NobleHome
             </span>
             <span class="block text-xs text-gray-800 tracking-tight font-roboto">
@@ -459,83 +453,8 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
             </span>
           </div>
         </a>
-
-        <!-- Search Bar Next to Logo (Desktop only) -->
-        <div x-data="{
-                      search: '',
-                      results: [],
-                      fetchResults() {
-                          if (this.search.trim().length < 1) {
-                              this.results = [];
-                              return;
-                          }
-                          fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
-                              .then(res => res.json())
-                              .then(data => {
-                                  this.results = data;
-                              })
-                              .catch(() => {
-                                  this.results = [];
-                              });
-                      }
-                     }" class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
-
-          <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full">
-            <!-- Search Icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-            </svg>
-
-            <!-- Input -->
-            <input
-              type="text"
-              x-model="search"
-              @input.debounce.300ms="fetchResults"
-              placeholder="Search products..."
-              class="flex-1 bg-transparent focus:outline-none text-sm text-gray-700 placeholder-gray-400"
-              autocomplete="off">
-
-            <!-- Button -->
-            <button
-              @click="fetchResults"
-              class="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-800 transition shadow-sm">
-              Search
-            </button>
-          </div>
-
-          <div
-            x-show="results.length > 0"
-            x-cloak
-            @click.away="results = []"
-            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200">
-            <ul>
-              <template x-for="item in results" :key="item.id">
-                <li class="border-b last:border-0">
-                  <a
-                    :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
-                    class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
-                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
-                    <span x-text="item.product_name"></span>
-                  </a>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </div>
-
-
-        <a href="../otherpage/index-inspirationpage-page-11.php"
-          class="hidden xl:block text-md text-black hover:text-orange-500 transition duration-200 font-roboto  ">
-          Inspiration
-        </a>
-
-        <a href="../otherpage/index-findpropage-page-10.php"
-          class="hidden xl:block text-md text-black hover:text-orange-500 transition duration-200 font-roboto  px-5">
-          Find Professional
-        </a>
-
       </div>
+
       <!-- Mobile Cart & User Icons (visible on mobile before hamburger) -->
       <div class="flex items-center space-x-3 lg:hidden">
 
@@ -598,7 +517,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
       </div>
 
       <!-- Desktop Navigation -->
-      <div class="hidden lg:flex space-x-6 items-center ">
+      <div class="hidden lg:flex space-x-6 items-center uppercase">
 
         <!-- NEW PRODUCTS, INSPIRATION & FIND PRO - Show directly on extra large screens -->
         <?php if (count($newProducts) > 0): ?>
@@ -611,10 +530,20 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
           </button>
         <?php endif; ?>
 
+        <a href="../otherpage/index-inspirationpage-page-11.php"
+          class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
+          Inspiration
+        </a>
+
+        <a href="../otherpage/index-findpropage-page-10.php"
+          class="hidden xl:block text-sm text-black hover:text-orange-500 transition duration-200 font-roboto">
+          Find Pro
+        </a>
+
         <!-- MORE DROPDOWN - Show on medium screens when space is tight -->
         <div x-data="{ moreOpen: false, searchModalOpen: false }" class="relative xl:hidden">
           <button @click="moreOpen = !moreOpen"
-            class="text-black hover:text-orange-500 transition font-mont text-sm flex items-center gap-1 relative">
+            class="text-black hover:text-orange-500 transition font-mont uppercase text-sm flex items-center gap-1 relative">
             More
             <?php if (count($newProducts) > 0): ?>
               <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[8px] leading-none min-w-[16px] text-center">
@@ -666,7 +595,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 
             <!-- Inspiration -->
             <a href="../otherpage/index-inspirationpage-page-11.php"
-              class="flex items-center gap-3 px-4 py-3 text-md text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
+              class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition border-b border-gray-100">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
@@ -675,7 +604,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 
             <!-- Find Professionals -->
             <a href="../otherpage/index-findpropage-page-10.php"
-              class="flex items-center gap-3 px-4 py-3 text-md text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+              class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -853,7 +782,69 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
           </div>
         </div>
 
+        <!-- Search component - Keep the original full search bar for desktop XL screens -->
+        <div x-data="{
+    search: '',
+    results: [],
+    fetchResults() {
+        if (this.search.trim().length < 1) {
+            this.results = [];
+            return;
+        }
+        fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
+            .then(res => res.json())
+            .then(data => {
+                this.results = data;
+            })
+            .catch(() => {
+                this.results = [];
+            });
+    }
+}" class="relative w-64 md:w-96 font-mont hidden xl:block">
 
+          <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full max-w-2xl">
+            <!-- Search Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
+
+            <!-- Input -->
+            <input
+              type="text"
+              x-model="search"
+              @input.debounce.300ms="fetchResults"
+              placeholder="Search products..."
+              class="flex-1 bg-transparent focus:outline-none text-sm text-gray-700 placeholder-gray-400"
+              autocomplete="off">
+
+            <!-- Button -->
+            <button
+              @click="fetchResults"
+              class="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-800 transition shadow-sm">
+              Search
+            </button>
+          </div>
+
+          <div
+            x-show="results.length > 0"
+            x-cloak
+            @click.away="results = []"
+            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200">
+            <ul>
+              <template x-for="item in results" :key="item.id">
+                <li class="border-b last:border-0">
+                  <a
+                    :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
+                    class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
+                    <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
+                    <span x-text="item.product_name"></span>
+                  </a>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
 
         <style>
           /* Loading Spinner */
@@ -914,7 +905,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
     selectedCategoryData: null,
     subcategorySlideIndex: 0,
     hoverTimeout: null
-    }">
+}">
           <!-- Shop Link with Hover Functionality -->
           <a href="javascript:void(0)"
             onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
@@ -926,11 +917,8 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
        clearTimeout(hoverTimeout);
        hoverTimeout = setTimeout(() => { productsOpen = false; selectedCategory = null; }, 200);
      "
-            class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-3 text-md font-roboto relative">
-
-            <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
+            class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 text-sm font-mont uppercase relative top-1">
+            <img src="../img/shopping-cart.png" alt="Shop Icon" class="w-5 h-5 object-contain" />
             Shop
           </a>
 
@@ -1133,16 +1121,21 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
           }
         </style>
 
+        <?php
+        $current_page = basename($_SERVER['PHP_SELF']);
+        $hidden_pages = ['help.php', 'about.php'];
+        ?>
+
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
           <?php if (!in_array($current_page, $hidden_pages)): ?>
             <a href="javascript:void(0)"
               onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
-              class="<?= $current_page == 'index-cart_view-page-8.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-2 relative font-mont p-2 rounded-lg hover:bg-orange-50"
+              class="<?= $current_page == 'index-cart_view-page-8.php' ? 'text-orange-600 underline font-bold' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-1 relative font-mont p-2 rounded-lg hover:bg-orange-50"
               id="cart-link">
-              <i class="fas fa-shopping-cart fa-md"></i>
+              <img src="../img/ecommerce.png" alt="Cart Icon" class="w-5 h-5 object-contain" />
               Cart
-              <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
+              <span id="cart-count-bubble" class="cart-count absolute -top-1 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none <?= $total_cart_items > 0 ? '' : 'hidden' ?>">
                 <span class="cart-count" data-cart-count><?= $total_cart_items ?></span>
               </span>
             </a>
@@ -1172,94 +1165,94 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
               <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
             </div>
 
-            <!-- Cart Items -->
-            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-              <?php if ($total_cart_items > 0): ?>
-                <div class="space-y-3">
-                  <?php
-                  // Fetch cart items for modal display - FIXED: Added product_colors join
-                  $modal_stmt = $conn->prepare("
-                    SELECT 
-                      c.*, 
-                      t.type_image, 
-                      p.descrip6, 
-                      p.descrip7,
-                      p.product_name,
-                      p.main_image,
-                      pc.image as pc_image
-                    FROM user_cart_items c
-                    LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-                    LEFT JOIN product_variants v ON c.variant_id = v.id
-                    LEFT JOIN products p ON c.product_id = p.id
-                    LEFT JOIN product_colors pc ON pc.id = c.color_id
-                    WHERE c.user_id = ?
-                   ");
-                  $modal_stmt->bind_param("i", $user_id);
-                  $modal_stmt->execute();
-                  $modal_result = $modal_stmt->get_result();
+     <!-- Cart Items -->
+<div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+  <?php if ($total_cart_items > 0): ?>
+    <div class="space-y-3">
+      <?php
+      // Fetch cart items for modal display - FIXED: Added product_colors join
+      $modal_stmt = $conn->prepare("
+            SELECT 
+              c.*, 
+              t.type_image, 
+              p.descrip6, 
+              p.descrip7,
+              p.product_name,
+              p.main_image,
+              pc.image as pc_image
+            FROM user_cart_items c
+            LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
+            LEFT JOIN product_variants v ON c.variant_id = v.id
+            LEFT JOIN products p ON c.product_id = p.id
+            LEFT JOIN product_colors pc ON pc.id = c.color_id
+            WHERE c.user_id = ?
+          ");
+      $modal_stmt->bind_param("i", $user_id);
+      $modal_stmt->execute();
+      $modal_result = $modal_stmt->get_result();
 
-                  while ($item = $modal_result->fetch_assoc()):
-                    $unit_price = floatval($item['price']);
-                    $quantity = intval($item['quantity']);
-                  ?>
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                      <?php if (!empty($item['pc_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                      <?php elseif (!empty($item['type_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                      <?php elseif (!empty($item['main_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                      <?php else: ?>
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i class="fas fa-image text-gray-400 text-xs"></i>
-                        </div>
-                      <?php endif; ?>
-
-                      <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
-                          <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
-                        </h4>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        </p>
-
-                        <!-- Display descrip6 and descrip7 if available -->
-                        <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                          <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
-                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
-                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
-                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
-                          </p>
-                        <?php endif; ?>
-
-                        <div class="flex items-center justify-between mt-1">
-                          <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                        </div>
-                      </div>
-
-                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                        <i class="fas fa-times text-xs"></i>
-                      </a>
-                    </div>
-                  <?php
-                  endwhile;
-                  $modal_stmt->close();
-                  ?>
-                </div>
-              <?php else: ?>
-                <!-- Empty Cart -->
-                <div class="text-center py-8">
-                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-                  <p class="text-gray-500 text-sm">Your cart is empty</p>
-                  <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm">
-                    Start Shopping
-                  </a>
-                </div>
-              <?php endif; ?>
+      while ($item = $modal_result->fetch_assoc()):
+        $unit_price = floatval($item['price']);
+        $quantity = intval($item['quantity']);
+      ?>
+        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+          <?php if (!empty($item['pc_image'])): ?>
+            <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+          <?php elseif (!empty($item['type_image'])): ?>
+            <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+          <?php elseif (!empty($item['main_image'])): ?>
+            <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+          <?php else: ?>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-image text-gray-400 text-xs"></i>
             </div>
+          <?php endif; ?>
+
+          <div class="flex-1 min-w-0">
+            <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
+              <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
+            </h4>
+            <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+              <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+              <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+              <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+            </p>
+
+            <!-- Display descrip6 and descrip7 if available -->
+            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+              <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
+                <?= htmlspecialchars($item['descrip6'] ?: '') ?>
+                <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
+                <?= htmlspecialchars($item['descrip7'] ?: '') ?>
+              </p>
+            <?php endif; ?>
+
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+              <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+            </div>
+          </div>
+
+          <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+            <i class="fas fa-times text-xs"></i>
+          </a>
+        </div>
+      <?php
+      endwhile;
+      $modal_stmt->close();
+      ?>
+    </div>
+  <?php else: ?>
+    <!-- Empty Cart -->
+    <div class="text-center py-8">
+      <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+      <p class="text-gray-500 text-sm">Your cart is empty</p>
+      <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm">
+        Start Shopping
+      </a>
+    </div>
+  <?php endif; ?>
+</div>
 
             <!-- Modal Footer -->
             <?php if ($total_cart_items > 0): ?>
@@ -1280,6 +1273,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
                       ?>
                   </span>
                 </div>
+
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-2 gap-2">
                   <a href="../otherpage/index-cart_view-page-8.php"
@@ -1291,12 +1285,90 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
                     Checkout
                   </a>
                 </div>
+
               </div>
             <?php endif; ?>
           </div>
         </div>
 
-        
+
+        <!-- Profile Link -->
+        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
+          class="<?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition  text-sm">
+          Orders
+        </a>
+
+
+        <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
+
+          <!-- Notifications -->
+          <div class="relative">
+            <button
+              @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
+              class="relative text-gray-600 hover:text-orange-500"
+              aria-label="Toggle notifications dropdown">
+              <i class="fas fa-bell text-xl"></i>
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </button>
+
+            <!-- Notification Dropdown -->
+            <div
+              x-show="notifOpen"
+              x-cloak
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 translate-y-1"
+              @click.outside="notifOpen = false"
+              class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
+              <div class="flex justify-between items-center p-3 border-b text-black">
+                <span>Notifications</span>
+                <button
+                  class="text-xs text-red-500 hover:text-red-700"
+                  @click.prevent="clearNotifications()"
+                  aria-label="Clear all notifications">
+                  Clear All
+                </button>
+              </div>
+              <ul class="max-h-60 overflow-y-auto">
+                <template x-for="notif in notifications" :key="notif.id">
+                  <li class="p-3 hover:bg-gray-50 cursor-pointer">
+                    <p class="text-sm text-black text-light" x-text="notif.message"></p>
+                    <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
+                  </li>
+                </template>
+                <template x-if="notifications.length === 0">
+                  <li class="p-3 text-sm text-gray-500">
+                    No new notifications.
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+          <div x-data="chatNotif" x-init="init()" class="relative">
+            <a href="../otherpage/index-chat_main-page-9.php"
+              class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
+              <i class="fas fa-envelope"></i>
+              <!-- Badge -->
+              <template x-if="unreadCount > 0">
+                <span
+                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
+                  x-text="unreadCount">
+                </span>
+              </template>
+            </a>
+          </div>
+        </div>
+
+        <script src="../navbar/topcart-obf.js"></script>
+
         <style>
           .cart-modal {
             opacity: 0 !important;
@@ -1476,82 +1548,6 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
             }
           }
         </style>
-
-
-        <!-- Example using Lucide -->
-        <a href="javascript:void(0)" onclick="navigateWithLoading('../otherpage/index-profile-page-6')"
-          class="<?= strpos($_SERVER['REQUEST_URI'], 'index-profile-page-6') !== false ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition text-md flex items-center gap-3">
-          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-          Orders
-        </a>
-
-        <div class="flex items-center gap-5" x-data="notificationSystem" x-init="init()">
-          <!-- Notifications -->
-          <div class="relative">
-            <button
-              @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
-              class="relative text-gray-600 hover:text-orange-500"
-              aria-label="Toggle notifications dropdown">
-              <i class="fas fa-bell text-xl"></i>
-              <template x-if="unreadCount > 0">
-                <span
-                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                  x-text="unreadCount">
-                </span>
-              </template>
-            </button>
-
-            <!-- Notification Dropdown -->
-            <div
-              x-show="notifOpen"
-              x-cloak
-              x-transition:enter="transition ease-out duration-200"
-              x-transition:enter-start="opacity-0 translate-y-1"
-              x-transition:enter-end="opacity-100 translate-y-0"
-              x-transition:leave="transition ease-in duration-150"
-              x-transition:leave-start="opacity-100 translate-y-0"
-              x-transition:leave-end="opacity-0 translate-y-1"
-              @click.outside="notifOpen = false"
-              class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-              <div class="flex justify-between items-center p-3 border-b text-black">
-                <span>Notifications</span>
-                <button
-                  class="text-xs text-red-500 hover:text-red-700"
-                  @click.prevent="clearNotifications()"
-                  aria-label="Clear all notifications">
-                  Clear All
-                </button>
-              </div>
-              <ul class="max-h-60 overflow-y-auto">
-                <template x-for="notif in notifications" :key="notif.id">
-                  <li class="p-3 hover:bg-gray-50 cursor-pointer">
-                    <p class="text-sm text-black text-light" x-text="notif.message"></p>
-                    <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
-                  </li>
-                </template>
-                <template x-if="notifications.length === 0">
-                  <li class="p-3 text-sm text-gray-500">
-                    No new notifications.
-                  </li>
-                </template>
-              </ul>
-            </div>
-          </div>
-          <div x-data="chatNotif" x-init="init()" class="relative">
-            <a href="../otherpage/index-chat_main-page-9.php"
-              class="flex items-center gap-1 px-3 py-1.5  text-black text-sm font-semibold transition relative">
-              <i class="fas fa-envelope"></i>
-              <!-- Badge -->
-              <template x-if="unreadCount > 0">
-                <span
-                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"
-                  x-text="unreadCount">
-                </span>
-              </template>
-            </a>
-          </div>
-        </div>
-
 
         <!-- User Authentication -->
         <?php if (isset($_SESSION['user_name'])): ?>
@@ -1739,6 +1735,8 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
     </div>
 
 
+    <!-- Replace the Mobile Menu section (starting from line ~892) with this: -->
+
     <!-- Mobile Sidebar -->
     <div x-show="mobileOpen"
       x-cloak
@@ -1803,24 +1801,24 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 
         <!-- Mobile Search -->
         <div x-data="{
-             search: '',
-             results: [],
-             searchOpen: false,
-             fetchResults() {
-                 if (this.search.trim() === '') {
-                   this.results = [];
-                   this.searchOpen = false;
-                   return;
-                 }
-                 fetch(`../otherpage/backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
-                     .then(res => res.json())
-                     .then(data => {
-                         this.results = data;
-                         this.searchOpen = true;
-                     });
-             }
-             }" class="p-4 border-b border-gray-200">
-                   <div class="relative">
+    search: '',
+    results: [],
+    searchOpen: false,
+    fetchResults() {
+        if (this.search.trim() === '') {
+          this.results = [];
+          this.searchOpen = false;
+          return;
+        }
+        fetch(`../otherpage/backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
+            .then(res => res.json())
+            .then(data => {
+                this.results = data;
+                this.searchOpen = true;
+            });
+    }
+}" class="p-4 border-b border-gray-200">
+          <div class="relative">
             <input
               type="text"
               x-model="search"
@@ -1847,6 +1845,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
 
         <!-- Navigation Links -->
         <div class="py-2">
+
           <!-- NEW PRODUCTS BUTTON - Mobile -->
           <?php if (count($newProducts) > 0): ?>
             <button @click="newProductsSidebarMobile = true; mobileOpen = false"
@@ -1914,13 +1913,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
             </button>
 
             <!-- Categories List -->
-            <div x-show="productsOpen"
-              x-transition:enter="transition ease-out duration-300"
-              x-transition:enter-start="opacity-0 transform scale-95 -translate-y-2"
-              x-transition:enter-end="opacity-100 transform scale-100 translate-y-0"
-              x-transition:leave="transition ease-in duration-200"
-              x-transition:leave-start="opacity-100 transform scale-100 translate-y-0"
-              x-transition:leave-end="opacity-0 transform scale-95 -translate-y-2">
+            <div x-show="productsOpen" x-collapse>
               <?php if (!empty($display_categories)): ?>
                 <?php foreach ($display_categories as $catKey => $category): ?>
                   <div x-data="{ subOpen: false }" class="bg-gray-50">
@@ -1941,14 +1934,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
                     </button>
 
                     <!-- Subcategories -->
-                    <div x-show="subOpen"
-                      x-transition:enter="transition ease-out duration-300"
-                      x-transition:enter-start="opacity-0 max-h-0"
-                      x-transition:enter-end="opacity-100 max-h-96"
-                      x-transition:leave="transition ease-in duration-200"
-                      x-transition:leave-start="opacity-100 max-h-96"
-                      x-transition:leave-end="opacity-0 max-h-0"
-                      class="bg-white overflow-hidden">
+                    <div x-show="subOpen" x-collapse class="bg-white">
                       <?php if (!empty($category['subcategories'])): ?>
                         <?php foreach ($category['subcategories'] as $sub): ?>
                           <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?subcategory_id=<?= $sub['id'] ?>"
@@ -1996,6 +1982,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
               <span x-show="unreadCount > 0" x-text="unreadCount" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"></span>
             </button>
           </div>
+
         </div>
 
         <!-- Auth Section (if not logged in) -->
@@ -2391,263 +2378,261 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
     </div>
   </div>
 
+  <!-- New Products Modal - List Style with Scroll Buttons -->
+  <?php if (count($newProducts) > 0): ?>
+    <!-- Modal Overlay -->
+    <div x-show="newProductsModal"
+      x-cloak
+      @click.self="newProductsModal = false"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
 
-  <section>
-    <!-- New Products Modal - List Style with Scroll Buttons -->
-    <?php if (count($newProducts) > 0): ?>
-      <!-- Modal Overlay -->
+      <!-- Modal Content -->
       <div x-show="newProductsModal"
-        x-cloak
-        @click.self="newProductsModal = false"
         x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        @click.stop
+        x-data="{ showScrollUp: false, showScrollDown: true }"
+        class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative">
 
-        <!-- Modal Content -->
-        <div x-show="newProductsModal"
-          x-transition:enter="transition ease-out duration-300"
-          x-transition:enter-start="opacity-0 scale-95"
-          x-transition:enter-end="opacity-100 scale-100"
-          x-transition:leave="transition ease-in duration-200"
-          x-transition:leave-start="opacity-100 scale-100"
-          x-transition:leave-end="opacity-0 scale-95"
-          @click.stop
-          x-data="{ showScrollUp: false, showScrollDown: true }"
-          class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative">
-
-          <!-- Modal Header -->
-          <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
-            <div class="flex items-center gap-3">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-              </svg>
-              <div>
-                <h2 class="text-base sm:text-lg">New Products</h2>
-                <p class="text-xs text-white">Latest additions to our store</p>
-              </div>
-            </div>
-            <button @click="newProductsModal = false"
-              class="text-white hover:text-orange-200 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
-              ×
-            </button>
-          </div>
-
-          <!-- Scroll Up Button -->
-          <button x-show="showScrollUp"
-            x-transition
-            @click="$refs.modalBody.scrollBy({ top: -300, behavior: 'smooth' })"
-            class="absolute top-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-4 border-b bg-black text-white shrink-0">
+          <div class="flex items-center gap-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
             </svg>
+            <div>
+              <h2 class="text-base sm:text-lg">New Products</h2>
+              <p class="text-xs text-white">Latest additions to our store</p>
+            </div>
+          </div>
+          <button @click="newProductsModal = false"
+            class="text-white hover:text-orange-200 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-all">
+            ×
           </button>
+        </div>
 
-          <!-- Modal Body - List View -->
-          <div x-ref="modalBody"
-            @scroll="
+        <!-- Scroll Up Button -->
+        <button x-show="showScrollUp"
+          x-transition
+          @click="$refs.modalBody.scrollBy({ top: -300, behavior: 'smooth' })"
+          class="absolute top-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+
+        <!-- Modal Body - List View -->
+        <div x-ref="modalBody"
+          @scroll="
           showScrollUp = $el.scrollTop > 100;
           showScrollDown = $el.scrollTop < ($el.scrollHeight - $el.clientHeight - 100);
         "
-            class="flex-1 overflow-y-auto"
-            style="-webkit-overflow-scrolling: touch;">
-            <div class="divide-y divide-gray-200">
-              <?php foreach ($newProducts as $index => $product): ?>
-                <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
-                  <div class="flex gap-4">
-                    <!-- Product Image -->
-                    <div class="flex-shrink-0 relative">
-                      <?php if (!empty($product['main_image'])): ?>
-                        <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
-                          alt="<?php echo htmlspecialchars($product['name']); ?>"
-                          class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
-                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg hidden items-center justify-center border border-gray-200">
-                          <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      <?php else: ?>
-                        <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                          <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      <?php endif; ?>
+          class="flex-1 overflow-y-auto"
+          style="-webkit-overflow-scrolling: touch;">
+          <div class="divide-y divide-gray-200">
+            <?php foreach ($newProducts as $index => $product): ?>
+              <div class="p-4 hover:bg-orange-50 transition-all duration-200 group">
+                <div class="flex gap-4">
+                  <!-- Product Image -->
+                  <div class="flex-shrink-0 relative">
+                    <?php if (!empty($product['main_image'])): ?>
+                      <img src="../../<?php echo htmlspecialchars($product['main_image']); ?>"
+                        alt="<?php echo htmlspecialchars($product['name']); ?>"
+                        class="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg border border-gray-200 group-hover:border-orange-300 transition"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg hidden items-center justify-center border border-gray-200">
+                        <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    <?php else: ?>
+                      <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                        <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    <?php endif; ?>
 
-                      <!-- NEW Badge -->
-                      <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">
-                        NEW
+                    <!-- NEW Badge -->
+                    <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full shadow-sm">
+                      NEW
+                    </span>
+                  </div>
+
+                  <!-- Product Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                      <h3 class="uppercase text-sm sm:text-base text-gray-900 group-hover:text-orange-600 transition line-clamp-2">
+                        <?php echo htmlspecialchars($product['name']); ?>
+                      </h3>
+
+                      <!-- Stock Status Badge -->
+                      <?php if ($product['stock_status'] === 'In Stock'): ?>
+                        <span class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                          <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                          In Stock
+                        </span>
+                      <?php else: ?>
+                        <span class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                          <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
+                          Out of Stock
+                        </span>
+                      <?php endif; ?>
+                    </div>
+
+                    <?php if (!empty($product['description'])): ?>
+                      <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                        <?php echo htmlspecialchars($product['description']); ?>
+                      </p>
+                    <?php endif; ?>
+
+                    <!-- Meta Info -->
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <?php echo htmlspecialchars($product['codename']); ?>
+                      </span>
+                      <span class="text-gray-300">•</span>
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
                       </span>
                     </div>
 
-                    <!-- Product Info -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between gap-2 mb-2">
-                        <h3 class="uppercase text-sm sm:text-base text-gray-900 group-hover:text-orange-600 transition line-clamp-2">
-                          <?php echo htmlspecialchars($product['name']); ?>
-                        </h3>
-
-                        <!-- Stock Status Badge -->
-                        <?php if ($product['stock_status'] === 'In Stock'): ?>
-                          <span class="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                            <span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
-                            In Stock
-                          </span>
-                        <?php else: ?>
-                          <span class="inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                            <span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                            Out of Stock
-                          </span>
-                        <?php endif; ?>
-                      </div>
-
-                      <?php if (!empty($product['description'])): ?>
-                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">
-                          <?php echo htmlspecialchars($product['description']); ?>
-                        </p>
-                      <?php endif; ?>
-
-                      <!-- Meta Info -->
-                      <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                          </svg>
-                          <?php echo htmlspecialchars($product['codename']); ?>
-                        </span>
-                        <span class="text-gray-300">•</span>
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <?php echo date('M j, Y', strtotime($product['created_at'])); ?>
-                        </span>
-                      </div>
-
-                      <!-- Action Button -->
-                      <form action="index-product_view-page-4-AA" method="GET">
-                        <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
-                        <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                          </svg>
-                          View Details
-                        </button>
-                      </form>
-                    </div>
+                    <!-- Action Button -->
+                    <form action="index-product_view-page-4-AA" method="GET">
+                      <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                      <button type="submit" class="inline-flex items-center gap-2 bg-black hover:bg-orange-600 text-white text-xs py-2 px-4 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        View Details
+                      </button>
+                    </form>
                   </div>
                 </div>
-              <?php endforeach; ?>
-            </div>
+              </div>
+            <?php endforeach; ?>
           </div>
+        </div>
 
-          <!-- Scroll Down Button -->
-          <button x-show="showScrollDown"
-            x-transition
-            @click="$refs.modalBody.scrollBy({ top: 300, behavior: 'smooth' })"
-            class="absolute bottom-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+        <!-- Scroll Down Button -->
+        <button x-show="showScrollDown"
+          x-transition
+          @click="$refs.modalBody.scrollBy({ top: 300, behavior: 'smooth' })"
+          class="absolute bottom-20 right-4 z-10 bg-black hover:bg-orange-600 text-white p-2 rounded-full shadow-lg transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-          <!-- Modal Footer -->
-          <div class="p-4 bg-gray-50 border-t shrink-0">
-            <div class="flex flex-col sm:flex-row gap-2">
-              <button onclick="window.location.href='allproduct'"
-                class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                View All Products
-              </button>
-              <button @click="newProductsModal = false"
-                class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all text-sm">
-                Close
-              </button>
-            </div>
+        <!-- Modal Footer -->
+        <div class="p-4 bg-gray-50 border-t shrink-0">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button onclick="window.location.href='allproduct'"
+              class="flex-1 bg-black hover:bg-orange-600 text-white py-2.5 px-4 transition-all flex items-center justify-center gap-2 text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              View All Products
+            </button>
+            <button @click="newProductsModal = false"
+              class="sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all text-sm">
+              Close
+            </button>
           </div>
         </div>
       </div>
+    </div>
 
-      <style>
-        /* Modal specific styles */
-        [x-cloak] {
-          display: none !important;
-        }
+    <style>
+      /* Modal specific styles */
+      [x-cloak] {
+        display: none !important;
+      }
 
-        /* Smooth scrollbar for modal */
-        .overflow-y-auto::-webkit-scrollbar {
-          width: 6px;
-        }
+      /* Smooth scrollbar for modal */
+      .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+      }
 
-        .overflow-y-auto::-webkit-scrollbar-track {
-          background: #f9fafb;
-        }
+      .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f9fafb;
+      }
 
-        .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 3px;
-        }
+      .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+      }
 
-        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af;
-        }
+      .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+      }
 
-        /* Line clamp utilities */
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
+      /* Line clamp utilities */
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
 
-        /* Hover effect for list items */
-        .group:hover {
-          background-color: #fff7ed;
-        }
-      </style>
+      /* Hover effect for list items */
+      .group:hover {
+        background-color: #fff7ed;
+      }
+    </style>
 
-      <script>
-        // Auto-refresh new products count
-        setInterval(function() {
-          fetch(window.location.pathname + '?action=get_new_products_count')
-            .then(response => {
-              const contentType = response.headers.get('content-type');
-              if (contentType && contentType.includes('application/json')) {
-                return response.json();
-              }
-              throw new Error('Not JSON');
-            })
-            .then(data => {
-              const badge = document.querySelector('button[\\@click="newProductsModal = true"] span');
-              if (badge && data.count !== undefined) {
-                badge.textContent = data.count;
-                badge.style.display = data.count > 0 ? 'inline-flex' : 'none';
-              }
-            })
-            .catch(error => {
-              console.log('Silent error:', error);
-            });
-        }, 30000); // Every 30 seconds
-      </script>
-    <?php endif; ?>
-  </section>
+    <script>
+      // Auto-refresh new products count
+      setInterval(function() {
+        fetch(window.location.pathname + '?action=get_new_products_count')
+          .then(response => {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return response.json();
+            }
+            throw new Error('Not JSON');
+          })
+          .then(data => {
+            const badge = document.querySelector('button[\\@click="newProductsModal = true"] span');
+            if (badge && data.count !== undefined) {
+              badge.textContent = data.count;
+              badge.style.display = data.count > 0 ? 'inline-flex' : 'none';
+            }
+          })
+          .catch(error => {
+            console.log('Silent error:', error);
+          });
+      }, 30000); // Every 30 seconds
+    </script>
+  <?php endif; ?>
 
 </nav>
 
-<script src="../navbar/topcart-obf.js"></script>
+<?php
+$current_page_navigation = basename($_SERVER['PHP_SELF']);
+$hidden_pages_navigation = ['help.php', 'about.php'];
+?>
+
 <script src="../navbar/top-obf.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
 
 <script>
-  lucide.createIcons(); // initialize icons
-
   document.addEventListener("alpine:init", () => {
     Alpine.data("notificationSystem", () => ({
       notifOpen: false,

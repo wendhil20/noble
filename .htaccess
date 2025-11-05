@@ -1,15 +1,18 @@
 RewriteEngine On
 
-# Redirect to HTTPS (optional, kung gusto mo)
+# Optional: Force HTTPS
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Remove .php extension
+# Hide .php extension
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}\.php -f
 RewriteRule ^([^\.]+)$ $1.php [NC,L]
 
-# Exclude admin folder from default redirect
+# Custom route: /orders → /user/otherpage/index-page-1-A-B-C-D-E.php
+RewriteRule ^orders/?$ user/otherpage/index-page-1-A-B-C-D-E.php [L,QSA]
+
+# Default route (index.php)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/noble/loginpage/admin/

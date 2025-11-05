@@ -1,9 +1,7 @@
 <?php 
 session_start(); 
-
 // Set content type to JSON early
 header('Content-Type: application/json; charset=utf-8');
-
 // Prevent caching
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -84,11 +82,6 @@ try {
         $stmt->close();
     }
 
-    // Debug session info (remove in production)
-    error_log("Session ID: " . session_id());
-    error_log("Session status: " . session_status());
-    error_log("User ID in session: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NOT SET'));
-    error_log("Remember token present: " . (isset($_COOKIE['remember_token']) ? 'YES' : 'NO'));
 
     // ✅ Final session check
     if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {

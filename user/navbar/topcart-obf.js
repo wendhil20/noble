@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     queueUpdate(() => instantCartUpdate());
                 }, 300);
 
-                showNotification('Item removed!', 'success');
+                showNotification('Item removed', 'success');
             } else {
                 throw new Error('Failed to remove item');
             }

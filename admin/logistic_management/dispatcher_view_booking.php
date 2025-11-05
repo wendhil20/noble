@@ -956,27 +956,23 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
                 <!-- Main Content -->
 
                 <!-- Items Loading -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                            <i class="fas fa-boxes <?php echo $isReplacement ? 'text-orange-600' : 'text-orange-600'; ?> mr-2"></i>
-                            <?php echo $isReplacement ? 'Replacement Item' : 'Items to Load'; ?>
-                        </h3>
+                <div class="flex items-center justify-between mb-3">
+    <h3 class="text-lg font-bold text-gray-900 flex items-center">
+        <i class="fas fa-boxes <?php echo $isReplacement ? 'text-orange-600' : 'text-orange-600'; ?> mr-2"></i>
+        <?php echo $isReplacement ? 'Replacement Item' : 'Items to Load'; ?>
+    </h3>
 
-                        <?php if (!$allLoaded && !$isCompleted && !$isInTransit): ?>
-                            <form method="POST" class="inline">
-                                <input type="hidden" name="action" value="toggle_item_loaded">
-                                <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                <input type="hidden" name="current_status" value="<?php echo $replacementDetails['status']; ?>">
-                                <input type="hidden" name="is_replacement" value="1">
-                                <button type="submit"
-                                    class="<?php echo $replacementDetails['status'] === 'ready_for_pickup' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
-                                    <i class="fas <?php echo $replacementDetails['status'] === 'ready_for_pickup' ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
-                                    <?php echo $replacementDetails['status'] === 'ready_for_pickup' ? 'Loaded' : 'Load'; ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
+    <?php if (!$allLoaded && !$isCompleted && !$isInTransit): ?>
+        <form method="POST" class="inline" onsubmit="return confirm('Mark all items as loaded?');">
+            <input type="hidden" name="action" value="mark_all_loaded">
+            <button type="submit"
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
+                <i class="fas fa-check-double mr-1"></i>
+                Mark All Loaded
+            </button>
+        </form>
+    <?php endif; ?>
+</div>
 
                     <!-- Progress Bar -->
                     <div class="mb-3">

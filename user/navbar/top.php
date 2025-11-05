@@ -150,8 +150,8 @@ $display_categories = getNavigationData($conn);
 $current_page_navigation = basename($_SERVER['PHP_SELF']);
 $hidden_pages_navigation = ['help.php', 'about.php'];
 
-     $current_page = basename($_SERVER['PHP_SELF']);
-        $hidden_pages = ['help.php', 'about.php'];
+$current_page = basename($_SERVER['PHP_SELF']);
+$hidden_pages = ['help.php', 'about.php'];
 ?>
 
 
@@ -460,25 +460,54 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
           </div>
         </a>
 
-        <!-- Search Bar Next to Logo (Desktop only) -->
+        <!-- Search Bar with History - FIXED VERSION -->
         <div x-data="{
-                      search: '',
-                      results: [],
-                      fetchResults() {
-                          if (this.search.trim().length < 1) {
-                              this.results = [];
-                              return;
-                          }
-                          fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
-                              .then(res => res.json())
-                              .then(data => {
-                                  this.results = data;
-                              })
-                              .catch(() => {
-                                  this.results = [];
-                              });
-                      }
-                     }" class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
+          search: '',
+          results: [],
+          searchHistory: JSON.parse(localStorage.getItem('searchHistory') || '[]'),
+          showHistory: false,
+          showDropdown: false,
+          fetchResults() {
+              if (this.search.trim().length < 1) {
+                  this.results = [];
+                  this.showDropdown = false;
+                  return;
+              }
+              fetch(`backend-search_ajax-A.php?search=${encodeURIComponent(this.search)}`)
+                  .then(res => res.json())
+                  .then(data => {
+                      this.results = data;
+                      this.showDropdown = data.length > 0;
+                  })
+                  .catch(() => {
+                      this.results = [];
+                      this.showDropdown = false;
+                  });
+          },
+          saveSearch(query) {
+              if (!query.trim()) return;
+              this.searchHistory = [query, ...this.searchHistory.filter(h => h !== query)].slice(0, 10);
+              localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
+          },
+          clearHistory() {
+              this.searchHistory = [];
+              localStorage.removeItem('searchHistory');
+          },
+          removeHistoryItem(query) {
+              this.searchHistory = this.searchHistory.filter(h => h !== query);
+              localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
+          },
+          performSearch(query) {
+              if (!query.trim()) return;
+              this.search = query;
+              this.saveSearch(query);
+              this.showHistory = false;
+              this.showDropdown = false;
+              window.location.href = 'index-shop-page-2.php?search=' + encodeURIComponent(query);
+          }
+         }"
+          @click.away="showHistory = false; showDropdown = false"
+          class="relative w-64 md:w-96 font-mont hidden xl:block flex-1 max-w-2xl">
 
           <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-sm px-3 py-1.5 w-full">
             <!-- Search Icon -->
@@ -492,28 +521,75 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
               type="text"
               x-model="search"
               @input.debounce.300ms="fetchResults"
+              @focus="showHistory = true; if(search.trim().length >= 1) fetchResults()"
+              @keydown.enter="performSearch(search)"
               placeholder="Search products..."
               class="flex-1 bg-transparent focus:outline-none text-sm text-gray-700 placeholder-gray-400"
               autocomplete="off">
 
             <!-- Button -->
             <button
-              @click="fetchResults"
+              @click="performSearch(search)"
               class="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-800 transition shadow-sm">
               Search
             </button>
           </div>
 
+          <!-- Search History Dropdown -->
           <div
-            x-show="results.length > 0"
+            x-show="showHistory && searchHistory.length > 0 && !showDropdown && search.trim().length === 0"
             x-cloak
-            @click.away="results = []"
+            class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full border border-gray-200">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+              <span class="text-xs text-gray-500 font-medium">Search History</span>
+              <button
+                @click.stop="clearHistory()"
+                class="text-xs text-orange-500 hover:text-orange-600 font-medium uppercase">
+                CLEAR
+              </button>
+            </div>
+
+            <!-- History Items -->
+            <ul class="max-h-60 overflow-y-auto">
+              <template x-for="(item, index) in searchHistory" :key="index">
+                <li class="group hover:bg-gray-50 transition">
+                  <div class="flex items-center justify-between px-4 py-2.5">
+                    <button
+                      @click.stop="performSearch(item)"
+                      type="button"
+                      class="flex items-center gap-2 flex-1 text-sm text-gray-700 text-left">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span x-text="item"></span>
+                    </button>
+                    <button
+                      @click.stop="removeHistoryItem(item)"
+                      type="button"
+                      class="opacity-0 group-hover:opacity-100 transition p-1 hover:bg-gray-200 rounded">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </div>
+
+          <!-- Search Results Dropdown -->
+          <div
+            x-show="showDropdown && results.length > 0"
+            x-cloak
             class="absolute z-50 bg-white shadow-lg rounded mt-2 w-full max-h-80 overflow-y-auto border border-gray-200">
             <ul>
               <template x-for="item in results" :key="item.id">
                 <li class="border-b last:border-0">
                   <a
                     :href="'index-shop-page-2.php?search=' + encodeURIComponent(item.product_name)"
+                    @click="saveSearch(item.product_name)"
                     class="flex items-center gap-3 px-4 py-2 hover:bg-orange-100 text-sm text-gray-700">
                     <img :src="item.main_image" alt="" class="w-10 h-10 object-contain rounded border border-gray-300">
                     <span x-text="item.product_name"></span>
@@ -523,8 +599,6 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
             </ul>
           </div>
         </div>
-
-
         <a href="../otherpage/index-inspirationpage-page-11.php"
           class="hidden xl:block text-md text-black hover:text-orange-500 transition duration-200 font-roboto  ">
           Inspiration
@@ -1296,7 +1370,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
           </div>
         </div>
 
-        
+
         <style>
           .cart-modal {
             opacity: 0 !important;
@@ -1820,7 +1894,7 @@ $hidden_pages_navigation = ['help.php', 'about.php'];
                      });
              }
              }" class="p-4 border-b border-gray-200">
-                   <div class="relative">
+          <div class="relative">
             <input
               type="text"
               x-model="search"

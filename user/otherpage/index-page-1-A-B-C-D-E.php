@@ -754,86 +754,112 @@ function displayTrendingBadge($view_count)
     $recommended_products = getRecommendedProducts($conn, 10);
     $recommended_count = mysqli_num_rows($recommended_products);
 
-    function renderProductCard($row, $conn)
-    {
-        $base = (float)$row['price'];
-        $percent = (float)($row['percent'] ?? 0);
-        $discount = (float)($row['discount'] ?? 0);
-        $priceWithMarkup = $base + ($base * $percent / 100);
-        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+   function renderProductCard($row, $conn)
+{
+    $base = (float)$row['price'];
+    $percent = (float)($row['percent'] ?? 0);
+    $discount = (float)($row['discount'] ?? 0);
+    $priceWithMarkup = $base + ($base * $percent / 100);
+    $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
 
-        $product_id = (int)$row['id'];
-        $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-        $rating_q->bind_param("i", $product_id);
-        $rating_q->execute();
-        $rating_result = $rating_q->get_result()->fetch_assoc();
-        $avg_rating = $rating_result['avg_rating'] ?? 0;
-        $total_raters = $rating_result['total_raters'] ?? 0;
-        $rating_q->close();
+    $product_id = (int)$row['id'];
+    
+    // ✅ Get rating
+    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+    $rating_q->bind_param("i", $product_id);
+    $rating_q->execute();
+    $rating_result = $rating_q->get_result()->fetch_assoc();
+    $avg_rating = $rating_result['avg_rating'] ?? 0;
+    $total_raters = $rating_result['total_raters'] ?? 0;
+    $rating_q->close();
 
-        $full = floor($avg_rating);
-        $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-        $empty = 5 - $full - $half;
+    // 🆕 Get sold count from sold_items table
+    $sold_q = $conn->prepare("
+        SELECT SUM(quantity) as total_sold 
+        FROM sold_items 
+        WHERE product_id = ?
+    ");
+    $sold_q->bind_param("i", $product_id);
+    $sold_q->execute();
+    $sold_result = $sold_q->get_result()->fetch_assoc();
+    $total_sold = (int)($sold_result['total_sold'] ?? 0);
+    $sold_q->close();
 
-        $colors = !empty($row['color_name']) ? explode(',', $row['color_name']) : [];
-        $firstColor = !empty($colors) ? trim($colors[0]) : '';
-    ?>
-        <div class="swiper-slide">
-            <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block group">
-                <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full" style="aspect-ratio: 1/1; max-height: 160px;">
-                    <?php if (!empty($row['main_image'])): ?>
-                        <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105" />
+    $full = floor($avg_rating);
+    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+    $empty = 5 - $full - $half;
+
+    $colors = !empty($row['color_name']) ? explode(',', $row['color_name']) : [];
+    $firstColor = !empty($colors) ? trim($colors[0]) : '';
+?>
+    <div class="swiper-slide">
+        <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block group">
+            <!-- Image container -->
+            <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full" style="aspect-ratio: 1/1; max-height: 160px;">
+                <?php if (!empty($row['main_image'])): ?>
+                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105" />
+                <?php else: ?>
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-image text-gray-300 text-3xl"></i>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="px-0.5 flex flex-col h-full">
+                <!-- Product name -->
+                <h3 class="text-[13px] font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
+                    <?= htmlspecialchars($row['product_name']) ?>
+                    <?php if (!empty($row['size'])): ?> <?= htmlspecialchars($row['size']) ?><?php endif; ?>
+                    <?php if ($firstColor): ?> <?= htmlspecialchars($firstColor) ?><?php endif; ?>
+                </h3>
+
+                <!-- Rating -->
+                <div class="flex items-center gap-1 mb-1.5">
+                    <?php if ($total_raters > 0): ?>
+                        <div class="flex text-yellow-400 text-[10px]">
+                            <?php for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>'; ?>
+                            <?php if ($half) echo '<i class="fas fa-star-half-alt"></i>'; ?>
+                            <?php for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>'; ?>
+                        </div>
+                        <span class="text-[9px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
                     <?php else: ?>
-                        <div class="w-full h-full flex items-center justify-center">
-                            <i class="fas fa-image text-gray-300 text-3xl"></i>
+                        <div class="flex text-gray-300 text-[10px]">
+                            <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
                         </div>
+                        <span class="text-[9px] text-gray-400">No rating</span>
                     <?php endif; ?>
                 </div>
 
-                <div class="px-0.5 flex flex-col h-full">
-                    <h3 class="text-[13px] font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
-                        <?= htmlspecialchars($row['product_name']) ?>
-                        <?php if (!empty($row['size'])): ?> <?= htmlspecialchars($row['size']) ?><?php endif; ?>
-                            <?php if ($firstColor): ?> <?= htmlspecialchars($firstColor) ?><?php endif; ?>
-                    </h3>
-
-                    <div class="flex items-center gap-1 mb-1.5">
-                        <?php if ($total_raters > 0): ?>
-                            <div class="flex text-yellow-400 text-[10px]">
-                                <?php for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>'; ?>
-                                <?php if ($half) echo '<i class="fas fa-star-half-alt"></i>'; ?>
-                                <?php for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>'; ?>
-                            </div>
-                            <span class="text-[9px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
-                        <?php else: ?>
-                            <div class="flex text-gray-300 text-[10px]">
-                                <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                            </div>
-                            <span class="text-[9px] text-gray-400">No rating</span>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
-                        <?php if ($discount > 0): ?>
-                            <p class="text-md font-bold text-gray-900">₱<?= number_format($finalPrice, 2) ?></p>
-                            <p class="text-[9px] text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                            <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                        <?php else: ?>
-                            <p class="text-xs font-bold text-gray-900">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                        <?php endif; ?>
-                    </div>
-
-                    <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?>
-                        <div class="text-[9px] text-gray-500 font-medium">
-                            <?= formatViewCount($row['view_count']) ?> viewing | 1 sold
-                        </div>
+                <!-- Price -->
+                <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
+                    <?php if ($discount > 0): ?>
+                        <p class="text-md font-bold text-gray-900">₱<?= number_format($finalPrice, 2) ?></p>
+                        <p class="text-[9px] text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                        <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                    <?php else: ?>
+                        <p class="text-xs font-bold text-gray-900">₱<?= number_format($priceWithMarkup, 2) ?></p>
                     <?php endif; ?>
                 </div>
-            </a>
-        </div>
-    <?php
-    }
-    ?>
+
+                <!-- 🆕 View count + Sold count -->
+                <?php if (!empty($row['view_count']) || $total_sold > 0): ?>
+                    <div class="text-[9px] text-gray-500 font-medium">
+                        <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?>
+                            <?= formatViewCount($row['view_count']) ?> viewing
+                        <?php endif; ?>
+                        
+                        <?php if ($total_sold > 0): ?>
+                            <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?> | <?php endif; ?>
+                            <?= number_format($total_sold) ?> sold
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </a>
+    </div>
+<?php
+}
+?>
 
     <?php if ($recent_count > 0 || $recommended_count > 0): ?>
         <section id="recent-recommendations-section" class="px-4 sm:px-5 lg:px-7 py-4 bg-white">

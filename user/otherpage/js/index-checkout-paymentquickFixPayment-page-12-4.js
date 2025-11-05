@@ -286,88 +286,99 @@ class PaymentSystem {
         });
     }
 
-    async handlePayMongoPayment() {
-        if (this.isSubmitting) return;
-        this.isSubmitting = true;
+  // FIXED handlePayMongoPayment() method
+// Replace the existing method in index-checkout-paymentquickFixPayment-page-12-4.js
 
+async handlePayMongoPayment() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.textContent = 'Creating PayMongo session...';
+    }
+
+    try {
+        // Get grand total
+        const grandTotalElement = document.getElementById('grandTotalDisplay');
+        if (!grandTotalElement) {
+            throw new Error('Cannot find total amount');
+        }
+        
+        const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '').trim();
+        const amount = parseFloat(totalText);
+        
+        if (isNaN(amount) || amount <= 0) {
+            throw new Error('Invalid amount: ' + totalText);
+        }
+
+        // Get delivery fee
+        let deliveryFee = 0;
+        const feeEl = document.getElementById('deliveryFee');
+        if (feeEl) {
+            deliveryFee = parseFloat(feeEl.value) || 0;
+        } else if (window.deliveryFee !== undefined) {
+            deliveryFee = parseFloat(window.deliveryFee) || 0;
+        }
+
+        // ✅ FIX: Get actual customer data from form
+        const formData = new FormData(document.getElementById('paymentForm'));
+        
+        // Get data from previous steps (these are in the PHP session)
+        // We need to extract them from the page or send them as hidden inputs
+        const requestData = {
+            amount: amount,
+            delivery_fee: deliveryFee,
+            // PayMongo session creation - actual data is in PHP session
+            // This will be retrieved by the PHP script from $_SESSION
+        };
+
+        console.log('Sending PayMongo request:', requestData);
+
+        const response = await fetch('checkout-paymongo-create-sessions-page-12-A.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const text = await response.text();
+        console.log('PayMongo response:', text);
+        
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to parse JSON:', text);
+            throw new Error('Server returned invalid JSON');
+        }
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
+            console.log('✓ Redirecting to PayMongo:', data.data.attributes.checkout_url);
+            window.location.href = data.data.attributes.checkout_url;
+        } else {
+            console.error('Invalid response structure:', data);
+            throw new Error('No checkout URL in response');
+        }
+
+    } catch (error) {
+        console.error('❌ PayMongo error:', error);
+        showNotification('PayMongo error: ' + error.message, 'error');
+        
         const placeOrderBtn = document.getElementById('placeOrderBtn');
         if (placeOrderBtn) {
-            placeOrderBtn.disabled = true;
-            placeOrderBtn.textContent = 'Creating PayMongo session...';
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.textContent = 'Pay with PayMongo';
         }
-
-        try {
-            const grandTotalElement = document.getElementById('grandTotalDisplay');
-            if (!grandTotalElement) {
-                throw new Error('Cannot find total amount');
-            }
-            
-            const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '').trim();
-            const amount = parseFloat(totalText);
-            
-            if (isNaN(amount) || amount <= 0) {
-                throw new Error('Invalid amount: ' + totalText);
-            }
-
-            let deliveryFee = 0;
-            const feeEl = document.getElementById('deliveryFee');
-            if (feeEl) {
-                deliveryFee = parseFloat(feeEl.value) || 0;
-            } else if (window.deliveryFee !== undefined) {
-                deliveryFee = parseFloat(window.deliveryFee) || 0;
-            }
-
-            const requestData = {
-                amount: amount,
-                delivery_fee: deliveryFee,
-                order_details: {
-                    customer_name: 'Processing',
-                    email: 'processing@order.com',
-                    mobile: '0000000000',
-                    address: 'Processing',
-                    zipcode: '0000',
-                    delivery_type: 'delivery'
-                }
-            };
-
-            const response = await fetch('checkout-paymongo-create-sessions-page-12-A.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            const text = await response.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                throw new Error('Server returned invalid JSON');
-            }
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-            if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
-                window.location.href = data.data.attributes.checkout_url;
-            } else {
-                throw new Error('No checkout URL in response');
-            }
-
-        } catch (error) {
-            console.error('❌ PayMongo error:', error);
-            showNotification('PayMongo error: ' + error.message, 'error');
-            
-            const placeOrderBtn = document.getElementById('placeOrderBtn');
-            if (placeOrderBtn) {
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.textContent = 'Pay with PayMongo';
-            }
-            this.isSubmitting = false;
-        }
+        this.isSubmitting = false;
     }
+}
 }
 
 // Initialize when DOM is ready

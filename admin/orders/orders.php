@@ -24,6 +24,8 @@ if (!isset($_SESSION['noble_user'])) {
   header("Location: ../../loginpage/index.php");
   exit();
 }
+
+
 ?>
 
 <style>

@@ -131,35 +131,35 @@ $itemsSql = "
     
     UNION ALL
     
-    SELECT 
-        oi.id,
-        oi.order_id,
-        CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
-        CAST(oi.codename AS CHAR) COLLATE utf8mb4_unicode_ci as codename,
-        CAST(oi.type_name AS CHAR) COLLATE utf8mb4_unicode_ci as type_name,
-        CAST(oi.variant_color AS CHAR) COLLATE utf8mb4_unicode_ci as variant_color,
-        oi.price,
-        rr.replacement_quantity as quantity,
-        (rr.replacement_quantity * oi.price) as subtotal,
-        CAST(oi.size AS CHAR) COLLATE utf8mb4_unicode_ci as size,
-        CAST(oi.descrip6 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip6,
-        CAST(oi.descrip7 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip7,
-        CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-        oi.supplier_id,
-        CAST(oi.manual_supplier_name AS CHAR) COLLATE utf8mb4_unicode_ci as manual_supplier_name,
-        oi.product_id,
-        oi.delivery_fee_per_item,
-        oi.item_total_delivery,
-        CAST(COALESCE(sl.business_name, oi.manual_supplier_name) AS CHAR) COLLATE utf8mb4_unicode_ci as supplier_name,
-        CAST(COALESCE(rr.status, 'approved') AS CHAR) COLLATE utf8mb4_unicode_ci as current_status,
-        CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-        rr.id as replacement_id,
-        CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
-        rr.replacement_quantity
-    FROM replacement_requests rr
-    LEFT JOIN order_items oi ON rr.order_item_id = oi.id
-    LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id AND oi.supplier_id > 0
-    WHERE rr.order_id = ? AND rr.status IN ('approved', 'processing', 'ready_for_pickup', 'out_for_delivery', 'delivered')
+SELECT 
+    oi.id,
+    oi.order_id,
+    CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+    CAST(oi.codename AS CHAR) COLLATE utf8mb4_unicode_ci as codename,
+    CAST(oi.type_name AS CHAR) COLLATE utf8mb4_unicode_ci as type_name,
+    CAST(oi.variant_color AS CHAR) COLLATE utf8mb4_unicode_ci as variant_color,
+    oi.price,
+    rr.replacement_quantity as quantity,
+    (rr.replacement_quantity * oi.price) as subtotal,
+    CAST(oi.size AS CHAR) COLLATE utf8mb4_unicode_ci as size,
+    CAST(oi.descrip6 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip6,
+    CAST(oi.descrip7 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip7,
+    CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+    oi.supplier_id,
+    CAST(oi.manual_supplier_name AS CHAR) COLLATE utf8mb4_unicode_ci as manual_supplier_name,
+    oi.product_id,
+    oi.delivery_fee_per_item,
+    oi.item_total_delivery,
+    CAST(COALESCE(sl.business_name, oi.manual_supplier_name) AS CHAR) COLLATE utf8mb4_unicode_ci as supplier_name,
+    CAST(COALESCE(rr.status, 'approved') AS CHAR) COLLATE utf8mb4_unicode_ci as current_status,
+    CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+    rr.id as replacement_id,
+    CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+    rr.replacement_quantity
+FROM replacement_requests rr
+LEFT JOIN order_items oi ON rr.order_item_id = oi.id
+LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id AND oi.supplier_id > 0
+WHERE rr.order_id = ? AND rr.status IN ('approved', 'processing', 'In Warehouse', 'scheduled', 'ready_for_pickup', 'out_for_delivery', 'delivered')
     
     ORDER BY origin, supplier_name, product_name, item_type
 ";
@@ -193,6 +193,9 @@ foreach ($items as $item) {
 
 // Check if order has any scheduled deliveries
 $hasScheduledDeliveries = false;
+$hasScheduledReplacements = false;
+
+// Check for any scheduled deliveries
 $scheduledCheckSql = "SELECT COUNT(*) as scheduled_count FROM delivery_schedules WHERE order_id = ?";
 $scheduledCheckStmt = $conn->prepare($scheduledCheckSql);
 $scheduledCheckStmt->bind_param("i", $order_id);
@@ -204,9 +207,27 @@ if ($scheduledResult['scheduled_count'] > 0) {
     $hasScheduledDeliveries = true;
 }
 
+// Check specifically for scheduled replacement deliveries
+$scheduledReplCheckSql = "SELECT COUNT(*) as repl_scheduled FROM delivery_schedules WHERE order_id = ? AND item_type = 'replacement'";
+$scheduledReplCheckStmt = $conn->prepare($scheduledReplCheckSql);
+$scheduledReplCheckStmt->bind_param("i", $order_id);
+$scheduledReplCheckStmt->execute();
+$scheduledReplResult = $scheduledReplCheckStmt->get_result()->fetch_assoc();
+$scheduledReplCheckStmt->close();
+
+if ($scheduledReplResult['repl_scheduled'] > 0) {
+    $hasScheduledReplacements = true;
+}
+
 $allItemsReadyForDelivery = true;
 $totalItems = count($items);
 $itemsReadyForDelivery = 0;
+
+// Separate tracking for replacements
+$allReplacementsReady = true;
+$totalReplacements = 0;
+$replacementsReadyForDelivery = 0;
+$hasReplacements = false;
 
 if ($totalItems > 0) {
     foreach ($items as $item) {
@@ -217,9 +238,15 @@ if ($totalItems > 0) {
 
         // Check if item meets delivery readiness criteria
         if ($itemType === 'replacement') {
+            $hasReplacements = true;
+            $totalReplacements++;
+            
             // Replacement items: must be in "In Warehouse" status
             if ($status === 'In Warehouse') {
                 $isReady = true;
+                $replacementsReadyForDelivery++;
+            } else {
+                $allReplacementsReady = false;
             }
         } elseif ($origin === 'local') {
             // Local items: must be in "In Warehouse" status
@@ -241,6 +268,11 @@ if ($totalItems > 0) {
     }
 } else {
     $allItemsReadyForDelivery = false;
+}
+
+// If no replacements exist, set allReplacementsReady to false
+if ($totalReplacements === 0) {
+    $allReplacementsReady = false;
 }
 
 // Status definitions
@@ -621,6 +653,64 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
             <?php endif; ?>
         <?php endif; ?>
 
+        <!-- Replacement Items Ready Banner -->
+<?php if ($hasReplacements && $allReplacementsReady && !$hasScheduledReplacements): ?>
+            <div class="mb-6 bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-sm">
+                <div class="flex items-start">
+                    <div class="bg-red-100 rounded-full p-3 mr-4 animate-pulse">
+                        <i class="fas fa-sync-alt text-red-600 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-red-900 font-bold text-lg mb-2">
+                            <i class="fas fa-warehouse mr-2"></i>All Replacement Items Ready!
+                        </h3>
+                        <p class="text-red-800 mb-3">
+                            All <?php echo $totalReplacements; ?> replacement item(s) have been received and are now stored in the warehouse. You can schedule delivery for replacements separately.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <a href="delivery_schedule.php?order_id=<?php echo $order_id; ?>&schedule_replacements=true"
+                                class="inline-flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg">
+                                <i class="fas fa-calendar-check"></i>
+                                <span>Schedule Replacement Delivery (<?php echo $totalReplacements; ?> items)</span>
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php elseif ($hasReplacements && !$allReplacementsReady && !$hasScheduledReplacements): ?>
+            <div class="mb-6 bg-orange-50 border-2 border-orange-300 rounded-xl p-6 shadow-sm">
+                <div class="flex items-start">
+                    <div class="bg-orange-100 rounded-full p-3 mr-4">
+                        <i class="fas fa-clock text-orange-600 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-orange-900 font-bold text-lg mb-2">
+                            Waiting for Replacement Items
+                        </h3>
+                        <p class="text-orange-800 mb-3">
+                            Some replacement items are still being processed. Delivery can be scheduled once all replacements reach "In Warehouse" status.
+                        </p>
+                        <div class="bg-white rounded-lg p-4 border border-orange-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-orange-900">
+                                    <i class="fas fa-sync-alt mr-2"></i>Replacement Progress
+                                </span>
+                                <span class="text-sm font-bold text-orange-600">
+                                    <?php echo $replacementsReadyForDelivery; ?> of <?php echo $totalReplacements; ?> ready
+                                </span>
+                            </div>
+                            <div class="w-full bg-orange-200 rounded-full h-3 overflow-hidden">
+                                <div class="bg-gradient-to-r from-red-400 to-red-600 h-3 rounded-full transition-all duration-500"
+                                    style="width: <?php echo $totalReplacements > 0 ? round(($replacementsReadyForDelivery / $totalReplacements) * 100) : 0; ?>%">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php
         function renderItemGroup($items, $origin, $supplier, $statusDefinitions, $selectableStatuses, $replacementStatusDefinitions, $selectableReplacementStatuses, $order_id)
         {
@@ -783,25 +873,53 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
         echo "</form>";
     }
     
-    // ADD REQUEST REPLACEMENT BUTTON (only for original items with defects, not already replaced)
-    if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
-        // Check if replacement already exists
-        $replCheckSql = "SELECT COUNT(*) as repl_count FROM replacement_requests WHERE order_item_id = ? AND status IN ('pending', 'approved', 'processing', 'ready_for_pickup', 'out_for_delivery', 'delivered')";
-        $replCheckStmt = $conn->prepare($replCheckSql);
-        $replCheckStmt->bind_param("i", $item['id']);
-        $replCheckStmt->execute();
-        $replCheckResult = $replCheckStmt->get_result()->fetch_assoc();
-        $replCheckStmt->close();
-        
-        if ((int)$replCheckResult['repl_count'] === 0) {
-            echo "<button onclick='event.stopPropagation(); requestReplacement({$item['id']}, {$order_id});' class='bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2'>";
-            echo "<i class='fas fa-exchange-alt'></i>";
-            echo "<span>Request Replacement</span>";
-            echo "</button>";
-        }
+    // ADD RESOLVE DEFECT BUTTON (only for items with unresolved defects)
+if (!$isReplacement && $hasDefects && $currentStatus !== 'cancelled') {
+    // Check defect status
+    $defectStatusSql = "SELECT status FROM defect_reports WHERE order_item_id = ? AND status != 'resolved' LIMIT 1";
+    $defectStatusStmt = $conn->prepare($defectStatusSql);
+    $defectStatusStmt->bind_param("i", $item['id']);
+    $defectStatusStmt->execute();
+    $defectStatusResult = $defectStatusStmt->get_result()->fetch_assoc();
+    $defectStatusStmt->close();
+    
+    if ($defectStatusResult) {
+        echo "<button onclick='event.stopPropagation(); resolveDefect({$item['id']}, {$order_id});' class='bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2'>";
+        echo "<i class='fas fa-check-circle'></i>";
+        echo "<span>Mark Defect as Resolved</span>";
+        echo "</button>";
     }
+}
 
     echo "</div>";
+    
+    // ADD P.O. NUMBER GENERATION FOR REPLACEMENTS
+    if ($isReplacement && in_array($currentStatus, ['approved', 'processing'])) {
+        // Check if replacement has P.O. number
+        $replPoCheckSql = "SELECT po_number FROM replacement_requests WHERE id = ?";
+        $replPoCheckStmt = $conn->prepare($replPoCheckSql);
+        $replPoCheckStmt->bind_param("i", $item['replacement_id']);
+        $replPoCheckStmt->execute();
+        $replPoResult = $replPoCheckStmt->get_result()->fetch_assoc();
+        $replPoCheckStmt->close();
+        
+        if (empty($replPoResult['po_number'])) {
+            echo "<button onclick='generateReplacementPO({$item['replacement_id']})' class='w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 mt-2'>";
+            echo "<i class='fas fa-file-invoice'></i>";
+            echo "<span>Generate P.O. Number</span>";
+            echo "</button>";
+        } else {
+            echo "<div class='bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center mt-2'>";
+            echo "<div class='text-xs text-green-700 mb-1 font-semibold'>P.O. Number Generated</div>";
+            echo "<div class='font-mono font-bold text-green-900 text-sm mb-2'>" . htmlspecialchars($replPoResult['po_number']) . "</div>";
+            echo "<a href='view_po_items.php?po_number=" . urlencode($replPoResult['po_number']) . "' class='inline-flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200'>";
+            echo "<i class='fas fa-qrcode'></i>";
+            echo "<span>Generate QR Code</span>";
+            echo "</a>";
+            echo "</div>";
+        }
+    }
+    
     echo "</div>";
     echo "</div>";
     echo "</div>";
@@ -1194,59 +1312,73 @@ $selectableReplacementStatuses = ['approved', 'processing']; // Only these can b
             }
         }
 
-        // Request Replacement Function
-        function requestReplacement(itemId, orderId) {
-            if (!confirm('Request a replacement for this defective item?\n\nThis will create a replacement request that needs to be approved.')) {
-                return;
-            }
-
-            // First, get defect details to use as reason
-            fetch(`report_defect.php?item_id=${itemId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.defects && data.defects.length > 0) {
-                        const defect = data.defects[0]; // Use first defect
-                        const reason = `Defective item: ${defect.defect_type} - ${defect.defect_description}`;
-                        
-                        // Create replacement request
-                        return fetch('create_replacement_request.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                order_item_id: itemId,
-                                order_id: orderId,
-                                reason: reason,
-                                quantity: defect.quantity_defective,
-                                auto_approve: false
-                            })
-                        });
-                    } else {
-                        throw new Error('No defect reports found');
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('✓ Replacement request created successfully!\n\nThe request will be reviewed for approval.');
-                        window.location.reload();
-                    } else {
-                        alert('✗ Failed to create replacement request: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('✗ Failed to create replacement request. Please try again.');
-                });
-        }
-
         // Handle escape key for all modals
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeDefectsModal();
             }
         });
+
+        // ADD THIS NEW FUNCTION
+        function generateReplacementPO(replacementId) {
+            if (!confirm('Generate P.O. number for this replacement item?\n\nThis will allow you to generate QR codes and track this replacement in the warehouse.')) {
+                return;
+            }
+            
+            fetch('generate_replacement_po.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    replacement_id: replacementId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ P.O. Number generated successfully!\n\nP.O. Number: ' + data.po_number + '\n\nYou can now search for this P.O. number in "View P.O. Items" to generate QR codes.');
+                    window.location.reload();
+                } else {
+                    alert('✗ Failed to generate P.O. number: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('✗ Failed to generate P.O. number. Please try again.');
+            });
+        }
+
+        // Resolve Defect Function
+function resolveDefect(itemId, orderId) {
+    if (!confirm('Mark this defect as resolved?\n\nThis will allow the item to be marked as "In Warehouse" when scanned.')) {
+        return;
+    }
+
+    fetch('resolve_defect.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            order_item_id: itemId,
+            order_id: orderId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Defect marked as resolved!\n\nThe item can now be marked as "In Warehouse" when scanned.');
+            window.location.reload();
+        } else {
+            alert('✗ Failed to resolve defect: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('✗ Failed to resolve defect. Please try again.');
+    });
+}
     </script>
 </body>
 

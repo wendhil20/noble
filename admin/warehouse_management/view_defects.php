@@ -145,19 +145,58 @@ $defectsStmt->close();
                         </div>
 
                         <div class="flex items-center justify-between text-sm text-gray-600 pt-4 border-t border-gray-200">
-                            <div>
-                                <i class="fas fa-user mr-2"></i>
-                                Reported by <strong><?php echo htmlspecialchars($defect['reporter_name']); ?></strong>
-                            </div>
-                            <div>
-                                <i class="fas fa-calendar mr-2"></i>
-                                <?php echo date('M j, Y g:i A', strtotime($defect['reported_at'])); ?>
-                            </div>
-                        </div>
+    <div>
+        <i class="fas fa-user mr-2"></i>
+        Reported by <strong><?php echo htmlspecialchars($defect['reporter_name']); ?></strong>
+    </div>
+    <div class="flex items-center space-x-4">
+        <div>
+            <i class="fas fa-calendar mr-2"></i>
+            <?php echo date('M j, Y g:i A', strtotime($defect['reported_at'])); ?>
+        </div>
+        <?php if ($defect['status'] !== 'resolved'): ?>
+            <button onclick="resolveThisDefect(<?php echo $defect['id']; ?>)" 
+                class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200">
+                <i class="fas fa-check mr-1"></i>Mark Resolved
+            </button>
+        <?php endif; ?>
+    </div>
+</div>
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>
+
+    <script>
+function resolveThisDefect(defectId) {
+    if (!confirm('Mark this defect as resolved?')) {
+        return;
+    }
+    
+    fetch('resolve_single_defect.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            defect_id: defectId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Defect marked as resolved!');
+            window.location.reload();
+        } else {
+            alert('✗ Failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('✗ Failed to resolve defect.');
+    });
+}
+</script>
 </body>
 </html>

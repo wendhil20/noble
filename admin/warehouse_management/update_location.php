@@ -22,7 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
+// Get raw input for debugging
+$rawInput = file_get_contents('php://input');
+error_log("Update Location Raw Input: " . $rawInput);
+
+$input = json_decode($rawInput, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    error_log("JSON decode error: " . json_last_error_msg());
+    echo json_encode(['success' => false, 'error' => 'Invalid JSON: ' . json_last_error_msg()]);
+    exit();
+}
 
 if (!isset($input['item_id']) || !isset($input['warehouse_location'])) {
     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
@@ -31,6 +41,9 @@ if (!isset($input['item_id']) || !isset($input['warehouse_location'])) {
 
 $itemId = intval($input['item_id']);
 $warehouseLocation = trim($input['warehouse_location']);
+$itemType = isset($input['item_type']) ? trim($input['item_type']) : 'original';
+
+error_log("Update Location - Item ID: $itemId, Type: '$itemType', Location: $warehouseLocation");
 
 if (empty($warehouseLocation)) {
     echo json_encode(['success' => false, 'error' => 'Location cannot be empty']);
@@ -38,24 +51,66 @@ if (empty($warehouseLocation)) {
 }
 
 try {
-    $stmt = $conn->prepare("UPDATE order_items SET warehouse_location = ? WHERE id = ?");
+    // Determine if this is a replacement based on input
+    $isReplacement = ($itemType === 'replacement');
+    
+    error_log("Is Replacement: " . ($isReplacement ? 'YES' : 'NO'));
+    
+    // Verify the item exists in the correct table
+    if ($isReplacement) {
+        $checkStmt = $conn->prepare("SELECT id, warehouse_location FROM replacement_requests WHERE id = ?");
+        $tableName = "replacement_requests";
+    } else {
+        $checkStmt = $conn->prepare("SELECT id, warehouse_location FROM order_items WHERE id = ?");
+        $tableName = "order_items";
+    }
+    
+    $checkStmt->bind_param("i", $itemId);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        $checkStmt->close();
+        $errorMsg = "Item ID $itemId not found in table: $tableName";
+        error_log($errorMsg);
+        throw new Exception($errorMsg);
+    }
+    
+    $itemData = $result->fetch_assoc();
+    $checkStmt->close();
+    
+    error_log("Item found in $tableName - Current Location: " . ($itemData['warehouse_location'] ?? 'NULL'));
+    
+    // Update the appropriate table
+    if ($isReplacement) {
+        $stmt = $conn->prepare("UPDATE replacement_requests SET warehouse_location = ? WHERE id = ?");
+    } else {
+        $stmt = $conn->prepare("UPDATE order_items SET warehouse_location = ? WHERE id = ?");
+    }
+    
     $stmt->bind_param("si", $warehouseLocation, $itemId);
     
     if ($stmt->execute()) {
+        $affectedRows = $stmt->affected_rows;
         $stmt->close();
+        
+        error_log("Update successful in $tableName - Affected rows: $affectedRows");
         
         // Log the action
         $user_info = is_array($_SESSION['noble_user']) ? 
             ($_SESSION['noble_user']['fullname'] ?? $_SESSION['noble_user']['name'] ?? 'Unknown') : 
             'Unknown';
-        error_log("Location updated - Item ID: $itemId, Location: $warehouseLocation, By: $user_info");
+        error_log("Location updated - Item ID: $itemId (Type: $itemType), Table: $tableName, Location: $warehouseLocation, By: $user_info");
         
         echo json_encode([
             'success' => true,
-            'message' => 'Location updated successfully'
+            'message' => 'Location updated successfully',
+            'item_type' => $itemType,
+            'table' => $tableName,
+            'item_id' => $itemId
         ]);
     } else {
-        throw new Exception('Failed to execute update query');
+        throw new Exception('Failed to execute update query: ' . $stmt->error);
     }
     
 } catch (Exception $e) {

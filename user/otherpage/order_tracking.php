@@ -520,7 +520,7 @@ $show_map = $delivery_settings &&
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <div class="flex items-center gap-3 sm:gap-4 mb-4">
-                <a href="profile.php" class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                <a href="index-profile-page-6" class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -847,31 +847,35 @@ $show_map = $delivery_settings &&
                                     
                                     <!-- Replacement Button/Status -->
                                     <?php if ($show_replacement_tracking): ?>
-                                        <?php
-                                        $replacement_status = $item['replacement_status'];
-                                        $replacement_delivery_status = $item['replacement_delivery_status'] ?? 'scheduled';
-                                        
-                                        // Determine current replacement status for display
-                                        if ($replacement_delivery_status === 'delivered' || $replacement_delivery_status === 'picked_up') {
-                                            $status_color = 'bg-green-100 text-green-800';
-                                            $status_text = $replacement_delivery_status === 'picked_up' ? '✅ Replacement Picked Up' : '✅ Replacement Delivered';
-                                        } elseif ($replacement_delivery_status === 'item_is_loaded') {
-                                            $status_color = 'bg-blue-100 text-blue-800';
-                                            $status_text = $delivery_type === 'pickup' ? '📦 Replacement Out for Pickup' : '🚚 Replacement Out for Delivery';
-                                        } elseif ($replacement_status === 'ready_for_pickup') {
-                                            $status_color = 'bg-purple-100 text-purple-800';
-                                            $status_text = '📦 Replacement Ready';
-                                        } elseif ($replacement_status === 'processing') {
-                                            $status_color = 'bg-yellow-100 text-yellow-800';
-                                            $status_text = '⚙️ Processing Replacement';
-                                        } elseif ($replacement_status === 'approved') {
-                                            $status_color = 'bg-indigo-100 text-indigo-800';
-                                            $status_text = '✓ Replacement Approved';
-                                        } else {
-                                            $status_color = 'bg-orange-100 text-orange-800';
-                                            $status_text = '🔄 Replacement Requested';
-                                        }
-                                        ?>
+    <?php
+    $replacement_status = strtolower($item['replacement_status']);
+    $replacement_delivery_status = strtolower($item['replacement_delivery_status'] ?? 'scheduled');
+    
+    // Determine current replacement status for display
+    // Check for final completion statuses first
+    if (in_array($replacement_status, ['delivered', 'picked_up'])) {
+        $status_color = 'bg-green-100 text-green-800';
+        $status_text = $replacement_status === 'picked_up' ? '✅ Replacement Picked Up' : '✅ Replacement Delivered';
+    } elseif (in_array($replacement_delivery_status, ['delivered', 'picked_up'])) {
+        $status_color = 'bg-green-100 text-green-800';
+        $status_text = $replacement_delivery_status === 'picked_up' ? '✅ Replacement Picked Up' : '✅ Replacement Delivered';
+    } elseif ($replacement_status === 'out_for_delivery' || $replacement_delivery_status === 'item_is_loaded') {
+        $status_color = 'bg-blue-100 text-blue-800';
+        $status_text = $delivery_type === 'pickup' ? '📦 Replacement Out for Pickup' : '🚚 Replacement Out for Delivery';
+    } elseif ($replacement_status === 'ready_for_pickup') {
+        $status_color = 'bg-purple-100 text-purple-800';
+        $status_text = '📦 Replacement Ready';
+    } elseif ($replacement_status === 'processing') {
+        $status_color = 'bg-yellow-100 text-yellow-800';
+        $status_text = '⚙️ Processing Replacement';
+    } elseif ($replacement_status === 'approved') {
+        $status_color = 'bg-indigo-100 text-indigo-800';
+        $status_text = '✓ Replacement Approved';
+    } else {
+        $status_color = 'bg-orange-100 text-orange-800';
+        $status_text = '🔄 Replacement Requested';
+    }
+    ?>
                                         <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full <?= $status_color ?> w-fit">
                                             <?= $status_text ?>
                                         </span>
@@ -903,23 +907,30 @@ $show_map = $delivery_settings &&
                                 </div>
                                 
                                 <?php
-                                // Determine replacement tracking status
-                                $replacement_tracking_status = 'pending';
-                                if ($item['replacement_delivery_status'] === 'delivered' || $item['replacement_delivery_status'] === 'picked_up') {
-                                    $replacement_tracking_status = $item['replacement_delivery_status'];
-                                } elseif ($item['replacement_delivery_status'] === 'item_is_loaded') {
-                                    $replacement_tracking_status = 'item_is_loaded';
-                                } elseif ($item['replacement_status'] === 'ready_for_pickup') {
-                                    $replacement_tracking_status = 'ready_for_pickup';
-                                } elseif ($item['replacement_status'] === 'processing') {
-                                    $replacement_tracking_status = 'processing';
-                                } elseif ($item['replacement_status'] === 'approved') {
-                                    $replacement_tracking_status = 'approved';
-                                }
-                                
-                                $replacement_steps = getReplacementStatusSteps($delivery_type);
-                                $replacement_current_index = getCurrentStepIndex($replacement_tracking_status, $replacement_steps);
-                                ?>
+// Determine replacement tracking status - normalize to lowercase
+$replacement_tracking_status = 'pending';
+
+// Priority 1: Check replacement_requests status for final states
+if (in_array(strtolower($item['replacement_status']), ['delivered', 'picked_up'])) {
+    $replacement_tracking_status = strtolower($item['replacement_status']);
+} 
+// Priority 2: Check delivery_schedules status
+elseif (in_array(strtolower($item['replacement_delivery_status'] ?? ''), ['delivered', 'picked_up'])) {
+    $replacement_tracking_status = strtolower($item['replacement_delivery_status']);
+} 
+// Priority 3: Check for out_for_delivery/item_is_loaded
+elseif (strtolower($item['replacement_status']) === 'out_for_delivery' || 
+        strtolower($item['replacement_delivery_status'] ?? '') === 'item_is_loaded') {
+    $replacement_tracking_status = 'item_is_loaded';
+} 
+// Priority 4: Other statuses from replacement_requests
+elseif (in_array(strtolower($item['replacement_status']), ['ready_for_pickup', 'processing', 'approved'])) {
+    $replacement_tracking_status = strtolower($item['replacement_status']);
+}
+
+$replacement_steps = getReplacementStatusSteps($delivery_type);
+$replacement_current_index = getCurrentStepIndex($replacement_tracking_status, $replacement_steps);
+?>
                                 
                                 <!-- Desktop Replacement Steps -->
                                 <div class="hidden sm:flex items-center justify-between">

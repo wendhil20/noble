@@ -8,6 +8,8 @@ ini_set('display_errors', 1);
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse']);
+// Either warehouse receiver or warehouse keeper can access
+require_subrole(['warehouse_receiver']);
 
 // Ensure session exists
 if (!isset($_SESSION['noble_user'])) {
@@ -31,41 +33,81 @@ $orderInfo = null;
 $supplierInfo = null;
 
 if (!empty($po_number)) {
-    // Get order items with the P.O. number
+    // Get order items with the P.O. number (both original and replacement items)
     $itemStmt = $conn->prepare("
         SELECT 
             oi.id as item_id,
             oi.order_id,
             oi.product_id,
-            oi.product_name,
-            oi.size,
-            oi.variant_color,
-            oi.codename,
-            oi.descrip6,
-            oi.descrip7,
+            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            CAST(oi.size AS CHAR) COLLATE utf8mb4_unicode_ci as size,
+            CAST(oi.variant_color AS CHAR) COLLATE utf8mb4_unicode_ci as variant_color,
+            CAST(oi.codename AS CHAR) COLLATE utf8mb4_unicode_ci as codename,
+            CAST(oi.descrip6 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip6,
+            CAST(oi.descrip7 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip7,
             oi.quantity,
-            oi.po_number,
-            oi.qr_code,
-            oi.warehouse_location,
+            CAST(oi.po_number AS CHAR) COLLATE utf8mb4_unicode_ci as po_number,
+            CAST(oi.qr_code AS CHAR) COLLATE utf8mb4_unicode_ci as qr_code,
+            CAST(oi.warehouse_location AS CHAR) COLLATE utf8mb4_unicode_ci as warehouse_location,
             oi.supplier_id,
-            oi.manual_supplier_name,
-            sl.business_name,
-            sl.primary_contact_name,
-            sl.email_address,
-            sl.phone_number,
-            sl.business_address,
-            o.customer_name,
-            o.email as customer_email,
+            CAST(oi.manual_supplier_name AS CHAR) COLLATE utf8mb4_unicode_ci as manual_supplier_name,
+            CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+            NULL as replacement_id,
+            CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            CAST(sl.business_name AS CHAR) COLLATE utf8mb4_unicode_ci as business_name,
+            CAST(sl.primary_contact_name AS CHAR) COLLATE utf8mb4_unicode_ci as primary_contact_name,
+            CAST(sl.email_address AS CHAR) COLLATE utf8mb4_unicode_ci as email_address,
+            CAST(sl.phone_number AS CHAR) COLLATE utf8mb4_unicode_ci as phone_number,
+            CAST(sl.business_address AS CHAR) COLLATE utf8mb4_unicode_ci as business_address,
+            CAST(o.customer_name AS CHAR) COLLATE utf8mb4_unicode_ci as customer_name,
+            CAST(o.email AS CHAR) COLLATE utf8mb4_unicode_ci as customer_email,
             o.created_at as order_date,
-            o.status as order_status
+            CAST(o.status AS CHAR) COLLATE utf8mb4_unicode_ci as order_status
         FROM order_items oi
         LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
         LEFT JOIN orders o ON oi.order_id = o.id
         WHERE oi.po_number = ?
-        ORDER BY oi.id
+        
+        UNION ALL
+        
+        SELECT 
+            rr.id as item_id,
+            rr.order_id,
+            oi.product_id,
+            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            CAST(oi.size AS CHAR) COLLATE utf8mb4_unicode_ci as size,
+            CAST(oi.variant_color AS CHAR) COLLATE utf8mb4_unicode_ci as variant_color,
+            CAST(oi.codename AS CHAR) COLLATE utf8mb4_unicode_ci as codename,
+            CAST(oi.descrip6 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip6,
+            CAST(oi.descrip7 AS CHAR) COLLATE utf8mb4_unicode_ci as descrip7,
+            rr.replacement_quantity as quantity,
+            CAST(rr.po_number AS CHAR) COLLATE utf8mb4_unicode_ci as po_number,
+            CAST(rr.qr_code AS CHAR) COLLATE utf8mb4_unicode_ci as qr_code,
+            CAST(rr.warehouse_location AS CHAR) COLLATE utf8mb4_unicode_ci as warehouse_location,
+            oi.supplier_id,
+            CAST(oi.manual_supplier_name AS CHAR) COLLATE utf8mb4_unicode_ci as manual_supplier_name,
+            CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+            rr.id as replacement_id,
+            CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            CAST(sl.business_name AS CHAR) COLLATE utf8mb4_unicode_ci as business_name,
+            CAST(sl.primary_contact_name AS CHAR) COLLATE utf8mb4_unicode_ci as primary_contact_name,
+            CAST(sl.email_address AS CHAR) COLLATE utf8mb4_unicode_ci as email_address,
+            CAST(sl.phone_number AS CHAR) COLLATE utf8mb4_unicode_ci as phone_number,
+            CAST(sl.business_address AS CHAR) COLLATE utf8mb4_unicode_ci as business_address,
+            CAST(o.customer_name AS CHAR) COLLATE utf8mb4_unicode_ci as customer_name,
+            CAST(o.email AS CHAR) COLLATE utf8mb4_unicode_ci as customer_email,
+            o.created_at as order_date,
+            CAST(o.status AS CHAR) COLLATE utf8mb4_unicode_ci as order_status
+        FROM replacement_requests rr
+        LEFT JOIN order_items oi ON rr.order_item_id = oi.id
+        LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
+        LEFT JOIN orders o ON rr.order_id = o.id
+        WHERE rr.po_number = ?
+        
+        ORDER BY item_id
     ");
     
-    $itemStmt->bind_param("s", $po_number);
+    $itemStmt->bind_param("ss", $po_number, $po_number);
     $itemStmt->execute();
     $result = $itemStmt->get_result();
     $orderItems = $result->fetch_all(MYSQLI_ASSOC);
@@ -337,6 +379,23 @@ if (!empty($po_number)) {
                                 <?php endif; ?>
                             </div>
                         </div>
+
+                        <!-- ADD REPLACEMENT BADGE HERE -->
+                        <?php if (isset($item['item_type']) && $item['item_type'] === 'replacement'): ?>
+                        <div class="bg-red-100 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-sync-alt text-red-600 text-lg"></i>
+                                    <span class="text-red-800 font-bold text-sm">REPLACEMENT ITEM</span>
+                                </div>
+                                <?php if (!empty($item['replacement_reason'])): ?>
+                                <span class="text-xs text-red-700 bg-red-50 px-2 py-1 rounded">
+                                    <?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $item['replacement_reason']))); ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         
                         <!-- Item Details -->
                         <div class="p-4">
@@ -384,12 +443,12 @@ if (!empty($po_number)) {
                             <!-- Action Buttons -->
                             <div class="space-y-2">
                                 <?php if (empty($item['qr_code'])): ?>
-                                    <button onclick="openQRModal(<?php echo $item['item_id']; ?>, '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>')" 
-                                            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2">
-                                        <i class="fas fa-qrcode"></i>
-                                        <span>Generate QR Code</span>
-                                    </button>
-                                <?php else: ?>
+    <button onclick="openQRModal(<?php echo $item['item_id']; ?>, '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>', '<?php echo $item['item_type']; ?>')" 
+            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2">
+        <i class="fas fa-qrcode"></i>
+        <span>Generate QR Code</span>
+    </button>
+<?php else: ?>
                                     <div class="grid grid-cols-2 gap-2">
                                         <button onclick="downloadQR(<?php echo $item['item_id']; ?>, '<?php echo htmlspecialchars($item['qr_code'], ENT_QUOTES); ?>')" 
                                                 class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-1 text-sm">
@@ -402,11 +461,11 @@ if (!empty($po_number)) {
                                             <span>Location</span>
                                         </button>
                                     </div>
-                                    <button onclick="resetQR(<?php echo $item['item_id']; ?>)" 
-                                            class="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm">
-                                        <i class="fas fa-times-circle"></i>
-                                        <span>Reset QR & Location</span>
-                                    </button>
+                                    <button onclick="resetQR(<?php echo $item['item_id']; ?>, '<?php echo $item['item_type']; ?>')" 
+        class="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm">
+    <i class="fas fa-times-circle"></i>
+    <span>Reset QR & Location</span>
+</button>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -556,15 +615,24 @@ if (!empty($po_number)) {
             // Scroll to alert
             alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        function openQRModal(itemId, productName) {
+        function openQRModal(itemId, productName, itemType = 'original') {
     currentItemId = itemId;
     
-    // Generate unique QR code value with URL
-    const baseUrl = window.location.origin + '/noble/admin/warehouse_management/scan_item.php';
-    currentQRCode = `${baseUrl}?item_id=${itemId}`;
+    // Store item type for later use
+    window.currentItemType = itemType;
     
-    // Set product name
-    document.getElementById('modalItemName').textContent = productName;
+    // Generate unique QR code value with URL - different page for replacements
+    if (itemType === 'replacement') {
+        const baseUrl = window.location.origin + '/noble/admin/warehouse_management/scan_replacement.php';
+        currentQRCode = `${baseUrl}?replacement_id=${itemId}`;
+    } else {
+        const baseUrl = window.location.origin + '/noble/admin/warehouse_management/scan_item.php';
+        currentQRCode = `${baseUrl}?item_id=${itemId}`;
+    }
+    
+    // Set product name with item type indicator
+    const typeLabel = itemType === 'replacement' ? ' [REPLACEMENT]' : '';
+    document.getElementById('modalItemName').textContent = productName + typeLabel;
     
     // Clear previous QR code
     document.getElementById('qrcode').innerHTML = '';
@@ -600,9 +668,16 @@ if (!empty($po_number)) {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i><span>Saving...</span>';
     
-    console.log('Saving QR Code:', { item_id: currentItemId, qr_code: currentQRCode });
+    // Get item type (stored when modal was opened)
+    const itemType = window.currentItemType || 'original';
     
-    // Send to server (without location)
+    console.log('Saving QR Code:', { 
+        item_id: currentItemId, 
+        qr_code: currentQRCode,
+        item_type: itemType
+    });
+    
+    // Send to server with item type
     fetch('save_qr_code.php', {
         method: 'POST',
         headers: {
@@ -610,7 +685,8 @@ if (!empty($po_number)) {
         },
         body: JSON.stringify({
             item_id: currentItemId,
-            qr_code: currentQRCode
+            qr_code: currentQRCode,
+            item_type: itemType
         })
     })
     .then(response => {
@@ -942,10 +1018,12 @@ if (!empty($po_number)) {
     }
 }
         
-        function resetQR(itemId) {
+        function resetQR(itemId, itemType = 'original') {
     if (!confirm('Are you sure you want to reset the QR code and location for this item? This action cannot be undone.')) {
         return;
     }
+    
+    console.log('Resetting QR - Item ID:', itemId, 'Type:', itemType);
     
     // Send to server
     fetch('reset_qr_code.php', {
@@ -954,11 +1032,16 @@ if (!empty($po_number)) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            item_id: itemId
+            item_id: itemId,
+            item_type: itemType
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Reset response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Reset response data:', data);
         if (data.success) {
             showAlert('QR code and location reset successfully! Reloading...', 'success');
             setTimeout(() => window.location.reload(), 800);
@@ -968,7 +1051,7 @@ if (!empty($po_number)) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('Failed to reset QR code', 'error');
+        showAlert('Failed to reset QR code: ' + error.message, 'error');
     });
 }
         

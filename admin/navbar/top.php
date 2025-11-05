@@ -8,10 +8,17 @@ function hasAnyRole($roles)
     return in_array($_SESSION['noble_lvl'], $roles);
 }
 
-function hasSubrole($subrole)
+function hasSubrole($subroles)
 {
     if (!isset($_SESSION['noble_subrole'])) return false;
-    return $_SESSION['noble_subrole'] === $subrole;
+    
+    // If single subrole passed as string, convert to array
+    if (!is_array($subroles)) {
+        $subroles = [$subroles];
+    }
+    
+    // Check if user's subrole matches any of the provided subroles
+    return in_array($_SESSION['noble_subrole'], $subroles);
 }
 
 if (!isset($_SESSION['noble_user'])) {
@@ -574,10 +581,17 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
                                     <div class="px-3 py-2">
                                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Logistics</div>
+                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['dispatcher'])): ?>
                                         <a href="../logistic_management/main_dashboard"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-dashboard-3-line text-lg"></i>
                                             <span>Dashboard</span>
+                                        </a>
+                                        <?php endif; ?>
+                                        <a href="../logistic_management/dispatcher_dashboard"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                            <i class="ri-file-info-line text-lg"></i>
+                                            <span>Dispatcher Dashboard</span>
                                         </a>
                                         <a href="../client/driver_management"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
@@ -641,7 +655,15 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <div class="px-3 py-2">
                                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Warehouse</div>
 
-                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole('warehouse_receiver')): ?>
+                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_receiver', 'warehouse_staff'])): ?>
+                                            <a href="../warehouse_management/Warehouse_head_dashboard"
+                                                class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                <i class="ri-archive-line text-lg"></i>
+                                                <span>Head Dashboard</span>
+                                            </a>
+                                        <?php endif; ?>
+
+                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_receiver'])): ?>
                                             <a href="../warehouse_management/order_list"
                                                 class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                                 <i class="ri-archive-line text-lg"></i>
@@ -649,11 +671,13 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             </a>
                                         <?php endif; ?>
 
+                                        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['warehouse_staff'])): ?>
                                         <a href="../warehouse_management/view_po_items"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-search-eye-line text-lg"></i>
                                             <span>Search Items</span>
                                         </a>
+                                        <?php endif; ?>
 
                                         <a href="../warehouse_management/qr_scanner"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">

@@ -35,7 +35,7 @@ function update_user_activity($conn, $email) {
 // Check if user session is still valid based on database
 function is_user_session_valid($conn, $email) {
     $stmt = $conn->prepare("
-        SELECT id, lvl, status, last_activity, is_online 
+        SELECT id, lvl, subrole, status, last_activity, is_online 
         FROM nobleaccount 
         WHERE email = ? AND status = 'active' 
         LIMIT 1
@@ -101,6 +101,7 @@ update_user_activity($conn, $email);
 // Update session with fresh data
 $_SESSION['noble_lvl'] = $user_data['lvl'];
 $_SESSION['user_id'] = $user_data['id'];
+$_SESSION['noble_subrole'] = $user_data['subrole'] ?? null;
 
 // ✅ RELAXED IP-based session security (only for major IP changes)
 if (!isset($_SESSION['user_ip'])) {
@@ -154,6 +155,84 @@ function require_role(array $allowed_roles): bool {
         exit;
     }
     return true;
+}
+
+/**
+ * ✅ Secure subrole-checking function (Enhanced with null support)
+ */
+function require_subrole(array $allowed_subroles): bool {
+    // Get current subrole (default to empty string if not set)
+    $current_subrole = $_SESSION['noble_subrole'] ?? '';
+    
+    // Normalize current subrole
+    $current_subrole = ($current_subrole === null || trim($current_subrole) === '') 
+        ? '' 
+        : strtolower(trim($current_subrole));
+    
+    // Normalize allowed subroles
+    $normalized_allowed = array_map(function($role) {
+        if ($role === null || $role === '' || trim($role) === '') {
+            return ''; // Empty subrole
+        }
+        return strtolower(trim($role));
+    }, $allowed_subroles);
+    
+    // Check if current subrole is in allowed list
+    if (!in_array($current_subrole, $normalized_allowed)) {
+        $_SESSION['access_denied'] = "Your subrole doesn't have permission to access this section.";
+        header("Location: ../../loginpage/index.php");
+        exit;
+    }
+    
+    return true;
+}
+
+/**
+ * ✅ Combined role and subrole checking function (most flexible)
+ */
+function require_role_and_subrole(array $allowed_roles, array $allowed_subroles = []): bool {
+    // First check role
+    if (!isset($_SESSION['noble_lvl']) || !in_array($_SESSION['noble_lvl'], $allowed_roles)) {
+        $_SESSION['access_denied'] = "You don't have permission to access this section.";
+        header("Location: ../../loginpage/index.php");
+        exit;
+    }
+    
+    // If subroles are specified, check them too
+    if (!empty($allowed_subroles)) {
+        if (!isset($_SESSION['noble_subrole']) || empty($_SESSION['noble_subrole'])) {
+            $_SESSION['access_denied'] = "You don't have the required subrole to access this section.";
+            header("Location: ../../loginpage/index.php");
+            exit;
+        }
+        
+        if (!in_array(strtolower($_SESSION['noble_subrole']), array_map('strtolower', $allowed_subroles))) {
+            $_SESSION['access_denied'] = "Your subrole doesn't have permission to access this section.";
+            header("Location: ../../loginpage/index.php");
+            exit;
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * ✅ Helper function to check if user has specific subrole (doesn't exit, just returns bool)
+ */
+function has_subrole(string $subrole): bool {
+    return isset($_SESSION['noble_subrole']) && 
+           strtolower($_SESSION['noble_subrole']) === strtolower($subrole);
+}
+
+/**
+ * ✅ Helper function to check if user has any of the specified subroles
+ */
+function has_any_subrole(array $subroles): bool {
+    if (!isset($_SESSION['noble_subrole']) || empty($_SESSION['noble_subrole'])) {
+        return false;
+    }
+    
+    return in_array(strtolower($_SESSION['noble_subrole']), array_map('strtolower', $subroles));
 }
 
 /**

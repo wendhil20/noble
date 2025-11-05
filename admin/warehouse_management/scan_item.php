@@ -409,33 +409,82 @@ if ($itemInfo && $itemInfo['order_id']) {
             </div>
 
             <?php if ($isInWarehouse): ?>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <div class="bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
-                        <i class="fas fa-check-circle text-base sm:text-xl"></i>
-                        <span class="font-medium text-sm sm:text-base">Confirmed</span>
-                    </div>
-                    <!-- ADD DEFECT REPORT BUTTON -->
-                    <button onclick="openDefectReportModal()"
-                        class="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto text-sm sm:text-base">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Report Defect</span>
-                    </button>
-                </div>
-            <?php elseif ($hasBooking): ?>
-                            <?php elseif ($hasBooking): ?>
-                                <div class="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
-                                    <i class="fas fa-calendar-check text-base sm:text-xl"></i>
-                                    <span class="font-medium text-sm sm:text-base">Delivery Scheduled</span>
-                                </div>
-                            <?php elseif (strtolower($user_level) === 'warehouse' || strtolower($user_level) === 'superadmin'): ?>
-                                <button onclick="updateTrackingStatus('In Warehouse')"
-                                    class="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
-                                    <i class="fas fa-warehouse"></i>
-                                    <span>Mark as In Warehouse</span>
-                                </button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+    <div class="flex flex-col sm:flex-row gap-2">
+        <div class="bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
+            <i class="fas fa-check-circle text-base sm:text-xl"></i>
+            <span class="font-medium text-sm sm:text-base">Confirmed</span>
+        </div>
+        <!-- Defect report button removed for In Warehouse status -->
+    </div>
+<?php elseif ($hasBooking): ?>
+    <div class="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto">
+        <i class="fas fa-calendar-check text-base sm:text-xl"></i>
+        <span class="font-medium text-sm sm:text-base">Delivery Scheduled</span>
+    </div>
+<?php elseif (strtolower($user_level) === 'warehouse' || strtolower($user_level) === 'superadmin'): ?>
+    <?php
+    // Check if item has unresolved defects
+    $defectCheckSql = "SELECT COUNT(*) as unresolved_count FROM defect_reports 
+                       WHERE order_item_id = ? AND status != 'resolved'";
+    $defectCheckStmt = $conn->prepare($defectCheckSql);
+    $defectCheckStmt->bind_param("i", $item_id);
+    $defectCheckStmt->execute();
+    $defectCheckResult = $defectCheckStmt->get_result()->fetch_assoc();
+    $defectCheckStmt->close();
+    $hasUnresolvedDefects = (int)$defectCheckResult['unresolved_count'] > 0;
+    
+    // Check if current status allows marking as In Warehouse
+    $canMarkInWarehouse = in_array($currentStatus, ['processing', 'customs_clearance']) && !$hasUnresolvedDefects;
+    ?>
+    
+   <?php if ($canMarkInWarehouse): ?>
+    <?php
+    // Check if item has UNRESOLVED defect reports only
+    $unresolvedDefectsSql = "SELECT COUNT(*) as unresolved_count FROM defect_reports 
+                             WHERE order_item_id = ? AND status != 'resolved'";
+    $unresolvedDefectsStmt = $conn->prepare($unresolvedDefectsSql);
+    $unresolvedDefectsStmt->bind_param("i", $item_id);
+    $unresolvedDefectsStmt->execute();
+    $unresolvedDefectsResult = $unresolvedDefectsStmt->get_result()->fetch_assoc();
+    $unresolvedDefectsStmt->close();
+    $hasUnresolvedDefectsForButton = (int)$unresolvedDefectsResult['unresolved_count'] > 0;
+    ?>
+    
+    <?php if (!$hasUnresolvedDefectsForButton): ?>
+        <!-- Only show buttons if no unresolved defects -->
+        <div class="flex flex-col gap-2">
+            <button onclick="updateTrackingStatus('In Warehouse')"
+                class="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
+                <i class="fas fa-warehouse"></i>
+                <span>Mark as In Warehouse</span>
+            </button>
+            
+            <button onclick="openDefectReportModal()"
+                class="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto text-sm sm:text-base">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Report Defect</span>
+            </button>
+        </div>
+    <?php endif; ?>
+    <?php elseif ($hasUnresolvedDefects): ?>
+        <div class="flex flex-col gap-2">
+            <div class="bg-red-100 border-2 border-red-300 text-red-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 w-full sm:w-auto">
+                <i class="fas fa-exclamation-circle"></i>
+                <span class="font-medium text-sm sm:text-base">Defect Reported - Cannot Mark as Received</span>
+            </div>
+            <button onclick="viewItemDefects(<?php echo $item_id; ?>)"
+                class="bg-orange-500 hover:bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto text-sm sm:text-base">
+                <i class="fas fa-eye"></i>
+                <span>View Defect Details</span>
+            </button>
+        </div>
+    <?php else: ?>
+        <div class="bg-yellow-100 border-2 border-yellow-300 text-yellow-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 w-full sm:w-auto">
+            <i class="fas fa-info-circle"></i>
+            <span class="font-medium text-sm sm:text-base">Item not ready for warehouse receipt</span>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
 
                     <!-- Warehouse Location -->
                     <?php if (!empty($itemInfo['warehouse_location'])): ?>
@@ -1149,39 +1198,42 @@ if ($itemInfo && $itemInfo['order_id']) {
         }
 
         function displayDefectWarning(defects) {
-            const trackingSection = document.querySelector('.bg-gradient-to-r.from-green-50, .bg-gradient-to-r.from-indigo-50');
-            if (trackingSection && defects.length > 0) {
-                const warningHTML = `
-                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
-                        <div class="flex items-start">
-                            <div class="bg-red-500 p-2 sm:p-3 rounded-lg mr-3 sm:mr-4 flex-shrink-0">
-                                <i class="fas fa-exclamation-triangle text-white text-lg sm:text-2xl"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs sm:text-sm text-red-700 font-medium mb-1 sm:mb-2">
-                                    DEFECT REPORTED
+    // Filter out resolved defects - only show unresolved ones
+    const unresolvedDefects = defects.filter(d => d.status !== 'resolved');
+    
+    const trackingSection = document.querySelector('.bg-gradient-to-r.from-green-50, .bg-gradient-to-r.from-indigo-50');
+    if (trackingSection && unresolvedDefects.length > 0) {
+        const warningHTML = `
+            <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                <div class="flex items-start">
+                    <div class="bg-red-500 p-2 sm:p-3 rounded-lg mr-3 sm:mr-4 flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-white text-lg sm:text-2xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs sm:text-sm text-red-700 font-medium mb-1 sm:mb-2">
+                            DEFECT REPORTED
+                        </div>
+                        <div class="text-lg sm:text-xl font-bold text-red-900 mb-2">
+                            ${unresolvedDefects.length} Unresolved Defect Report${unresolvedDefects.length > 1 ? 's' : ''}
+                        </div>
+                        <div class="space-y-2">
+                            ${unresolvedDefects.map(d => `
+                                <div class="bg-white rounded p-2 text-sm">
+                                    <div class="font-semibold text-red-800">${d.defect_type}</div>
+                                    <div class="text-gray-600">${d.defect_description}</div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        Reported by ${d.reporter_name} on ${new Date(d.reported_at).toLocaleDateString()}
+                                    </div>
                                 </div>
-                                <div class="text-lg sm:text-xl font-bold text-red-900 mb-2">
-                                    ${defects.length} Defect Report${defects.length > 1 ? 's' : ''} on Record
-                                </div>
-                                <div class="space-y-2">
-                                    ${defects.map(d => `
-                                        <div class="bg-white rounded p-2 text-sm">
-                                            <div class="font-semibold text-red-800">${d.defect_type}</div>
-                                            <div class="text-gray-600">${d.defect_description}</div>
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                Reported by ${d.reporter_name} on ${new Date(d.reported_at).toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
+                            `).join('')}
                         </div>
                     </div>
-                `;
-                trackingSection.insertAdjacentHTML('beforebegin', warningHTML);
-            }
-        }
+                </div>
+            </div>
+        `;
+        trackingSection.insertAdjacentHTML('beforebegin', warningHTML);
+    }
+}
 
         // Load defects on page load
         document.addEventListener('DOMContentLoaded', loadDefectReports);

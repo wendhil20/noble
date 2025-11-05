@@ -63,7 +63,7 @@ try {
         $cleanup_stmt->close();
     }
 
-    $stmt = $conn->prepare("SELECT id, email, password, lvl, status, last_login, failed_attempts, locked_until, is_online, remember_token, remember_expires FROM nobleaccount WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, email, password, lvl, subrole, status, last_login, failed_attempts, locked_until, is_online, remember_token, remember_expires FROM nobleaccount WHERE email = ? LIMIT 1");
 
     if (!$stmt) {
         throw new Exception("Database error.");
@@ -216,6 +216,7 @@ try {
     // ✅ Set comprehensive session data
     $_SESSION['noble_user'] = $user['email'];
     $_SESSION['noble_lvl'] = $user['lvl'];
+    $_SESSION['noble_subrole'] = $user['subrole'] ?? null;
     $_SESSION['noble_id'] = $user['id'];
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['login_time'] = time();
@@ -234,7 +235,10 @@ try {
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/adminshop",
         'logistic' => "../admin/logistic_management/main_dashboard",
-        'warehouse' => "../admin/warehouse_management/order_list",
+        'warehouse' => match (strtolower($user['subrole'] ?? '')) {
+        'warehouse_receiver' => "../admin/warehouse_management/qr_scanner",
+        default => "../admin/warehouse_management/warehouse_head_dashboard"
+    },
         'hr' => "../admin/hr/account",
         default => "../admin/client/dashboard"
     };

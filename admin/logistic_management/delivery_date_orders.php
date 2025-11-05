@@ -37,6 +37,7 @@ $ordersSql = "SELECT
     ds.delivery_type,
     ds.delivery_status,
     ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
@@ -348,11 +349,16 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end gap-2">
                                             <?php if ($canBook): ?>
-                                                <a href="delivery_booking.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>" 
-                                                   onclick="event.stopPropagation()"
-                                                   class="text-blue-600 hover:text-blue-800" title="Book Delivery">
-                                                    <i class="fas fa-calendar-check text-lg"></i>
-                                                </a>
+    <?php 
+    $bookingUrl = $order['item_type'] === 'replacement' 
+        ? "replacement_booking.php?schedule_id=" . $order['delivery_id'] . "&replacement_id=" . $order['replacement_id']
+        : "delivery_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
+    ?>
+    <a href="<?php echo $bookingUrl; ?>" 
+       onclick="event.stopPropagation()"
+       class="text-blue-600 hover:text-blue-800" title="Book <?php echo $order['item_type'] === 'replacement' ? 'Replacement' : 'Delivery'; ?>">
+        <i class="fas fa-calendar-check text-lg"></i>
+    </a>
                                             <?php elseif ($hasBooking && !$isCompleted): ?>
                                                 <a href="delivery_tracking.php?booking_id=<?php echo $order['booking_id']; ?>" 
                                                    onclick="event.stopPropagation()"

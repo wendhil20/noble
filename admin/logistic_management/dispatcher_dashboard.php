@@ -27,12 +27,27 @@ $sql = "SELECT
     db.*,
     ds.delivery_date,
     ds.delivery_time,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.address,
     o.final_total,
     tv.courier_name,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id) as total_items,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded') as loaded_items
+    -- If replacement, count only 1 item, otherwise count all order items
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN 1
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
+    END as total_items,
+    -- If replacement, check only the replacement item's status, otherwise check all items
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN 
+            (SELECT CASE WHEN oi.tracking_status = 'item_is_loaded' THEN 1 ELSE 0 END
+             FROM order_items oi
+             INNER JOIN replacement_requests rr ON oi.id = rr.order_item_id
+             WHERE rr.id = ds.replacement_id
+             LIMIT 1)
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
+    END as loaded_items
 FROM delivery_bookings db
 INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
 INNER JOIN orders o ON db.order_id = o.id
@@ -170,9 +185,14 @@ foreach ($bookings as $booking) {
                                             <?php endif; ?>
                                         </div>
                                         
-                                        <h3 class="text-lg font-bold text-gray-900 mb-1">
-                                            Order #<?php echo $booking['order_id']; ?> - Booking #<?php echo $booking['id']; ?>
-                                        </h3>
+                                        <h3 class="text-lg font-bold text-gray-900 mb-1 flex items-center flex-wrap gap-2">
+    <span>Order #<?php echo $booking['order_id']; ?> - Booking #<?php echo $booking['id']; ?></span>
+    <?php if ($booking['item_type'] === 'replacement'): ?>
+        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">
+            <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
+        </span>
+    <?php endif; ?>
+</h3>
                                         
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
                                             <div>

@@ -12,7 +12,7 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
     $remember_email = $_COOKIE['noble_remember_email'];
     
     // Validate remember token
-    $stmt = $conn->prepare("SELECT id, email, lvl, status, remember_token, remember_expires FROM nobleaccount WHERE email = ? AND remember_token = ? AND remember_expires > NOW() LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, email, lvl, subrole, status, remember_token, remember_expires FROM nobleaccount WHERE email = ? AND remember_token = ? AND remember_expires > NOW() LIMIT 1");
     $stmt->bind_param("ss", $remember_email, $remember_token);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -33,6 +33,7 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
             $_SESSION['noble_user'] = $user['email'];
             $_SESSION['noble_lvl'] = $user['lvl'];
             $_SESSION['noble_id'] = $user['id'];
+            $_SESSION['noble_subrole'] = $user['subrole'] ?? null;
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['login_time'] = time();
             $_SESSION['last_activity'] = time();
@@ -50,7 +51,10 @@ if (!isset($_SESSION['noble_user']) && isset($_COOKIE['noble_remember_token']) &
                 'supplier' => "admin/suppliermain/suppliercompany",
                 'productspecialist' => "admin/shop/adminshop",
                 'logistic' => "admin/logistic_management/logistics_dashboard",
-                'warehouse' => "admin/warehouse_management/order_list",
+                'warehouse' => match (strtolower($user['subrole'] ?? '')) {
+        'warehouse_receiver' => "admin/warehouse_management/order_list",
+        default => "admin/warehouse_management/warehouse_head_dashboard"
+    },
                 'hr' => "admin/hr/account",
                 default => "admin/client/dashboard"
             };

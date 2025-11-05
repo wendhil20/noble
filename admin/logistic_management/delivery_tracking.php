@@ -32,6 +32,8 @@ $sql = "SELECT
     ds.delivery_time,
     ds.delivery_notes,
     ds.delivery_type,
+    ds.item_type,
+    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
@@ -42,9 +44,29 @@ $sql = "SELECT
     tv.courier_name,
     dispatcher.fullname as dispatcher_name,
     dispatcher.email as dispatcher_email,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id) as total_items,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'ready_for_pickup') as ready_items,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded') as loaded_items
+    -- If replacement, count only 1 item, otherwise count all order items
+CASE 
+    WHEN ds.item_type = 'replacement' THEN 1
+    ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
+END as total_items,
+-- For ready items count
+CASE 
+    WHEN ds.item_type = 'replacement' THEN 
+        (SELECT CASE WHEN rr.status = 'ready_for_pickup' THEN 1 ELSE 0 END
+         FROM replacement_requests rr
+         WHERE rr.id = ds.replacement_id
+         LIMIT 1)
+    ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'ready_for_pickup')
+END as ready_items,
+-- For loaded items count
+CASE 
+    WHEN ds.item_type = 'replacement' THEN 
+        (SELECT CASE WHEN rr.status IN ('item_is_loaded', 'out_for_delivery') THEN 1 ELSE 0 END
+         FROM replacement_requests rr
+         WHERE rr.id = ds.replacement_id
+         LIMIT 1)
+    ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
+END as loaded_items
 FROM delivery_bookings db
 INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
 INNER JOIN orders o ON db.order_id = o.id
@@ -63,10 +85,54 @@ if (!$booking) {
     exit();
 }
 
+// Check if this is a replacement booking
+$isReplacement = ($booking['item_type'] === 'replacement' && $booking['replacement_id']);
+
+// If replacement, get replacement details
+$replacementDetails = null;
+if ($isReplacement) {
+    $replSql = "SELECT 
+        rr.*,
+        oi.product_name,
+        oi.variant_color,
+        oi.size,
+        oi.price
+    FROM replacement_requests rr
+    INNER JOIN order_items oi ON rr.order_item_id = oi.id
+    WHERE rr.id = ?";
+    
+    $replStmt = $conn->prepare($replSql);
+    $replStmt->bind_param("i", $booking['replacement_id']);
+    $replStmt->execute();
+    $replacementDetails = $replStmt->get_result()->fetch_assoc();
+    $replStmt->close();
+}
+
 // Get order items with their status
-$itemsSql = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
-$itemsStmt = $conn->prepare($itemsSql);
-$itemsStmt->bind_param("i", $booking['order_id']);
+if ($isReplacement) {
+    // For replacements, get item details with replacement status
+    $itemsSql = "SELECT 
+        oi.id,
+        oi.product_name,
+        oi.variant_color,
+        oi.size,
+        oi.price,
+        oi.warehouse_location,
+        rr.replacement_quantity as quantity,
+        rr.reason as replacement_reason,
+        rr.details as replacement_details,
+        rr.status as replacement_status
+    FROM order_items oi
+    INNER JOIN replacement_requests rr ON oi.id = rr.order_item_id
+    WHERE rr.id = ?";
+    $itemsStmt = $conn->prepare($itemsSql);
+    $itemsStmt->bind_param("i", $booking['replacement_id']);
+} else {
+    // For regular orders, show all items
+    $itemsSql = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
+    $itemsStmt = $conn->prepare($itemsSql);
+    $itemsStmt->bind_param("i", $booking['order_id']);
+}
 $itemsStmt->execute();
 $items = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $itemsStmt->close();
@@ -150,38 +216,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 imagedestroy($image);
                 
                 // Update booking with proof
-                $updateProof = $conn->prepare("
-                    UPDATE delivery_bookings 
-                    SET delivery_proof_image = ?,
-                        booking_status = CASE 
-                            WHEN booking_type = 'pickup' THEN 'picked_up'
-                            ELSE 'delivered'
-                        END,
-                        actual_delivery_time = CURRENT_TIMESTAMP
-                    WHERE id = ?
-                ");
-                $updateProof->bind_param("si", $webp_filename, $booking_id);
-                
-                if ($updateProof->execute()) {
-                    // Update order status
-                    $final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
-                    $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-                    $updateOrder->bind_param("si", $final_status, $booking['order_id']);
-                    $updateOrder->execute();
-                    $updateOrder->close();
-                    
-                    // Update all items to final status
-                    $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
-                    $updateItems = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE order_id = ?");
-                    $updateItems->bind_param("si", $item_status, $booking['order_id']);
-                    $updateItems->execute();
-                    $updateItems->close();
-                    
-                    $_SESSION['success_message'] = "Delivery proof uploaded successfully!";
-                } else {
-                    $_SESSION['error_message'] = "Failed to update booking with proof";
-                }
-                $updateProof->close();
+$updateProof = $conn->prepare("
+    UPDATE delivery_bookings 
+    SET delivery_proof_image = ?,
+        booking_status = CASE 
+            WHEN booking_type = 'pickup' THEN 'picked_up'
+            ELSE 'delivered'
+        END,
+        actual_delivery_time = CURRENT_TIMESTAMP
+    WHERE id = ?
+");
+$updateProof->bind_param("si", $webp_filename, $booking_id);
+
+if ($updateProof->execute()) {
+    // Check if this is a replacement booking
+    if ($isReplacement && $booking['replacement_id']) {
+        // For replacements, update replacement_requests status
+        $replacement_final_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+        $updateReplacement = $conn->prepare("
+            UPDATE replacement_requests 
+            SET status = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ");
+        $updateReplacement->bind_param("si", $replacement_final_status, $booking['replacement_id']);
+        $updateReplacement->execute();
+        $updateReplacement->close();
+        
+        // ALSO update the order status for replacements
+        $order_final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
+        $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        $updateOrder->bind_param("si", $order_final_status, $booking['order_id']);
+        $updateOrder->execute();
+        $updateOrder->close();
+        
+        // Update the replacement item's tracking status
+        $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+        $updateReplacementItem = $conn->prepare("
+            UPDATE order_items 
+            SET tracking_status = ? 
+            WHERE id = (SELECT order_item_id FROM replacement_requests WHERE id = ?)
+        ");
+        $updateReplacementItem->bind_param("si", $item_status, $booking['replacement_id']);
+        $updateReplacementItem->execute();
+        $updateReplacementItem->close();
+        
+        $_SESSION['success_message'] = "Replacement " . ($booking['booking_type'] === 'pickup' ? 'pickup' : 'delivery') . " completed successfully!";
+    } else {
+        // For regular orders, update order status and all items
+        $final_status = ($booking['booking_type'] === 'pickup') ? 'Picked Up' : 'Delivered';
+        $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        $updateOrder->bind_param("si", $final_status, $booking['order_id']);
+        $updateOrder->execute();
+        $updateOrder->close();
+        
+        // Update all items to final status
+        $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+        $updateItems = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE order_id = ?");
+        $updateItems->bind_param("si", $item_status, $booking['order_id']);
+        $updateItems->execute();
+        $updateItems->close();
+        
+        $_SESSION['success_message'] = "Delivery proof uploaded successfully!";
+    }
+} else {
+    $_SESSION['error_message'] = "Failed to update booking with proof";
+}
+$updateProof->close();
             } else {
                 imagedestroy($image);
                 $_SESSION['error_message'] = "Failed to convert image to WebP";
@@ -232,10 +333,22 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
             </a>
             
             <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                <i class="fas fa-tasks text-purple-600 mr-3"></i>
-                Manage <?php echo ucfirst($booking['booking_type']); ?>
-            </h1>
-            <p class="text-gray-600 mt-2">Order #<?php echo $booking['order_id']; ?> - Booking #<?php echo $booking_id; ?></p>
+    <?php if ($isReplacement): ?>
+        <i class="fas fa-sync-alt text-orange-600 mr-3"></i>
+        Manage Replacement <?php echo ucfirst($booking['booking_type']); ?>
+    <?php else: ?>
+        <i class="fas fa-tasks text-purple-600 mr-3"></i>
+        Manage <?php echo ucfirst($booking['booking_type']); ?>
+    <?php endif; ?>
+</h1>
+<p class="text-gray-600 mt-2">
+    Order #<?php echo $booking['order_id']; ?> - Booking #<?php echo $booking_id; ?>
+    <?php if ($isReplacement): ?>
+        <span class="ml-2 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">
+            <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
+        </span>
+    <?php endif; ?>
+</p>
         </div>
 
         <?php if (isset($_SESSION['success_message'])): ?>
@@ -264,9 +377,9 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                 <!-- Booking Info Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-                        Booking Information
-                    </h3>
+    <i class="fas fa-info-circle <?php echo $isReplacement ? 'text-orange-600' : 'text-blue-600'; ?> mr-2"></i>
+    <?php echo $isReplacement ? 'Replacement' : 'Booking'; ?> Information
+</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="bg-blue-50 rounded-lg p-4">
@@ -314,6 +427,53 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                         </div>
                         <?php endif; ?>
                     </div>
+
+                    <?php if ($isReplacement && $replacementDetails): ?>
+<!-- Replacement Details -->
+<div class="mt-6 pt-6 border-t">
+    <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-sync-alt text-orange-600 mr-2"></i>
+        Replacement Details
+    </h4>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-orange-50 rounded-lg p-4">
+            <span class="text-sm text-orange-700">Replacement Request ID</span>
+            <p class="font-bold text-lg text-orange-900">#<?php echo $booking['replacement_id']; ?></p>
+        </div>
+        
+        <div class="bg-orange-50 rounded-lg p-4">
+            <span class="text-sm text-orange-700">Reason</span>
+            <p class="font-semibold text-orange-900 capitalize">
+                <?php echo str_replace('_', ' ', $replacementDetails['reason']); ?>
+            </p>
+        </div>
+        
+        <?php if ($replacementDetails['details']): ?>
+        <div class="bg-orange-50 rounded-lg p-4 md:col-span-2">
+            <span class="text-sm text-orange-700">Details</span>
+            <p class="text-orange-900 mt-1"><?php echo nl2br(htmlspecialchars($replacementDetails['details'])); ?></p>
+        </div>
+        <?php endif; ?>
+        
+        <div class="bg-orange-50 rounded-lg p-4">
+            <span class="text-sm text-orange-700">Product</span>
+            <p class="font-semibold text-orange-900"><?php echo htmlspecialchars($replacementDetails['product_name']); ?></p>
+            <?php if ($replacementDetails['variant_color'] || $replacementDetails['size']): ?>
+            <p class="text-xs text-orange-700 mt-1">
+                <?php echo $replacementDetails['variant_color'] ? htmlspecialchars($replacementDetails['variant_color']) : ''; ?>
+                <?php echo $replacementDetails['size'] ? ' - ' . htmlspecialchars($replacementDetails['size']) : ''; ?>
+            </p>
+            <?php endif; ?>
+        </div>
+        
+        <div class="bg-orange-50 rounded-lg p-4">
+            <span class="text-sm text-orange-700">Replacement Quantity</span>
+            <p class="font-bold text-lg text-orange-900"><?php echo $replacementDetails['replacement_quantity']; ?> pcs</p>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
                     <!-- Dispatcher Assignment Section -->
                     <div class="mt-6 border-t pt-6">
@@ -414,81 +574,192 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                     <?php endif; ?>
                     
                     <!-- Show Delivery Proof -->
-                    <?php if ($booking['delivery_proof_image']): ?>
-                    <div class="mt-6 border-t pt-6">
-                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
-    <i class="fas fa-check-circle text-green-600 mr-2"></i>
-    <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> Proof
-</h4>
-                        <img src="../../uploads/delivery_proofs/<?php echo htmlspecialchars($booking['delivery_proof_image']); ?>" 
-                             alt="Delivery Proof"
-                             class="w-full rounded-lg shadow-lg">
-                    </div>
-                    <?php endif; ?>
+<?php if ($booking['delivery_proof_image']): ?>
+<div class="mt-6 border-t pt-6">
+    <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-check-circle text-green-600 mr-2"></i>
+        <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> Proof
+    </h4>
+    <div class="flex justify-center">
+        <img src="../../uploads/delivery_proofs/<?php echo htmlspecialchars($booking['delivery_proof_image']); ?>" 
+             alt="Delivery Proof"
+             class="max-w-md w-full rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+             onclick="openImageModal(this.src)">
+    </div>
+    <p class="text-xs text-gray-500 text-center mt-2">Click image to view full size</p>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+    <div class="relative max-w-4xl max-h-full">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white bg-red-500 hover:bg-red-600 rounded-full w-10 h-10 flex items-center justify-center">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="modalImage" src="" alt="Full Size" class="max-w-full max-h-screen rounded-lg">
+    </div>
+</div>
+
+<script>
+function openImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('imageModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal on ESC key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageModal();
+    }
+});
+</script>
+
+<?php endif; ?>
                 </div>
                 
                 <!-- Items Management -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                            <i class="fas fa-boxes text-orange-600 mr-2"></i>
-                            Order Items
-                        </h3>
+    <i class="fas fa-boxes <?php echo $isReplacement ? 'text-orange-600' : 'text-orange-600'; ?> mr-2"></i>
+    <?php echo $isReplacement ? 'Replacement Item' : 'Order Items'; ?>
+</h3>
                     </div>
                     
                     <!-- Progress Bar -->
-                    <div class="mb-6">
-                        <div class="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Loading Progress</span>
-                            <span class="font-semibold"><?php echo $booking['loaded_items']; ?> / <?php echo $booking['total_items']; ?> items loaded</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-4">
-                            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all" 
-                                 style="width: <?php echo $booking['total_items'] > 0 ? ($booking['loaded_items'] / $booking['total_items']) * 100 : 0; ?>%">
-                            </div>
-                        </div>
-                    </div>
+<?php if (!$isReplacement): ?>
+<div class="mb-6">
+    <div class="flex justify-between text-sm text-gray-600 mb-2">
+        <span>Loading Progress</span>
+        <span class="font-semibold"><?php echo $booking['loaded_items']; ?> / <?php echo $booking['total_items']; ?> items loaded</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-4">
+        <div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all" 
+             style="width: <?php echo $booking['total_items'] > 0 ? ($booking['loaded_items'] / $booking['total_items']) * 100 : 0; ?>%">
+        </div>
+    </div>
+</div>
+<?php else: ?>
+<!-- Replacement Status -->
+<?php if (count($items) > 0): ?>
+<div class="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="font-semibold text-orange-900">Replacement Status</p>
+            <p class="text-sm text-orange-700">Request #<?php echo $booking['replacement_id']; ?></p>
+        </div>
+        <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-lg font-semibold">
+            <?php echo ucfirst(str_replace('_', ' ', $items[0]['replacement_status'])); ?>
+        </span>
+    </div>
+</div>
+<?php endif; ?>
+<?php endif; ?>
                     
                     <!-- Items List -->
-                    <div class="space-y-3">
-                        <?php foreach ($items as $item): ?>
-                            <?php 
-                            $isLoaded = $item['tracking_status'] === 'item_is_loaded';
-                            $isReady = $item['tracking_status'] === 'ready_for_pickup';
-                            $isFinal = in_array($item['tracking_status'], ['delivered', 'picked_up']);
-                            ?>
-                            <div class="item-card flex items-center justify-between p-4 rounded-lg border-2 <?php 
-                                echo $isFinal ? 'bg-green-50 border-green-300' : 
-                                     ($isLoaded ? 'bg-blue-50 border-blue-300' : 'bg-yellow-50 border-yellow-300'); 
-                            ?>">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900"><?php echo htmlspecialchars($item['product_name']); ?></h4>
-                                    <div class="text-sm text-gray-600 mt-1">
-                                        <?php if ($item['variant_color']): ?>
-                                        <span class="mr-3">Color: <?php echo htmlspecialchars($item['variant_color']); ?></span>
-                                        <?php endif; ?>
-                                        <?php if ($item['size']): ?>
-                                        <span class="mr-3">Size: <?php echo htmlspecialchars($item['size']); ?></span>
-                                        <?php endif; ?>
-                                        <span class="font-medium">Qty: <?php echo $item['quantity']; ?></span>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-center gap-3">
-                                    <span class="<?php 
-                                        echo $isFinal ? 'bg-green-500' : 
-                                             ($isLoaded ? 'bg-blue-500' : 'bg-yellow-500'); 
-                                    ?> text-white px-4 py-2 rounded-lg font-semibold">
-                                        <i class="fas <?php 
-                                            echo $isFinal ? 'fa-check-circle' : 
-                                                 ($isLoaded ? 'fa-check' : 'fa-clock'); 
-                                        ?> mr-1"></i>
-                                        <?php echo ucfirst(str_replace('_', ' ', $item['tracking_status'])); ?>
-                                    </span>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
+<div class="space-y-3">
+    <?php if ($isReplacement && count($items) > 0): ?>
+    <!-- Replacement Item Display -->
+    <?php
+    $item = $items[0]; // Get the first (and only) item
+    $replStatus = strtolower($item['replacement_status']);
+    $isFinal = in_array($replStatus, ['delivered', 'picked_up']);
+    $isOutForDelivery = $replStatus === 'out_for_delivery';
+    $isLoaded = $replStatus === 'item_is_loaded';
+    ?>
+        <div class="item-card flex items-center justify-between p-4 rounded-lg border-2 <?php 
+    echo $isFinal ? 'bg-green-50 border-green-300' : 
+         ($isOutForDelivery ? 'bg-blue-50 border-blue-300' : 
+         ($isLoaded ? 'bg-orange-50 border-orange-300' : 'bg-yellow-50 border-yellow-300'));
+?>">
+    <div class="flex-1">
+        <h4 class="font-semibold text-gray-900"><?php echo htmlspecialchars($item['product_name']); ?></h4>
+        <div class="text-sm text-gray-600 mt-1">
+            <?php if ($item['variant_color']): ?>
+            <span class="mr-3">Color: <?php echo htmlspecialchars($item['variant_color']); ?></span>
+            <?php endif; ?>
+            <?php if ($item['size']): ?>
+            <span class="mr-3">Size: <?php echo htmlspecialchars($item['size']); ?></span>
+            <?php endif; ?>
+            <span class="font-medium">Qty: <?php echo $item['quantity']; ?></span>
+        </div>
+        <div class="mt-2 text-xs">
+            <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                <i class="fas fa-sync-alt mr-1"></i>
+                Replacement: <?php echo ucfirst(str_replace('_', ' ', $item['replacement_reason'])); ?>
+            </span>
+        </div>
+        <?php if (!empty($item['warehouse_location'])): ?>
+        <div class="text-xs mt-1 flex items-center">
+            <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+            <span class="font-semibold text-gray-700">Location: </span>
+            <span class="ml-1 text-gray-900 bg-yellow-100 px-2 py-0.5 rounded"><?php echo htmlspecialchars($item['warehouse_location']); ?></span>
+        </div>
+        <?php endif; ?>
+    </div>
+    
+    <div class="flex items-center gap-3">
+        <span class="<?php 
+            echo $isFinal ? 'bg-green-500' : 
+                 ($isOutForDelivery ? 'bg-blue-500' : 
+                 ($isLoaded ? 'bg-orange-500' : 'bg-yellow-500')); 
+        ?> text-white px-4 py-2 rounded-lg font-semibold">
+            <i class="fas <?php 
+                echo $isFinal ? 'fa-check-circle' : 
+                     ($isOutForDelivery ? 'fa-truck' : 
+                     ($isLoaded ? 'fa-check' : 'fa-clock')); 
+            ?> mr-1"></i>
+            <?php echo ucfirst(str_replace('_', ' ', $item['replacement_status'])); ?>
+        </span>
+    </div>
+    </div>
+        
+    <?php else: ?>
+        <!-- Regular Order Items Display -->
+        <?php foreach ($items as $item): ?>
+            <?php 
+            $isLoaded = $item['tracking_status'] === 'item_is_loaded';
+            $isReady = $item['tracking_status'] === 'ready_for_pickup';
+            $isFinal = in_array($item['tracking_status'], ['delivered', 'picked_up']);
+            ?>
+            <div class="item-card flex items-center justify-between p-4 rounded-lg border-2 <?php 
+                echo $isFinal ? 'bg-green-50 border-green-300' : 
+                     ($isLoaded ? 'bg-blue-50 border-blue-300' : 'bg-yellow-50 border-yellow-300'); 
+            ?>">
+                <div class="flex-1">
+                    <h4 class="font-semibold text-gray-900"><?php echo htmlspecialchars($item['product_name']); ?></h4>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <?php if ($item['variant_color']): ?>
+                        <span class="mr-3">Color: <?php echo htmlspecialchars($item['variant_color']); ?></span>
+                        <?php endif; ?>
+                        <?php if ($item['size']): ?>
+                        <span class="mr-3">Size: <?php echo htmlspecialchars($item['size']); ?></span>
+                        <?php endif; ?>
+                        <span class="font-medium">Qty: <?php echo $item['quantity']; ?></span>
                     </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <span class="<?php 
+                        echo $isFinal ? 'bg-green-500' : 
+                             ($isLoaded ? 'bg-blue-500' : 'bg-yellow-500'); 
+                    ?> text-white px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas <?php 
+                            echo $isFinal ? 'fa-check-circle' : 
+                                 ($isLoaded ? 'fa-check' : 'fa-clock'); 
+                        ?> mr-1"></i>
+                        <?php echo ucfirst(str_replace('_', ' ', $item['tracking_status'])); ?>
+                    </span>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</div>
                 </div>
             </div>
             
@@ -501,6 +772,16 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                         <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
                         Status Summary
                     </h3>
+
+                    <?php if ($isReplacement): ?>
+<div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+    <span class="text-sm text-gray-700">Type</span>
+    <span class="font-semibold text-orange-900 flex items-center">
+        <i class="fas fa-sync-alt mr-1"></i>
+        Replacement
+    </span>
+</div>
+<?php endif; ?>
                     
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">

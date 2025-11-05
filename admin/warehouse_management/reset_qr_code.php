@@ -22,7 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
+// Get raw input for debugging
+$rawInput = file_get_contents('php://input');
+error_log("Reset QR Raw Input: " . $rawInput);
+
+$input = json_decode($rawInput, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    error_log("JSON decode error: " . json_last_error_msg());
+    echo json_encode(['success' => false, 'error' => 'Invalid JSON: ' . json_last_error_msg()]);
+    exit();
+}
 
 if (!isset($input['item_id'])) {
     echo json_encode(['success' => false, 'error' => 'Missing item ID']);
@@ -30,26 +40,87 @@ if (!isset($input['item_id'])) {
 }
 
 $itemId = intval($input['item_id']);
+$itemType = isset($input['item_type']) ? trim($input['item_type']) : 'original';
+
+// Log incoming request
+error_log("Reset QR Request - Item ID: $itemId, Type: '$itemType'");
 
 try {
-    $stmt = $conn->prepare("UPDATE order_items SET qr_code = NULL, warehouse_location = NULL WHERE id = ?");
+    // Determine if this is a replacement based on input
+    $isReplacement = ($itemType === 'replacement');
+    
+    error_log("Is Replacement: " . ($isReplacement ? 'YES' : 'NO'));
+    
+    // Verify the item exists in the correct table
+    if ($isReplacement) {
+        $checkStmt = $conn->prepare("SELECT id, qr_code, warehouse_location FROM replacement_requests WHERE id = ?");
+        $tableName = "replacement_requests";
+    } else {
+        $checkStmt = $conn->prepare("SELECT id, qr_code, warehouse_location FROM order_items WHERE id = ?");
+        $tableName = "order_items";
+    }
+    
+    $checkStmt->bind_param("i", $itemId);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        $checkStmt->close();
+        $errorMsg = "Item ID $itemId not found in table: $tableName";
+        error_log($errorMsg);
+        throw new Exception($errorMsg);
+    }
+    
+    $itemData = $result->fetch_assoc();
+    $checkStmt->close();
+    
+    error_log("Item found in $tableName - Current QR: " . ($itemData['qr_code'] ?? 'NULL') . ", Location: " . ($itemData['warehouse_location'] ?? 'NULL'));
+    
+    // Update the appropriate table
+    if ($isReplacement) {
+        $stmt = $conn->prepare("UPDATE replacement_requests SET qr_code = NULL, warehouse_location = NULL WHERE id = ?");
+    } else {
+        $stmt = $conn->prepare("UPDATE order_items SET qr_code = NULL, warehouse_location = NULL WHERE id = ?");
+    }
+    
     $stmt->bind_param("i", $itemId);
     
     if ($stmt->execute()) {
+        $affectedRows = $stmt->affected_rows;
         $stmt->close();
+        
+        error_log("Reset successful in $tableName - Affected rows: $affectedRows");
+        
+        // Verify the update
+        if ($isReplacement) {
+            $verifyStmt = $conn->prepare("SELECT qr_code, warehouse_location FROM replacement_requests WHERE id = ?");
+        } else {
+            $verifyStmt = $conn->prepare("SELECT qr_code, warehouse_location FROM order_items WHERE id = ?");
+        }
+        $verifyStmt->bind_param("i", $itemId);
+        $verifyStmt->execute();
+        $verifyResult = $verifyStmt->get_result();
+        $verifiedData = $verifyResult->fetch_assoc();
+        $verifyStmt->close();
+        
+        error_log("After reset - QR: " . ($verifiedData['qr_code'] ?? 'NULL') . ", Location: " . ($verifiedData['warehouse_location'] ?? 'NULL'));
         
         // Log the action
         $user_info = is_array($_SESSION['noble_user']) ? 
             ($_SESSION['noble_user']['fullname'] ?? $_SESSION['noble_user']['name'] ?? 'Unknown') : 
             'Unknown';
-        error_log("QR Code reset - Item ID: $itemId, By: $user_info");
+        error_log("QR code reset - Item ID: $itemId (Type: $itemType), Table: $tableName, By: $user_info");
         
         echo json_encode([
             'success' => true,
-            'message' => 'QR code and location reset successfully'
+            'message' => 'QR code and location reset successfully',
+            'item_type' => $itemType,
+            'table' => $tableName,
+            'affected_rows' => $affectedRows,
+            'item_id' => $itemId
         ]);
     } else {
-        throw new Exception('Failed to execute update query');
+        throw new Exception('Failed to execute update query: ' . $stmt->error);
     }
     
 } catch (Exception $e) {

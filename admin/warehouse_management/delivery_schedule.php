@@ -5,7 +5,7 @@ session_start();
 
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
-require_role([ 'superadmin', 'sales', 'warehouse']);
+require_role(['superadmin', 'sales', 'warehouse']);
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
@@ -14,9 +14,10 @@ if (!isset($_SESSION['noble_user'])) {
 
 $order_id = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
 $schedule_all = isset($_GET['schedule_all']) && $_GET['schedule_all'] === 'true';
+$schedule_replacements = isset($_GET['schedule_replacements']) && $_GET['schedule_replacements'] === 'true';
 
 // Validate input parameters
-if ($order_id <= 0 || !$schedule_all) {
+if ($order_id <= 0 || (!$schedule_all && !$schedule_replacements)) {
     header("Location: order_list.php");
     exit();
 }
@@ -34,45 +35,70 @@ if (!$order) {
     exit();
 }
 
-// Get all items in warehouse for this order (including replacements)
-$itemsSql = "
-    SELECT 
-        oi.id,
-        CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
-        oi.quantity,
-        oi.price,
-        CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-        CAST(oi.tracking_status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
-        CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-        NULL as replacement_id,
-        CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
-        oi.lt_from,
-        oi.lt_to
-    FROM order_items oi
-    WHERE oi.order_id = ? AND oi.tracking_status = 'In Warehouse'
-    
-    UNION ALL
-    
-    SELECT 
-        oi.id,
-        CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
-        rr.replacement_quantity as quantity,
-        oi.price,
-        CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
-        CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
-        CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-        rr.id as replacement_id,
-        CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
-        oi.lt_from,
-        oi.lt_to
-    FROM replacement_requests rr
-    JOIN order_items oi ON rr.order_item_id = oi.id
-    WHERE rr.order_id = ? AND rr.status = 'In Warehouse'
-    
-    ORDER BY item_type, product_name
-";
-$itemsStmt = $conn->prepare($itemsSql);
-$itemsStmt->bind_param("ii", $order_id, $order_id);
+// Get items in warehouse based on scheduling mode
+if ($schedule_replacements) {
+    // Only get replacement items that are in warehouse
+    $itemsSql = "
+        SELECT 
+            oi.id,
+            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            rr.replacement_quantity as quantity,
+            oi.price,
+            CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+            CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
+            CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+            rr.id as replacement_id,
+            CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            oi.lt_from,
+            oi.lt_to
+        FROM replacement_requests rr
+        JOIN order_items oi ON rr.order_item_id = oi.id
+        WHERE rr.order_id = ? AND rr.status = 'In Warehouse'
+        ORDER BY product_name
+    ";
+    $itemsStmt = $conn->prepare($itemsSql);
+    $itemsStmt->bind_param("i", $order_id);
+} else {
+    // Get all items (original + replacements) in warehouse
+    $itemsSql = "
+        SELECT 
+            oi.id,
+            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            oi.quantity,
+            oi.price,
+            CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+            CAST(oi.tracking_status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
+            CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+            NULL as replacement_id,
+            CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            oi.lt_from,
+            oi.lt_to
+        FROM order_items oi
+        WHERE oi.order_id = ? AND oi.tracking_status = 'In Warehouse'
+        
+        UNION ALL
+        
+        SELECT 
+            oi.id,
+            CAST(oi.product_name AS CHAR) COLLATE utf8mb4_unicode_ci as product_name,
+            rr.replacement_quantity as quantity,
+            oi.price,
+            CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
+            CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
+            CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
+            rr.id as replacement_id,
+            CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
+            oi.lt_from,
+            oi.lt_to
+        FROM replacement_requests rr
+        JOIN order_items oi ON rr.order_item_id = oi.id
+        WHERE rr.order_id = ? AND rr.status = 'In Warehouse'
+        
+        ORDER BY item_type, product_name
+    ";
+    $itemsStmt = $conn->prepare($itemsSql);
+    $itemsStmt->bind_param("ii", $order_id, $order_id);
+}
 $itemsStmt->execute();
 $items = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $itemsStmt->close();
@@ -85,12 +111,12 @@ foreach ($items as $item) {
     if (!empty($item['lt_from']) && !empty($item['lt_to'])) {
         $currentLtFrom = new DateTime($item['lt_from']);
         $currentLtTo = new DateTime($item['lt_to']);
-        
+
         // Find the latest lt_from date
         if ($latestLtFrom === null || $currentLtFrom > $latestLtFrom) {
             $latestLtFrom = $currentLtFrom;
         }
-        
+
         // Find the latest lt_to date
         if ($latestLtTo === null || $currentLtTo > $latestLtTo) {
             $latestLtTo = $currentLtTo;
@@ -115,60 +141,78 @@ if (empty($items)) {
 // Calculate totals
 $totalItems = count($items);
 $totalQuantity = array_sum(array_column($items, 'quantity'));
-$hasReplacements = !empty(array_filter($items, function($item) { return $item['item_type'] === 'replacement'; }));
+$hasReplacements = !empty(array_filter($items, function ($item) {
+    return $item['item_type'] === 'replacement';
+}));
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery'])) {
     $delivery_date = $_POST['delivery_date'];
     $delivery_time = $_POST['delivery_time'];
     $delivery_notes = $_POST['delivery_notes'] ?? '';
-    
+
     try {
         $conn->begin_transaction();
-        
+
+        // Determine item_type based on scheduling mode
+        $item_type_for_schedule = $schedule_replacements ? 'replacement' : 'original';
+
         // Insert ONE delivery schedule record for the entire order
         $scheduleSql = "INSERT INTO delivery_schedules 
-                        (order_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) 
-                        VALUES (?, ?, ?, ?, 'original', ?, NOW())";
+                    (order_id, delivery_date, delivery_time, delivery_notes, item_type, created_by, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())";
         $scheduleStmt = $conn->prepare($scheduleSql);
         $created_by = $_SESSION['noble_user'];
-        $scheduleStmt->bind_param("issss", $order_id, $delivery_date, $delivery_time, $delivery_notes, $created_by);
+        $scheduleStmt->bind_param("isssss", $order_id, $delivery_date, $delivery_time, $delivery_notes, $item_type_for_schedule, $created_by);
         $scheduleStmt->execute();
         $scheduleStmt->close();
-        
-        // Update all items in warehouse to 'scheduled'
-// Update original items
-$updateOriginalSql = "UPDATE order_items 
-                     SET tracking_status = 'scheduled' 
-                     WHERE order_id = ? AND tracking_status = 'In Warehouse'";
-$updateOriginalStmt = $conn->prepare($updateOriginalSql);
-$updateOriginalStmt->bind_param("i", $order_id);
-$updateOriginalStmt->execute();
-$affectedOriginal = $updateOriginalStmt->affected_rows;
-$updateOriginalStmt->close();
 
-// Update replacement items
-$updateReplacementSql = "UPDATE replacement_requests 
-                        SET status = 'scheduled' 
-                        WHERE order_id = ? AND status = 'In Warehouse'";
-$updateReplacementStmt = $conn->prepare($updateReplacementSql);
-$updateReplacementStmt->bind_param("i", $order_id);
-$updateReplacementStmt->execute();
-$affectedReplacement = $updateReplacementStmt->affected_rows;
-$updateReplacementStmt->close();
+        // Update items based on scheduling mode
+        $affectedOriginal = 0;
+        $affectedReplacement = 0;
 
-$conn->commit();
+        if ($schedule_replacements) {
+            // Only update replacement items
+            $updateReplacementSql = "UPDATE replacement_requests 
+                            SET status = 'scheduled' 
+                            WHERE order_id = ? AND status = 'In Warehouse'";
+            $updateReplacementStmt = $conn->prepare($updateReplacementSql);
+            $updateReplacementStmt->bind_param("i", $order_id);
+            $updateReplacementStmt->execute();
+            $affectedReplacement = $updateReplacementStmt->affected_rows;
+            $updateReplacementStmt->close();
+        } else {
+            // Update both original and replacement items
+            $updateOriginalSql = "UPDATE order_items 
+                         SET tracking_status = 'scheduled' 
+                         WHERE order_id = ? AND tracking_status = 'In Warehouse'";
+            $updateOriginalStmt = $conn->prepare($updateOriginalSql);
+            $updateOriginalStmt->bind_param("i", $order_id);
+            $updateOriginalStmt->execute();
+            $affectedOriginal = $updateOriginalStmt->affected_rows;
+            $updateOriginalStmt->close();
 
-$totalUpdated = $affectedOriginal + $affectedReplacement;
-$success_message = "Order delivery scheduled successfully! {$totalUpdated} item(s) updated to 'Scheduled'.";
-        
+            $updateReplacementSql = "UPDATE replacement_requests 
+                            SET status = 'scheduled' 
+                            WHERE order_id = ? AND status = 'In Warehouse'";
+            $updateReplacementStmt = $conn->prepare($updateReplacementSql);
+            $updateReplacementStmt->bind_param("i", $order_id);
+            $updateReplacementStmt->execute();
+            $affectedReplacement = $updateReplacementStmt->affected_rows;
+            $updateReplacementStmt->close();
+        }
+
+        $conn->commit();
+
+        $totalUpdated = $affectedOriginal + $affectedReplacement;
+        $success_message = "Order delivery scheduled successfully! {$totalUpdated} item(s) updated to 'Scheduled'.";
+
         // Redirect after 2 seconds
         echo "<script>
             setTimeout(function() {
                 window.location.href = 'order_tracking.php?order_id=$order_id';
             }, 2000);
         </script>";
-        
     } catch (Exception $e) {
         $conn->rollback();
         $error_message = "Failed to schedule delivery: " . $e->getMessage();
@@ -231,6 +275,7 @@ foreach ($schedules as $schedule) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -243,9 +288,16 @@ foreach ($schedules as $schedule) {
                 extend: {
                     colors: {
                         primary: {
-                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-                            800: '#9a3412', 900: '#7c2d12',
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
                         }
                     }
                 }
@@ -256,33 +308,41 @@ foreach ($schedules as $schedule) {
         .item-card {
             transition: all 0.3s ease;
         }
+
         .item-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
+
         .date-section {
             border-left: 4px solid #3b82f6;
         }
+
         .calendar-day {
             transition: all 0.2s ease;
             cursor: pointer;
         }
+
         .calendar-day:hover {
             background-color: #e0f2fe;
             transform: scale(1.05);
         }
+
         .calendar-day.selected {
             background-color: #1976d2 !important;
             color: white;
         }
+
         .calendar-day.has-deliveries {
             background-color: #fff3e0;
             border: 2px solid #ff9800;
         }
+
         .calendar-day.busy {
             background-color: #ffebee;
             border: 2px solid #f44336;
         }
+
         .delivery-count {
             font-size: 0.7rem;
             background-color: rgba(255, 255, 255, 0.9);
@@ -297,10 +357,12 @@ foreach ($schedules as $schedule) {
             right: 2px;
             font-weight: bold;
         }
+
         .replacement-item {
             border-left: 4px solid #ef4444;
             background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
         }
+
         .replacement-badge {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
@@ -308,9 +370,10 @@ foreach ($schedules as $schedule) {
         }
     </style>
 </head>
+
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
-    
+
     <!-- Header -->
     <div class="bg-white shadow-lg border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -324,7 +387,7 @@ foreach ($schedules as $schedule) {
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">
-                            Schedule Order Delivery
+                            <?php echo $schedule_replacements ? 'Schedule Replacement Delivery' : 'Schedule Order Delivery'; ?>
                         </h1>
                         <p class="text-gray-600 mt-1">
                             Order #<?php echo $order_id; ?> - <?php echo htmlspecialchars($order['customer_name']); ?>
@@ -337,30 +400,30 @@ foreach ($schedules as $schedule) {
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-    <div class="bg-blue-100 px-4 py-2 rounded-lg">
-        <span class="text-blue-900 font-semibold">
-            <i class="fas fa-boxes mr-2"></i><?php echo $totalItems; ?> Items
-        </span>
-    </div>
-    <div class="bg-green-100 px-4 py-2 rounded-lg">
-        <span class="text-green-900 font-semibold">
-            <i class="fas fa-cube mr-2"></i><?php echo $totalQuantity; ?> Total Qty
-        </span>
-    </div>
-    <?php if ($expectedDeliveryMessage): ?>
-    <div class="bg-orange-100 px-4 py-2 rounded-lg">
-        <span class="text-orange-900 font-semibold text-sm">
-            <i class="fas fa-calendar-alt mr-2"></i><?php echo $expectedDeliveryMessage; ?>
-        </span>
-    </div>
-    <?php endif; ?>
-</div>
+                    <div class="bg-blue-100 px-4 py-2 rounded-lg">
+                        <span class="text-blue-900 font-semibold">
+                            <i class="fas fa-boxes mr-2"></i><?php echo $totalItems; ?> Items
+                        </span>
+                    </div>
+                    <div class="bg-green-100 px-4 py-2 rounded-lg">
+                        <span class="text-green-900 font-semibold">
+                            <i class="fas fa-cube mr-2"></i><?php echo $totalQuantity; ?> Total Qty
+                        </span>
+                    </div>
+                    <?php if ($expectedDeliveryMessage): ?>
+                        <div class="bg-orange-100 px-4 py-2 rounded-lg">
+                            <span class="text-orange-900 font-semibold text-sm">
+                                <i class="fas fa-calendar-alt mr-2"></i><?php echo $expectedDeliveryMessage; ?>
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+
         <!-- Messages -->
         <?php if (isset($success_message)): ?>
             <div class="mb-6 bg-green-50 border-l-4 border-green-400 rounded-lg p-4">
@@ -381,7 +444,7 @@ foreach ($schedules as $schedule) {
         <?php endif; ?>
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            
+
             <!-- Left Column: Item Details & Schedule Form -->
             <div class="xl:col-span-1">
                 <!-- Order Items Summary -->
@@ -390,7 +453,7 @@ foreach ($schedules as $schedule) {
                         <i class="fas fa-boxes text-green-600 mr-3"></i>
                         Order Items (<?php echo $totalItems; ?>)
                     </h3>
-                    
+
                     <div class="max-h-96 overflow-y-auto space-y-3">
                         <?php foreach ($items as $item): ?>
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 <?php echo $item['item_type'] === 'replacement' ? 'border-l-4 border-l-red-500' : ''; ?>">
@@ -406,7 +469,7 @@ foreach ($schedules as $schedule) {
                                         </p>
                                     <?php endif; ?>
                                 <?php endif; ?>
-                                
+
                                 <div class="font-medium text-gray-900 mb-1">
                                     <?php echo htmlspecialchars($item['product_name']); ?>
                                 </div>
@@ -417,40 +480,40 @@ foreach ($schedules as $schedule) {
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    
+
                     <div class="mt-4 pt-4 border-t border-gray-200">
-    <div class="space-y-2">
-        <div class="flex justify-between">
-            <span class="text-gray-600">Total Items:</span>
-            <span class="font-bold"><?php echo $totalItems; ?></span>
-        </div>
-        <div class="flex justify-between">
-            <span class="text-gray-600">Total Quantity:</span>
-            <span class="font-bold"><?php echo $totalQuantity; ?></span>
-        </div>
-        <div class="flex justify-between">
-            <span class="text-gray-600">Customer:</span>
-            <span class="font-medium"><?php echo htmlspecialchars($order['customer_name']); ?></span>
-        </div>
-        <?php if ($expectedDeliveryMessage): ?>
-        <div class="pt-2 border-t">
-            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <div class="flex items-start">
-                    <i class="fas fa-clock text-orange-600 mr-2 mt-1"></i>
-                    <div>
-                        <span class="text-orange-900 font-semibold text-sm block">Estimated Delivery</span>
-                        <span class="text-orange-800 text-sm"><?php echo str_replace('Expected delivery: ', '', $expectedDeliveryMessage); ?></span>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Items:</span>
+                                <span class="font-bold"><?php echo $totalItems; ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Quantity:</span>
+                                <span class="font-bold"><?php echo $totalQuantity; ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Customer:</span>
+                                <span class="font-medium"><?php echo htmlspecialchars($order['customer_name']); ?></span>
+                            </div>
+                            <?php if ($expectedDeliveryMessage): ?>
+                                <div class="pt-2 border-t">
+                                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-clock text-orange-600 mr-2 mt-1"></i>
+                                            <div>
+                                                <span class="text-orange-900 font-semibold text-sm block">Estimated Delivery</span>
+                                                <span class="text-orange-800 text-sm"><?php echo str_replace('Expected delivery: ', '', $expectedDeliveryMessage); ?></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <div class="pt-2 border-t">
+                                <span class="text-gray-600">Delivery Address:</span>
+                                <p class="font-medium mt-1"><?php echo htmlspecialchars($order['address']); ?></p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
-        <div class="pt-2 border-t">
-            <span class="text-gray-600">Delivery Address:</span>
-            <p class="font-medium mt-1"><?php echo htmlspecialchars($order['address']); ?></p>
-        </div>
-    </div>
-</div>
                 </div>
 
                 <!-- Schedule Form -->
@@ -459,26 +522,26 @@ foreach ($schedules as $schedule) {
                         <i class="fas fa-calendar-check text-green-600 mr-3"></i>
                         Schedule Order Delivery
                     </h3>
-                    
+
                     <form method="POST" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-calendar mr-2 text-gray-500"></i>
                                 Delivery Date
                             </label>
-                            <input type="date" name="delivery_date" id="delivery_date" required 
-       min="<?php echo date('Y-m-d'); ?>"
-       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 text-lg">
+                            <input type="date" name="delivery_date" id="delivery_date" required
+                                min="<?php echo date('Y-m-d'); ?>"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 text-lg">
                             <p class="text-sm text-gray-500 mt-1">Click on calendar days to select dates</p>
                         </div>
-                        
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-clock mr-2 text-gray-500"></i>
                                 Delivery Time
                             </label>
-                            <select name="delivery_time" required 
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 text-lg">
+                            <select name="delivery_time" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 text-lg">
                                 <option value="">Select time slot</option>
                                 <option value="08:00">8:00 AM - 9:00 AM</option>
                                 <option value="09:00">9:00 AM - 10:00 AM</option>
@@ -490,20 +553,20 @@ foreach ($schedules as $schedule) {
                                 <option value="16:00">4:00 PM - 5:00 PM</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-sticky-note mr-2 text-gray-500"></i>
                                 Delivery Notes (Optional)
                             </label>
-                            <textarea name="delivery_notes" rows="3" 
-          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500" 
-          placeholder="Special instructions, contact details, or delivery preferences...<?php echo $hasReplacements ? ' (Includes replacement items)' : ''; ?>"></textarea>
+                            <textarea name="delivery_notes" rows="3"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500 focus:border-<?php echo $hasReplacements ? 'red' : 'blue'; ?>-500"
+                                placeholder="Special instructions, contact details, or delivery preferences...<?php echo $hasReplacements ? ' (Includes replacement items)' : ''; ?>"></textarea>
                         </div>
-                        
+
                         <div class="pt-4">
-                            <button type="submit" name="schedule_delivery" 
-                                    class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] text-lg shadow-lg">
+                            <button type="submit" name="schedule_delivery"
+                                class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] text-lg shadow-lg">
                                 <i class="fas fa-calendar-check mr-3"></i>
                                 Schedule All <?php echo $totalItems; ?> Items for Delivery
                             </button>
@@ -519,7 +582,7 @@ foreach ($schedules as $schedule) {
                         <i class="fas fa-calendar text-purple-600 mr-3"></i>
                         Delivery Calendar
                     </h3>
-                    
+
                     <!-- Calendar Navigation -->
                     <div class="flex items-center justify-between mb-4">
                         <button type="button" id="prevMonth" class="p-2 hover:bg-gray-100 rounded-lg">
@@ -530,7 +593,7 @@ foreach ($schedules as $schedule) {
                             <i class="fas fa-chevron-right text-gray-600"></i>
                         </button>
                     </div>
-                    
+
                     <!-- Calendar Grid -->
                     <div class="grid grid-cols-7 gap-1 mb-2">
                         <div class="text-center text-sm font-medium text-gray-500 p-2">Sun</div>
@@ -541,9 +604,9 @@ foreach ($schedules as $schedule) {
                         <div class="text-center text-sm font-medium text-gray-500 p-2">Fri</div>
                         <div class="text-center text-sm font-medium text-gray-500 p-2">Sat</div>
                     </div>
-                    
+
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-                    
+
                     <!-- Legend -->
                     <div class="mt-4 space-y-2 text-sm">
                         <div class="flex items-center">
@@ -574,7 +637,7 @@ foreach ($schedules as $schedule) {
                             </span>
                         </h3>
                     </div>
-                    
+
                     <div id="scheduled-items-container" class="max-h-[700px] overflow-y-auto">
                         <!-- Items will be populated by JavaScript -->
                     </div>
@@ -589,61 +652,61 @@ foreach ($schedules as $schedule) {
         const schedules = <?php echo json_encode($schedules); ?>;
         const totalItems = <?php echo $totalItems; ?>;
         const hasReplacements = <?php echo $hasReplacements ? 'true' : 'false'; ?>;
-        
+
         let currentDate = new Date();
         let selectedDate = null;
-        
+
         function generateCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
             const startingDayOfWeek = firstDay.getDay();
-            
+
             const calendarGrid = document.getElementById('calendar-grid');
             calendarGrid.innerHTML = '';
-            
+
             // Add empty cells for days before the first day of the month
             for (let i = 0; i < startingDayOfWeek; i++) {
                 const emptyDay = document.createElement('div');
                 emptyDay.className = 'p-3';
                 calendarGrid.appendChild(emptyDay);
             }
-            
+
             // Add days of the month
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const dateString = year + '-' + 
-                    String(month + 1).padStart(2, '0') + '-' + 
+                const dateString = year + '-' +
+                    String(month + 1).padStart(2, '0') + '-' +
                     String(day).padStart(2, '0');
-                    
+
                 const dayElement = document.createElement('div');
-                
+
                 dayElement.className = 'calendar-day relative p-3 text-center rounded-lg border border-gray-200 bg-white';
                 dayElement.textContent = day;
                 dayElement.dataset.date = dateString;
-                
+
                 const currentDateOnly = new Date(year, month, day);
                 currentDateOnly.setHours(0, 0, 0, 0);
-                
+
                 if (currentDateOnly < today) {
                     dayElement.className += ' text-gray-400 cursor-not-allowed bg-gray-100';
                 } else {
                     const deliveryCount = deliveryCounts[dateString] || 0;
-                    
+
                     if (deliveryCount > 0) {
                         if (deliveryCount >= 5) {
                             dayElement.className += ' busy';
                         } else {
                             dayElement.className += ' has-deliveries';
                         }
-                        
+
                         const countBadge = document.createElement('div');
                         countBadge.className = 'delivery-count';
                         countBadge.textContent = deliveryCount;
-                        
+
                         if (deliveryCount >= 5) {
                             countBadge.style.backgroundColor = '#ffcdd2';
                             countBadge.style.color = '#c62828';
@@ -651,50 +714,50 @@ foreach ($schedules as $schedule) {
                             countBadge.style.backgroundColor = '#fff3e0';
                             countBadge.style.color = '#ef6c00';
                         }
-                        
+
                         dayElement.appendChild(countBadge);
                     }
-                    
+
                     dayElement.addEventListener('click', function() {
                         if (currentDateOnly >= today) {
                             selectDate(dateString, dayElement);
                         }
                     });
                 }
-                
+
                 calendarGrid.appendChild(dayElement);
             }
         }
-        
+
         function selectDate(dateString, element) {
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
-            
+
             element.classList.add('selected');
             selectedDate = dateString;
-            
+
             document.getElementById('delivery_date').value = dateString;
             updateScheduledItemsDisplay(dateString);
             checkTimeSlotAvailability();
         }
-        
+
         function updateScheduledItemsDisplay(selectedDate = null) {
             const scheduledItemsContainer = document.getElementById('scheduled-items-container');
             const itemsCountSpan = document.getElementById('items-count');
-            
+
             if (!selectedDate) {
                 showAllScheduledItems();
                 return;
             }
-            
+
             const selectedDateSchedules = schedules.filter(s => s.delivery_date === selectedDate);
-            
-            itemsCountSpan.textContent = selectedDate ? 
-                `${selectedDateSchedules.length} orders on ${formatDisplayDate(selectedDate)}` : 
+
+            itemsCountSpan.textContent = selectedDate ?
+                `${selectedDateSchedules.length} orders on ${formatDisplayDate(selectedDate)}` :
                 `${schedules.length} orders`;
-            
+
             if (selectedDateSchedules.length === 0) {
                 scheduledItemsContainer.innerHTML = `
                     <div class="p-8 text-center">
@@ -712,7 +775,7 @@ foreach ($schedules as $schedule) {
                 `;
                 return;
             }
-            
+
             const schedulesByDate = {};
             selectedDateSchedules.forEach(schedule => {
                 const date = schedule.delivery_date;
@@ -721,7 +784,7 @@ foreach ($schedules as $schedule) {
                 }
                 schedulesByDate[date].push(schedule);
             });
-            
+
             let html = '';
             for (const [date, daySchedules] of Object.entries(schedulesByDate)) {
                 html += `
@@ -745,29 +808,29 @@ foreach ($schedules as $schedule) {
                     </div>
                     <div class="p-4 space-y-3">
                 `;
-                
+
                 daySchedules.forEach(schedule => {
                     html += renderScheduleItem(schedule);
                 });
-                
+
                 html += '</div>';
             }
-            
+
             scheduledItemsContainer.innerHTML = html;
         }
-        
+
         function showAllScheduledItems() {
             const scheduledItemsContainer = document.getElementById('scheduled-items-container');
             const itemsCountSpan = document.getElementById('items-count');
-            
+
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
             selectedDate = null;
-            
+
             itemsCountSpan.textContent = `${schedules.length} orders`;
-            
+
             if (schedules.length === 0) {
                 scheduledItemsContainer.innerHTML = `
                     <div class="p-8 text-center">
@@ -780,7 +843,7 @@ foreach ($schedules as $schedule) {
                 `;
                 return;
             }
-            
+
             const schedulesByDate = {};
             schedules.forEach(schedule => {
                 const date = schedule.delivery_date;
@@ -789,7 +852,7 @@ foreach ($schedules as $schedule) {
                 }
                 schedulesByDate[date].push(schedule);
             });
-            
+
             let html = '';
             for (const [date, daySchedules] of Object.entries(schedulesByDate)) {
                 html += `
@@ -806,26 +869,26 @@ foreach ($schedules as $schedule) {
                     </div>
                     <div class="p-4 space-y-3">
                 `;
-                
+
                 daySchedules.forEach(schedule => {
                     html += renderScheduleItem(schedule);
                 });
-                
+
                 html += '</div>';
             }
-            
+
             scheduledItemsContainer.innerHTML = html;
         }
-        
+
         function renderScheduleItem(schedule) {
-    const originalCount = parseInt(schedule.original_count) || 0;
-    const replacementCount = parseInt(schedule.replacement_count) || 0;
-    const totalItems = originalCount + replacementCount;
-    const originalQty = parseInt(schedule.original_quantity) || 0;
-    const replacementQty = parseInt(schedule.replacement_quantity) || 0;
-    const totalQty = originalQty + replacementQty;
-    
-    return `
+            const originalCount = parseInt(schedule.original_count) || 0;
+            const replacementCount = parseInt(schedule.replacement_count) || 0;
+            const totalItems = originalCount + replacementCount;
+            const originalQty = parseInt(schedule.original_quantity) || 0;
+            const replacementQty = parseInt(schedule.replacement_quantity) || 0;
+            const totalQty = originalQty + replacementQty;
+
+            return `
         <div class="item-card bg-gray-50 border border-gray-200 rounded-lg p-4">
             <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
@@ -878,71 +941,71 @@ foreach ($schedules as $schedule) {
                 </div>
             `;
         }
-        
+
         function formatDisplayDate(dateString) {
             const date = new Date(dateString + 'T00:00:00');
-            return date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
         }
-        
+
         function formatTime(timeString) {
             const time = new Date('2000-01-01 ' + timeString);
-            return time.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
+            return time.toLocaleTimeString('en-US', {
+                hour: 'numeric',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             });
         }
-        
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
+
         function updateCalendarHeader() {
             const monthNames = [
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'
             ];
-            
-            document.getElementById('currentMonth').textContent = 
+
+            document.getElementById('currentMonth').textContent =
                 monthNames[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
         }
-        
+
         function initializeCalendar() {
             updateCalendarHeader();
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-            
+
             document.getElementById('prevMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() - 1);
                 updateCalendarHeader();
                 generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             });
-            
+
             document.getElementById('nextMonth').addEventListener('click', function() {
                 currentDate.setMonth(currentDate.getMonth() + 1);
                 updateCalendarHeader();
                 generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             });
         }
-        
+
         function checkTimeSlotAvailability() {
             const selectedDate = document.getElementById('delivery_date').value;
             const selectedTime = document.querySelector('select[name="delivery_time"]').value;
-            
+
             if (selectedDate && selectedTime) {
-                const conflicts = schedules.filter(s => 
+                const conflicts = schedules.filter(s =>
                     s.delivery_date === selectedDate && s.delivery_time === selectedTime
                 );
-                
+
                 const timeSelect = document.querySelector('select[name="delivery_time"]');
                 const selectedOption = timeSelect.querySelector(`option[value="${selectedTime}"]`);
-                
+
                 if (conflicts.length > 0) {
                     selectedOption.text = selectedOption.text.replace(' (Busy)', '') + ` (${conflicts.length} scheduled)`;
                     selectedOption.style.color = '#dc2626';
@@ -952,7 +1015,7 @@ foreach ($schedules as $schedule) {
                 }
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeCalendar();
             showAllScheduledItems();
@@ -960,20 +1023,21 @@ foreach ($schedules as $schedule) {
 
         document.getElementById('delivery_date').addEventListener('change', function() {
             const selectedDateValue = this.value;
-            
+
             const previousSelected = document.querySelector('.calendar-day.selected');
             if (previousSelected) {
                 previousSelected.classList.remove('selected');
             }
-            
+
             const calendarDay = document.querySelector(`[data-date="${selectedDateValue}"]`);
             if (calendarDay) {
                 calendarDay.classList.add('selected');
                 selectedDate = selectedDateValue;
             }
-            
+
             checkTimeSlotAvailability();
         });
     </script>
 </body>
+
 </html>

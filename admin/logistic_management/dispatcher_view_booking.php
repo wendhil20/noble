@@ -65,29 +65,65 @@
 
     // Get booking details - ensure it's assigned to this dispatcher
     $sql = "SELECT 
-        db.*,
-        ds.delivery_date,
-        ds.delivery_time,
-        ds.delivery_notes,
-        o.customer_name,
-        o.email,
-        o.mobile,
-        o.address,
-        o.final_total,
-        tv.courier_name,
-        tv.vehicle_type,
-        (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id) as total_items,
-        (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded') as loaded_items
-    FROM delivery_bookings db
-    INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
-    INNER JOIN orders o ON db.order_id = o.id
-    LEFT JOIN transportify_vehicle_list tv ON db.vehicle_id = tv.id
-    WHERE db.id = ? AND db.dispatcher_id = ?";
+    db.*,
+    ds.delivery_date,
+    ds.delivery_time,
+    ds.delivery_notes,
+    o.customer_name,
+    ds.item_type,
+    ds.replacement_id,
+    o.email,
+    o.mobile,
+    o.address,
+    o.final_total,
+    tv.courier_name,
+    tv.vehicle_type,
+    -- If replacement, count only 1 item, otherwise count all order items
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN 1
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
+    END as total_items,
+-- If replacement, check the replacement_requests status (item_is_loaded means loaded)
+CASE 
+    WHEN ds.item_type = 'replacement' THEN 
+        (SELECT CASE WHEN rr.status IN ('item_is_loaded', 'out_for_delivery') THEN 1 ELSE 0 END
+         FROM replacement_requests rr
+         WHERE rr.id = ds.replacement_id
+         LIMIT 1)
+    ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
+END as loaded_items
+FROM delivery_bookings db
+INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
+INNER JOIN orders o ON db.order_id = o.id
+LEFT JOIN transportify_vehicle_list tv ON db.vehicle_id = tv.id
+WHERE db.id = ? AND db.dispatcher_id = ?";
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ii", $booking_id, $dispatcher_id);
     $stmt->execute();
     $booking = $stmt->get_result()->fetch_assoc();
+    // Check if this is a replacement booking
+    $isReplacement = ($booking['item_type'] === 'replacement' && $booking['replacement_id']);
+
+    // If replacement, get replacement details
+    $replacementDetails = null;
+    if ($isReplacement) {
+        $replSql = "SELECT 
+        rr.*,
+        oi.product_name,
+        oi.variant_color,
+        oi.size,
+        oi.price
+    FROM replacement_requests rr
+    INNER JOIN order_items oi ON rr.order_item_id = oi.id
+    WHERE rr.id = ?";
+
+        $replStmt = $conn->prepare($replSql);
+        $replStmt->bind_param("i", $booking['replacement_id']);
+        $replStmt->execute();
+        $replacementDetails = $replStmt->get_result()->fetch_assoc();
+        $replStmt->close();
+    }
     $stmt->close();
 
     if (!$booking) {
@@ -97,9 +133,32 @@
     }
 
     // Get order items
-    $itemsSql = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
-    $itemsStmt = $conn->prepare($itemsSql);
-    $itemsStmt->bind_param("i", $booking['order_id']);
+    if ($isReplacement) {
+        // For replacements, get item details but DON'T rely on order_items tracking_status
+        $itemsSql = "SELECT 
+        oi.id,
+        oi.product_name,
+        oi.variant_color,
+        oi.size,
+        oi.price,
+        oi.warehouse_location,
+        oi.po_number,
+        oi.qr_code,
+        rr.replacement_quantity as quantity,
+        rr.reason as replacement_reason,
+        rr.details as replacement_details,
+        rr.status as replacement_status
+    FROM order_items oi
+    INNER JOIN replacement_requests rr ON oi.id = rr.order_item_id
+    WHERE rr.id = ?";
+        $itemsStmt = $conn->prepare($itemsSql);
+        $itemsStmt->bind_param("i", $booking['replacement_id']);
+    } else {
+        // For regular orders, show all items
+        $itemsSql = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
+        $itemsStmt = $conn->prepare($itemsSql);
+        $itemsStmt->bind_param("i", $booking['order_id']);
+    }
     $itemsStmt->execute();
     $items = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $itemsStmt->close();
@@ -110,24 +169,65 @@
         if ($_POST['action'] === 'toggle_item_loaded') {
             $item_id = intval($_POST['item_id']);
             $current_status = $_POST['current_status'];
+            $is_replacement = isset($_POST['is_replacement']) ? intval($_POST['is_replacement']) : 0;
+            $replacement_id = isset($_POST['replacement_id']) ? intval($_POST['replacement_id']) : 0;
 
-            $new_status = ($current_status === 'ready_for_pickup') ? 'item_is_loaded' : 'ready_for_pickup';
+            // If it's a replacement, ONLY update replacement_requests, NOT order_items
+            if ($is_replacement && $replacement_id) {
+                // Status flow: ready_for_pickup -> item_is_loaded -> ready_for_pickup
+                if ($current_status === 'ready_for_pickup') {
+                    $replacement_status = 'item_is_loaded';
+                    $message = "Replacement item is now loaded!";
+                } elseif ($current_status === 'item_is_loaded') {
+                    $replacement_status = 'ready_for_pickup';
+                    $message = "Replacement item marked as ready for pickup!";
+                } else {
+                    // If coming from other statuses, go to ready_for_pickup first
+                    $replacement_status = 'ready_for_pickup';
+                    $message = "Replacement item is ready for pickup!";
+                }
 
-            $updateItem = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE id = ?");
-            $updateItem->bind_param("si", $new_status, $item_id);
-
-            if ($updateItem->execute()) {
-                $_SESSION['success_message'] = "Item status updated!";
+                // Update ONLY replacement_requests by replacement_id, NOT order_items
+                $updateReplacement = $conn->prepare("UPDATE replacement_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $updateReplacement->bind_param("si", $replacement_status, $replacement_id);
+                if ($updateReplacement->execute()) {
+                    $_SESSION['success_message'] = $message;
+                }
+                $updateReplacement->close();
+            } else {
+                // For regular items, update order_items tracking_status
+                $new_status = ($current_status === 'ready_for_pickup') ? 'item_is_loaded' : 'ready_for_pickup';
+                $updateItem = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE id = ?");
+                $updateItem->bind_param("si", $new_status, $item_id);
+                if ($updateItem->execute()) {
+                    $_SESSION['success_message'] = "Item status updated!";
+                }
+                $updateItem->close();
             }
-            $updateItem->close();
 
             header("Location: dispatcher_view_booking.php?booking_id=" . $booking_id);
             exit();
         }
 
         if ($_POST['action'] === 'mark_all_loaded') {
-            $updateAll = $conn->prepare("UPDATE order_items SET tracking_status = 'item_is_loaded' WHERE order_id = ?");
-            $updateAll->bind_param("i", $booking['order_id']);
+            if ($isReplacement && $booking['replacement_id']) {
+                // For replacements, ONLY update replacement_requests, NOT order_items
+                $updateAll = $conn->prepare("
+            UPDATE replacement_requests 
+            SET status = 'item_is_loaded',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ");
+                $updateAll->bind_param("i", $booking['replacement_id']);
+            } else {
+                // For regular orders, update all items in order_items
+                $updateAll = $conn->prepare("
+            UPDATE order_items 
+            SET tracking_status = 'item_is_loaded' 
+            WHERE order_id = ?
+        ");
+                $updateAll->bind_param("i", $booking['order_id']);
+            }
 
             if ($updateAll->execute()) {
                 $_SESSION['success_message'] = "All items marked as loaded!";
@@ -139,46 +239,62 @@
         }
 
         if ($_POST['action'] === 'start_transit') {
-    $conn->begin_transaction();
+            $conn->begin_transaction();
 
-    try {
-        // Update booking to in_transit
-        $updateBooking = $conn->prepare("
+            try {
+                // Update booking to in_transit
+                $updateBooking = $conn->prepare("
             UPDATE delivery_bookings 
             SET booking_status = 'in_transit',
                 actual_pickup_time = CURRENT_TIMESTAMP,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ");
-        $updateBooking->bind_param("i", $booking_id);
-        $updateBooking->execute();
-        $updateBooking->close();
+                $updateBooking->bind_param("i", $booking_id);
+                $updateBooking->execute();
+                $updateBooking->close();
 
-        // Update order status based on booking type
-        $order_status = ($booking['booking_type'] === 'pickup') ? 'Out for Pickup' : 'Out for Delivery';
-        $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-        $updateOrder->bind_param("si", $order_status, $booking['order_id']);
-        $updateOrder->execute();
-        $updateOrder->close();
+                // Check if this is a replacement booking
+                if ($booking['item_type'] === 'replacement' && $booking['replacement_id']) {
+                    // Update replacement request status to 'out_for_delivery'
+                    $updateReplacement = $conn->prepare("
+                UPDATE replacement_requests 
+                SET status = 'out_for_delivery',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ");
+                    $updateReplacement->bind_param("i", $booking['replacement_id']);
+                    $updateReplacement->execute();
+                    $updateReplacement->close();
+                }
 
-        // Update delivery schedule based on booking type
-        $delivery_status = ($booking['booking_type'] === 'pickup') ? 'out_for_pickup' : 'out_for_delivery';
-        $updateDS = $conn->prepare("UPDATE delivery_schedules SET delivery_status = ? WHERE id = ?");
-        $updateDS->bind_param("si", $delivery_status, $booking['delivery_schedule_id']);
-        $updateDS->execute();
-        $updateDS->close();
+                // Update order status based on booking type (skip if replacement)
+                if ($booking['item_type'] !== 'replacement') {
+                    $order_status = ($booking['booking_type'] === 'pickup') ? 'Out for Pickup' : 'Out for Delivery';
+                    $updateOrder = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+                    $updateOrder->bind_param("si", $order_status, $booking['order_id']);
+                    $updateOrder->execute();
+                    $updateOrder->close();
+                }
 
-        $conn->commit();
-        $action_text = ($booking['booking_type'] === 'pickup') ? 'Pickup' : 'Delivery';
-        $_SESSION['success_message'] = "$action_text started! Status changed to In Transit.";
-    } catch (Exception $e) {
-        $conn->rollback();
-        $_SESSION['error_message'] = "Error: " . $e->getMessage();
-    }
+                // Update delivery schedule based on booking type
+                $delivery_status = ($booking['booking_type'] === 'pickup') ? 'out_for_pickup' : 'out_for_delivery';
+                $updateDS = $conn->prepare("UPDATE delivery_schedules SET delivery_status = ? WHERE id = ?");
+                $updateDS->bind_param("si", $delivery_status, $booking['delivery_schedule_id']);
+                $updateDS->execute();
+                $updateDS->close();
 
-    header("Location: dispatcher_view_booking.php?booking_id=" . $booking_id);
-    exit();
-}
+                $conn->commit();
+                $action_text = ($booking['booking_type'] === 'pickup') ? 'Pickup' : 'Delivery';
+                $_SESSION['success_message'] = "$action_text started! Status changed to In Transit.";
+            } catch (Exception $e) {
+                $conn->rollback();
+                $_SESSION['error_message'] = "Error: " . $e->getMessage();
+            }
+
+            header("Location: dispatcher_view_booking.php?booking_id=" . $booking_id);
+            exit();
+        }
     }
 
     $isInTransit = $booking['booking_status'] === 'in_transit';
@@ -260,15 +376,27 @@
                 </a>
 
                 <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-                    <i class="fas fa-truck-loading text-purple-600 mr-3"></i>
-                    Manage <?php echo ucfirst($booking['booking_type']); ?>
-                    <?php if ($hasMultipleBookings): ?>
-                        <span class="ml-3 bg-blue-500 text-white text-sm px-3 py-1 rounded-full">
-                            <?php echo count($allBookings); ?> Bookings
-                        </span>
+                    <?php if ($isReplacement): ?>
+                        <i class="fas fa-sync-alt text-orange-600 mr-3"></i>
+                        Manage Replacement <?php echo ucfirst($booking['booking_type']); ?>
+                    <?php else: ?>
+                        <i class="fas fa-truck-loading text-purple-600 mr-3"></i>
+                        Manage <?php echo ucfirst($booking['booking_type']); ?>
+                        <?php if ($hasMultipleBookings): ?>
+                            <span class="ml-3 bg-blue-500 text-white text-sm px-3 py-1 rounded-full">
+                                <?php echo count($allBookings); ?> Bookings
+                            </span>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </h1>
-                <p class="text-gray-600 mt-1 text-sm">Order #<?php echo $booking['order_id']; ?> - Booking #<?php echo $booking_id; ?></p>
+                <p class="text-gray-600 mt-1 text-sm flex items-center flex-wrap gap-2">
+                    <span>Order #<?php echo $booking['order_id']; ?> - Booking #<?php echo $booking_id; ?></span>
+                    <?php if ($isReplacement): ?>
+                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">
+                            <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
+                        </span>
+                    <?php endif; ?>
+                </p>
             </div>
 
             <!-- Quick Stats Dashboard -->
@@ -279,21 +407,21 @@
                         <?php echo $booking['loaded_items']; ?><span class="text-lg text-gray-500">/<?php echo $booking['total_items']; ?></span>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-lg shadow-sm p-3 border-l-4 border-purple-500">
                     <div class="text-xs text-gray-600 uppercase mb-1">Status</div>
                     <div class="text-base font-bold text-purple-900 capitalize">
                         <?php echo str_replace('_', ' ', $booking['booking_status']); ?>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-lg shadow-sm p-3 border-l-4 border-green-500">
                     <div class="text-xs text-gray-600 uppercase mb-1">Delivery Date</div>
                     <div class="text-sm font-bold text-gray-900">
                         <?php echo date('M d, Y', strtotime($booking['delivery_date'])); ?>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-lg shadow-sm p-3 border-l-4 border-orange-500">
                     <div class="text-xs text-gray-600 uppercase mb-1">Type</div>
                     <div class="text-base font-bold text-orange-900 capitalize">
@@ -320,15 +448,15 @@
                 </div>
             <?php endif; ?>
 
-            <?php if ($hasMultipleBookings): ?>
+            <?php if ($hasMultipleBookings && !$isReplacement): ?>
                 <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-lg shadow-sm">
                     <div class="flex items-start">
                         <i class="fas fa-info-circle text-blue-500 mt-1 mr-3 text-xl"></i>
                         <div class="flex-1">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="font-bold text-base">Multiple Bookings (<?php echo count($allBookings); ?> total)</h3>
-                                <button onclick="toggleBookings()" id="toggleBookingsBtn" 
-                                        class="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                <button onclick="toggleBookings()" id="toggleBookingsBtn"
+                                    class="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
                                     <i class="fas fa-chevron-down mr-1"></i> Show Details
                                 </button>
                             </div>
@@ -379,8 +507,8 @@
                                                                                         ?>"></i>Status:
                                                     </span>
                                                     <span class="font-bold capitalize text-xs <?php
-                                                                                        echo $otherBooking['booking_status'] == 'delivered' ? 'text-green-700' : ($otherBooking['booking_status'] == 'in_transit' ? 'text-blue-700' : ($otherBooking['booking_status'] == 'cancelled' ? 'text-red-700' : ($otherBooking['booking_status'] == 'picked_up' ? 'text-purple-700' : 'text-yellow-700')));
-                                                                                        ?>">
+                                                                                                echo $otherBooking['booking_status'] == 'delivered' ? 'text-green-700' : ($otherBooking['booking_status'] == 'in_transit' ? 'text-blue-700' : ($otherBooking['booking_status'] == 'cancelled' ? 'text-red-700' : ($otherBooking['booking_status'] == 'picked_up' ? 'text-purple-700' : 'text-yellow-700')));
+                                                                                                ?>">
                                                         <?php echo str_replace('_', ' ', $otherBooking['booking_status']); ?>
                                                     </span>
                                                 </div>
@@ -475,7 +603,7 @@
                     function toggleBookings() {
                         const container = document.getElementById('bookingsContainer');
                         const btn = document.getElementById('toggleBookingsBtn');
-                        
+
                         if (container.classList.contains('hidden')) {
                             container.classList.remove('hidden');
                             btn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i> Hide Details';
@@ -508,10 +636,16 @@
                                 <i class="fas fa-calendar mr-1"></i> Schedule
                             </button>
                             <?php if ($booking['delivery_notes'] || $booking['booking_notes']): ?>
-                            <button onclick="switchTab('notes')" id="tab-notes" class="tab-button px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
-                                <i class="fas fa-sticky-note mr-1"></i> Notes
-                            </button>
+                                <button onclick="switchTab('notes')" id="tab-notes" class="tab-button px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
+                                    <i class="fas fa-sticky-note mr-1"></i> Notes
+                                </button>
                             <?php endif; ?>
+                            <?php if ($isReplacement): ?>
+                                <button onclick="switchTab('replacement')" id="tab-replacement" class="tab-button px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
+                                    <i class="fas fa-sync-alt mr-1"></i> Replacement
+                                </button>
+                            <?php endif; ?>
+
                         </div>
                     </div>
 
@@ -658,7 +792,7 @@
                                         <span class="font-semibold text-sm"><?php echo htmlspecialchars($booking['courier_name']); ?></span>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <?php if ($booking['vehicle_type']): ?>
                                     <div class="p-3 bg-gray-50 rounded-lg">
                                         <span class="text-xs text-gray-600 block mb-1">Vehicle Type:</span>
@@ -714,29 +848,84 @@
 
                         <!-- Notes Tab -->
                         <?php if ($booking['delivery_notes'] || $booking['booking_notes']): ?>
-                        <div id="content-notes" class="tab-content hidden">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <?php if ($booking['delivery_notes']): ?>
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <h4 class="font-bold text-orange-900 mb-2 text-sm flex items-center">
-                                            <i class="fas fa-clipboard text-orange-600 mr-2"></i>
-                                            Delivery Notes
-                                        </h4>
-                                        <p class="text-xs text-orange-800 whitespace-pre-wrap"><?php echo htmlspecialchars($booking['delivery_notes']); ?></p>
-                                    </div>
-                                <?php endif; ?>
+                            <div id="content-notes" class="tab-content hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <?php if ($booking['delivery_notes']): ?>
+                                        <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                            <h4 class="font-bold text-orange-900 mb-2 text-sm flex items-center">
+                                                <i class="fas fa-clipboard text-orange-600 mr-2"></i>
+                                                Delivery Notes
+                                            </h4>
+                                            <p class="text-xs text-orange-800 whitespace-pre-wrap"><?php echo htmlspecialchars($booking['delivery_notes']); ?></p>
+                                        </div>
+                                    <?php endif; ?>
 
-                                <?php if ($booking['booking_notes']): ?>
-                                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                        <h4 class="font-bold text-blue-900 mb-2 text-sm flex items-center">
-                                            <i class="fas fa-sticky-note text-blue-600 mr-2"></i>
-                                            Booking Notes
-                                        </h4>
-                                        <p class="text-xs text-blue-800 whitespace-pre-wrap"><?php echo htmlspecialchars($booking['booking_notes']); ?></p>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php if ($booking['booking_notes']): ?>
+                                        <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                            <h4 class="font-bold text-blue-900 mb-2 text-sm flex items-center">
+                                                <i class="fas fa-sticky-note text-blue-600 mr-2"></i>
+                                                Booking Notes
+                                            </h4>
+                                            <p class="text-xs text-blue-800 whitespace-pre-wrap"><?php echo htmlspecialchars($booking['booking_notes']); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
+                        <!-- Replacement Tab -->
+                        <?php if ($isReplacement && $replacementDetails): ?>
+                            <div id="content-replacement" class="tab-content hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <span class="text-xs text-gray-600 block mb-1">Replacement Request ID</span>
+                                        <span class="font-bold text-lg text-orange-900">#<?php echo $booking['replacement_id']; ?></span>
+                                    </div>
+
+                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <span class="text-xs text-gray-600 block mb-1">Reason</span>
+                                        <span class="font-semibold text-orange-900 capitalize">
+                                            <?php echo str_replace('_', ' ', $replacementDetails['reason']); ?>
+                                        </span>
+                                    </div>
+
+                                    <?php if ($replacementDetails['details']): ?>
+                                        <div class="p-3 bg-orange-50 rounded-lg border border-orange-200 md:col-span-2">
+                                            <span class="text-xs text-gray-600 block mb-1">Details</span>
+                                            <p class="text-sm text-orange-900"><?php echo nl2br(htmlspecialchars($replacementDetails['details'])); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <span class="text-xs text-gray-600 block mb-1">Product</span>
+                                        <p class="font-semibold text-orange-900"><?php echo htmlspecialchars($replacementDetails['product_name']); ?></p>
+                                        <?php if ($replacementDetails['variant_color'] || $replacementDetails['size']): ?>
+                                            <p class="text-xs text-orange-700 mt-1">
+                                                <?php echo $replacementDetails['variant_color'] ? htmlspecialchars($replacementDetails['variant_color']) : ''; ?>
+                                                <?php echo $replacementDetails['size'] ? ' - ' . htmlspecialchars($replacementDetails['size']) : ''; ?>
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <span class="text-xs text-gray-600 block mb-1">Replacement Quantity</span>
+                                        <span class="font-bold text-lg text-orange-900"><?php echo $replacementDetails['replacement_quantity']; ?> pcs</span>
+                                    </div>
+
+                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <span class="text-xs text-gray-600 block mb-1">Status</span>
+                                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold capitalize">
+                                            <?php echo str_replace('_', ' ', $replacementDetails['status']); ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <span class="text-xs text-gray-600 block mb-1">Value</span>
+                                        <span class="font-bold text-lg text-orange-900">
+                                            ₱<?php echo number_format($replacementDetails['price'] * $replacementDetails['replacement_quantity'], 2); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -747,16 +936,16 @@
                         document.querySelectorAll('.tab-content').forEach(content => {
                             content.classList.add('hidden');
                         });
-                        
+
                         // Remove active class from all tabs
                         document.querySelectorAll('.tab-button').forEach(button => {
                             button.classList.remove('active', 'border-purple-600', 'text-purple-600');
                             button.classList.add('border-transparent', 'text-gray-600');
                         });
-                        
+
                         // Show selected tab content
                         document.getElementById('content-' + tabName).classList.remove('hidden');
-                        
+
                         // Add active class to selected tab
                         const activeTab = document.getElementById('tab-' + tabName);
                         activeTab.classList.add('active', 'border-purple-600', 'text-purple-600');
@@ -766,60 +955,77 @@
 
                 <!-- Main Content -->
 
-                    <!-- Items Loading -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                                <i class="fas fa-boxes text-orange-600 mr-2"></i>
-                                Items to Load
-                            </h3>
+                <!-- Items Loading -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-boxes <?php echo $isReplacement ? 'text-orange-600' : 'text-orange-600'; ?> mr-2"></i>
+                            <?php echo $isReplacement ? 'Replacement Item' : 'Items to Load'; ?>
+                        </h3>
 
-                            <?php if (!$allLoaded && !$isCompleted && !$isInTransit): ?>
-                                <form method="POST" class="inline">
-                                    <input type="hidden" name="action" value="mark_all_loaded">
-                                    <button type="submit"
-                                        class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm font-semibold">
-                                        <i class="fas fa-check-double mr-1"></i>
-                                        Mark All Loaded
-                                    </button>
-                                </form>
-                            <?php endif; ?>
+                        <?php if (!$allLoaded && !$isCompleted && !$isInTransit): ?>
+                            <form method="POST" class="inline">
+                                <input type="hidden" name="action" value="toggle_item_loaded">
+                                <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                                <input type="hidden" name="current_status" value="<?php echo $replacementDetails['status']; ?>">
+                                <input type="hidden" name="is_replacement" value="1">
+                                <button type="submit"
+                                    class="<?php echo $replacementDetails['status'] === 'ready_for_pickup' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
+                                    <i class="fas <?php echo $replacementDetails['status'] === 'ready_for_pickup' ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
+                                    <?php echo $replacementDetails['status'] === 'ready_for_pickup' ? 'Loaded' : 'Load'; ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mb-3">
+                        <div class="flex justify-between text-xs text-gray-600 mb-1">
+                            <span>Loading Progress</span>
+                            <span class="font-semibold"><?php echo $booking['loaded_items']; ?> / <?php echo $booking['total_items']; ?> items loaded</span>
                         </div>
-
-                        <!-- Progress Bar -->
-                        <div class="mb-3">
-                            <div class="flex justify-between text-xs text-gray-600 mb-1">
-                                <span>Loading Progress</span>
-                                <span class="font-semibold"><?php echo $booking['loaded_items']; ?> / <?php echo $booking['total_items']; ?> items loaded</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
-                                <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
-                                    style="width: <?php echo $booking['total_items'] > 0 ? ($booking['loaded_items'] / $booking['total_items']) * 100 : 0; ?>%">
-                                </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
+                                style="width: <?php echo $booking['total_items'] > 0 ? ($booking['loaded_items'] / $booking['total_items']) * 100 : 0; ?>%">
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Items List -->
-                        <div class="space-y-2">
-                            <?php foreach ($items as $item): ?>
-                                <?php
-                                $isLoaded = $item['tracking_status'] === 'item_is_loaded';
-                                ?>
+                    <!-- Items List -->
+                    <div class="space-y-2">
+                        <?php if ($isReplacement && $replacementDetails): ?>
+                            <!-- Replacement Item Display -->
+                            <?php
+                            // Since we're using the replacement item, use replacement_status from the query
+                            $item = $items[0] ?? null;
+                            if ($item):
+                                // Check replacement_status (from JOIN), NOT order_items tracking_status
+                                $isLoaded = $item['replacement_status'] === 'item_is_loaded';
+                            ?>
                                 <div class="item-card flex items-center justify-between p-3 rounded-lg border-2 <?php
-                                                                                                                echo $isLoaded ? 'bg-blue-50 border-blue-300' : 'bg-yellow-50 border-yellow-300';
+                                                                                                                echo $isLoaded ? 'bg-orange-50 border-orange-300' : 'bg-yellow-50 border-yellow-300';
                                                                                                                 ?>">
                                     <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold">
+                                                <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
+                                            </span>
+                                        </div>
                                         <div class="flex items-center flex-wrap gap-x-4 gap-y-1">
-                                            <h4 class="font-semibold text-gray-900 text-sm"><?php echo htmlspecialchars($item['product_name']); ?></h4>
+                                            <h4 class="font-semibold text-gray-900 text-sm"><?php echo htmlspecialchars($replacementDetails['product_name']); ?></h4>
                                             <div class="text-xs text-gray-600 flex items-center gap-3">
-                                                <?php if ($item['variant_color']): ?>
-                                                    <span>Color: <span class="font-medium"><?php echo htmlspecialchars($item['variant_color']); ?></span></span>
+                                                <?php if ($replacementDetails['variant_color']): ?>
+                                                    <span>Color: <span class="font-medium"><?php echo htmlspecialchars($replacementDetails['variant_color']); ?></span></span>
                                                 <?php endif; ?>
-                                                <?php if ($item['size']): ?>
-                                                    <span>Size: <span class="font-medium"><?php echo htmlspecialchars($item['size']); ?></span></span>
+                                                <?php if ($replacementDetails['size']): ?>
+                                                    <span>Size: <span class="font-medium"><?php echo htmlspecialchars($replacementDetails['size']); ?></span></span>
                                                 <?php endif; ?>
-                                                <span>Qty: <span class="font-bold"><?php echo $item['quantity']; ?></span></span>
+                                                <span>Qty: <span class="font-bold"><?php echo $replacementDetails['replacement_quantity']; ?></span></span>
                                             </div>
+                                        </div>
+                                        <div class="text-xs mt-1">
+                                            <span class="text-orange-700">Reason: </span>
+                                            <span class="font-semibold capitalize"><?php echo str_replace('_', ' ', $replacementDetails['reason']); ?></span>
                                         </div>
                                         <?php if (!empty($item['warehouse_location'])): ?>
                                             <div class="text-xs mt-1 flex items-center">
@@ -835,60 +1041,117 @@
                                             <form method="POST" class="inline">
                                                 <input type="hidden" name="action" value="toggle_item_loaded">
                                                 <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                                <input type="hidden" name="current_status" value="<?php echo $item['tracking_status']; ?>">
+                                                <input type="hidden" name="current_status" value="<?php echo $item['replacement_status']; ?>">
+                                                <input type="hidden" name="is_replacement" value="1">
+                                                <input type="hidden" name="replacement_id" value="<?php echo $booking['replacement_id']; ?>">
                                                 <button type="submit"
-                                                    class="<?php echo $isLoaded ? 'bg-blue-500 hover:bg-blue-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
-                                                    <i class="fas <?php echo $isLoaded ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
-                                                    <?php echo $isLoaded ? 'Loaded' : 'Load'; ?>
+                                                    class="<?php echo $item['replacement_status'] === 'item_is_loaded' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
+                                                    <i class="fas <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
+                                                    <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'Loaded' : 'Load'; ?>
                                                 </button>
                                             </form>
                                         <?php else: ?>
-                                            <span class="<?php echo $isLoaded ? 'bg-blue-500' : 'bg-yellow-500'; ?> text-white px-4 py-2 rounded-lg font-semibold text-sm">
-                                                <i class="fas <?php echo $isLoaded ? 'fa-check' : 'fa-clock'; ?> mr-1"></i>
-                                                <?php echo $isLoaded ? 'Loaded' : 'Pending'; ?>
+                                            <span class="<?php echo $item['replacement_status'] === 'item_is_loaded' ? 'bg-orange-500' : 'bg-yellow-500'; ?> text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                                                <i class="fas <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'fa-check' : 'fa-clock'; ?> mr-1"></i>
+                                                <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'Loaded' : 'Pending'; ?>
                                             </span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+            <?php else: ?>
+                <!-- Regular Order Items Display -->
+                <?php foreach ($items as $item): ?>
+                    <?php
+                                $isLoaded = $item['tracking_status'] === 'item_is_loaded';
+                    ?>
+                    <div class="item-card flex items-center justify-between p-3 rounded-lg border-2 <?php
+                                                                                                    echo $isLoaded ? 'bg-blue-50 border-blue-300' : 'bg-yellow-50 border-yellow-300';
+                                                                                                    ?>">
+                        <div class="flex-1">
+                            <div class="flex items-center flex-wrap gap-x-4 gap-y-1">
+                                <h4 class="font-semibold text-gray-900 text-sm"><?php echo htmlspecialchars($item['product_name']); ?></h4>
+                                <div class="text-xs text-gray-600 flex items-center gap-3">
+                                    <?php if ($item['variant_color']): ?>
+                                        <span>Color: <span class="font-medium"><?php echo htmlspecialchars($item['variant_color']); ?></span></span>
+                                    <?php endif; ?>
+                                    <?php if ($item['size']): ?>
+                                        <span>Size: <span class="font-medium"><?php echo htmlspecialchars($item['size']); ?></span></span>
+                                    <?php endif; ?>
+                                    <span>Qty: <span class="font-bold"><?php echo $item['quantity']; ?></span></span>
+                                </div>
+                            </div>
+                            <?php if (!empty($item['warehouse_location'])): ?>
+                                <div class="text-xs mt-1 flex items-center">
+                                    <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                    <span class="font-semibold text-gray-700">Location: </span>
+                                    <span class="ml-1 text-gray-900 bg-yellow-100 px-2 py-0.5 rounded"><?php echo htmlspecialchars($item['warehouse_location']); ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <?php if (!$isCompleted && !$isInTransit): ?>
+                                <form method="POST" class="inline">
+                                    <input type="hidden" name="action" value="toggle_item_loaded">
+                                    <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                                    <input type="hidden" name="current_status" value="<?php echo $item['tracking_status']; ?>">
+                                    <button type="submit"
+                                        class="<?php echo $isLoaded ? 'bg-blue-500 hover:bg-blue-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
+                                        <i class="fas <?php echo $isLoaded ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
+                                        <?php echo $isLoaded ? 'Loaded' : 'Load'; ?>
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <span class="<?php echo $isLoaded ? 'bg-blue-500' : 'bg-yellow-500'; ?> text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                                    <i class="fas <?php echo $isLoaded ? 'fa-check' : 'fa-clock'; ?> mr-1"></i>
+                                    <?php echo $isLoaded ? 'Loaded' : 'Pending'; ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
-
-                    <!-- Start Transit Button -->
-                    <?php if ($allLoaded && !$isInTransit && !$isCompleted): ?>
-    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 text-white">
-        <h3 class="text-lg font-bold mb-2 flex items-center">
-            <i class="fas fa-<?php echo $booking['booking_type'] === 'pickup' ? 'box' : 'truck-moving'; ?> mr-2"></i>
-            Ready to Start <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?>
-        </h3>
-        <p class="mb-3 text-green-100 text-sm">
-            All items are loaded. Click below to mark as "In Transit"
-        </p>
-
-        <form method="POST" onsubmit="return confirm('Are you sure all items are loaded and ready to <?php echo $booking['booking_type'] === 'pickup' ? 'pick up' : 'deliver'; ?>?');">
-            <input type="hidden" name="action" value="start_transit">
-            <button type="submit"
-                class="bg-white text-green-600 px-6 py-2 rounded-lg hover:bg-green-50 transition-all shadow-md hover:shadow-lg font-bold">
-                <i class="fas fa-play-circle mr-2"></i>
-                Start <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> (In Transit)
-            </button>
-        </form>
-    </div>
-<?php endif; ?>
-
-                    <?php if ($isInTransit): ?>
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white">
-        <h3 class="text-lg font-bold mb-2 flex items-center">
-            <i class="fas fa-shipping-fast mr-2"></i>
-            <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> In Progress
-        </h3>
-        <p class="text-blue-100 text-sm">
-            This <?php echo $booking['booking_type']; ?> is currently in transit. Drive safely!
-        </p>
-    </div>
-<?php endif; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Start Transit Button -->
+            <?php if ($allLoaded && !$isInTransit && !$isCompleted): ?>
+                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 text-white">
+                    <h3 class="text-lg font-bold mb-2 flex items-center">
+                        <i class="fas fa-<?php echo $booking['booking_type'] === 'pickup' ? 'box' : 'truck-moving'; ?> mr-2"></i>
+                        Ready to Start <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?>
+                    </h3>
+                    <p class="mb-3 text-green-100 text-sm">
+                        All items are loaded. Click below to mark as "In Transit"
+                    </p>
+
+                    <form method="POST" onsubmit="return confirm('Are you sure all items are loaded and ready to <?php echo $booking['booking_type'] === 'pickup' ? 'pick up' : 'deliver'; ?>?');">
+                        <input type="hidden" name="action" value="start_transit">
+                        <button type="submit"
+                            class="bg-white text-green-600 px-6 py-2 rounded-lg hover:bg-green-50 transition-all shadow-md hover:shadow-lg font-bold">
+                            <i class="fas fa-play-circle mr-2"></i>
+                            Start <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> (In Transit)
+                        </button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($isInTransit): ?>
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white">
+                    <h3 class="text-lg font-bold mb-2 flex items-center">
+                        <i class="fas fa-shipping-fast mr-2"></i>
+                        <?php echo $booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery'; ?> In Progress
+                    </h3>
+                    <p class="text-blue-100 text-sm">
+                        This <?php echo $booking['booking_type']; ?> is currently in transit. Drive safely!
+                    </p>
+                </div>
+            <?php endif; ?>
+        </div>
+        </div>
         </div>
     </body>
 

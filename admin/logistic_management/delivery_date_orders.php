@@ -102,6 +102,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -110,32 +111,43 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @keyframes slide-in {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
-        .animate-slide-in { animation: slide-in 0.3s ease-out; }
-        
+
+        .animate-slide-in {
+            animation: slide-in 0.3s ease-out;
+        }
+
         .order-row:hover {
             background-color: rgba(59, 130, 246, 0.05);
             transform: translateX(4px);
             transition: all 0.2s ease;
         }
-        
+
         .filter-btn {
             transition: all 0.3s ease;
         }
-        
+
         .filter-btn.active {
             transform: scale(1.05);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
     <?php include '../navbar/top.php'; ?>
-    
+
     <div class="max-w-[1920px] mx-auto px-6 lg:px-12 py-6">
-        
+
         <!-- Header -->
         <div class="mb-6">
             <a href="main_dashboard.php" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-3 text-sm font-medium">
@@ -153,55 +165,55 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
             <form method="GET" action="" class="relative">
                 <input type="hidden" name="date" value="<?php echo htmlspecialchars($selectedDate); ?>">
                 <div class="relative">
-                    <input type="text" 
-                           name="search" 
-                           value="<?php echo htmlspecialchars($searchQuery); ?>"
-                           placeholder="Search by Order ID, Customer Name, or Tracking Number..."
-                           class="w-full px-12 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg">
+                    <input type="text"
+                        name="search"
+                        value="<?php echo htmlspecialchars($searchQuery); ?>"
+                        placeholder="Search by Order ID, Customer Name, or Tracking Number..."
+                        class="w-full px-12 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg">
                     <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
                     <?php if ($searchQuery): ?>
-                    <a href="?date=<?php echo $selectedDate; ?>" 
-                       class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </a>
+                        <a href="?date=<?php echo $selectedDate; ?>"
+                            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </a>
                     <?php endif; ?>
                 </div>
                 <?php if ($searchQuery): ?>
-                <p class="text-sm text-gray-600 mt-2">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Showing results for: <strong><?php echo htmlspecialchars($searchQuery); ?></strong>
-                </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Showing results for: <strong><?php echo htmlspecialchars($searchQuery); ?></strong>
+                    </p>
                 <?php endif; ?>
             </form>
         </div>
-        
+
         <!-- Filter Buttons -->
         <div class="mb-6 flex flex-wrap gap-3">
-            <button onclick="filterOrders('all')" 
-                    class="filter-btn active px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2"
-                    id="filter-all">
+            <button onclick="filterOrders('all')"
+                class="filter-btn active px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2"
+                id="filter-all">
                 <i class="fas fa-list"></i>
                 All Orders
                 <span class="bg-white text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $totalOrders; ?></span>
             </button>
-            
-            <button onclick="filterOrders('delivery')" 
-                    class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
-                    id="filter-delivery">
+
+            <button onclick="filterOrders('delivery')"
+                class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
+                id="filter-delivery">
                 <i class="fas fa-truck"></i>
                 Delivery
                 <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $deliveryOrders; ?></span>
             </button>
-            
-            <button onclick="filterOrders('pickup')" 
-                    class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
-                    id="filter-pickup">
+
+            <button onclick="filterOrders('pickup')"
+                class="filter-btn px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 flex items-center gap-2"
+                id="filter-pickup">
                 <i class="fas fa-hand-holding"></i>
                 Pickup
                 <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold"><?php echo $pickupOrders; ?></span>
             </button>
         </div>
-            
+
         <!-- Statistics Cards -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -211,7 +223,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 </div>
                 <p class="text-xs text-gray-600 mt-2">Total Orders</p>
             </div>
-            
+
             <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <i class="fas fa-check-circle text-green-500 text-xl"></i>
@@ -219,7 +231,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 </div>
                 <p class="text-xs text-gray-600 mt-2">Completed</p>
             </div>
-            
+
             <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <i class="fas fa-book text-purple-500 text-xl"></i>
@@ -227,7 +239,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 </div>
                 <p class="text-xs text-gray-600 mt-2">Booked</p>
             </div>
-            
+
             <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <i class="fas fa-clock text-yellow-500 text-xl"></i>
@@ -235,7 +247,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 </div>
                 <p class="text-xs text-gray-600 mt-2">Pending</p>
             </div>
-            
+
             <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
@@ -276,7 +288,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                 $hasBooking = $order['booking_id'] !== null;
                                 $isCompleted = in_array($order['booking_status'], ['delivered', 'picked_up']);
                                 $canBook = !$hasBooking && in_array($order['computed_status'], ['ready_for_booking', 'scheduled']);
-                                
+
                                 if ($isCompleted) {
                                     $statusBadge = '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>Delivered</span>';
                                 } elseif ($order['delivery_status'] === 'overdue') {
@@ -286,13 +298,13 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                 } else {
                                     $statusBadge = '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-clock mr-1"></i>Scheduled</span>';
                                 }
-                                
-                                $deliveryTypeBadge = $order['delivery_type'] === 'pickup' 
+
+                                $deliveryTypeBadge = $order['delivery_type'] === 'pickup'
                                     ? '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-hand-holding mr-1"></i>Pickup</span>'
                                     : '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-truck mr-1"></i>Delivery</span>';
                                 ?>
-                                
-                                <tr class="order-row cursor-pointer" 
+
+                                <tr class="order-row cursor-pointer"
                                     data-delivery-type="<?php echo $order['delivery_type']; ?>"
                                     onclick="openDetailsModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -349,33 +361,33 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end gap-2">
                                             <?php if ($canBook): ?>
-    <?php 
-    $bookingUrl = $order['item_type'] === 'replacement' 
-        ? "replacement_booking.php?schedule_id=" . $order['delivery_id'] . "&replacement_id=" . $order['replacement_id']
-        : "delivery_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
-    ?>
-    <a href="<?php echo $bookingUrl; ?>" 
-       onclick="event.stopPropagation()"
-       class="text-blue-600 hover:text-blue-800" title="Book <?php echo $order['item_type'] === 'replacement' ? 'Replacement' : 'Delivery'; ?>">
-        <i class="fas fa-calendar-check text-lg"></i>
-    </a>
+                                                <?php
+                                                $bookingUrl = $order['item_type'] === 'replacement'
+                                                    ? "replacement_booking.php?schedule_id=" . $order['delivery_id'] . "&replacement_id=" . $order['replacement_id']
+                                                    : "delivery_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
+                                                ?>
+                                                <a href="<?php echo $bookingUrl; ?>"
+                                                    onclick="event.stopPropagation()"
+                                                    class="text-blue-600 hover:text-blue-800" title="Book <?php echo $order['item_type'] === 'replacement' ? 'Replacement' : 'Delivery'; ?>">
+                                                    <i class="fas fa-calendar-check text-lg"></i>
+                                                </a>
                                             <?php elseif ($hasBooking && !$isCompleted): ?>
-                                                <a href="delivery_tracking.php?booking_id=<?php echo $order['booking_id']; ?>" 
-                                                   onclick="event.stopPropagation()"
-                                                   class="text-purple-600 hover:text-purple-800" title="Manage Delivery">
+                                                <a href="delivery_tracking.php?booking_id=<?php echo $order['booking_id']; ?>"
+                                                    onclick="event.stopPropagation()"
+                                                    class="text-purple-600 hover:text-purple-800" title="Manage Delivery">
                                                     <i class="fas fa-tasks text-lg"></i>
                                                 </a>
                                             <?php endif; ?>
-                                            
-                                            <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>" 
-                                               onclick="event.stopPropagation()"
-                                               class="text-green-600 hover:text-green-800" title="View Items">
+
+                                            <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>"
+                                                onclick="event.stopPropagation()"
+                                                class="text-green-600 hover:text-green-800" title="View Items">
                                                 <i class="fas fa-list text-lg"></i>
                                             </a>
-                                            
+
                                             <?php if (!$isCompleted): ?>
-                                                <button onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');" 
-                                                        class="text-orange-600 hover:text-orange-800" title="Reschedule">
+                                                <button onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');"
+                                                    class="text-orange-600 hover:text-orange-800" title="Reschedule">
                                                     <i class="fas fa-calendar-alt text-lg"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -387,7 +399,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                     </table>
                 </div>
             </div>
-            
+
             <!-- No Results Message (hidden by default) -->
             <div id="noResultsMessage" class="hidden bg-white rounded-lg border border-gray-200 p-12 text-center">
                 <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
@@ -411,7 +423,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                     </button>
                 </div>
             </div>
-            
+
             <div class="p-6" id="modalContent">
                 <!-- Content will be populated by JavaScript -->
             </div>
@@ -432,52 +444,52 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                     </button>
                 </div>
             </div>
-            
+
             <form id="rescheduleForm" class="p-6">
                 <input type="hidden" id="reschedule_delivery_id" name="delivery_id">
                 <input type="hidden" id="reschedule_order_id" name="order_id">
-                
+
                 <div class="mb-5 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                     <p class="text-sm text-blue-900 font-semibold">Order #<span id="modal_order_id"></span></p>
                     <p class="text-xs text-blue-700 mt-1">Customer: <span id="modal_customer_name"></span></p>
                 </div>
-                
+
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         <i class="fas fa-calendar text-orange-500 mr-2"></i>New Date
                     </label>
                     <input type="date" id="new_delivery_date" name="new_delivery_date" required
-                           min="<?php echo date('Y-m-d'); ?>"
-                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+                        min="<?php echo date('Y-m-d'); ?>"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
                 </div>
-                
+
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         <i class="fas fa-clock text-orange-500 mr-2"></i>New Time
                     </label>
                     <input type="time" id="new_delivery_time" name="new_delivery_time" required
-                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
                 </div>
-                
+
                 <div class="mb-5">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         <i class="fas fa-comment-alt text-orange-500 mr-2"></i>Reason (Optional)
                     </label>
                     <textarea id="reschedule_reason" name="reschedule_reason" rows="3"
-                              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 resize-none"></textarea>
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 resize-none"></textarea>
                 </div>
-                
+
                 <div id="rescheduleError" class="hidden mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
                     <p class="text-sm text-red-700" id="rescheduleErrorMessage"></p>
                 </div>
-                
+
                 <div class="flex gap-3">
                     <button type="button" onclick="closeRescheduleModal()"
-                            class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold">
+                        class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold">
                         Cancel
                     </button>
                     <button type="submit"
-                            class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 font-semibold">
+                        class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 font-semibold">
                         Confirm
                     </button>
                 </div>
@@ -486,79 +498,79 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
     </div>
 
     <script>
-    let currentFilter = 'all';
-    const allOrders = <?php echo json_encode($orders); ?>;
-    
-    function filterOrders(type) {
-        currentFilter = type;
-        const rows = document.querySelectorAll('.order-row');
-        const noResultsMsg = document.getElementById('noResultsMessage');
-        const ordersTable = document.querySelector('.bg-white.rounded-lg.border.border-gray-200.overflow-hidden');
-        let visibleCount = 0;
-        
-        // Update button styles
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active', 'bg-blue-600', 'text-white');
-            btn.classList.add('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
-        });
-        
-        const activeBtn = document.getElementById(`filter-${type}`);
-        activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
-        activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
-        
-        // Filter rows
-        rows.forEach(row => {
-            const deliveryType = row.getAttribute('data-delivery-type');
-            if (type === 'all' || deliveryType === type) {
-                row.style.display = '';
-                visibleCount++;
+        let currentFilter = 'all';
+        const allOrders = <?php echo json_encode($orders); ?>;
+
+        function filterOrders(type) {
+            currentFilter = type;
+            const rows = document.querySelectorAll('.order-row');
+            const noResultsMsg = document.getElementById('noResultsMessage');
+            const ordersTable = document.querySelector('.bg-white.rounded-lg.border.border-gray-200.overflow-hidden');
+            let visibleCount = 0;
+
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+            });
+
+            const activeBtn = document.getElementById(`filter-${type}`);
+            activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+            activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+
+            // Filter rows
+            rows.forEach(row => {
+                const deliveryType = row.getAttribute('data-delivery-type');
+                if (type === 'all' || deliveryType === type) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            if (visibleCount === 0) {
+                ordersTable.classList.add('hidden');
+                noResultsMsg.classList.remove('hidden');
             } else {
-                row.style.display = 'none';
+                ordersTable.classList.remove('hidden');
+                noResultsMsg.classList.add('hidden');
             }
-        });
-        
-        // Show/hide no results message
-        if (visibleCount === 0) {
-            ordersTable.classList.add('hidden');
-            noResultsMsg.classList.remove('hidden');
-        } else {
-            ordersTable.classList.remove('hidden');
-            noResultsMsg.classList.add('hidden');
+
+            // Update statistics based on filter
+            updateStatistics(type);
         }
-        
-        // Update statistics based on filter
-        updateStatistics(type);
-    }
-    
-    function updateStatistics(type) {
-        let filteredOrders = allOrders;
-        if (type !== 'all') {
-            filteredOrders = allOrders.filter(o => o.delivery_type === type);
+
+        function updateStatistics(type) {
+            let filteredOrders = allOrders;
+            if (type !== 'all') {
+                filteredOrders = allOrders.filter(o => o.delivery_type === type);
+            }
+
+            const total = filteredOrders.length;
+            const completed = filteredOrders.filter(o => ['delivered', 'picked_up'].includes(o.booking_status)).length;
+            const booked = filteredOrders.filter(o => o.booking_id !== null).length;
+            const pending = filteredOrders.filter(o => !['delivered', 'picked_up'].includes(o.booking_status)).length;
+            const overdue = filteredOrders.filter(o => o.delivery_status === 'overdue').length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-completed').textContent = completed;
+            document.getElementById('stat-booked').textContent = booked;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-overdue').textContent = overdue;
         }
-        
-        const total = filteredOrders.length;
-        const completed = filteredOrders.filter(o => ['delivered', 'picked_up'].includes(o.booking_status)).length;
-        const booked = filteredOrders.filter(o => o.booking_id !== null).length;
-        const pending = filteredOrders.filter(o => !['delivered', 'picked_up'].includes(o.booking_status)).length;
-        const overdue = filteredOrders.filter(o => o.delivery_status === 'overdue').length;
-        
-        document.getElementById('stat-total').textContent = total;
-        document.getElementById('stat-completed').textContent = completed;
-        document.getElementById('stat-booked').textContent = booked;
-        document.getElementById('stat-pending').textContent = pending;
-        document.getElementById('stat-overdue').textContent = overdue;
-    }
-    
-    function openDetailsModal(order) {
-        const modal = document.getElementById('detailsModal');
-        const content = document.getElementById('modalContent');
-        
-        const hasBooking = order.booking_id !== null;
-        const deliveryTypeLabel = order.delivery_type === 'pickup' 
-            ? '<span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-hand-holding mr-2"></i>Pickup</span>'
-            : '<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-truck mr-2"></i>Delivery</span>';
-        
-        const bookingSection = hasBooking ? `
+
+        function openDetailsModal(order) {
+            const modal = document.getElementById('detailsModal');
+            const content = document.getElementById('modalContent');
+
+            const hasBooking = order.booking_id !== null;
+            const deliveryTypeLabel = order.delivery_type === 'pickup' ?
+                '<span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-hand-holding mr-2"></i>Pickup</span>' :
+                '<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-truck mr-2"></i>Delivery</span>';
+
+            const bookingSection = hasBooking ? `
             <div class="bg-purple-50 border border-purple-200 rounded-lg p-5 mb-4">
                 <h4 class="font-bold text-purple-900 mb-3 flex items-center">
                     <i class="fas fa-shipping-fast mr-2"></i>Booking Information
@@ -571,8 +583,8 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 </div>
             </div>
         ` : '';
-        
-        content.innerHTML = `
+
+            content.innerHTML = `
             <div class="space-y-4">
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-5">
                     <h4 class="font-bold text-gray-900 mb-3 flex items-center">
@@ -612,65 +624,65 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 ${order.delivery_notes ? `<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4"><i class="fas fa-sticky-note text-yellow-600 mr-2"></i><span class="font-semibold">Notes:</span> ${order.delivery_notes}</div>` : ''}
             </div>
         `;
-        
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeDetailsModal() {
-        document.getElementById('detailsModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
-    
-    function openRescheduleModal(deliveryId, orderId, customerName, currentDate, currentTime) {
-        document.getElementById('reschedule_delivery_id').value = deliveryId;
-        document.getElementById('reschedule_order_id').value = orderId;
-        document.getElementById('modal_order_id').textContent = orderId;
-        document.getElementById('modal_customer_name').textContent = customerName;
-        document.getElementById('new_delivery_date').value = currentDate;
-        document.getElementById('new_delivery_time').value = currentTime;
-        document.getElementById('rescheduleModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeRescheduleModal() {
-        document.getElementById('rescheduleModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        document.getElementById('rescheduleForm').reset();
-        document.getElementById('rescheduleError').classList.add('hidden');
-    }
-    
-    // Close modals when clicking outside
-    document.getElementById('detailsModal').addEventListener('click', function(e) {
-        if (e.target === this) closeDetailsModal();
-    });
-    
-    document.getElementById('rescheduleModal').addEventListener('click', function(e) {
-        if (e.target === this) closeRescheduleModal();
-    });
-    
-    // Handle reschedule form submission
-    document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
-        
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rescheduling...';
-        document.getElementById('rescheduleError').classList.add('hidden');
-        
-        fetch('process_reschedule.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const successMsg = document.createElement('div');
-                successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in';
-                successMsg.innerHTML = `
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openRescheduleModal(deliveryId, orderId, customerName, currentDate, currentTime) {
+            document.getElementById('reschedule_delivery_id').value = deliveryId;
+            document.getElementById('reschedule_order_id').value = orderId;
+            document.getElementById('modal_order_id').textContent = orderId;
+            document.getElementById('modal_customer_name').textContent = customerName;
+            document.getElementById('new_delivery_date').value = currentDate;
+            document.getElementById('new_delivery_time').value = currentTime;
+            document.getElementById('rescheduleModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRescheduleModal() {
+            document.getElementById('rescheduleModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            document.getElementById('rescheduleForm').reset();
+            document.getElementById('rescheduleError').classList.add('hidden');
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('detailsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDetailsModal();
+        });
+
+        document.getElementById('rescheduleModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRescheduleModal();
+        });
+
+        // Handle reschedule form submission
+        document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rescheduling...';
+            document.getElementById('rescheduleError').classList.add('hidden');
+
+            fetch('process_reschedule.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in';
+                        successMsg.innerHTML = `
                     <div class="flex items-center">
                         <i class="fas fa-check-circle mr-3 text-xl"></i>
                         <div>
@@ -679,27 +691,28 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                         </div>
                     </div>
                 `;
-                document.body.appendChild(successMsg);
-                
-                setTimeout(() => {
-                    closeRescheduleModal();
-                    location.reload();
-                }, 1500);
-            } else {
-                document.getElementById('rescheduleErrorMessage').textContent = data.message || 'Failed to reschedule delivery.';
-                document.getElementById('rescheduleError').classList.remove('hidden');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('rescheduleErrorMessage').textContent = 'An error occurred. Please try again.';
-            document.getElementById('rescheduleError').classList.remove('hidden');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+                        document.body.appendChild(successMsg);
+
+                        setTimeout(() => {
+                            closeRescheduleModal();
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        document.getElementById('rescheduleErrorMessage').textContent = data.message || 'Failed to reschedule delivery.';
+                        document.getElementById('rescheduleError').classList.remove('hidden');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('rescheduleErrorMessage').textContent = 'An error occurred. Please try again.';
+                    document.getElementById('rescheduleError').classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                });
         });
-    });
     </script>
 </body>
+
 </html>

@@ -29,7 +29,7 @@ if (isset($_POST['acceptCookies'])) {
 
 $cookieAccepted = isset($_COOKIE['cookiesAccepted']) && $_COOKIE['cookiesAccepted'] === 'true';
 
-// 1. Fetch all variants (basic list) - WITH VIEW COUNT
+// 1. Fetch all variants (basic list) - WITH VIEW COUNT, RATING & SOLD COUNT
 $query_variants1 = "
     SELECT 
         pv.id, 
@@ -41,27 +41,39 @@ $query_variants1 = "
         pv.image, 
         pv.origin,
         p.view_count,
-        p.unique_view_count
+        p.unique_view_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(DISTINCT r.id) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM product_variants pv
     LEFT JOIN product_types pt ON pv.type_id = pt.id
     LEFT JOIN products p ON pt.product_id = p.id
+    LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
+    GROUP BY pv.id
     ORDER BY pv.id DESC
 ";
 $result_variants = mysqli_query($conn, $query_variants1);
 
-// 2. Furniture product list - WITH VIEW COUNT
+// 2. Furniture product list - WITH VIEW COUNT, RATING & SOLD COUNT
 $SYCJ_query = "
     SELECT 
         p.*,
         p.view_count,
-        p.unique_view_count
+        p.unique_view_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(DISTINCT r.id) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p 
-    WHERE codename = 'furniture' 
+    LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
+    WHERE p.codename = 'furniture' 
+    GROUP BY p.id
     ORDER BY p.id DESC
 ";
 $SYCJ_result = mysqli_query($conn, $SYCJ_query);
 
-// 3. Discount 10% materials - WITH VIEW COUNT
+// 3. Discount 10% materials - WITH VIEW COUNT, RATING & SOLD COUNT
 $material_querys = "
     SELECT 
         pv.*,
@@ -77,6 +89,9 @@ $material_querys = "
         p.descrip7,
         p.view_count,
         p.unique_view_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(DISTINCT r.id) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold,
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
@@ -84,6 +99,8 @@ $material_querys = "
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
+    LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
     LEFT JOIN product_colors pc 
         ON pc.product_id = p.id
        AND pc.id = (
@@ -92,12 +109,13 @@ $material_querys = "
            WHERE pc2.product_id = p.id
        )
     WHERE pv.discount = 10
+    GROUP BY pv.id
     ORDER BY p.view_count DESC, RAND()
     LIMIT 10
 ";
 $material_results = mysqli_query($conn, $material_querys);
 
-// 4. Discount between 1-5% - WITH VIEW COUNT
+// 4. Discount between 1-5% - WITH VIEW COUNT, RATING & SOLD COUNT
 $material_querysone = "
     SELECT 
         pv.*,
@@ -113,6 +131,9 @@ $material_querysone = "
         p.descrip7,
         p.view_count,
         p.unique_view_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(DISTINCT r.id) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold,
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
@@ -120,6 +141,8 @@ $material_querysone = "
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
+    LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
     LEFT JOIN product_colors pc 
         ON pc.id = (
             SELECT MIN(pc2.id) 
@@ -132,7 +155,7 @@ $material_querysone = "
 ";
 $material_resultsone = mysqli_query($conn, $material_querysone);
 
-// 5. Fetch "new" status product variants - WITH VIEW COUNT
+// 5. Fetch "new" status product variants - WITH VIEW COUNT, RATING & SOLD COUNT
 $material_querystwo = "
     SELECT 
         pv.*,
@@ -148,6 +171,9 @@ $material_querystwo = "
         p.descrip7,
         p.view_count,
         p.unique_view_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(DISTINCT r.id) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold,
         pc.id AS color_id,
         pc.color_name AS color,
         pc.color_code,
@@ -155,6 +181,8 @@ $material_querystwo = "
     FROM product_variants pv
     INNER JOIN product_types pt ON pv.type_id = pt.id
     INNER JOIN products p ON pt.product_id = p.id
+    LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
     WHERE pv.status = 'new'
     GROUP BY pv.id
@@ -163,7 +191,7 @@ $material_querystwo = "
 ";
 $material_resultstwo = mysqli_query($conn, $material_querystwo);
 
-// 6. Products without discount - WITH VIEW COUNT
+// 6. Products without discount - WITH VIEW COUNT, RATING & SOLD COUNT
 $discount_result = mysqli_query(
     $conn,
     "SELECT 
@@ -180,6 +208,9 @@ $discount_result = mysqli_query(
         p.descrip7,
         p.view_count,
         p.unique_view_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(DISTINCT r.id) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold,
         pc.color_name AS color,
         pc.color_code,
         pc.price AS color_price,
@@ -187,6 +218,8 @@ $discount_result = mysqli_query(
      FROM product_variants pv
      INNER JOIN product_types pt ON pv.type_id = pt.id
      INNER JOIN products p ON pt.product_id = p.id
+     LEFT JOIN product_ratings r ON r.product_id = p.id
+     LEFT JOIN sold_items si ON si.product_id = p.id
      LEFT JOIN product_colors pc ON p.id = pc.product_id
      WHERE pv.discount IS NULL OR pv.discount = 0
      GROUP BY pv.id
@@ -194,7 +227,7 @@ $discount_result = mysqli_query(
      LIMIT 10"
 );
 
-// 7. Filter by furniture codename - WITH VIEW COUNT & RATING
+// 7. Filter by furniture codename - WITH VIEW COUNT & RATING & SOLD COUNT
 $filter = 'furniture';
 $query = "
     SELECT 
@@ -208,10 +241,12 @@ $query = "
         v.percent,
         v.status,
         AVG(r.rating) AS avg_rating,
-        COUNT(r.rating) AS rating_count
+        COUNT(r.rating) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
     LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
@@ -221,6 +256,8 @@ $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $filter);
 $stmt->execute();
 $result = $stmt->get_result();
+
+
 
 // 8. Filter by material codename with rating - WITH VIEW COUNT
 $filter = 'buildingmaterials';
@@ -236,13 +273,15 @@ $query = "
         v.percent,
         v.status,
         AVG(r.rating) AS avg_rating,
-        COUNT(r.rating) AS rating_count
+        COUNT(r.rating) AS rating_count,
+        COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p
     LEFT JOIN (
         SELECT * FROM product_variants 
         GROUP BY product_id
     ) v ON v.product_id = p.id
     LEFT JOIN product_ratings r ON r.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
@@ -265,9 +304,11 @@ $query = "
         v.origin,
         v.discount,
         v.percent,
-        v.status
+        v.status,
+        COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
+    LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
@@ -353,11 +394,11 @@ function displayTrendingBadge($view_count)
 {
     if ($view_count >= 1000) {
         return '<span class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                    🔥 Trending
+                     Trending
                 </span>';
     } elseif ($view_count >= 500) {
         return '<span class="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                    ⭐ Popular
+                     Popular
                 </span>';
     }
     return '';
@@ -754,112 +795,112 @@ function displayTrendingBadge($view_count)
     $recommended_products = getRecommendedProducts($conn, 10);
     $recommended_count = mysqli_num_rows($recommended_products);
 
-   function renderProductCard($row, $conn)
-{
-    $base = (float)$row['price'];
-    $percent = (float)($row['percent'] ?? 0);
-    $discount = (float)($row['discount'] ?? 0);
-    $priceWithMarkup = $base + ($base * $percent / 100);
-    $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+    function renderProductCard($row, $conn)
+    {
+        $base = (float)$row['price'];
+        $percent = (float)($row['percent'] ?? 0);
+        $discount = (float)($row['discount'] ?? 0);
+        $priceWithMarkup = $base + ($base * $percent / 100);
+        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
 
-    $product_id = (int)$row['id'];
-    
-    // ✅ Get rating
-    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-    $rating_q->bind_param("i", $product_id);
-    $rating_q->execute();
-    $rating_result = $rating_q->get_result()->fetch_assoc();
-    $avg_rating = $rating_result['avg_rating'] ?? 0;
-    $total_raters = $rating_result['total_raters'] ?? 0;
-    $rating_q->close();
+        $product_id = (int)$row['id'];
 
-    // 🆕 Get sold count from sold_items table
-    $sold_q = $conn->prepare("
+        // ✅ Get rating
+        $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+        $rating_q->bind_param("i", $product_id);
+        $rating_q->execute();
+        $rating_result = $rating_q->get_result()->fetch_assoc();
+        $avg_rating = $rating_result['avg_rating'] ?? 0;
+        $total_raters = $rating_result['total_raters'] ?? 0;
+        $rating_q->close();
+
+        // 🆕 Get sold count from sold_items table
+        $sold_q = $conn->prepare("
         SELECT SUM(quantity) as total_sold 
         FROM sold_items 
         WHERE product_id = ?
     ");
-    $sold_q->bind_param("i", $product_id);
-    $sold_q->execute();
-    $sold_result = $sold_q->get_result()->fetch_assoc();
-    $total_sold = (int)($sold_result['total_sold'] ?? 0);
-    $sold_q->close();
+        $sold_q->bind_param("i", $product_id);
+        $sold_q->execute();
+        $sold_result = $sold_q->get_result()->fetch_assoc();
+        $total_sold = (int)($sold_result['total_sold'] ?? 0);
+        $sold_q->close();
 
-    $full = floor($avg_rating);
-    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-    $empty = 5 - $full - $half;
+        $full = floor($avg_rating);
+        $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+        $empty = 5 - $full - $half;
 
-    $colors = !empty($row['color_name']) ? explode(',', $row['color_name']) : [];
-    $firstColor = !empty($colors) ? trim($colors[0]) : '';
-?>
-    <div class="swiper-slide">
-        <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block group">
-            <!-- Image container -->
-            <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full" style="aspect-ratio: 1/1; max-height: 160px;">
-                <?php if (!empty($row['main_image'])): ?>
-                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105" />
-                <?php else: ?>
-                    <div class="w-full h-full flex items-center justify-center">
-                        <i class="fas fa-image text-gray-300 text-3xl"></i>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="px-0.5 flex flex-col h-full">
-                <!-- Product name -->
-                <h3 class="text-[13px] font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
-                    <?= htmlspecialchars($row['product_name']) ?>
-                    <?php if (!empty($row['size'])): ?> <?= htmlspecialchars($row['size']) ?><?php endif; ?>
-                    <?php if ($firstColor): ?> <?= htmlspecialchars($firstColor) ?><?php endif; ?>
-                </h3>
-
-                <!-- Rating -->
-                <div class="flex items-center gap-1 mb-1.5">
-                    <?php if ($total_raters > 0): ?>
-                        <div class="flex text-yellow-400 text-[10px]">
-                            <?php for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>'; ?>
-                            <?php if ($half) echo '<i class="fas fa-star-half-alt"></i>'; ?>
-                            <?php for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>'; ?>
-                        </div>
-                        <span class="text-[9px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
+        $colors = !empty($row['color_name']) ? explode(',', $row['color_name']) : [];
+        $firstColor = !empty($colors) ? trim($colors[0]) : '';
+    ?>
+        <div class="swiper-slide">
+            <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block group">
+                <!-- Image container -->
+                <div class="relative bg-gray-50 rounded-lg overflow-hidden mb-2 w-full" style="aspect-ratio: 1/1; max-height: 160px;">
+                    <?php if (!empty($row['main_image'])): ?>
+                        <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105" />
                     <?php else: ?>
-                        <div class="flex text-gray-300 text-[10px]">
-                            <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i class="fas fa-image text-gray-300 text-3xl"></i>
                         </div>
-                        <span class="text-[9px] text-gray-400">No rating</span>
                     <?php endif; ?>
                 </div>
 
-                <!-- Price -->
-                <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
-                    <?php if ($discount > 0): ?>
-                        <p class="text-md font-bold text-gray-900">₱<?= number_format($finalPrice, 2) ?></p>
-                        <p class="text-[9px] text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                        <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                    <?php else: ?>
-                        <p class="text-xs font-bold text-gray-900">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                    <?php endif; ?>
-                </div>
+                <div class="px-0.5 flex flex-col h-full">
+                    <!-- Product name -->
+                    <h3 class="text-[13px] font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
+                        <?= htmlspecialchars($row['product_name']) ?>
+                        <?php if (!empty($row['size'])): ?> <?= htmlspecialchars($row['size']) ?><?php endif; ?>
+                            <?php if ($firstColor): ?> <?= htmlspecialchars($firstColor) ?><?php endif; ?>
+                    </h3>
 
-                <!-- 🆕 View count + Sold count -->
-                <?php if (!empty($row['view_count']) || $total_sold > 0): ?>
-                    <div class="text-[9px] text-gray-500 font-medium">
-                        <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?>
-                            <?= formatViewCount($row['view_count']) ?> viewing
-                        <?php endif; ?>
-                        
-                        <?php if ($total_sold > 0): ?>
-                            <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?> | <?php endif; ?>
-                            <?= number_format($total_sold) ?> sold
+                    <!-- Rating -->
+                    <div class="flex items-center gap-1 mb-1.5">
+                        <?php if ($total_raters > 0): ?>
+                            <div class="flex text-yellow-400 text-[10px]">
+                                <?php for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>'; ?>
+                                <?php if ($half) echo '<i class="fas fa-star-half-alt"></i>'; ?>
+                                <?php for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>'; ?>
+                            </div>
+                            <span class="text-[9px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
+                        <?php else: ?>
+                            <div class="flex text-gray-300 text-[10px]">
+                                <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                            </div>
+                            <span class="text-[9px] text-gray-400">No rating</span>
                         <?php endif; ?>
                     </div>
-                <?php endif; ?>
-            </div>
-        </a>
-    </div>
-<?php
-}
-?>
+
+                    <!-- Price -->
+                    <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
+                        <?php if ($discount > 0): ?>
+                            <p class="text-md font-bold text-gray-900">₱<?= number_format($finalPrice, 2) ?></p>
+                            <p class="text-[9px] text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                            <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                        <?php else: ?>
+                            <p class="text-xs font-bold text-gray-900">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- View count + Sold count -->
+                    <?php if (!empty($row['view_count']) || $total_sold > 0): ?>
+                        <div class="text-[9px] text-gray-500 font-medium">
+                            <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?>
+                                <?= formatViewCount($row['view_count']) ?> viewing
+                            <?php endif; ?>
+
+                            <?php if ($total_sold > 0): ?>
+                                <?php if (!empty($row['view_count']) && $row['view_count'] > 0): ?> | <?php endif; ?>
+                                <?= number_format($total_sold) ?> sold
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </a>
+        </div>
+    <?php
+    }
+    ?>
 
     <?php if ($recent_count > 0 || $recommended_count > 0): ?>
         <section id="recent-recommendations-section" class="px-4 sm:px-5 lg:px-7 py-4 bg-white">
@@ -937,16 +978,18 @@ function displayTrendingBadge($view_count)
 
     <section class="px-4 sm:px-6 lg:px-8 py-10 ">
         <div class="max-w-full mx-auto">
-
-
             <!-- Banner -->
             <a href="https://www.yfk20.com/login" class="group block relative overflow-hidden transition-all duration-300 pointer-events-none cursor-not-allowed" data-aos="fade-up">
                 <!-- Rectangle Container -->
                 <div class="relative w-full aspect-[16/9] sm:aspect-auto sm:h-auto bg-white border border-neutral-200 rounded-2xl overflow-hidden">
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton-loader absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 bg-[length:200%_100%] animate-shimmer sm:relative sm:max-h-[220px] md:max-h-[280px] lg:max-h-[380px] xl:max-h-[500px]"></div>
+
                     <!-- Image -->
                     <img src="../img/sunpina.png"
                         alt="Promotion Banner"
-                        class="absolute inset-0 w-full h-full object-cover sm:relative sm:object-contain sm:max-h-[220px] md:max-h-[280px] lg:max-h-[380px] xl:max-h-[500px]">
+                        class="banner-image absolute inset-0 w-full h-full object-cover sm:relative sm:object-contain sm:max-h-[220px] md:max-h-[280px] lg:max-h-[380px] xl:max-h-[500px] opacity-0 transition-opacity duration-300"
+                        onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';">
 
                     <!-- Temporary Overlay Badge -->
                     <div class="absolute inset-0 flex items-center justify-center z-10">
@@ -957,7 +1000,28 @@ function displayTrendingBadge($view_count)
                 </div>
             </a>
         </div>
+
+        <style>
+            @keyframes shimmer {
+                0% {
+                    background-position: -200% 0;
+                }
+
+                100% {
+                    background-position: 200% 0;
+                }
+            }
+
+            .animate-shimmer {
+                animation: shimmer 1.5s ease-in-out infinite;
+            }
+
+            .banner-image {
+                transition: opacity 0.3s ease-in-out;
+            }
+        </style>
     </section>
+
 
     <!-- POPUP MODAL -->
     <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
@@ -1246,7 +1310,7 @@ function displayTrendingBadge($view_count)
                             ?>
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px] bg-white">
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[220px] sm:h-[260px] lg:h-[320px] bg-white">
 
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
@@ -1263,7 +1327,6 @@ function displayTrendingBadge($view_count)
                                     <!-- Clickable entire card -->
                                     <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                                         class="block h-full">
-
 
                                         <!-- Image Container with Overlay -->
                                         <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
@@ -1285,7 +1348,7 @@ function displayTrendingBadge($view_count)
                                         </div>
 
                                         <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[90px] sm:h-[110px] lg:h-[120px]">
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[110px] sm:h-[130px] lg:h-[140px]">
 
                                             <!-- Product Info -->
                                             <div class="space-y-0.5 sm:space-y-1">
@@ -1321,6 +1384,7 @@ function displayTrendingBadge($view_count)
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
+
                                                 <!-- Description -->
                                                 <?php if (!empty($row['description'])): ?>
                                                     <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
@@ -1329,10 +1393,28 @@ function displayTrendingBadge($view_count)
                                                 <?php else: ?>
                                                     <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                 <?php endif; ?>
+
+                                                <!-- 🆕 View Count + Sold Count -->
+                                                <?php
+                                                $view_count = (int)($row['view_count'] ?? 0);
+                                                $total_sold = (int)($row['total_sold'] ?? 0);
+                                                ?>
+                                                <?php if ($view_count > 0 || $total_sold > 0): ?>
+                                                    <div class="text-[9px] text-gray-500 font-medium">
+                                                        <?php if ($view_count > 0): ?>
+                                                            <?= formatViewCount($view_count) ?> viewing
+                                                        <?php endif; ?>
+
+                                                        <?php if ($total_sold > 0): ?>
+                                                            <?php if ($view_count > 0): ?> | <?php endif; ?>
+                                                            <?= number_format($total_sold) ?> sold
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
 
                                             <!-- Action Button - Desktop Only -->
-                                            <div class="mt-1.5 hidden lg:flex justify-start">
+                                            <div class="mt-1 hidden lg:flex justify-start">
                                                 <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                                     <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                                     <button type="submit"
@@ -2114,7 +2196,7 @@ function displayTrendingBadge($view_count)
                             ?>
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px] bg-white">
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[220px] sm:h-[260px] lg:h-[320px] bg-white">
 
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
@@ -2132,7 +2214,6 @@ function displayTrendingBadge($view_count)
                                     <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                                         class="block h-full">
 
-
                                         <!-- Image Container with Overlay -->
                                         <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
                                             <!-- Gradient Overlay -->
@@ -2142,7 +2223,7 @@ function displayTrendingBadge($view_count)
                                                 <img src="../../<?= $row['main_image'] ?>"
                                                     loading="lazy"
                                                     alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                    class="w-full h-full object-cover transition-all duration-700 group-hover:brightness-105" />
+                                                    class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
                                             <?php else: ?>
                                                 <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
                                                     <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
@@ -2153,7 +2234,7 @@ function displayTrendingBadge($view_count)
                                         </div>
 
                                         <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[90px] sm:h-[110px] lg:h-[120px]">
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[110px] sm:h-[130px] lg:h-[140px]">
 
                                             <!-- Product Info -->
                                             <div class="space-y-0.5 sm:space-y-1">
@@ -2189,6 +2270,7 @@ function displayTrendingBadge($view_count)
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
+
                                                 <!-- Description -->
                                                 <?php if (!empty($row['description'])): ?>
                                                     <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
@@ -2197,10 +2279,28 @@ function displayTrendingBadge($view_count)
                                                 <?php else: ?>
                                                     <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                 <?php endif; ?>
+
+                                                <!-- 🆕 View Count + Sold Count -->
+                                                <?php
+                                                $view_count = (int)($row['view_count'] ?? 0);
+                                                $total_sold = (int)($row['total_sold'] ?? 0);
+                                                ?>
+                                                <?php if ($view_count > 0 || $total_sold > 0): ?>
+                                                    <div class="text-[9px] text-gray-500 font-medium">
+                                                        <?php if ($view_count > 0): ?>
+                                                            <?= formatViewCount($view_count) ?> viewing
+                                                        <?php endif; ?>
+
+                                                        <?php if ($total_sold > 0): ?>
+                                                            <?php if ($view_count > 0): ?> | <?php endif; ?>
+                                                            <?= number_format($total_sold) ?> sold
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
 
                                             <!-- Action Button - Desktop Only -->
-                                            <div class="mt-1.5 hidden lg:flex justify-start">
+                                            <div class="mt-1 hidden lg:flex justify-start">
                                                 <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                                     <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                                     <button type="submit"
@@ -2438,7 +2538,7 @@ function displayTrendingBadge($view_count)
             <div class="flex items-center gap-3">
                 <div class="w-1 h-8 bg-neutral-900"></div>
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
-                  Building Materials
+                    Building Materials
                 </h2>
             </div>
 
@@ -2513,7 +2613,7 @@ function displayTrendingBadge($view_count)
                             ?>
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[200px] sm:h-[240px] lg:h-[300px] bg-white">
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[220px] sm:h-[260px] lg:h-[320px] bg-white">
 
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
@@ -2531,7 +2631,6 @@ function displayTrendingBadge($view_count)
                                     <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
                                         class="block h-full">
 
-
                                         <!-- Image Container with Overlay -->
                                         <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
                                             <!-- Gradient Overlay -->
@@ -2541,7 +2640,7 @@ function displayTrendingBadge($view_count)
                                                 <img src="../../<?= $row['main_image'] ?>"
                                                     loading="lazy"
                                                     alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                    class="w-full h-full object-contain transition-all duration-700 group-hover:brightness-105" />
+                                                    class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
                                             <?php else: ?>
                                                 <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
                                                     <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
@@ -2552,7 +2651,7 @@ function displayTrendingBadge($view_count)
                                         </div>
 
                                         <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[90px] sm:h-[110px] lg:h-[120px]">
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[110px] sm:h-[130px] lg:h-[140px]">
 
                                             <!-- Product Info -->
                                             <div class="space-y-0.5 sm:space-y-1">
@@ -2588,6 +2687,7 @@ function displayTrendingBadge($view_count)
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
+
                                                 <!-- Description -->
                                                 <?php if (!empty($row['description'])): ?>
                                                     <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
@@ -2596,10 +2696,28 @@ function displayTrendingBadge($view_count)
                                                 <?php else: ?>
                                                     <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                 <?php endif; ?>
+
+                                                <!-- 🆕 View Count + Sold Count -->
+                                                <?php
+                                                $view_count = (int)($row['view_count'] ?? 0);
+                                                $total_sold = (int)($row['total_sold'] ?? 0);
+                                                ?>
+                                                <?php if ($view_count > 0 || $total_sold > 0): ?>
+                                                    <div class="text-[9px] text-gray-500 font-medium">
+                                                        <?php if ($view_count > 0): ?>
+                                                            <?= formatViewCount($view_count) ?> viewing
+                                                        <?php endif; ?>
+
+                                                        <?php if ($total_sold > 0): ?>
+                                                            <?php if ($view_count > 0): ?> | <?php endif; ?>
+                                                            <?= number_format($total_sold) ?> sold
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
 
                                             <!-- Action Button - Desktop Only -->
-                                            <div class="mt-1.5 hidden lg:flex justify-start">
+                                            <div class="mt-1 hidden lg:flex justify-start">
                                                 <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
                                                     <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
                                                     <button type="submit"
@@ -2829,271 +2947,307 @@ function displayTrendingBadge($view_count)
         </script>
     </section>
 
-    <!-- Top Sales Section -->
-    <section class="px-4 py-10">
-        <!-- Header -->
-        <div class="text-center mb-10 relative">
-            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
-            <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
-                Get Up to <span class="text-red-500">10% Discount</span> on Select Items!
-            </h2>
-
-        </div>
-
+    <section>
         <?php
         // Check if there are any products
         $row_count = mysqli_num_rows($material_results);
         ?>
 
         <?php if ($row_count > 0): ?>
-            <!-- Swiper Container -->
-            <div class="swiper mySwiper-products w-full">
-                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                    <?php while ($row = mysqli_fetch_assoc($material_results)) : ?>
-                        <?php
-                        $base = (float)$row['price'];
-                        $percent = (float)($row['percent'] ?? 0);
-                        $discount = (float)($row['discount'] ?? 0);
-                        $priceWithMarkup = $base + ($base * $percent / 100);
-                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                        ?>
-                        <div class="swiper-slide p-2">
-                            <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[320px] sm:h-[360px] lg:h-[420px] text-center relative">
-                                <!-- Triangle Badge -->
-                                <div class="absolute top-0 left-0 z-10">
-                                    <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
-                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
-                                    </div>
-                                </div>
+            <!-- Top Sales Section -->
+            <section class="px-4 py-10">
+                <!-- Header -->
+                <div class="text-center mb-10 relative">
+                    <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
+                    <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
+                        Get Up to <span class="text-red-500">10% Discount</span> on Select Items!
+                    </h2>
+                </div>
 
-                                <!-- Product Image -->
-                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
-                                    <?php if (!empty($row['type_image'])): ?>
-                                        <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                            class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
-                                    <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                    <?php endif; ?>
-                                </div>
+                <?php
+                // Check if there are any products
+                $row_count = mysqli_num_rows($material_results);
+                ?>
 
-                                <!-- Product Info -->
-                                <div class="mt-auto">
-                                    <div class="relative w-full">
-                                        <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
-                                            <?= htmlspecialchars($row['product_name']) ?>
-                                        </h3>
-                                    </div>
+                <?php if ($row_count > 0): ?>
+                    <!-- Swiper Container -->
+                    <div class="swiper mySwiper-products w-full">
+                        <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                            <?php while ($row = mysqli_fetch_assoc($material_results)) : ?>
+                                <?php
+                                $base = (float)$row['price'];
+                                $percent = (float)($row['percent'] ?? 0);
+                                $discount = (float)($row['discount'] ?? 0);
+                                $priceWithMarkup = $base + ($base * $percent / 100);
+                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
 
-                                    <!-- Description - Desktop Only -->
-                                    <div class="hidden lg:block relative w-full mt-1">
-                                        <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
-                                            <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
-                                        </p>
-                                    </div>
+                                // Get stats
+                                $viewCount = (int)($row['view_count'] ?? 0);
+                                $soldCount = (int)($row['total_sold'] ?? 0);
+                                $avgRating = (float)($row['avg_rating'] ?? 0);
+                                $ratingCount = (int)($row['rating_count'] ?? 0);
+                                ?>
+                                <div class="swiper-slide p-2">
+                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[380px] sm:h-[420px] lg:h-[480px] text-center relative">
+                                        <!-- Triangle Badge -->
+                                        <div class="absolute top-0 left-0 z-10">
+                                            <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
+                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
+                                            </div>
+                                        </div>
 
-                                    <!-- Price + View Button Row - Desktop Only -->
-                                    <div class="hidden lg:flex items-center justify-between mt-2 px-2">
-                                        <!-- Pricing -->
-                                        <div>
-                                            <?php if ($discount > 0): ?>
-                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                <p class="text-sm text-black font-bold">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                </p>
+                                        <!-- Product Image -->
+                                        <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
+                                            <?php if (!empty($row['type_image'])): ?>
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                                    class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
                                             <?php else: ?>
-                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                             <?php endif; ?>
                                         </div>
 
-                                        <!-- View Button -->
-                                        <form action="index-product_view-page-4-AA" method="GET">
-                                            <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                                <span>View</span>
-                                            </button>
-                                        </form>
-                                    </div>
+                                        <!-- Product Info -->
+                                        <div class="">
+                                            <div class="relative w-full">
+                                                <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
+                                                    <?= htmlspecialchars($row['product_name']) ?>
+                                                </h3>
+                                            </div>
 
-                                    <!-- Mobile Layout (Original) -->
-                                    <div class="lg:hidden">
-                                        <!-- Pricing -->
-                                        <div class="my-1">
-                                            <?php if ($discount > 0): ?>
-                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                <p class="text-sm text-black font-bold">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                            <!-- Description - Desktop Only -->
+                                            <div class="hidden lg:block relative w-full mt-1">
+                                                <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
+                                                    <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
                                                 </p>
-                                            <?php else: ?>
-                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                            <?php endif; ?>
+                                            </div>
+
+                                            <!-- Stats Row (Views, Sold, Rating) -->
+                                            <div class="flex items-center justify-center lg:justify-start gap-1 mt-2 px-2 text-xs text-gray-600">
+                                                <!-- Views -->
+                                                <span><?= number_format($viewCount) ?> viewing</span>
+                                                <span>|</span>
+
+                                                <!-- Sold -->
+                                                <span><?= number_format($soldCount) ?> sold</span>
+
+                                                <!-- Rating -->
+                                                <?php if ($ratingCount > 0): ?>
+                                                    <span>|</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <i class="fa-solid fa-star text-yellow-500"></i>
+                                                        <span><?= number_format($avgRating, 1) ?></span>
+                                                        <span class="text-gray-400">(<?= $ratingCount ?>)</span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Price + View Button Row - Desktop Only -->
+                                            <div class="hidden lg:flex items-center justify-between mt-2 px-2">
+                                                <!-- Pricing -->
+                                                <div>
+                                                    <?php if ($discount > 0): ?>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-black font-bold">
+                                                            ₱<?= number_format($finalPrice, 2) ?>
+                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                        </p>
+                                                    <?php else: ?>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- View Button -->
+                                                <form action="index-product_view-page-4-AA" method="GET">
+                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                    <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
+                                                        <i class="fa-solid fa-bag-shopping"></i>
+                                                        <span>View</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- Mobile Layout (Original) -->
+                                            <div class="lg:hidden">
+                                                <!-- Pricing -->
+                                                <div class="my-1">
+                                                    <?php if ($discount > 0): ?>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-black font-bold">
+                                                            ₱<?= number_format($finalPrice, 2) ?>
+                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                        </p>
+                                                    <?php else: ?>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- Buttons -->
+                                                <div class="flex flex-col gap-1.5 mt-1.5">
+                                                    <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
+                                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                        <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                                            <i class="fa-solid fa-bag-shopping"></i>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </form>
+
+                                                    <!-- Add to Cart Button -->
+                                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="return_url" value="index">
+                                                        <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                            <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                                            Add to Cart
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                            <!-- Add to Cart Button - Desktop -->
+                                            <div class="hidden lg:block mt-2">
+                                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="return_url" value="index">
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                        <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                        Add to Cart
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
-
-                                        <!-- Buttons -->
-                                        <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
-                                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                    <span>View</span>
-                                                </button>
-                                            </form>
-
-                                            <!-- Add to Cart Button -->
-                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                <input type="hidden" name="return_url" value="index">
-                                                <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                    <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                                    Add to Cart
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <!-- Add to Cart Button - Desktop -->
-                                    <div class="hidden lg:block mt-2">
-                                        <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                            <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                            <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                            <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                            <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                            <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                            <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                            <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                            <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                            <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                            <input type="hidden" name="return_url" value="index">
-                                            <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                                Add to Cart
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-                            </div>
+                            <?php endwhile; ?>
                         </div>
-                    <?php endwhile; ?>
-                </div>
-            </div>
-        <?php else: ?>
-            <!-- No Products Available Message -->
-            <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-                <div class="text-center max-w-md">
-                    <!-- Icon -->
-                    <div class="mb-6">
-                        <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
                     </div>
+                <?php else: ?>
+                    <!-- No Products Available Message -->
+                    <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+                        <div class="text-center max-w-md">
+                            <!-- Icon -->
+                            <div class="mb-6">
+                                <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                            </div>
 
-                    <!-- Message -->
-                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                        No Products Available
-                    </h3>
-                    <p class="text-gray-500 text-sm sm:text-base mb-6">
-                        There are currently no discounted products available in this section. Please check back later for amazing deals!
-                    </p>
-                </div>
-            </div>
+                            <!-- Message -->
+                            <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                                No Products Available
+                            </h3>
+                            <p class="text-gray-500 text-sm sm:text-base mb-6">
+                                There are currently no discounted products available in this section. Please check back later for amazing deals!
+                            </p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <style>
+                    /* Animated View Details Button Styles */
+                    .animated-view-btn {
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-start;
+                        width: 45px;
+                        height: 40px;
+                        border: none;
+                        cursor: pointer;
+                        position: relative;
+                        overflow: hidden;
+                        transition-duration: .3s;
+                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                    }
+
+                    /* Icon */
+                    .animated-view-btn .btn-sign {
+                        width: 100%;
+                        font-size: 1em;
+                        color: white;
+                        transition-duration: .3s;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    /* Text */
+                    .animated-view-btn .btn-text {
+                        position: absolute;
+                        right: 0%;
+                        width: 0%;
+                        opacity: 0;
+                        color: white;
+                        font-size: 0.85em;
+                        font-weight: 600;
+                        transition-duration: .3s;
+                        white-space: nowrap;
+                    }
+
+                    /* Hover effect */
+                    .animated-view-btn:hover {
+                        width: 120px;
+                        transition-duration: .3s;
+                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                    }
+
+                    .animated-view-btn:hover .btn-sign {
+                        width: 35%;
+                        transition-duration: .3s;
+                        padding-left: 12px;
+                    }
+
+                    .animated-view-btn:hover .btn-text {
+                        opacity: 1;
+                        width: 65%;
+                        transition-duration: .3s;
+                        padding-right: 12px;
+                    }
+
+                    /* Click effect */
+                    .animated-view-btn:active {
+                        transform: translate(1px, 1px);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    }
+
+                    /* Mobile adjustments */
+                    @media (max-width: 1024px) {
+                        .animated-view-btn {
+                            width: 42px;
+                            height: 38px;
+                        }
+
+                        .animated-view-btn .btn-sign {
+                            font-size: 0.9em;
+                        }
+
+                        .animated-view-btn:hover {
+                            width: 100px;
+                        }
+                    }
+                </style>
+            </section>
         <?php endif; ?>
     </section>
 
-    <style>
-        /* Animated View Details Button Styles */
-        .animated-view-btn {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            width: 45px;
-            height: 40px;
-            border: none;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition-duration: .3s;
-            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-        }
 
-        /* Icon */
-        .animated-view-btn .btn-sign {
-            width: 100%;
-            font-size: 1em;
-            color: white;
-            transition-duration: .3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Text */
-        .animated-view-btn .btn-text {
-            position: absolute;
-            right: 0%;
-            width: 0%;
-            opacity: 0;
-            color: white;
-            font-size: 0.85em;
-            font-weight: 600;
-            transition-duration: .3s;
-            white-space: nowrap;
-        }
-
-        /* Hover effect */
-        .animated-view-btn:hover {
-            width: 120px;
-            transition-duration: .3s;
-            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-        }
-
-        .animated-view-btn:hover .btn-sign {
-            width: 35%;
-            transition-duration: .3s;
-            padding-left: 12px;
-        }
-
-        .animated-view-btn:hover .btn-text {
-            opacity: 1;
-            width: 65%;
-            transition-duration: .3s;
-            padding-right: 12px;
-        }
-
-        /* Click effect */
-        .animated-view-btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Mobile adjustments */
-        @media (max-width: 1024px) {
-            .animated-view-btn {
-                width: 42px;
-                height: 38px;
-            }
-
-            .animated-view-btn .btn-sign {
-                font-size: 0.9em;
-            }
-
-            .animated-view-btn:hover {
-                width: 100px;
-            }
-        }
-    </style>
 
     <!-- Featured Categories Section - Vertical Carousel -->
-<section class="w-full relative overflow-hidden bg-white py-12">
+    <section class="w-full relative overflow-hidden bg-white py-12">
         <!-- Header -->
         <div class="text-center mb-8 px-4">
             <h2 class="text-4xl md:text-5xl text-black mb-2 tracking-tight">Featured Collection</h2>
@@ -3213,762 +3367,838 @@ function displayTrendingBadge($view_count)
         </style>
     </section>
 
-<section>
-    <!-- Sidebar Overlay (Hidden by default) -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
+    <section>
+        <!-- Sidebar Overlay (Hidden by default) -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeSidebar()"></div>
 
-    <!-- Sidebar for Products -->
-    <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
-        <!-- Sidebar Header (Fixed) -->
-        <div class="bg-black border-b p-3 md:p-4 flex justify-between items-center flex-shrink-0">
-            <div class="text-white">
-                <h2 class="text-lg md:text-xl capitalize" id="sidebarTitle">Products</h2>
-                <p class="text-xs md:text-sm" id="sidebarSubtitle">Loading...</p>
+        <!-- Sidebar for Products -->
+        <div id="productSidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+            <!-- Sidebar Header (Fixed) -->
+            <div class="bg-black border-b p-3 md:p-4 flex justify-between items-center flex-shrink-0">
+                <div class="text-white">
+                    <h2 class="text-lg md:text-xl capitalize" id="sidebarTitle">Products</h2>
+                    <p class="text-xs md:text-sm" id="sidebarSubtitle">Loading...</p>
+                </div>
+                <button onclick="closeSidebar()" class="text-white hover:text-gray-300 transition-colors p-2 -mr-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-            <button onclick="closeSidebar()" class="text-white hover:text-gray-300 transition-colors p-2 -mr-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
 
-        <!-- Mobile Swipe Indicator -->
-        <div class="md:hidden bg-gray-100 py-2 flex justify-center flex-shrink-0">
-            <div class="w-12 h-1 bg-gray-400 rounded-full"></div>
-        </div>
+            <!-- Mobile Swipe Indicator -->
+            <div class="md:hidden bg-gray-100 py-2 flex justify-center flex-shrink-0">
+                <div class="w-12 h-1 bg-gray-400 rounded-full"></div>
+            </div>
 
-        <!-- Scroll Buttons Container (Desktop Only) -->
-        <div class="hidden md:flex gap-2 p-2 bg-gray-100 flex-shrink-0">
-            <button id="scrollUpBtn" onclick="scrollSidebarUp()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors hidden" title="Scroll Up">
-                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                </svg>
-            </button>
-            <button id="scrollDownBtn" onclick="scrollSidebarDown()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors" title="Scroll Down">
-                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-            </button>
-        </div>
+            <!-- Scroll Buttons Container (Desktop Only) -->
+            <div class="hidden md:flex gap-2 p-2 bg-gray-100 flex-shrink-0">
+                <button id="scrollUpBtn" onclick="scrollSidebarUp()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors hidden" title="Scroll Up">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
+                <button id="scrollDownBtn" onclick="scrollSidebarDown()" class="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded transition-colors" title="Scroll Down">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                </button>
+            </div>
 
-        <!-- Sidebar Content (Scrollable) -->
-        <div id="sidebarContent" class="flex-1 overflow-y-auto p-3 md:p-4">
-            <div class="flex justify-center items-center h-40">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            <!-- Sidebar Content (Scrollable) -->
+            <div id="sidebarContent" class="flex-1 overflow-y-auto p-3 md:p-4">
+                <div class="flex justify-center items-center h-40">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        const scrollStep = 150;
-        let touchStartY = 0;
-        let touchEndY = 0;
+        <script>
+            const scrollStep = 150;
+            let touchStartY = 0;
+            let touchEndY = 0;
 
-        function loadCategoryProducts(category) {
-            document.getElementById('sidebarOverlay').classList.remove('hidden');
-            document.getElementById('productSidebar').classList.remove('translate-x-full');
+            function loadCategoryProducts(category) {
+                document.getElementById('sidebarOverlay').classList.remove('hidden');
+                document.getElementById('productSidebar').classList.remove('translate-x-full');
 
-            const categoryNames = {
-                'doors': 'Doors',
-                'aircon': 'Aircon',
-                'bathroomfixtures': 'Bathroom Fixtures',
-                'tiles': 'Tiles'
-            };
+                const categoryNames = {
+                    'doors': 'Doors',
+                    'aircon': 'Aircon',
+                    'bathroomfixtures': 'Bathroom Fixtures',
+                    'tiles': 'Tiles'
+                };
 
-            document.getElementById('sidebarTitle').textContent = categoryNames[category] || category;
-            document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
-            document.getElementById('sidebarContent').innerHTML = `
+                document.getElementById('sidebarTitle').textContent = categoryNames[category] || category;
+                document.getElementById('sidebarSubtitle').textContent = 'Loading products...';
+                document.getElementById('sidebarContent').innerHTML = `
             <div class="flex justify-center items-center h-40">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
         `;
 
-            document.getElementById('sidebarContent').scrollTop = 0;
-            updateScrollButtons();
+                document.getElementById('sidebarContent').scrollTop = 0;
+                updateScrollButtons();
 
-            fetch('index-index_fetch_category_products-A.php?category=' + category)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('sidebarContent').innerHTML = data;
-                    document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
-                    updateScrollButtons();
-                })
-                .catch(error => {
-                    document.getElementById('sidebarContent').innerHTML = `
+                fetch('index-index_fetch_category_products-A.php?category=' + category)
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('sidebarContent').innerHTML = data;
+                        document.getElementById('sidebarSubtitle').textContent = 'Browse our collection';
+                        updateScrollButtons();
+                    })
+                    .catch(error => {
+                        document.getElementById('sidebarContent').innerHTML = `
                     <div class="text-center text-red-500 p-4">
                         <p>Error loading products. Please try again.</p>
                     </div>
                 `;
+                    });
+            }
+
+            function scrollSidebarUp() {
+                const content = document.getElementById('sidebarContent');
+                content.scrollBy({
+                    top: -scrollStep,
+                    behavior: 'smooth'
                 });
-        }
+                setTimeout(updateScrollButtons, 400);
+            }
 
-        function scrollSidebarUp() {
-            const content = document.getElementById('sidebarContent');
-            content.scrollBy({
-                top: -scrollStep,
-                behavior: 'smooth'
+            function scrollSidebarDown() {
+                const content = document.getElementById('sidebarContent');
+                content.scrollBy({
+                    top: scrollStep,
+                    behavior: 'smooth'
+                });
+                setTimeout(updateScrollButtons, 400);
+            }
+
+            function updateScrollButtons() {
+                const content = document.getElementById('sidebarContent');
+                const scrollUpBtn = document.getElementById('scrollUpBtn');
+                const scrollDownBtn = document.getElementById('scrollDownBtn');
+
+                if (content.scrollTop > 0) {
+                    scrollUpBtn.classList.remove('hidden');
+                } else {
+                    scrollUpBtn.classList.add('hidden');
+                }
+
+                if (content.scrollTop < content.scrollHeight - content.clientHeight - 10) {
+                    scrollDownBtn.classList.remove('hidden');
+                } else {
+                    scrollDownBtn.classList.add('hidden');
+                }
+            }
+
+            function closeSidebar() {
+                document.getElementById('sidebarOverlay').classList.add('hidden');
+                document.getElementById('productSidebar').classList.add('translate-x-full');
+            }
+
+            // Mobile swipe to close functionality
+            const sidebar = document.getElementById('productSidebar');
+
+            sidebar.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+            }, {
+                passive: true
             });
-            setTimeout(updateScrollButtons, 400);
-        }
 
-        function scrollSidebarDown() {
-            const content = document.getElementById('sidebarContent');
-            content.scrollBy({
-                top: scrollStep,
-                behavior: 'smooth'
+            sidebar.addEventListener('touchmove', (e) => {
+                touchEndY = e.touches[0].clientY;
+            }, {
+                passive: true
             });
-            setTimeout(updateScrollButtons, 400);
-        }
 
-        function updateScrollButtons() {
-            const content = document.getElementById('sidebarContent');
-            const scrollUpBtn = document.getElementById('scrollUpBtn');
-            const scrollDownBtn = document.getElementById('scrollDownBtn');
+            sidebar.addEventListener('touchend', () => {
+                const swipeDistance = touchEndY - touchStartY;
+                const content = document.getElementById('sidebarContent');
 
-            if (content.scrollTop > 0) {
-                scrollUpBtn.classList.remove('hidden');
-            } else {
-                scrollUpBtn.classList.add('hidden');
+                // Close sidebar if swiped down at the top of content (mobile only)
+                if (window.innerWidth < 768 && swipeDistance > 100 && content.scrollTop === 0) {
+                    closeSidebar();
+                }
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeSidebar();
+                }
+            });
+
+            // Update scroll buttons on scroll (desktop only)
+            document.getElementById('sidebarContent').addEventListener('scroll', () => {
+                if (window.innerWidth >= 768) {
+                    updateScrollButtons();
+                }
+            });
+
+            // Prevent body scroll when sidebar is open (mobile)
+            const observer = new MutationObserver(() => {
+                const overlay = document.getElementById('sidebarOverlay');
+                if (overlay.classList.contains('hidden')) {
+                    document.body.style.overflow = '';
+                } else {
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+
+            observer.observe(document.getElementById('sidebarOverlay'), {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        </script>
+
+        <style>
+            .category-box {
+                transition: all 0.3s ease;
             }
 
-            if (content.scrollTop < content.scrollHeight - content.clientHeight - 10) {
-                scrollDownBtn.classList.remove('hidden');
-            } else {
-                scrollDownBtn.classList.add('hidden');
-            }
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebarOverlay').classList.add('hidden');
-            document.getElementById('productSidebar').classList.add('translate-x-full');
-        }
-
-        // Mobile swipe to close functionality
-        const sidebar = document.getElementById('productSidebar');
-        
-        sidebar.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-        }, { passive: true });
-
-        sidebar.addEventListener('touchmove', (e) => {
-            touchEndY = e.touches[0].clientY;
-        }, { passive: true });
-
-        sidebar.addEventListener('touchend', () => {
-            const swipeDistance = touchEndY - touchStartY;
-            const content = document.getElementById('sidebarContent');
-            
-            // Close sidebar if swiped down at the top of content (mobile only)
-            if (window.innerWidth < 768 && swipeDistance > 100 && content.scrollTop === 0) {
-                closeSidebar();
-            }
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeSidebar();
-            }
-        });
-
-        // Update scroll buttons on scroll (desktop only)
-        document.getElementById('sidebarContent').addEventListener('scroll', () => {
-            if (window.innerWidth >= 768) {
-                updateScrollButtons();
-            }
-        });
-
-        // Prevent body scroll when sidebar is open (mobile)
-        const observer = new MutationObserver(() => {
-            const overlay = document.getElementById('sidebarOverlay');
-            if (overlay.classList.contains('hidden')) {
-                document.body.style.overflow = '';
-            } else {
-                document.body.style.overflow = 'hidden';
-            }
-        });
-
-        observer.observe(document.getElementById('sidebarOverlay'), {
-            attributes: true,
-            attributeFilter: ['class']
-        });
-    </script>
-
-    <style>
-        .category-box {
-            transition: all 0.3s ease;
-        }
-
-        .category-box:active {
-            transform: scale(0.98);
-        }
-
-        /* Mobile-specific optimizations */
-        @media (max-width: 768px) {
-            #sidebarContent {
-                -webkit-overflow-scrolling: touch;
-                overscroll-behavior: contain;
+            .category-box:active {
+                transform: scale(0.98);
             }
 
-            /* Ensure touch targets are at least 44px */
-            button {
-                min-height: 44px;
-                min-width: 44px;
+            /* Mobile-specific optimizations */
+            @media (max-width: 768px) {
+                #sidebarContent {
+                    -webkit-overflow-scrolling: touch;
+                    overscroll-behavior: contain;
+                }
+
+                /* Ensure touch targets are at least 44px */
+                button {
+                    min-height: 44px;
+                    min-width: 44px;
+                }
+
+                /* Smooth animations on mobile */
+                #productSidebar {
+                    -webkit-transform: translate3d(100%, 0, 0);
+                    transform: translate3d(100%, 0, 0);
+                }
+
+                #productSidebar:not(.translate-x-full) {
+                    -webkit-transform: translate3d(0, 0, 0);
+                    transform: translate3d(0, 0, 0);
+                }
             }
 
-            /* Smooth animations on mobile */
-            #productSidebar {
-                -webkit-transform: translate3d(100%, 0, 0);
-                transform: translate3d(100%, 0, 0);
+            /* Desktop optimizations */
+            @media (min-width: 768px) {
+                #sidebarContent {
+                    overflow-y: hidden;
+                }
             }
 
-            #productSidebar:not(.translate-x-full) {
-                -webkit-transform: translate3d(0, 0, 0);
-                transform: translate3d(0, 0, 0);
+            /* Safe area for notched devices */
+            @supports (padding: max(0px)) {
+                #productSidebar {
+                    padding-left: max(0px, env(safe-area-inset-left));
+                    padding-right: max(0px, env(safe-area-inset-right));
+                }
             }
-        }
-
-        /* Desktop optimizations */
-        @media (min-width: 768px) {
-            #sidebarContent {
-                overflow-y: hidden;
-            }
-        }
-
-        /* Safe area for notched devices */
-        @supports (padding: max(0px)) {
-            #productSidebar {
-                padding-left: max(0px, env(safe-area-inset-left));
-                padding-right: max(0px, env(safe-area-inset-right));
-            }
-        }
-    </style>
-</section>
+        </style>
+    </section>
 
 
-    <!-- Top Sales Section -->
-    <section class="px-4 py-10">
-        <!-- Header -->
-        <div class="text-center mb-10 relative">
-            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
-            <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
-                Get Up to <span class="text-red-500">5% Discount</span> on Select Items!
-            </h2>
-            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-        </div>
 
+    <section>
         <?php
         // Check if there are any products
         $row_count = mysqli_num_rows($material_resultsone);
         ?>
 
         <?php if ($row_count > 0): ?>
-            <!-- Swiper Container -->
-            <div class="swiper mySwiper-products w-full">
-                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                    <?php while ($row = mysqli_fetch_assoc($material_resultsone)) : ?>
-                        <?php
-                        $base = (float)$row['price'];
-                        $percent = (float)($row['percent'] ?? 0);
-                        $discount = (float)($row['discount'] ?? 0);
-                        $priceWithMarkup = $base + ($base * $percent / 100);
-                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                        ?>
-                        <div class="swiper-slide p-2">
-                            <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[320px] sm:h-[360px] lg:h-[420px] text-center relative">
-                                <!-- Triangle Badge -->
-                                <div class="absolute top-0 left-0 z-10">
-                                    <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
-                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
-                                    </div>
-                                </div>
+            <!-- Top Sales Section -->
+            <section class="px-4 py-10">
+                <!-- Header -->
+                <div class="text-center mb-10 relative">
+                    <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
+                    <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
+                        Get Up to <span class="text-red-500">5% Discount</span> on Select Items!
+                    </h2>
+                    <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                </div>
 
-                                <!-- Product Image -->
-                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
-                                    <?php if (!empty($row['type_image'])): ?>
-                                        <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                            class="w-full h-full object-cover lg:object-contain transition-transform duration-300 group-hover:scale-105" />
-                                    <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                    <?php endif; ?>
-                                </div>
+                <?php
+                // Check if there are any products
+                $row_count = mysqli_num_rows($material_resultsone);
+                ?>
 
-                                <!-- Product Info -->
-                                <div class="mt-auto">
-                                    <div class="relative w-full">
-                                        <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
-                                            <?= htmlspecialchars($row['product_name']) ?>
-                                        </h3>
-                                    </div>
+                <?php if ($row_count > 0): ?>
+                    <!-- Swiper Container -->
+                    <div class="swiper mySwiper-products w-full">
+                        <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                            <?php while ($row = mysqli_fetch_assoc($material_resultsone)) : ?>
+                                <?php
+                                $base = (float)$row['price'];
+                                $percent = (float)($row['percent'] ?? 0);
+                                $discount = (float)($row['discount'] ?? 0);
+                                $priceWithMarkup = $base + ($base * $percent / 100);
+                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
 
-                                    <!-- Description - Desktop Only -->
-                                    <div class="hidden lg:block relative w-full mt-1">
-                                        <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
-                                            <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
-                                        </p>
-                                    </div>
+                                // Get stats
+                                $viewCount = (int)($row['view_count'] ?? 0);
+                                $soldCount = (int)($row['total_sold'] ?? 0);
+                                $avgRating = (float)($row['avg_rating'] ?? 0);
+                                $ratingCount = (int)($row['rating_count'] ?? 0);
+                                ?>
+                                <div class="swiper-slide p-2">
+                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[380px] sm:h-[420px] lg:h-[480px] text-center relative">
+                                        <!-- Triangle Badge -->
+                                        <div class="absolute top-0 left-0 z-10">
+                                            <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
+                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
+                                            </div>
+                                        </div>
 
-                                    <!-- Price + View Button Row - Desktop Only -->
-                                    <div class="hidden lg:flex items-center justify-between mt-2 px-2">
-                                        <!-- Pricing -->
-                                        <div>
-                                            <?php if ($discount > 0): ?>
-                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                <p class="text-sm text-black font-bold">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                </p>
+                                        <!-- Product Image -->
+                                        <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
+                                            <?php if (!empty($row['type_image'])): ?>
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                                    class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
                                             <?php else: ?>
-                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                             <?php endif; ?>
                                         </div>
 
-                                        <!-- View Button -->
-                                        <form action="index-product_view-page-4-AA" method="GET">
-                                            <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                                <span>View</span>
-                                            </button>
-                                        </form>
-                                    </div>
+                                        <!-- Product Info -->
+                                        <div class="">
+                                            <div class="relative w-full">
+                                                <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
+                                                    <?= htmlspecialchars($row['product_name']) ?>
+                                                </h3>
+                                            </div>
 
-                                    <!-- Mobile Layout (Original) -->
-                                    <div class="lg:hidden">
-                                        <!-- Pricing -->
-                                        <div class="my-1">
-                                            <?php if ($discount > 0): ?>
-                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                <p class="text-sm text-black font-bold">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                            <!-- Description - Desktop Only -->
+                                            <div class="hidden lg:block relative w-full mt-1">
+                                                <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
+                                                    <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
                                                 </p>
-                                            <?php else: ?>
-                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                            <?php endif; ?>
+                                            </div>
+
+                                            <!-- Stats Row (Views, Sold, Rating) -->
+                                            <div class="flex items-center justify-center lg:justify-start gap-1 mt-2 px-2 text-xs text-gray-600">
+                                                <!-- Views -->
+                                                <span><?= number_format($viewCount) ?> viewing</span>
+                                                <span>|</span>
+
+                                                <!-- Sold -->
+                                                <span><?= number_format($soldCount) ?> sold</span>
+
+                                                <!-- Rating -->
+                                                <?php if ($ratingCount > 0): ?>
+                                                    <span>|</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <i class="fa-solid fa-star text-yellow-500"></i>
+                                                        <span><?= number_format($avgRating, 1) ?></span>
+                                                        <span class="text-gray-400">(<?= $ratingCount ?>)</span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Price + View Button Row - Desktop Only -->
+                                            <div class="hidden lg:flex items-center justify-between mt-2 px-2">
+                                                <!-- Pricing -->
+                                                <div>
+                                                    <?php if ($discount > 0): ?>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-black font-bold">
+                                                            ₱<?= number_format($finalPrice, 2) ?>
+                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                        </p>
+                                                    <?php else: ?>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- View Button -->
+                                                <form action="index-product_view-page-4-AA" method="GET">
+                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                    <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
+                                                        <i class="fa-solid fa-bag-shopping"></i>
+                                                        <span>View</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- Mobile Layout (Original) -->
+                                            <div class="lg:hidden">
+                                                <!-- Pricing -->
+                                                <div class="my-1">
+                                                    <?php if ($discount > 0): ?>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-black font-bold">
+                                                            ₱<?= number_format($finalPrice, 2) ?>
+                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                        </p>
+                                                    <?php else: ?>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- Buttons -->
+                                                <div class="flex flex-col gap-1.5 mt-1.5">
+                                                    <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
+                                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                        <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                                            <i class="fa-solid fa-bag-shopping"></i>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </form>
+
+                                                    <!-- Add to Cart Button -->
+                                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="return_url" value="index">
+                                                        <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                            <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                                            Add to Cart
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                            <!-- Add to Cart Button - Desktop -->
+                                            <div class="hidden lg:block mt-2">
+                                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="return_url" value="index">
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                        <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                        Add to Cart
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
-
-                                        <!-- Buttons -->
-                                        <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
-                                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                    <span>View</span>
-                                                </button>
-                                            </form>
-
-                                            <!-- Add to Cart Button -->
-                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                <input type="hidden" name="return_url" value="index">
-                                                <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                    <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                                    Add to Cart
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <!-- Add to Cart Button - Desktop -->
-                                    <div class="hidden lg:block mt-2">
-                                        <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                            <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                            <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                            <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                            <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                            <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                            <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                            <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                            <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                            <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                            <input type="hidden" name="return_url" value="index">
-                                            <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                                Add to Cart
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-                            </div>
+                            <?php endwhile; ?>
                         </div>
-                    <?php endwhile; ?>
-                </div>
-            </div>
-        <?php else: ?>
-            <!-- No Products Available Message -->
-            <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-                <div class="text-center max-w-md">
-                    <!-- Icon -->
-                    <div class="mb-6">
-                        <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
                     </div>
+                <?php else: ?>
+                    <!-- No Products Available Message -->
+                    <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+                        <div class="text-center max-w-md">
+                            <!-- Icon -->
+                            <div class="mb-6">
+                                <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                            </div>
 
-                    <!-- Message -->
-                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                        No Products Available
-                    </h3>
-                    <p class="text-gray-500 text-sm sm:text-base mb-6">
-                        There are currently no discounted products available in this section. Please check back later for amazing deals!
-                    </p>
-                </div>
-            </div>
+                            <!-- Message -->
+                            <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                                No Products Available
+                            </h3>
+                            <p class="text-gray-500 text-sm sm:text-base mb-6">
+                                There are currently no discounted products available in this section. Please check back later for amazing deals!
+                            </p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <style>
+                    /* Animated View Details Button Styles */
+                    .animated-view-btn {
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-start;
+                        width: 45px;
+                        height: 40px;
+                        border: none;
+                        cursor: pointer;
+                        position: relative;
+                        overflow: hidden;
+                        transition-duration: .3s;
+                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                    }
+
+                    /* Icon */
+                    .animated-view-btn .btn-sign {
+                        width: 100%;
+                        font-size: 1em;
+                        color: white;
+                        transition-duration: .3s;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    /* Text */
+                    .animated-view-btn .btn-text {
+                        position: absolute;
+                        right: 0%;
+                        width: 0%;
+                        opacity: 0;
+                        color: white;
+                        font-size: 0.85em;
+                        font-weight: 600;
+                        transition-duration: .3s;
+                        white-space: nowrap;
+                    }
+
+                    /* Hover effect */
+                    .animated-view-btn:hover {
+                        width: 120px;
+                        transition-duration: .3s;
+                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                    }
+
+                    .animated-view-btn:hover .btn-sign {
+                        width: 35%;
+                        transition-duration: .3s;
+                        padding-left: 12px;
+                    }
+
+                    .animated-view-btn:hover .btn-text {
+                        opacity: 1;
+                        width: 65%;
+                        transition-duration: .3s;
+                        padding-right: 12px;
+                    }
+
+                    /* Click effect */
+                    .animated-view-btn:active {
+                        transform: translate(1px, 1px);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    }
+
+                    /* Mobile adjustments */
+                    @media (max-width: 1024px) {
+                        .animated-view-btn {
+                            width: 42px;
+                            height: 38px;
+                        }
+
+                        .animated-view-btn .btn-sign {
+                            font-size: 0.9em;
+                        }
+
+                        .animated-view-btn:hover {
+                            width: 100px;
+                        }
+                    }
+                </style>
+            </section>
         <?php endif; ?>
     </section>
 
-    <style>
-        /* Animated View Details Button Styles */
-        .animated-view-btn {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            width: 45px;
-            height: 40px;
-            border: none;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition-duration: .3s;
-            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-        }
 
-        /* Icon */
-        .animated-view-btn .btn-sign {
-            width: 100%;
-            font-size: 1em;
-            color: white;
-            transition-duration: .3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Text */
-        .animated-view-btn .btn-text {
-            position: absolute;
-            right: 0%;
-            width: 0%;
-            opacity: 0;
-            color: white;
-            font-size: 0.85em;
-            font-weight: 600;
-            transition-duration: .3s;
-            white-space: nowrap;
-        }
-
-        /* Hover effect */
-        .animated-view-btn:hover {
-            width: 120px;
-            transition-duration: .3s;
-            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-        }
-
-        .animated-view-btn:hover .btn-sign {
-            width: 35%;
-            transition-duration: .3s;
-            padding-left: 12px;
-        }
-
-        .animated-view-btn:hover .btn-text {
-            opacity: 1;
-            width: 65%;
-            transition-duration: .3s;
-            padding-right: 12px;
-        }
-
-        /* Click effect */
-        .animated-view-btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Mobile adjustments */
-        @media (max-width: 1024px) {
-            .animated-view-btn {
-                width: 42px;
-                height: 38px;
-            }
-
-            .animated-view-btn .btn-sign {
-                font-size: 0.9em;
-            }
-
-            .animated-view-btn:hover {
-                width: 100px;
-            }
-        }
-    </style>
-
-    <!-- Top Sales Section -->
-    <section class="px-4 py-10">
-        <!-- Header -->
-        <div class="text-center mb-10 relative">
-            <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">New Arrival</h2>
-
-            <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-        </div>
-
+    <section>
         <?php
         // Check if there are any products
         $row_count = mysqli_num_rows($material_resultstwo);
         ?>
 
         <?php if ($row_count > 0): ?>
-            <!-- Swiper Container -->
-            <div class="swiper mySwiper-products w-full">
-                <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                    <?php while ($row = mysqli_fetch_assoc($material_resultstwo)) : ?>
-                        <?php
-                        $base = (float)$row['price'];
-                        $percent = (float)($row['percent'] ?? 0);
-                        $discount = (float)($row['discount'] ?? 0);
-                        $priceWithMarkup = $base + ($base * $percent / 100);
-                        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                        ?>
-                        <div class="swiper-slide p-2">
-                            <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[320px] sm:h-[360px] lg:h-[420px] text-center relative">
-                                <!-- Triangle Badge -->
-                                <div class="absolute top-0 left-0 z-10">
-                                    <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
-                                        <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
-                                    </div>
-                                </div>
+            <!-- Top Sales Section -->
+            <section class="px-4 py-10">
+                <!-- Header -->
+                <div class="text-center mb-10 relative">
+                    <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">New Arrival</h2>
 
-                                <!-- Product Image -->
-                                <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
-                                    <?php if (!empty($row['type_image'])): ?>
-                                        <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                            class="w-full h-full object-cover lg:object-contain transition-transform duration-300 group-hover:scale-105" />
-                                    <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                    <?php endif; ?>
-                                </div>
+                    <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                </div>
 
-                                <!-- Product Info -->
-                                <div class="mt-auto">
-                                    <div class="relative w-full">
-                                        <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
-                                            <?= htmlspecialchars($row['product_name']) ?>
-                                        </h3>
-                                    </div>
+                <?php
+                // Check if there are any products
+                $row_count = mysqli_num_rows($material_resultstwo);
+                ?>
 
-                                    <!-- Description - Desktop Only -->
-                                    <div class="hidden lg:block relative w-full mt-1">
-                                        <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
-                                            <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
-                                        </p>
-                                    </div>
+                <?php if ($row_count > 0): ?>
+                    <!-- Swiper Container -->
+                    <div class="swiper mySwiper-products w-full">
+                        <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                            <?php while ($row = mysqli_fetch_assoc($material_resultstwo)) : ?>
+                                <?php
+                                $base = (float)$row['price'];
+                                $percent = (float)($row['percent'] ?? 0);
+                                $discount = (float)($row['discount'] ?? 0);
+                                $priceWithMarkup = $base + ($base * $percent / 100);
+                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
 
-                                    <!-- Price + View Button Row - Desktop Only -->
-                                    <div class="hidden lg:flex items-center justify-between mt-2 px-2">
-                                        <!-- Pricing -->
-                                        <div>
-                                            <?php if ($discount > 0): ?>
-                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                <p class="text-sm text-black font-bold">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                </p>
+                                // Get stats
+                                $viewCount = (int)($row['view_count'] ?? 0);
+                                $soldCount = (int)($row['total_sold'] ?? 0);
+                                $avgRating = (float)($row['avg_rating'] ?? 0);
+                                $ratingCount = (int)($row['rating_count'] ?? 0);
+                                ?>
+                                <div class="swiper-slide p-2">
+                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[380px] sm:h-[420px] lg:h-[480px] text-center relative">
+                                        <!-- Triangle Badge -->
+                                        <div class="absolute top-0 left-0 z-10">
+                                            <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
+                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Image -->
+                                        <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
+                                            <?php if (!empty($row['type_image'])): ?>
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
+                                                    class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
                                             <?php else: ?>
-                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                             <?php endif; ?>
                                         </div>
 
-                                        <!-- View Button -->
-                                        <form action="index-product_view-page-4-AA" method="GET">
-                                            <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
-                                                <i class="fa-solid fa-bag-shopping"></i>
-                                                <span>View</span>
-                                            </button>
-                                        </form>
-                                    </div>
+                                        <!-- Product Info -->
+                                        <div class="">
+                                            <div class="relative w-full">
+                                                <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
+                                                    <?= htmlspecialchars($row['product_name']) ?>
+                                                </h3>
+                                            </div>
 
-                                    <!-- Mobile Layout (Original) -->
-                                    <div class="lg:hidden">
-                                        <!-- Pricing -->
-                                        <div class="my-1">
-                                            <?php if ($discount > 0): ?>
-                                                <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                <p class="text-sm text-black font-bold">
-                                                    ₱<?= number_format($finalPrice, 2) ?>
-                                                    <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                            <!-- Description - Desktop Only -->
+                                            <div class="hidden lg:block relative w-full mt-1">
+                                                <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
+                                                    <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
                                                 </p>
-                                            <?php else: ?>
-                                                <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                            <?php endif; ?>
+                                            </div>
+
+                                            <!-- Stats Row (Views, Sold, Rating) -->
+                                            <div class="flex items-center justify-center lg:justify-start gap-1 mt-2 px-2 text-xs text-gray-600">
+                                                <!-- Views -->
+                                                <span><?= number_format($viewCount) ?> viewing</span>
+                                                <span>|</span>
+
+                                                <!-- Sold -->
+                                                <span><?= number_format($soldCount) ?> sold</span>
+
+                                                <!-- Rating -->
+                                                <?php if ($ratingCount > 0): ?>
+                                                    <span>|</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <i class="fa-solid fa-star text-yellow-500"></i>
+                                                        <span><?= number_format($avgRating, 1) ?></span>
+                                                        <span class="text-gray-400">(<?= $ratingCount ?>)</span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Price + View Button Row - Desktop Only -->
+                                            <div class="hidden lg:flex items-center justify-between mt-2 px-2">
+                                                <!-- Pricing -->
+                                                <div>
+                                                    <?php if ($discount > 0): ?>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-black font-bold">
+                                                            ₱<?= number_format($finalPrice, 2) ?>
+                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                        </p>
+                                                    <?php else: ?>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- View Button -->
+                                                <form action="index-product_view-page-4-AA" method="GET">
+                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                    <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
+                                                        <i class="fa-solid fa-bag-shopping"></i>
+                                                        <span>View</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- Mobile Layout (Original) -->
+                                            <div class="lg:hidden">
+                                                <!-- Pricing -->
+                                                <div class="my-1">
+                                                    <?php if ($discount > 0): ?>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-black font-bold">
+                                                            ₱<?= number_format($finalPrice, 2) ?>
+                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                        </p>
+                                                    <?php else: ?>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <!-- Buttons -->
+                                                <div class="flex flex-col gap-1.5 mt-1.5">
+                                                    <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
+                                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                        <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
+                                                            <i class="fa-solid fa-bag-shopping"></i>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </form>
+
+                                                    <!-- Add to Cart Button -->
+                                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="return_url" value="index">
+                                                        <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                            <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
+                                                            Add to Cart
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                            <!-- Add to Cart Button - Desktop -->
+                                            <div class="hidden lg:block mt-2">
+                                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="return_url" value="index">
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
+                                                        <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                        Add to Cart
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
-
-                                        <!-- Buttons -->
-                                        <div class="flex flex-col gap-1.5 mt-1.5">
-                                            <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
-                                                <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
-                                                    <i class="fa-solid fa-bag-shopping"></i>
-                                                    <span>View</span>
-                                                </button>
-                                            </form>
-
-                                            <!-- Add to Cart Button -->
-                                            <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                <input type="hidden" name="return_url" value="index">
-                                                <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                    <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                                    Add to Cart
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <!-- Add to Cart Button - Desktop -->
-                                    <div class="hidden lg:block mt-2">
-                                        <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                            <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                            <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                            <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                            <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                            <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                            <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                            <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                            <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                            <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                            <input type="hidden" name="return_url" value="index">
-                                            <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                                Add to Cart
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-                            </div>
+                            <?php endwhile; ?>
                         </div>
-                    <?php endwhile; ?>
-                </div>
-            </div>
-        <?php else: ?>
-            <!-- No Products Available Message -->
-            <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-                <div class="text-center max-w-md">
-                    <!-- Icon -->
-                    <div class="mb-6">
-                        <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
                     </div>
+                <?php else: ?>
+                    <!-- No Products Available Message -->
+                    <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
+                        <div class="text-center max-w-md">
+                            <!-- Icon -->
+                            <div class="mb-6">
+                                <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                            </div>
 
-                    <!-- Message -->
-                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                        No Products Available
-                    </h3>
-                    <p class="text-gray-500 text-sm sm:text-base mb-6">
-                        There are currently no discounted products available in this section. Please check back later for amazing deals!
-                    </p>
-                </div>
-            </div>
+                            <!-- Message -->
+                            <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
+                                No Products Available
+                            </h3>
+                            <p class="text-gray-500 text-sm sm:text-base mb-6">
+                                There are currently no discounted products available in this section. Please check back later for amazing deals!
+                            </p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <style>
+                    /* Animated View Details Button Styles */
+                    .animated-view-btn {
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-start;
+                        width: 45px;
+                        height: 40px;
+                        border: none;
+                        cursor: pointer;
+                        position: relative;
+                        overflow: hidden;
+                        transition-duration: .3s;
+                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                    }
+
+                    /* Icon */
+                    .animated-view-btn .btn-sign {
+                        width: 100%;
+                        font-size: 1em;
+                        color: white;
+                        transition-duration: .3s;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    /* Text */
+                    .animated-view-btn .btn-text {
+                        position: absolute;
+                        right: 0%;
+                        width: 0%;
+                        opacity: 0;
+                        color: white;
+                        font-size: 0.85em;
+                        font-weight: 600;
+                        transition-duration: .3s;
+                        white-space: nowrap;
+                    }
+
+                    /* Hover effect */
+                    .animated-view-btn:hover {
+                        width: 120px;
+                        transition-duration: .3s;
+                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
+                    }
+
+                    .animated-view-btn:hover .btn-sign {
+                        width: 35%;
+                        transition-duration: .3s;
+                        padding-left: 12px;
+                    }
+
+                    .animated-view-btn:hover .btn-text {
+                        opacity: 1;
+                        width: 65%;
+                        transition-duration: .3s;
+                        padding-right: 12px;
+                    }
+
+                    /* Click effect */
+                    .animated-view-btn:active {
+                        transform: translate(1px, 1px);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    }
+
+                    /* Mobile adjustments */
+                    @media (max-width: 1024px) {
+                        .animated-view-btn {
+                            width: 42px;
+                            height: 38px;
+                        }
+
+                        .animated-view-btn .btn-sign {
+                            font-size: 0.9em;
+                        }
+
+                        .animated-view-btn:hover {
+                            width: 100px;
+                        }
+                    }
+                </style>
+            </section>
+
+
         <?php endif; ?>
     </section>
-
-    <style>
-        /* Animated View Details Button Styles */
-        .animated-view-btn {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            width: 45px;
-            height: 40px;
-            border: none;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition-duration: .3s;
-            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-        }
-
-        /* Icon */
-        .animated-view-btn .btn-sign {
-            width: 100%;
-            font-size: 1em;
-            color: white;
-            transition-duration: .3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Text */
-        .animated-view-btn .btn-text {
-            position: absolute;
-            right: 0%;
-            width: 0%;
-            opacity: 0;
-            color: white;
-            font-size: 0.85em;
-            font-weight: 600;
-            transition-duration: .3s;
-            white-space: nowrap;
-        }
-
-        /* Hover effect */
-        .animated-view-btn:hover {
-            width: 120px;
-            transition-duration: .3s;
-            background: linear-gradient(135deg, #000000 0%, #000000 100%);
-        }
-
-        .animated-view-btn:hover .btn-sign {
-            width: 35%;
-            transition-duration: .3s;
-            padding-left: 12px;
-        }
-
-        .animated-view-btn:hover .btn-text {
-            opacity: 1;
-            width: 65%;
-            transition-duration: .3s;
-            padding-right: 12px;
-        }
-
-        /* Click effect */
-        .animated-view-btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Mobile adjustments */
-        @media (max-width: 1024px) {
-            .animated-view-btn {
-                width: 42px;
-                height: 38px;
-            }
-
-            .animated-view-btn .btn-sign {
-                font-size: 0.9em;
-            }
-
-            .animated-view-btn:hover {
-                width: 100px;
-            }
-        }
-    </style>
 
     <!-- Floating Chatbot Widget -->
     <div id="chatbot-widget" class="fixed bottom-5 right-5 z-50">

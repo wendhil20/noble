@@ -599,6 +599,9 @@ $hidden_pages = ['help.php', 'about.php'];
             </ul>
           </div>
         </div>
+
+
+
         <a href="../otherpage/index-inspirationpage-page-11.php"
           class="hidden xl:block text-md text-black hover:text-orange-500 transition duration-200 font-roboto  ">
           Inspiration
@@ -2057,19 +2060,108 @@ $hidden_pages = ['help.php', 'about.php'];
             <span class="font-medium">Messages</span>
           </a>
 
-          <!-- Notifications -->
-          <div x-data="notificationSystem" x-init="init()">
+          <!-- Notifications - Mobile Responsive -->
+          <div x-data="notificationSystem" x-init="init()" class="relative">
+            <!-- Button with notification icon -->
             <button @click="notifOpen = !notifOpen; if (notifOpen) markAsRead()"
-              class="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
-              <div class="flex items-center gap-3">
+              class="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition lg:hidden relative">
+              <div class="flex items-center gap-3 flex-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                <span class="font-medium">Notifications</span>
+                <span class="font-medium text-sm">Notifications</span>
               </div>
-              <span x-show="unreadCount > 0" x-text="unreadCount" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"></span>
+
+              <!-- Badge positioned on button -->
+              <span x-show="unreadCount > 0" x-text="unreadCount"
+                class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold min-w-[20px] text-center flex-shrink-0"></span>
             </button>
+
+            <!-- Mobile Notification Dropdown - Positioned inside sidebar flow -->
+            <div x-show="notifOpen"
+              x-cloak
+              @click.outside="notifOpen = false"
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 scale-95"
+              x-transition:enter-end="opacity-100 scale-100"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 scale-100"
+              x-transition:leave-end="opacity-0 scale-95"
+              class="lg:hidden bg-white border border-t-0 border-gray-200 max-h-80 overflow-hidden flex flex-col">
+
+              <!-- Header -->
+              <div class="flex justify-between items-center px-4 py-3 border-b bg-orange-50 shrink-0">
+                <span class="text-sm font-semibold text-gray-800">Your Notifications</span>
+                <button @click.stop="clearNotifications()"
+                  class="text-xs text-orange-500 hover:text-orange-700 font-medium transition">
+                  Clear All
+                </button>
+              </div>
+
+              <!-- Notifications List -->
+              <ul class="overflow-y-auto flex-1">
+                <template x-for="notif in notifications" :key="notif.id">
+                  <li class="border-b last:border-0">
+                    <div class="px-4 py-3 hover:bg-orange-50 transition cursor-pointer">
+                      <p class="text-sm text-gray-800 font-medium mb-1" x-text="notif.message"></p>
+                      <span class="text-xs text-gray-400" x-text="formatDateTime(notif.created_at)"></span>
+                    </div>
+                  </li>
+                </template>
+
+                <!-- Empty State -->
+                <template x-if="notifications.length === 0">
+                  <li class="py-8 px-4 text-center">
+                    <svg class="w-12 h-12 text-gray-200 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p class="text-sm text-gray-500 mt-2">No notifications yet</p>
+                  </li>
+                </template>
+              </ul>
+
+              <!-- Footer Close -->
+              <div class="px-4 py-2 bg-gray-50 border-t shrink-0">
+                <button @click.stop="notifOpen = false"
+                  class="w-full text-xs text-gray-600 hover:text-gray-800 py-1.5 font-medium transition">
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
+
+          <style>
+            /* Smooth scrollbar for notification list */
+            ul::-webkit-scrollbar {
+              width: 4px;
+            }
+
+            ul::-webkit-scrollbar-track {
+              background: #f9fafb;
+            }
+
+            ul::-webkit-scrollbar-thumb {
+              background: #fed7aa;
+              border-radius: 2px;
+            }
+
+            ul::-webkit-scrollbar-thumb:hover {
+              background: #fb923c;
+            }
+
+            /* Firefox scrollbar */
+            ul {
+              scrollbar-width: thin;
+              scrollbar-color: #fed7aa #f9fafb;
+            }
+
+            /* Hide on desktop */
+            @media (min-width: 1024px) {
+              .lg\:hidden {
+                display: none !important;
+              }
+            }
+          </style>
         </div>
 
         <!-- Auth Section (if not logged in) -->

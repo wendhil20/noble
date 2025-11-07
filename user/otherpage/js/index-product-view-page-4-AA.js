@@ -1,3 +1,4 @@
+// ===== MAGNIFIER FUNCTIONALITY =====
 document.addEventListener("DOMContentLoaded", function () {
   const container = document.getElementById("magnifier-container");
   const img = document.getElementById("main-product-image");
@@ -10,17 +11,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const zoomLevel = 2.5;
   let isActive = false;
 
-  // Show lens and preview when mouse enters image
   container.addEventListener("mouseenter", function () {
     isActive = true;
-
-    // Show lens and preview
     lens.classList.remove("hidden");
     lens.classList.add("active");
     previewPanel.classList.remove("hidden");
     previewPanel.classList.add("active");
 
-    // Setup preview image
     if (img.complete) {
       setupPreview();
     } else {
@@ -28,11 +25,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Hide lens and preview when mouse leaves image
   container.addEventListener("mouseleave", function () {
     isActive = false;
-
-    // Hide with animation
     lens.classList.remove("active");
     previewPanel.classList.remove("active");
 
@@ -47,7 +41,6 @@ document.addEventListener("DOMContentLoaded", function () {
     previewContent.style.backgroundImage = `url('${img.src}')`;
   }
 
-  // Track mouse movement inside image
   container.addEventListener("mousemove", function (e) {
     if (!isActive) return;
 
@@ -55,18 +48,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Position tracking lens
     let lensX = x - lens.offsetWidth / 2;
     let lensY = y - lens.offsetHeight / 2;
 
-    // Keep lens within image bounds
     lensX = Math.max(0, Math.min(lensX, rect.width - lens.offsetWidth));
     lensY = Math.max(0, Math.min(lensY, rect.height - lens.offsetHeight));
 
     lens.style.left = lensX + "px";
     lens.style.top = lensY + "px";
 
-    // Update preview panel zoom position
     const percentX = (x / rect.width) * 100;
     const percentY = (y / rect.height) * 100;
 
@@ -74,7 +64,6 @@ document.addEventListener("DOMContentLoaded", function () {
     previewContent.style.backgroundSize = `${zoomLevel * 100}%`;
   });
 
-  // Update preview when image source changes (e.g., color selection)
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       if (mutation.type === "attributes" && mutation.attributeName === "src") {
@@ -91,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// Mobile sidebar functionality
+// ===== MOBILE SIDEBAR FUNCTIONALITY =====
 document.addEventListener("DOMContentLoaded", function () {
   const sidebarToggle = document.getElementById("mobileSidebarToggle");
   const closeSidebar = document.getElementById("closeSidebar");
@@ -123,22 +112,19 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// ===== THUMBNAIL GALLERY =====
 document.addEventListener("DOMContentLoaded", function () {
-  // Highlight active thumbnail on click
   document.querySelectorAll(".thumbnail-item").forEach((item) => {
     item.addEventListener("click", () => {
-      // Remove active class from all thumbnails
       document.querySelectorAll(".thumbnail-item img").forEach((img) => {
         img.classList.remove("border-blue-500", "thumbnail-active");
         img.classList.add("border-transparent");
       });
 
-      // Add active class to clicked thumbnail
       const clickedImg = item.querySelector("img");
       clickedImg.classList.add("border-blue-500", "thumbnail-active");
       clickedImg.classList.remove("border-transparent");
 
-      // Scroll clicked thumbnail into view
       item.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
@@ -147,7 +133,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Optional: Add touch/swipe support for mobile
   let isDown = false;
   let startX;
   let scrollLeft;
@@ -182,108 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Image gallery functionality
-  const mainImage = document.getElementById("main-product-image");
-  const thumbnails = document.querySelectorAll(".thumbnail-item");
-  const prevBtn = document.getElementById("prev-image");
-  const nextBtn = document.getElementById("next-image");
-  const currentIndexSpan = document.getElementById("current-image-index");
-
-  // All image sources (main + sub images) - You'll need to populate this with actual PHP data
-  const allImages = [
-    // Main image first, then sub images
-    // This needs to be populated with actual image paths from PHP
-  ];
-
-  let currentImageIndex = 0;
-
-  // Function to update main image and active thumbnail
-  function updateMainImage(index) {
-    if (index >= 0 && index < allImages.length) {
-      currentImageIndex = index;
-      mainImage.src = allImages[index];
-
-      // Update current image counter
-      if (currentIndexSpan) {
-        currentIndexSpan.textContent = index + 1;
-      }
-
-      // Update active thumbnail
-      thumbnails.forEach((thumb, i) => {
-        thumb
-          .querySelector("img")
-          .classList.toggle("thumbnail-active", i === index);
-      });
-    }
-  }
-
-  // Thumbnail click handlers
-  thumbnails.forEach((thumbnail, index) => {
-    thumbnail.addEventListener("click", function () {
-      updateMainImage(index);
-    });
-  });
-
-  // Navigation button handlers
-  if (prevBtn) {
-    prevBtn.addEventListener("click", function () {
-      const newIndex =
-        currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
-      updateMainImage(newIndex);
-    });
-  }
-
-  if (nextBtn) {
-    nextBtn.addEventListener("click", function () {
-      const newIndex =
-        currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
-      updateMainImage(newIndex);
-    });
-  }
-
-  // Keyboard navigation
-  document.addEventListener("keydown", function (e) {
-    if (allImages.length > 1) {
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        if (prevBtn) prevBtn.click();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        if (nextBtn) nextBtn.click();
-      }
-    }
-  });
-
-  // Image zoom functionality (optional enhancement)
-  if (mainImage) {
-    mainImage.addEventListener("click", function () {
-      // Create modal for full-size image view
-      const modal = document.createElement("div");
-      modal.className =
-        "fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer";
-      modal.innerHTML = `
-        <div class="relative max-w-4xl max-h-full p-4">
-          <img src="${this.src}" loading="lazy" class="max-w-full max-h-full object-contain" alt="Full size image">
-          <button class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-      `;
-
-      document.body.appendChild(modal);
-
-      // Close modal on click
-      modal.addEventListener("click", function () {
-        document.body.removeChild(modal);
-      });
-    });
-  }
-});
-
-// Fix for Contact Us button initialization
+// ===== CONTACT MODAL =====
 document.addEventListener("DOMContentLoaded", function () {
   const contactBtn = document.getElementById("contactUsBtn");
   if (contactBtn) {
@@ -294,7 +178,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function openContactModal() {
-  // Get selected options
   const colorData = window.productSelector
     ? window.productSelector.selectedColorData
     : null;
@@ -306,7 +189,6 @@ function openContactModal() {
       ? document.getElementById("selected_type")?.value
       : null;
 
-  // Build options text
   const options = [];
   if (typeData) {
     options.push(`Type: ${typeData}`);
@@ -318,12 +200,10 @@ function openContactModal() {
     options.push(`Size: ${variantData.size}`);
   }
 
-  // Calculate total price
   const totalPrice = window.productSelector
     ? window.productSelector.calculateTotalPrice().totalPrice
     : 0;
 
-  // Update modal content
   const selectedOptionsElement = document.getElementById("selectedOptionsText");
   const selectedPriceElement = document.getElementById("selectedPriceText");
   const emailLink = document.getElementById("emailLink");
@@ -340,7 +220,6 @@ function openContactModal() {
       totalPrice > 0 ? `Total: ₱${totalPrice.toFixed(2)}` : "";
   }
 
-  // Update email link with details
   if (emailLink) {
     const productName = document.querySelector("h1")?.textContent || "Product";
     const subject = `Windows Quote Request - ${productName}`;
@@ -376,7 +255,6 @@ function closeContactModal() {
   }
 }
 
-// Close modal when clicking outside
 document.addEventListener("DOMContentLoaded", function () {
   const modal = document.getElementById("contactModal");
   if (modal) {
@@ -388,54 +266,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// Close modal with Escape key
 document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") {
     closeContactModal();
   }
 });
 
-// Initialize Swiper for related products
-document.addEventListener("DOMContentLoaded", function () {
-  if (typeof Swiper !== "undefined") {
-    const relatedSwiperElement = document.querySelector(".related-swiper");
-    if (relatedSwiperElement) {
-      const relatedSwiper = new Swiper(".related-swiper", {
-        slidesPerView: 2,
-        spaceBetween: 10,
-        loop: true,
-        autoplay: {
-          delay: 2500,
-          disableOnInteraction: false,
-        },
-        navigation: {
-          nextEl: ".swiper-button-next",
-          prevEl: ".swiper-button-prev",
-        },
-        breakpoints: {
-          640: {
-            slidesPerView: 2,
-            spaceBetween: 15,
-          },
-          768: {
-            slidesPerView: 3,
-            spaceBetween: 20,
-          },
-          1024: {
-            slidesPerView: 4,
-            spaceBetween: 25,
-          },
-          1280: {
-            slidesPerView: 5,
-            spaceBetween: 30,
-          },
-        },
-      });
-    }
-  }
-});
-
-// Product Selection State Management - All Steps Visible Version
+// ===== PRODUCT SELECTOR CLASS =====
 class ProductSelector {
   constructor() {
     this.selectedTypeId = null;
@@ -451,8 +288,6 @@ class ProductSelector {
 
     this.initializeElements();
     this.bindEvents();
-
-    // ✅ Enable all sections from start
     this.initializeAllSectionsEnabled();
   }
 
@@ -495,14 +330,12 @@ class ProductSelector {
     });
   }
 
-  // ✅ NEW: Enable all sections from start
   initializeAllSectionsEnabled() {
     this.enableColorSelection();
     this.showAllVariantGroups();
     this.updateDisplay();
   }
 
-  // ✅ MODIFIED: Enable colors immediately (no type requirement)
   enableColorSelection() {
     const container = document.getElementById("color-selection-container");
     const message = document.getElementById("color-disabled-message");
@@ -518,35 +351,28 @@ class ProductSelector {
     });
   }
 
-  // ✅ NEW: Show all variant groups at once
   showAllVariantGroups() {
-    // Hide default message
     if (this.elements.variantContainer) {
       this.elements.variantContainer.style.display = "none";
     }
 
-    // Show all variant groups
     document.querySelectorAll(".variant-group").forEach((group) => {
       group.classList.remove("hidden");
     });
 
-    // Enable/disable based on selections
     this.updateVariantAvailability();
   }
 
-  // ✅ MODIFIED: Update which variants are clickable
   updateVariantAvailability() {
     document.querySelectorAll(".variant-group").forEach((group) => {
       const variantButtons = group.querySelectorAll(".variant-btn");
 
       if (!this.selectedTypeId) {
-        // If no type selected, disable all variants
         variantButtons.forEach((btn) => {
           btn.disabled = true;
           btn.classList.add("opacity-50", "cursor-not-allowed");
         });
       } else {
-        // Enable variants only for selected type
         const groupTypeId = group.id.replace("variants-", "");
         if (parseInt(groupTypeId) === parseInt(this.selectedTypeId)) {
           variantButtons.forEach((btn) => {
@@ -563,7 +389,6 @@ class ProductSelector {
     });
   }
 
-  // ✅ TYPE SELECTION
   showVariants(typeId, typeName) {
     const clickedButton = event.currentTarget;
     const isCurrentlySelected = clickedButton.classList.contains("selected");
@@ -603,12 +428,8 @@ class ProductSelector {
       this.elements.selectedType.value = typeName;
     }
 
-    // Clear variant selection when type changes
     this.clearVariantSelection();
-
-    // Update which variants are enabled
     this.updateVariantAvailability();
-
     this.updateDisplay();
   }
 
@@ -632,7 +453,6 @@ class ProductSelector {
     this.updateDisplay();
   }
 
-  // ✅ COLOR SELECTION
   setColorFromGrid(colorId, colorName, price, image, colorCode) {
     this.selectedColorData = {
       id: colorId,
@@ -647,7 +467,6 @@ class ProductSelector {
       this.elements.selectedColor.value = colorName;
     }
 
-    // Update images
     if (image) {
       let imagePath = image.startsWith("../../") ? image : `../../${image}`;
 
@@ -689,7 +508,6 @@ class ProductSelector {
     this.updateDisplay();
   }
 
-  // ✅ VARIANT SELECTION
   selectVariant(button, size, color = null) {
     const isCurrentlySelected = button.classList.contains("selected");
 
@@ -752,8 +570,8 @@ class ProductSelector {
     this.updateProductHeaderPrice();
 
     setTimeout(() => {
-      if (typeof updateQuantityPreview === "function") {
-        updateQuantityPreview();
+      if (typeof updateAllPriceDisplays === "function") {
+        updateAllPriceDisplays();
       }
     }, 100);
   }
@@ -799,7 +617,6 @@ class ProductSelector {
     });
   }
 
-  // ✅ PRICE CALCULATIONS
   calculateTotalPrice() {
     let totalPrice = 0;
     const hasSelections = this.selectedColorData || this.selectedVariantData;
@@ -954,7 +771,7 @@ class ProductSelector {
           addToCartBtn.className =
             "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75";
           btnText.innerHTML =
-            '<i class="fas fa-shopping-cart mr-2"></i> Select all options first';
+            '<i class="fas fa-shopping-cart mr-2"></i> Select first';
         }
       }
     }
@@ -966,7 +783,6 @@ class ProductSelector {
     this.updateVariantAvailability();
   }
 
-  // ✅ FORM SUBMISSION
   validateSelections() {
     const errors = [];
     if (!this.selectedTypeId) errors.push("Please select an item type");
@@ -1064,7 +880,7 @@ class ProductSelector {
     return formData;
   }
 
-  showNotification(message, type = "success") {
+showNotification(message, type = "success") {
     const existingNotifications = document.querySelectorAll(
       ".notification-toast"
     );
@@ -1185,55 +1001,51 @@ class ProductSelector {
   }
 }
 
-// ✅ GLOBAL FUNCTIONS
+// ===== GLOBAL FUNCTIONS =====
 function showVariants(typeId, typeName) {
   if (window.productSelector) {
     window.productSelector.showVariants(typeId, typeName);
   }
 }
 
-// ✅ UPDATE: selectVariant function
 function selectVariant(button, size, color = null) {
   const isCurrentlySelected = button.classList.contains("selected");
 
-  // Clear previous selections
+  if (isCurrentlySelected) {
+    button.classList.remove("selected", "border-orange-500", "bg-orange-50");
+    button.classList.add("border-gray-200", "bg-white");
+
+    window.productSelector.selectedVariantData = null;
+    document.getElementById("selected_variant").value = "";
+    document.getElementById("variant_id").value = "";
+
+    hideAllPriceDisplays();
+    updatePurchaseButton();
+    return;
+  }
+
   document.querySelectorAll(".variant-btn").forEach((btn) => {
     btn.classList.remove("selected", "border-orange-500", "bg-orange-50");
     btn.classList.add("border-gray-200", "bg-white");
   });
 
-  if (isCurrentlySelected) {
-    // Unselect
-    window.productSelector.clearVariantSelection();
-    return;
-  }
-
-  // Select new variant
   button.classList.add("selected", "border-orange-500", "bg-orange-50");
   button.classList.remove("border-gray-200", "bg-white");
 
-  // ✅ GET VARIANT DATA
   const variantPrice = parseFloat(button.dataset.price) || 0;
   const percent = parseFloat(button.dataset.percent) || 0;
   const discount = parseFloat(button.dataset.discount) || 0;
   const variantId = button.dataset.variantId;
 
-  // ✅ CALCULATE PRICES (MATCHING YOUR SCREENSHOT LOGIC)
-  // Step 1: Base price
   let basePrice = variantPrice;
 
-  // Step 2: Add color price if selected
-  if (window.productSelector.selectedColorData) {
-    basePrice += parseFloat(window.productSelector.selectedColorData.price);
+  if (window.productSelector && window.productSelector.selectedColorData) {
+    basePrice += parseFloat(window.productSelector.selectedColorData.price) || 0;
   }
 
-  // Step 3: Apply markup percentage
   const priceWithMarkup = basePrice + (basePrice * percent) / 100;
-
-  // Step 4: Apply discount
   const finalPrice = priceWithMarkup - (priceWithMarkup * discount) / 100;
 
-  // ✅ STORE VARIANT DATA
   window.productSelector.selectedVariantData = {
     price: variantPrice,
     percent: percent,
@@ -1245,44 +1057,29 @@ function selectVariant(button, size, color = null) {
     color: color || "",
   };
 
-  // Update hidden fields
   document.getElementById("selected_variant").value = size;
   document.getElementById("variant_id").value = variantId;
 
-  // ✅ UPDATE ALL PRICE DISPLAYS
   updateAllPriceDisplays();
 }
 
-// ✅ NEW: Centralized price display update
 function updateAllPriceDisplays() {
-  if (!window.productSelector.selectedVariantData) {
+  if (!window.productSelector || !window.productSelector.selectedVariantData) {
     hideAllPriceDisplays();
     return;
   }
 
   const variant = window.productSelector.selectedVariantData;
-  const quantity =
-    parseInt(document.getElementById("quantityInput")?.value) || 1;
+  const quantity = parseInt(document.getElementById("quantityInput")?.value) || 1;
 
-  // ✅ 1. UPDATE MAIN PRODUCT HEADER PRICE (Top section)
   updateProductHeaderPrice(variant);
-
-  // ✅ 2. UPDATE QUANTITY PREVIEW (Middle section - "1 pcs: ₱3,062.60")
   updateQuantityPreview(variant, quantity);
-
-  // ✅ 3. UPDATE TOTAL PRICE (Bottom - Green box)
   updateTotalPrice(variant, quantity);
-
-  // ✅ 4. UPDATE BUTTON STATE
   updatePurchaseButton();
 }
 
-// ✅ 1. Product Header Price (Shows original, discount, final)
 function updateProductHeaderPrice(variant) {
   const priceDisplay = document.getElementById("product-price-display");
-  const originalPriceContainer = document.getElementById(
-    "original-price-container"
-  );
   const originalPriceElement = document.getElementById("original-price");
   const finalPriceElement = document.getElementById("final-price");
   const discountBadge = document.getElementById("discount-badge");
@@ -1293,64 +1090,39 @@ function updateProductHeaderPrice(variant) {
 
   priceDisplay.classList.remove("hidden");
 
-  // Show selected size
   if (selectedSizeText && variant.size) {
     selectedSizeText.textContent = variant.size;
   }
 
-  // ✅ MATCHING YOUR SCREENSHOT:
-  // Original: ₱4373.00 (with strikethrough)
-  // Final: ₱3061.10 (big, no strikethrough)
-  // Badge: 30% OFF
-
   if (variant.discount > 0) {
-    // Show original price with strikethrough
-    if (originalPriceContainer && originalPriceElement) {
-      originalPriceContainer.classList.remove("hidden");
-      originalPriceElement.textContent = `₱${variant.priceWithMarkup.toLocaleString(
-        "en-PH",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }
-      )}`;
-    }
-
-    // Show discounted price (big)
-    finalPriceElement.textContent = `₱${variant.finalPrice.toLocaleString(
-      "en-PH",
-      {
+    if (originalPriceElement) {
+      document.getElementById("original-price-container")?.classList.remove("hidden");
+      originalPriceElement.textContent = `₱${variant.priceWithMarkup.toLocaleString("en-PH", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }
-    )}`;
+      })}`;
+    }
 
-    // Show discount badge
+    finalPriceElement.textContent = `₱${variant.finalPrice.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
     if (discountBadge && discountPercent) {
       discountBadge.classList.remove("hidden");
       discountPercent.textContent = Math.round(variant.discount);
     }
   } else {
-    // No discount - hide original price
-    if (originalPriceContainer) {
-      originalPriceContainer.classList.add("hidden");
-    }
+    document.getElementById("original-price-container")?.classList.add("hidden");
+    finalPriceElement.textContent = `₱${variant.priceWithMarkup.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
-    finalPriceElement.textContent = `₱${variant.priceWithMarkup.toLocaleString(
-      "en-PH",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    )}`;
-
-    if (discountBadge) {
-      discountBadge.classList.add("hidden");
-    }
+    if (discountBadge) discountBadge.classList.add("hidden");
   }
 }
 
-// ✅ 2. Quantity Preview (Shows "1 pcs: ₱3,062.60")
 function updateQuantityPreview(variant, quantity) {
   const previewContainer = document.getElementById("quantityPricePreview");
   const previewQty = document.getElementById("previewQty");
@@ -1358,7 +1130,6 @@ function updateQuantityPreview(variant, quantity) {
 
   if (!previewContainer || !previewQty || !previewTotal) return;
 
-  // Calculate per-piece price
   const unitPrice = variant.finalPrice;
   const totalPrice = unitPrice * quantity;
 
@@ -1371,7 +1142,6 @@ function updateQuantityPreview(variant, quantity) {
   previewContainer.classList.remove("hidden");
 }
 
-// ✅ 3. Total Price (Green box at bottom)
 function updateTotalPrice(variant, quantity) {
   const totalPriceElement = document.getElementById("totalPrice");
   const selectionStatus = document.getElementById("selectionStatus");
@@ -1385,7 +1155,6 @@ function updateTotalPrice(variant, quantity) {
     maximumFractionDigits: 2,
   })}`;
 
-  // Update selection status
   if (selectionStatus) {
     const status = [];
     if (window.productSelector.selectedTypeId) {
@@ -1401,93 +1170,60 @@ function updateTotalPrice(variant, quantity) {
   }
 }
 
-// ✅ 4. Hide all price displays when no selection
 function hideAllPriceDisplays() {
-  const priceDisplay = document.getElementById("product-price-display");
-  const previewContainer = document.getElementById("quantityPricePreview");
-  const totalPriceElement = document.getElementById("totalPrice");
-  const selectionStatus = document.getElementById("selectionStatus");
-
-  if (priceDisplay) priceDisplay.classList.add("hidden");
-  if (previewContainer) previewContainer.classList.add("hidden");
-  if (totalPriceElement) totalPriceElement.textContent = "₱0.00";
-  if (selectionStatus) {
-    selectionStatus.textContent = "Complete steps 1-3 to see price";
-  }
+  document.getElementById("product-price-display")?.classList.add("hidden");
+  document.getElementById("quantityPricePreview")?.classList.add("hidden");
+  document.getElementById("totalPrice").textContent = "₱0.00";
+  document.getElementById("selectionStatus").textContent = "Complete steps 1-3 to see price";
 }
 
-// ✅ Update button state
 function updatePurchaseButton() {
   const hasRequiredSelections =
     window.productSelector.selectedTypeId &&
     window.productSelector.selectedColorData &&
     window.productSelector.selectedVariantData;
 
-  const isWindows =
-    document.querySelector('[name="is_windows"]')?.value === "1";
+  const isWindows = document.querySelector('[name="is_windows"]')?.value === "1";
 
   if (isWindows) {
     const contactBtn = document.getElementById("contactUsBtn");
-    const contactBtnText = document.getElementById("contactBtnText");
-
-    if (contactBtn && contactBtnText) {
+    if (contactBtn) {
       if (hasRequiredSelections) {
         contactBtn.disabled = false;
-        contactBtn.className =
-          "w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white";
-        contactBtnText.innerHTML =
-          '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
+        contactBtn.className = "w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white";
+        document.getElementById("contactBtnText").innerHTML = '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
       } else {
         contactBtn.disabled = true;
-        contactBtn.className =
-          "w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
-        contactBtnText.innerHTML =
-          '<i class="fas fa-phone mr-2"></i>Select all options first';
+        contactBtn.className = "w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
+        document.getElementById("contactBtnText").innerHTML = '<i class="fas fa-phone mr-2"></i>Select all options first';
       }
     }
   } else {
     const addToCartBtn = document.getElementById("addToCartBtn");
-    const btnText = document.getElementById("btnText");
-
-    if (addToCartBtn && btnText) {
+    if (addToCartBtn) {
       if (hasRequiredSelections) {
         addToCartBtn.disabled = false;
-        addToCartBtn.className =
-          "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white";
-        btnText.innerHTML =
-          '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
+        addToCartBtn.className = "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white";
+        document.getElementById("btnText").innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
       } else {
         addToCartBtn.disabled = true;
-        addToCartBtn.className =
-          "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
-        btnText.innerHTML =
-          '<i class="fas fa-shopping-cart mr-2"></i> Select all options first';
+        addToCartBtn.className = "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
+        document.getElementById("btnText").innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Select all options first';
       }
     }
   }
 }
 
-// ✅ HOOK: Update prices when quantity changes
 function validateQuantity() {
   const input = document.getElementById("quantityInput");
   let val = parseInt(input.value) || 1;
   val = Math.max(1, Math.min(9999, val));
   input.value = val;
 
-  // Update all price displays
   if (window.productSelector?.selectedVariantData) {
     updateAllPriceDisplays();
   }
 }
-
-// ✅ INITIALIZE
-document.addEventListener("DOMContentLoaded", function () {
-  const quantityInput = document.getElementById("quantityInput");
-  if (quantityInput) {
-    quantityInput.addEventListener("input", validateQuantity);
-    quantityInput.addEventListener("change", validateQuantity);
-  }
-});
 
 function selectColorFromGrid(colorId, colorName, price, image, colorCode) {
   document.querySelectorAll(".color-btn").forEach((btn) => {
@@ -1499,14 +1235,55 @@ function selectColorFromGrid(colorId, colorName, price, image, colorCode) {
   clickedButton.classList.add("selected", "border-orange-500", "bg-orange-50");
   clickedButton.classList.remove("border-gray-200", "bg-white");
 
-  if (window.productSelector) {
-    window.productSelector.setColorFromGrid(
-      colorId,
-      colorName,
-      price,
-      image,
-      colorCode
-    );
+  if (!window.productSelector) return;
+
+  window.productSelector.selectedColorData = {
+    id: colorId,
+    name: colorName,
+    price: parseFloat(price) || 0,
+  };
+
+  if (window.productSelector.elements.selectedColorId) {
+    window.productSelector.elements.selectedColorId.value = colorId;
+  }
+  if (window.productSelector.elements.selectedColor) {
+    window.productSelector.elements.selectedColor.value = colorName;
+  }
+
+  if (image) {
+    let imagePath = image.startsWith("../../") ? image : `../../${image}`;
+    if (window.productSelector.elements.mainImage) {
+      window.productSelector.elements.mainImage.src = imagePath;
+    }
+    const sidebarImage = document.getElementById("sidebar-product-image");
+    if (sidebarImage) {
+      sidebarImage.src = imagePath;
+    }
+  }
+
+  const selectedSizeBtn = document.querySelector(".variant-btn.selected");
+  if (selectedSizeBtn && window.productSelector.selectedVariantData) {
+    const variantPrice = parseFloat(selectedSizeBtn.dataset.price) || 0;
+    const percent = parseFloat(selectedSizeBtn.dataset.percent) || 0;
+    const discount = parseFloat(selectedSizeBtn.dataset.discount) || 0;
+    const variantId = selectedSizeBtn.dataset.variantId;
+
+    let finalBasePrice = variantPrice + (parseFloat(price) || 0);
+    const priceWithMarkup = finalBasePrice + (finalBasePrice * percent) / 100;
+    const finalPrice = priceWithMarkup - (priceWithMarkup * discount) / 100;
+
+    window.productSelector.selectedVariantData = {
+      price: variantPrice,
+      percent: percent,
+      discount: discount,
+      finalPrice: finalPrice,
+      priceWithMarkup: priceWithMarkup,
+      variantId: variantId,
+      size: selectedSizeBtn.querySelector(".text-gray-700").textContent.trim(),
+      color: colorName,
+    };
+
+    updateAllPriceDisplays();
   }
 }
 
@@ -1542,7 +1319,34 @@ function shareProduct() {
   }
 }
 
-// ✅ INITIALIZE
+// ===== QUANTITY FUNCTIONS =====
+function increaseQuantity() {
+  const input = document.getElementById("quantityInput");
+  const val = parseInt(input.value) || 1;
+  if (val < 9999) {
+    input.value = val + 1;
+    validateQuantity();
+  }
+}
+
+function decreaseQuantity() {
+  const input = document.getElementById("quantityInput");
+  const val = parseInt(input.value) || 1;
+  if (val > 1) {
+    input.value = val - 1;
+    validateQuantity();
+  }
+}
+
+function setQuantity(amount) {
+  const input = document.getElementById("quantityInput");
+  if (amount >= 1 && amount <= 9999) {
+    input.value = amount;
+    validateQuantity();
+  }
+}
+
+// ===== INITIALIZE =====
 document.addEventListener("DOMContentLoaded", function () {
   if (typeof ProductSelector !== "undefined") {
     window.productSelector = new ProductSelector();
@@ -1556,9 +1360,31 @@ document.addEventListener("DOMContentLoaded", function () {
   } else {
     console.error("ProductSelector class not found");
   }
+
+  const quantityInput = document.getElementById("quantityInput");
+  if (quantityInput) {
+    quantityInput.addEventListener("keydown", function (e) {
+      e.stopPropagation();
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.blur();
+        return false;
+      }
+    });
+
+    quantityInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    quantityInput.addEventListener("input", validateQuantity);
+    quantityInput.addEventListener("change", validateQuantity);
+  }
 });
 
-// ✅ KEYBOARD SHORTCUTS
+// ===== KEYBOARD SHORTCUTS =====
 document.addEventListener("keydown", function (e) {
   const activeElement = document.activeElement;
 
@@ -1578,9 +1404,7 @@ document.addEventListener("keydown", function (e) {
   }
 
   if (e.key >= "1" && e.key <= "9" && !e.ctrlKey && !e.altKey && !e.metaKey) {
-    const variantButtons = document.querySelectorAll(
-      ".variant-btn:not([disabled])"
-    );
+    const variantButtons = document.querySelectorAll(".variant-btn:not([disabled])");
     const index = parseInt(e.key) - 1;
     if (variantButtons[index]) {
       e.preventDefault();
@@ -1592,11 +1416,221 @@ document.addEventListener("keydown", function (e) {
 
 window.debugProductSelector = function () {
   if (window.productSelector) {
-    console.log(
-      "ProductSelector State:",
-      window.productSelector.getSelectionSummary()
-    );
+    console.log("ProductSelector State:", window.productSelector.getSelectionSummary());
   } else {
     console.log("ProductSelector not initialized");
   }
 };
+
+// ===== CALCULATOR FUNCTIONS =====
+function updateCalculatorFromVariant(button) {
+  const width = parseFloat(button.dataset.width) || 0;
+  const height = parseFloat(button.dataset.height) || 0;
+  const length = parseFloat(button.dataset.length) || 0;
+  const size = button.querySelector('.text-gray-700').textContent.trim();
+
+  // Convert mm to meters
+  const widthM = width / 1000;
+  const heightM = height / 1000;
+  const areaPerPiece = widthM * heightM;
+
+  // Store dimensions in global scope
+  window.selectedVariantDimensions = {
+    width,
+    height,
+    length,
+    size,
+    areaPerPiece
+  };
+
+  // Show calculator section
+  const calcSection = document.getElementById('calculatorSection');
+  if (calcSection) {
+    calcSection.classList.remove('hidden');
+  }
+
+  // Set size display
+  const sizeDisplay = document.getElementById('selectedSizeDisplay');
+  if (sizeDisplay) {
+    sizeDisplay.textContent = size;
+  }
+
+  // Update dimension displays
+  const widthEl = document.getElementById('calcWidth');
+  const heightEl = document.getElementById('calcHeight');
+  const lengthEl = document.getElementById('calcLength');
+  const areaEl = document.getElementById('calcAreaPerPiece');
+
+  if (widthEl) widthEl.textContent = width;
+  if (heightEl) heightEl.textContent = height;
+  if (lengthEl) lengthEl.textContent = length;
+  if (areaEl) areaEl.textContent = areaPerPiece.toFixed(4) + ' m²';
+
+  // Clear previous calculations
+  const areaInput = document.getElementById('userArea');
+  const piecesDisplay = document.getElementById('piecesFromArea');
+  const resultsSection = document.getElementById('userCalculationResults');
+
+  if (areaInput) areaInput.value = '';
+  if (piecesDisplay) piecesDisplay.textContent = '0';
+  if (resultsSection) resultsSection.classList.add('hidden');
+}
+
+function calculateFromArea() {
+  const areaInput = document.getElementById('userArea');
+  const piecesDisplay = document.getElementById('piecesFromArea');
+  const resultsSection = document.getElementById('userCalculationResults');
+  const adhesiveEl = document.getElementById('userAdhesiveNeeded');
+  const bracketsEl = document.getElementById('userBracketsNeeded');
+
+  if (!areaInput || !piecesDisplay) return;
+
+  const area = parseFloat(areaInput.value);
+
+  // Validation
+  if (!area || area <= 0) {
+    piecesDisplay.textContent = '0';
+    if (resultsSection) resultsSection.classList.add('hidden');
+    return;
+  }
+
+  if (!window.selectedVariantDimensions || !window.selectedVariantDimensions.areaPerPiece || window.selectedVariantDimensions.areaPerPiece <= 0) {
+    piecesDisplay.textContent = '0';
+    if (resultsSection) resultsSection.classList.add('hidden');
+    return;
+  }
+
+  // Calculate pieces needed
+  const piecesNeeded = Math.ceil(area / window.selectedVariantDimensions.areaPerPiece);
+
+  // Calculate additional materials
+  const adhesiveNeeded = (area * 0.30).toFixed(2);
+  const bracketsNeeded = Math.ceil(piecesNeeded * 0.25);
+
+  // Update display
+  piecesDisplay.textContent = piecesNeeded.toLocaleString();
+
+  if (adhesiveEl) adhesiveEl.textContent = adhesiveNeeded;
+  if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
+  if (resultsSection) resultsSection.classList.remove('hidden');
+}
+
+function clearCalculator() {
+  const calcSection = document.getElementById('calculatorSection');
+  const areaInput = document.getElementById('userArea');
+  const piecesDisplay = document.getElementById('piecesFromArea');
+  const resultsSection = document.getElementById('userCalculationResults');
+
+  if (calcSection) calcSection.classList.add('hidden');
+  if (areaInput) areaInput.value = '';
+  if (piecesDisplay) piecesDisplay.textContent = '0';
+  if (resultsSection) resultsSection.classList.add('hidden');
+
+  window.selectedVariantDimensions = {
+    width: 0,
+    height: 0,
+    length: 0,
+    size: '',
+    areaPerPiece: 0
+  };
+}
+
+// ===== SKU INFO FUNCTIONS =====
+function showSkuInfo(button) {
+  const display = document.getElementById('sku-info-display');
+  const content = document.getElementById('sku-info-content');
+  const toggleBtn = document.getElementById('toggle-sku-btn');
+  const skuInfoJson = button.getAttribute('data-sku-info');
+
+  // Reset expansion state
+  content.classList.remove('collapsed', 'expanded');
+  toggleBtn.classList.add('hidden');
+
+  if (!skuInfoJson) {
+    display.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const skuInfo = JSON.parse(skuInfoJson);
+    let html = '';
+
+    if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
+      html = `
+        <div class="bg-white p-4 rounded-lg">
+          <div class="whitespace-pre-wrap text-gray-800">${escapeHtml(skuInfo.notes)}</div>
+        </div>
+      `;
+    } else {
+      html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
+      for (const [key, value] of Object.entries(skuInfo)) {
+        const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+        html += `
+          <div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+            <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(label)}:</span>
+            <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
+          </div>
+        `;
+      }
+      html += '</div></div>';
+    }
+
+    content.innerHTML = html;
+    display.classList.remove('hidden');
+
+    setTimeout(() => {
+      if (content.scrollHeight > 120) {
+        content.classList.add('collapsed');
+        toggleBtn.classList.remove('hidden');
+        updateToggleButton();
+      }
+    }, 50);
+
+  } catch (e) {
+    console.error('Error parsing SKU info:', e);
+    display.classList.add('hidden');
+  }
+}
+
+function toggleSkuContent() {
+  const content = document.getElementById('sku-info-content');
+  const currentlyExpanded = content.classList.contains('expanded');
+
+  if (currentlyExpanded) {
+    content.classList.remove('expanded');
+    content.classList.add('collapsed');
+  } else {
+    content.classList.remove('collapsed');
+    content.classList.add('expanded');
+  }
+
+  updateToggleButton();
+}
+
+function updateToggleButton() {
+  const toggleText = document.getElementById('toggle-sku-text');
+  const toggleIcon = document.getElementById('toggle-sku-icon');
+  const content = document.getElementById('sku-info-content');
+  const currentlyExpanded = content.classList.contains('expanded');
+
+  if (currentlyExpanded) {
+    toggleText.textContent = 'See Less';
+    toggleIcon.classList.remove('fa-chevron-down');
+    toggleIcon.classList.add('fa-chevron-up');
+  } else {
+    toggleText.textContent = 'See More';
+    toggleIcon.classList.remove('fa-chevron-up');
+    toggleIcon.classList.add('fa-chevron-down');
+  }
+}
+
+function hideSkuInfo() {
+  const display = document.getElementById('sku-info-display');
+  display.classList.add('hidden');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}

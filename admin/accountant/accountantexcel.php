@@ -120,6 +120,8 @@ if (!empty($params)) {
 $projects_sql = "SELECT DISTINCT project_name FROM accountantrecord ORDER BY project_name";
 $projects_result = $conn->query($projects_sql);
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

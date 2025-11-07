@@ -1222,7 +1222,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                       <div class="flex-1">
                         <label class="block text-xs font-semibold text-gray-900 mb-1">
                           <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
-                          Area (m²)
+                          Area 
                         </label>
                         <div class="bg-gray-50 rounded">
                           <input type="number" id="userArea" step="0.01" placeholder="Enter area"

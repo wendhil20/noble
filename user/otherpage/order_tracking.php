@@ -54,11 +54,14 @@ $stmt = $conn->prepare("
            rr.status as replacement_status,
            rr.reason as replacement_reason,
            rr.created_at as replacement_requested_at,
-           ds.id as replacement_delivery_id,
-           ds.delivery_status as replacement_delivery_status
+           rr.delivery_schedule_id as replacement_delivery_id,
+           rr.replacement_quantity,
+           ds.delivery_status as replacement_delivery_status,
+           ds.delivery_date as replacement_delivery_date,
+           ds.delivery_time as replacement_delivery_time
     FROM order_items oi
     LEFT JOIN replacement_requests rr ON oi.id = rr.order_item_id
-    LEFT JOIN delivery_schedules ds ON rr.id = ds.replacement_id
+    LEFT JOIN delivery_schedules ds ON rr.delivery_schedule_id = ds.id
     WHERE oi.order_id = ?
     ORDER BY oi.id
 ");
@@ -806,9 +809,9 @@ $show_map = $delivery_settings &&
                     $has_replacement_request = !empty($replacement_info);
                     
                     // Determine if we should show replacement tracking
-                    $show_replacement_tracking = $has_replacement_request && 
-                                               $item['replacement_delivery_id'] && 
-                                               in_array($item['replacement_status'], ['approved', 'processing', 'ready_for_pickup', 'item_is_loaded', 'delivered', 'picked_up']);
+// Show tracking if there's a request and it's not rejected or just pending without approval
+$show_replacement_tracking = $has_replacement_request && 
+                           !in_array(strtolower($item['replacement_status'] ?? ''), ['rejected', '']);
                     
                     if ($origin === 'local') {
                         $steps = getLocalStatusSteps($delivery_type);
@@ -848,37 +851,50 @@ $show_map = $delivery_settings &&
                                     <!-- Replacement Button/Status -->
                                     <?php if ($show_replacement_tracking): ?>
     <?php
-    $replacement_status = strtolower($item['replacement_status']);
-    $replacement_delivery_status = strtolower($item['replacement_delivery_status'] ?? 'scheduled');
+    $replacement_status = strtolower($item['replacement_status'] ?? '');
+    $replacement_delivery_status = strtolower($item['replacement_delivery_status'] ?? '');
     
     // Determine current replacement status for display
-    // Check for final completion statuses first
-    if (in_array($replacement_status, ['delivered', 'picked_up'])) {
-        $status_color = 'bg-green-100 text-green-800';
-        $status_text = $replacement_status === 'picked_up' ? '✅ Replacement Picked Up' : '✅ Replacement Delivered';
-    } elseif (in_array($replacement_delivery_status, ['delivered', 'picked_up'])) {
+    // Priority order: delivery_status > replacement_requests.status
+    
+    // Check delivery_schedules status first (most current)
+    if ($replacement_delivery_status === 'delivered' || $replacement_delivery_status === 'picked_up') {
         $status_color = 'bg-green-100 text-green-800';
         $status_text = $replacement_delivery_status === 'picked_up' ? '✅ Replacement Picked Up' : '✅ Replacement Delivered';
-    } elseif ($replacement_status === 'out_for_delivery' || $replacement_delivery_status === 'item_is_loaded') {
+    } elseif ($replacement_delivery_status === 'item_is_loaded' || $replacement_delivery_status === 'out_for_delivery') {
         $status_color = 'bg-blue-100 text-blue-800';
-        $status_text = $delivery_type === 'pickup' ? '📦 Replacement Out for Pickup' : '🚚 Replacement Out for Delivery';
-    } elseif ($replacement_status === 'ready_for_pickup') {
+        $status_text = $delivery_type === 'pickup' ? '📦 Out for Pickup' : '🚚 Out for Delivery';
+    } elseif ($replacement_delivery_status === 'ready_for_pickup') {
         $status_color = 'bg-purple-100 text-purple-800';
-        $status_text = '📦 Replacement Ready';
+        $status_text = '📦 Ready for ' . ($delivery_type === 'pickup' ? 'Pickup' : 'Delivery');
+    } 
+    // Then check replacement_requests status
+    elseif ($replacement_status === 'scheduled') {
+        $status_color = 'bg-indigo-100 text-indigo-800';
+        $status_text = '📅 Delivery Scheduled';
+    } elseif ($replacement_status === 'in_warehouse' || $replacement_status === 'in warehouse') {
+        $status_color = 'bg-purple-100 text-purple-800';
+        $status_text = '🏭 In Warehouse';
     } elseif ($replacement_status === 'processing') {
         $status_color = 'bg-yellow-100 text-yellow-800';
-        $status_text = '⚙️ Processing Replacement';
+        $status_text = '⚙️ Processing';
     } elseif ($replacement_status === 'approved') {
-        $status_color = 'bg-indigo-100 text-indigo-800';
-        $status_text = '✓ Replacement Approved';
-    } else {
+        $status_color = 'bg-green-100 text-green-800';
+        $status_text = '✅ Approved';
+    } elseif ($replacement_status === 'rejected') {
+        $status_color = 'bg-red-100 text-red-800';
+        $status_text = '❌ Rejected';
+    } elseif ($replacement_status === 'pending') {
         $status_color = 'bg-orange-100 text-orange-800';
-        $status_text = '🔄 Replacement Requested';
+        $status_text = '🔄 Pending Review';
+    } else {
+        $status_color = 'bg-gray-100 text-gray-800';
+        $status_text = '📋 ' . ucfirst(str_replace('_', ' ', $replacement_status));
     }
     ?>
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full <?= $status_color ?> w-fit">
-                                            <?= $status_text ?>
-                                        </span>
+    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full <?= $status_color ?> w-fit">
+        <?= $status_text ?>
+    </span>
                                     <?php elseif ($has_replacement_request): ?>
                                         <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 w-fit">
                                             🔄 Replacement Requested
@@ -906,31 +922,62 @@ $show_map = $delivery_settings &&
                                     <?php endif; ?>
                                 </div>
                                 
-                                <?php
+                               <?php
 // Determine replacement tracking status - normalize to lowercase
-$replacement_tracking_status = 'pending';
+$replacement_status_lower = strtolower($item['replacement_status'] ?? '');
+$replacement_delivery_status_lower = strtolower($item['replacement_delivery_status'] ?? '');
 
-// Priority 1: Check replacement_requests status for final states
-if (in_array(strtolower($item['replacement_status']), ['delivered', 'picked_up'])) {
-    $replacement_tracking_status = strtolower($item['replacement_status']);
-} 
-// Priority 2: Check delivery_schedules status
-elseif (in_array(strtolower($item['replacement_delivery_status'] ?? ''), ['delivered', 'picked_up'])) {
-    $replacement_tracking_status = strtolower($item['replacement_delivery_status']);
-} 
-// Priority 3: Check for out_for_delivery/item_is_loaded
-elseif (strtolower($item['replacement_status']) === 'out_for_delivery' || 
-        strtolower($item['replacement_delivery_status'] ?? '') === 'item_is_loaded') {
+// CRITICAL: Check replacement_requests.status FIRST for final states
+// Because delivery_schedules might not be updated yet
+
+// Priority 1: Check replacement_requests.status for final delivery states
+if ($replacement_status_lower === 'delivered') {
+    $replacement_tracking_status = 'delivered';
+} elseif ($replacement_status_lower === 'picked_up') {
+    $replacement_tracking_status = 'picked_up';
+}
+// Priority 2: Check delivery_schedules.delivery_status for final states (backup)
+elseif ($replacement_delivery_status_lower === 'delivered') {
+    $replacement_tracking_status = 'delivered';
+} elseif ($replacement_delivery_status_lower === 'picked_up') {
+    $replacement_tracking_status = 'picked_up';
+}
+// Priority 3: Check for out for delivery/pickup (either table)
+elseif ($replacement_delivery_status_lower === 'item_is_loaded' || 
+        $replacement_delivery_status_lower === 'out_for_delivery' ||
+        $replacement_status_lower === 'out_for_delivery') {
     $replacement_tracking_status = 'item_is_loaded';
-} 
-// Priority 4: Other statuses from replacement_requests
-elseif (in_array(strtolower($item['replacement_status']), ['ready_for_pickup', 'processing', 'approved'])) {
-    $replacement_tracking_status = strtolower($item['replacement_status']);
+}
+// Priority 4: Ready for pickup (either table)
+elseif ($replacement_delivery_status_lower === 'ready_for_pickup' ||
+        $replacement_status_lower === 'ready_for_pickup') {
+    $replacement_tracking_status = 'ready_for_pickup';
+}
+// Priority 5: Scheduled state (has delivery_schedule_id)
+elseif ($item['replacement_delivery_id'] && $replacement_status_lower === 'scheduled') {
+    $replacement_tracking_status = 'ready_for_pickup'; // Scheduled means ready
+}
+// Priority 6: Warehouse state
+elseif ($replacement_status_lower === 'in_warehouse' || $replacement_status_lower === 'in warehouse') {
+    $replacement_tracking_status = 'processing'; // Map to processing step
+}
+// Priority 7: Processing state
+elseif ($replacement_status_lower === 'processing') {
+    $replacement_tracking_status = 'processing';
+}
+// Priority 8: Approved state
+elseif ($replacement_status_lower === 'approved') {
+    $replacement_tracking_status = 'approved';
+}
+// Priority 9: Pending state (default)
+else {
+    $replacement_tracking_status = 'pending';
 }
 
 $replacement_steps = getReplacementStatusSteps($delivery_type);
 $replacement_current_index = getCurrentStepIndex($replacement_tracking_status, $replacement_steps);
 ?>
+
                                 
                                 <!-- Desktop Replacement Steps -->
                                 <div class="hidden sm:flex items-center justify-between">

@@ -37,7 +37,6 @@ $ordersSql = "SELECT
     ds.delivery_type,
     ds.delivery_status,
     ds.item_type,
-    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
@@ -46,14 +45,73 @@ $ordersSql = "SELECT
     o.final_total,
     o.delivery_fee,
     o.delivery_type,
-    o.total_weight_kg,
-    o.total_cubic_meters,
+    -- For replacement, calculate weight/volume from replacement items only
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN (
+            SELECT SUM(
+                CASE 
+                    WHEN LOWER(pv.weight_unit) = 'kg' THEN pv.weight * rr.replacement_quantity
+                    WHEN LOWER(pv.weight_unit) IN ('g', 'grams') THEN (pv.weight / 1000) * rr.replacement_quantity
+                    WHEN LOWER(pv.weight_unit) IN ('lbs', 'lb') THEN (pv.weight * 0.453592) * rr.replacement_quantity
+                    ELSE 0
+                END
+            )
+            FROM replacement_requests rr
+            INNER JOIN order_items oi ON rr.order_item_id = oi.id
+            LEFT JOIN product_variants pv ON oi.product_id = pv.product_id
+            WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id
+        )
+        ELSE o.total_weight_kg
+    END as total_weight_kg,
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN (
+            SELECT SUM(
+                CASE 
+                    WHEN LOWER(pv.dimension_unit) = 'cm' THEN 
+                        (pv.width / 100) * (pv.height / 100) * (pv.length / 100) * rr.replacement_quantity
+                    WHEN LOWER(pv.dimension_unit) = 'mm' THEN 
+                        (pv.width / 1000) * (pv.height / 1000) * (pv.length / 1000) * rr.replacement_quantity
+                    WHEN LOWER(pv.dimension_unit) IN ('in', 'inch') THEN 
+                        (pv.width * 0.0254) * (pv.height * 0.0254) * (pv.length * 0.0254) * rr.replacement_quantity
+                    WHEN LOWER(pv.dimension_unit) IN ('ft', 'feet') THEN 
+                        (pv.width * 0.3048) * (pv.height * 0.3048) * (pv.length * 0.3048) * rr.replacement_quantity
+                    WHEN LOWER(pv.dimension_unit) = 'm' THEN 
+                        pv.width * pv.height * pv.length * rr.replacement_quantity
+                    ELSE 0
+                END
+            )
+            FROM replacement_requests rr
+            INNER JOIN order_items oi ON rr.order_item_id = oi.id
+            LEFT JOIN product_variants pv ON oi.product_id = pv.product_id
+            WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id
+        )
+        ELSE o.total_cubic_meters
+    END as total_cubic_meters,
     o.assigned_vehicle_id,
     o.assigned_vehicle_type,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id) as total_items,
-    (SELECT SUM(quantity) FROM order_items WHERE order_id = ds.order_id) as total_quantity,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id AND tracking_status = 'ready_for_pickup') as ready_items,
-    (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id AND tracking_status = 'item_is_loaded') as loaded_items,
+    -- For replacement deliveries, count only replacement items
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN (SELECT COUNT(DISTINCT rr.id) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id)
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id)
+    END as total_items,
+    -- For replacement deliveries, sum only replacement quantities
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN (SELECT IFNULL(SUM(rr.replacement_quantity), 0) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id)
+        ELSE (SELECT SUM(quantity) FROM order_items WHERE order_id = ds.order_id)
+    END as total_quantity,
+    -- For replacement deliveries, check replacement request status instead
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN (SELECT COUNT(*) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id AND rr.status = 'ready_for_pickup')
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id AND tracking_status = 'ready_for_pickup')
+    END as ready_items,
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN (SELECT COUNT(*) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id AND rr.status = 'item_is_loaded')
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id AND tracking_status = 'item_is_loaded')
+    END as loaded_items,
+    rr.reason as replacement_reason,
+    rr.details as replacement_details,
+    rr.replacement_quantity,
+    rr.status as replacement_status,
     tv.vehicle_type,
     tv.courier_name,
     db.id as booking_id,
@@ -70,6 +128,7 @@ FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 LEFT JOIN transportify_vehicle_list tv ON o.assigned_vehicle_id = tv.id
 LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
+LEFT JOIN replacement_requests rr ON ds.id = rr.delivery_schedule_id AND ds.item_type = 'replacement'
 WHERE ds.delivery_date = ?
 AND (
     ? = '' OR 
@@ -347,11 +406,14 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                         <div class="text-xs text-gray-500"><?php echo $order['total_quantity']; ?> pcs total</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-xs text-gray-900">
-                                            <div><i class="fas fa-weight text-orange-500 mr-1"></i><?php echo number_format($order['total_weight_kg'], 2); ?> kg</div>
-                                            <div class="mt-1"><i class="fas fa-cube text-orange-500 mr-1"></i><?php echo number_format($order['total_cubic_meters'], 3); ?> m³</div>
-                                        </div>
-                                    </td>
+    <div class="text-xs text-gray-900">
+        <div><i class="fas fa-weight text-orange-500 mr-1"></i><?php echo number_format($order['total_weight_kg'] ?? 0, 2); ?> kg</div>
+        <div class="mt-1"><i class="fas fa-cube text-orange-500 mr-1"></i><?php echo number_format($order['total_cubic_meters'] ?? 0, 3); ?> m³</div>
+        <?php if ($order['item_type'] === 'replacement'): ?>
+        <div class="mt-1 text-xs text-orange-600 italic">(Replacement)</div>
+        <?php endif; ?>
+    </div>
+</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-bold text-green-600">₱<?php echo number_format($order['final_total'], 2); ?></div>
                                     </td>
@@ -363,7 +425,7 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                             <?php if ($canBook): ?>
                                                 <?php
                                                 $bookingUrl = $order['item_type'] === 'replacement'
-                                                    ? "replacement_booking.php?schedule_id=" . $order['delivery_id'] . "&replacement_id=" . $order['replacement_id']
+                                                    ? "replacement_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id']
                                                     : "delivery_booking.php?schedule_id=" . $order['delivery_id'] . "&order_id=" . $order['order_id'];
                                                 ?>
                                                 <a href="<?php echo $bookingUrl; ?>"
@@ -379,11 +441,19 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                                                 </a>
                                             <?php endif; ?>
 
-                                            <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>"
-                                                onclick="event.stopPropagation()"
-                                                class="text-green-600 hover:text-green-800" title="View Items">
-                                                <i class="fas fa-list text-lg"></i>
-                                            </a>
+                                            <?php if ($order['item_type'] === 'replacement'): ?>
+    <a href="replacement_items_view.php?schedule_id=<?php echo $order['delivery_id']; ?>&order_id=<?php echo $order['order_id']; ?>"
+        onclick="event.stopPropagation()"
+        class="text-orange-600 hover:text-orange-800" title="View Replacement Items">
+        <i class="fas fa-sync-alt text-lg"></i>
+    </a>
+<?php else: ?>
+    <a href="order_items_view.php?order_id=<?php echo $order['order_id']; ?>"
+        onclick="event.stopPropagation()"
+        class="text-green-600 hover:text-green-800" title="View Items">
+        <i class="fas fa-list text-lg"></i>
+    </a>
+<?php endif; ?>
 
                                             <?php if (!$isCompleted): ?>
                                                 <button onclick="event.stopPropagation(); openRescheduleModal(<?php echo $order['delivery_id']; ?>, <?php echo $order['order_id']; ?>, '<?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES); ?>', '<?php echo $order['delivery_date']; ?>', '<?php echo date('H:i', strtotime($order['delivery_time'])); ?>');"
@@ -601,16 +671,26 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 ${bookingSection}
                 
                 <div class="bg-gray-50 border border-gray-200 rounded-lg p-5">
-                    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
-                        <i class="fas fa-box text-orange-600 mr-2"></i>Order Details
-                    </h4>
-                    <div class="grid grid-cols-4 gap-4">
-                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-blue-600">${order.total_items}</div><div class="text-xs text-gray-600">Items</div></div>
-                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-green-600">${order.total_quantity}</div><div class="text-xs text-gray-600">Quantity</div></div>
-                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-orange-600">${parseFloat(order.total_weight_kg).toFixed(2)} kg</div><div class="text-xs text-gray-600">Weight</div></div>
-                        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-orange-600">${parseFloat(order.total_cubic_meters).toFixed(3)} m³</div><div class="text-xs text-gray-600">Volume</div></div>
-                    </div>
-                </div>
+    <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+        <i class="fas fa-box text-orange-600 mr-2"></i>
+        ${order.item_type === 'replacement' ? 'Replacement' : 'Order'} Details
+        ${order.item_type === 'replacement' ? '<span class="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-semibold">Replacement Items Only</span>' : ''}
+    </h4>
+    <div class="grid grid-cols-4 gap-4">
+        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-blue-600">${order.total_items}</div><div class="text-xs text-gray-600">Items</div></div>
+        <div class="text-center p-3 bg-white rounded border"><div class="text-2xl font-bold text-green-600">${order.total_quantity}</div><div class="text-xs text-gray-600">Quantity</div></div>
+        <div class="text-center p-3 bg-white rounded border">
+            <div class="text-2xl font-bold text-orange-600">${parseFloat(order.total_weight_kg || 0).toFixed(2)} kg</div>
+            <div class="text-xs text-gray-600">Weight</div>
+            ${order.item_type === 'replacement' ? '<div class="text-xs text-orange-600 mt-1">(Replacements)</div>' : ''}
+        </div>
+        <div class="text-center p-3 bg-white rounded border">
+            <div class="text-2xl font-bold text-orange-600">${parseFloat(order.total_cubic_meters || 0).toFixed(3)} m³</div>
+            <div class="text-xs text-gray-600">Volume</div>
+            ${order.item_type === 'replacement' ? '<div class="text-xs text-orange-600 mt-1">(Replacements)</div>' : ''}
+        </div>
+    </div>
+</div>
                 
                 <div class="bg-green-50 border border-green-200 rounded-lg p-5">
                     <h4 class="font-bold text-gray-900 mb-3">Payment Summary</h4>
@@ -622,6 +702,20 @@ $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] ===
                 </div>
                 
                 ${order.delivery_notes ? `<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4"><i class="fas fa-sticky-note text-yellow-600 mr-2"></i><span class="font-semibold">Notes:</span> ${order.delivery_notes}</div>` : ''}
+
+${order.item_type === 'replacement' && order.replacement_reason ? `
+    <div class="bg-orange-50 border border-orange-200 rounded-lg p-5">
+        <h4 class="font-bold text-orange-900 mb-3 flex items-center">
+            <i class="fas fa-exchange-alt mr-2"></i>Replacement Information
+        </h4>
+        <div class="space-y-2 text-sm">
+            <div><span class="text-orange-700 font-semibold">Reason:</span> <span class="text-gray-900">${order.replacement_reason}</span></div>
+            ${order.replacement_details ? `<div><span class="text-orange-700 font-semibold">Details:</span> <span class="text-gray-900">${order.replacement_details}</span></div>` : ''}
+            ${order.replacement_quantity ? `<div><span class="text-orange-700 font-semibold">Quantity:</span> <span class="text-gray-900">${order.replacement_quantity} pcs</span></div>` : ''}
+            ${order.replacement_status ? `<div><span class="text-orange-700 font-semibold">Status:</span> <span class="text-gray-900 capitalize">${order.replacement_status.replace('_', ' ')}</span></div>` : ''}
+        </div>
+    </div>
+` : ''}
             </div>
         `;
 

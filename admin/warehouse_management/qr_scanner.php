@@ -398,44 +398,62 @@ $fullname = is_array($sessionUser) ?
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            if (scanCooldown) return;
-            
-            console.log(`QR Code detected: ${decodedText}`);
-            scanCooldown = true;
-            
-            // Show scan result
-            document.getElementById('scanResult').classList.remove('hidden');
-            document.getElementById('scanningIndicator').style.display = 'none';
-            
-            // Add to recent scans
-            addToRecentScans(decodedText);
-            
-            // Stop scanner
-            stopScanner();
-            
-            // Extract item_id from URL or use the full text
-            let itemId = null;
-            
-            // Check if it's a URL with item_id parameter
-            if (decodedText.includes('item_id=')) {
-                const urlParams = new URLSearchParams(decodedText.split('?')[1]);
-                itemId = urlParams.get('item_id');
-            }
-            
-            // Redirect after 1 second
-            setTimeout(() => {
-                if (itemId) {
-                    window.location.href = `scan_item.php?item_id=${itemId}`;
-                } else if (decodedText.includes('scan_item.php')) {
-                    window.location.href = decodedText;
-                } else {
-                    showStatus('Invalid QR code format', 'red');
-                    document.getElementById('scanResult').classList.add('hidden');
-                    scanCooldown = false;
-                    startScanner();
-                }
-            }, 1000);
+    if (scanCooldown) return;
+    
+    console.log(`QR Code detected: ${decodedText}`);
+    scanCooldown = true;
+    
+    // Show scan result
+    document.getElementById('scanResult').classList.remove('hidden');
+    document.getElementById('scanningIndicator').style.display = 'none';
+    
+    // Add to recent scans
+    addToRecentScans(decodedText);
+    
+    // Stop scanner
+    stopScanner();
+    
+    // Check if it's a replacement or original item
+    let itemId = null;
+    let replacementId = null;
+    let redirectUrl = null;
+    
+    // Check if it's a replacement QR code
+    if (decodedText.includes('replacement_id=')) {
+        const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+        replacementId = urlParams.get('replacement_id');
+        if (replacementId) {
+            redirectUrl = `scan_replacement.php?replacement_id=${replacementId}`;
         }
+    }
+    // Check if it's an original item QR code
+    else if (decodedText.includes('item_id=')) {
+        const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+        itemId = urlParams.get('item_id');
+        if (itemId) {
+            redirectUrl = `scan_item.php?item_id=${itemId}`;
+        }
+    }
+    // Check if it's a direct URL
+    else if (decodedText.includes('scan_replacement.php')) {
+        redirectUrl = decodedText;
+    }
+    else if (decodedText.includes('scan_item.php')) {
+        redirectUrl = decodedText;
+    }
+    
+    // Redirect after 1 second
+    setTimeout(() => {
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        } else {
+            showStatus('Invalid QR code format', 'red');
+            document.getElementById('scanResult').classList.add('hidden');
+            scanCooldown = false;
+            startScanner();
+        }
+    }, 1000);
+}
 
         function onScanError(errorMessage) {
             // Silently ignore scan errors
@@ -480,16 +498,30 @@ $fullname = is_array($sessionUser) ?
         }
 
         function rescanQR(qrCode) {
-            if (qrCode.includes('item_id=')) {
-                const urlParams = new URLSearchParams(qrCode.split('?')[1]);
-                const itemId = urlParams.get('item_id');
-                if (itemId) {
-                    window.location.href = `scan_item.php?item_id=${itemId}`;
-                }
-            } else if (qrCode.includes('scan_item.php')) {
-                window.location.href = qrCode;
-            }
+    // Check for replacement QR codes first
+    if (qrCode.includes('replacement_id=')) {
+        const urlParams = new URLSearchParams(qrCode.split('?')[1]);
+        const replacementId = urlParams.get('replacement_id');
+        if (replacementId) {
+            window.location.href = `scan_replacement.php?replacement_id=${replacementId}`;
         }
+    }
+    // Then check for original item QR codes
+    else if (qrCode.includes('item_id=')) {
+        const urlParams = new URLSearchParams(qrCode.split('?')[1]);
+        const itemId = urlParams.get('item_id');
+        if (itemId) {
+            window.location.href = `scan_item.php?item_id=${itemId}`;
+        }
+    }
+    // Check for direct URLs
+    else if (qrCode.includes('scan_replacement.php')) {
+        window.location.href = qrCode;
+    }
+    else if (qrCode.includes('scan_item.php')) {
+        window.location.href = qrCode;
+    }
+}
 
         // Auto-start scanner on page load
         window.addEventListener('load', () => {

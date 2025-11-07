@@ -354,9 +354,9 @@ if ($replacement_id > 0) {
 
                     <!-- Replacement Status Section -->
                     <?php
-$currentStatus = $itemInfo['status'] ?? 'pending';
-$isReceived = ($currentStatus === 'In Warehouse');
-?>
+                    $currentStatus = $itemInfo['status'] ?? 'pending';
+                    $isReceived = ($currentStatus === 'In Warehouse');
+                    ?>
 
                     <div class="bg-gradient-to-r from-<?php echo $isReceived ? 'green' : 'yellow'; ?>-50 to-<?php echo $isReceived ? 'emerald' : 'orange'; ?>-50 border-2 border-<?php echo $isReceived ? 'green' : 'yellow'; ?>-300 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -397,12 +397,18 @@ $isReceived = ($currentStatus === 'In Warehouse');
                                     <i class="fas fa-check-circle text-base sm:text-xl"></i>
                                     <span class="font-medium text-sm sm:text-base">Confirmed</span>
                                 </div>
-                            <?php elseif (strtolower($user_level) === 'warehouse' || strtolower($user_level) === 'superadmin'): ?>
-    <button onclick="updateReplacementStatus('In Warehouse')"
-        class="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
-        <i class="fas fa-warehouse"></i>
-        <span>Mark as In Warehouse</span>
-    </button>
+                            <?php elseif (strtolower($currentStatus) === 'processing' && (strtolower($user_level) === 'warehouse' || strtolower($user_level) === 'superadmin')): ?>
+                                <button onclick="updateReplacementStatus('In Warehouse')"
+                                    class="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg w-full sm:w-auto hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
+                                    <i class="fas fa-warehouse"></i>
+                                    <span>Mark as In Warehouse</span>
+                                </button>
+                            <?php elseif (!$isReceived && strtolower($currentStatus) !== 'processing'): ?>
+                                <!-- Show status info when not processing and not received -->
+                                <div class="bg-blue-100 text-blue-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-2 w-full sm:w-auto">
+                                    <i class="fas fa-info-circle text-base sm:text-xl"></i>
+                                    <span class="font-medium text-sm sm:text-base">Status: <?php echo htmlspecialchars(ucfirst($currentStatus)); ?></span>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -488,10 +494,9 @@ $isReceived = ($currentStatus === 'In Warehouse');
                             <div class="text-xs sm:text-sm text-gray-600 mb-1">Order Status</div>
                             <div>
                                 <span class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium <?php
-                                    echo ($orderInfo['order_status'] === 'pending') ? 'bg-yellow-100 text-yellow-800' : 
-                                        (($orderInfo['order_status'] === 'processing') ? 'bg-blue-100 text-blue-800' :
-                                        'bg-green-100 text-green-800');
-                                ?>">
+                                                                                                                        echo ($orderInfo['order_status'] === 'pending') ? 'bg-yellow-100 text-yellow-800' : (($orderInfo['order_status'] === 'processing') ? 'bg-blue-100 text-blue-800' :
+                                                                                                                                'bg-green-100 text-green-800');
+                                                                                                                        ?>">
                                     <?php echo htmlspecialchars(ucfirst($orderInfo['order_status'])); ?>
                                 </span>
                             </div>
@@ -619,7 +624,7 @@ $isReceived = ($currentStatus === 'In Warehouse');
                 word-break: break-word;
                 overflow-wrap: break-word;
             }
-            
+
             .break-all {
                 word-break: break-all;
             }
@@ -630,21 +635,21 @@ $isReceived = ($currentStatus === 'In Warehouse');
         const replacementId = <?php echo $replacement_id; ?>;
 
         function updateReplacementStatus(newStatus) {
-    const statusMessages = {
-        'In Warehouse': 'This will indicate that the replacement item has been received and is now stored in the warehouse.',
-        'approved': 'This will approve the replacement request.',
-        'processing': 'This will mark the replacement as being processed.',
-        'ready_for_pickup': 'This will mark the replacement as ready for pickup.',
-        'out_for_delivery': 'This will mark the replacement as out for delivery.',
-        'delivered': 'This will mark the replacement as delivered to the customer.',
-        'cancelled': 'This will cancel the replacement request.'
-    };
-    
-    const message = statusMessages[newStatus] || 'This will update the replacement status.';
-    
-    if (!confirm('Are you sure you want to mark this replacement item as "' + newStatus + '"?\n\n' + message)) {
-        return;
-    }
+            const statusMessages = {
+                'In Warehouse': 'This will indicate that the replacement item has been received and is now stored in the warehouse.',
+                'approved': 'This will approve the replacement request.',
+                'processing': 'This will mark the replacement as being processed.',
+                'ready_for_pickup': 'This will mark the replacement as ready for pickup.',
+                'out_for_delivery': 'This will mark the replacement as out for delivery.',
+                'delivered': 'This will mark the replacement as delivered to the customer.',
+                'cancelled': 'This will cancel the replacement request.'
+            };
+
+            const message = statusMessages[newStatus] || 'This will update the replacement status.';
+
+            if (!confirm('Are you sure you want to mark this replacement item as "' + newStatus + '"?\n\n' + message)) {
+                return;
+            }
 
             // Show loading state
             const button = event.target.closest('button');

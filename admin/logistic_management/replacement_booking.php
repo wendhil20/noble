@@ -13,46 +13,66 @@ if (!isset($_SESSION['noble_user'])) {
 }
 
 $schedule_id = isset($_GET['schedule_id']) ? intval($_GET['schedule_id']) : 0;
-$replacement_id = isset($_GET['replacement_id']) ? intval($_GET['replacement_id']) : 0;
+$order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
-if (!$schedule_id || !$replacement_id) {
+if (!$schedule_id || !$order_id) {
     header("Location: logistics_dashboard_view.php");
     exit();
 }
 
-// Get replacement request and delivery schedule details
-$sql = "SELECT 
-    rr.*,
-    ds.delivery_date,
-    ds.delivery_time,
-    ds.delivery_notes,
-    ds.delivery_type,
-    ds.delivery_status,
+// Get delivery schedule details
+$scheduleSql = "SELECT 
+    ds.*,
     o.customer_name,
     o.email,
     o.mobile,
     o.address,
-    o.delivery_type as order_delivery_type,
+    o.delivery_type as order_delivery_type
+FROM delivery_schedules ds
+INNER JOIN orders o ON ds.order_id = o.id
+WHERE ds.id = ? AND ds.order_id = ? AND ds.item_type = 'replacement'";
+
+$scheduleStmt = $conn->prepare($scheduleSql);
+$scheduleStmt->bind_param("ii", $schedule_id, $order_id);
+$scheduleStmt->execute();
+$schedule = $scheduleStmt->get_result()->fetch_assoc();
+$scheduleStmt->close();
+
+if (!$schedule) {
+    header("Location: logistics_dashboard_view.php");
+    exit();
+}
+
+// Get ALL replacement items for this delivery schedule
+$replacementsSql = "SELECT 
+    rr.*,
     oi.product_name,
     oi.variant_color,
     oi.size,
     oi.price,
-    oi.product_id
+    oi.product_id,
+    oi.id as order_item_id
 FROM replacement_requests rr
-INNER JOIN delivery_schedules ds ON rr.id = ds.replacement_id
-INNER JOIN orders o ON rr.order_id = o.id
 INNER JOIN order_items oi ON rr.order_item_id = oi.id
-WHERE ds.id = ? AND rr.id = ?";
+WHERE rr.delivery_schedule_id = ? AND rr.order_id = ?
+ORDER BY oi.product_name";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ii", $schedule_id, $replacement_id);
-$stmt->execute();
-$replacement = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+$replacementsStmt = $conn->prepare($replacementsSql);
+$replacementsStmt->bind_param("ii", $schedule_id, $order_id);
+$replacementsStmt->execute();
+$replacements = $replacementsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$replacementsStmt->close();
 
-if (!$replacement) {
+if (empty($replacements)) {
     header("Location: logistics_dashboard_view.php");
     exit();
+}
+
+// Calculate totals
+$totalQuantity = array_sum(array_column($replacements, 'replacement_quantity'));
+$totalValue = 0;
+foreach ($replacements as $replacement) {
+    $totalValue += $replacement['price'] * $replacement['replacement_quantity'];
 }
 
 // Check if already booked
@@ -67,76 +87,80 @@ if ($existingBooking) {
     exit();
 }
 
-// Get product dimensions and weight from product_variants
-$dimensionsSql = "SELECT 
-    pv.weight,
-    pv.weight_unit,
-    pv.width,
-    pv.height,
-    pv.length,
-    pv.dimension_unit
-FROM product_variants pv
-INNER JOIN order_items oi ON pv.product_id = oi.product_id
-WHERE oi.id = ?
-LIMIT 1";
-
-$dimStmt = $conn->prepare($dimensionsSql);
-$dimStmt->bind_param("i", $replacement['order_item_id']);
-$dimStmt->execute();
-$dimensions = $dimStmt->get_result()->fetch_assoc();
-$dimStmt->close();
-
-// Calculate weight in kg
+// Calculate total weight and volume for ALL replacement items
 $total_weight_kg = 0;
-if ($dimensions && $dimensions['weight']) {
-    $weight = floatval($dimensions['weight']);
-    $weight_unit = strtolower($dimensions['weight_unit']);
-    
-    if ($weight_unit === 'kg') {
-        $total_weight_kg = $weight * $replacement['replacement_quantity'];
-    } elseif ($weight_unit === 'g' || $weight_unit === 'grams') {
-        $total_weight_kg = ($weight / 1000) * $replacement['replacement_quantity'];
-    } elseif ($weight_unit === 'lbs' || $weight_unit === 'lb') {
-        $total_weight_kg = ($weight * 0.453592) * $replacement['replacement_quantity'];
-    }
-}
-
-// Calculate volume in cubic meters
 $total_cubic_meters = 0;
-if ($dimensions && $dimensions['width'] && $dimensions['height'] && $dimensions['length']) {
-    $width = floatval($dimensions['width']);
-    $height = floatval($dimensions['height']);
-    $length = floatval($dimensions['length']);
-    $dimension_unit = strtolower($dimensions['dimension_unit']);
+
+foreach ($replacements as $replacement) {
+    // Get product dimensions and weight
+    $dimensionsSql = "SELECT 
+        pv.weight,
+        pv.weight_unit,
+        pv.width,
+        pv.height,
+        pv.length,
+        pv.dimension_unit
+    FROM product_variants pv
+    WHERE pv.product_id = ?
+    LIMIT 1";
     
-    // Convert to meters
-    if ($dimension_unit === 'cm') {
-        $width_m = $width / 100;
-        $height_m = $height / 100;
-        $length_m = $length / 100;
-    } elseif ($dimension_unit === 'mm') {
-        $width_m = $width / 1000;
-        $height_m = $height / 1000;
-        $length_m = $length / 1000;
-    } elseif ($dimension_unit === 'in' || $dimension_unit === 'inch') {
-        $width_m = $width * 0.0254;
-        $height_m = $height * 0.0254;
-        $length_m = $length * 0.0254;
-    } elseif ($dimension_unit === 'ft' || $dimension_unit === 'feet') {
-        $width_m = $width * 0.3048;
-        $height_m = $height * 0.3048;
-        $length_m = $length * 0.3048;
-    } else {
-        // Assume meters
-        $width_m = $width;
-        $height_m = $height;
-        $length_m = $length;
+    $dimStmt = $conn->prepare($dimensionsSql);
+    $dimStmt->bind_param("i", $replacement['product_id']);
+    $dimStmt->execute();
+    $dimensions = $dimStmt->get_result()->fetch_assoc();
+    $dimStmt->close();
+    
+    // Calculate weight for this item
+    if ($dimensions && $dimensions['weight']) {
+        $weight = floatval($dimensions['weight']);
+        $weight_unit = strtolower($dimensions['weight_unit']);
+        $quantity = $replacement['replacement_quantity'];
+        
+        if ($weight_unit === 'kg') {
+            $total_weight_kg += $weight * $quantity;
+        } elseif ($weight_unit === 'g' || $weight_unit === 'grams') {
+            $total_weight_kg += ($weight / 1000) * $quantity;
+        } elseif ($weight_unit === 'lbs' || $weight_unit === 'lb') {
+            $total_weight_kg += ($weight * 0.453592) * $quantity;
+        }
     }
     
-    $total_cubic_meters = ($width_m * $height_m * $length_m) * $replacement['replacement_quantity'];
+    // Calculate volume for this item
+    if ($dimensions && $dimensions['width'] && $dimensions['height'] && $dimensions['length']) {
+        $width = floatval($dimensions['width']);
+        $height = floatval($dimensions['height']);
+        $length = floatval($dimensions['length']);
+        $dimension_unit = strtolower($dimensions['dimension_unit']);
+        $quantity = $replacement['replacement_quantity'];
+        
+        // Convert to meters
+        if ($dimension_unit === 'cm') {
+            $width_m = $width / 100;
+            $height_m = $height / 100;
+            $length_m = $length / 100;
+        } elseif ($dimension_unit === 'mm') {
+            $width_m = $width / 1000;
+            $height_m = $height / 1000;
+            $length_m = $length / 1000;
+        } elseif ($dimension_unit === 'in' || $dimension_unit === 'inch') {
+            $width_m = $width * 0.0254;
+            $height_m = $height * 0.0254;
+            $length_m = $length * 0.0254;
+        } elseif ($dimension_unit === 'ft' || $dimension_unit === 'feet') {
+            $width_m = $width * 0.3048;
+            $height_m = $height * 0.3048;
+            $length_m = $length * 0.3048;
+        } else {
+            $width_m = $width;
+            $height_m = $height;
+            $length_m = $length;
+        }
+        
+        $total_cubic_meters += ($width_m * $height_m * $length_m) * $quantity;
+    }
 }
 
-$isPickup = strtolower($replacement['order_delivery_type']) === 'pickup';
+$isPickup = strtolower($schedule['order_delivery_type']) === 'pickup';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_booking') {
@@ -166,10 +190,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         ");
         
         $insertBooking->bind_param(
-            "iissssssissss",
-            $replacement['order_id'],
-            $schedule_id,
-            $replacement['order_delivery_type'],
+    "iissssssissss",
+    $order_id,
+    $schedule_id,
+    $schedule['order_delivery_type'],
             $tracking_number,
             $courier_name,
             $booking_reference,
@@ -188,13 +212,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $booking_id = $conn->insert_id;
         $insertBooking->close();
         
-        // Update replacement request status
-        $updateReplacement = $conn->prepare("
-            UPDATE replacement_requests 
-            SET status = 'ready_for_pickup' 
-            WHERE id = ?
-        ");
-        $updateReplacement->bind_param("i", $replacement_id);
+        // Update ALL replacement requests for this delivery schedule
+$updateReplacement = $conn->prepare("
+    UPDATE replacement_requests 
+    SET status = 'ready_for_pickup' 
+    WHERE delivery_schedule_id = ? AND order_id = ?
+");
+$updateReplacement->bind_param("ii", $schedule_id, $order_id);
         
         if (!$updateReplacement->execute()) {
             throw new Exception("Failed to update replacement");
@@ -251,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         <!-- Header -->
         <div class="mb-6">
-            <a href="delivery_date_orders.php?date=<?php echo $replacement['delivery_date']; ?>" 
+            <a href="delivery_date_orders.php?date=<?php echo $schedule['delivery_date']; ?>" 
                class="inline-flex items-center text-blue-600 hover:text-blue-700 mb-3 text-sm font-medium transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Orders
@@ -273,23 +297,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         <p class="text-orange-100 text-sm flex items-center">
                             <span class="font-semibold mr-2">Order #<?php echo $replacement['order_id']; ?></span>
                             <span class="text-orange-200">•</span>
-                            <span class="ml-2">Replacement Request #<?php echo $replacement_id; ?></span>
+                            <span class="ml-2">Schedule #<?php echo $schedule_id; ?></span>
                             <span class="text-orange-200 mx-2">•</span>
-                            <span><?php echo date('l, F d, Y', strtotime($replacement['delivery_date'])); ?></span>
+                            <span><?php echo date('l, F d, Y', strtotime($schedule['delivery_date'])); ?></span>
                         </p>
                     </div>
                     
                     <!-- Quick Info -->
                     <div class="flex gap-3">
-                        <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
-                            <div class="text-2xl font-bold text-white"><?php echo $replacement['replacement_quantity']; ?></div>
-                            <div class="text-xs text-orange-100 font-medium">Quantity</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
-                            <div class="text-2xl font-bold text-white">₱<?php echo number_format($replacement['price'] * $replacement['replacement_quantity'], 2); ?></div>
-                            <div class="text-xs text-orange-100 font-medium">Value</div>
-                        </div>
-                    </div>
+    <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
+        <div class="text-2xl font-bold text-white"><?php echo count($replacements); ?></div>
+        <div class="text-xs text-orange-100 font-medium">Items</div>
+    </div>
+    <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
+        <div class="text-2xl font-bold text-white"><?php echo $totalQuantity; ?></div>
+        <div class="text-xs text-orange-100 font-medium">Total Qty</div>
+    </div>
+    <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg px-5 py-3 text-center border border-white border-opacity-30">
+        <div class="text-2xl font-bold text-white">₱<?php echo number_format($totalValue, 2); ?></div>
+        <div class="text-xs text-orange-100 font-medium">Total Value</div>
+    </div>
+</div>
                 </div>
             </div>
         </div>
@@ -332,7 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     Customer Name
                                 </label>
                                 <div class="bg-gray-50 border border-gray-300 rounded-lg p-3">
-                                    <p class="font-semibold text-gray-900"><?php echo htmlspecialchars($replacement['customer_name']); ?></p>
+                                    <p class="font-semibold text-gray-900"><?php echo htmlspecialchars($schedule['customer_name']); ?></p>
                                 </div>
                             </div>
                             
@@ -347,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     <input type="text" 
                                            name="tracking_number" 
                                            required
-                                           value="RPL-<?php echo $replacement_id; ?>-<?php echo date('Ymd'); ?>"
+                                           value="RPL-<?php echo $schedule_id; ?>-<?php echo date('Ymd'); ?>"
                                            class="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                                            placeholder="Enter replacement pickup reference">
                                 </div>
@@ -398,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     <input type="text" 
                                            name="pickup_person_contact" 
                                            required
-                                           value="<?php echo htmlspecialchars($replacement['mobile']); ?>"
+                                           value="<?php echo htmlspecialchars($schedule['mobile']); ?>"
                                            class="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                                            placeholder="e.g., 09171234567">
                                 </div>
@@ -436,7 +464,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     <input type="text" 
                                            name="tracking_number" 
                                            required
-                                           value="RPL-<?php echo $replacement_id; ?>-<?php echo date('Ymd'); ?>"
+                                           value="RPL-<?php echo $schedule_id; ?>-<?php echo date('Ymd'); ?>"
                                            class="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                                            placeholder="Enter tracking number from courier">
                                 </div>
@@ -521,7 +549,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 </div>
                                 <input type="datetime-local" 
                                        name="estimated_pickup_time"
-                                       value="<?php echo date('Y-m-d\TH:i', strtotime($replacement['delivery_date'] . ' ' . $replacement['delivery_time'])); ?>"
+                                       value="<?php echo date('Y-m-d\TH:i', strtotime($schedule['delivery_date'] . ' ' . $schedule['delivery_time'])); ?>"
                                        class="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
                             </div>
                         </div>
@@ -532,9 +560,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 Notes <span class="text-gray-400 text-xs font-normal">(Optional)</span>
                             </label>
                             <textarea name="booking_notes"
-                                      rows="4"
-                                      class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none"
-                                      placeholder="Replacement reason: <?php echo htmlspecialchars($replacement['reason']); ?>. <?php echo $replacement['details'] ? htmlspecialchars($replacement['details']) : ''; ?>">Replacement item for reason: <?php echo htmlspecialchars($replacement['reason']); ?></textarea>
+          rows="4"
+          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none"
+          placeholder="Replacement delivery - <?php echo count($replacements); ?> items">Replacement delivery for <?php echo count($replacements); ?> item(s). Multiple replacement requests included in this shipment.</textarea>
                         </div>
                         
                         <div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
@@ -549,7 +577,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     </div>
                     
                     <div class="flex gap-3 mt-8 pt-6 border-t-2 border-gray-200">
-                        <a href="delivery_date_orders.php?date=<?php echo $replacement['delivery_date']; ?>" 
+                        <a href="delivery_date_orders.php?date=<?php echo $schedule['delivery_date']; ?>" 
                            class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold text-center flex items-center justify-center gap-2">
                             <i class="fas fa-times"></i>
                             <span>Cancel</span>
@@ -584,39 +612,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <!-- Left Column -->
                     <div class="space-y-4">
                         
-                        <!-- Replacement Info -->
-                        <div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-5">
-                            <h4 class="font-bold text-orange-900 mb-4 pb-3 border-b border-orange-200 flex items-center">
-                                <i class="fas fa-sync-alt text-orange-600 mr-2"></i>
-                                Replacement Information
-                            </h4>
-                            <div class="space-y-3 text-sm">
-                                <div>
-                                    <p class="text-orange-700 text-xs mb-1">Request ID</p>
-                                    <p class="font-bold text-orange-900">#<?php echo $replacement_id; ?></p>
-                                </div>
-                                <div>
-                                    <p class="text-orange-700 text-xs mb-1">Original Order</p>
-                                    <p class="font-bold text-orange-900">#<?php echo $replacement['order_id']; ?></p>
-                                </div>
-                                <div>
-                                    <p class="text-orange-700 text-xs mb-1">Reason</p>
-                                    <p class="font-semibold text-orange-900 capitalize"><?php echo htmlspecialchars(str_replace('_', ' ', $replacement['reason'])); ?></p>
-                                </div>
-                                <?php if ($replacement['details']): ?>
-                                <div>
-                                    <p class="text-orange-700 text-xs mb-1">Details</p>
-                                    <p class="text-orange-900 text-sm leading-relaxed"><?php echo nl2br(htmlspecialchars($replacement['details'])); ?></p>
-                                </div>
-                                <?php endif; ?>
-                                <div>
-                                    <p class="text-orange-700 text-xs mb-1">Status</p>
-                                    <span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">
-                                        <?php echo ucfirst($replacement['status']); ?>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Replacement Info - Summary -->
+<div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-5">
+    <h4 class="font-bold text-orange-900 mb-4 pb-3 border-b border-orange-200 flex items-center justify-between">
+        <span class="flex items-center">
+            <i class="fas fa-sync-alt text-orange-600 mr-2"></i>
+            Replacement Summary
+        </span>
+        <span class="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full">
+            <?php echo count($replacements); ?> Items
+        </span>
+    </h4>
+    <div class="space-y-3 text-sm">
+        <div>
+            <p class="text-orange-700 text-xs mb-1">Schedule ID</p>
+            <p class="font-bold text-orange-900">#<?php echo $schedule_id; ?></p>
+        </div>
+        <div>
+            <p class="text-orange-700 text-xs mb-1">Order ID</p>
+            <p class="font-bold text-orange-900">#<?php echo $order_id; ?></p>
+        </div>
+        <div>
+            <p class="text-orange-700 text-xs mb-1">Total Items</p>
+            <p class="font-bold text-orange-900"><?php echo count($replacements); ?> products</p>
+        </div>
+        <div>
+            <p class="text-orange-700 text-xs mb-1">Total Quantity</p>
+            <p class="font-bold text-orange-900"><?php echo $totalQuantity; ?> pieces</p>
+        </div>
+        <div>
+            <p class="text-orange-700 text-xs mb-1">Total Value</p>
+            <p class="font-bold text-orange-900 text-lg">₱<?php echo number_format($totalValue, 2); ?></p>
+        </div>
+        
+        <!-- Reasons Summary -->
+        <div class="pt-3 border-t border-orange-200">
+            <p class="text-orange-700 text-xs mb-2 font-semibold">Replacement Reasons:</p>
+            <div class="space-y-1">
+                <?php 
+                $reasons = array_count_values(array_column($replacements, 'reason'));
+                foreach ($reasons as $reason => $count):
+                ?>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-orange-900 capitalize"><?php echo htmlspecialchars(str_replace('_', ' ', $reason)); ?></span>
+                    <span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full font-bold"><?php echo $count; ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
                         
                         <!-- Customer Info -->
                         <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-5">
@@ -627,31 +672,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <div class="space-y-3 text-sm">
                                 <div>
                                     <p class="text-blue-700 text-xs mb-1">Name</p>
-                                    <p class="font-bold text-blue-900"><?php echo htmlspecialchars($replacement['customer_name']); ?></p>
+                                    <p class="font-bold text-blue-900"><?php echo htmlspecialchars($schedule['customer_name']); ?></p>
                                 </div>
-                                <?php if ($replacement['mobile']): ?>
-                                <div>
-                                    <p class="text-blue-700 text-xs mb-1">Mobile</p>
-                                    <p class="font-bold text-blue-900">
-                                        <i class="fas fa-phone text-green-500 mr-2"></i>
-                                        <?php echo htmlspecialchars($replacement['mobile']); ?>
-                                    </p>
-                                </div>
-                                <?php endif; ?>
-                                <?php if ($replacement['email']): ?>
-                                <div>
-                                    <p class="text-blue-700 text-xs mb-1">Email</p>
-                                    <p class="font-bold text-blue-900">
-                                        <i class="fas fa-envelope text-blue-500 mr-2"></i>
-                                        <?php echo htmlspecialchars($replacement['email']); ?>
-                                    </p>
-                                </div>
-                                <?php endif; ?>
+                                <?php if ($schedule['mobile']): ?>
+<div>
+    <p class="text-blue-700 text-xs mb-1">Mobile</p>
+    <p class="font-bold text-blue-900">
+        <i class="fas fa-phone text-green-500 mr-2"></i>
+        <?php echo htmlspecialchars($schedule['mobile']); ?>
+    </p>
+</div>
+<?php endif; ?>
+<?php if ($schedule['email']): ?>
+<div>
+    <p class="text-blue-700 text-xs mb-1">Email</p>
+    <p class="font-bold text-blue-900">
+        <i class="fas fa-envelope text-blue-500 mr-2"></i>
+        <?php echo htmlspecialchars($schedule['email']); ?>
+    </p>
+</div>
+<?php endif; ?>
                                 <div>
                                     <p class="text-blue-700 text-xs mb-1">Address</p>
                                     <p class="font-semibold text-blue-900 leading-relaxed">
                                         <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
-                                        <?php echo htmlspecialchars($replacement['address']); ?>
+                                        <?php echo htmlspecialchars($schedule['address']); ?>
                                     </p>
                                 </div>
                             </div>
@@ -672,12 +717,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                             <?php echo number_format($total_weight_kg, 2); ?>
                                         </span>
                                         <span class="text-xs text-purple-600 font-semibold">kg</span>
-                                        <span class="text-xs text-gray-500 mt-1">Weight</span>
-                                        <?php if ($dimensions && $dimensions['weight']): ?>
-                                        <span class="text-xs text-gray-400 mt-1">
-                                            (<?php echo $dimensions['weight'] . ' ' . $dimensions['weight_unit']; ?> × <?php echo $replacement['replacement_quantity']; ?>)
-                                        </span>
-                                        <?php endif; ?>
+                                        <span class="text-xs text-gray-500 mt-1">Total Weight</span>
+<span class="text-xs text-gray-400 mt-1">
+    (All items combined)
+</span>
                                     </div>
                                 </div>
                                 
@@ -688,45 +731,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                             <?php echo number_format($total_cubic_meters, 3); ?>
                                         </span>
                                         <span class="text-xs text-purple-600 font-semibold">m³</span>
-                                        <span class="text-xs text-gray-500 mt-1">Volume</span>
-                                        <?php if ($dimensions && $dimensions['width']): ?>
-                                        <span class="text-xs text-gray-400 mt-1">
-                                            (<?php echo $dimensions['width'] . '×' . $dimensions['height'] . '×' . $dimensions['length'] . ' ' . $dimensions['dimension_unit']; ?>)
-                                        </span>
-                                        <?php endif; ?>
+                                        <span class="text-xs text-gray-500 mt-1">Total Volume</span>
+<span class="text-xs text-gray-400 mt-1">
+    (All items combined)
+</span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <?php if ($dimensions): ?>
-                            <div class="mt-4 pt-4 border-t border-purple-200">
-                                <p class="text-xs text-purple-700 mb-2 font-semibold">Product Dimensions</p>
-                                <div class="grid grid-cols-3 gap-2 text-xs">
-                                    <div class="bg-white rounded p-2 text-center border border-purple-200">
-                                        <div class="font-bold text-purple-900"><?php echo $dimensions['width'] ?? 'N/A'; ?></div>
-                                        <div class="text-purple-600">Width</div>
-                                    </div>
-                                    <div class="bg-white rounded p-2 text-center border border-purple-200">
-                                        <div class="font-bold text-purple-900"><?php echo $dimensions['height'] ?? 'N/A'; ?></div>
-                                        <div class="text-purple-600">Height</div>
-                                    </div>
-                                    <div class="bg-white rounded p-2 text-center border border-purple-200">
-                                        <div class="font-bold text-purple-900"><?php echo $dimensions['length'] ?? 'N/A'; ?></div>
-                                        <div class="text-purple-600">Length</div>
-                                    </div>
-                                </div>
-                                <p class="text-center text-xs text-purple-600 mt-2">
-                                    Unit: <?php echo strtoupper($dimensions['dimension_unit'] ?? 'N/A'); ?>
-                                </p>
-                            </div>
-                            <?php else: ?>
-                            <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                                <p class="text-xs text-yellow-800 flex items-center">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                                    No dimension data available for this product
-                                </p>
-                            </div>
-                            <?php endif; ?>
+                            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+    <p class="text-xs text-blue-800 flex items-center">
+        <i class="fas fa-info-circle mr-2"></i>
+        Dimensions calculated from <?php echo count($replacements); ?> replacement item(s)
+    </p>
+</div>
                         </div>
 
                         <!-- Schedule Info -->
@@ -737,163 +755,185 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             </h4>
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center text-sm">
-                                    <span class="text-green-700">Type</span>
-                                    <span class="font-bold <?php echo $isPickup ? 'bg-indigo-100 text-indigo-800' : 'bg-blue-100 text-blue-800'; ?> px-3 py-1 rounded-full">
-                                        <i class="fas <?php echo $isPickup ? 'fa-hand-holding' : 'fa-truck'; ?> mr-1"></i>
-                                        <?php echo ucfirst($replacement['order_delivery_type']); ?>
-                                    </span>
-                                </div>
-                                <div class="flex justify-between items-center text-sm">
-                                    <span class="text-green-700">Date</span>
-                                    <span class="font-bold text-green-900">
-                                        <?php echo date('M d, Y', strtotime($replacement['delivery_date'])); ?>
-                                    </span>
-                                </div>
-                                <div class="flex justify-between items-center text-sm">
-                                    <span class="text-green-700">Time</span>
-                                    <span class="font-bold text-green-900">
-                                        <?php echo date('g:i A', strtotime($replacement['delivery_time'])); ?>
-                                    </span>
-                                </div>
+    <span class="text-green-700">Type</span>
+    <span class="font-bold <?php echo $isPickup ? 'bg-indigo-100 text-indigo-800' : 'bg-blue-100 text-blue-800'; ?> px-3 py-1 rounded-full">
+        <i class="fas <?php echo $isPickup ? 'fa-hand-holding' : 'fa-truck'; ?> mr-1"></i>
+        <?php echo ucfirst($schedule['order_delivery_type']); ?>
+    </span>
+</div>
+<div class="flex justify-between items-center text-sm">
+    <span class="text-green-700">Date</span>
+    <span class="font-bold text-green-900">
+        <?php echo date('M d, Y', strtotime($schedule['delivery_date'])); ?>
+    </span>
+</div>
+<div class="flex justify-between items-center text-sm">
+    <span class="text-green-700">Time</span>
+    <span class="font-bold text-green-900">
+        <?php echo date('g:i A', strtotime($schedule['delivery_time'])); ?>
+    </span>
+</div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Right Column - Product Details -->
-                    <div>
-                        <div class="bg-gray-50 border-2 border-gray-200 rounded-lg p-5 h-full">
-                            <h4 class="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-300 flex items-center justify-between">
-                                <span class="flex items-center">
-                                    <i class="fas fa-box-open text-gray-600 mr-2"></i>
-                                    Replacement Item
-                                </span>
-                                <span class="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full">
-                                    Qty: <?php echo $replacement['replacement_quantity']; ?>
-                                </span>
-                            </h4>
-                            
-                            <div class="bg-white rounded-lg p-6 border-2 border-orange-200">
-                                <div class="mb-4">
-                                    <h5 class="font-bold text-gray-900 text-lg leading-tight mb-3">
-                                        <?php echo htmlspecialchars($replacement['product_name']); ?>
-                                    </h5>
-                                    
-                                    <?php if ($replacement['variant_color'] || $replacement['size']): ?>
-                                    <div class="space-y-2 mb-4">
-                                        <?php if ($replacement['variant_color']): ?>
-                                        <div class="flex items-center text-sm text-gray-600">
-                                            <i class="fas fa-palette text-blue-400 mr-2"></i>
-                                            <span class="font-semibold">Color:</span>
-                                            <span class="ml-2"><?php echo htmlspecialchars($replacement['variant_color']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                        <?php if ($replacement['size']): ?>
-                                        <div class="flex items-center text-sm text-gray-600">
-                                            <i class="fas fa-ruler text-green-400 mr-2"></i>
-                                            <span class="font-semibold">Size:</span>
-                                            <span class="ml-2"><?php echo htmlspecialchars($replacement['size']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php endif; ?>
-                                    
-                                    <div class="pt-4 border-t-2 border-gray-200">
-                                        <div class="flex justify-between items-center mb-3">
-                                            <span class="text-gray-600 text-sm">Unit Price</span>
-                                            <span class="font-bold text-gray-900">₱<?php echo number_format($replacement['price'], 2); ?></span>
-                                        </div>
-                                        <div class="flex justify-between items-center mb-3">
-                                            <span class="text-gray-600 text-sm">Quantity</span>
-                                            <span class="font-bold text-gray-900"><?php echo $replacement['replacement_quantity']; ?> pcs</span>
-                                        </div>
-                                        <div class="flex justify-between items-center pt-3 border-t-2 border-gray-200">
-                                            <span class="font-bold text-gray-900">Total Value</span>
-                                            <span class="text-2xl font-bold text-orange-600">
-                                                ₱<?php echo number_format($replacement['price'] * $replacement['replacement_quantity'], 2); ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Warehouse Info -->
-                                <?php if ($replacement['warehouse_location'] || $replacement['po_number']): ?>
-                                <div class="mt-4 pt-4 border-t border-gray-200">
-                                    <p class="text-xs text-gray-600 font-semibold mb-2">Warehouse Information</p>
-                                    <div class="space-y-2">
-                                        <?php if ($replacement['warehouse_location']): ?>
-                                        <div class="flex items-center text-xs">
-                                            <i class="fas fa-map-marker-alt text-blue-400 mr-2"></i>
-                                            <span class="text-gray-600">Location:</span>
-                                            <span class="ml-2 font-semibold text-gray-900"><?php echo htmlspecialchars($replacement['warehouse_location']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                        <?php if ($replacement['po_number']): ?>
-                                        <div class="flex items-center text-xs">
-                                            <i class="fas fa-file-alt text-green-400 mr-2"></i>
-                                            <span class="text-gray-600">PO Number:</span>
-                                            <span class="ml-2 font-semibold text-gray-900"><?php echo htmlspecialchars($replacement['po_number']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                        <?php if ($replacement['qr_code']): ?>
-                                        <div class="flex items-center text-xs">
-                                            <i class="fas fa-qrcode text-purple-400 mr-2"></i>
-                                            <span class="text-gray-600">QR Code:</span>
-                                            <span class="ml-2 font-semibold text-gray-900"><?php echo htmlspecialchars($replacement['qr_code']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <!-- Defect Images Section -->
-                            <div class="mt-4 bg-red-50 border-2 border-red-200 rounded-lg p-4">
-                                <h5 class="font-bold text-red-900 mb-3 flex items-center text-sm">
-                                    <i class="fas fa-images text-red-600 mr-2"></i>
-                                    Defect Evidence Photos
-                                </h5>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <?php if ($replacement['defect_image_overview']): ?>
-                                    <div class="text-center">
-                                        <div class="bg-white rounded-lg p-2 border border-red-200 mb-1">
-                                            <i class="fas fa-camera text-red-400 text-2xl"></i>
-                                        </div>
-                                        <p class="text-xs text-red-700 font-semibold">Overview</p>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($replacement['defect_image_closeup']): ?>
-                                    <div class="text-center">
-                                        <div class="bg-white rounded-lg p-2 border border-red-200 mb-1">
-                                            <i class="fas fa-search-plus text-red-400 text-2xl"></i>
-                                        </div>
-                                        <p class="text-xs text-red-700 font-semibold">Close-up</p>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($replacement['defect_image_detail']): ?>
-                                    <div class="text-center">
-                                        <div class="bg-white rounded-lg p-2 border border-red-200 mb-1">
-                                            <i class="fas fa-image text-red-400 text-2xl"></i>
-                                        </div>
-                                        <p class="text-xs text-red-700 font-semibold">Detail</p>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            
-                            <!-- Admin Notes -->
-                            <?php if ($replacement['admin_notes']): ?>
-                            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <h5 class="font-bold text-blue-900 mb-2 flex items-center text-sm">
-                                    <i class="fas fa-clipboard-list text-blue-600 mr-2"></i>
-                                    Admin Notes
-                                </h5>
-                                <p class="text-sm text-blue-900 leading-relaxed">
-                                    <?php echo nl2br(htmlspecialchars($replacement['admin_notes'])); ?>
-                                </p>
-                            </div>
-                            <?php endif; ?>
+<div>
+    <div class="bg-gray-50 border-2 border-gray-200 rounded-lg p-5 h-full">
+        <h4 class="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-300 flex items-center justify-between">
+            <span class="flex items-center">
+                <i class="fas fa-box-open text-gray-600 mr-2"></i>
+                Replacement Items
+            </span>
+            <span class="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full">
+                <?php echo count($replacements); ?> Products | Total Qty: <?php echo $totalQuantity; ?>
+            </span>
+        </h4>
+        
+        <div class="space-y-4 max-h-[600px] overflow-y-auto">
+            <?php foreach ($replacements as $index => $replacement): ?>
+            <div class="bg-white rounded-lg p-5 border-2 border-orange-200">
+                <div class="flex items-start justify-between mb-3">
+                    <h5 class="font-bold text-gray-900 text-base leading-tight flex-1">
+                        <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold mr-2">
+                            #<?php echo $index + 1; ?>
+                        </span>
+                        <?php echo htmlspecialchars($replacement['product_name']); ?>
+                    </h5>
+                    <span class="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-2">
+                        Qty: <?php echo $replacement['replacement_quantity']; ?>
+                    </span>
+                </div>
+                
+                <?php if ($replacement['variant_color'] || $replacement['size']): ?>
+                <div class="space-y-1 mb-3 text-sm">
+                    <?php if ($replacement['variant_color']): ?>
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-palette text-blue-400 mr-2 w-4"></i>
+                        <span class="font-semibold">Color:</span>
+                        <span class="ml-2"><?php echo htmlspecialchars($replacement['variant_color']); ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($replacement['size']): ?>
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-ruler text-green-400 mr-2 w-4"></i>
+                        <span class="font-semibold">Size:</span>
+                        <span class="ml-2"><?php echo htmlspecialchars($replacement['size']); ?></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Replacement Info -->
+                <div class="bg-orange-50 border border-orange-200 rounded p-3 mb-3">
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <span class="text-orange-700 font-semibold">Request ID:</span>
+                            <span class="text-orange-900 font-bold ml-2">#<?php echo $replacement['id']; ?></span>
+                        </div>
+                        <div>
+                            <span class="text-orange-700 font-semibold">Reason:</span>
+                            <span class="text-orange-900 ml-2 capitalize"><?php echo htmlspecialchars(str_replace('_', ' ', $replacement['reason'])); ?></span>
+                        </div>
+                        <?php if ($replacement['details']): ?>
+                        <div>
+                            <span class="text-orange-700 font-semibold">Details:</span>
+                            <p class="text-orange-900 mt-1 text-xs"><?php echo nl2br(htmlspecialchars($replacement['details'])); ?></p>
+                        </div>
+                        <?php endif; ?>
+                        <div>
+                            <span class="text-orange-700 font-semibold">Status:</span>
+                            <span class="inline-block bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-bold ml-2">
+                                <?php echo ucfirst($replacement['status']); ?>
+                            </span>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Pricing -->
+                <div class="pt-3 border-t-2 border-gray-200">
+                    <div class="flex justify-between items-center text-sm mb-2">
+                        <span class="text-gray-600">Unit Price</span>
+                        <span class="font-bold text-gray-900">₱<?php echo number_format($replacement['price'], 2); ?></span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm mb-2">
+                        <span class="text-gray-600">Quantity</span>
+                        <span class="font-bold text-gray-900"><?php echo $replacement['replacement_quantity']; ?> pcs</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span class="font-bold text-gray-900 text-sm">Subtotal</span>
+                        <span class="text-lg font-bold text-orange-600">
+                            ₱<?php echo number_format($replacement['price'] * $replacement['replacement_quantity'], 2); ?>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Defect Images -->
+                <?php if ($replacement['defect_image_overview'] || $replacement['defect_image_closeup'] || $replacement['defect_image_detail']): ?>
+                <div class="mt-3 bg-red-50 border border-red-200 rounded p-3">
+                    <h6 class="font-bold text-red-900 mb-2 flex items-center text-xs">
+                        <i class="fas fa-images text-red-600 mr-2"></i>
+                        Defect Evidence
+                    </h6>
+                    <div class="grid grid-cols-3 gap-2">
+                        <?php if ($replacement['defect_image_overview']): ?>
+                        <div class="text-center">
+                            <div class="bg-white rounded p-2 border border-red-200">
+                                <i class="fas fa-camera text-red-400 text-xl"></i>
+                            </div>
+                            <p class="text-xs text-red-700 font-semibold mt-1">Overview</p>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($replacement['defect_image_closeup']): ?>
+                        <div class="text-center">
+                            <div class="bg-white rounded p-2 border border-red-200">
+                                <i class="fas fa-search-plus text-red-400 text-xl"></i>
+                            </div>
+                            <p class="text-xs text-red-700 font-semibold mt-1">Close-up</p>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($replacement['defect_image_detail']): ?>
+                        <div class="text-center">
+                            <div class="bg-white rounded p-2 border border-red-200">
+                                <i class="fas fa-image text-red-400 text-xl"></i>
+                            </div>
+                            <p class="text-xs text-red-700 font-semibold mt-1">Detail</p>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Admin Notes -->
+                <?php if ($replacement['admin_notes']): ?>
+                <div class="mt-3 bg-blue-50 border border-blue-200 rounded p-3">
+                    <h6 class="font-bold text-blue-900 mb-1 flex items-center text-xs">
+                        <i class="fas fa-clipboard-list text-blue-600 mr-2"></i>
+                        Admin Notes
+                    </h6>
+                    <p class="text-xs text-blue-900 leading-relaxed">
+                        <?php echo nl2br(htmlspecialchars($replacement['admin_notes'])); ?>
+                    </p>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        
+        <!-- Grand Total -->
+        <div class="mt-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-orange-100 text-xs mb-1">Grand Total</p>
+                    <p class="text-sm"><?php echo count($replacements); ?> items • <?php echo $totalQuantity; ?> pieces</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-3xl font-bold">₱<?php echo number_format($totalValue, 2); ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
                 
                 <div class="mt-6 pt-6 border-t-2 border-gray-200">

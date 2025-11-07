@@ -621,13 +621,15 @@ if (!empty($po_number)) {
     // Store item type for later use
     window.currentItemType = itemType;
     
+    // Get the correct base path from current URL
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    
     // Generate unique QR code value with URL - different page for replacements
     if (itemType === 'replacement') {
-        const baseUrl = window.location.origin + '/noble/admin/warehouse_management/scan_replacement.php';
-        currentQRCode = `${baseUrl}?replacement_id=${itemId}`;
+        currentQRCode = `${window.location.origin}${basePath}scan_replacement.php?replacement_id=${itemId}`;
     } else {
-        const baseUrl = window.location.origin + '/noble/admin/warehouse_management/scan_item.php';
-        currentQRCode = `${baseUrl}?item_id=${itemId}`;
+        currentQRCode = `${window.location.origin}${basePath}scan_item.php?item_id=${itemId}`;
     }
     
     // Set product name with item type indicator

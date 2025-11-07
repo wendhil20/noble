@@ -127,6 +127,7 @@ $date_to       = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
 $show_replacements = isset($_GET['replacements']) ? (bool)$_GET['replacements'] : false;
 $show_ready_for_schedule = isset($_GET['ready_schedule']) ? (bool)$_GET['ready_schedule'] : false;
 $show_defects = isset($_GET['defects']) ? (bool)$_GET['defects'] : false;
+$show_ready_replacements = isset($_GET['ready_replacements']) ? (bool)$_GET['ready_replacements'] : false;
 
 // --- Build WHERE conditions ---
 // IMPORTANT: We ALWAYS restrict by warehouse_employee_id = logged in user
@@ -176,6 +177,37 @@ if ($show_ready_for_schedule) {
     $whereParts[] = "(SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) > 0";
 }
 
+// Add ready replacements filter
+if ($show_ready_replacements) {
+    $whereParts[] = "EXISTS (
+        SELECT 1 FROM replacement_requests rr 
+        WHERE rr.order_id = o.id 
+        AND rr.status IN ('approved', 'processing', 'In Warehouse')
+    )";
+    $whereParts[] = "NOT EXISTS (
+        SELECT 1 FROM delivery_schedules ds 
+        WHERE ds.order_id = o.id 
+        AND ds.item_type = 'replacement'
+    )";
+    $whereParts[] = "(
+        SELECT COUNT(*) 
+        FROM replacement_requests rr2 
+        WHERE rr2.order_id = o.id 
+        AND rr2.status = 'In Warehouse'
+    ) = (
+        SELECT COUNT(*) 
+        FROM replacement_requests rr3 
+        WHERE rr3.order_id = o.id 
+        AND rr3.status IN ('approved', 'processing', 'In Warehouse')
+    )";
+    $whereParts[] = "(
+        SELECT COUNT(*) 
+        FROM replacement_requests rr4 
+        WHERE rr4.order_id = o.id 
+        AND rr4.status IN ('approved', 'processing', 'In Warehouse')
+    ) > 0";
+}
+
 $whereClause = 'WHERE ' . implode(' AND ', $whereParts);
 
 // --- Helper to bind params dynamically (call_user_func_array with references) ---
@@ -210,6 +242,7 @@ $ordersSql = "
         END) as assigned_count,
         COUNT(DISTINCT poa.id) as po_attachment_count,
         COUNT(DISTINCT CASE WHEN rr.status IN ('approved', 'processing') THEN rr.id END) as approved_replacements_count,
+        COUNT(DISTINCT CASE WHEN rr.status = 'In Warehouse' THEN rr.id END) as warehouse_replacements_count,
         COUNT(DISTINCT CASE WHEN dr.status != 'resolved' THEN dr.id END) as unresolved_defects_count
     FROM orders o
     LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -304,6 +337,51 @@ if ($stmt3 = $conn->prepare($replacementSql)) {
         }
         $stmt4->close();
     }
+}
+
+// Count orders with replacements ready for scheduling
+$readyReplacementsSql = "
+    SELECT COUNT(DISTINCT o.id) as count 
+    FROM orders o 
+    WHERE o.warehouse_employee_id = ? 
+    AND EXISTS (
+        SELECT 1 FROM replacement_requests rr 
+        WHERE rr.order_id = o.id 
+        AND rr.status IN ('approved', 'processing', 'In Warehouse')
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM delivery_schedules ds 
+        WHERE ds.order_id = o.id 
+        AND ds.item_type = 'replacement'
+    )
+    AND (
+        SELECT COUNT(*) 
+        FROM replacement_requests rr2 
+        WHERE rr2.order_id = o.id 
+        AND rr2.status = 'In Warehouse'
+    ) = (
+        SELECT COUNT(*) 
+        FROM replacement_requests rr3 
+        WHERE rr3.order_id = o.id 
+        AND rr3.status IN ('approved', 'processing', 'In Warehouse')
+    )
+    AND (
+        SELECT COUNT(*) 
+        FROM replacement_requests rr4 
+        WHERE rr4.order_id = o.id 
+        AND rr4.status IN ('approved', 'processing', 'In Warehouse')
+    ) > 0
+";
+$readyReplacementsCount = 0;
+if ($stmt_repl = $conn->prepare($readyReplacementsSql)) {
+    $stmt_repl->bind_param("i", $user_id);
+    $stmt_repl->execute();
+    $r_repl = $stmt_repl->get_result();
+    if ($r_repl) {
+        $replReadyResult = $r_repl->fetch_assoc();
+        $readyReplacementsCount = (int)$replReadyResult['count'];
+    }
+    $stmt_repl->close();
 }
 
 $statusCountsArray = [];
@@ -479,6 +557,18 @@ if ($defectsOrdersCount > 0): ?>
                             <?php endif; ?>
                         </a>
                     <?php endif; ?>
+                    <!-- Replacements Ready for Schedule Filter - NEW -->
+<?php if ($readyReplacementsCount > 0): ?>
+    <a href="?ready_replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_replacements ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
+        <i class="fas fa-sync-alt mr-1"></i>
+        Replacements Ready (<?php echo $readyReplacementsCount; ?>)
+        <?php if (!$show_ready_replacements): ?>
+            <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
+            <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full"></span>
+        <?php endif; ?>
+    </a>
+<?php endif; ?>
                 </div>
 
                 <div class="flex gap-4">
@@ -570,6 +660,35 @@ $unresolved_defects_count = (int)($order['unresolved_defects_count'] ?? 0);
                                                     <i class="fas fa-calendar-check mr-1"></i>Ready to Schedule
                                                 </span>
                                             <?php endif; ?>
+                                            <?php 
+// Check if replacements are ready for scheduling
+$replacementsReady = false;
+$warehouse_replacements_count = (int)($order['warehouse_replacements_count'] ?? 0);
+if ($warehouse_replacements_count > 0 && $approved_replacements_count > 0) {
+    $checkReplReadySql = "
+        SELECT 
+            (SELECT COUNT(*) FROM replacement_requests WHERE order_id = ? AND status = 'In Warehouse') as ready_count,
+            (SELECT COUNT(*) FROM replacement_requests WHERE order_id = ? AND status IN ('approved', 'processing', 'In Warehouse')) as total_count,
+            (SELECT COUNT(*) FROM delivery_schedules WHERE order_id = ? AND item_type = 'replacement') as scheduled_count
+    ";
+    if ($checkReplStmt = $conn->prepare($checkReplReadySql)) {
+        $checkReplStmt->bind_param("iii", $order['id'], $order['id'], $order['id']);
+        $checkReplStmt->execute();
+        $replReadyResult = $checkReplStmt->get_result()->fetch_assoc();
+        $checkReplStmt->close();
+        
+        if ($replReadyResult['ready_count'] == $replReadyResult['total_count']
+            && $replReadyResult['total_count'] > 0
+            && $replReadyResult['scheduled_count'] == 0) {
+            $replacementsReady = true;
+        }
+    }
+}
+if ($replacementsReady): ?>
+    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 pulse-notification relative">
+        <i class="fas fa-sync-alt mr-1"></i>Replacements Ready
+    </span>
+<?php endif; ?>
                                         </div>
                                         <div class="text-sm text-gray-600 space-y-1">
                                             <div class="flex items-center"><i class="fas fa-user mr-2"></i><span><?php echo htmlspecialchars($order['customer_name']); ?></span></div>

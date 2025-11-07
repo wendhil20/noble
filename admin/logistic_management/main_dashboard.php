@@ -1,5 +1,5 @@
 <?php
-// logistics_dashboard_view.php
+//main_dashboard.php
 session_name("nobleadmin");
 session_start();
 
@@ -37,7 +37,6 @@ $scheduleSql = "SELECT
     ds.created_by,
     ds.created_at,
     ds.item_type,
-    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
@@ -68,7 +67,7 @@ $scheduleSql = "SELECT
 FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
-LEFT JOIN replacement_requests rr ON ds.replacement_id = rr.id
+LEFT JOIN replacement_requests rr ON ds.id = rr.delivery_schedule_id AND ds.item_type = 'replacement'
 WHERE ds.delivery_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
 ORDER BY ds.delivery_date DESC, ds.delivery_time ASC";

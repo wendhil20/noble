@@ -69,29 +69,29 @@
     ds.delivery_date,
     ds.delivery_time,
     ds.delivery_notes,
+    ds.id as delivery_schedule_id,
     o.customer_name,
     ds.item_type,
-    ds.replacement_id,
     o.email,
     o.mobile,
     o.address,
     o.final_total,
     tv.courier_name,
     tv.vehicle_type,
-    -- If replacement, count only 1 item, otherwise count all order items
+    -- Count items: if replacement, count replacement_requests, else count order_items
     CASE 
-        WHEN ds.item_type = 'replacement' THEN 1
+        WHEN ds.item_type = 'replacement' THEN 
+            (SELECT COUNT(*) FROM replacement_requests WHERE delivery_schedule_id = ds.id)
         ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
     END as total_items,
--- If replacement, check the replacement_requests status (item_is_loaded means loaded)
-CASE 
-    WHEN ds.item_type = 'replacement' THEN 
-        (SELECT CASE WHEN rr.status IN ('item_is_loaded', 'out_for_delivery') THEN 1 ELSE 0 END
-         FROM replacement_requests rr
-         WHERE rr.id = ds.replacement_id
-         LIMIT 1)
-    ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
-END as loaded_items
+    -- Count loaded items: if replacement, check replacement_requests status, else check order_items
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN 
+            (SELECT COUNT(*) FROM replacement_requests 
+             WHERE delivery_schedule_id = ds.id 
+             AND status IN ('item_is_loaded', 'out_for_delivery'))
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
+    END as loaded_items
 FROM delivery_bookings db
 INNER JOIN delivery_schedules ds ON db.delivery_schedule_id = ds.id
 INNER JOIN orders o ON db.order_id = o.id
@@ -103,12 +103,13 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
     $stmt->execute();
     $booking = $stmt->get_result()->fetch_assoc();
     // Check if this is a replacement booking
-    $isReplacement = ($booking['item_type'] === 'replacement' && $booking['replacement_id']);
+$isReplacement = ($booking['item_type'] === 'replacement');
 
-    // If replacement, get replacement details
-    $replacementDetails = null;
-    if ($isReplacement) {
-        $replSql = "SELECT 
+// If replacement, get ALL replacement details for this delivery schedule
+$replacementDetails = [];
+$totalReplacementQty = 0;
+if ($isReplacement) {
+    $replSql = "SELECT 
         rr.*,
         oi.product_name,
         oi.variant_color,
@@ -116,14 +117,20 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
         oi.price
     FROM replacement_requests rr
     INNER JOIN order_items oi ON rr.order_item_id = oi.id
-    WHERE rr.id = ?";
-
-        $replStmt = $conn->prepare($replSql);
-        $replStmt->bind_param("i", $booking['replacement_id']);
-        $replStmt->execute();
-        $replacementDetails = $replStmt->get_result()->fetch_assoc();
-        $replStmt->close();
+    WHERE rr.delivery_schedule_id = ?
+    ORDER BY oi.product_name";
+    
+    $replStmt = $conn->prepare($replSql);
+    $replStmt->bind_param("i", $booking['delivery_schedule_id']);
+    $replStmt->execute();
+    $replacementDetails = $replStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $replStmt->close();
+    
+    // Calculate total replacement quantity
+    foreach ($replacementDetails as $repl) {
+        $totalReplacementQty += $repl['replacement_quantity'];
     }
+}
     $stmt->close();
 
     if (!$booking) {
@@ -132,10 +139,10 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
         exit();
     }
 
-    // Get order items
-    if ($isReplacement) {
-        // For replacements, get item details but DON'T rely on order_items tracking_status
-        $itemsSql = "SELECT 
+   // Get order items
+if ($isReplacement) {
+    // For replacements, get ALL items for this delivery schedule
+    $itemsSql = "SELECT 
         oi.id,
         oi.product_name,
         oi.variant_color,
@@ -144,16 +151,18 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
         oi.warehouse_location,
         oi.po_number,
         oi.qr_code,
+        rr.id as replacement_id,
         rr.replacement_quantity as quantity,
         rr.reason as replacement_reason,
         rr.details as replacement_details,
         rr.status as replacement_status
     FROM order_items oi
     INNER JOIN replacement_requests rr ON oi.id = rr.order_item_id
-    WHERE rr.id = ?";
-        $itemsStmt = $conn->prepare($itemsSql);
-        $itemsStmt->bind_param("i", $booking['replacement_id']);
-    } else {
+    WHERE rr.delivery_schedule_id = ?
+    ORDER BY oi.product_name";
+    $itemsStmt = $conn->prepare($itemsSql);
+    $itemsStmt->bind_param("i", $booking['delivery_schedule_id']);
+} else {
         // For regular orders, show all items
         $itemsSql = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
         $itemsStmt = $conn->prepare($itemsSql);
@@ -167,34 +176,34 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         if ($_POST['action'] === 'toggle_item_loaded') {
-            $item_id = intval($_POST['item_id']);
-            $current_status = $_POST['current_status'];
-            $is_replacement = isset($_POST['is_replacement']) ? intval($_POST['is_replacement']) : 0;
-            $replacement_id = isset($_POST['replacement_id']) ? intval($_POST['replacement_id']) : 0;
+    $item_id = intval($_POST['item_id']);
+    $current_status = $_POST['current_status'];
+    $is_replacement = isset($_POST['is_replacement']) ? intval($_POST['is_replacement']) : 0;
+    $replacement_request_id = isset($_POST['replacement_request_id']) ? intval($_POST['replacement_request_id']) : 0;
 
-            // If it's a replacement, ONLY update replacement_requests, NOT order_items
-            if ($is_replacement && $replacement_id) {
-                // Status flow: ready_for_pickup -> item_is_loaded -> ready_for_pickup
-                if ($current_status === 'ready_for_pickup') {
-                    $replacement_status = 'item_is_loaded';
-                    $message = "Replacement item is now loaded!";
-                } elseif ($current_status === 'item_is_loaded') {
-                    $replacement_status = 'ready_for_pickup';
-                    $message = "Replacement item marked as ready for pickup!";
-                } else {
-                    // If coming from other statuses, go to ready_for_pickup first
-                    $replacement_status = 'ready_for_pickup';
-                    $message = "Replacement item is ready for pickup!";
-                }
+    // If it's a replacement, ONLY update replacement_requests, NOT order_items
+    if ($is_replacement && $replacement_request_id) {
+        // Status flow: ready_for_pickup -> item_is_loaded -> ready_for_pickup
+        if ($current_status === 'ready_for_pickup') {
+            $replacement_status = 'item_is_loaded';
+            $message = "Replacement item is now loaded!";
+        } elseif ($current_status === 'item_is_loaded') {
+            $replacement_status = 'ready_for_pickup';
+            $message = "Replacement item marked as ready for pickup!";
+        } else {
+            // If coming from other statuses, go to ready_for_pickup first
+            $replacement_status = 'ready_for_pickup';
+            $message = "Replacement item is ready for pickup!";
+        }
 
-                // Update ONLY replacement_requests by replacement_id, NOT order_items
-                $updateReplacement = $conn->prepare("UPDATE replacement_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-                $updateReplacement->bind_param("si", $replacement_status, $replacement_id);
-                if ($updateReplacement->execute()) {
-                    $_SESSION['success_message'] = $message;
-                }
-                $updateReplacement->close();
-            } else {
+        // Update ONLY replacement_requests by its ID, NOT order_items
+        $updateReplacement = $conn->prepare("UPDATE replacement_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $updateReplacement->bind_param("si", $replacement_status, $replacement_request_id);
+        if ($updateReplacement->execute()) {
+            $_SESSION['success_message'] = $message;
+        }
+        $updateReplacement->close();
+    } else {
                 // For regular items, update order_items tracking_status
                 $new_status = ($current_status === 'ready_for_pickup') ? 'item_is_loaded' : 'ready_for_pickup';
                 $updateItem = $conn->prepare("UPDATE order_items SET tracking_status = ? WHERE id = ?");
@@ -210,16 +219,16 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
         }
 
         if ($_POST['action'] === 'mark_all_loaded') {
-            if ($isReplacement && $booking['replacement_id']) {
-                // For replacements, ONLY update replacement_requests, NOT order_items
-                $updateAll = $conn->prepare("
+    if ($isReplacement) {
+        // For replacements, update ALL replacement_requests for this delivery schedule
+        $updateAll = $conn->prepare("
             UPDATE replacement_requests 
             SET status = 'item_is_loaded',
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE delivery_schedule_id = ?
         ");
-                $updateAll->bind_param("i", $booking['replacement_id']);
-            } else {
+        $updateAll->bind_param("i", $booking['delivery_schedule_id']);
+    } else {
                 // For regular orders, update all items in order_items
                 $updateAll = $conn->prepare("
             UPDATE order_items 
@@ -255,18 +264,18 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
                 $updateBooking->close();
 
                 // Check if this is a replacement booking
-                if ($booking['item_type'] === 'replacement' && $booking['replacement_id']) {
-                    // Update replacement request status to 'out_for_delivery'
-                    $updateReplacement = $conn->prepare("
-                UPDATE replacement_requests 
-                SET status = 'out_for_delivery',
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ");
-                    $updateReplacement->bind_param("i", $booking['replacement_id']);
-                    $updateReplacement->execute();
-                    $updateReplacement->close();
-                }
+if ($booking['item_type'] === 'replacement') {
+    // Update ALL replacement requests for this delivery schedule to 'out_for_delivery'
+    $updateReplacement = $conn->prepare("
+        UPDATE replacement_requests 
+        SET status = 'out_for_delivery',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE delivery_schedule_id = ?
+    ");
+    $updateReplacement->bind_param("i", $booking['delivery_schedule_id']);
+    $updateReplacement->execute();
+    $updateReplacement->close();
+}
 
                 // Update order status based on booking type (skip if replacement)
                 if ($booking['item_type'] !== 'replacement') {
@@ -873,60 +882,91 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
                             </div>
                         <?php endif; ?>
                         <!-- Replacement Tab -->
-                        <?php if ($isReplacement && $replacementDetails): ?>
-                            <div id="content-replacement" class="tab-content hidden">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <span class="text-xs text-gray-600 block mb-1">Replacement Request ID</span>
-                                        <span class="font-bold text-lg text-orange-900">#<?php echo $booking['replacement_id']; ?></span>
-                                    </div>
-
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <span class="text-xs text-gray-600 block mb-1">Reason</span>
-                                        <span class="font-semibold text-orange-900 capitalize">
-                                            <?php echo str_replace('_', ' ', $replacementDetails['reason']); ?>
-                                        </span>
-                                    </div>
-
-                                    <?php if ($replacementDetails['details']): ?>
-                                        <div class="p-3 bg-orange-50 rounded-lg border border-orange-200 md:col-span-2">
-                                            <span class="text-xs text-gray-600 block mb-1">Details</span>
-                                            <p class="text-sm text-orange-900"><?php echo nl2br(htmlspecialchars($replacementDetails['details'])); ?></p>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <span class="text-xs text-gray-600 block mb-1">Product</span>
-                                        <p class="font-semibold text-orange-900"><?php echo htmlspecialchars($replacementDetails['product_name']); ?></p>
-                                        <?php if ($replacementDetails['variant_color'] || $replacementDetails['size']): ?>
-                                            <p class="text-xs text-orange-700 mt-1">
-                                                <?php echo $replacementDetails['variant_color'] ? htmlspecialchars($replacementDetails['variant_color']) : ''; ?>
-                                                <?php echo $replacementDetails['size'] ? ' - ' . htmlspecialchars($replacementDetails['size']) : ''; ?>
-                                            </p>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <span class="text-xs text-gray-600 block mb-1">Replacement Quantity</span>
-                                        <span class="font-bold text-lg text-orange-900"><?php echo $replacementDetails['replacement_quantity']; ?> pcs</span>
-                                    </div>
-
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <span class="text-xs text-gray-600 block mb-1">Status</span>
-                                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold capitalize">
-                                            <?php echo str_replace('_', ' ', $replacementDetails['status']); ?>
-                                        </span>
-                                    </div>
-
-                                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                        <span class="text-xs text-gray-600 block mb-1">Value</span>
-                                        <span class="font-bold text-lg text-orange-900">
-                                            ₱<?php echo number_format($replacementDetails['price'] * $replacementDetails['replacement_quantity'], 2); ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+<?php if ($isReplacement && !empty($replacementDetails)): ?>
+    <div id="content-replacement" class="tab-content hidden">
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div class="p-3 bg-orange-50 rounded-lg border border-orange-200 text-center">
+                <span class="text-xs text-gray-600 block mb-1">Total Items</span>
+                <span class="font-bold text-2xl text-orange-900"><?php echo count($replacementDetails); ?></span>
+            </div>
+            
+            <div class="p-3 bg-orange-50 rounded-lg border border-orange-200 text-center">
+                <span class="text-xs text-gray-600 block mb-1">Total Quantity</span>
+                <span class="font-bold text-2xl text-orange-900"><?php echo $totalReplacementQty; ?> pcs</span>
+            </div>
+            
+            <div class="p-3 bg-orange-50 rounded-lg border border-orange-200 text-center">
+                <span class="text-xs text-gray-600 block mb-1">Total Value</span>
+                <span class="font-bold text-2xl text-orange-900">
+                    ₱<?php 
+                    $totalValue = 0;
+                    foreach ($replacementDetails as $repl) {
+                        $totalValue += $repl['price'] * $repl['replacement_quantity'];
+                    }
+                    echo number_format($totalValue, 2); 
+                    ?>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Replacement Items List -->
+        <div class="space-y-3 max-h-96 overflow-y-auto">
+            <?php foreach ($replacementDetails as $index => $repl): ?>
+            <div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-3">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-orange-200 text-orange-900 px-2 py-1 rounded text-xs font-bold">
+                                #<?php echo $index + 1; ?>
+                            </span>
+                            <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-semibold">
+                                Request #<?php echo $repl['id']; ?>
+                            </span>
+                        </div>
+                        <p class="font-bold text-orange-900"><?php echo htmlspecialchars($repl['product_name']); ?></p>
+                        <?php if ($repl['variant_color'] || $repl['size']): ?>
+                        <p class="text-xs text-orange-700 mt-1">
+                            <?php if ($repl['variant_color']): ?>
+                                <span class="mr-2">Color: <?php echo htmlspecialchars($repl['variant_color']); ?></span>
+                            <?php endif; ?>
+                            <?php if ($repl['size']): ?>
+                                <span>Size: <?php echo htmlspecialchars($repl['size']); ?></span>
+                            <?php endif; ?>
+                        </p>
                         <?php endif; ?>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-orange-900"><?php echo $repl['replacement_quantity']; ?> pcs</p>
+                        <p class="text-xs text-orange-700">₱<?php echo number_format($repl['price'] * $repl['replacement_quantity'], 2); ?></p>
+                    </div>
+                </div>
+                
+                <div class="mt-2 pt-2 border-t border-orange-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <span class="text-orange-700 font-semibold">Reason:</span>
+                            <span class="text-orange-900 ml-1 capitalize"><?php echo str_replace('_', ' ', $repl['reason']); ?></span>
+                        </div>
+                        <div>
+                            <span class="text-orange-700 font-semibold">Status:</span>
+                            <span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded ml-1 font-semibold capitalize">
+                                <?php echo str_replace('_', ' ', $repl['status']); ?>
+                            </span>
+                        </div>
+                        <?php if ($repl['details']): ?>
+                        <div class="md:col-span-2">
+                            <span class="text-orange-700 font-semibold">Details:</span>
+                            <p class="text-orange-900 mt-1"><?php echo nl2br(htmlspecialchars($repl['details'])); ?></p>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+<?php endif; ?>
                     </div>
                 </div>
 
@@ -989,75 +1029,73 @@ WHERE db.id = ? AND db.dispatcher_id = ?";
 
                     <!-- Items List -->
                     <div class="space-y-2">
-                        <?php if ($isReplacement && $replacementDetails): ?>
-                            <!-- Replacement Item Display -->
-                            <?php
-                            // Since we're using the replacement item, use replacement_status from the query
-                            $item = $items[0] ?? null;
-                            if ($item):
-                                // Check replacement_status (from JOIN), NOT order_items tracking_status
-                                $isLoaded = $item['replacement_status'] === 'item_is_loaded';
-                            ?>
-                                <div class="item-card flex items-center justify-between p-3 rounded-lg border-2 <?php
-                                                                                                                echo $isLoaded ? 'bg-orange-50 border-orange-300' : 'bg-yellow-50 border-yellow-300';
-                                                                                                                ?>">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold">
-                                                <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center flex-wrap gap-x-4 gap-y-1">
-                                            <h4 class="font-semibold text-gray-900 text-sm"><?php echo htmlspecialchars($replacementDetails['product_name']); ?></h4>
-                                            <div class="text-xs text-gray-600 flex items-center gap-3">
-                                                <?php if ($replacementDetails['variant_color']): ?>
-                                                    <span>Color: <span class="font-medium"><?php echo htmlspecialchars($replacementDetails['variant_color']); ?></span></span>
-                                                <?php endif; ?>
-                                                <?php if ($replacementDetails['size']): ?>
-                                                    <span>Size: <span class="font-medium"><?php echo htmlspecialchars($replacementDetails['size']); ?></span></span>
-                                                <?php endif; ?>
-                                                <span>Qty: <span class="font-bold"><?php echo $replacementDetails['replacement_quantity']; ?></span></span>
-                                            </div>
-                                        </div>
-                                        <div class="text-xs mt-1">
-                                            <span class="text-orange-700">Reason: </span>
-                                            <span class="font-semibold capitalize"><?php echo str_replace('_', ' ', $replacementDetails['reason']); ?></span>
-                                        </div>
-                                        <?php if (!empty($item['warehouse_location'])): ?>
-                                            <div class="text-xs mt-1 flex items-center">
-                                                <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
-                                                <span class="font-semibold text-gray-700">Location: </span>
-                                                <span class="ml-1 text-gray-900 bg-yellow-100 px-2 py-0.5 rounded"><?php echo htmlspecialchars($item['warehouse_location']); ?></span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <div class="flex items-center gap-3">
-                                        <?php if (!$isCompleted && !$isInTransit): ?>
-                                            <form method="POST" class="inline">
-                                                <input type="hidden" name="action" value="toggle_item_loaded">
-                                                <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-                                                <input type="hidden" name="current_status" value="<?php echo $item['replacement_status']; ?>">
-                                                <input type="hidden" name="is_replacement" value="1">
-                                                <input type="hidden" name="replacement_id" value="<?php echo $booking['replacement_id']; ?>">
-                                                <button type="submit"
-                                                    class="<?php echo $item['replacement_status'] === 'item_is_loaded' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
-                                                    <i class="fas <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
-                                                    <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'Loaded' : 'Load'; ?>
-                                                </button>
-                                            </form>
-                                        <?php else: ?>
-                                            <span class="<?php echo $item['replacement_status'] === 'item_is_loaded' ? 'bg-orange-500' : 'bg-yellow-500'; ?> text-white px-4 py-2 rounded-lg font-semibold text-sm">
-                                                <i class="fas <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'fa-check' : 'fa-clock'; ?> mr-1"></i>
-                                                <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'Loaded' : 'Pending'; ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+                        <?php if ($isReplacement && !empty($items)): ?>
+    <!-- Replacement Items Display -->
+    <?php foreach ($items as $item): ?>
+        <?php
+        $isLoaded = $item['replacement_status'] === 'item_is_loaded';
+        ?>
+        <div class="item-card flex items-center justify-between p-3 rounded-lg border-2 <?php
+            echo $isLoaded ? 'bg-orange-50 border-orange-300' : 'bg-yellow-50 border-yellow-300';
+        ?>">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold">
+                        <i class="fas fa-sync-alt mr-1"></i>REPLACEMENT
+                    </span>
+                    <span class="bg-orange-200 text-orange-900 px-2 py-1 rounded text-xs font-bold">
+                        Req #<?php echo $item['replacement_id']; ?>
+                    </span>
+                </div>
+                <div class="flex items-center flex-wrap gap-x-4 gap-y-1">
+                    <h4 class="font-semibold text-gray-900 text-sm"><?php echo htmlspecialchars($item['product_name']); ?></h4>
+                    <div class="text-xs text-gray-600 flex items-center gap-3">
+                        <?php if ($item['variant_color']): ?>
+                            <span>Color: <span class="font-medium"><?php echo htmlspecialchars($item['variant_color']); ?></span></span>
+                        <?php endif; ?>
+                        <?php if ($item['size']): ?>
+                            <span>Size: <span class="font-medium"><?php echo htmlspecialchars($item['size']); ?></span></span>
+                        <?php endif; ?>
+                        <span>Qty: <span class="font-bold"><?php echo $item['quantity']; ?></span></span>
+                    </div>
+                </div>
+                <div class="text-xs mt-1">
+                    <span class="text-orange-700">Reason: </span>
+                    <span class="font-semibold capitalize"><?php echo str_replace('_', ' ', $item['replacement_reason']); ?></span>
+                </div>
+                <?php if (!empty($item['warehouse_location'])): ?>
+                    <div class="text-xs mt-1 flex items-center">
+                        <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                        <span class="font-semibold text-gray-700">Location: </span>
+                        <span class="ml-1 text-gray-900 bg-yellow-100 px-2 py-0.5 rounded"><?php echo htmlspecialchars($item['warehouse_location']); ?></span>
                     </div>
                 <?php endif; ?>
+            </div>
 
-            <?php else: ?>
+            <div class="flex items-center gap-3">
+                <?php if (!$isCompleted && !$isInTransit): ?>
+                    <form method="POST" class="inline">
+                        <input type="hidden" name="action" value="toggle_item_loaded">
+                        <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                        <input type="hidden" name="current_status" value="<?php echo $item['replacement_status']; ?>">
+                        <input type="hidden" name="is_replacement" value="1">
+                        <input type="hidden" name="replacement_request_id" value="<?php echo $item['replacement_id']; ?>">
+                        <button type="submit"
+                            class="<?php echo $item['replacement_status'] === 'item_is_loaded' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'; ?> text-white px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
+                            <i class="fas <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'fa-check' : 'fa-box'; ?> mr-1"></i>
+                            <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'Loaded' : 'Load'; ?>
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <span class="<?php echo $item['replacement_status'] === 'item_is_loaded' ? 'bg-orange-500' : 'bg-yellow-500'; ?> text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                        <i class="fas <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'fa-check' : 'fa-clock'; ?> mr-1"></i>
+                        <?php echo $item['replacement_status'] === 'item_is_loaded' ? 'Loaded' : 'Pending'; ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endforeach; ?>
+<?php else: ?>
                 <!-- Regular Order Items Display -->
                 <?php foreach ($items as $item): ?>
                     <?php

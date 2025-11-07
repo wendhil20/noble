@@ -47,7 +47,6 @@ if ($schedule_replacements) {
             CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
             CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
             CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-            rr.id as replacement_id,
             CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
             oi.lt_from,
             oi.lt_to
@@ -69,7 +68,6 @@ if ($schedule_replacements) {
             CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
             CAST(oi.tracking_status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
             CAST('original' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-            NULL as replacement_id,
             CAST(NULL AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
             oi.lt_from,
             oi.lt_to
@@ -86,7 +84,6 @@ if ($schedule_replacements) {
             CAST(oi.origin AS CHAR) COLLATE utf8mb4_unicode_ci as origin,
             CAST(rr.status AS CHAR) COLLATE utf8mb4_unicode_ci as tracking_status,
             CAST('replacement' AS CHAR) COLLATE utf8mb4_unicode_ci as item_type,
-            rr.id as replacement_id,
             CAST(rr.reason AS CHAR) COLLATE utf8mb4_unicode_ci as replacement_reason,
             oi.lt_from,
             oi.lt_to
@@ -164,7 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
         $scheduleStmt = $conn->prepare($scheduleSql);
         $created_by = $_SESSION['noble_user'];
         $scheduleStmt->bind_param("isssss", $order_id, $delivery_date, $delivery_time, $delivery_notes, $item_type_for_schedule, $created_by);
-        $scheduleStmt->execute();
+        $scheduleStmt->execute();  // ✨ REMOVED DUPLICATE LINE
+        
+        // ✨ GET THE INSERTED ID
+        $delivery_schedule_id = $conn->insert_id;
         $scheduleStmt->close();
 
         // Update items based on scheduling mode
@@ -172,17 +172,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
         $affectedReplacement = 0;
 
         if ($schedule_replacements) {
-            // Only update replacement items
+            // ✨ Update ONLY replacement items with delivery_schedule_id
             $updateReplacementSql = "UPDATE replacement_requests 
-                            SET status = 'scheduled' 
+                            SET status = 'scheduled', 
+                                delivery_schedule_id = ? 
                             WHERE order_id = ? AND status = 'In Warehouse'";
             $updateReplacementStmt = $conn->prepare($updateReplacementSql);
-            $updateReplacementStmt->bind_param("i", $order_id);
+            $updateReplacementStmt->bind_param("ii", $delivery_schedule_id, $order_id);
             $updateReplacementStmt->execute();
             $affectedReplacement = $updateReplacementStmt->affected_rows;
             $updateReplacementStmt->close();
         } else {
-            // Update both original and replacement items
+            // ✨ Update ONLY original items (NO replacements here)
             $updateOriginalSql = "UPDATE order_items 
                          SET tracking_status = 'scheduled' 
                          WHERE order_id = ? AND tracking_status = 'In Warehouse'";
@@ -192,14 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_delivery']))
             $affectedOriginal = $updateOriginalStmt->affected_rows;
             $updateOriginalStmt->close();
 
-            $updateReplacementSql = "UPDATE replacement_requests 
-                            SET status = 'scheduled' 
-                            WHERE order_id = ? AND status = 'In Warehouse'";
-            $updateReplacementStmt = $conn->prepare($updateReplacementSql);
-            $updateReplacementStmt->bind_param("i", $order_id);
-            $updateReplacementStmt->execute();
-            $affectedReplacement = $updateReplacementStmt->affected_rows;
-            $updateReplacementStmt->close();
+            // ✨ REMOVED the replacement update from here - we only schedule original items in this mode
         }
 
         $conn->commit();
@@ -247,8 +241,8 @@ $scheduleSql = "SELECT ds.*,
                        SUM(rr.replacement_quantity) as replacement_quantity
                 FROM delivery_schedules ds
                 JOIN orders o ON ds.order_id = o.id
-                LEFT JOIN order_items oi ON oi.order_id = ds.order_id AND oi.tracking_status IN ('ready_for_pickup', 'out_for_delivery')
-                LEFT JOIN replacement_requests rr ON rr.order_id = ds.order_id AND rr.status IN ('ready_for_pickup', 'out_for_delivery')
+                LEFT JOIN order_items oi ON oi.order_id = ds.order_id AND oi.tracking_status IN ('scheduled', 'ready_for_pickup', 'out_for_delivery')
+                LEFT JOIN replacement_requests rr ON rr.delivery_schedule_id = ds.id
                 WHERE ds.delivery_date >= CURDATE() 
                   AND ds.delivery_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
                   AND ds.item_type IN ('original', 'replacement')

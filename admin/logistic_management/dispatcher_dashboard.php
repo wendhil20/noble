@@ -28,24 +28,22 @@ $sql = "SELECT
     ds.delivery_date,
     ds.delivery_time,
     ds.item_type,
-    ds.replacement_id,
     o.customer_name,
     o.address,
     o.final_total,
     tv.courier_name,
-    -- If replacement, count only 1 item, otherwise count all order items
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN 1
-        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
-    END as total_items,
-    -- If replacement, check only the replacement item's status, otherwise check all items
+    -- Count items: if replacement, count replacement_requests, else count order_items
     CASE 
         WHEN ds.item_type = 'replacement' THEN 
-            (SELECT CASE WHEN oi.tracking_status = 'item_is_loaded' THEN 1 ELSE 0 END
-             FROM order_items oi
-             INNER JOIN replacement_requests rr ON oi.id = rr.order_item_id
-             WHERE rr.id = ds.replacement_id
-             LIMIT 1)
+            (SELECT COUNT(*) FROM replacement_requests WHERE delivery_schedule_id = ds.id)
+        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
+    END as total_items,
+    -- Count loaded items: if replacement, check replacement_requests status, else check order_items
+    CASE 
+        WHEN ds.item_type = 'replacement' THEN 
+            (SELECT COUNT(*) FROM replacement_requests 
+             WHERE delivery_schedule_id = ds.id 
+             AND status IN ('item_is_loaded', 'out_for_delivery'))
         ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
     END as loaded_items
 FROM delivery_bookings db

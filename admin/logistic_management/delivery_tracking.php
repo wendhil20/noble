@@ -33,7 +33,6 @@ $sql = "SELECT
     ds.delivery_notes,
     ds.delivery_type,
     ds.item_type,
-    ds.replacement_id,
     o.customer_name,
     o.email,
     o.mobile,
@@ -44,27 +43,24 @@ $sql = "SELECT
     tv.courier_name,
     dispatcher.fullname as dispatcher_name,
     dispatcher.email as dispatcher_email,
-    -- If replacement, count only 1 item, otherwise count all order items
+    -- Count items based on type
 CASE 
-    WHEN ds.item_type = 'replacement' THEN 1
+    WHEN ds.item_type = 'replacement' THEN 
+        (SELECT COUNT(*) FROM replacement_requests WHERE delivery_schedule_id = ds.id)
     ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id)
 END as total_items,
 -- For ready items count
 CASE 
     WHEN ds.item_type = 'replacement' THEN 
-        (SELECT CASE WHEN rr.status = 'ready_for_pickup' THEN 1 ELSE 0 END
-         FROM replacement_requests rr
-         WHERE rr.id = ds.replacement_id
-         LIMIT 1)
+        (SELECT COUNT(*) FROM replacement_requests 
+         WHERE delivery_schedule_id = ds.id AND status = 'ready_for_pickup')
     ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'ready_for_pickup')
 END as ready_items,
 -- For loaded items count
 CASE 
     WHEN ds.item_type = 'replacement' THEN 
-        (SELECT CASE WHEN rr.status IN ('item_is_loaded', 'out_for_delivery') THEN 1 ELSE 0 END
-         FROM replacement_requests rr
-         WHERE rr.id = ds.replacement_id
-         LIMIT 1)
+        (SELECT COUNT(*) FROM replacement_requests 
+         WHERE delivery_schedule_id = ds.id AND status IN ('item_is_loaded', 'out_for_delivery'))
     ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = db.order_id AND tracking_status = 'item_is_loaded')
 END as loaded_items
 FROM delivery_bookings db
@@ -86,10 +82,11 @@ if (!$booking) {
 }
 
 // Check if this is a replacement booking
-$isReplacement = ($booking['item_type'] === 'replacement' && $booking['replacement_id']);
+$isReplacement = ($booking['item_type'] === 'replacement');
 
-// If replacement, get replacement details
-$replacementDetails = null;
+// If replacement, get ALL replacement details
+$replacementDetails = [];
+$totalReplacementQty = 0;
 if ($isReplacement) {
     $replSql = "SELECT 
         rr.*,
@@ -99,18 +96,24 @@ if ($isReplacement) {
         oi.price
     FROM replacement_requests rr
     INNER JOIN order_items oi ON rr.order_item_id = oi.id
-    WHERE rr.id = ?";
+    WHERE rr.delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
+    ORDER BY oi.product_name";
     
     $replStmt = $conn->prepare($replSql);
-    $replStmt->bind_param("i", $booking['replacement_id']);
+    $replStmt->bind_param("i", $booking_id);
     $replStmt->execute();
-    $replacementDetails = $replStmt->get_result()->fetch_assoc();
+    $replacementDetails = $replStmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $replStmt->close();
+    
+    // Calculate total replacement quantity
+    foreach ($replacementDetails as $repl) {
+        $totalReplacementQty += $repl['replacement_quantity'];
+    }
 }
 
 // Get order items with their status
 if ($isReplacement) {
-    // For replacements, get item details with replacement status
+    // For replacements, get ALL item details with replacement status
     $itemsSql = "SELECT 
         oi.id,
         oi.product_name,
@@ -118,15 +121,17 @@ if ($isReplacement) {
         oi.size,
         oi.price,
         oi.warehouse_location,
+        rr.id as replacement_id,
         rr.replacement_quantity as quantity,
         rr.reason as replacement_reason,
         rr.details as replacement_details,
         rr.status as replacement_status
     FROM order_items oi
     INNER JOIN replacement_requests rr ON oi.id = rr.order_item_id
-    WHERE rr.id = ?";
+    WHERE rr.delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
+    ORDER BY oi.product_name";
     $itemsStmt = $conn->prepare($itemsSql);
-    $itemsStmt->bind_param("i", $booking['replacement_id']);
+    $itemsStmt->bind_param("i", $booking_id);
 } else {
     // For regular orders, show all items
     $itemsSql = "SELECT * FROM order_items WHERE order_id = ? ORDER BY id";
@@ -230,16 +235,16 @@ $updateProof->bind_param("si", $webp_filename, $booking_id);
 
 if ($updateProof->execute()) {
     // Check if this is a replacement booking
-    if ($isReplacement && $booking['replacement_id']) {
-        // For replacements, update replacement_requests status
+    if ($isReplacement) {
+        // For replacements, update ALL replacement_requests status for this delivery schedule
         $replacement_final_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
         $updateReplacement = $conn->prepare("
             UPDATE replacement_requests 
             SET status = ?,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
         ");
-        $updateReplacement->bind_param("si", $replacement_final_status, $booking['replacement_id']);
+        $updateReplacement->bind_param("si", $replacement_final_status, $booking_id);
         $updateReplacement->execute();
         $updateReplacement->close();
         
@@ -250,14 +255,18 @@ if ($updateProof->execute()) {
         $updateOrder->execute();
         $updateOrder->close();
         
-        // Update the replacement item's tracking status
+        // Update ALL replacement items' tracking status
         $item_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
         $updateReplacementItem = $conn->prepare("
             UPDATE order_items 
             SET tracking_status = ? 
-            WHERE id = (SELECT order_item_id FROM replacement_requests WHERE id = ?)
+            WHERE id IN (
+                SELECT order_item_id 
+                FROM replacement_requests 
+                WHERE delivery_schedule_id = (SELECT delivery_schedule_id FROM delivery_bookings WHERE id = ?)
+            )
         ");
-        $updateReplacementItem->bind_param("si", $item_status, $booking['replacement_id']);
+        $updateReplacementItem->bind_param("si", $item_status, $booking_id);
         $updateReplacementItem->execute();
         $updateReplacementItem->close();
         
@@ -428,49 +437,91 @@ $allLoaded = $booking['loaded_items'] === $booking['total_items'] && $booking['t
                         <?php endif; ?>
                     </div>
 
-                    <?php if ($isReplacement && $replacementDetails): ?>
+                    <?php if ($isReplacement && !empty($replacementDetails)): ?>
 <!-- Replacement Details -->
 <div class="mt-6 pt-6 border-t">
     <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
         <i class="fas fa-sync-alt text-orange-600 mr-2"></i>
         Replacement Details
+        <span class="ml-2 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">
+            <?php echo count($replacementDetails); ?> Item(s)
+        </span>
     </h4>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-orange-50 rounded-lg p-4">
-            <span class="text-sm text-orange-700">Replacement Request ID</span>
-            <p class="font-bold text-lg text-orange-900">#<?php echo $booking['replacement_id']; ?></p>
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-orange-50 rounded-lg p-4 text-center">
+            <span class="text-sm text-orange-700 block mb-1">Total Items</span>
+            <p class="font-bold text-2xl text-orange-900"><?php echo count($replacementDetails); ?></p>
         </div>
         
-        <div class="bg-orange-50 rounded-lg p-4">
-            <span class="text-sm text-orange-700">Reason</span>
-            <p class="font-semibold text-orange-900 capitalize">
-                <?php echo str_replace('_', ' ', $replacementDetails['reason']); ?>
+        <div class="bg-orange-50 rounded-lg p-4 text-center">
+            <span class="text-sm text-orange-700 block mb-1">Total Quantity</span>
+            <p class="font-bold text-2xl text-orange-900"><?php echo $totalReplacementQty; ?> pcs</p>
+        </div>
+        
+        <div class="bg-orange-50 rounded-lg p-4 text-center">
+            <span class="text-sm text-orange-700 block mb-1">Total Value</span>
+            <p class="font-bold text-2xl text-orange-900">
+                ₱<?php 
+                $totalValue = 0;
+                foreach ($replacementDetails as $repl) {
+                    $totalValue += $repl['price'] * $repl['replacement_quantity'];
+                }
+                echo number_format($totalValue, 2); 
+                ?>
             </p>
         </div>
-        
-        <?php if ($replacementDetails['details']): ?>
-        <div class="bg-orange-50 rounded-lg p-4 md:col-span-2">
-            <span class="text-sm text-orange-700">Details</span>
-            <p class="text-orange-900 mt-1"><?php echo nl2br(htmlspecialchars($replacementDetails['details'])); ?></p>
+    </div>
+    
+    <!-- Replacement Items List -->
+    <div class="space-y-3 max-h-96 overflow-y-auto">
+        <?php foreach ($replacementDetails as $index => $repl): ?>
+        <div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="bg-orange-200 text-orange-900 px-2 py-1 rounded text-xs font-bold">
+                            #<?php echo $index + 1; ?>
+                        </span>
+                        <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-semibold">
+                            Request #<?php echo $repl['id']; ?>
+                        </span>
+                    </div>
+                    <p class="font-bold text-orange-900 text-lg"><?php echo htmlspecialchars($repl['product_name']); ?></p>
+                    <?php if ($repl['variant_color'] || $repl['size']): ?>
+                    <p class="text-sm text-orange-700 mt-1">
+                        <?php if ($repl['variant_color']): ?>
+                            <span class="mr-2">Color: <?php echo htmlspecialchars($repl['variant_color']); ?></span>
+                        <?php endif; ?>
+                        <?php if ($repl['size']): ?>
+                            <span>Size: <?php echo htmlspecialchars($repl['size']); ?></span>
+                        <?php endif; ?>
+                    </p>
+                    <?php endif; ?>
+                </div>
+                <div class="text-right">
+                    <p class="font-bold text-orange-900 text-lg"><?php echo $repl['replacement_quantity']; ?> pcs</p>
+                    <p class="text-sm text-orange-700">₱<?php echo number_format($repl['price'] * $repl['replacement_quantity'], 2); ?></p>
+                </div>
+            </div>
+            
+            <div class="mt-3 pt-3 border-t border-orange-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <div>
+                        <span class="text-orange-700 font-semibold">Reason:</span>
+                        <span class="text-orange-900 ml-1 capitalize"><?php echo str_replace('_', ' ', $repl['reason']); ?></span>
+                    </div>
+                    <?php if ($repl['details']): ?>
+                    <div class="md:col-span-2">
+                        <span class="text-orange-700 font-semibold">Details:</span>
+                        <p class="text-orange-900 mt-1 text-xs"><?php echo nl2br(htmlspecialchars($repl['details'])); ?></p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
-        <?php endif; ?>
-        
-        <div class="bg-orange-50 rounded-lg p-4">
-            <span class="text-sm text-orange-700">Product</span>
-            <p class="font-semibold text-orange-900"><?php echo htmlspecialchars($replacementDetails['product_name']); ?></p>
-            <?php if ($replacementDetails['variant_color'] || $replacementDetails['size']): ?>
-            <p class="text-xs text-orange-700 mt-1">
-                <?php echo $replacementDetails['variant_color'] ? htmlspecialchars($replacementDetails['variant_color']) : ''; ?>
-                <?php echo $replacementDetails['size'] ? ' - ' . htmlspecialchars($replacementDetails['size']) : ''; ?>
-            </p>
-            <?php endif; ?>
-        </div>
-        
-        <div class="bg-orange-50 rounded-lg p-4">
-            <span class="text-sm text-orange-700">Replacement Quantity</span>
-            <p class="font-bold text-lg text-orange-900"><?php echo $replacementDetails['replacement_quantity']; ?> pcs</p>
-        </div>
+        <?php endforeach; ?>
     </div>
 </div>
 <?php endif; ?>
@@ -651,7 +702,6 @@ document.addEventListener('keydown', function(event) {
     <div class="flex items-center justify-between">
         <div>
             <p class="font-semibold text-orange-900">Replacement Status</p>
-            <p class="text-sm text-orange-700">Request #<?php echo $booking['replacement_id']; ?></p>
         </div>
         <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-lg font-semibold">
             <?php echo ucfirst(str_replace('_', ' ', $items[0]['replacement_status'])); ?>
@@ -664,9 +714,8 @@ document.addEventListener('keydown', function(event) {
                     <!-- Items List -->
 <div class="space-y-3">
     <?php if ($isReplacement && count($items) > 0): ?>
-    <!-- Replacement Item Display -->
-    <?php
-    $item = $items[0]; // Get the first (and only) item
+<!-- Replacement Items Display -->
+<?php foreach ($items as $item):
     $replStatus = strtolower($item['replacement_status']);
     $isFinal = in_array($replStatus, ['delivered', 'picked_up']);
     $isOutForDelivery = $replStatus === 'out_for_delivery';
@@ -718,8 +767,9 @@ document.addEventListener('keydown', function(event) {
         </span>
     </div>
     </div>
+<?php endforeach; ?>
         
-    <?php else: ?>
+<?php else: ?>
         <!-- Regular Order Items Display -->
         <?php foreach ($items as $item): ?>
             <?php 

@@ -192,12 +192,21 @@ function initializeDistanceCalculation() {
                 updateDeliveryDisplay(deliveryResult, routeData, distance, vehicleAssignment);
 
                 // Update hidden fields
-                document.getElementById('deliveryDistance').value = distance.toFixed(2);
-                document.getElementById('deliveryFee').value = deliveryResult.totalDeliveryCost.toFixed(2);
-                document.getElementById('assignedVehicleId').value = vehicleAssignment.vehicle.id || '';
-                document.getElementById('assignedVehicleType').value = vehicleAssignment.vehicle.vehicle_type || '';
-                document.getElementById('totalCubicMeters').value = vehicleAssignment.totalCubicMeters.toFixed(3);
-                document.getElementById('totalWeightKg').value = vehicleAssignment.totalWeightKg.toFixed(2);
+document.getElementById('deliveryDistance').value = distance.toFixed(2);
+document.getElementById('deliveryFee').value = deliveryResult.totalDeliveryCost.toFixed(2);
+document.getElementById('assignedVehicleId').value = vehicleAssignment.vehicle.id || '';
+document.getElementById('assignedVehicleType').value = vehicleAssignment.vehicle.vehicle_type || '';
+document.getElementById('totalCubicMeters').value = vehicleAssignment.totalCubicMeters.toFixed(3);
+document.getElementById('totalWeightKg').value = vehicleAssignment.totalWeightKg.toFixed(2);
+
+// ✅ ADD DIMENSION FIELDS
+const totalWidth = Math.max(...window.cartItemsData.map(item => parseFloat(item.width) || 0));
+const totalHeight = Math.max(...window.cartItemsData.map(item => parseFloat(item.height) || 0));
+const totalLength = Math.max(...window.cartItemsData.map(item => parseFloat(item.length) || 0));
+
+document.getElementById('totalWidth').value = totalWidth.toFixed(2);
+document.getElementById('totalHeight').value = totalHeight.toFixed(2);
+document.getElementById('totalLength').value = totalLength.toFixed(2);
 
                 // Update totals
                 if (typeof updateTotalsDisplay === 'function') {

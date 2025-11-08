@@ -60,16 +60,47 @@ try {
     $delivery_distance = floatval($order_details['delivery_distance'] ?? ($_SESSION['checkout_step3']['delivery_distance'] ?? 0));
     $delivery_type = $order_details['delivery_type'] ?? ($_SESSION['checkout_step3']['delivery_type'] ?? 'delivery');
     
-    // ✅ CRITICAL: Vehicle ID from JavaScript assignment
-    $assigned_vehicle_id_input = !empty($order_details['assigned_vehicle_id']) ? intval($order_details['assigned_vehicle_id']) : null;
-    $assigned_vehicle_id = null;  // Start with NULL
-    
-    $assigned_vehicle_type = $order_details['assigned_vehicle_type'] ?? ($_SESSION['checkout_step3']['assigned_vehicle_type'] ?? null);
-    $total_cubic_meters = !empty($order_details['total_cubic_meters']) ? floatval($order_details['total_cubic_meters']) : 0;
-    $total_weight_kg = !empty($order_details['total_weight_kg']) ? floatval($order_details['total_weight_kg']) : 0;
-    $total_width = !empty($order_details['total_width']) ? floatval($order_details['total_width']) : 0;
-    $total_height = !empty($order_details['total_height']) ? floatval($order_details['total_height']) : 0;
-    $total_length = !empty($order_details['total_length']) ? floatval($order_details['total_length']) : 0;
+    // ✅ CRITICAL: Vehicle data - prioritize order_details, fallback to session
+$assigned_vehicle_id_input = !empty($order_details['assigned_vehicle_id']) 
+    ? intval($order_details['assigned_vehicle_id']) 
+    : (!empty($_SESSION['checkout_step3']['assigned_vehicle_id']) 
+        ? intval($_SESSION['checkout_step3']['assigned_vehicle_id']) 
+        : null);
+
+$assigned_vehicle_id = null;  // Will be validated later
+
+$assigned_vehicle_type = $order_details['assigned_vehicle_type'] 
+    ?? ($_SESSION['checkout_step3']['assigned_vehicle_type'] ?? null);
+
+$total_cubic_meters = !empty($order_details['total_cubic_meters']) 
+    ? floatval($order_details['total_cubic_meters']) 
+    : (!empty($_SESSION['checkout_step3']['total_cubic_meters']) 
+        ? floatval($_SESSION['checkout_step3']['total_cubic_meters']) 
+        : 0);
+
+$total_weight_kg = !empty($order_details['total_weight_kg']) 
+    ? floatval($order_details['total_weight_kg']) 
+    : (!empty($_SESSION['checkout_step3']['total_weight_kg']) 
+        ? floatval($_SESSION['checkout_step3']['total_weight_kg']) 
+        : 0);
+
+$total_width = !empty($order_details['total_width']) 
+    ? floatval($order_details['total_width']) 
+    : (!empty($_SESSION['checkout_step3']['total_width']) 
+        ? floatval($_SESSION['checkout_step3']['total_width']) 
+        : 0);
+
+$total_height = !empty($order_details['total_height']) 
+    ? floatval($order_details['total_height']) 
+    : (!empty($_SESSION['checkout_step3']['total_height']) 
+        ? floatval($_SESSION['checkout_step3']['total_height']) 
+        : 0);
+
+$total_length = !empty($order_details['total_length']) 
+    ? floatval($order_details['total_length']) 
+    : (!empty($_SESSION['checkout_step3']['total_length']) 
+        ? floatval($_SESSION['checkout_step3']['total_length']) 
+        : 0);
 
     // ✅ DEBUG LOG: Print incoming data
     error_log("=== PAYMONGO DEBUG ===");
@@ -163,7 +194,7 @@ try {
     }
 
     // Type string for 27 parameters
-    $types = "isssssdddddsssssiisdddddddi";
+    $types = "isssssdddddsssssissdddddddi";
     
     $stmt->bind_param(
         $types,

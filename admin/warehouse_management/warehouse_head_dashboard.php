@@ -32,13 +32,13 @@ $is_head = false;
 // Check if session is an array
 if (is_array($sessionUser)) {
     if (isset($sessionUser['id'])) {
-        $user_id = (int)$sessionUser['id'];
+        $user_id = (int) $sessionUser['id'];
     } elseif (isset($sessionUser['user_id'])) {
-        $user_id = (int)$sessionUser['user_id'];
+        $user_id = (int) $sessionUser['user_id'];
     }
     $fullname = $sessionUser['fullname'] ?? $sessionUser['name'] ?? '';
     $user_lvl = $sessionUser['lvl'] ?? $sessionUser['level'] ?? '';
-    $is_head = isset($sessionUser['is_head']) && (int)$sessionUser['is_head'] === 1;
+    $is_head = isset($sessionUser['is_head']) && (int) $sessionUser['is_head'] === 1;
 }
 
 // If session is just an email or string, look up user by email or id
@@ -55,16 +55,16 @@ if (empty($user_id)) {
                 $r = $s->get_result()->fetch_assoc();
                 $s->close();
                 if ($r) {
-                    $user_id = (int)$r['id'];
+                    $user_id = (int) $r['id'];
                     $fullname = $r['fullname'];
                     $user_lvl = $r['lvl'];
-                    $is_head = (int)$r['is_head'] === 1;
+                    $is_head = (int) $r['is_head'] === 1;
                 }
             }
         }
         // Check if it's a numeric ID
-        elseif (ctype_digit((string)$lookupValue)) {
-            $candidate = (int)$lookupValue;
+        elseif (ctype_digit((string) $lookupValue)) {
+            $candidate = (int) $lookupValue;
             $sql = "SELECT id, fullname, lvl, is_head FROM nobleaccount WHERE id = ? LIMIT 1";
             if ($s = $conn->prepare($sql)) {
                 $s->bind_param("i", $candidate);
@@ -72,10 +72,10 @@ if (empty($user_id)) {
                 $r = $s->get_result()->fetch_assoc();
                 $s->close();
                 if ($r) {
-                    $user_id = (int)$r['id'];
+                    $user_id = (int) $r['id'];
                     $fullname = $r['fullname'];
                     $user_lvl = $r['lvl'];
-                    $is_head = (int)$r['is_head'] === 1;
+                    $is_head = (int) $r['is_head'] === 1;
                 }
             }
         }
@@ -90,13 +90,13 @@ if (!$is_head) {
 
 // --- Filters from GET ---
 $status_filter = isset($_GET['status']) ? trim($_GET['status']) : '';
-$search_query  = isset($_GET['search']) ? trim($_GET['search']) : '';
-$date_from     = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
-$date_to       = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
-$employee_filter = isset($_GET['employee']) ? (int)$_GET['employee'] : 0;
-$show_replacements = isset($_GET['replacements']) ? (bool)$_GET['replacements'] : false;
-$show_ready_for_schedule = isset($_GET['ready_schedule']) ? (bool)$_GET['ready_schedule'] : false;
-$show_unassigned = isset($_GET['unassigned']) ? (bool)$_GET['unassigned'] : false;
+$search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
+$date_from = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
+$date_to = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
+$employee_filter = isset($_GET['employee']) ? (int) $_GET['employee'] : 0;
+$show_replacements = isset($_GET['replacements']) ? (bool) $_GET['replacements'] : false;
+$show_ready_for_schedule = isset($_GET['ready_schedule']) ? (bool) $_GET['ready_schedule'] : false;
+$show_unassigned = isset($_GET['unassigned']) ? (bool) $_GET['unassigned'] : false;
 
 // Get all warehouse employees
 $warehouseEmployees = [];
@@ -107,7 +107,7 @@ if ($empResult) {
 }
 
 // --- Build WHERE conditions ---
-$whereParts = ["1=1"]; // Start with always true condition
+$whereParts = ["1=1", "o.status != 'pending'"]; // Exclude pending orders
 $params = [];
 $types = '';
 
@@ -121,6 +121,7 @@ if (!$is_head && !$show_unassigned) {
     // Head: apply filters based on GET parameters
     if ($show_unassigned) {
         $whereParts[] = "(o.warehouse_employee_id IS NULL OR o.warehouse_employee_id = 0)";
+        $whereParts[] = "o.status = 'Ongoing'";
     } elseif ($employee_filter > 0) {
         $whereParts[] = "o.warehouse_employee_id = ?";
         $params[] = $employee_filter;
@@ -172,7 +173,8 @@ $whereClause = 'WHERE ' . implode(' AND ', $whereParts);
 // Helper function for binding params
 function bindParamsToStmt($stmt, $types, $params)
 {
-    if ($types === '' || empty($params)) return;
+    if ($types === '' || empty($params))
+        return;
     $bind_names[] = $types;
     for ($i = 0; $i < count($params); $i++) {
         $bind_name = 'bind' . $i;
@@ -218,7 +220,8 @@ if ($stmt = $conn->prepare($ordersSql)) {
     }
     $stmt->execute();
     $res = $stmt->get_result();
-    if ($res) $orders = $res->fetch_all(MYSQLI_ASSOC);
+    if ($res)
+        $orders = $res->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 }
 
@@ -229,8 +232,8 @@ $statusCounts = [];
 $replacementOrdersCount = 0;
 $readyForScheduleCount = 0;
 
-// Total and status counts
-$statsSql = "SELECT status, COUNT(*) as count FROM orders GROUP BY status";
+// Total and status counts (excluding pending)
+$statsSql = "SELECT status, COUNT(*) as count FROM orders WHERE status != 'pending' GROUP BY status";
 $statsResult = $conn->query($statsSql);
 if ($statsResult) {
     $statsData = $statsResult->fetch_all(MYSQLI_ASSOC);
@@ -240,12 +243,12 @@ if ($statsResult) {
     }
 }
 
-// Unassigned orders count
-$unassignedSql = "SELECT COUNT(*) as count FROM orders WHERE warehouse_employee_id IS NULL OR warehouse_employee_id = 0";
+// Unassigned orders count (only Ongoing status for badge display)
+$unassignedSql = "SELECT COUNT(*) as count FROM orders WHERE (warehouse_employee_id IS NULL OR warehouse_employee_id = 0) AND status = 'Ongoing'";
 $unassignedResult = $conn->query($unassignedSql);
 if ($unassignedResult) {
     $unassignedData = $unassignedResult->fetch_assoc();
-    $unassignedCount = (int)$unassignedData['count'];
+    $unassignedCount = (int) $unassignedData['count'];
 }
 
 // Replacement orders count
@@ -257,7 +260,7 @@ $replacementSql = "
 $replacementResult = $conn->query($replacementSql);
 if ($replacementResult) {
     $replacementData = $replacementResult->fetch_assoc();
-    $replacementOrdersCount = (int)$replacementData['count'];
+    $replacementOrdersCount = (int) $replacementData['count'];
 }
 
 // Ready for schedule count
@@ -285,7 +288,7 @@ $readyForScheduleSql = "
 $readyForScheduleResult = $conn->query($readyForScheduleSql);
 if ($readyForScheduleResult) {
     $readyData = $readyForScheduleResult->fetch_assoc();
-    $readyForScheduleCount = (int)$readyData['count'];
+    $readyForScheduleCount = (int) $readyData['count'];
 }
 
 // Employee workload statistics
@@ -390,11 +393,13 @@ if ($empStatsResult) {
                     </div>
                 </div>
                 <div class="text-right">
-                    <a href="warehouse_assignment.php" class="bg-white text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl transition-all duration-200 inline-flex items-center space-x-3 shadow-lg hover:shadow-xl hover:scale-105 font-semibold border-2 border-red-100">
+                    <a href="warehouse_assignment.php"
+                        class="bg-white text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl transition-all duration-200 inline-flex items-center space-x-3 shadow-lg hover:shadow-xl hover:scale-105 font-semibold border-2 border-red-100">
                         <i class="fas fa-users-cog text-lg"></i>
                         <span>Manage Assignments</span>
                     </a>
-                    <p class="text-red-100 text-sm mt-3">Logged in as: <strong><?php echo htmlspecialchars($fullname); ?></strong></p>
+                    <p class="text-red-100 text-sm mt-3">Logged in as:
+                        <strong><?php echo htmlspecialchars($fullname); ?></strong></p>
                 </div>
             </div>
         </div>
@@ -428,7 +433,8 @@ if ($empStatsResult) {
                     </div>
                 </div>
                 <?php if ($unassignedCount > 0): ?>
-                    <a href="warehouse_assignment.php" class="mt-3 text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full inline-block">
+                    <a href="warehouse_assignment.php"
+                        class="mt-3 text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full inline-block">
                         Assign Now →
                     </a>
                 <?php endif; ?>
@@ -436,7 +442,8 @@ if ($empStatsResult) {
 
             <!-- Replacement Requests -->
             <?php if ($replacementOrdersCount > 0): ?>
-                <div class="stat-card bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white pulse-notification">
+                <div
+                    class="stat-card bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white pulse-notification">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-orange-100 text-sm font-medium">Replacements</p>
@@ -451,7 +458,8 @@ if ($empStatsResult) {
 
             <!-- Ready for Schedule -->
             <?php if ($readyForScheduleCount > 0): ?>
-                <div class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white pulse-notification">
+                <div
+                    class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white pulse-notification">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-green-100 text-sm font-medium">Ready to Schedule</p>
@@ -488,7 +496,8 @@ if ($empStatsResult) {
                 <?php foreach ($employeeStats as $empStat): ?>
                     <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($empStat['fullname']); ?></h3>
+                            <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($empStat['fullname']); ?>
+                            </h3>
                             <span class="text-2xl font-bold text-primary-600"><?php echo $empStat['order_count']; ?></span>
                         </div>
                         <div class="text-xs text-gray-600 space-y-1">
@@ -511,7 +520,8 @@ if ($empStatsResult) {
             <form method="GET" class="space-y-4">
                 <!-- Filter Tabs -->
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '' && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
+                    <a href="?"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '' && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
                         All Orders (<?php echo $totalOrders; ?>)
                     </a>
 
@@ -522,38 +532,43 @@ if ($empStatsResult) {
                     // Display statuses in the specified order
                     foreach ($statusOrder as $status) {
                         if (isset($statusCounts[$status]) && $statusCounts[$status] > 0):
-                    ?>
+                            ?>
                             <a href="?status=<?php echo urlencode($status); ?>"
                                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === $status) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
                                 <?php echo htmlspecialchars(ucfirst($status)); ?> (<?php echo $statusCounts[$status]; ?>)
                             </a>
-                    <?php
+                            <?php
                         endif;
                     }
                     ?>
 
                     <?php if ($readyForScheduleCount > 0): ?>
-                        <a href="?ready_schedule=1" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_for_schedule ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200 pulse-notification'; ?>">
+                        <a href="?ready_schedule=1"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_for_schedule ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200 pulse-notification'; ?>">
                             <i class="fas fa-calendar-check mr-1"></i>
                             Ready to Schedule (<?php echo $readyForScheduleCount; ?>)
                             <?php if (!$show_ready_for_schedule): ?>
-                                <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full animate-ping"></span>
+                                <span
+                                    class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full animate-ping"></span>
                             <?php endif; ?>
                         </a>
                     <?php endif; ?>
 
                     <?php if ($unassignedCount > 0): ?>
-                        <a href="?unassigned=1" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_unassigned ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
+                        <a href="?unassigned=1"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_unassigned ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200 pulse-notification'; ?>">
                             <i class="fas fa-exclamation-triangle mr-1"></i>
                             Unassigned (<?php echo $unassignedCount; ?>)
                             <?php if (!$show_unassigned): ?>
-                                <span class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
+                                <span
+                                    class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
                             <?php endif; ?>
                         </a>
                     <?php endif; ?>
 
                     <?php if ($replacementOrdersCount > 0): ?>
-                        <a href="?replacements=1" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo $show_replacements ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 pulse-notification'; ?>">
+                        <a href="?replacements=1"
+                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo $show_replacements ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 pulse-notification'; ?>">
                             <i class="fas fa-sync-alt mr-1"></i>
                             Replacements (<?php echo $replacementOrdersCount; ?>)
                         </a>
@@ -571,19 +586,21 @@ if ($empStatsResult) {
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Employee</label>
-                        <select name="employee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <select name="employee"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                             <option value="0">All Employees</option>
                             <?php foreach ($warehouseEmployees as $emp): ?>
                                 <option value="<?php echo $emp['id']; ?>" <?php echo ($employee_filter == $emp['id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($emp['fullname']); ?>
-                                    <?php echo ((int)$emp['is_head'] === 1) ? ' (Head)' : ''; ?>
+                                    <?php echo ((int) $emp['is_head'] === 1) ? ' (Head)' : ''; ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div class="flex items-end">
-                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md transition-colors duration-200">
+                        <button type="submit"
+                            class="w-full bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md transition-colors duration-200">
                             <i class="fas fa-search mr-2"></i>Apply Filters
                         </button>
                     </div>
@@ -595,16 +612,17 @@ if ($empStatsResult) {
         <?php if (!empty($orders)): ?>
             <div class="space-y-4">
                 <?php foreach ($orders as $order):
-                    $assignedItems = (int)$order['assigned_count'];
-                    $item_count = (int)$order['item_count'];
-                    $po_attachment_count = (int)$order['po_attachment_count'];
-                    $approved_replacements_count = (int)$order['approved_replacements_count'];
+                    $assignedItems = (int) $order['assigned_count'];
+                    $item_count = (int) $order['item_count'];
+                    $po_attachment_count = (int) $order['po_attachment_count'];
+                    $approved_replacements_count = (int) $order['approved_replacements_count'];
                     $assignmentPercentage = $item_count > 0 ? round(($assignedItems / $item_count) * 100) : 0;
                     $hasPOFiles = $po_attachment_count > 0;
                     $hasReplacements = $approved_replacements_count > 0;
                     $isUnassigned = empty($order['warehouse_employee_id']);
-                ?>
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 <?php echo $hasReplacements ? 'border-l-4 border-l-red-500' : ''; ?> <?php echo $isUnassigned ? 'border-l-4 border-l-orange-500' : ''; ?>">
+                    ?>
+                    <div
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 <?php echo $hasReplacements ? 'border-l-4 border-l-red-500' : ''; ?> <?php echo ($isUnassigned && $order['status'] === 'Ongoing') ? 'border-l-4 border-l-orange-500' : ''; ?>">
                         <div class="p-4">
                             <div class="flex items-center justify-between gap-4">
                                 <!-- Order Info -->
@@ -615,25 +633,30 @@ if ($empStatsResult) {
 
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2 mb-1">
-                                            <h3 class="text-lg font-bold text-gray-900">Order #<?php echo htmlspecialchars($order['id']); ?></h3>
+                                            <h3 class="text-lg font-bold text-gray-900">Order
+                                                #<?php echo htmlspecialchars($order['id']); ?></h3>
 
                                             <?php if ($hasReplacements): ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
                                                     <i class="fas fa-sync-alt mr-1"></i><?php echo $approved_replacements_count; ?>
                                                 </span>
                                             <?php endif; ?>
 
-                                            <?php if ($isUnassigned): ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                            <?php if ($isUnassigned && $order['status'] === 'Ongoing'): ?>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
                                                     <i class="fas fa-user-slash mr-1"></i>Unassigned
                                                 </span>
                                             <?php endif; ?>
                                         </div>
 
                                         <div class="flex items-center gap-4 text-xs text-gray-600">
-                                            <span class="truncate"><i class="fas fa-user mr-1"></i><?php echo htmlspecialchars($order['customer_name']); ?></span>
+                                            <span class="truncate"><i
+                                                    class="fas fa-user mr-1"></i><?php echo htmlspecialchars($order['customer_name']); ?></span>
                                             <span><i class="fas fa-box mr-1"></i><?php echo $item_count; ?> items</span>
-                                            <span class="hidden md:inline"><i class="fas fa-calendar mr-1"></i><?php echo date('M j, Y', strtotime($order['created_at'])); ?></span>
+                                            <span class="hidden md:inline"><i
+                                                    class="fas fa-calendar mr-1"></i><?php echo date('M j, Y', strtotime($order['created_at'])); ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -646,14 +669,16 @@ if ($empStatsResult) {
                                             style="width: <?php echo $assignmentPercentage; ?>%">
                                         </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-0.5"><?php echo $assignmentPercentage; ?>% Complete</div>
+                                    <div class="text-xs text-gray-500 mt-0.5"><?php echo $assignmentPercentage; ?>% Complete
+                                    </div>
                                 </div>
 
                                 <!-- Employee -->
                                 <div class="flex-shrink-0 w-36 hidden lg:block">
                                     <div class="text-xs text-gray-600 mb-1">Assigned To</div>
-                                    <div class="text-sm font-medium <?php echo $isUnassigned ? 'text-orange-600' : 'text-blue-600'; ?>">
-                                        <?php echo $isUnassigned ? 'Not Assigned' : htmlspecialchars($order['assigned_employee_name']); ?>
+                                    <div
+                                        class="text-sm font-medium <?php echo ($isUnassigned && $order['status'] === 'Ongoing') ? 'text-orange-600' : 'text-blue-600'; ?>">
+                                        <?php echo ($isUnassigned && $order['status'] === 'Ongoing') ? 'Not Assigned' : htmlspecialchars($order['assigned_employee_name']); ?>
                                     </div>
                                 </div>
 
@@ -672,7 +697,7 @@ if ($empStatsResult) {
                                 <div class="flex-shrink-0 text-right w-28">
                                     <div class="text-xs text-gray-600 mb-1">Total</div>
                                     <div class="text-lg font-bold text-primary-700">
-                                        ₱<?php echo number_format((float)$order['total'], 2); ?>
+                                        ₱<?php echo number_format((float) $order['total'], 2); ?>
                                     </div>
                                 </div>
 
@@ -707,7 +732,8 @@ if ($empStatsResult) {
                                             <?php endif; ?>
 
                                             <?php if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', 'Delivered', 'Out for Delivery'])): ?>
-                                                <button onclick="openTrackingModal(<?php echo $order['id']; ?>); toggleActionsMenu(<?php echo $order['id']; ?>);"
+                                                <button
+                                                    onclick="openTrackingModal(<?php echo $order['id']; ?>); toggleActionsMenu(<?php echo $order['id']; ?>);"
                                                     class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                                     <i class="fas fa-route mr-2 w-4"></i>Track Items
                                                 </button>
@@ -747,13 +773,15 @@ if ($empStatsResult) {
                                             }
 
                                             if ($isReadyForSchedule): ?>
-                                                <div class="px-4 py-2 text-xs font-bold text-green-700 bg-green-50 border-t border-gray-100">
+                                                <div
+                                                    class="px-4 py-2 text-xs font-bold text-green-700 bg-green-50 border-t border-gray-100">
                                                     <i class="fas fa-calendar-check mr-1"></i>READY TO SCHEDULE
                                                 </div>
                                             <?php endif; ?>
 
                                             <?php if (!$hasPOFiles && $assignmentPercentage >= 100): ?>
-                                                <div class="px-4 py-2 text-xs font-medium text-yellow-700 bg-yellow-50 border-t border-gray-100">
+                                                <div
+                                                    class="px-4 py-2 text-xs font-medium text-yellow-700 bg-yellow-50 border-t border-gray-100">
                                                     <i class="fas fa-exclamation-circle mr-1"></i>Awaiting P.O. Attachment
                                                 </div>
                                             <?php endif; ?>
@@ -791,14 +819,18 @@ if ($empStatsResult) {
         <?php endif; ?>
     </div>
     <!-- Tracking Modal -->
-    <div id="trackingModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4" style="backdrop-filter: blur(8px);">
+    <div id="trackingModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+        style="backdrop-filter: blur(8px);">
         <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+            <div
+                class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
                 <h3 class="text-xl font-bold text-gray-900 flex items-center">
                     <i class="fas fa-route mr-3 text-blue-600"></i>
                     Order Tracking - <span id="modalOrderId"></span>
                 </h3>
-                <button onclick="closeTrackingModal()" class="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
+                <button onclick="closeTrackingModal()"
+                    class="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -1260,26 +1292,26 @@ if ($empStatsResult) {
         }
 
         // Close modal on escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeTrackingModal();
             }
         });
 
         // Close tracking modal when clicking outside
-        document.getElementById('trackingModal').addEventListener('click', function(e) {
+        document.getElementById('trackingModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeTrackingModal();
             }
         });
 
         // Auto-refresh every 2 minutes to keep data current
-        setTimeout(function() {
+        setTimeout(function () {
             location.reload();
         }, 120000);
 
         // Highlight newly unassigned orders
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('unassigned') === '1') {
                 console.log('Showing unassigned orders');
@@ -1303,7 +1335,7 @@ if ($empStatsResult) {
         }
 
         // Close dropdowns when clicking outside
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!e.target.closest('button[onclick^="toggleActionsMenu"]') && !e.target.closest('[id^="actions-"]')) {
                 document.querySelectorAll('[id^="actions-"]').forEach(menu => {
                     menu.classList.add('hidden');

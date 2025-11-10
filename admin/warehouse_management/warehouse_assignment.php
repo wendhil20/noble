@@ -406,7 +406,7 @@ if (!empty($view_assigned)) {
                         <i class="fas fa-arrow-left mr-2"></i>Back to Unassigned
                     </a>
                     <?php endif; ?>
-                    <a href="order_list.php" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <a href="warehouse_head_dashboard.php" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                         <i class="fas fa-list mr-2"></i>Back to Orders
                     </a>
                 </div>

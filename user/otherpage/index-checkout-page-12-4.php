@@ -489,54 +489,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Handle PayMongo
-    if ($payment_method === 'PayMongo') {
-        $_SESSION['paymongo_order_data'] = [
-            'customer_name' => $customer_data['customer_name'],
-            'email' => $customer_data['email'],
-            'mobile' => $address_data['mobile'],
-            'address' => $address_data['address'],
-            'zipcode' => $address_data['zipcode'],
-            'billing_address_id' => $address_data['billing_address_id'],
-            'latitude' => $address_data['latitude'],
-            'longitude' => $address_data['longitude'],
-            'delivery_fee' => $delivery_fee,
-            'delivery_distance' => $delivery_data['delivery_distance'],
-            'subtotal' => $subtotal_after_discount,
-            'vat_amount' => $vat_amount,
-            'grand_total' => $grand_total,
-            'user_id' => $user_id,
-            'cart_items' => $cart_items,
-            'delivery_type' => $delivery_data['delivery_type'],
-            'assigned_vehicle_id' => $delivery_data['assigned_vehicle_id'],
-            'assigned_vehicle_type' => $delivery_data['assigned_vehicle_type'],
-            'total_cubic_meters' => $delivery_data['total_cubic_meters'],
-            'total_weight_kg' => $delivery_data['total_weight_kg'],
-            'total_width' => $delivery_data['total_width'],
-            'total_height' => $delivery_data['total_height'],
-            'total_length' => $delivery_data['total_length']
-        ];
+if ($payment_method === 'PayMongo') {
+    // ✅ Extract vehicle data from POST or Session
+    $assigned_vehicle_id = isset($_POST['assigned_vehicle_id']) ? intval($_POST['assigned_vehicle_id']) : NULL;
+    $assigned_vehicle_type = isset($_POST['assigned_vehicle_type']) ? trim($_POST['assigned_vehicle_type']) : NULL;
+    $total_cubic_meters = isset($_POST['total_cubic_meters']) ? floatval($_POST['total_cubic_meters']) : NULL;
+    $total_weight_kg = isset($_POST['total_weight_kg']) ? floatval($_POST['total_weight_kg']) : NULL;
+    $total_width = isset($_POST['total_width']) ? floatval($_POST['total_width']) : NULL;
+    $total_height = isset($_POST['total_height']) ? floatval($_POST['total_height']) : NULL;
+    $total_length = isset($_POST['total_length']) ? floatval($_POST['total_length']) : NULL;
+
+    // Fallback to session data if POST is empty
+    if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
+        $step3 = $_SESSION['checkout_step3'];
+        $assigned_vehicle_id = isset($step3['assigned_vehicle_id']) ? intval($step3['assigned_vehicle_id']) : NULL;
+        $assigned_vehicle_type = isset($step3['assigned_vehicle_type']) ? $step3['assigned_vehicle_type'] : NULL;
+        $total_cubic_meters = isset($step3['total_cubic_meters']) ? floatval($step3['total_cubic_meters']) : NULL;
+        $total_weight_kg = isset($step3['total_weight_kg']) ? floatval($step3['total_weight_kg']) : NULL;
+        $total_width = isset($step3['total_width']) ? floatval($step3['total_width']) : NULL;
+        $total_height = isset($step3['total_height']) ? floatval($step3['total_height']) : NULL;
+        $total_length = isset($step3['total_length']) ? floatval($step3['total_length']) : NULL;
+    }
+
+    // Get delivery distance from POST or session
+    $delivery_distance = 0.00;
+    if (isset($delivery_data['delivery_distance'])) {
+        $delivery_distance = $delivery_data['delivery_distance'];
+    } elseif (isset($_POST['delivery_distance'])) {
+        $delivery_distance = floatval($_POST['delivery_distance']);
+    }
+
+    $_SESSION['paymongo_order_data'] = [
+        'customer_name' => $customer_data['customer_name'],
+        'email' => $customer_data['email'],
+        'mobile' => $address_data['mobile'],
+        'address' => $address_data['address'],
+        'zipcode' => $address_data['zipcode'],
+        'billing_address_id' => $address_data['billing_address_id'],
+        'latitude' => $address_data['latitude'],
+        'longitude' => $address_data['longitude'],
+        'delivery_fee' => $delivery_fee,
+        'delivery_distance' => $delivery_distance,
+        'subtotal' => $subtotal_after_discount,
+        'vat_amount' => $vat_amount,
+        'grand_total' => $grand_total,
+        'user_id' => $user_id,
+        'cart_items' => $cart_items,
+        'delivery_type' => $delivery_data['delivery_type'],
+        'assigned_vehicle_id' => $assigned_vehicle_id,
+        'assigned_vehicle_type' => $assigned_vehicle_type,
+        'total_cubic_meters' => $total_cubic_meters,
+        'total_weight_kg' => $total_weight_kg,
+        'total_width' => $total_width,
+        'total_height' => $total_height,
+        'total_length' => $total_length
+    ];
 
 ?>
         <script>
-            fetch('checkout-paymongo-create-sessions-page-12-A.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        amount: <?= $grand_total ?>,
-                        delivery_fee: <?= $delivery_fee ?>
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
-                        window.location.href = data.data.attributes.checkout_url;
-                    } else {
-                        alert('PayMongo session creation failed.');
-                    }
-                });
-        </script>
+    // Get all vehicle data from hidden fields
+    const vehicleData = {
+        amount: <?= $grand_total ?>,
+        delivery_fee: <?= $delivery_fee ?>,
+        order_details: {
+            customer_name: '<?= addslashes($customer_data['customer_name']) ?>',
+            email: '<?= addslashes($customer_data['email']) ?>',
+            mobile: '<?= addslashes($address_data['mobile']) ?>',
+            address: '<?= addslashes($address_data['address']) ?>',
+            zipcode: '<?= addslashes($address_data['zipcode']) ?>',
+            billing_address_id: <?= intval($address_data['billing_address_id'] ?? 0) ?>,
+            latitude: <?= floatval($address_data['latitude'] ?? 0) ?>,
+            longitude: <?= floatval($address_data['longitude'] ?? 0) ?>,
+            delivery_distance: <?= floatval($delivery_data['delivery_distance'] ?? 0) ?>,
+            delivery_type: '<?= $delivery_data['delivery_type'] ?>',
+            assigned_vehicle_id: <?= intval($delivery_data['assigned_vehicle_id'] ?? 0) ?>,
+            assigned_vehicle_type: '<?= addslashes($delivery_data['assigned_vehicle_type'] ?? '') ?>',
+            total_cubic_meters: <?= floatval($delivery_data['total_cubic_meters'] ?? 0) ?>,
+            total_weight_kg: <?= floatval($delivery_data['total_weight_kg'] ?? 0) ?>,
+            total_width: <?= floatval($delivery_data['total_width'] ?? 0) ?>,
+            total_height: <?= floatval($delivery_data['total_height'] ?? 0) ?>,
+            total_length: <?= floatval($delivery_data['total_length'] ?? 0) ?>
+        }
+    };
+
+    console.log('Sending PayMongo data:', vehicleData);
+
+    fetch('checkout-paymongo-create-sessions-page-12-A.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(vehicleData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
+                window.location.href = data.data.attributes.checkout_url;
+            } else {
+                alert('PayMongo session creation failed.');
+                console.error('PayMongo error:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('Error connecting to payment gateway.');
+        });
+</script>
 <?php
         exit;
     }
@@ -547,14 +605,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $reference_no = generateReferenceNumber();
             $payment_status = 'pending';
 
-            // ✅ ALL variables must be declared separately for bind_param
-            $assigned_vehicle_id = NULL;
-            $assigned_vehicle_type = NULL;
-            $total_cubic_meters = NULL;
-            $total_weight_kg = NULL;
-            $total_width = NULL;
-            $total_height = NULL;
-            $total_length = NULL;
+            // ✅ Extract vehicle data from hidden form fields OR session
+$assigned_vehicle_id = isset($_POST['assigned_vehicle_id']) ? intval($_POST['assigned_vehicle_id']) : NULL;
+$assigned_vehicle_type = isset($_POST['assigned_vehicle_type']) ? trim($_POST['assigned_vehicle_type']) : NULL;
+$total_cubic_meters = isset($_POST['total_cubic_meters']) ? floatval($_POST['total_cubic_meters']) : NULL;
+$total_weight_kg = isset($_POST['total_weight_kg']) ? floatval($_POST['total_weight_kg']) : NULL;
+$total_width = isset($_POST['total_width']) ? floatval($_POST['total_width']) : NULL;
+$total_height = isset($_POST['total_height']) ? floatval($_POST['total_height']) : NULL;
+$total_length = isset($_POST['total_length']) ? floatval($_POST['total_length']) : NULL;
+
+// If not in POST, try to get from session (Step 3 data)
+if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
+    $step3 = $_SESSION['checkout_step3'];
+    $assigned_vehicle_id = isset($step3['assigned_vehicle_id']) ? intval($step3['assigned_vehicle_id']) : NULL;
+    $assigned_vehicle_type = isset($step3['assigned_vehicle_type']) ? $step3['assigned_vehicle_type'] : NULL;
+    $total_cubic_meters = isset($step3['total_cubic_meters']) ? floatval($step3['total_cubic_meters']) : NULL;
+    $total_weight_kg = isset($step3['total_weight_kg']) ? floatval($step3['total_weight_kg']) : NULL;
+    $total_width = isset($step3['total_width']) ? floatval($step3['total_width']) : NULL;
+    $total_height = isset($step3['total_height']) ? floatval($step3['total_height']) : NULL;
+    $total_length = isset($step3['total_length']) ? floatval($step3['total_length']) : NULL;
+}
 
             // ✅ Extract all values as variables
             $customer_name = $customer_data['customer_name'];
@@ -822,6 +892,16 @@ foreach ($cart_items as $item) {
         </div>
 
         <form method="POST" id="paymentForm" class="space-y-6" enctype="multipart/form-data">
+
+            <!-- ✅ ADD THESE HIDDEN FIELDS HERE -->
+    <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="<?= $delivery_data['assigned_vehicle_id'] ?? 0 ?>">
+    <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="<?= htmlspecialchars($delivery_data['assigned_vehicle_type'] ?? '') ?>">
+    <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="<?= $delivery_data['total_cubic_meters'] ?? 0 ?>">
+    <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="<?= $delivery_data['total_weight_kg'] ?? 0 ?>">
+    <input type="hidden" name="total_width" id="totalWidth" value="<?= $delivery_data['total_width'] ?? 0 ?>">
+    <input type="hidden" name="total_height" id="totalHeight" value="<?= $delivery_data['total_height'] ?? 0 ?>">
+    <input type="hidden" name="total_length" id="totalLength" value="<?= $delivery_data['total_length'] ?? 0 ?>">
+
             <div class="bg-purple-50 p-4 rounded-lg mb-6">
                 <div class="flex items-center">
                     <svg class="w-8 h-8 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -135,6 +135,18 @@ $whereParts = ["o.warehouse_employee_id = ?"];
 $params = [$user_id];
 $types = 'i';
 
+// For "My Orders" (no status filter), only show orders that are NOT 100% assigned
+if ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) {
+    $whereParts[] = "(
+        (SELECT COUNT(*) FROM order_items oi_check 
+         WHERE oi_check.order_id = o.id 
+         AND ((oi_check.supplier_id IS NOT NULL AND oi_check.supplier_id > 0) 
+              OR (oi_check.supplier_id = 0 AND oi_check.manual_supplier_name IS NOT NULL AND oi_check.manual_supplier_name != ''))
+        ) < (SELECT COUNT(*) FROM order_items oi_total WHERE oi_total.order_id = o.id)
+        OR (SELECT COUNT(*) FROM order_items oi_total WHERE oi_total.order_id = o.id) = 0
+    )";
+}
+
 if ($status_filter !== '') {
     $whereParts[] = "o.status = ?";
     $params[] = $status_filter;
@@ -283,6 +295,31 @@ if ($stmt2 = $conn->prepare($statusSql)) {
     $r2 = $stmt2->get_result();
     if ($r2) $statusCounts = $r2->fetch_all(MYSQLI_ASSOC);
     $stmt2->close();
+    // Count ongoing orders (not 100% assigned)
+$ongoingOrdersSql = "
+    SELECT COUNT(DISTINCT o.id) as count 
+    FROM orders o 
+    WHERE o.warehouse_employee_id = ? 
+    AND (
+        (SELECT COUNT(*) FROM order_items oi_check 
+         WHERE oi_check.order_id = o.id 
+         AND ((oi_check.supplier_id IS NOT NULL AND oi_check.supplier_id > 0) 
+              OR (oi_check.supplier_id = 0 AND oi_check.manual_supplier_name IS NOT NULL AND oi_check.manual_supplier_name != ''))
+        ) < (SELECT COUNT(*) FROM order_items oi_total WHERE oi_total.order_id = o.id)
+        OR (SELECT COUNT(*) FROM order_items oi_total WHERE oi_total.order_id = o.id) = 0
+    )
+";
+$ongoingOrdersCount = 0;
+if ($stmt_ongoing = $conn->prepare($ongoingOrdersSql)) {
+    $stmt_ongoing->bind_param("i", $user_id);
+    $stmt_ongoing->execute();
+    $r_ongoing = $stmt_ongoing->get_result();
+    if ($r_ongoing) {
+        $ongoingResult = $r_ongoing->fetch_assoc();
+        $ongoingOrdersCount = (int)$ongoingResult['count'];
+    }
+    $stmt_ongoing->close();
+}
 }
 
 // Count orders with approved OR processing replacement requests
@@ -485,16 +522,44 @@ foreach ($statusCounts as $row) {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
             <form method="GET" class="space-y-4">
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
-                        My Orders (<?php echo $totalOrders; ?>)
-                    </a>
+    <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-primary-600 text-white shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
+    <i class="fas fa-tasks"></i>
+    <span>Ongoing Orders</span>
+    <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-white/20' : 'bg-orange-200'; ?>">
+        <?php echo $ongoingOrdersCount; ?>
+    </span>
+</a>
 
-                    <?php foreach ($statusCountsArray as $status => $count): ?>
-                        <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
-                            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === $status && !$show_replacements && !$show_ready_for_schedule) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
-                            <?php echo htmlspecialchars(ucfirst($status)); ?> (<?php echo (int)$count; ?>)
-                        </a>
-                    <?php endforeach; ?>
+    <?php 
+    // Define the order of statuses you want to display
+    $statusOrder = ['pending', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
+    
+    // Status icons and colors
+    $statusConfig = [
+        'pending' => ['icon' => 'fa-clock', 'color' => 'yellow'],
+        'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
+        'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
+        'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
+        'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
+        'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
+        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
+    ];
+    
+    foreach ($statusOrder as $status):
+        if (!isset($statusCountsArray[$status])) continue;
+        $count = $statusCountsArray[$status];
+        $config = $statusConfig[$status] ?? ['icon' => 'fa-circle', 'color' => 'gray'];
+        $isActive = ($status_filter === $status && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements);
+    ?>
+        <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo $isActive ? 'bg-' . $config['color'] . '-600 text-white shadow-md' : 'bg-' . $config['color'] . '-100 text-' . $config['color'] . '-700 hover:bg-' . $config['color'] . '-200'; ?>">
+            <i class="fas <?php echo $config['icon']; ?>"></i>
+            <span><?php echo htmlspecialchars(ucfirst($status)); ?></span>
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo $isActive ? 'bg-white/20' : 'bg-' . $config['color'] . '-200'; ?>">
+                <?php echo (int)$count; ?>
+            </span>
+        </a>
+    <?php endforeach; ?>
 
                     <!-- Replacement Items Filter -->
                     <?php if ($replacementOrdersCount > 0): ?>

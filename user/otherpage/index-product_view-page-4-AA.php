@@ -8,11 +8,11 @@ include 'index-recent_views_handler-page-14.php';
 
 // Track this product view
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-    $product_id = (int)$_GET['id'];
-    trackProductView($conn, $product_id);
-    
-    // Get view count for display
-    $viewData = getProductViewCount($conn, $product_id);
+  $product_id = (int)$_GET['id'];
+  trackProductView($conn, $product_id);
+
+  // Get view count for display
+  $viewData = getProductViewCount($conn, $product_id);
 }
 
 // ✅ STEP 1: SESSION RESTORE
@@ -1003,8 +1003,8 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
           <!-- Mobile Sidebar Header -->
           <div class="lg:hidden sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-20 shadow-sm bg-orange-500">
-            <h2 class="text-lg text-white">Product Options</h2>
-            <button id="closeSidebar" class="text-white hover:text-white p-1">
+            <h2 class="text-lg text-black">Product Options</h2>
+            <button id="closeSidebar" class="text-black hover:text-white p-1">
               <i class="fas fa-times text-xl"></i>
             </button>
           </div>
@@ -1222,7 +1222,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
                       <div class="flex-1">
                         <label class="block text-xs font-semibold text-gray-900 mb-1">
                           <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
-                          Area (m²)
+                          Area 
                         </label>
                         <div class="bg-gray-50 rounded">
                           <input type="number" id="userArea" step="0.01" placeholder="Enter area"
@@ -1577,194 +1577,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
     </div>
   </div>
 
-  <!-- JavaScript Functions -->
-  <script>
-    function increaseQuantity() {
-      const input = document.getElementById('quantityInput');
-      const val = parseInt(input.value) || 1;
-      if (val < 9999) {
-        input.value = val + 1;
-        validateQuantity();
-        updateQuantityPreview();
-      }
-    }
 
-    function decreaseQuantity() {
-      const input = document.getElementById('quantityInput');
-      const val = parseInt(input.value) || 1;
-      if (val > 1) {
-        input.value = val - 1;
-        validateQuantity();
-        updateQuantityPreview();
-      }
-    }
-
-    function setQuantity(amount) {
-      const input = document.getElementById('quantityInput');
-      if (amount >= 1 && amount <= 9999) {
-        input.value = amount;
-        validateQuantity();
-        updateQuantityPreview();
-      }
-    }
-
-    function validateQuantity() {
-      const input = document.getElementById('quantityInput');
-      const decreaseBtn = document.getElementById('decreaseBtn');
-      const increaseBtn = document.getElementById('increaseBtn');
-      let val = parseInt(input.value) || 1;
-      val = Math.max(1, Math.min(9999, val));
-      input.value = val;
-      if (decreaseBtn) decreaseBtn.disabled = val <= 1;
-      if (increaseBtn) increaseBtn.disabled = val >= 9999;
-      updateQuantityPreview();
-    }
-
-    function updateQuantityPreview() {
-      const quantityInput = document.getElementById('quantityInput');
-      const previewContainer = document.getElementById('quantityPricePreview');
-      const previewQty = document.getElementById('previewQty');
-      const previewTotal = document.getElementById('previewTotal');
-      if (!quantityInput || !previewContainer) return;
-      const quantity = parseInt(quantityInput.value) || 1;
-      if (window.productSelector && window.productSelector.selectedVariantData) {
-        const unitPrice = window.productSelector.calculateTotalPrice().totalPrice;
-        const totalPrice = unitPrice * quantity;
-        previewQty.textContent = quantity;
-        previewTotal.textContent = `₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        previewContainer.classList.remove('hidden');
-      } else {
-        previewContainer.classList.add('hidden');
-      }
-    }
-
-    let isExpanded = false;
-
-    function showSkuInfo(button) {
-      const display = document.getElementById('sku-info-display');
-      const content = document.getElementById('sku-info-content');
-      const toggleBtn = document.getElementById('toggle-sku-btn');
-      const skuInfoJson = button.getAttribute('data-sku-info');
-
-      isExpanded = false;
-      content.classList.remove('collapsed', 'expanded');
-      toggleBtn.classList.add('hidden');
-
-      if (!skuInfoJson) {
-        display.classList.add('hidden');
-        return;
-      }
-
-      try {
-        const skuInfo = JSON.parse(skuInfoJson);
-        let html = '';
-
-        if (Object.keys(skuInfo).length === 1 && skuInfo.notes) {
-          html = `
-          <div class="bg-white p-4 rounded-lg">
-            <div class="whitespace-pre-wrap text-gray-800">${escapeHtml(skuInfo.notes)}</div>
-          </div>
-        `;
-        } else {
-          html = '<div class="bg-white p-4 rounded-lg"><div class="space-y-3">';
-          for (const [key, value] of Object.entries(skuInfo)) {
-            const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
-            html += `
-            <div class="flex items-start border-b border-gray-100 pb-2 last:border-0 last:pb-0">
-              <span class="text-sm font-semibold text-orange-600 min-w-[120px]">${escapeHtml(label)}:</span>
-              <span class="text-sm text-gray-800 flex-1">${escapeHtml(value)}</span>
-            </div>
-          `;
-          }
-          html += '</div></div>';
-        }
-
-        content.innerHTML = html;
-        display.classList.remove('hidden');
-
-        setTimeout(() => {
-          if (content.scrollHeight > 120) {
-            content.classList.add('collapsed');
-            toggleBtn.classList.remove('hidden');
-            updateToggleButton();
-          }
-        }, 50);
-
-      } catch (e) {
-        console.error('Error parsing SKU info:', e);
-        display.classList.add('hidden');
-      }
-    }
-
-    function toggleSkuContent() {
-      const content = document.getElementById('sku-info-content');
-      isExpanded = !isExpanded;
-
-      if (isExpanded) {
-        content.classList.remove('collapsed');
-        content.classList.add('expanded');
-      } else {
-        content.classList.remove('expanded');
-        content.classList.add('collapsed');
-      }
-
-      updateToggleButton();
-    }
-
-    function updateToggleButton() {
-      const toggleText = document.getElementById('toggle-sku-text');
-      const toggleIcon = document.getElementById('toggle-sku-icon');
-
-      if (isExpanded) {
-        toggleText.textContent = 'See Less';
-        toggleIcon.classList.remove('fa-chevron-down');
-        toggleIcon.classList.add('fa-chevron-up');
-      } else {
-        toggleText.textContent = 'See More';
-        toggleIcon.classList.remove('fa-chevron-up');
-        toggleIcon.classList.add('fa-chevron-down');
-      }
-    }
-
-    function hideSkuInfo() {
-      const display = document.getElementById('sku-info-display');
-      display.classList.add('hidden');
-      isExpanded = false;
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // ✅ ✅ ✅ FIXED VERSION - Prevents Enter key and keyboard shortcuts
-    document.addEventListener('DOMContentLoaded', function() {
-      validateQuantity();
-      const quantityInput = document.getElementById('quantityInput');
-      if (quantityInput) {
-        // ✅ Prevent ALL keyboard events from bubbling up
-        quantityInput.addEventListener('keydown', function(e) {
-          e.stopPropagation(); // Prevent shortcuts from triggering
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            this.blur();
-            return false;
-          }
-        });
-
-        // ✅ Double protection for Enter key
-        quantityInput.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            return false;
-          }
-        });
-
-        quantityInput.addEventListener('input', updateQuantityPreview);
-      }
-    });
-  </script>
 
   <style>
     /* Step Section Spacing */
@@ -2010,7 +1823,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
 
   <?php if (!empty($product_specs)): ?>
-    <section class="mt-6 lg:mt-8">
+    <section class="mt-6 lg:mt-8 px-4 lg:px-0 max-w-7xl mx-auto">
       <div class="bg-white rounded-xl p-4 lg:p-8">
         <h2 class="text-xl sm:text-2xl lg:text-3xl text-black mb-4 lg:mb-6 flex items-center gap-3">
           <i class="fas fa-list-alt"></i>
@@ -2084,14 +1897,14 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           $related_products->data_seek(0);
           while ($row = $related_products->fetch_assoc()):
 
-      // Track this product view
-if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-    $product_id = (int)$_GET['id'];
-    trackProductView($conn, $product_id);
-    
-    // Get view count for display
-    $viewData = getProductViewCount($conn, $product_id);
-}
+            // Track this product view
+            if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+              $product_id = (int)$_GET['id'];
+              trackProductView($conn, $product_id);
+
+              // Get view count for display
+              $viewData = getProductViewCount($conn, $product_id);
+            }
           ?>
             <div class="group">
               <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
@@ -2273,7 +2086,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
   <?php endif; ?>
 
   <?php include '../navbar/footer.php'; ?>
-  <script src="js/index-product-view-page-4-AA.js?v=<?= filemtime('js/index-product-view-page-4-AA.js')?>"></script>
+  <script src="js/index-product-view-page-4-AA.js?v=<?= filemtime('js/index-product-view-page-4-AA.js') ?>"></script>
 </body>
 
 </html>

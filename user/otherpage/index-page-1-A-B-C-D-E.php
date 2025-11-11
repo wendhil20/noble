@@ -227,7 +227,7 @@ $discount_result = mysqli_query(
      LIMIT 10"
 );
 
-// 7. Filter by furniture codename - WITH VIEW COUNT & RATING & SOLD COUNT
+// 7. Filter by furniture codename - WITH VIEW COUNT & RATING & SOLD COUNT & PRICE RANGE
 $filter = 'furniture';
 $query = "
     SELECT 
@@ -240,11 +240,18 @@ $query = "
         v.discount,
         v.percent,
         v.status,
+      COALESCE(MIN(pv.price), 0) as min_size_price,  
+      COALESCE(MAX(pv.price), 0) as max_size_price,  
+        COALESCE(MIN(pc.price), 0) as min_color_price,
+        COALESCE(MAX(pc.price), 0) as max_color_price,
+        COUNT(DISTINCT pc.id) as color_count,
         AVG(r.rating) AS avg_rating,
         COUNT(r.rating) AS rating_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
+    LEFT JOIN product_variants pv ON p.id = pv.product_id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
@@ -257,9 +264,7 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $result = $stmt->get_result();
 
-
-
-// 8. Filter by material codename with rating - WITH VIEW COUNT
+// 8. Filter by material codename - WITH PRICE RANGE
 $filter = 'buildingmaterials';
 $query = "
     SELECT 
@@ -272,6 +277,11 @@ $query = "
         v.discount,
         v.percent,
         v.status,
+     COALESCE(MIN(pv.price), 0) as min_size_price, 
+COALESCE(MAX(pv.price), 0) as max_size_price, 
+        COALESCE(MIN(pc.price), 0) as min_color_price,
+        COALESCE(MAX(pc.price), 0) as max_color_price,
+        COUNT(DISTINCT pc.id) as color_count,
         AVG(r.rating) AS avg_rating,
         COUNT(r.rating) AS rating_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold
@@ -280,6 +290,8 @@ $query = "
         SELECT * FROM product_variants 
         GROUP BY product_id
     ) v ON v.product_id = p.id
+    LEFT JOIN product_variants pv ON p.id = pv.product_id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
     LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
@@ -292,7 +304,7 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $results = $stmt->get_result();
 
-// 9. Filter by bedfurniture codename - WITH VIEW COUNT
+// 9. Filter by bedfurniture - WITH PRICE RANGE
 $filters = 'bedfurniture';
 $query = "
     SELECT 
@@ -305,9 +317,16 @@ $query = "
         v.discount,
         v.percent,
         v.status,
+      COALESCE(MIN(pv.price), 0) as min_size_price,
+COALESCE(MAX(pv.price), 0) as max_size_price,  
+        COALESCE(MIN(pc.price), 0) as min_color_price,
+        COALESCE(MAX(pc.price), 0) as max_color_price,
+        COUNT(DISTINCT pc.id) as color_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
+    LEFT JOIN product_variants pv ON p.id = pv.product_id
+    LEFT JOIN product_colors pc ON p.id = pc.product_id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
@@ -358,51 +377,22 @@ handleQueryError($conn, "Discount 10% Query");
 handleQueryError($conn, "Discount 1-5% Query");
 handleQueryError($conn, "New Status Query");
 
-// 🆕 Helper function to display view count badge
-function displayViewCountBadge($view_count, $size = 'small')
-{
-    if (!$view_count || $view_count == 0) return '';
-
-    $formatted = formatViewCount($view_count);
-
-    if ($size === 'large') {
-        return '
-        <div class="flex items-center gap-2 text-gray-600">
-            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-            <span class="text-lg font-semibold">' . $formatted . '</span>
-            <span class="text-sm">views</span>
-        </div>';
-    } else {
-        return '
-        <div class="flex items-center gap-1 text-gray-500 text-xs">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-            </svg>
-            <span class="font-medium">' . $formatted . '</span>
-        </div>';
-    }
-}
 
 // 🆕 Helper function to display trending badge
 function displayTrendingBadge($view_count)
 {
     if ($view_count >= 1000) {
         return '<span class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                     Trending
+                     Popular
                 </span>';
-    } elseif ($view_count >= 500) {
-        return '<span class="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+    } elseif ($view_count >= 20) {
+        return '<span class="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
                      Popular
                 </span>';
     }
     return '';
 }
+
 ?>
 
 
@@ -797,11 +787,12 @@ function displayTrendingBadge($view_count)
 
     function renderProductCard($row, $conn)
     {
-        $base = (float)$row['price'];
-        $percent = (float)($row['percent'] ?? 0);
+        // 🔥 USE SMART PRICE DISPLAY FUNCTION
+        $priceData = calculateSmartPriceDisplay($row);
+
+        // Get discount info
         $discount = (float)($row['discount'] ?? 0);
-        $priceWithMarkup = $base + ($base * $percent / 100);
-        $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+        $percent = (float)($row['percent'] ?? 0);
 
         $product_id = (int)$row['id'];
 
@@ -814,7 +805,7 @@ function displayTrendingBadge($view_count)
         $total_raters = $rating_result['total_raters'] ?? 0;
         $rating_q->close();
 
-        // 🆕 Get sold count from sold_items table
+        // 🆕 Get sold count
         $sold_q = $conn->prepare("
         SELECT SUM(quantity) as total_sold 
         FROM sold_items 
@@ -871,14 +862,19 @@ function displayTrendingBadge($view_count)
                         <?php endif; ?>
                     </div>
 
-                    <!-- Price -->
+                    <!-- 🔥 SMART PRICE DISPLAY -->
                     <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
                         <?php if ($discount > 0): ?>
-                            <p class="text-md font-bold text-gray-900">₱<?= number_format($finalPrice, 2) ?></p>
-                            <p class="text-[9px] text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                            <!-- With Discount -->
+                            <p class="text-md font-bold text-gray-900">
+                                <?= $priceData['display_price'] ?>
+                            </p>
                             <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                         <?php else: ?>
-                            <p class="text-xs font-bold text-gray-900">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                            <!-- No Discount -->
+                            <p class="text-xs font-bold text-gray-900">
+                                <?= $priceData['display_price'] ?>
+                            </p>
                         <?php endif; ?>
                     </div>
 
@@ -974,7 +970,6 @@ function displayTrendingBadge($view_count)
             </div>
         </section>
     <?php endif; ?>
-
 
     <section class="px-4 sm:px-6 lg:px-8 py-10 ">
         <div class="max-w-full mx-auto">
@@ -1227,6 +1222,8 @@ function displayTrendingBadge($view_count)
         </div>
     </section>
 
+
+    
     <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
 
         <!-- Header with proper alignment -->
@@ -1245,17 +1242,14 @@ function displayTrendingBadge($view_count)
                 <div class="relative group inline-block">
                     <button id="compareBtn" onclick="goToComparison()"
                         class="hidden items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white transition-all duration-300 text-sm font-normal rounded">
-
                         Compare (<span id="compareCount">0</span>)
                     </button>
 
                     <!-- Tooltip -->
-                    <div
-                        class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                    <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                         Compare selected products
                     </div>
                 </div>
-
 
                 <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
                     See All
@@ -1289,14 +1283,16 @@ function displayTrendingBadge($view_count)
                     <div class="swiper-wrapper">
                         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
                             <?php
-                            $base = (float)$row['price'];
-                            $percent = (float)($row['percent'] ?? 0);
-                            $discount = (float)($row['discount'] ?? 0);
-                            $priceWithMarkup = $base + ($base * $percent / 100);
-                            $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                            // 🔥 USE SMART PRICE DISPLAY FUNCTION
+                            $priceData = calculateSmartPriceDisplay($row);
 
-                            // Variables from Code 2
+                            // Get discount info
+                            $discount = (float)($row['discount'] ?? 0);
+                            $percent = (float)($row['percent'] ?? 0);
+
                             $product_id = (int)$row['id'];
+
+                            // ✅ Get rating
                             $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
                             $rating_q->bind_param("i", $product_id);
                             $rating_q->execute();
@@ -1304,33 +1300,46 @@ function displayTrendingBadge($view_count)
                             $avg_rating = $rating_result['avg_rating'] ?? 0;
                             $total_raters = $rating_result['total_raters'] ?? 0;
                             $rating_q->close();
+
+                            // 🆕 Get sold count
+                            $sold_q = $conn->prepare("
+                            SELECT SUM(quantity) as total_sold 
+                            FROM sold_items 
+                            WHERE product_id = ?
+                        ");
+                            $sold_q->bind_param("i", $product_id);
+                            $sold_q->execute();
+                            $sold_result = $sold_q->get_result()->fetch_assoc();
+                            $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                            $sold_q->close();
+
                             $full = floor($avg_rating);
                             $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                             $empty = 5 - $full - $half;
+
+                            $view_count = (int)($row['view_count'] ?? 0);
                             ?>
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[220px] sm:h-[260px] lg:h-[320px] bg-white">
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
 
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
                                         <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
                                             <input type="checkbox"
                                                 class="compare-checkbox hidden"
-                                                data-product-id="<?= (int)$row['id'] ?>"
-                                                onchange="toggleCompare(this, <?= (int)$row['id'] ?>)">
+                                                data-product-id="<?= $product_id ?>"
+                                                onchange="toggleCompare(this, <?= $product_id ?>)">
                                             <i class="fas fa-plus text-black text-xs compare-icon"></i>
                                             <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
                                         </label>
                                     </div>
 
                                     <!-- Clickable entire card -->
-                                    <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
-                                        class="block h-full">
+                                    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
 
                                         <!-- Image Container with Overlay -->
                                         <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                            <!-- Gradient Overlay -->
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
                                             <?php if (!empty($row['main_image'])): ?>
@@ -1348,16 +1357,15 @@ function displayTrendingBadge($view_count)
                                         </div>
 
                                         <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[110px] sm:h-[130px] lg:h-[140px]">
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
 
                                             <!-- Product Info -->
                                             <div class="space-y-0.5 sm:space-y-1">
                                                 <!-- Title -->
                                                 <div class="relative w-full max-w-xs">
-                                                    <h3 class="text-[13px] sm:text-[13px] font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                    <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
                                                         <?= htmlspecialchars($row['product_name']) ?>
                                                     </h3>
-                                                    <!-- Fade overlay - desktop only -->
                                                     <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
                                                 </div>
 
@@ -1394,35 +1402,53 @@ function displayTrendingBadge($view_count)
                                                     <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                 <?php endif; ?>
 
-                                                <!-- 🆕 View Count + Sold Count -->
-                                                <?php
-                                                $view_count = (int)($row['view_count'] ?? 0);
-                                                $total_sold = (int)($row['total_sold'] ?? 0);
-                                                ?>
-                                                <?php if ($view_count > 0 || $total_sold > 0): ?>
-                                                    <div class="text-[9px] text-gray-500 font-medium">
-                                                        <?php if ($view_count > 0): ?>
-                                                            <?= formatViewCount($view_count) ?> viewing
-                                                        <?php endif; ?>
-
-                                                        <?php if ($total_sold > 0): ?>
-                                                            <?php if ($view_count > 0): ?> | <?php endif; ?>
-                                                            <?= number_format($total_sold) ?> sold
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endif; ?>
+                                                <!-- 🔥 SMART PRICE DISPLAY -->
+                                                <div class="flex items-baseline gap-1 flex-wrap">
+                                                    <?php if ($discount > 0): ?>
+                                                        <!-- With Discount -->
+                                                        <p class="text-[11px] font-bold text-gray-900">
+                                                            <?= $priceData['display_price'] ?>
+                                                        </p>
+                                                        <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                                                    <?php else: ?>
+                                                        <!-- No Discount -->
+                                                        <p class="text-[11px] font-bold text-gray-900">
+                                                            <?= $priceData['display_price'] ?>
+                                                        </p>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
 
-                                            <!-- Action Button - Desktop Only -->
-                                            <div class="mt-1 hidden lg:flex justify-start">
-                                                <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
-                                                    <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                                    <button type="submit"
-                                                        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[13px]">
-                                                        <i class="fa-solid fa-bag-shopping text-[13px]"></i>
-                                                        <span>View</span>
-                                                    </button>
-                                                </form>
+                                            <!-- 🔥 NEW: Action Bar - View Button, Viewing, Sold (Side by Side) -->
+                                            <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                                                <!-- View Button -->
+                                            <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
+    <input type="hidden" name="id" value="<?= $product_id ?>">
+    <button type="submit"
+        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
+        <i class="fa-solid fa-bag-shopping text-[11px]"></i>
+        <span>View</span>
+    </button>
+</form>
+
+                                                <!-- Stats Container -->
+                                                <div class="flex items-center gap-2 text-[9px] text-gray-500">
+                                                    <!-- Viewing Count -->
+                                                    <?php if ($view_count > 0): ?>
+                                                        <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                            viewing
+                                                            <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+
+                                                    <!-- Sold Count -->
+                                                    <?php if ($total_sold > 0): ?>
+                                                        <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                            Sold
+                                                            <span class="font-medium"><?= number_format($total_sold) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </a>
@@ -1466,69 +1492,6 @@ function displayTrendingBadge($view_count)
                     transform: scale(1);
                 }
             }
-
-            /* From Uiverse.io by vinodjangid07 */
-            .Btn {
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                width: 45px;
-                height: 45px;
-                border: none;
-                border-radius: 0px;
-                cursor: pointer;
-                position: relative;
-                overflow: hidden;
-                transition-duration: .3s;
-                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-                background-color: black;
-            }
-
-            /* icon */
-            .Btn .sign {
-                width: 100%;
-                font-size: 1.5em;
-                color: white;
-                transition-duration: .3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            /* text */
-            .Btn .text {
-                position: absolute;
-                right: 0%;
-                width: 0%;
-                opacity: 0;
-                color: white;
-                transition-duration: .3s;
-            }
-
-            /* hover effect */
-            .Btn:hover {
-                width: 125px;
-                border-radius: 0px;
-                transition-duration: .3s;
-            }
-
-            .Btn:hover .sign {
-                width: 30%;
-                transition-duration: .3s;
-                padding-left: 20px;
-            }
-
-            .Btn:hover .text {
-                opacity: 1;
-                width: 70%;
-                transition-duration: .3s;
-                padding-right: 20px;
-            }
-
-            /* click effect */
-            .Btn:active {
-                transform: translate(2px, 2px);
-            }
         </style>
 
         <script>
@@ -1552,22 +1515,18 @@ function displayTrendingBadge($view_count)
 
             // Toggle product in comparison list
             function toggleCompare(checkbox, productId) {
-                // Prevent click from propagating to the link
                 event.stopPropagation();
 
                 if (checkbox.checked) {
-                    // Add to comparison (NO LIMIT - compare unlimited products)
                     if (!compareProducts.includes(productId)) {
                         compareProducts.push(productId);
                         showToast('Product added to comparison');
                     }
                 } else {
-                    // Remove from comparison
                     compareProducts = compareProducts.filter(id => id !== productId);
                     showToast('Product removed from comparison');
                 }
 
-                // Save to localStorage
                 localStorage.setItem('compareProducts', JSON.stringify(compareProducts));
                 updateCompareButton();
             }
@@ -1584,14 +1543,12 @@ function displayTrendingBadge($view_count)
 
             // Show toast notification
             function showToast(message) {
-                // Create toast element
                 const toast = document.createElement('div');
                 toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
                 toast.textContent = message;
 
                 document.body.appendChild(toast);
 
-                // Remove after 2 seconds
                 setTimeout(() => {
                     toast.style.animation = 'slide-down 0.3s ease';
                     setTimeout(() => toast.remove(), 300);
@@ -1600,7 +1557,6 @@ function displayTrendingBadge($view_count)
 
             // Initialize on page load
             document.addEventListener('DOMContentLoaded', function() {
-                // Restore checked state from localStorage
                 document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
                     const productId = parseInt(checkbox.dataset.productId);
                     if (compareProducts.includes(productId)) {
@@ -1614,32 +1570,32 @@ function displayTrendingBadge($view_count)
             // Add animation styles
             const style = document.createElement('style');
             style.textContent = `
-                @keyframes slide-up {
-                    from {
-                        transform: translateY(100%);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
+            @keyframes slide-up {
+                from {
+                    transform: translateY(100%);
+                    opacity: 0;
                 }
-                
-                @keyframes slide-down {
-                    from {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateY(100%);
-                        opacity: 0;
-                    }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
                 }
-                
-                .animate-slide-up {
-                    animation: slide-up 0.3s ease;
+            }
+            
+            @keyframes slide-down {
+                from {
+                    transform: translateY(0);
+                    opacity: 1;
                 }
-            `;
+                to {
+                    transform: translateY(100%);
+                    opacity: 0;
+                }
+            }
+            
+            .animate-slide-up {
+                animation: slide-up 0.3s ease;
+            }
+        `;
             document.head.appendChild(style);
         </script>
     </section>
@@ -2175,14 +2131,16 @@ function displayTrendingBadge($view_count)
                     <div class="swiper-wrapper">
                         <?php while ($row = mysqli_fetch_assoc($resultss)) : ?>
                             <?php
-                            $base = (float)$row['price'];
-                            $percent = (float)($row['percent'] ?? 0);
-                            $discount = (float)($row['discount'] ?? 0);
-                            $priceWithMarkup = $base + ($base * $percent / 100);
-                            $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                            // 🔥 USE SMART PRICE DISPLAY FUNCTION
+                            $priceData = calculateSmartPriceDisplay($row);
 
-                            // Variables from Code 2
+                            // Get discount info
+                            $discount = (float)($row['discount'] ?? 0);
+                            $percent = (float)($row['percent'] ?? 0);
+
                             $product_id = (int)$row['id'];
+
+                            // ✅ Get rating
                             $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
                             $rating_q->bind_param("i", $product_id);
                             $rating_q->execute();
@@ -2190,33 +2148,46 @@ function displayTrendingBadge($view_count)
                             $avg_rating = $rating_result['avg_rating'] ?? 0;
                             $total_raters = $rating_result['total_raters'] ?? 0;
                             $rating_q->close();
+
+                            // 🆕 Get sold count
+                            $sold_q = $conn->prepare("
+                            SELECT SUM(quantity) as total_sold 
+                            FROM sold_items 
+                            WHERE product_id = ?
+                        ");
+                            $sold_q->bind_param("i", $product_id);
+                            $sold_q->execute();
+                            $sold_result = $sold_q->get_result()->fetch_assoc();
+                            $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                            $sold_q->close();
+
                             $full = floor($avg_rating);
                             $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                             $empty = 5 - $full - $half;
+
+                            $view_count = (int)($row['view_count'] ?? 0);
                             ?>
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[220px] sm:h-[260px] lg:h-[320px] bg-white">
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
 
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
                                         <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
                                             <input type="checkbox"
                                                 class="compare-checkbox hidden"
-                                                data-product-id="<?= (int)$row['id'] ?>"
-                                                onchange="toggleCompare(this, <?= (int)$row['id'] ?>)">
+                                                data-product-id="<?= $product_id ?>"
+                                                onchange="toggleCompare(this, <?= $product_id ?>)">
                                             <i class="fas fa-plus text-black text-xs compare-icon"></i>
                                             <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
                                         </label>
                                     </div>
 
                                     <!-- Clickable entire card -->
-                                    <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
-                                        class="block h-full">
+                                    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
 
                                         <!-- Image Container with Overlay -->
                                         <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                            <!-- Gradient Overlay -->
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
                                             <?php if (!empty($row['main_image'])): ?>
@@ -2234,16 +2205,15 @@ function displayTrendingBadge($view_count)
                                         </div>
 
                                         <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[110px] sm:h-[130px] lg:h-[140px]">
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
 
                                             <!-- Product Info -->
                                             <div class="space-y-0.5 sm:space-y-1">
                                                 <!-- Title -->
                                                 <div class="relative w-full max-w-xs">
-                                                    <h3 class="text-[13px] sm:text-[13px] font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                    <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
                                                         <?= htmlspecialchars($row['product_name']) ?>
                                                     </h3>
-                                                    <!-- Fade overlay - desktop only -->
                                                     <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
                                                 </div>
 
@@ -2280,35 +2250,53 @@ function displayTrendingBadge($view_count)
                                                     <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                 <?php endif; ?>
 
-                                                <!-- 🆕 View Count + Sold Count -->
-                                                <?php
-                                                $view_count = (int)($row['view_count'] ?? 0);
-                                                $total_sold = (int)($row['total_sold'] ?? 0);
-                                                ?>
-                                                <?php if ($view_count > 0 || $total_sold > 0): ?>
-                                                    <div class="text-[9px] text-gray-500 font-medium">
-                                                        <?php if ($view_count > 0): ?>
-                                                            <?= formatViewCount($view_count) ?> viewing
-                                                        <?php endif; ?>
-
-                                                        <?php if ($total_sold > 0): ?>
-                                                            <?php if ($view_count > 0): ?> | <?php endif; ?>
-                                                            <?= number_format($total_sold) ?> sold
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endif; ?>
+                                                <!-- 🔥 SMART PRICE DISPLAY -->
+                                                <div class="flex items-baseline gap-1 flex-wrap">
+                                                    <?php if ($discount > 0): ?>
+                                                        <!-- With Discount -->
+                                                        <p class="text-[11px] font-bold text-gray-900">
+                                                            <?= $priceData['display_price'] ?>
+                                                        </p>
+                                                        <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                                                    <?php else: ?>
+                                                        <!-- No Discount -->
+                                                        <p class="text-[11px] font-bold text-gray-900">
+                                                            <?= $priceData['display_price'] ?>
+                                                        </p>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
 
-                                            <!-- Action Button - Desktop Only -->
-                                            <div class="mt-1 hidden lg:flex justify-start">
-                                                <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
-                                                    <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                                    <button type="submit"
-                                                        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[13px]">
-                                                        <i class="fa-solid fa-bag-shopping text-[13px]"></i>
-                                                        <span>View</span>
-                                                    </button>
-                                                </form>
+                                            <!-- 🔥 NEW: Action Bar - View Button, Viewing, Sold (Side by Side) -->
+                                            <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                                                <!-- View Button -->
+                                                                                       <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
+    <input type="hidden" name="id" value="<?= $product_id ?>">
+    <button type="submit"
+        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
+        <i class="fa-solid fa-bag-shopping text-[11px]"></i>
+        <span>View</span>
+    </button>
+</form>
+
+                                                <!-- Stats Container -->
+                                                <div class="flex items-center gap-2 text-[9px] text-gray-500">
+                                                    <!-- Viewing Count -->
+                                                    <?php if ($view_count > 0): ?>
+                                                        <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                            viewing
+                                                            <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+
+                                                    <!-- Sold Count -->
+                                                    <?php if ($total_sold > 0): ?>
+                                                        <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                            sold
+                                                            <span class="font-medium"><?= number_format($total_sold) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </a>
@@ -2592,14 +2580,16 @@ function displayTrendingBadge($view_count)
                     <div class="swiper-wrapper">
                         <?php while ($row = mysqli_fetch_assoc($results)) : ?>
                             <?php
-                            $base = (float)$row['price'];
-                            $percent = (float)($row['percent'] ?? 0);
-                            $discount = (float)($row['discount'] ?? 0);
-                            $priceWithMarkup = $base + ($base * $percent / 100);
-                            $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                            // 🔥 USE SMART PRICE DISPLAY FUNCTION
+                            $priceData = calculateSmartPriceDisplay($row);
 
-                            // Variables from Code 2
+                            // Get discount info
+                            $discount = (float)($row['discount'] ?? 0);
+                            $percent = (float)($row['percent'] ?? 0);
+
                             $product_id = (int)$row['id'];
+
+                            // ✅ Get rating
                             $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
                             $rating_q->bind_param("i", $product_id);
                             $rating_q->execute();
@@ -2607,40 +2597,53 @@ function displayTrendingBadge($view_count)
                             $avg_rating = $rating_result['avg_rating'] ?? 0;
                             $total_raters = $rating_result['total_raters'] ?? 0;
                             $rating_q->close();
+
+                            // 🆕 Get sold count
+                            $sold_q = $conn->prepare("
+                            SELECT SUM(quantity) as total_sold 
+                            FROM sold_items 
+                            WHERE product_id = ?
+                        ");
+                            $sold_q->bind_param("i", $product_id);
+                            $sold_q->execute();
+                            $sold_result = $sold_q->get_result()->fetch_assoc();
+                            $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                            $sold_q->close();
+
                             $full = floor($avg_rating);
                             $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
                             $empty = 5 - $full - $half;
+
+                            $view_count = (int)($row['view_count'] ?? 0);
                             ?>
                             <div class="swiper-slide p-1">
                                 <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[220px] sm:h-[260px] lg:h-[320px] bg-white">
+                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
 
                                     <!-- Compare Checkbox - Top Right -->
                                     <div class="absolute top-2 right-2 z-20">
                                         <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
                                             <input type="checkbox"
                                                 class="compare-checkbox hidden"
-                                                data-product-id="<?= (int)$row['id'] ?>"
-                                                onchange="toggleCompare(this, <?= (int)$row['id'] ?>)">
+                                                data-product-id="<?= $product_id ?>"
+                                                onchange="toggleCompare(this, <?= $product_id ?>)">
                                             <i class="fas fa-plus text-black text-xs compare-icon"></i>
                                             <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
                                         </label>
                                     </div>
 
                                     <!-- Clickable entire card -->
-                                    <a href="index-product_view-page-4-AA?id=<?= (int)$row['id'] ?>"
-                                        class="block h-full">
+                                    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
 
                                         <!-- Image Container with Overlay -->
                                         <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                            <!-- Gradient Overlay -->
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
 
                                             <?php if (!empty($row['main_image'])): ?>
                                                 <img src="../../<?= $row['main_image'] ?>"
                                                     loading="lazy"
                                                     alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                    class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
+                                                    class="w-full h-full object-contain sm:object-contain transition-all duration-700 group-hover:brightness-105" />
                                             <?php else: ?>
                                                 <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
                                                     <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
@@ -2651,16 +2654,15 @@ function displayTrendingBadge($view_count)
                                         </div>
 
                                         <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[110px] sm:h-[130px] lg:h-[140px]">
+                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
 
                                             <!-- Product Info -->
                                             <div class="space-y-0.5 sm:space-y-1">
                                                 <!-- Title -->
                                                 <div class="relative w-full max-w-xs">
-                                                    <h3 class="text-[13px] sm:text-[13px] font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                    <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
                                                         <?= htmlspecialchars($row['product_name']) ?>
                                                     </h3>
-                                                    <!-- Fade overlay - desktop only -->
                                                     <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
                                                 </div>
 
@@ -2697,35 +2699,53 @@ function displayTrendingBadge($view_count)
                                                     <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                 <?php endif; ?>
 
-                                                <!-- 🆕 View Count + Sold Count -->
-                                                <?php
-                                                $view_count = (int)($row['view_count'] ?? 0);
-                                                $total_sold = (int)($row['total_sold'] ?? 0);
-                                                ?>
-                                                <?php if ($view_count > 0 || $total_sold > 0): ?>
-                                                    <div class="text-[9px] text-gray-500 font-medium">
-                                                        <?php if ($view_count > 0): ?>
-                                                            <?= formatViewCount($view_count) ?> viewing
-                                                        <?php endif; ?>
-
-                                                        <?php if ($total_sold > 0): ?>
-                                                            <?php if ($view_count > 0): ?> | <?php endif; ?>
-                                                            <?= number_format($total_sold) ?> sold
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endif; ?>
+                                                <!-- 🔥 SMART PRICE DISPLAY -->
+                                                <div class="flex items-baseline gap-1 flex-wrap">
+                                                    <?php if ($discount > 0): ?>
+                                                        <!-- With Discount -->
+                                                        <p class="text-[11px] font-bold text-gray-900">
+                                                            <?= $priceData['display_price'] ?>
+                                                        </p>
+                                                        <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                                                    <?php else: ?>
+                                                        <!-- No Discount -->
+                                                        <p class="text-[11px] font-bold text-gray-900">
+                                                            <?= $priceData['display_price'] ?>
+                                                        </p>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
 
-                                            <!-- Action Button - Desktop Only -->
-                                            <div class="mt-1 hidden lg:flex justify-start">
-                                                <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto">
-                                                    <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                                                    <button type="submit"
-                                                        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[13px]">
-                                                        <i class="fa-solid fa-bag-shopping text-[13px]"></i>
-                                                        <span>View</span>
-                                                    </button>
-                                                </form>
+                                            <!-- 🔥 NEW: Action Bar - View Button, Viewing, Sold (Side by Side) -->
+                                            <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                                                <!-- View Button -->
+                                   <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
+    <input type="hidden" name="id" value="<?= $product_id ?>">
+    <button type="submit"
+        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
+        <i class="fa-solid fa-bag-shopping text-[11px]"></i>
+        <span>View</span>
+    </button>
+</form>
+
+                                                <!-- Stats Container -->
+                                                <div class="flex items-center gap-2 text-[9px] text-gray-500">
+                                                    <!-- Viewing Count -->
+                                                    <?php if ($view_count > 0): ?>
+                                                        <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                            viewing
+                                                            <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+
+                                                    <!-- Sold Count -->
+                                                    <?php if ($total_sold > 0): ?>
+                                                        <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                            sold
+                                                            <span class="font-medium"><?= number_format($total_sold) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </a>
@@ -3616,6 +3636,7 @@ function displayTrendingBadge($view_count)
             <section class="px-4 py-10">
                 <!-- Header -->
                 <div class="text-center mb-10 relative">
+                    
                     <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
                     <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
                         Get Up to <span class="text-red-500">5% Discount</span> on Select Items!

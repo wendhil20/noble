@@ -593,6 +593,11 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <i class="ri-file-info-line text-lg"></i>
                                             <span>Dispatcher Dashboard</span>
                                         </a>
+                                        <a href="../warehouse_management/qr_scanner"
+                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                            <i class="ri-qr-code-line text-lg"></i>
+                                            <span>QR Scanner</span>
+                                        </a>
                                         <a href="../client/driver_management"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-user-add-line text-lg"></i>

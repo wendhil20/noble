@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin', 'sales', 'warehouse']);
+require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
 // Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {

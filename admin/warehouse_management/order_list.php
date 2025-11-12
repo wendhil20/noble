@@ -524,7 +524,7 @@ foreach ($statusCounts as $row) {
                 <div class="flex flex-wrap gap-2 mb-4">
     <a href="?" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-primary-600 text-white shadow-md' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'; ?>">
     <i class="fas fa-tasks"></i>
-    <span>Ongoing Orders</span>
+    <span>Incomplete Assignments</span>
     <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) ? 'bg-white/20' : 'bg-orange-200'; ?>">
         <?php echo $ongoingOrdersCount; ?>
     </span>
@@ -532,18 +532,19 @@ foreach ($statusCounts as $row) {
 
     <?php 
     // Define the order of statuses you want to display
-    $statusOrder = ['pending', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
+    $statusOrder = ['pending', 'Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
     
     // Status icons and colors
     $statusConfig = [
-        'pending' => ['icon' => 'fa-clock', 'color' => 'yellow'],
-        'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
-        'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
-        'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
-        'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
-        'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
-        'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
-    ];
+    'pending' => ['icon' => 'fa-clock', 'color' => 'yellow'],
+    'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
+    'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
+    'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
+    'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
+    'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
+    'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
+    'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
+];
     
     foreach ($statusOrder as $status):
         if (!isset($statusCountsArray[$status])) continue;

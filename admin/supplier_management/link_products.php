@@ -42,80 +42,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'link_product' && isset($_POST['product_id'])) {
-            $product_id = intval($_POST['product_id']);
-            $supplier_type = isset($_POST['supplier_type']) ? $_POST['supplier_type'] : 'secondary'; // Default to secondary
-            
-            try {
-                // Check if link already exists for this supplier and product
-                $check_sql = "SELECT id, status, supplier_type FROM supp_link_products WHERE supplier_id = ? AND product_id = ?";
-                $check_stmt = $conn->prepare($check_sql);
-                $check_stmt->bind_param("ii", $supplier_id, $product_id);
-                $check_stmt->execute();
-                $existing = $check_stmt->get_result()->fetch_assoc();
-                $check_stmt->close();
-                
-                if ($existing) {
-                    if ($existing['status'] === 'active') {
-                        // Already linked and active
-                        echo json_encode(['success' => true, 'message' => 'Product is already linked to this supplier']);
-                        exit();
-                    } else {
-                        // Update status to active if link exists but inactive
-                        $update_sql = "UPDATE supp_link_products SET status = 'active', supplier_type = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
-                        $update_stmt = $conn->prepare($update_sql);
-                        $update_stmt->bind_param("sii", $supplier_type, $supplier_id, $product_id);
-                        $success = $update_stmt->execute();
-                        $update_stmt->close();
-                        
-                        if ($success) {
-                            echo json_encode(['success' => true, 'message' => 'Product linked successfully']);
-                        } else {
-                            echo json_encode(['success' => false, 'message' => 'Failed to update product link: ' . $conn->error]);
-                        }
-                        exit();
-                    }
-                } else {
-                    // Check if trying to set as primary and there's already a primary supplier for this product
-                    if ($supplier_type === 'primary') {
-                        $primary_check_sql = "SELECT sp.id, sl.business_name FROM supp_link_products sp 
-                                            LEFT JOIN supplier_list sl ON sp.supplier_id = sl.id 
-                                            WHERE sp.product_id = ? AND sp.supplier_type = 'primary' AND sp.status = 'active'";
-                        $primary_check_stmt = $conn->prepare($primary_check_sql);
-                        $primary_check_stmt->bind_param("i", $product_id);
-                        $primary_check_stmt->execute();
-                        $existing_primary = $primary_check_stmt->get_result()->fetch_assoc();
-                        $primary_check_stmt->close();
-                        
-                        if ($existing_primary) {
-                            $supplier_name = $existing_primary['business_name'] ? $existing_primary['business_name'] : 'Another supplier';
-                            echo json_encode(['success' => false, 'message' => "This product already has a primary supplier ({$supplier_name}). Only one primary supplier is allowed per product."]);
-                            exit();
-                        }
-                    }
-                    
-                    // For secondary suppliers, we allow multiple, so no additional checks needed
-                    
-                    // Create new link
-                    $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, supplier_type, status, created_at, updated_at) VALUES (?, ?, ?, 'active', NOW(), NOW())";
-                    $insert_stmt = $conn->prepare($insert_sql);
-                    $insert_stmt->bind_param("iis", $supplier_id, $product_id, $supplier_type);
-                    $success = $insert_stmt->execute();
-                    
-                    if ($success) {
-                        $insert_stmt->close();
-                        echo json_encode(['success' => true, 'message' => 'Product linked successfully as ' . $supplier_type . ' supplier']);
-                    } else {
-                        $error_msg = $conn->error;
-                        $insert_stmt->close();
-                        echo json_encode(['success' => false, 'message' => 'Failed to create product link: ' . $error_msg]);
-                    }
-                    exit();
+    $product_id = intval($_POST['product_id']);
+    $supplier_type = isset($_POST['supplier_type']) ? $_POST['supplier_type'] : 'secondary';
+    $supplier_price = isset($_POST['supplier_price']) && !empty($_POST['supplier_price']) ? floatval($_POST['supplier_price']) : null;
+    
+    try {
+        // Check if link already exists for this supplier and product
+        $check_sql = "SELECT id, status, supplier_type FROM supp_link_products WHERE supplier_id = ? AND product_id = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("ii", $supplier_id, $product_id);
+        $check_stmt->execute();
+        $existing = $check_stmt->get_result()->fetch_assoc();
+        $check_stmt->close();
+        
+        if ($existing) {
+            if ($existing['status'] === 'active') {
+                // Already linked and active - update price if provided
+                if ($supplier_price !== null) {
+                    $update_price_sql = "UPDATE supp_link_products SET supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
+                    $update_price_stmt = $conn->prepare($update_price_sql);
+                    $update_price_stmt->bind_param("dii", $supplier_price, $supplier_id, $product_id);
+                    $update_price_stmt->execute();
+                    $update_price_stmt->close();
                 }
-            } catch (Exception $e) {
-                echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+                echo json_encode(['success' => true, 'message' => 'Product is already linked. Price updated.']);
+                exit();
+            } else {
+                // Update status to active if link exists but inactive
+                $update_sql = "UPDATE supp_link_products SET status = 'active', supplier_type = ?, supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
+                $update_stmt = $conn->prepare($update_sql);
+                $update_stmt->bind_param("sdii", $supplier_type, $supplier_price, $supplier_id, $product_id);
+                $success = $update_stmt->execute();
+                $update_stmt->close();
+                
+                if ($success) {
+                    echo json_encode(['success' => true, 'message' => 'Product linked successfully with price']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to update product link: ' . $conn->error]);
+                }
                 exit();
             }
+        } else {
+            // Check if trying to set as primary and there's already a primary supplier for this product
+            if ($supplier_type === 'primary') {
+                $primary_check_sql = "SELECT sp.id, sl.business_name FROM supp_link_products sp 
+                                    LEFT JOIN supplier_list sl ON sp.supplier_id = sl.id 
+                                    WHERE sp.product_id = ? AND sp.supplier_type = 'primary' AND sp.status = 'active'";
+                $primary_check_stmt = $conn->prepare($primary_check_sql);
+                $primary_check_stmt->bind_param("i", $product_id);
+                $primary_check_stmt->execute();
+                $existing_primary = $primary_check_stmt->get_result()->fetch_assoc();
+                $primary_check_stmt->close();
+                
+                if ($existing_primary) {
+                    $supplier_name = $existing_primary['business_name'] ? $existing_primary['business_name'] : 'Another supplier';
+                    echo json_encode(['success' => false, 'message' => "This product already has a primary supplier ({$supplier_name}). Only one primary supplier is allowed per product."]);
+                    exit();
+                }
+            }
+            
+            // Create new link with price (only store in supp_link_products)
+            $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, supplier_type, supplier_price, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', NOW(), NOW())";
+            $insert_stmt = $conn->prepare($insert_sql);
+            $insert_stmt->bind_param("iisd", $supplier_id, $product_id, $supplier_type, $supplier_price);
+            $success = $insert_stmt->execute();
+            
+            if ($success) {
+                $insert_stmt->close();
+                echo json_encode(['success' => true, 'message' => 'Product linked successfully as ' . $supplier_type . ' supplier' . ($supplier_price ? ' with price ₱' . number_format($supplier_price, 2) : '')]);
+            } else {
+                $error_msg = $conn->error;
+                $insert_stmt->close();
+                echo json_encode(['success' => false, 'message' => 'Failed to create product link: ' . $error_msg]);
+            }
+            exit();
         }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        exit();
+    }
+}
         
         if ($_POST['action'] === 'unlink_product' && isset($_POST['product_id'])) {
             $product_id = intval($_POST['product_id']);
@@ -168,11 +174,15 @@ $products_sql = "
     SELECT p.*, 
            CASE WHEN sp.status = 'active' THEN 1 ELSE 0 END as is_linked,
            sp.supplier_type,
+           sp.supplier_price,
            sp.created_at as linked_at,
+           pv.original_price as variant_original_price,
            (SELECT COUNT(*) FROM supp_link_products sp2 WHERE sp2.product_id = p.id AND sp2.supplier_type = 'primary' AND sp2.status = 'active') as has_primary
     FROM products p
     LEFT JOIN supp_link_products sp ON p.id = sp.product_id AND sp.supplier_id = ? AND sp.status = 'active'
+    LEFT JOIN product_variants pv ON p.id = pv.product_id
     $where_clause
+    GROUP BY p.id
     ORDER BY is_linked DESC, p.product_name ASC
 ";
 
@@ -429,39 +439,113 @@ $linked_count_stmt->close();
                         </div>
 
                         <!-- Action Button -->
-                        <div class="px-6 pb-6">
-                            <?php if ($product['is_linked']): ?>
-                                <button onclick="unlinkProduct(<?= $product['id'] ?>)" 
-                                        class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                        id="btn-<?= $product['id'] ?>">
-                                    <i class="fas fa-unlink mr-2"></i>Unlink Product
-                                </button>
-                            <?php else: ?>
-                                <div class="space-y-2">
-                                    <!-- Primary Supplier Button -->
-                                    <?php if ($product['has_primary'] == 0): ?>
-                                        <button onclick="linkProduct(<?= $product['id'] ?>, 'primary')" 
-                                                class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                                id="btn-primary-<?= $product['id'] ?>">
-                                            <i class="fas fa-star mr-2"></i>Link as Primary Supplier
-                                        </button>
-                                    <?php else: ?>
-                                        <button disabled 
-                                                class="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg flex items-center justify-center cursor-not-allowed"
-                                                title="This product already has a primary supplier">
-                                            <i class="fas fa-star mr-2"></i>Primary Slot Taken
-                                        </button>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Secondary Supplier Button -->
-                                    <button onclick="linkProduct(<?= $product['id'] ?>, 'secondary')" 
-                                            class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                                            id="btn-secondary-<?= $product['id'] ?>">
-                                        <i class="fas fa-link mr-2"></i>Link as Secondary Supplier
-                                    </button>
-                                </div>
-                            <?php endif; ?>
+<div class="px-6 pb-6">
+    <?php if ($product['is_linked']): ?>
+        <!-- Linked Product - Show Prices and Unlink -->
+        <div class="space-y-3">
+            <!-- Display Price Information -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <!-- Supplier Price (Editable) -->
+                <?php if ($product['supplier_price']): ?>
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-blue-700 font-medium">Your Supplier Price:</span>
+                            <span class="text-lg font-bold text-blue-900">₱<?= number_format($product['supplier_price'], 2) ?></span>
                         </div>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Original Price (Reference Only) -->
+                <?php if ($product['variant_original_price']): ?>
+                    <div class="pt-3 border-t border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-indigo-600">
+                                <i class="fas fa-info-circle mr-1"></i>Product Original Price (Reference):
+                            </span>
+                            <span class="text-sm font-semibold text-indigo-800">₱<?= number_format($product['variant_original_price'], 2) ?></span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Price Comparison -->
+                <?php if ($product['supplier_price'] && $product['variant_original_price']): ?>
+                    <?php 
+                    $difference = $product['supplier_price'] - $product['variant_original_price'];
+                    $percentage = ($difference / $product['variant_original_price']) * 100;
+                    ?>
+                    <div class="mt-2 text-xs">
+                        <?php if ($difference > 0): ?>
+                            <span class="text-red-600">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                +₱<?= number_format(abs($difference), 2) ?> (+<?= number_format(abs($percentage), 1) ?>%)
+                            </span>
+                        <?php elseif ($difference < 0): ?>
+                            <span class="text-green-600">
+                                <i class="fas fa-arrow-down mr-1"></i>
+                                -₱<?= number_format(abs($difference), 2) ?> (-<?= number_format(abs($percentage), 1) ?>%)
+                            </span>
+                        <?php else: ?>
+                            <span class="text-gray-600">
+                                <i class="fas fa-equals mr-1"></i>
+                                Same as original price
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Update Price Button -->
+            <button onclick="showPriceModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>', <?= $product['supplier_price'] ?? 0 ?>, <?= $product['variant_original_price'] ?? 0 ?>)" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                <i class="fas fa-edit mr-2"></i>Update Supplier Price
+            </button>
+            
+            <!-- Unlink Button -->
+            <button onclick="unlinkProduct(<?= $product['id'] ?>)" 
+                    class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                    id="btn-<?= $product['id'] ?>">
+                <i class="fas fa-unlink mr-2"></i>Unlink Product
+            </button>
+        </div>
+    <?php else: ?>
+        <div class="space-y-2">
+            <!-- Show Original Price Reference Before Linking -->
+            <?php if ($product['variant_original_price']): ?>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">
+                            <i class="fas fa-tag mr-1"></i>Original Price:
+                        </span>
+                        <span class="font-semibold text-gray-900">₱<?= number_format($product['variant_original_price'], 2) ?></span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">You can use this as reference when setting supplier price</p>
+                </div>
+            <?php endif; ?>
+            
+            <!-- Primary Supplier Button -->
+            <?php if ($product['has_primary'] == 0): ?>
+                <button onclick="showLinkModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>', 'primary', <?= $product['variant_original_price'] ?? 0 ?>)" 
+                        class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                        id="btn-primary-<?= $product['id'] ?>">
+                    <i class="fas fa-star mr-2"></i>Link as Primary Supplier
+                </button>
+            <?php else: ?>
+                <button disabled 
+                        class="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg flex items-center justify-center cursor-not-allowed"
+                        title="This product already has a primary supplier">
+                    <i class="fas fa-star mr-2"></i>Primary Slot Taken
+                </button>
+            <?php endif; ?>
+            
+            <!-- Secondary Supplier Button -->
+            <button onclick="showLinkModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>', 'secondary', <?= $product['variant_original_price'] ?? 0 ?>)" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                    id="btn-secondary-<?= $product['id'] ?>">
+                <i class="fas fa-link mr-2"></i>Link as Secondary Supplier
+            </button>
+        </div>
+    <?php endif; ?>
+</div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -491,133 +575,270 @@ $linked_count_stmt->close();
         </div>
     </div>
 
+    <!-- Price Modal -->
+<div id="priceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-tag text-blue-500 mr-2"></i>
+                    <span id="modalAction">Set</span> Supplier Price
+                </h3>
+                <button onclick="closePriceModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">Product:</p>
+                <p class="font-medium text-gray-900" id="modalProductName"></p>
+            </div>
+            
+            <!-- Show Original Price Reference -->
+            <div id="originalPriceReference" class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600">
+                        <i class="fas fa-info-circle mr-1"></i>Original Price (Reference):
+                    </span>
+                    <span class="font-semibold text-gray-900" id="modalOriginalPrice">₱0.00</span>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label for="supplierPriceInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    Your Supplier Price (₱) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₱</span>
+                    <input type="number" 
+                           id="supplierPriceInput" 
+                           step="0.01" 
+                           min="0"
+                           placeholder="0.00"
+                           class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    <i class="fas fa-lightbulb mr-1"></i>
+                    Enter the price this supplier offers for this product
+                </p>
+            </div>
+            
+            <input type="hidden" id="modalProductId">
+            <input type="hidden" id="modalSupplierType">
+            <input type="hidden" id="modalOriginalPriceValue">
+            
+            <div class="flex space-x-3">
+                <button onclick="closePriceModal()" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-lg transition-colors duration-200">
+                    Cancel
+                </button>
+                <button onclick="submitPriceAndLink()" 
+                        id="submitPriceBtn"
+                        class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-check mr-2"></i>
+                    <span id="submitBtnText">Link Product</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script>
         function showLoading() {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-        }
+    document.getElementById('loading-overlay').classList.remove('hidden');
+}
 
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }
+function hideLoading() {
+    document.getElementById('loading-overlay').classList.add('hidden');
+}
 
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const iconI = document.getElementById('toast-icon-i');
-            const messageEl = document.getElementById('toast-message');
-            
-            messageEl.textContent = message;
-            
-            if (type === 'success') {
-                icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-500';
-                iconI.className = 'fas fa-check text-white';
-            } else {
-                icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-500';
-                iconI.className = 'fas fa-times text-white';
-            }
-            
-            toast.classList.remove('hidden');
-            
-            // Auto hide after 3 seconds
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const icon = document.getElementById('toast-icon');
+    const iconI = document.getElementById('toast-icon-i');
+    const messageEl = document.getElementById('toast-message');
+    
+    messageEl.textContent = message;
+    
+    if (type === 'success') {
+        icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-500';
+        iconI.className = 'fas fa-check text-white';
+    } else {
+        icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-500';
+        iconI.className = 'fas fa-times text-white';
+    }
+    
+    toast.classList.remove('hidden');
+    
+    setTimeout(() => {
+        hideToast();
+    }, 3000);
+}
+
+function hideToast() {
+    document.getElementById('toast').classList.add('hidden');
+}
+
+function showLinkModal(productId, productName, supplierType, originalPrice = 0) {
+    document.getElementById('modalProductId').value = productId;
+    document.getElementById('modalProductName').textContent = productName;
+    document.getElementById('modalSupplierType').value = supplierType;
+    document.getElementById('supplierPriceInput').value = '';
+    document.getElementById('modalAction').textContent = 'Set';
+    document.getElementById('submitBtnText').textContent = 'Link Product';
+    document.getElementById('modalOriginalPriceValue').value = originalPrice;
+    document.getElementById('modalOriginalPrice').textContent = '₱' + parseFloat(originalPrice).toFixed(2);
+    
+    // Show/hide original price reference
+    const refDiv = document.getElementById('originalPriceReference');
+    if (originalPrice > 0) {
+        refDiv.classList.remove('hidden');
+    } else {
+        refDiv.classList.add('hidden');
+    }
+    
+    document.getElementById('priceModal').classList.remove('hidden');
+    
+    // Focus on price input
+    setTimeout(() => {
+        document.getElementById('supplierPriceInput').focus();
+    }, 100);
+}
+
+function showPriceModal(productId, productName, currentPrice, originalPrice = 0) {
+    document.getElementById('modalProductId').value = productId;
+    document.getElementById('modalProductName').textContent = productName;
+    document.getElementById('modalSupplierType').value = 'update';
+    document.getElementById('supplierPriceInput').value = currentPrice || '';
+    document.getElementById('modalAction').textContent = 'Update';
+    document.getElementById('submitBtnText').textContent = 'Update Price';
+    document.getElementById('modalOriginalPriceValue').value = originalPrice;
+    document.getElementById('modalOriginalPrice').textContent = '₱' + parseFloat(originalPrice).toFixed(2);
+    
+    // Show/hide original price reference
+    const refDiv = document.getElementById('originalPriceReference');
+    if (originalPrice > 0) {
+        refDiv.classList.remove('hidden');
+    } else {
+        refDiv.classList.add('hidden');
+    }
+    
+    document.getElementById('priceModal').classList.remove('hidden');
+    
+    // Focus on price input
+    setTimeout(() => {
+        document.getElementById('supplierPriceInput').focus();
+    }, 100);
+}
+
+function closePriceModal() {
+    document.getElementById('priceModal').classList.add('hidden');
+}
+
+function submitPriceAndLink() {
+    const productId = document.getElementById('modalProductId').value;
+    const supplierType = document.getElementById('modalSupplierType').value;
+    const supplierPrice = document.getElementById('supplierPriceInput').value;
+    const submitBtn = document.getElementById('submitPriceBtn');
+    
+    if (!supplierPrice || parseFloat(supplierPrice) <= 0) {
+        showToast('Please enter a valid price', 'error');
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+    
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=link_product&product_id=${productId}&supplier_type=${supplierType}&supplier_price=${supplierPrice}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message || 'Operation successful!', 'success');
+            closePriceModal();
             setTimeout(() => {
-                hideToast();
-            }, 3000);
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message || 'Error processing request. Please try again.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span id="submitBtnText">Link Product</span>';
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Network error. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span id="submitBtnText">Link Product</span>';
+    });
+}
 
-        function hideToast() {
-            document.getElementById('toast').classList.add('hidden');
-        }
-
-        function linkProduct(productId, supplierType = 'secondary') {
-            const buttonId = supplierType === 'primary' ? `btn-primary-${productId}` : `btn-secondary-${productId}`;
-            const button = document.getElementById(buttonId);
-            
-            if (button) {
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Linking...';
+function unlinkProduct(productId) {
+    if (confirm('Are you sure you want to unlink this product from this supplier? The price data will be preserved.')) {
+        const button = document.getElementById(`btn-${productId}`);
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Unlinking...';
+        
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=unlink_product&product_id=${productId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Product unlinked successfully!', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast(data.message || 'Error unlinking product. Please try again.', 'error');
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
             }
-            
-            fetch('', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=link_product&product_id=${productId}&supplier_type=${supplierType}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message || 'Product linked successfully!', 'success');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    showToast(data.message || 'Error linking product. Please try again.', 'error');
-                    if (button) {
-                        button.disabled = false;
-                        const iconClass = supplierType === 'primary' ? 'fas fa-star' : 'fas fa-link';
-                        const text = supplierType === 'primary' ? 'Link as Primary Supplier' : 'Link as Secondary Supplier';
-                        button.innerHTML = `<i class="${iconClass} mr-2"></i>${text}`;
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Network error. Please try again.', 'error');
-                if (button) {
-                    button.disabled = false;
-                    const iconClass = supplierType === 'primary' ? 'fas fa-star' : 'fas fa-link';
-                    const text = supplierType === 'primary' ? 'Link as Primary Supplier' : 'Link as Secondary Supplier';
-                    button.innerHTML = `<i class="${iconClass} mr-2"></i>${text}`;
-                }
-            });
-        }
-
-        function unlinkProduct(productId) {
-            if (confirm('Are you sure you want to unlink this product from this supplier?')) {
-                const button = document.getElementById(`btn-${productId}`);
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Unlinking...';
-                
-                fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `action=unlink_product&product_id=${productId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast(data.message || 'Product unlinked successfully!', 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        showToast(data.message || 'Error unlinking product. Please try again.', 'error');
-                        button.disabled = false;
-                        button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Network error. Please try again.', 'error');
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
-                });
-            }
-        }
-
-        // Add hover effects
-        document.querySelectorAll('[id^="product-card-"]').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-2px)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Network error. Please try again.', 'error');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
         });
+    }
+}
+
+// Add hover effects
+document.querySelectorAll('[id^="product-card-"]').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('priceModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePriceModal();
+    }
+});
+
+// Allow Enter key to submit
+document.getElementById('supplierPriceInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        submitPriceAndLink();
+    }
+});
     </script>
 </body>
 </html>

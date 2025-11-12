@@ -525,22 +525,36 @@ if ($empStatsResult) {
                         All Orders (<?php echo $totalOrders; ?>)
                     </a>
 
-                    <?php
-                    // Define the specific order you want
-                    $statusOrder = ['processing', 'Picked Up', 'Delivered'];
+                    <?php 
+// Define the order of statuses you want to display (starting from processing, no pending)
+$statusOrder = ['Ongoing', 'processing', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'completed', 'cancelled'];
 
-                    // Display statuses in the specified order
-                    foreach ($statusOrder as $status) {
-                        if (isset($statusCounts[$status]) && $statusCounts[$status] > 0):
-                            ?>
-                            <a href="?status=<?php echo urlencode($status); ?>"
-                                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 <?php echo ($status_filter === $status) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'; ?>">
-                                <?php echo htmlspecialchars(ucfirst($status)); ?> (<?php echo $statusCounts[$status]; ?>)
-                            </a>
-                            <?php
-                        endif;
-                    }
-                    ?>
+// Status icons and colors
+$statusConfig = [
+    'Ongoing' => ['icon' => 'fa-tasks', 'color' => 'orange'],
+    'processing' => ['icon' => 'fa-cog', 'color' => 'blue'],
+    'Ready for Pickup' => ['icon' => 'fa-box', 'color' => 'indigo'],
+    'Out for Delivery' => ['icon' => 'fa-truck', 'color' => 'purple'],
+    'Delivered' => ['icon' => 'fa-check-circle', 'color' => 'green'],
+    'completed' => ['icon' => 'fa-check-double', 'color' => 'green'],
+    'cancelled' => ['icon' => 'fa-times-circle', 'color' => 'red']
+];
+
+foreach ($statusOrder as $status):
+    if (!isset($statusCounts[$status])) continue;
+    $count = $statusCounts[$status];
+    $config = $statusConfig[$status] ?? ['icon' => 'fa-circle', 'color' => 'gray'];
+    $isActive = ($status_filter === $status && !$show_replacements && !$show_unassigned && !$show_ready_for_schedule);
+?>
+    <a href="?status=<?php echo urlencode($status); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?><?php echo $employee_filter > 0 ? '&employee=' . $employee_filter : ''; ?>"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 <?php echo $isActive ? 'bg-' . $config['color'] . '-600 text-white shadow-md' : 'bg-' . $config['color'] . '-100 text-' . $config['color'] . '-700 hover:bg-' . $config['color'] . '-200'; ?>">
+        <i class="fas <?php echo $config['icon']; ?>"></i>
+        <span><?php echo htmlspecialchars(ucfirst($status)); ?></span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold <?php echo $isActive ? 'bg-white/20' : 'bg-' . $config['color'] . '-200'; ?>">
+            <?php echo (int)$count; ?>
+        </span>
+    </a>
+<?php endforeach; ?>
 
                     <?php if ($readyForScheduleCount > 0): ?>
                         <a href="?ready_schedule=1"

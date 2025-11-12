@@ -143,11 +143,20 @@ $total_length = !empty($order_details['total_length'])
         $assigned_vehicle_id = null;
     }
 
-    // Calculate breakdown
-    $subtotal = $amount - $delivery_fee;
-    $vat_amount = $subtotal * 0.12;
-    $items_without_vat = $subtotal - $vat_amount;
-    $reference_no = 'NH' . mt_rand(9800000, 9899999);
+    // Calculate breakdown - VAT on items only (not delivery)
+// Formula: grand_total = (items * 1.12) + delivery
+// Step 1: items_with_vat = grand_total - delivery
+$items_with_vat = $amount - $delivery_fee;
+
+// Step 2: items = items_with_vat / 1.12
+$subtotal = $items_with_vat / 1.12;
+
+// Step 3: VAT amount (12% of items only)
+$vat_amount = $subtotal * 0.12;
+
+// Step 4: Items without VAT (same as subtotal)
+$items_without_vat = $subtotal;
+$reference_no = 'NH' . mt_rand(9800000, 9899999);
     $payment_method = 'PayMongo';
     $payment_status = 'pending';
     $order_status = 'pending';

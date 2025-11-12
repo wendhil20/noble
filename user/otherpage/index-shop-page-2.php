@@ -726,81 +726,153 @@ $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0
                     </div>
                 </div>
 
-              <!-- Product Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
-                    <?php while ($row = $products->fetch_assoc()): ?>
-                        <?php
-                        $product_id = (int)$row['id'];
-                        $variant_stmt = $conn->prepare("SELECT COUNT(*) as total FROM product_variants pv JOIN product_types pt ON pv.type_id = pt.id WHERE pt.product_id = ?");
-                        $variant_stmt->bind_param("i", $product_id);
-                        $variant_stmt->execute();
-                        $variant_count = $variant_stmt->get_result()->fetch_assoc()['total'] ?? 0;
-                        $variant_stmt->close();
-                        ?>
+<!-- Product Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 mb-12">
+    <?php while ($row = $products->fetch_assoc()): ?>
+        <?php
+        $product_id = (int)$row['id'];
+        
+        // Get variant count
+        $variant_stmt = $conn->prepare("SELECT COUNT(*) as total FROM product_variants pv JOIN product_types pt ON pv.type_id = pt.id WHERE pt.product_id = ?");
+        $variant_stmt->bind_param("i", $product_id);
+        $variant_stmt->execute();
+        $variant_count = $variant_stmt->get_result()->fetch_assoc()['total'] ?? 0;
+        $variant_stmt->close();
 
-                        <div class="card-hover bg-white overflow-hidden flex flex-col">
-                            <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
-                                <!-- Image Container - Fixed Square -->
-                                <div class="relative w-full " style="padding-bottom: 100%;">
-                                    <div class="absolute inset-0 p-2 sm:p-4">
-                                        <?php if (!empty($row['main_image'])): ?>
-                                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
-                                                alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                class="w-full h-full object-contain"
-                                                loading="lazy">
-                                        <?php else: ?>
-                                            <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                                <i class="fas fa-image text-2xl sm:text-4xl"></i>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+        // Get view count
+        $view_stmt = $conn->prepare("SELECT view_count FROM products WHERE id = ?");
+        $view_stmt->bind_param("i", $product_id);
+        $view_stmt->execute();
+        $view_result = $view_stmt->get_result()->fetch_assoc();
+        $view_count = (int)($view_result['view_count'] ?? 0);
+        $view_stmt->close();
 
-                                    <!-- Category Badge -->
-                                    <div class="absolute top-1.5 left-1.5 sm:top-3 sm:left-3">
-                                        <span class="bg-black text-white px-1.5 py-0.5 sm:px-3 sm:py-1.5 text-[9px] sm:text-xs font-semibold uppercase shadow-md">
-                                            <?= htmlspecialchars($row['codename']) ?>
-                                        </span>
-                                    </div>
+        // Get sold count
+        $sold_stmt = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
+        $sold_stmt->bind_param("i", $product_id);
+        $sold_stmt->execute();
+        $sold_result = $sold_stmt->get_result()->fetch_assoc();
+        $total_sold = (int)($sold_result['total_sold'] ?? 0);
+        $sold_stmt->close();
 
-                                    <!-- Hover Overlay (Desktop Only) -->
-                                    <div class="hidden sm:flex absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all items-center justify-center">
-                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold shadow-lg text-sm">
-                                                <i class="fas fa-eye mr-2"></i>View Details
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+        // Get rating
+        $rating_stmt = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+        $rating_stmt->bind_param("i", $product_id);
+        $rating_stmt->execute();
+        $rating_result = $rating_stmt->get_result()->fetch_assoc();
+        $avg_rating = $rating_result['avg_rating'] ?? 0;
+        $total_raters = $rating_result['total_raters'] ?? 0;
+        $rating_stmt->close();
 
-                                <!-- Content Container -->
-                                <div class="flex-1 flex flex-col p-2 sm:p-5">
-                                    <!-- Product Name - Fixed 2 lines -->
-                                    <h3 class="text-[11px] sm:text-base text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold" style="min-height: 2rem;">
-                                        <?= htmlspecialchars($row['product_name']) ?>
-                                    </h3>
+        // Calculate stars
+        $full_stars = floor($avg_rating);
+        $half_star = ($avg_rating - $full_stars >= 0.5) ? 1 : 0;
+        $empty_stars = 5 - $full_stars - $half_star;
+        ?>
 
-                                    <!-- Description - Fixed 2 lines -->
-                                    <p class="text-[9px] sm:text-sm text-gray-600 line-clamp-2 mb-1.5 sm:mb-3" style="min-height: 1.5rem;">
-                                        <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
-                                    </p>
+        <div class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+            <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
+                <!-- Image Container - Fixed Square -->
+                <div class="relative w-full bg-gray-50" style="padding-bottom: 100%;">
+                    <div class="absolute inset-0 p-2 sm:p-4">
+                        <?php if (!empty($row['main_image'])): ?>
+                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>"
+                                alt="<?= htmlspecialchars($row['product_name']) ?>"
+                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                loading="lazy">
+                        <?php else: ?>
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-image text-2xl sm:text-4xl"></i>
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
-                                    <!-- Bottom Section -->
-                                    <div class="mt-auto space-y-1.5 sm:space-y-3">
-                                        <!-- Variant Count -->
-                                        <div>
-                                            <span class="inline-flex items-center bg-black text-white px-1.5 py-0.5 sm:px-3 sm:py-1.5 text-[9px] sm:text-xs">
-                                                <i class="fas fa-layer-group mr-1 text-[8px] sm:text-xs"></i>
-                                                <?= $variant_count ?> Variant<?= $variant_count !== 1 ? 's' : '' ?>
-                                            </span>
-                                        </div>
-
-                                    
-                                    </div>
-                                </div>
-                            </a>
+                    <!-- Hover Overlay (Desktop Only) -->
+                    <div class="hidden sm:flex absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all items-center justify-center">
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold shadow-lg text-sm">
+                                <i class="fas fa-eye mr-2"></i>View Details
+                            </span>
                         </div>
-                    <?php endwhile; ?>
+                    </div>
                 </div>
+
+                <!-- Content Container -->
+                <div class="flex-1 flex flex-col p-2 sm:p-4">
+                    <!-- Product Name - Fixed 2 lines -->
+                    <h3 class="text-[15px] sm:text-sm text-black mb-1 sm:mb-2 line-clamp-2 uppercase font-semibold leading-tight" style="min-height: 2rem;">
+                        <?= htmlspecialchars($row['product_name']) ?>
+                    </h3>
+
+                    <!-- Description - Fixed 2 lines -->
+                    <p class="text-[13px] sm:text-xs text-gray-600 line-clamp-2 mb-1.5 sm:mb-2" style="min-height: 1.5rem;">
+                        <?= htmlspecialchars($row['description'] ?? 'No description available.') ?>
+                    </p>
+
+                    <!-- Rating -->
+                    <div class="flex items-center gap-1 mb-1.5 sm:mb-2">
+                        <?php if ($total_raters > 0): ?>
+                            <div class="flex text-yellow-400 text-[9px] sm:text-[11px]">
+                                <?php for ($i = 0; $i < $full_stars; $i++): ?>
+                                    <i class="fas fa-star"></i>
+                                <?php endfor; ?>
+                                <?php if ($half_star): ?>
+                                    <i class="fas fa-star-half-alt"></i>
+                                <?php endif; ?>
+                                <?php for ($i = 0; $i < $empty_stars; $i++): ?>
+                                    <i class="far fa-star text-gray-300"></i>
+                                <?php endfor; ?>
+                            </div>
+                            <span class="text-[8px] sm:text-[10px] text-gray-500 font-medium">(<?= $total_raters ?>)</span>
+                        <?php else: ?>
+                            <div class="flex text-gray-300 text-[9px] sm:text-[11px]">
+                                <?php for ($i = 0; $i < 5; $i++): ?>
+                                    <i class="far fa-star"></i>
+                                <?php endfor; ?>
+                            </div>
+                            <span class="text-[8px] sm:text-[10px] text-gray-400">No rating</span>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Bottom Section -->
+                    <div class="mt-auto space-y-1 sm:space-y-2">
+                    <!-- View Count + Sold Count -->
+                        <?php if ($view_count > 0 || $total_sold > 0): ?>
+                            <div class="text-[8px] sm:text-[10px] text-gray-500 font-medium">
+                                <?php if ($view_count > 0): ?>
+                                    <?= number_format($view_count); ?> viewing
+                                <?php endif; ?>
+                                <?php if ($view_count > 0 && $total_sold > 0): ?> | <?php endif; ?>
+                                <?php if ($total_sold > 0): ?>
+                                    <i class="fas fa-shopping-bag mr-0.5"></i>
+                                    <?= number_format($total_sold); ?> sold
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </a>
+        </div>
+    <?php endwhile; ?>
+</div>
+
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+}
+</style>
 
          <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>

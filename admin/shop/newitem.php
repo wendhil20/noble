@@ -10,10 +10,6 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-/**
- * Auto-assigns categories for ALL product variants based on codenames
- * Also updates the codename in products table to match category
- */
 function autoAssignAllCategories($conn) {
     $result = [
         'success' => false,
@@ -23,7 +19,6 @@ function autoAssignAllCategories($conn) {
     ];
     
     try {
-        // Update all variants at once - BOTH category_id AND category_name
         $update_query = "
             UPDATE product_variants pv
             JOIN products p ON pv.product_id = p.id
@@ -39,7 +34,6 @@ function autoAssignAllCategories($conn) {
             $result['errors'][] = "Failed to update categories: " . $conn->error;
         }
         
-        // Check for products without matching categories
         $orphan_query = "
             SELECT DISTINCT p.product_name, p.codename
             FROM products p
@@ -64,16 +58,15 @@ function autoAssignAllCategories($conn) {
     return $result;
 }
 
-// Get message and error from session (for PRG pattern)
 $sync_message = '';
 if (isset($_SESSION['sync_message'])) {
     $sync_message = $_SESSION['sync_message'];
     unset($_SESSION['sync_message']);
 }
 
-// Fetch category, subcategory, and delivery size lists
-$category_result = $conn->query("SELECT * FROM categories");
-$subcategory_result = $conn->query("SELECT * FROM product_subcategories ORDER BY subcategory_name");
+$category_result = $conn->query("SELECT * FROM categories ORDER BY name");
+$subcategory_result = $conn->query("SELECT ps.*, c.name as category_name FROM product_subcategories ps LEFT JOIN categories c ON ps.category_id = c.id ORDER BY ps.subcategory_name");
+$sub_subcategory_result = $conn->query("SELECT pss.*, ps.subcategory_name, ps.category_id FROM product_sub_subcategories pss LEFT JOIN product_subcategories ps ON pss.subcategory_id = ps.id ORDER BY pss.sub_subcategory_name");
 $delivery_size_result = $conn->query("SELECT * FROM delivery_sizes ORDER BY percentage ASC");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -94,11 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
 
-        // FIXED: Update both product_variants category AND products codename
         if (!empty($_POST['bulk_category'])) {
             $catId = intval($_POST['bulk_category']);
             
-            // First, get the category name from the categories table
             $catQuery = $conn->prepare("SELECT name FROM categories WHERE id = ?");
             $catQuery->bind_param("i", $catId);
             $catQuery->execute();
@@ -108,12 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $catData = $catResult->fetch_assoc();
                 $catName = $catData['name'];
                 
-                // Update BOTH category_id AND category_name fields in product_variants
                 $stmt = $conn->prepare("UPDATE product_variants SET category_id = ?, category_name = ? WHERE id IN (" . implode(',', $ids) . ")");
                 $stmt->bind_param("is", $catId, $catName);
                 $stmt->execute();
                 
-                // NEW: Also update the codename in products table for all affected products
                 $productUpdateQuery = "
                     UPDATE products p
                     JOIN product_variants pv ON p.id = pv.product_id
@@ -126,27 +115,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // FIXED: Handle subcategory using product_subcategories table
+        // SUBCATEGORY - MULTIPLE SUPPORT
         if (!empty($_POST['bulk_subcategory'])) {
-            $subcatName = $_POST['bulk_subcategory'];
-            // First get the ID of the subcategory by name from product_subcategories
-            $subcatQuery = $conn->prepare("SELECT id FROM product_subcategories WHERE subcategory_name = ?");
-            $subcatQuery->bind_param("s", $subcatName);
-            $subcatQuery->execute();
-            $subcatResult = $subcatQuery->get_result();
+            $subcatIds = $_POST['bulk_subcategory'];
+            $appendMode = isset($_POST['append_subcategory']) && $_POST['append_subcategory'] === '1';
             
-            if ($subcatResult->num_rows > 0) {
-                $subcatData = $subcatResult->fetch_assoc();
-                $subcatId = $subcatData['id'];
+            if (is_array($subcatIds)) {
+                $cleanIds = array_map('intval', $subcatIds);
                 
-                // Update BOTH subcategory_id AND subcategory_name fields
-                $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id IN (" . implode(',', $ids) . ")");
-                $stmt->bind_param("is", $subcatId, $subcatName);
+                $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
+                $subcatQuery = $conn->prepare("SELECT id, subcategory_name FROM product_subcategories WHERE id IN ($placeholders)");
+                $subcatQuery->bind_param(str_repeat('i', count($cleanIds)), ...$cleanIds);
+                $subcatQuery->execute();
+                $subcatResult = $subcatQuery->get_result();
+                
+                $subcatNames = [];
+                while ($row = $subcatResult->fetch_assoc()) {
+                    $subcatNames[] = $row['subcategory_name'];
+                }
+                
+                if ($appendMode) {
+                    foreach ($ids as $variantId) {
+                        $getQuery = $conn->prepare("SELECT subcategory_name FROM product_variants WHERE id = ?");
+                        $getQuery->bind_param("i", $variantId);
+                        $getQuery->execute();
+                        $result = $getQuery->get_result();
+                        $row = $result->fetch_assoc();
+                        
+                        $existingNames = [];
+                        if (!empty($row['subcategory_name'])) {
+                            $decoded = json_decode($row['subcategory_name'], true);
+                            if (is_array($decoded)) {
+                                $existingNames = $decoded;
+                            } else {
+                                $existingNames = [$row['subcategory_name']];
+                            }
+                        }
+                        
+                        $mergedNames = array_unique(array_merge($existingNames, $subcatNames));
+                        $jsonNames = json_encode(array_values($mergedNames));
+                        $primaryId = $cleanIds[0];
+                        
+                        $updateStmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id = ?");
+                        $updateStmt->bind_param("isi", $primaryId, $jsonNames, $variantId);
+                        $updateStmt->execute();
+                    }
+                } else {
+                    $jsonNames = json_encode($subcatNames);
+                    $primaryId = $cleanIds[0];
+                    
+                    $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id IN (" . implode(',', $ids) . ")");
+                    $stmt->bind_param("is", $primaryId, $jsonNames);
+                    $stmt->execute();
+                }
+            } else {
+                $subcatId = intval($subcatIds);
+                
+                $subcatQuery = $conn->prepare("SELECT subcategory_name FROM product_subcategories WHERE id = ?");
+                $subcatQuery->bind_param("i", $subcatId);
+                $subcatQuery->execute();
+                $subcatResult = $subcatQuery->get_result();
+                
+                if ($subcatResult->num_rows > 0) {
+                    $subcatData = $subcatResult->fetch_assoc();
+                    $subcatName = $subcatData['subcategory_name'];
+                    $jsonName = json_encode([$subcatName]);
+                    
+                    $stmt = $conn->prepare("UPDATE product_variants SET subcategory_id = ?, subcategory_name = ? WHERE id IN (" . implode(',', $ids) . ")");
+                    $stmt->bind_param("is", $subcatId, $jsonName);
+                    $stmt->execute();
+                }
+            }
+        }
+
+        // SUB-SUBCATEGORY
+        if (!empty($_POST['bulk_sub_subcategory'])) {
+            $subSubcatIds = $_POST['bulk_sub_subcategory'];
+            $appendMode = isset($_POST['append_sub_subcategory']) && $_POST['append_sub_subcategory'] === '1';
+            
+            if (is_array($subSubcatIds)) {
+                $cleanIds = array_map('intval', $subSubcatIds);
+                
+                if ($appendMode) {
+                    foreach ($ids as $variantId) {
+                        $getQuery = $conn->prepare("SELECT sub_subcategory_ids FROM product_variants WHERE id = ?");
+                        $getQuery->bind_param("i", $variantId);
+                        $getQuery->execute();
+                        $result = $getQuery->get_result();
+                        $row = $result->fetch_assoc();
+                        
+                        $existingIds = [];
+                        if (!empty($row['sub_subcategory_ids'])) {
+                            $existingIds = json_decode($row['sub_subcategory_ids'], true) ?: [];
+                        }
+                        
+                        $mergedIds = array_unique(array_merge($existingIds, $cleanIds));
+                        $jsonIds = json_encode(array_values($mergedIds));
+                        $primaryId = $mergedIds[0];
+                        
+                        $updateStmt = $conn->prepare("UPDATE product_variants SET sub_subcategory_id = ?, sub_subcategory_ids = ? WHERE id = ?");
+                        $updateStmt->bind_param("isi", $primaryId, $jsonIds, $variantId);
+                        $updateStmt->execute();
+                    }
+                } else {
+                    $jsonIds = json_encode($cleanIds);
+                    $primaryId = $cleanIds[0];
+                    
+                    $stmt = $conn->prepare("UPDATE product_variants SET sub_subcategory_id = ?, sub_subcategory_ids = ? WHERE id IN (" . implode(',', $ids) . ")");
+                    $stmt->bind_param("is", $primaryId, $jsonIds);
+                    $stmt->execute();
+                }
+            } else {
+                $subSubcatId = intval($subSubcatIds);
+                $jsonSingle = json_encode([$subSubcatId]);
+                
+                $stmt = $conn->prepare("UPDATE product_variants SET sub_subcategory_id = ?, sub_subcategory_ids = ? WHERE id IN (" . implode(',', $ids) . ")");
+                $stmt->bind_param("is", $subSubcatId, $jsonSingle);
                 $stmt->execute();
             }
         }
 
-        // NEW: Handle delivery size updates
         if (!empty($_POST['bulk_delivery_size'])) {
             $deliverySizeId = intval($_POST['bulk_delivery_size']);
             $stmt = $conn->prepare("UPDATE product_variants SET delivery_size_id = ? WHERE id IN (" . implode(',', $ids) . ")");
@@ -154,23 +242,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
 
-        // ✅ NEW: Handle lead time bulk updates
         if (!empty($_POST['bulk_lead_count']) && !empty($_POST['bulk_lead_interval'])) {
             $leadCount = intval($_POST['bulk_lead_count']);
             $leadInterval = $_POST['bulk_lead_interval'];
             $leadGap = !empty($_POST['bulk_lead_gap']) ? intval($_POST['bulk_lead_gap']) : null;
 
-            // Update lead time directly in product_variants table
             $stmt = $conn->prepare("UPDATE product_variants SET lead_count = ?, lead_interval = ?, lead_gap = ? WHERE id IN (" . implode(',', $ids) . ")");
             $stmt->bind_param("isi", $leadCount, $leadInterval, $leadGap);
             $stmt->execute();
         }
 
-        // FIXED: Auto-sync categories based on product codename - update both variants and products
         if (isset($_POST['auto_sync_categories'])) {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             
-            // Update product_variants with category info
             $update_query = "
                 UPDATE product_variants pv
                 JOIN products p ON pv.product_id = p.id
@@ -183,14 +267,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
         }
         
-        // Redirect to prevent form resubmission
         $_SESSION['sync_message'] = "Bulk update completed successfully!";
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
 }
 
-// AUTO-SYNC: Automatically sync categories for all variants where codename exists
 if (isset($_POST['auto_sync_all'])) {
     $auto_sync_result = autoAssignAllCategories($conn);
     
@@ -203,7 +285,6 @@ if (isset($_POST['auto_sync_all'])) {
         $message = "Error occurred during synchronization: " . implode(', ', $auto_sync_result['errors']);
     }
     
-    // Store message in session and redirect
     $_SESSION['sync_message'] = $message;
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
@@ -213,10 +294,10 @@ $status_filter = $_GET['status'] ?? '';
 $origin_filter = $_GET['origin'] ?? '';
 $category_filter = $_GET['category'] ?? '';
 $subcategory_filter = $_GET['subcategory'] ?? '';
+$sub_subcategory_filter = $_GET['sub_subcategory'] ?? '';
 $delivery_size_filter = $_GET['delivery_size'] ?? '';
-$leadtime_filter = $_GET['leadtime'] ?? ''; // ✅ NEW: Lead time filter
+$leadtime_filter = $_GET['leadtime'] ?? '';
 
-// Enhanced query that shows category mismatch status and includes delivery size info and lead time
 $query = "
     SELECT 
         pv.*,
@@ -226,10 +307,14 @@ $query = "
         pv.lead_count,
         pv.lead_interval,
         pv.lead_gap,
+        pv.size,
+        pv.color,
         c1.name as current_category_name,
         c2.name as expected_category_name,
         c2.id as expected_category_id,
-        ps.subcategory_name as current_subcategory_name,
+        (SELECT GROUP_CONCAT(pss2.sub_subcategory_name SEPARATOR ', ')
+         FROM product_sub_subcategories pss2
+         WHERE FIND_IN_SET(pss2.id, REPLACE(REPLACE(REPLACE(pv.sub_subcategory_ids, '[', ''), ']', ''), '\"', ''))) as all_sub_subcategory_names,
         ds.size_name as delivery_size_name,
         ds.percentage as delivery_size_percentage,
         CASE 
@@ -241,7 +326,6 @@ $query = "
     JOIN products p ON pv.product_id = p.id
     LEFT JOIN categories c1 ON pv.category_id = c1.id
     LEFT JOIN categories c2 ON p.codename = c2.name
-    LEFT JOIN product_subcategories ps ON pv.subcategory_id = ps.id
     LEFT JOIN delivery_sizes ds ON pv.delivery_size_id = ds.id
     WHERE 1=1
 ";
@@ -255,34 +339,22 @@ if ($origin_filter === 'local' || $origin_filter === 'international') {
 if (is_numeric($category_filter)) {
     $query .= " AND pv.category_id = " . intval($category_filter);
 }
-
-// UPDATED: Update the subcategory filter to work with product_subcategories
-if (!empty($subcategory_filter)) {
-    // Convert name to ID for the query
-    $subcatQuery = $conn->prepare("SELECT id FROM product_subcategories WHERE subcategory_name = ?");
-    $subcatQuery->bind_param("s", $subcategory_filter);
-    $subcatQuery->execute();
-    $subcatResult = $subcatQuery->get_result();
-    
-    if ($subcatResult->num_rows > 0) {
-        $subcatData = $subcatResult->fetch_assoc();
-        $query .= " AND pv.subcategory_id = " . intval($subcatData['id']);
-    }
+if (is_numeric($subcategory_filter)) {
+    $query .= " AND pv.subcategory_id = " . intval($subcategory_filter);
 }
-
-// NEW: Add delivery size filter
+if (is_numeric($sub_subcategory_filter)) {
+    $query .= " AND (pv.sub_subcategory_id = " . intval($sub_subcategory_filter) . 
+              " OR pv.sub_subcategory_ids LIKE '%\"" . intval($sub_subcategory_filter) . "\"%')";
+}
 if (is_numeric($delivery_size_filter)) {
     $query .= " AND pv.delivery_size_id = " . intval($delivery_size_filter);
 }
-
-// ✅ NEW: Add lead time filter
 if ($leadtime_filter === 'with_leadtime') {
     $query .= " AND pv.lead_count IS NOT NULL AND pv.lead_interval IS NOT NULL";
 } elseif ($leadtime_filter === 'without_leadtime') {
     $query .= " AND (pv.lead_count IS NULL OR pv.lead_interval IS NULL)";
 }
 
-// Add filter for category sync status
 $sync_filter = $_GET['sync_status'] ?? '';
 if ($sync_filter === 'mismatched') {
     $query .= " AND pv.category_id != c2.id AND c2.id IS NOT NULL";
@@ -295,7 +367,6 @@ if ($sync_filter === 'mismatched') {
 $query .= " ORDER BY pv.percent ASC";
 $result = $conn->query($query);
 
-// Get counts for sync status
 $count_query = "
     SELECT 
         SUM(CASE WHEN pv.category_id = c2.id THEN 1 ELSE 0 END) as matched_count,
@@ -308,7 +379,6 @@ $count_query = "
 $count_result = $conn->query($count_query);
 $counts = $count_result->fetch_assoc();
 
-// ✅ NEW: Get lead time counts
 $leadtime_count_query = "
     SELECT 
         SUM(CASE WHEN pv.lead_count IS NOT NULL AND pv.lead_interval IS NOT NULL THEN 1 ELSE 0 END) as with_leadtime_count,
@@ -318,54 +388,51 @@ $leadtime_count_query = "
 ";
 $leadtime_count_result = $conn->query($leadtime_count_query);
 $leadtime_counts = $leadtime_count_result->fetch_assoc();
-?>
 
+$subcategories_with_category = [];
+$subcategory_result->data_seek(0);
+while ($sub = $subcategory_result->fetch_assoc()) {
+    $subcategories_with_category[] = $sub;
+}
+
+$sub_subcategories_with_parent = [];
+$sub_subcategory_result->data_seek(0);
+while ($subsub = $sub_subcategory_result->fetch_assoc()) {
+    $sub_subcategories_with_parent[] = $subsub;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Manage Product Variants</title>
+  <title>Manage Product Variants - Multiple Subcategories</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    function toggleSelectAll(source) {
-      const checkboxes = document.querySelectorAll('.variant-checkbox');
-      checkboxes.forEach(cb => {
-        cb.checked = source.checked;
-        
-        // Update visual feedback for each card
-        const cardId = 'card-' + cb.value;
-        const card = document.getElementById(cardId);
-        
-        if (cb.checked) {
-          card.classList.add('ring-2', 'ring-orange-500', 'bg-orange-50');
-        } else {
-          card.classList.remove('ring-2', 'ring-orange-500', 'bg-orange-50');
-        }
-      });
-    }
+    const subcategoriesData = <?= json_encode($subcategories_with_category) ?>;
+    const subSubcategoriesData = <?= json_encode($sub_subcategories_with_parent) ?>;
 
-    // Function to handle card clicks
-    function toggleCardSelection(cardElement, checkboxId) {
-      const checkbox = document.getElementById(checkboxId);
-      checkbox.checked = !checkbox.checked;
-      
-      // Update visual feedback
-      updateCardVisualState(cardElement, checkbox.checked);
-      
-      // Update "Select All" checkbox state
+    function toggleSelectAll(source) {
+      document.querySelectorAll('.variant-checkbox').forEach(cb => {
+        cb.checked = source.checked;
+        const card = document.getElementById('card-' + cb.value);
+        updateCardVisualState(card, source.checked);
+      });
       updateSelectAllState();
     }
 
-    // Function to update card visual state
-    function updateCardVisualState(cardElement, isChecked) {
-      if (isChecked) {
-        cardElement.classList.add('ring-2', 'ring-orange-500', 'bg-orange-50');
-      } else {
-        cardElement.classList.remove('ring-2', 'ring-orange-500', 'bg-orange-50');
-      }
+    function toggleCardSelection(cardElement, checkboxId) {
+      const checkbox = document.getElementById(checkboxId);
+      checkbox.checked = !checkbox.checked;
+      updateCardVisualState(cardElement, checkbox.checked);
+      updateSelectAllState();
     }
 
-    // Function to update "Select All" checkbox state
+    function updateCardVisualState(cardElement, isChecked) {
+      cardElement.classList.toggle('ring-2', isChecked);
+      cardElement.classList.toggle('ring-orange-500', isChecked);
+      cardElement.classList.toggle('bg-orange-50', isChecked);
+    }
+
     function updateSelectAllState() {
       const selectAllCheckbox = document.querySelector('input[onclick*="toggleSelectAll"]');
       const checkboxes = document.querySelectorAll('.variant-checkbox');
@@ -383,24 +450,57 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
       }
     }
 
-    // Initialize card selection states on page load
+    function filterSubcategories(selectElement, targetId) {
+      const categoryId = selectElement.value;
+      const subcategorySelect = document.getElementById(targetId);
+      
+      subcategorySelect.innerHTML = '<option value="">Select Subcategories</option>';
+      
+      if (categoryId) {
+        const filtered = subcategoriesData.filter(sub => sub.category_id == categoryId);
+        filtered.forEach(sub => {
+          const option = document.createElement('option');
+          option.value = sub.id;
+          option.textContent = sub.subcategory_name;
+          subcategorySelect.appendChild(option);
+        });
+      }
+      
+      const subSubcategorySelect = document.getElementById(targetId.replace('subcategory', 'sub_subcategory'));
+      if (subSubcategorySelect) {
+        subSubcategorySelect.innerHTML = '<option value="">Select Sub-Subcategories</option>';
+      }
+    }
+
+    function filterSubSubcategories(selectElement, targetId) {
+      const subcategoryId = selectElement.value;
+      const subSubcategorySelect = document.getElementById(targetId);
+      
+      subSubcategorySelect.innerHTML = '<option value="">Select Sub-Subcategories</option>';
+      
+      if (subcategoryId) {
+        const filtered = subSubcategoriesData.filter(subsub => subsub.subcategory_id == subcategoryId);
+        filtered.forEach(subsub => {
+          const option = document.createElement('option');
+          option.value = subsub.id;
+          option.textContent = subsub.sub_subcategory_name;
+          subSubcategorySelect.appendChild(option);
+        });
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       const checkboxes = document.querySelectorAll('.variant-checkbox');
       checkboxes.forEach(function(checkbox) {
-        const cardId = 'card-' + checkbox.value;
-        const card = document.getElementById(cardId);
-        
-        // Set initial visual state
+        const card = document.getElementById('card-' + checkbox.value);
         updateCardVisualState(card, checkbox.checked);
         
-        // Add click event listener to checkbox to update visual state
         checkbox.addEventListener('change', function() {
           updateCardVisualState(card, this.checked);
           updateSelectAllState();
         });
       });
       
-      // Initialize "Select All" state
       updateSelectAllState();
     });
   </script>
@@ -408,17 +508,15 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
 <body class="bg-gray-100 font-sans">
 <?php include '../navbar/top.php'; ?>
 <div class="max-w-full mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variant Status, Origin, Category, Delivery Size & Lead Time</h1>
+  <h1 class="text-3xl font-bold text-orange-700 mb-6">Manage Product Variants (Multiple Subcategories Support)</h1>
 
   <?php if ($sync_message): ?>
-  <!-- Success Message -->
   <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6" role="alert">
     <strong class="font-bold">Success!</strong>
     <span class="block sm:inline"><?= htmlspecialchars($sync_message) ?></span>
   </div>
   <?php endif; ?>
 
-  <!-- Auto-Sync All Button -->
   <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
     <div class="flex items-center justify-between">
       <div>
@@ -434,7 +532,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
     </div>
   </div>
 
-  <!-- Category Sync Status Summary -->
   <div class="bg-white rounded-lg shadow-md p-4 mb-6">
     <h3 class="text-lg font-semibold text-gray-800 mb-2">Category Synchronization Status</h3>
     <div class="flex gap-4 text-sm mb-3">
@@ -442,7 +539,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
       <span class="text-red-600">✗ Mismatched: <?= $counts['mismatched_count'] ?></span>
       <span class="text-yellow-600">⚠ No Match: <?= $counts['no_match_count'] ?></span>
     </div>
-    <!-- ✅ NEW: Lead Time Status -->
     <h3 class="text-lg font-semibold text-gray-800 mb-2">Lead Time Status</h3>
     <div class="flex gap-4 text-sm">
       <span class="text-blue-600">⏰ With Lead Time: <?= $leadtime_counts['with_leadtime_count'] ?></span>
@@ -450,7 +546,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
     </div>
   </div>
 
-  <!-- Filters -->
   <form method="GET" class="flex flex-wrap gap-4 items-center mb-6">
     <div>
       <label class="text-sm font-medium text-gray-700">Status:</label>
@@ -472,7 +567,7 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
 
     <div>
       <label class="text-sm font-medium text-gray-700">Category:</label>
-      <select name="category" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
+      <select name="category" id="filter_category" onchange="filterSubcategories(this, 'filter_subcategory'); this.form.submit();" class="border rounded px-3 py-1 text-sm">
         <option value="">All</option>
         <?php
         $category_result->data_seek(0);
@@ -484,22 +579,40 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
       </select>
     </div>
 
-    <!-- UPDATED: Subcategory dropdown now uses product_subcategories -->
     <div>
       <label class="text-sm font-medium text-gray-700">Subcategory:</label>
-      <select name="subcategory" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
+      <select name="subcategory" id="filter_subcategory" onchange="filterSubSubcategories(this, 'filter_sub_subcategory'); this.form.submit();" class="border rounded px-3 py-1 text-sm">
         <option value="">All</option>
-        <?php
-        $subcategory_result->data_seek(0);
-        while ($sub = $subcategory_result->fetch_assoc()): ?>
-          <option value="<?= htmlspecialchars($sub['subcategory_name']) ?>" <?= $subcategory_filter === $sub['subcategory_name'] ? 'selected' : '' ?>>
+        <?php foreach ($subcategories_with_category as $sub): ?>
+          <option value="<?= $sub['id'] ?>" 
+                  data-category-id="<?= $sub['category_id'] ?>"
+                  <?= $subcategory_filter == $sub['id'] ? 'selected' : '' ?>>
             <?= htmlspecialchars($sub['subcategory_name']) ?>
+            <?php if (!empty($sub['category_name'])): ?>
+              (<?= htmlspecialchars($sub['category_name']) ?>)
+            <?php endif; ?>
           </option>
-        <?php endwhile; ?>
+        <?php endforeach; ?>
       </select>
     </div>
 
-    <!-- NEW: Delivery Size filter -->
+    <div>
+      <label class="text-sm font-medium text-gray-700">Sub-Subcategory:</label>
+      <select name="sub_subcategory" id="filter_sub_subcategory" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
+        <option value="">All</option>
+        <?php foreach ($sub_subcategories_with_parent as $subsub): ?>
+          <option value="<?= $subsub['id'] ?>" 
+                  data-subcategory-id="<?= $subsub['subcategory_id'] ?>"
+                  <?= $sub_subcategory_filter == $subsub['id'] ? 'selected' : '' ?>>
+            <?= htmlspecialchars($subsub['sub_subcategory_name']) ?>
+            <?php if (!empty($subsub['subcategory_name'])): ?>
+              (<?= htmlspecialchars($subsub['subcategory_name']) ?>)
+            <?php endif; ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+
     <div>
       <label class="text-sm font-medium text-gray-700">Delivery Size:</label>
       <select name="delivery_size" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
@@ -514,7 +627,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
       </select>
     </div>
 
-    <!-- ✅ NEW: Lead Time filter -->
     <div>
       <label class="text-sm font-medium text-gray-700">Lead Time:</label>
       <select name="leadtime" onchange="this.form.submit()" class="border rounded px-3 py-1 text-sm">
@@ -537,7 +649,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
     <a href="?" class="text-blue-600 text-sm underline hover:text-blue-800">Reset Filters</a>
   </form>
 
-  <!-- Bulk Update Form -->
   <form method="POST">
     <div class="mb-4 flex justify-between items-center">
       <label class="flex items-center gap-2">
@@ -557,7 +668,7 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
           <option value="international">International</option>
         </select>
 
-        <select name="bulk_category" class="border rounded px-2 py-1 text-sm">
+        <select name="bulk_category" id="bulk_category" onchange="filterSubcategories(this, 'bulk_subcategory')" class="border rounded px-2 py-1 text-sm">
           <option value="">Change Category</option>
           <?php
           $category_result->data_seek(0);
@@ -566,17 +677,47 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
           <?php endwhile; ?>
         </select>
 
-        <!-- UPDATED: Subcategory dropdown now uses product_subcategories -->
-        <select name="bulk_subcategory" class="border rounded px-2 py-1 text-sm">
-          <option value="">Change Subcategory</option>
-          <?php
-          $subcategory_result->data_seek(0);
-          while ($sub = $subcategory_result->fetch_assoc()): ?>
-            <option value="<?= htmlspecialchars($sub['subcategory_name']) ?>"><?= htmlspecialchars($sub['subcategory_name']) ?></option>
-          <?php endwhile; ?>
-        </select>
+        <div class="flex flex-col gap-1">
+          <select name="bulk_subcategory[]" id="bulk_subcategory" multiple size="1" 
+                  onchange="filterSubSubcategories(this, 'bulk_sub_subcategory')" 
+                  class="border rounded px-2 py-1 text-sm w-48" 
+                  title="Hold Ctrl/Cmd to select multiple">
+            <option value="">Change Subcategories</option>
+            <?php foreach ($subcategories_with_category as $sub): ?>
+              <option value="<?= $sub['id'] ?>" data-category-id="<?= $sub['category_id'] ?>">
+                <?= htmlspecialchars($sub['subcategory_name']) ?>
+                <?php if (!empty($sub['category_name'])): ?>
+                  (<?= htmlspecialchars($sub['category_name']) ?>)
+                <?php endif; ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <label class="flex items-center gap-1 text-xs text-gray-700">
+            <input type="checkbox" name="append_subcategory" value="1" class="form-checkbox h-3 w-3">
+            <span>Add to existing (don't replace)</span>
+          </label>
+        </div>
 
-        <!-- NEW: Delivery Size bulk update dropdown -->
+        <div class="flex flex-col gap-1">
+          <select name="bulk_sub_subcategory[]" id="bulk_sub_subcategory" multiple size="1" 
+                  class="border rounded px-2 py-1 text-sm w-48" 
+                  title="Hold Ctrl/Cmd to select multiple">
+            <option value="">Change Sub-Subcategories</option>
+            <?php foreach ($sub_subcategories_with_parent as $subsub): ?>
+              <option value="<?= $subsub['id'] ?>" data-subcategory-id="<?= $subsub['subcategory_id'] ?>">
+                <?= htmlspecialchars($subsub['sub_subcategory_name']) ?>
+                <?php if (!empty($subsub['subcategory_name'])): ?>
+                  (<?= htmlspecialchars($subsub['subcategory_name']) ?>)
+                <?php endif; ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <label class="flex items-center gap-1 text-xs text-gray-700">
+            <input type="checkbox" name="append_sub_subcategory" value="1" class="form-checkbox h-3 w-3">
+            <span>Add to existing (don't replace)</span>
+          </label>
+        </div>
+
         <select name="bulk_delivery_size" class="border rounded px-2 py-1 text-sm">
           <option value="">Change Delivery Size</option>
           <?php
@@ -586,7 +727,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
           <?php endwhile; ?>
         </select>
 
-        <!-- ✅ NEW: Lead Time bulk update inputs -->
         <input type="number" name="bulk_lead_count" placeholder="Lead Count" min="1" class="border rounded px-2 py-1 text-sm w-24">
         <select name="bulk_lead_interval" class="border rounded px-2 py-1 text-sm">
           <option value="">Lead Interval</option>
@@ -605,21 +745,18 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
       </div>
     </div>
 
-    <!-- Variant Cards -->
-    <div class="grid gap-3 grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+    <div class="grid gap-3 grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8">
       <?php while ($row = $result->fetch_assoc()): ?>
         <div id="card-<?= $row['id'] ?>" 
              class="bg-white rounded-lg shadow-sm p-2 hover:shadow-md transition cursor-pointer select-none text-xs" 
              onclick="toggleCardSelection(this, 'checkbox-<?= $row['id'] ?>')">
           
-          <!-- Hidden checkbox for form submission -->
           <input type="checkbox" 
                  name="bulk_ids[]" 
                  value="<?= $row['id'] ?>" 
                  class="variant-checkbox hidden" 
                  id="checkbox-<?= $row['id'] ?>">
           
-          <!-- Visual selection indicator -->
           <div class="flex items-center mb-1">
             <div class="w-3 h-3 border border-gray-300 rounded mr-1 flex items-center justify-center selection-indicator">
               <div class="w-1.5 h-1.5 bg-orange-600 rounded-full hidden checkmark"></div>
@@ -627,7 +764,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
             <span class="text-xs font-medium text-gray-700 truncate">Select</span>
           </div>
 
-          <!-- Product Image -->
           <div class="mb-2 aspect-square pointer-events-none">
             <?php if (!empty($row['main_image'])): ?>
               <img src="../../<?= htmlspecialchars($row['main_image']) ?>" 
@@ -640,7 +776,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
             <?php endif; ?>
           </div>
 
-          <!-- Category Sync Status Indicator -->
           <div class="mb-1 pointer-events-none">
             <?php if ($row['category_sync_status'] === 'matched'): ?>
               <span class="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded">✓</span>
@@ -659,11 +794,25 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
             <?= htmlspecialchars($row['codename']) ?>
           </div>
           
+          <?php if (!empty($row['color']) || !empty($row['size'])): ?>
+            <div class="text-xs text-gray-600 mb-0.5 pointer-events-none">
+              <?php if (!empty($row['color'])): ?>
+                <span class="bg-gray-100 text-gray-700 px-1 py-0.5 rounded" title="Color: <?= htmlspecialchars($row['color']) ?>">
+                  🎨 <?= htmlspecialchars(substr($row['color'], 0, 10)) ?><?= strlen($row['color']) > 10 ? '...' : '' ?>
+                </span>
+              <?php endif; ?>
+              <?php if (!empty($row['size'])): ?>
+                <span class="bg-gray-100 text-gray-700 px-1 py-0.5 rounded ml-0.5" title="Size: <?= htmlspecialchars($row['size']) ?>">
+                  📏 <?= htmlspecialchars($row['size']) ?>
+                </span>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
+          
           <div class="text-xs text-gray-600 mb-0.5 pointer-events-none">
             <span class="font-medium"><?= $row['percent'] ?>%</span> | <span class="font-medium"><?= $row['discount'] ?>%</span>
           </div>
           
-          <!-- Category Information with Sync Status -->
           <div class="text-xs text-gray-600 mb-0.5 pointer-events-none truncate" title="Current: <?= htmlspecialchars($row['current_category_name'] ?: 'None') ?>">
             Cat: <span class="font-medium <?= $row['category_sync_status'] === 'mismatched' ? 'text-red-600' : '' ?>">
               <?= htmlspecialchars($row['current_category_name'] ?: 'None') ?>
@@ -676,22 +825,92 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
             </div>
           <?php endif; ?>
           
-          <?php if ($row['current_subcategory_name']): ?>
-            <div class="text-xs text-gray-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($row['current_subcategory_name']) ?>">
-              Sub: <span class="font-medium"><?= htmlspecialchars($row['current_subcategory_name']) ?></span>
+          <?php 
+          // Display subcategory names
+          $subcatDisplay = '';
+          $subcatArray = [];
+          
+          if (!empty($row['subcategory_name'])) {
+            $decoded = json_decode($row['subcategory_name'], true);
+            if (is_array($decoded)) {
+              $subcatArray = $decoded;
+              $subcatDisplay = implode(', ', $decoded);
+            } else {
+              $subcatDisplay = $row['subcategory_name'];
+              $subcatArray = [$row['subcategory_name']];
+            }
+          }
+          
+          if (!empty($subcatArray)):
+          ?>
+            <div class="text-xs mb-0.5 pointer-events-none" title="<?= htmlspecialchars($subcatDisplay) ?>">
+              <div class="flex flex-wrap gap-0.5">
+                <?php foreach (array_slice($subcatArray, 0, 2) as $subcatName): ?>
+                  <span class="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-xs">
+                    <?= htmlspecialchars(substr($subcatName, 0, 8)) ?><?= strlen($subcatName) > 8 ? '...' : '' ?>
+                  </span>
+                <?php endforeach; ?>
+                <?php if (count($subcatArray) > 2): ?>
+                  <span class="bg-blue-200 text-blue-800 px-1 py-0.5 rounded text-xs font-bold">
+                    +<?= count($subcatArray) - 2 ?>
+                  </span>
+                <?php endif; ?>
+              </div>
             </div>
           <?php endif; ?>
 
-          <!-- NEW: Delivery Size Information -->
+          <?php 
+            $hasMultipleSubSubs = false;
+            $subSubCount = 0;
+            $subSubDisplay = '';
+            $subSubArray = [];
+            
+            if (!empty($row['sub_subcategory_ids'])) {
+              $subSubIds = json_decode($row['sub_subcategory_ids'], true);
+              if (is_array($subSubIds) && count($subSubIds) > 0) {
+                $hasMultipleSubSubs = true;
+                $subSubCount = count($subSubIds);
+                if (!empty($row['all_sub_subcategory_names'])) {
+                  $subSubArray = explode(', ', $row['all_sub_subcategory_names']);
+                  $subSubDisplay = $row['all_sub_subcategory_names'];
+                } else {
+                  $subSubDisplay = $subSubCount . ' selected';
+                }
+              }
+            }
+            
+            if ($hasMultipleSubSubs):
+          ?>
+            <div class="text-xs mb-0.5 pointer-events-none" title="<?= htmlspecialchars($subSubDisplay) ?>">
+              <div class="flex flex-wrap gap-0.5">
+                <?php if (count($subSubArray) > 0): ?>
+                  <?php foreach (array_slice($subSubArray, 0, 3) as $subSubName): ?>
+                    <span class="bg-purple-100 text-purple-700 px-1 py-0.5 rounded text-xs">
+                      <?= htmlspecialchars(substr($subSubName, 0, 8)) ?><?= strlen($subSubName) > 8 ? '...' : '' ?>
+                    </span>
+                  <?php endforeach; ?>
+                  <?php if (count($subSubArray) > 3): ?>
+                    <span class="bg-purple-200 text-purple-800 px-1 py-0.5 rounded text-xs font-bold">
+                      +<?= count($subSubArray) - 3 ?>
+                    </span>
+                  <?php endif; ?>
+                <?php else: ?>
+                  <span class="bg-purple-100 text-purple-700 px-1 py-0.5 rounded text-xs">
+                    <?= $subSubCount ?> item<?= $subSubCount > 1 ? 's' : '' ?>
+                  </span>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endif; ?>
+
           <?php if ($row['delivery_size_name']): ?>
-            <div class="text-xs text-purple-600 mb-1 pointer-events-none truncate" title="<?= htmlspecialchars($row['delivery_size_name']) ?> - <?= $row['delivery_size_percentage'] ?>%">
+            <div class="text-xs text-indigo-600 mb-0.5 pointer-events-none truncate" title="<?= htmlspecialchars($row['delivery_size_name']) ?> - <?= $row['delivery_size_percentage'] ?>%">
               Size: <span class="font-medium"><?= htmlspecialchars($row['delivery_size_name']) ?></span> (<?= $row['delivery_size_percentage'] ?>%)
             </div>
           <?php endif; ?>
 
-          <!-- ✅ NEW: Lead Time Information -->
           <?php if ($row['lead_count'] && $row['lead_interval']): ?>
-            <div class="text-xs text-indigo-600 mb-1 pointer-events-none truncate" 
+            <div class="text-xs text-teal-600 mb-1 pointer-events-none truncate" 
                  title="Lead Time: <?= $row['lead_count'] ?> <?= $row['lead_interval'] ?><?= $row['lead_count'] > 1 ? 's' : '' ?><?= $row['lead_gap'] ? ' + ' . $row['lead_gap'] . ' day' . ($row['lead_gap'] > 1 ? 's' : '') : '' ?>">
               ⏰: <span class="font-medium"><?= $row['lead_count'] ?><?= substr($row['lead_interval'], 0, 1) ?></span><?= $row['lead_gap'] ? '+' . $row['lead_gap'] . 'd' : '' ?>
             </div>
@@ -718,7 +937,6 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
 </div>
 
 <style>
-/* Additional CSS for better visual feedback */
 .bg-orange-50 .selection-indicator {
   border-color: #f97316;
   background-color: #f97316;
@@ -727,6 +945,26 @@ $leadtime_counts = $leadtime_count_result->fetch_assoc();
 .bg-orange-50 .checkmark {
   display: block !important;
   background-color: white;
+}
+
+select[multiple] {
+  padding: 4px;
+  min-height: 32px;
+}
+
+select[multiple]:focus {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
+select[multiple] option {
+  padding: 2px 4px;
+  margin: 1px 0;
+}
+
+select[multiple] option:checked {
+  background: linear-gradient(#f97316, #f97316);
+  color: white;
 }
 </style>
 

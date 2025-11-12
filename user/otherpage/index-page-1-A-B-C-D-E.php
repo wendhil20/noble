@@ -304,8 +304,8 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $results = $stmt->get_result();
 
-// 9. Filter by bedfurniture - WITH PRICE RANGE
-$filters = 'bedfurniture';
+// 9. Filter by bedfurniture - WITH SUBCATEGORIES (BETTER APPROACH)
+$filters = 'aircon';
 $query = "
     SELECT 
         p.*, 
@@ -313,12 +313,17 @@ $query = "
         p.descrip7,
         p.view_count,
         p.unique_view_count,
-        v.origin,
-        v.discount,
-        v.percent,
-        v.status,
-      COALESCE(MIN(pv.price), 0) as min_size_price,
-COALESCE(MAX(pv.price), 0) as max_size_price,  
+        MAX(v.origin) as origin,
+        MAX(v.discount) as discount,
+        MAX(v.percent) as percent,
+        MAX(v.status) as status,
+        -- Get the first variant's subcategory_name (or aggregate all unique ones)
+        (SELECT subcategory_name 
+         FROM product_variants 
+         WHERE product_id = p.id 
+         LIMIT 1) as subcategory_name,
+        COALESCE(MIN(pv.price), 0) as min_size_price,
+        COALESCE(MAX(pv.price), 0) as max_size_price,  
         COALESCE(MIN(pc.price), 0) as min_color_price,
         COALESCE(MAX(pc.price), 0) as max_color_price,
         COUNT(DISTINCT pc.id) as color_count,
@@ -393,6 +398,19 @@ function displayTrendingBadge($view_count)
     return '';
 }
 
+
+// In the bed furniture loop where you set $subcategory_name
+$subcategory_name = 'uncategorized';
+if (!empty($row['subcategory_name'])) {
+    $decoded = json_decode($row['subcategory_name'], true);
+    if (is_array($decoded) && count($decoded) > 0) {
+        // Use the first subcategory for filtering
+        $subcategory_name = $decoded[0];
+    } else {
+        $subcategory_name = $row['subcategory_name'];
+    }
+}
+$sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
 ?>
 
 
@@ -1018,6 +1036,140 @@ function displayTrendingBadge($view_count)
     </section>
 
 
+    <section>
+        <!-- Modal for "Not Available" -->
+        <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-neutral-900 mb-2">Not Available</h3>
+                    <p class="text-sm text-neutral-600 mb-6">This promotion is currently unavailable. Please check back later.</p>
+                    <button onclick="closeModal()" class="w-full bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function showUnavailable(event) {
+                event.preventDefault();
+                document.getElementById('unavailableModal').classList.remove('hidden');
+            }
+
+            function closeModal() {
+                document.getElementById('unavailableModal').classList.add('hidden');
+            }
+
+            // Close modal when clicking outside
+            document.getElementById('unavailableModal')?.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        </script>
+
+        <section class=" px-4 sm:px-6 lg:px-8">
+            <div class="max-w-full mx-auto">
+                <!-- 2x2 Grid Content -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <!-- Box 1 -->
+                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
+                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
+                            <img src="../img/display2.webp"
+                                alt="Promo 1"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+
+                            <!-- Dark Overlay on Hover -->
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
+
+                            <!-- Text Overlay -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
+                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    Style to Modern your house!
+                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </h3>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Box 2 -->
+                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
+                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
+                            <img src="../img/display1.webp"
+                                alt="Promo 2"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+
+                            <!-- Dark Overlay on Hover -->
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
+
+                            <!-- Text Overlay -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
+                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    Chair furniture deals below ₱5,000
+                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </h3>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Box 3 -->
+                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
+                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
+                            <img src="../img/gif2.gif"
+                                alt="Promo 3"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+
+                            <!-- Dark Overlay on Hover -->
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
+
+                            <!-- Text Overlay -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
+                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    Keep Shopping For Holiday
+                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </h3>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Box 4 -->
+                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
+                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
+                            <img src="../img/display3.webp"
+                                alt="Promo 4"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+
+                            <!-- Dark Overlay on Hover -->
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
+
+                            <!-- Text Overlay -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
+                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    Upgrade Your Living Space Today!
+                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </h3>
+                            </div>
+                        </div>
+                    </a>
+
+                </div>
+            </div>
+        </section>
+    </section>
+
     <!-- POPUP MODAL -->
     <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
         <div class="relative max-w-4xl w-full mx-4">
@@ -1127,7 +1279,7 @@ function displayTrendingBadge($view_count)
     $resultdepartment = mysqli_query($conn, $query);
     $categories = mysqli_fetch_all($resultdepartment, MYSQLI_ASSOC);
 
-    // Category URL mapping
+    // Category URL mapping - NO LONGER NEEDED but kept for reference
     $categoryUrlMap = [
         'furniture' => 'furniture',
         'Tiles' => 'tiles',
@@ -1164,7 +1316,6 @@ function displayTrendingBadge($view_count)
                 <?php foreach ($categories as $category): ?>
                     <?php
                     $categoryName = $category['name'];
-                    $categoryUrl = $categoryUrlMap[$categoryName] ?? strtolower($categoryName);
                     $imagePath = '../../uploads/categories/' . $category['image_pathtwo'];
 
                     // Format display name
@@ -1185,10 +1336,11 @@ function displayTrendingBadge($view_count)
                         $displayName = ucfirst($categoryName);
                     }
                     ?>
-                    <a href="index-shop-page-2?category[]=<?php echo htmlspecialchars($categoryUrl); ?>" class="group block">
-                        <div class="rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <!-- UPDATED: Changed from category_id to category_name -->
+                    <a href="index-subcategory_grid_page-14.php?category_name=<?php echo urlencode($categoryName); ?>" class="group block">
+                        <div class="rounded-lg overflow-hidden ">
                             <!-- Image -->
-                            <div class="h-32 sm:h-40 md:h-48 lg:h-56 bg-gray-100 flex items-center justify-center p-2 sm:p-3 md:p-4">
+                            <div class="h-32 sm:h-40 md:h-48 lg:h-56  flex items-center justify-center p-2 sm:p-3 md:p-4">
                                 <img src="<?php echo htmlspecialchars($imagePath); ?>"
                                     alt="<?php echo htmlspecialchars($displayName); ?>"
                                     class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
@@ -1222,530 +1374,708 @@ function displayTrendingBadge($view_count)
         </div>
     </section>
 
-
-    
     <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
+        <!-- Main Container with Border -->
+        <div class="bg-white p-4 sm:p-6">
+            <!-- Grid Layout: Left (Furniture) and Right (Bed Furniture) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-        <!-- Header with proper alignment -->
-        <div class="flex items-center justify-between mb-6 mt-2" data-aos="fade-up">
-            <!-- Left Side: Bar + Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-1 h-8 bg-neutral-900"></div>
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
-                    Furniture
-                </h2>
-            </div>
-
-            <!-- Right Side: Compare Button + See All -->
-            <div class="flex items-center gap-3">
-                <!-- Compare Button (Shows when products selected) -->
-                <div class="relative group inline-block">
-                    <button id="compareBtn" onclick="goToComparison()"
-                        class="hidden items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white transition-all duration-300 text-sm font-normal rounded">
-                        Compare (<span id="compareCount">0</span>)
-                    </button>
-
-                    <!-- Tooltip -->
-                    <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        Compare selected products
+                <!-- LEFT SIDE: FURNITURE -->
+                <div class="space-y-4 border-r-0 lg:border-r-2 lg:border-gray-200 lg:pr-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-1 h-8 bg-neutral-900"></div>
+                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-neutral-900 tracking-tight">
+                                Furniture
+                            </h2>
+                        </div>
+                        <a href="#" class="text-xs sm:text-sm text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-1 transition-colors duration-300 group">
+                            See All
+                            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                            </svg>
+                        </a>
                     </div>
-                </div>
 
-                <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
-                    See All
-                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
+                    <!-- Label: Suggestions -->
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
 
-        <!-- Products Layout: Featured Image + Product Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-0 items-center" data-aos="fade-up" data-aos-delay="300">
-
-            <!-- Left: Featured Image (Hidden on mobile, shown on desktop) -->
-            <div class="hidden lg:block lg:col-span-3 xl:col-span-2 relative z-0">
-                <div class="rounded-lg overflow-hidden h-[400px] group relative">
-                    <img src="../img/category/1.png"
-                        alt="Furniture Collection"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 text-white">
-                        <h3 class="text-xl font-light mb-1">Furniture</h3>
-                        <p class="text-xs opacity-90">Discover our collection</p>
+                            Suggestions for you
+                        </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- Right: Product Swiper -->
-            <div class="col-span-1 lg:col-span-9 xl:col-span-10 lg:-ml-16 relative z-10">
-                <div class="swiper mySwiper-products w-full">
-                    <div class="swiper-wrapper">
-                        <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+    <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
+    <div class="flex flex-wrap gap-2 mb-3">
+        <?php
+        // Get 3 random subcategories for Furniture (category_id = 1)
+        $furniture_cat_id = 1;
+        
+        // First get the category name
+        $cat_name_query = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+        $cat_name_query->bind_param("i", $furniture_cat_id);
+        $cat_name_query->execute();
+        $cat_name_result = $cat_name_query->get_result();
+        $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
+        $cat_name_query->close();
+        
+        $sub_query = $conn->prepare("
+            SELECT DISTINCT id, subcategory_name 
+            FROM product_subcategories 
+            WHERE category_id = ? 
+            ORDER BY RAND() 
+            LIMIT 3
+        ");
+        $sub_query->bind_param("i", $furniture_cat_id);
+        $sub_query->execute();
+        $sub_result = $sub_query->get_result();
+
+        while ($sub_row = $sub_result->fetch_assoc()):
+            $sub_name = $sub_row['subcategory_name'];
+            $sub_id = $sub_row['id'];
+        ?>
+            <!-- ✅ CHANGED: Now goes to Recommendations page with visual indicator -->
+            <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $sub_id ?>&from=home" 
+               class="furniture-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
+               
+                <?= ucfirst(htmlspecialchars($sub_name)) ?>
+            </a>
+        <?php endwhile; ?>
+    </div>
+
+                    <!-- Product Swiper -->
+                    <div class="swiper mySwiper-furniture w-full">
+                        <div class="swiper-wrapper">
                             <?php
-                            // 🔥 USE SMART PRICE DISPLAY FUNCTION
-                            $priceData = calculateSmartPriceDisplay($row);
+                            mysqli_data_seek($result, 0);
+                            while ($row = mysqli_fetch_assoc($result)) :
+                                $priceData = calculateSmartPriceDisplay($row);
+                                $discount = (float)($row['discount'] ?? 0);
+                                $product_id = (int)$row['id'];
 
-                            // Get discount info
-                            $discount = (float)($row['discount'] ?? 0);
-                            $percent = (float)($row['percent'] ?? 0);
+                                $subcategory_name = $row['subcategory_name'] ?? 'uncategorized';
+                                $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
 
-                            $product_id = (int)$row['id'];
+                                $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                                $rating_q->bind_param("i", $product_id);
+                                $rating_q->execute();
+                                $rating_result = $rating_q->get_result()->fetch_assoc();
+                                $avg_rating = $rating_result['avg_rating'] ?? 0;
+                                $total_raters = $rating_result['total_raters'] ?? 0;
+                                $rating_q->close();
 
-                            // ✅ Get rating
-                            $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-                            $rating_q->bind_param("i", $product_id);
-                            $rating_q->execute();
-                            $rating_result = $rating_q->get_result()->fetch_assoc();
-                            $avg_rating = $rating_result['avg_rating'] ?? 0;
-                            $total_raters = $rating_result['total_raters'] ?? 0;
-                            $rating_q->close();
+                                $sold_q = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
+                                $sold_q->bind_param("i", $product_id);
+                                $sold_q->execute();
+                                $sold_result = $sold_q->get_result()->fetch_assoc();
+                                $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                                $sold_q->close();
 
-                            // 🆕 Get sold count
-                            $sold_q = $conn->prepare("
-                            SELECT SUM(quantity) as total_sold 
-                            FROM sold_items 
-                            WHERE product_id = ?
-                        ");
-                            $sold_q->bind_param("i", $product_id);
-                            $sold_q->execute();
-                            $sold_result = $sold_q->get_result()->fetch_assoc();
-                            $total_sold = (int)($sold_result['total_sold'] ?? 0);
-                            $sold_q->close();
-
-                            $full = floor($avg_rating);
-                            $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                            $empty = 5 - $full - $half;
-
-                            $view_count = (int)($row['view_count'] ?? 0);
+                                $full = floor($avg_rating);
+                                $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                                $empty = 5 - $full - $half;
+                                $view_count = (int)($row['view_count'] ?? 0);
                             ?>
-                            <div class="swiper-slide p-1">
-                                <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
-
-                                    <!-- Compare Checkbox - Top Right -->
-                                    <div class="absolute top-2 right-2 z-20">
-                                        <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
-                                            <input type="checkbox"
-                                                class="compare-checkbox hidden"
-                                                data-product-id="<?= $product_id ?>"
-                                                onchange="toggleCompare(this, <?= $product_id ?>)">
-                                            <i class="fas fa-plus text-black text-xs compare-icon"></i>
-                                            <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
-                                        </label>
-                                    </div>
-
-                                    <!-- Clickable entire card -->
-                                    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
-
-                                        <!-- Image Container with Overlay -->
-                                        <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-
-                                            <?php if (!empty($row['main_image'])): ?>
-                                                <img src="../../<?= $row['main_image'] ?>"
-                                                    loading="lazy"
-                                                    alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                    class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
-                                            <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                            <?php endif; ?>
+                                <div class="swiper-slide p-1 furniture-item" data-subcategory="<?= $sub_slug ?>">
+                                    <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
+                                        <div class="absolute top-2 right-2 z-20">
+                                            <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
+                                                <input type="checkbox" class="compare-checkbox hidden" data-product-id="<?= $product_id ?>" onchange="toggleCompare(this, <?= $product_id ?>)">
+                                                <i class="fas fa-plus text-black text-xs compare-icon"></i>
+                                                <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
+                                            </label>
                                         </div>
 
-                                        <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
-
-                                            <!-- Product Info -->
-                                            <div class="space-y-0.5 sm:space-y-1">
-                                                <!-- Title -->
-                                                <div class="relative w-full max-w-xs">
-                                                    <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
-                                                        <?= htmlspecialchars($row['product_name']) ?>
-                                                    </h3>
-                                                    <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
-                                                </div>
-
-                                                <!-- Rating Section -->
-                                                <div class="flex items-center justify-between">
-                                                    <?php if ($total_raters > 0): ?>
-                                                        <div class="flex items-center space-x-0.5">
-                                                            <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
-                                                                <?php
-                                                                for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                                if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                                for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
-                                                                ?>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
-                                                        </div>
-                                                        <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
-                                                    <?php else: ?>
-                                                        <div class="flex items-center space-x-0.5">
-                                                            <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
-                                                                <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- Description -->
-                                                <?php if (!empty($row['description'])): ?>
-                                                    <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
-                                                        <?= htmlspecialchars($row['description']) ?>
-                                                    </p>
+                                        <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
+                                            <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+                                                <?php if (!empty($row['main_image'])): ?>
+                                                    <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
                                                 <?php else: ?>
-                                                    <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
+                                                    <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                                        <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                                        </svg>
+                                                    </div>
                                                 <?php endif; ?>
+                                            </div>
 
-                                                <!-- 🔥 SMART PRICE DISPLAY -->
-                                                <div class="flex items-baseline gap-1 flex-wrap">
-                                                    <?php if ($discount > 0): ?>
-                                                        <!-- With Discount -->
-                                                        <p class="text-[11px] font-bold text-gray-900">
-                                                            <?= $priceData['display_price'] ?>
+                                            <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
+                                                <div class="space-y-0.5 sm:space-y-1">
+                                                    <div class="relative w-full max-w-xs">
+                                                        <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                            <?= htmlspecialchars($row['product_name']) ?>
+                                                        </h3>
+                                                        <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
+                                                    </div>
+
+                                                    <div class="flex items-center justify-between">
+                                                        <?php if ($total_raters > 0): ?>
+                                                            <div class="flex items-center space-x-0.5">
+                                                                <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
+                                                                    <?php
+                                                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                                    ?>
+                                                                </div>
+                                                                <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                                            </div>
+                                                            <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
+                                                        <?php else: ?>
+                                                            <div class="flex items-center space-x-0.5">
+                                                                <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
+                                                                    <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                                </div>
+                                                                <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <?php if (!empty($row['description'])): ?>
+                                                        <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
+                                                            <?= htmlspecialchars($row['description']) ?>
                                                         </p>
-                                                        <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                                                     <?php else: ?>
-                                                        <!-- No Discount -->
-                                                        <p class="text-[11px] font-bold text-gray-900">
-                                                            <?= $priceData['display_price'] ?>
-                                                        </p>
+                                                        <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
                                                     <?php endif; ?>
+
+                                                    <div class="flex items-baseline gap-1 flex-wrap">
+                                                        <?php if ($discount > 0): ?>
+                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                            <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                                                        <?php else: ?>
+                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                                                    <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
+                                                        <input type="hidden" name="id" value="<?= $product_id ?>">
+                                                        <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
+                                                            <i class="fa-solid fa-bag-shopping text-[11px]"></i>
+                                                            <span>View</span>
+                                                        </button>
+                                                    </form>
+
+                                                    <div class="flex items-center gap-2 text-[9px] text-gray-500">
+                                                        <?php if ($view_count > 0): ?>
+                                                            <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                                viewing
+                                                                <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                                                            </div>
+                                                        <?php endif; ?>
+
+                                                        <?php if ($total_sold > 0): ?>
+                                                            <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                                Sold
+                                                                <span class="font-medium"><?= number_format($total_sold) ?></span>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <!-- 🔥 NEW: Action Bar - View Button, Viewing, Sold (Side by Side) -->
-                                            <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
-                                                <!-- View Button -->
-                                            <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
-    <input type="hidden" name="id" value="<?= $product_id ?>">
-    <button type="submit"
-        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
-        <i class="fa-solid fa-bag-shopping text-[11px]"></i>
-        <span>View</span>
-    </button>
-</form>
-
-                                                <!-- Stats Container -->
-                                                <div class="flex items-center gap-2 text-[9px] text-gray-500">
-                                                    <!-- Viewing Count -->
-                                                    <?php if ($view_count > 0): ?>
-                                                        <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
-                                                            viewing
-                                                            <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-
-                                                    <!-- Sold Count -->
-                                                    <?php if ($total_sold > 0): ?>
-                                                        <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                                                            Sold
-                                                            <span class="font-medium"><?= number_format($total_sold) ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
-                        <?php endwhile; ?>
+                            <?php endwhile; ?>
+                        </div>
                     </div>
                 </div>
+
+                <!-- RIGHT SIDE: BED FURNITURE -->
+                <div class="space-y-4">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-1 h-8 bg-neutral-900"></div>
+                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-light text-neutral-900 tracking-tight">
+                                Tiles
+                            </h2>
+                        </div>
+                        <a href="#" class="text-xs sm:text-sm text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-1 transition-colors duration-300 group">
+                            See All
+                            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Label: Suggestions -->
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
+
+                            Suggestions for you
+                        </p>
+                    </div>
+
+                 <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
+    <div class="flex flex-wrap gap-2 mb-3">
+        <?php
+        // Get subcategories for Tiles/Aircon from actual product variants
+        $tiles_cat_query = $conn->prepare("SELECT id FROM categories WHERE name LIKE '%aircon%' OR name LIKE '%tiles%' LIMIT 1");
+        $tiles_cat_query->execute();
+        $tiles_cat_result = $tiles_cat_query->get_result();
+
+        if ($tiles_cat_row = $tiles_cat_result->fetch_assoc()) {
+            $tiles_cat_id = $tiles_cat_row['id'];
+            $tiles_cat_query->close();
+
+            // Get 3 random unique subcategories with their IDs
+            $tiles_sub_query = $conn->prepare("
+                SELECT DISTINCT ps.id, ps.subcategory_name
+                FROM product_subcategories ps
+                WHERE ps.category_id = ?
+                ORDER BY RAND()
+                LIMIT 3
+            ");
+            $tiles_sub_query->bind_param("i", $tiles_cat_id);
+            $tiles_sub_query->execute();
+            $tiles_sub_result = $tiles_sub_query->get_result();
+
+            // ✅ CHANGED: Display filter buttons as RECOMMENDATIONS LINKS
+            while ($tiles_sub_row = $tiles_sub_result->fetch_assoc()):
+                $tiles_sub_name = $tiles_sub_row['subcategory_name'];
+                $tiles_sub_id = $tiles_sub_row['id'];
+        ?>
+                <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $tiles_sub_id ?>&from=home"
+                   class="bed-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
+                   
+                    <?= ucfirst(htmlspecialchars($tiles_sub_name)) ?>
+                </a>
+        <?php
+            endwhile;
+            $tiles_sub_query->close();
+        } else {
+            $tiles_cat_query->close();
+        }
+        ?>
+    </div>
+
+
+                    <!-- Product Swiper -->
+                    <div class="swiper mySwiper-bedfurniture w-full">
+                        <div class="swiper-wrapper">
+                            <?php
+                            if (isset($resultss) && $resultss) {
+                                mysqli_data_seek($resultss, 0);
+                                while ($row = mysqli_fetch_assoc($resultss)) :
+                                    $priceData = calculateSmartPriceDisplay($row);
+                                    $discount = (float)($row['discount'] ?? 0);
+                                    $product_id = (int)$row['id'];
+
+                                    $subcategory_name = $row['subcategory_name'] ?? 'uncategorized';
+                                    $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
+
+                                    $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                                    $rating_q->bind_param("i", $product_id);
+                                    $rating_q->execute();
+                                    $rating_result = $rating_q->get_result()->fetch_assoc();
+                                    $avg_rating = $rating_result['avg_rating'] ?? 0;
+                                    $total_raters = $rating_result['total_raters'] ?? 0;
+                                    $rating_q->close();
+
+                                    $sold_q = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
+                                    $sold_q->bind_param("i", $product_id);
+                                    $sold_q->execute();
+                                    $sold_result = $sold_q->get_result()->fetch_assoc();
+                                    $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                                    $sold_q->close();
+
+                                    $full = floor($avg_rating);
+                                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                                    $empty = 5 - $full - $half;
+                                    $view_count = (int)($row['view_count'] ?? 0);
+                            ?>
+                                    <div class="swiper-slide p-1 bed-item" data-subcategory="<?= $sub_slug ?>">
+                                        <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
+                                            <div class="absolute top-2 right-2 z-20">
+                                                <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
+                                                    <input type="checkbox" class="compare-checkbox hidden" data-product-id="<?= $product_id ?>" onchange="toggleCompare(this, <?= $product_id ?>)">
+                                                    <i class="fas fa-plus text-black text-xs compare-icon"></i>
+                                                    <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
+                                                </label>
+                                            </div>
+
+                                            <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
+                                                <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
+                                                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+                                                    <?php if (!empty($row['main_image'])): ?>
+                                                        <img src="../../<?= $row['main_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['product_name']) ?>" class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
+                                                    <?php else: ?>
+                                                        <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                                            <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
+                                                    <div class="space-y-0.5 sm:space-y-1">
+                                                        <div class="relative w-full max-w-xs">
+                                                            <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                                <?= htmlspecialchars($row['product_name']) ?>
+                                                            </h3>
+                                                            <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
+                                                        </div>
+
+                                                        <div class="flex items-center justify-between">
+                                                            <?php if ($total_raters > 0): ?>
+                                                                <div class="flex items-center space-x-0.5">
+                                                                    <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
+                                                                        <?php
+                                                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                                        ?>
+                                                                    </div>
+                                                                    <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
+                                                                </div>
+                                                                <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
+                                                            <?php else: ?>
+                                                                <div class="flex items-center space-x-0.5">
+                                                                    <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
+                                                                        <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                                    </div>
+                                                                    <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+
+                                                        <?php if (!empty($row['description'])): ?>
+                                                            <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
+                                                                <?= htmlspecialchars($row['description']) ?>
+                                                            </p>
+                                                        <?php else: ?>
+                                                            <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
+                                                        <?php endif; ?>
+
+                                                        <div class="flex items-baseline gap-1 flex-wrap">
+                                                            <?php if ($discount > 0): ?>
+                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                                <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                                                            <?php else: ?>
+                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                                                        <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
+                                                            <input type="hidden" name="id" value="<?= $product_id ?>">
+                                                            <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
+                                                                <i class="fa-solid fa-bag-shopping text-[11px]"></i>
+                                                                <span>View</span>
+                                                            </button>
+                                                        </form>
+
+                                                        <div class="flex items-center gap-2 text-[9px] text-gray-500">
+                                                            <?php if ($view_count > 0): ?>
+                                                                <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                                                                    viewing
+                                                                    <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <?php if ($total_sold > 0): ?>
+                                                                <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                                    sold
+                                                                    <span class="font-medium"><?= number_format($total_sold) ?></span>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                            <?php
+                                endwhile;
+                            }
+                            ?>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    /* Improved Button Styles */
+                    .bed-filter-btn {
+                        border-color: #d1d5db;
+                        background: white;
+                        color: #4b5563;
+                        text-decoration: none;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    }
+
+
+                    .compare-checkbox:checked~.compare-icon {
+                        display: none !important;
+                    }
+
+                    .compare-checkbox:checked~.compare-icon-checked {
+                        display: inline-block !important;
+                    }
+
+                    .compare-icon-checked {
+                        display: none;
+                    }
+
+                    .compare-checkbox:checked~.compare-icon,
+                    .compare-checkbox:checked~.compare-icon-checked {
+                        animation: scaleIn 0.3s ease;
+                    }
+
+                    @keyframes scaleIn {
+                        0% {
+                            transform: scale(0);
+                        }
+
+                        50% {
+                            transform: scale(1.2);
+                        }
+
+                        100% {
+                            transform: scale(1);
+                        }
+                    }
+
+                    @keyframes slide-up {
+                        from {
+                            transform: translateY(100%);
+                            opacity: 0;
+                        }
+
+                        to {
+                            transform: translateY(0);
+                            opacity: 1;
+                        }
+                    }
+
+                    @keyframes slide-down {
+                        from {
+                            transform: translateY(0);
+                            opacity: 1;
+                        }
+
+                        to {
+                            transform: translateY(100%);
+                            opacity: 0;
+                        }
+                    }
+
+                    .animate-slide-up {
+                        animation: slide-up 0.3s ease;
+                    }
+
+                    /* Filter Button Styles */
+                    .furniture-filter-btn,
+                    .bed-filter-btn {
+                        border-color: #d1d5db;
+                        background: white;
+                        color: #6b7280;
+                    }
+
+                    .furniture-filter-btn:hover,
+                    .bed-filter-btn:hover {
+                        border-color: #f97316;
+                        color: #f97316;
+                    }
+
+                    .furniture-filter-btn.active {
+                        border-color: #f97316;
+                        background: #f97316;
+                        color: white;
+                    }
+
+                    .bed-filter-btn.active {
+                        border-color: #3b82f6;
+                        background: #3b82f6;
+                        color: white;
+                    }
+
+                    .furniture-item,
+                    .bed-item {
+                        transition: opacity 0.3s ease, transform 0.3s ease;
+                    }
+
+                    .furniture-item.hidden,
+                    .bed-item.hidden {
+                        display: none !important;
+                    }
+                </style>
+
+                <script>
+                    // Initialize Swiper for Furniture
+                    let furnitureSwiper = new Swiper('.mySwiper-furniture', {
+                        slidesPerView: 2,
+                        spaceBetween: 10,
+                        breakpoints: {
+                            640: {
+                                slidesPerView: 2,
+                                spaceBetween: 15,
+                            },
+                            1024: {
+                                slidesPerView: 4,
+                                spaceBetween: 20,
+                            },
+                        }
+                    });
+
+                    // Initialize Swiper for Bed Furniture
+                    let bedFurnitureSwiper = new Swiper('.mySwiper-bedfurniture', {
+                        slidesPerView: 2,
+                        spaceBetween: 10,
+                        breakpoints: {
+                            640: {
+                                slidesPerView: 2,
+                                spaceBetween: 15,
+                            },
+                            1024: {
+                                slidesPerView: 4,
+                                spaceBetween: 20,
+                            },
+                        }
+                    });
+
+                    // Filter Furniture by Subcategory
+                    function filterFurniture(subcategory) {
+                        const items = document.querySelectorAll('.furniture-item');
+                        const buttons = document.querySelectorAll('.furniture-filter-btn');
+
+                        // Update active button
+                        buttons.forEach(btn => {
+                            if (btn.getAttribute('data-filter') === subcategory) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+
+                        // Filter items
+                        items.forEach(item => {
+                            if (subcategory === 'all') {
+                                item.classList.remove('hidden');
+                            } else {
+                                if (item.getAttribute('data-subcategory') === subcategory) {
+                                    item.classList.remove('hidden');
+                                } else {
+                                    item.classList.add('hidden');
+                                }
+                            }
+                        });
+
+                        // Update Swiper after filtering
+                        setTimeout(() => {
+                            furnitureSwiper.update();
+                        }, 100);
+                    }
+
+                    // Filter Bed Furniture by Subcategory
+                    function filterBedFurniture(subcategory) {
+                        const items = document.querySelectorAll('.bed-item');
+                        const buttons = document.querySelectorAll('.bed-filter-btn');
+
+                        // Update active button
+                        buttons.forEach(btn => {
+                            if (btn.getAttribute('data-filter') === subcategory) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+
+                        // Filter items
+                        items.forEach(item => {
+                            if (subcategory === 'all') {
+                                item.classList.remove('hidden');
+                            } else {
+                                if (item.getAttribute('data-subcategory') === subcategory) {
+                                    item.classList.remove('hidden');
+                                } else {
+                                    item.classList.add('hidden');
+                                }
+                            }
+                        });
+
+                        // Update Swiper after filtering
+                        setTimeout(() => {
+                            bedFurnitureSwiper.update();
+                        }, 100);
+                    }
+
+                    let compareProducts = JSON.parse(localStorage.getItem('compareProducts') || '[]');
+
+                    function updateCompareButton() {
+                        const compareBtn = document.getElementById('compareBtn');
+                        const compareCount = document.getElementById('compareCount');
+
+                        if (compareProducts.length > 0) {
+                            compareBtn.classList.remove('hidden');
+                            compareBtn.classList.add('flex');
+                            compareCount.textContent = compareProducts.length;
+                        } else {
+                            compareBtn.classList.add('hidden');
+                            compareBtn.classList.remove('flex');
+                        }
+                    }
+
+                    function toggleCompare(checkbox, productId) {
+                        event.stopPropagation();
+
+                        if (checkbox.checked) {
+                            if (!compareProducts.includes(productId)) {
+                                compareProducts.push(productId);
+                                showToast('Product added to comparison');
+                            }
+                        } else {
+                            compareProducts = compareProducts.filter(id => id !== productId);
+                            showToast('Product removed from comparison');
+                        }
+
+                        localStorage.setItem('compareProducts', JSON.stringify(compareProducts));
+                        updateCompareButton();
+                    }
+
+                    function goToComparison() {
+                        if (compareProducts.length < 2) {
+                            alert('Please select at least 2 products to compare.');
+                            return;
+                        }
+                        window.location.href = 'index-shopcompare-C.php?products=' + compareProducts.join(',');
+                    }
+
+                    function showToast(message) {
+                        const toast = document.createElement('div');
+                        toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
+                        toast.textContent = message;
+                        document.body.appendChild(toast);
+
+                        setTimeout(() => {
+                            toast.style.animation = 'slide-down 0.3s ease';
+                            setTimeout(() => toast.remove(), 300);
+                        }, 2000);
+                    }
+
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
+                            const productId = parseInt(checkbox.dataset.productId);
+                            if (compareProducts.includes(productId)) {
+                                checkbox.checked = true;
+                            }
+                        });
+                        updateCompareButton();
+                    });
+                </script>
             </div>
         </div>
-
-        <style>
-            /* Compare checkbox styles */
-            .compare-checkbox:checked~.compare-icon {
-                display: none !important;
-            }
-
-            .compare-checkbox:checked~.compare-icon-checked {
-                display: inline-block !important;
-            }
-
-            .compare-icon-checked {
-                display: none;
-            }
-
-            .compare-checkbox:checked~.compare-icon,
-            .compare-checkbox:checked~.compare-icon-checked {
-                animation: scaleIn 0.3s ease;
-            }
-
-            @keyframes scaleIn {
-                0% {
-                    transform: scale(0);
-                }
-
-                50% {
-                    transform: scale(1.2);
-                }
-
-                100% {
-                    transform: scale(1);
-                }
-            }
-        </style>
-
-        <script>
-            // Store selected products for comparison
-            let compareProducts = JSON.parse(localStorage.getItem('compareProducts') || '[]');
-
-            // Update compare button visibility and count
-            function updateCompareButton() {
-                const compareBtn = document.getElementById('compareBtn');
-                const compareCount = document.getElementById('compareCount');
-
-                if (compareProducts.length > 0) {
-                    compareBtn.classList.remove('hidden');
-                    compareBtn.classList.add('flex');
-                    compareCount.textContent = compareProducts.length;
-                } else {
-                    compareBtn.classList.add('hidden');
-                    compareBtn.classList.remove('flex');
-                }
-            }
-
-            // Toggle product in comparison list
-            function toggleCompare(checkbox, productId) {
-                event.stopPropagation();
-
-                if (checkbox.checked) {
-                    if (!compareProducts.includes(productId)) {
-                        compareProducts.push(productId);
-                        showToast('Product added to comparison');
-                    }
-                } else {
-                    compareProducts = compareProducts.filter(id => id !== productId);
-                    showToast('Product removed from comparison');
-                }
-
-                localStorage.setItem('compareProducts', JSON.stringify(compareProducts));
-                updateCompareButton();
-            }
-
-            // Navigate to comparison page
-            function goToComparison() {
-                if (compareProducts.length < 2) {
-                    alert('Please select at least 2 products to compare.');
-                    return;
-                }
-
-                window.location.href = 'index-shopcompare-C.php?products=' + compareProducts.join(',');
-            }
-
-            // Show toast notification
-            function showToast(message) {
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
-                toast.textContent = message;
-
-                document.body.appendChild(toast);
-
-                setTimeout(() => {
-                    toast.style.animation = 'slide-down 0.3s ease';
-                    setTimeout(() => toast.remove(), 300);
-                }, 2000);
-            }
-
-            // Initialize on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
-                    const productId = parseInt(checkbox.dataset.productId);
-                    if (compareProducts.includes(productId)) {
-                        checkbox.checked = true;
-                    }
-                });
-
-                updateCompareButton();
-            });
-
-            // Add animation styles
-            const style = document.createElement('style');
-            style.textContent = `
-            @keyframes slide-up {
-                from {
-                    transform: translateY(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-            
-            @keyframes slide-down {
-                from {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateY(100%);
-                    opacity: 0;
-                }
-            }
-            
-            .animate-slide-up {
-                animation: slide-up 0.3s ease;
-            }
-        `;
-            document.head.appendChild(style);
-        </script>
     </section>
 
-    <section>
-        <!-- Modal for "Not Available" -->
-        <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
-                <div class="text-center">
-                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
-                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-medium text-neutral-900 mb-2">Not Available</h3>
-                    <p class="text-sm text-neutral-600 mb-6">This promotion is currently unavailable. Please check back later.</p>
-                    <button onclick="closeModal()" class="w-full bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
 
-        <script>
-            function showUnavailable(event) {
-                event.preventDefault();
-                document.getElementById('unavailableModal').classList.remove('hidden');
-            }
-
-            function closeModal() {
-                document.getElementById('unavailableModal').classList.add('hidden');
-            }
-
-            // Close modal when clicking outside
-            document.getElementById('unavailableModal')?.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-        </script>
-
-        <section class="py-7 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-full mx-auto">
-                <!-- Header -->
-                <div class="mb-8" data-aos="fade-up">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-1 h-8 bg-neutral-900"></div>
-                        <h2 class="text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
-                            Featured Promotions
-                        </h2>
-                    </div>
-                    <p class="text-neutral-600 text-base lg:text-lg ml-7 font-light">
-                        Discover our latest deals and special offers
-                    </p>
-                </div>
-
-                <!-- 2x2 Grid Content -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <!-- Box 1 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/display2.webp"
-                                alt="Promo 1"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Style to Modern your house!
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Box 2 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/display1.webp"
-                                alt="Promo 2"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Chair furniture deals below ₱5,000
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Box 3 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/gif2.gif"
-                                alt="Promo 3"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Keep Shopping For Holiday
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Box 4 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/display3.webp"
-                                alt="Promo 4"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Upgrade Your Living Space Today!
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                </div>
-            </div>
-        </section>
-    </section>
 
     <section>
         <?php
@@ -2069,1083 +2399,123 @@ function displayTrendingBadge($view_count)
 
     </section>
 
-    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
 
-        <!-- Header with proper alignment -->
-        <div class="flex items-center justify-between mb-6 mt-2" data-aos="fade-up">
-            <!-- Left Side: Bar + Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-1 h-8 bg-neutral-900"></div>
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
-                    Bed Furniture
-                </h2>
-            </div>
+    <section class="px-4 ">
+        <!-- Combined Container for Both Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-            <!-- Right Side: Compare Button + See All -->
-            <div class="flex items-center gap-3">
-                <!-- Compare Button (Shows when products selected) -->
-                <div class="relative group inline-block">
-                    <button id="compareBtn" onclick="goToComparison()"
-                        class="hidden items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white transition-all duration-300 text-sm font-normal rounded">
-
-                        Compare (<span id="compareCount">0</span>)
-                    </button>
-
-                    <!-- Tooltip -->
-                    <div
-                        class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        Compare selected products
+            <!-- LEFT SECTION: Top Sales (10% Discount) -->
+            <?php if (mysqli_num_rows($material_results) > 0): ?>
+                <div class="p-4 rounded-lg">
+                    <!-- Header -->
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl lg:text-3xl text-black mb-1 tracking-tight" data-aos="fade-up">Top Sales</h2>
+                        <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
+                            Up to <span class="text-red-500">10% OFF</span>
+                        </h3>
+                        <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
                     </div>
-                </div>
 
-
-                <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
-                    See All
-                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- Products Layout: Featured Image + Product Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-0 items-center" data-aos="fade-up" data-aos-delay="300">
-
-            <!-- Left: Featured Image (Hidden on mobile, shown on desktop) -->
-            <div class="hidden lg:block lg:col-span-3 xl:col-span-2 relative z-0">
-                <div class="rounded-lg overflow-hidden h-[400px] group relative">
-                    <img src="../img/category/4.png"
-                        alt="Furniture Collection"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 text-white">
-                        <h3 class="text-xl font-light mb-1">Bed Furniture</h3>
-                        <p class="text-xs opacity-90">Discover our collection</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Product Swiper -->
-            <div class="col-span-1 lg:col-span-9 xl:col-span-10 lg:-ml-16 relative z-10">
-                <div class="swiper mySwiper-products w-full">
-                    <div class="swiper-wrapper">
-                        <?php while ($row = mysqli_fetch_assoc($resultss)) : ?>
-                            <?php
-                            // 🔥 USE SMART PRICE DISPLAY FUNCTION
-                            $priceData = calculateSmartPriceDisplay($row);
-
-                            // Get discount info
-                            $discount = (float)($row['discount'] ?? 0);
-                            $percent = (float)($row['percent'] ?? 0);
-
-                            $product_id = (int)$row['id'];
-
-                            // ✅ Get rating
-                            $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-                            $rating_q->bind_param("i", $product_id);
-                            $rating_q->execute();
-                            $rating_result = $rating_q->get_result()->fetch_assoc();
-                            $avg_rating = $rating_result['avg_rating'] ?? 0;
-                            $total_raters = $rating_result['total_raters'] ?? 0;
-                            $rating_q->close();
-
-                            // 🆕 Get sold count
-                            $sold_q = $conn->prepare("
-                            SELECT SUM(quantity) as total_sold 
-                            FROM sold_items 
-                            WHERE product_id = ?
-                        ");
-                            $sold_q->bind_param("i", $product_id);
-                            $sold_q->execute();
-                            $sold_result = $sold_q->get_result()->fetch_assoc();
-                            $total_sold = (int)($sold_result['total_sold'] ?? 0);
-                            $sold_q->close();
-
-                            $full = floor($avg_rating);
-                            $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                            $empty = 5 - $full - $half;
-
-                            $view_count = (int)($row['view_count'] ?? 0);
-                            ?>
-                            <div class="swiper-slide p-1">
-                                <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
-
-                                    <!-- Compare Checkbox - Top Right -->
-                                    <div class="absolute top-2 right-2 z-20">
-                                        <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
-                                            <input type="checkbox"
-                                                class="compare-checkbox hidden"
-                                                data-product-id="<?= $product_id ?>"
-                                                onchange="toggleCompare(this, <?= $product_id ?>)">
-                                            <i class="fas fa-plus text-black text-xs compare-icon"></i>
-                                            <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
-                                        </label>
-                                    </div>
-
-                                    <!-- Clickable entire card -->
-                                    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
-
-                                        <!-- Image Container with Overlay -->
-                                        <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-
-                                            <?php if (!empty($row['main_image'])): ?>
-                                                <img src="../../<?= $row['main_image'] ?>"
-                                                    loading="lazy"
-                                                    alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                    class="w-full h-full object-cover sm:object-contain transition-all duration-700 group-hover:brightness-105" />
-                                            <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
-
-                                            <!-- Product Info -->
-                                            <div class="space-y-0.5 sm:space-y-1">
-                                                <!-- Title -->
-                                                <div class="relative w-full max-w-xs">
-                                                    <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
-                                                        <?= htmlspecialchars($row['product_name']) ?>
-                                                    </h3>
-                                                    <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
-                                                </div>
-
-                                                <!-- Rating Section -->
-                                                <div class="flex items-center justify-between">
-                                                    <?php if ($total_raters > 0): ?>
-                                                        <div class="flex items-center space-x-0.5">
-                                                            <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
-                                                                <?php
-                                                                for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                                if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                                for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
-                                                                ?>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
-                                                        </div>
-                                                        <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
-                                                    <?php else: ?>
-                                                        <div class="flex items-center space-x-0.5">
-                                                            <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
-                                                                <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- Description -->
-                                                <?php if (!empty($row['description'])): ?>
-                                                    <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
-                                                        <?= htmlspecialchars($row['description']) ?>
-                                                    </p>
-                                                <?php else: ?>
-                                                    <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
-                                                <?php endif; ?>
-
-                                                <!-- 🔥 SMART PRICE DISPLAY -->
-                                                <div class="flex items-baseline gap-1 flex-wrap">
-                                                    <?php if ($discount > 0): ?>
-                                                        <!-- With Discount -->
-                                                        <p class="text-[11px] font-bold text-gray-900">
-                                                            <?= $priceData['display_price'] ?>
-                                                        </p>
-                                                        <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                                                    <?php else: ?>
-                                                        <!-- No Discount -->
-                                                        <p class="text-[11px] font-bold text-gray-900">
-                                                            <?= $priceData['display_price'] ?>
-                                                        </p>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-
-                                            <!-- 🔥 NEW: Action Bar - View Button, Viewing, Sold (Side by Side) -->
-                                            <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
-                                                <!-- View Button -->
-                                                                                       <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
-    <input type="hidden" name="id" value="<?= $product_id ?>">
-    <button type="submit"
-        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
-        <i class="fa-solid fa-bag-shopping text-[11px]"></i>
-        <span>View</span>
-    </button>
-</form>
-
-                                                <!-- Stats Container -->
-                                                <div class="flex items-center gap-2 text-[9px] text-gray-500">
-                                                    <!-- Viewing Count -->
-                                                    <?php if ($view_count > 0): ?>
-                                                        <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
-                                                            viewing
-                                                            <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-
-                                                    <!-- Sold Count -->
-                                                    <?php if ($total_sold > 0): ?>
-                                                        <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                                                            sold
-                                                            <span class="font-medium"><?= number_format($total_sold) ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <style>
-            /* Compare checkbox styles */
-            .compare-checkbox:checked~.compare-icon {
-                display: none !important;
-            }
-
-            .compare-checkbox:checked~.compare-icon-checked {
-                display: inline-block !important;
-            }
-
-            .compare-icon-checked {
-                display: none;
-            }
-
-            .compare-checkbox:checked~.compare-icon,
-            .compare-checkbox:checked~.compare-icon-checked {
-                animation: scaleIn 0.3s ease;
-            }
-
-            @keyframes scaleIn {
-                0% {
-                    transform: scale(0);
-                }
-
-                50% {
-                    transform: scale(1.2);
-                }
-
-                100% {
-                    transform: scale(1);
-                }
-            }
-
-            /* From Uiverse.io by vinodjangid07 */
-            .Btn {
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                width: 45px;
-                height: 45px;
-                border: none;
-                border-radius: 0px;
-                cursor: pointer;
-                position: relative;
-                overflow: hidden;
-                transition-duration: .3s;
-                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-                background-color: black;
-            }
-
-            /* icon */
-            .Btn .sign {
-                width: 100%;
-                font-size: 1.5em;
-                color: white;
-                transition-duration: .3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            /* text */
-            .Btn .text {
-                position: absolute;
-                right: 0%;
-                width: 0%;
-                opacity: 0;
-                color: white;
-                transition-duration: .3s;
-            }
-
-            /* hover effect */
-            .Btn:hover {
-                width: 125px;
-                border-radius: 0px;
-                transition-duration: .3s;
-            }
-
-            .Btn:hover .sign {
-                width: 30%;
-                transition-duration: .3s;
-                padding-left: 20px;
-            }
-
-            .Btn:hover .text {
-                opacity: 1;
-                width: 70%;
-                transition-duration: .3s;
-                padding-right: 20px;
-            }
-
-            /* click effect */
-            .Btn:active {
-                transform: translate(2px, 2px);
-            }
-        </style>
-
-        <script>
-            // Store selected products for comparison
-            let compareProductssbedfurniture = JSON.parse(localStorage.getItem('compareProducts') || '[]');
-
-            // Update compare button visibility and count
-            function updateCompareButton() {
-                const compareBtn = document.getElementById('compareBtn');
-                const compareCount = document.getElementById('compareCount');
-
-                if (compareProductssbedfurniture.length > 0) {
-                    compareBtn.classList.remove('hidden');
-                    compareBtn.classList.add('flex');
-                    compareCount.textContent = compareProductssbedfurniture.length;
-                } else {
-                    compareBtn.classList.add('hidden');
-                    compareBtn.classList.remove('flex');
-                }
-            }
-
-            // Toggle product in comparison list
-            function toggleCompare(checkbox, productId) {
-                // Prevent click from propagating to the link
-                event.stopPropagation();
-
-                if (checkbox.checked) {
-                    // Add to comparison (NO LIMIT - compare unlimited products)
-                    if (!compareProductssbedfurniture.includes(productId)) {
-                        compareProductssbedfurniture.push(productId);
-                        showToast('Product added to comparison');
-                    }
-                } else {
-                    // Remove from comparison
-                    compareProductssbedfurniture = compareProductssbedfurniture.filter(id => id !== productId);
-                    showToast('Product removed from comparison');
-                }
-
-                // Save to localStorage
-                localStorage.setItem('compareProducts', JSON.stringify(compareProductssbedfurniture));
-                updateCompareButton();
-            }
-
-            // Navigate to comparison page
-            function goToComparison() {
-                if (compareProductssbedfurniture.length < 2) {
-                    alert('Please select at least 2 products to compare.');
-                    return;
-                }
-
-                window.location.href = 'index-shopcompare-C.php?products=' + compareProductssbedfurniture.join(',');
-            }
-
-            // Show toast notification
-            function showToast(message) {
-                // Create toast element
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
-                toast.textContent = message;
-
-                document.body.appendChild(toast);
-
-                // Remove after 2 seconds
-                setTimeout(() => {
-                    toast.style.animation = 'slide-down 0.3s ease';
-                    setTimeout(() => toast.remove(), 300);
-                }, 2000);
-            }
-
-            // Initialize on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                // Restore checked state from localStorage
-                document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
-                    const productId = parseInt(checkbox.dataset.productId);
-                    if (compareProductssbedfurniture.includes(productId)) {
-                        checkbox.checked = true;
-                    }
-                });
-
-                updateCompareButton();
-            });
-
-            // Add animation styles
-            const stylebed = document.createElement('styles');
-            style.textContent = `
-                @keyframes slide-up {
-                    from {
-                        transform: translateY(100%);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-                
-                @keyframes slide-down {
-                    from {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateY(100%);
-                        opacity: 0;
-                    }
-                }
-                
-                .animate-slide-up {
-                    animation: slide-up 0.3s ease;
-                }
-            `;
-            document.head.appendChild(stylebed);
-        </script>
-    </section>
-
-    <section class="px-2 sm:px-4 lg:px-6 py-1 sm:py-1 mt-4">
-
-        <!-- Header with proper alignment -->
-        <div class="flex items-center justify-between mb-6 mt-2" data-aos="fade-up">
-            <!-- Left Side: Bar + Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-1 h-8 bg-neutral-900"></div>
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-neutral-900 tracking-tight">
-                    Building Materials
-                </h2>
-            </div>
-
-            <!-- Right Side: Compare Button + See All -->
-            <div class="flex items-center gap-3">
-                <!-- Compare Button (Shows when products selected) -->
-                <div class="relative group inline-block">
-                    <button id="compareBtn" onclick="goToComparison()"
-                        class="hidden items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white transition-all duration-300 text-sm font-normal rounded">
-
-                        Compare (<span id="compareCount">0</span>)
-                    </button>
-
-                    <!-- Tooltip -->
-                    <div
-                        class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        Compare selected products
-                    </div>
-                </div>
-
-
-                <a href="#" class="text-sm sm:text-base text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-2 transition-colors duration-300 group">
-                    See All
-                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- Products Layout: Featured Image + Product Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-0 items-center" data-aos="fade-up" data-aos-delay="300">
-
-            <!-- Left: Featured Image (Hidden on mobile, shown on desktop) -->
-            <div class="hidden lg:block lg:col-span-3 xl:col-span-2 relative z-0">
-                <div class="rounded-lg overflow-hidden h-[400px] group relative">
-                    <img src="../img/category/3.png"
-                        alt="Furniture Collection"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 text-white">
-                        <h3 class="text-xl font-light mb-1">Building Materials</h3>
-                        <p class="text-xs opacity-90">Discover our collection</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Product Swiper -->
-            <div class="col-span-1 lg:col-span-9 xl:col-span-10 lg:-ml-16 relative z-10">
-                <div class="swiper mySwiper-products w-full">
-                    <div class="swiper-wrapper">
-                        <?php while ($row = mysqli_fetch_assoc($results)) : ?>
-                            <?php
-                            // 🔥 USE SMART PRICE DISPLAY FUNCTION
-                            $priceData = calculateSmartPriceDisplay($row);
-
-                            // Get discount info
-                            $discount = (float)($row['discount'] ?? 0);
-                            $percent = (float)($row['percent'] ?? 0);
-
-                            $product_id = (int)$row['id'];
-
-                            // ✅ Get rating
-                            $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
-                            $rating_q->bind_param("i", $product_id);
-                            $rating_q->execute();
-                            $rating_result = $rating_q->get_result()->fetch_assoc();
-                            $avg_rating = $rating_result['avg_rating'] ?? 0;
-                            $total_raters = $rating_result['total_raters'] ?? 0;
-                            $rating_q->close();
-
-                            // 🆕 Get sold count
-                            $sold_q = $conn->prepare("
-                            SELECT SUM(quantity) as total_sold 
-                            FROM sold_items 
-                            WHERE product_id = ?
-                        ");
-                            $sold_q->bind_param("i", $product_id);
-                            $sold_q->execute();
-                            $sold_result = $sold_q->get_result()->fetch_assoc();
-                            $total_sold = (int)($sold_result['total_sold'] ?? 0);
-                            $sold_q->close();
-
-                            $full = floor($avg_rating);
-                            $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                            $empty = 5 - $full - $half;
-
-                            $view_count = (int)($row['view_count'] ?? 0);
-                            ?>
-                            <div class="swiper-slide p-1">
-                                <!-- Product Card -->
-                                <div class="relative rounded overflow-hidden group hover:shadow-2xl transition-all duration-500 ease-out h-[240px] sm:h-[280px] lg:h-[340px] bg-white">
-
-                                    <!-- Compare Checkbox - Top Right -->
-                                    <div class="absolute top-2 right-2 z-20">
-                                        <label class="flex items-center justify-center w-7 h-7 bg-white hover:bg-gray-100 rounded cursor-pointer transition-all duration-300 hover:scale-110 shadow">
-                                            <input type="checkbox"
-                                                class="compare-checkbox hidden"
-                                                data-product-id="<?= $product_id ?>"
-                                                onchange="toggleCompare(this, <?= $product_id ?>)">
-                                            <i class="fas fa-plus text-black text-xs compare-icon"></i>
-                                            <i class="fas fa-check text-black text-xs compare-icon-checked hidden"></i>
-                                        </label>
-                                    </div>
-
-                                    <!-- Clickable entire card -->
-                                    <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
-
-                                        <!-- Image Container with Overlay -->
-                                        <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-
-                                            <?php if (!empty($row['main_image'])): ?>
-                                                <img src="../../<?= $row['main_image'] ?>"
-                                                    loading="lazy"
-                                                    alt="<?= htmlspecialchars($row['product_name']) ?>"
-                                                    class="w-full h-full object-contain sm:object-contain transition-all duration-700 group-hover:brightness-105" />
-                                            <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <!-- Content Section -->
-                                        <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
-
-                                            <!-- Product Info -->
-                                            <div class="space-y-0.5 sm:space-y-1">
-                                                <!-- Title -->
-                                                <div class="relative w-full max-w-xs">
-                                                    <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
-                                                        <?= htmlspecialchars($row['product_name']) ?>
-                                                    </h3>
-                                                    <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
-                                                </div>
-
-                                                <!-- Rating Section -->
-                                                <div class="flex items-center justify-between">
-                                                    <?php if ($total_raters > 0): ?>
-                                                        <div class="flex items-center space-x-0.5">
-                                                            <div class="flex text-yellow-400 text-[8px] sm:text-[9px]">
-                                                                <?php
-                                                                for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                                                if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                                                for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
-                                                                ?>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-500 font-medium"><?= $avg_rating ?></span>
-                                                        </div>
-                                                        <span class="text-[8px] sm:text-[9px] text-gray-400">(<?= $total_raters ?>)</span>
-                                                    <?php else: ?>
-                                                        <div class="flex items-center space-x-0.5">
-                                                            <div class="flex text-gray-300 text-[8px] sm:text-[9px]">
-                                                                <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
-                                                            </div>
-                                                            <span class="text-[8px] sm:text-[9px] text-gray-400">No rating</span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- Description -->
-                                                <?php if (!empty($row['description'])): ?>
-                                                    <p class="text-[13px] sm:text-[13px] text-gray-600 leading-relaxed line-clamp-1 sm:line-clamp-2">
-                                                        <?= htmlspecialchars($row['description']) ?>
-                                                    </p>
-                                                <?php else: ?>
-                                                    <p class="text-[8px] sm:text-[9px] text-gray-400 italic">No description</p>
-                                                <?php endif; ?>
-
-                                                <!-- 🔥 SMART PRICE DISPLAY -->
-                                                <div class="flex items-baseline gap-1 flex-wrap">
-                                                    <?php if ($discount > 0): ?>
-                                                        <!-- With Discount -->
-                                                        <p class="text-[11px] font-bold text-gray-900">
-                                                            <?= $priceData['display_price'] ?>
-                                                        </p>
-                                                        <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
-                                                    <?php else: ?>
-                                                        <!-- No Discount -->
-                                                        <p class="text-[11px] font-bold text-gray-900">
-                                                            <?= $priceData['display_price'] ?>
-                                                        </p>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-
-                                            <!-- 🔥 NEW: Action Bar - View Button, Viewing, Sold (Side by Side) -->
-                                            <div class="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
-                                                <!-- View Button -->
-                                   <form action="index-product_view-page-4-AA" method="GET" class="pointer-events-auto hidden sm:block" onclick="event.stopPropagation()">
-    <input type="hidden" name="id" value="<?= $product_id ?>">
-    <button type="submit"
-        class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-[11px] px-2 py-1 border border-gray-300 rounded hover:border-orange-500">
-        <i class="fa-solid fa-bag-shopping text-[11px]"></i>
-        <span>View</span>
-    </button>
-</form>
-
-                                                <!-- Stats Container -->
-                                                <div class="flex items-center gap-2 text-[9px] text-gray-500">
-                                                    <!-- Viewing Count -->
-                                                    <?php if ($view_count > 0): ?>
-                                                        <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
-                                                            viewing
-                                                            <span class="font-medium"><?= formatViewCount($view_count) ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-
-                                                    <!-- Sold Count -->
-                                                    <?php if ($total_sold > 0): ?>
-                                                        <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                                                            sold
-                                                            <span class="font-medium"><?= number_format($total_sold) ?></span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
-                        <?php endwhile; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <style>
-            /* Compare checkbox styles */
-            .compare-checkbox:checked~.compare-icon {
-                display: none !important;
-            }
-
-            .compare-checkbox:checked~.compare-icon-checked {
-                display: inline-block !important;
-            }
-
-            .compare-icon-checked {
-                display: none;
-            }
-
-            .compare-checkbox:checked~.compare-icon,
-            .compare-checkbox:checked~.compare-icon-checked {
-                animation: scaleIn 0.3s ease;
-            }
-
-            @keyframes scaleIn {
-                0% {
-                    transform: scale(0);
-                }
-
-                50% {
-                    transform: scale(1.2);
-                }
-
-                100% {
-                    transform: scale(1);
-                }
-            }
-
-            /* From Uiverse.io by vinodjangid07 */
-            .Btn {
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                width: 45px;
-                height: 45px;
-                border: none;
-                border-radius: 0px;
-                cursor: pointer;
-                position: relative;
-                overflow: hidden;
-                transition-duration: .3s;
-                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
-                background-color: black;
-            }
-
-            /* icon */
-            .Btn .sign {
-                width: 100%;
-                font-size: 1.5em;
-                color: white;
-                transition-duration: .3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            /* text */
-            .Btn .text {
-                position: absolute;
-                right: 0%;
-                width: 0%;
-                opacity: 0;
-                color: white;
-                transition-duration: .3s;
-            }
-
-            /* hover effect */
-            .Btn:hover {
-                width: 125px;
-                border-radius: 0px;
-                transition-duration: .3s;
-            }
-
-            .Btn:hover .sign {
-                width: 30%;
-                transition-duration: .3s;
-                padding-left: 20px;
-            }
-
-            .Btn:hover .text {
-                opacity: 1;
-                width: 70%;
-                transition-duration: .3s;
-                padding-right: 20px;
-            }
-
-            /* click effect */
-            .Btn:active {
-                transform: translate(2px, 2px);
-            }
-        </style>
-
-        <script>
-            // Store selected products for comparison
-            let compareProductsmaterial = JSON.parse(localStorage.getItem('compareProducts') || '[]');
-
-            // Update compare button visibility and count
-            function updateCompareButton() {
-                const compareBtn = document.getElementById('compareBtn');
-                const compareCount = document.getElementById('compareCount');
-
-                if (compareProductsmaterial.length > 0) {
-                    compareBtn.classList.remove('hidden');
-                    compareBtn.classList.add('flex');
-                    compareCount.textContent = compareProductsmaterial.length;
-                } else {
-                    compareBtn.classList.add('hidden');
-                    compareBtn.classList.remove('flex');
-                }
-            }
-
-            // Toggle product in comparison list
-            function toggleCompare(checkbox, productId) {
-                // Prevent click from propagating to the link
-                event.stopPropagation();
-
-                if (checkbox.checked) {
-                    // Add to comparison (NO LIMIT - compare unlimited products)
-                    if (!compareProductsmaterial.includes(productId)) {
-                        compareProductsmaterial.push(productId);
-                        showToast('Product added to comparison');
-                    }
-                } else {
-                    // Remove from comparison
-                    compareProductsmaterial = compareProductsmaterial.filter(id => id !== productId);
-                    showToast('Product removed from comparison');
-                }
-
-                // Save to localStorage
-                localStorage.setItem('compareProducts', JSON.stringify(compareProductsmaterial));
-                updateCompareButton();
-            }
-
-            // Navigate to comparison page
-            function goToComparison() {
-                if (compareProductsmaterial.length < 2) {
-                    alert('Please select at least 2 products to compare.');
-                    return;
-                }
-
-                window.location.href = 'index-shopcompare-C.php?products=' + compareProductsmaterial.join(',');
-            }
-
-            // Show toast notification
-            function showToast(message) {
-                // Create toast element
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up';
-                toast.textContent = message;
-
-                document.body.appendChild(toast);
-
-                // Remove after 2 seconds
-                setTimeout(() => {
-                    toast.style.animation = 'slide-down 0.3s ease';
-                    setTimeout(() => toast.remove(), 300);
-                }, 2000);
-            }
-
-            // Initialize on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                // Restore checked state from localStorage
-                document.querySelectorAll('.compare-checkbox').forEach(checkbox => {
-                    const productId = parseInt(checkbox.dataset.productId);
-                    if (compareProductsmaterial.includes(productId)) {
-                        checkbox.checked = true;
-                    }
-                });
-
-                updateCompareButton();
-            });
-
-            // Add animation styles
-            const stylematerial = document.createElement('style');
-            style.textContent = `
-                @keyframes slide-up {
-                    from {
-                        transform: translateY(100%);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-                
-                @keyframes slide-down {
-                    from {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateY(100%);
-                        opacity: 0;
-                    }
-                }
-                
-                .animate-slide-up {
-                    animation: slide-up 0.3s ease;
-                }
-            `;
-            document.head.appendChild(stylematerial);
-        </script>
-    </section>
-
-    <section>
-        <?php
-        // Check if there are any products
-        $row_count = mysqli_num_rows($material_results);
-        ?>
-
-        <?php if ($row_count > 0): ?>
-            <!-- Top Sales Section -->
-            <section class="px-4 py-10">
-                <!-- Header -->
-                <div class="text-center mb-10 relative">
-                    <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Top Sales</h2>
-                    <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
-                        Get Up to <span class="text-red-500">10% Discount</span> on Select Items!
-                    </h2>
-                </div>
-
-                <?php
-                // Check if there are any products
-                $row_count = mysqli_num_rows($material_results);
-                ?>
-
-                <?php if ($row_count > 0): ?>
                     <!-- Swiper Container -->
-                    <div class="swiper mySwiper-products w-full">
+                    <div class="swiper mySwiper-topsales w-full">
                         <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                            <?php while ($row = mysqli_fetch_assoc($material_results)) : ?>
-                                <?php
+                            <?php
+                            mysqli_data_seek($material_results, 0);
+                            while ($row = mysqli_fetch_assoc($material_results)) :
                                 $base = (float)$row['price'];
                                 $percent = (float)($row['percent'] ?? 0);
                                 $discount = (float)($row['discount'] ?? 0);
                                 $priceWithMarkup = $base + ($base * $percent / 100);
                                 $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
 
-                                // Get stats
                                 $viewCount = (int)($row['view_count'] ?? 0);
                                 $soldCount = (int)($row['total_sold'] ?? 0);
                                 $avgRating = (float)($row['avg_rating'] ?? 0);
                                 $ratingCount = (int)($row['rating_count'] ?? 0);
-                                ?>
+                            ?>
                                 <div class="swiper-slide p-2">
-                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[380px] sm:h-[420px] lg:h-[480px] text-center relative">
-                                        <!-- Triangle Badge -->
+                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
+                                        <!-- Discount Badge -->
                                         <div class="absolute top-0 left-0 z-10">
-                                            <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
-                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
+                                            <div class="w-8 h-8 relative">
+                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 object-contain" />
                                             </div>
                                         </div>
 
                                         <!-- Product Image -->
-                                        <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
+                                        <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
                                             <?php if (!empty($row['type_image'])): ?>
-                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                                    class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['size']) ?>" class="w-full h-full object-cover transition-transform duration-300" />
                                             <?php else: ?>
                                                 <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                                             <?php endif; ?>
                                         </div>
 
                                         <!-- Product Info -->
-                                        <div class="">
-                                            <div class="relative w-full">
-                                                <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
-                                                    <?= htmlspecialchars($row['product_name']) ?>
-                                                </h3>
-                                            </div>
-
-                                            <!-- Description - Desktop Only -->
-                                            <div class="hidden lg:block relative w-full mt-1">
-                                                <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
-                                                    <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
+                                        <div>
+                                            <div class="px-1 text-left">
+                                                <p class="text-xs text-black leading-relaxed text-left">
+                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300"><?= htmlspecialchars($row['product_name']) ?></span>
+                                                    <span class="text-black"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
+                                                    <span class="">
+                                                        <?php if (!empty($row['color'])): ?>
+                                                            <?php if (!empty($row['color_code'])): ?>
+                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
+                                                            <?php endif; ?>
+                                                            <?= htmlspecialchars($row['color']) ?>
+                                                        <?php endif; ?>
+                                                    </span>
                                                 </p>
                                             </div>
 
-                                            <!-- Stats Row (Views, Sold, Rating) -->
-                                            <div class="flex items-center justify-center lg:justify-start gap-1 mt-2 px-2 text-xs text-gray-600">
-                                                <!-- Views -->
+                                            <!-- Stats -->
+                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs text-gray-600 px-1">
                                                 <span><?= number_format($viewCount) ?> viewing</span>
                                                 <span>|</span>
-
-                                                <!-- Sold -->
                                                 <span><?= number_format($soldCount) ?> sold</span>
-
-                                                <!-- Rating -->
                                                 <?php if ($ratingCount > 0): ?>
                                                     <span>|</span>
-                                                    <div class="flex items-center gap-1">
-                                                        <i class="fa-solid fa-star text-yellow-500"></i>
+                                                    <div class="flex items-center gap-0.5">
+                                                        <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
                                                         <span><?= number_format($avgRating, 1) ?></span>
-                                                        <span class="text-gray-400">(<?= $ratingCount ?>)</span>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
 
-                                            <!-- Price + View Button Row - Desktop Only -->
-                                            <div class="hidden lg:flex items-center justify-between mt-2 px-2">
-                                                <!-- Pricing -->
-                                                <div>
-                                                    <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                        <p class="text-sm text-black font-bold">
-                                                            ₱<?= number_format($finalPrice, 2) ?>
-                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                    <?php endif; ?>
-                                                </div>
+                                            <!-- Price -->
+                                            <div class="my-1 text-left px-1">
+                                                <?php if ($discount > 0): ?>
+                                                    <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <p class="text-sm text-black font-bold">
+                                                        ₱<?= number_format($finalPrice, 2) ?>
+                                                        <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                    </p>
+                                                <?php else: ?>
+                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <?php endif; ?>
+                                            </div>
 
-                                                <!-- View Button -->
-                                                <form action="index-product_view-page-4-AA" method="GET">
+                                            <!-- Buttons -->
+                                            <div class="flex gap-2 mt-2 px-1">
+                                                <form action="index-product_view-page-4-AA" method="GET" class="flex-1">
                                                     <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                    <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
-                                                        <i class="fa-solid fa-bag-shopping"></i>
-                                                        <span>View</span>
+                                                    <button type="submit" class="w-full text-black hover:text-orange-500 transition font-medium text-xs py-2 border border-gray-300 rounded hover:border-orange-500">
+                                                        View
                                                     </button>
                                                 </form>
-                                            </div>
 
-                                            <!-- Mobile Layout (Original) -->
-                                            <div class="lg:hidden">
-                                                <!-- Pricing -->
-                                                <div class="my-1">
-                                                    <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                        <p class="text-sm text-black font-bold">
-                                                            ₱<?= number_format($finalPrice, 2) ?>
-                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- Buttons -->
-                                                <div class="flex flex-col gap-1.5 mt-1.5">
-                                                    <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
-                                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                        <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
-                                                            <i class="fa-solid fa-bag-shopping"></i>
-                                                            <span>View</span>
-                                                        </button>
-                                                    </form>
-
-                                                    <!-- Add to Cart Button -->
-                                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                        <input type="hidden" name="return_url" value="index">
-                                                        <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                            <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                                            Add to Cart
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-
-                                            <!-- Add to Cart Button - Desktop -->
-                                            <div class="hidden lg:block mt-2">
-                                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                <form class="productForm flex-1" data-product-id="<?= (int)$row['product_id'] ?>">
                                                     <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
                                                     <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
+                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['size'] ?? '') ?>">
                                                     <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
                                                     <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
+                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
                                                     <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                                     <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                     <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
                                                     <input type="hidden" name="return_url" value="index">
-                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                        <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 rounded transition-all">
                                                         Add to Cart
                                                     </button>
                                                 </form>
@@ -3156,115 +2526,176 @@ function displayTrendingBadge($view_count)
                             <?php endwhile; ?>
                         </div>
                     </div>
-                <?php else: ?>
-                    <!-- No Products Available Message -->
-                    <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-                        <div class="text-center max-w-md">
-                            <!-- Icon -->
-                            <div class="mb-6">
-                                <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                </svg>
-                            </div>
+                </div>
+            <?php endif; ?>
 
-                            <!-- Message -->
-                            <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                                No Products Available
-                            </h3>
-                            <p class="text-gray-500 text-sm sm:text-base mb-6">
-                                There are currently no discounted products available in this section. Please check back later for amazing deals!
-                            </p>
+            <!-- RIGHT SECTION: Discounted Minimal (5% Discount) -->
+            <?php if (mysqli_num_rows($material_resultsone) > 0): ?>
+                <div class="p-4 rounded-lg">
+                    <!-- Header -->
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl lg:text-3xl text-black mb-1 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
+                        <h3 class="text-base lg:text-lg text-black mb-2" data-aos="fade-up">
+                            Up to <span class="text-red-500">5% OFF</span>
+                        </h3>
+                        <div class="mx-auto w-24 h-0.5 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+                    </div>
+
+                    <!-- Swiper Container -->
+                    <div class="swiper mySwiper-minimal w-full">
+                        <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
+                            <?php
+                            mysqli_data_seek($material_resultsone, 0);
+                            while ($row = mysqli_fetch_assoc($material_resultsone)) :
+                                $base = (float)$row['price'];
+                                $percent = (float)($row['percent'] ?? 0);
+                                $discount = (float)($row['discount'] ?? 0);
+                                $priceWithMarkup = $base + ($base * $percent / 100);
+                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+
+                                $viewCount = (int)($row['view_count'] ?? 0);
+                                $soldCount = (int)($row['total_sold'] ?? 0);
+                                $avgRating = (float)($row['avg_rating'] ?? 0);
+                                $ratingCount = (int)($row['rating_count'] ?? 0);
+                            ?>
+                                <div class="swiper-slide p-2">
+                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-lg transition duration-300 flex flex-col justify-between h-[320px] text-center relative rounded-md">
+                                        <!-- Discount Badge -->
+                                        <div class="absolute top-0 left-0 z-10">
+                                            <div class="w-8 h-8 relative">
+                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 object-contain" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Image -->
+                                        <div class="w-32 h-32 mx-auto rounded-lg overflow-hidden mb-2">
+                                            <?php if (!empty($row['type_image'])): ?>
+                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['size']) ?>" class="w-full h-full object-cover transition-transform duration-300" />
+                                            <?php else: ?>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Product Info -->
+                                        <div>
+                                            <div class="px-1 text-left">
+                                                <p class="text-xs text-black leading-relaxed text-left">
+                                                    <span class="font-medium group-hover:text-orange-600 transition-colors duration-300"><?= htmlspecialchars($row['product_name']) ?></span>
+                                                    <span class="text-black"><?= !empty($row['size']) ? ' ' . htmlspecialchars($row['size']) : '' ?></span>
+                                                    <span class="">
+                                                        <?php if (!empty($row['color'])): ?>
+                                                            <?php if (!empty($row['color_code'])): ?>
+                                                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 ml-1 mr-0.5 align-middle" style="background-color: <?= htmlspecialchars($row['color_code']) ?>"></span>
+                                                            <?php endif; ?>
+                                                            <?= htmlspecialchars($row['color']) ?>
+                                                        <?php endif; ?>
+                                                    </span>
+                                                </p>
+                                            </div>
+
+                                            <!-- Stats -->
+                                            <div class="flex items-center justify-start gap-1 mt-1 text-xs text-gray-600 px-1">
+                                                <span><?= number_format($viewCount) ?> viewing</span>
+                                                <span>|</span>
+                                                <span><?= number_format($soldCount) ?> sold</span>
+                                                <?php if ($ratingCount > 0): ?>
+                                                    <span>|</span>
+                                                    <div class="flex items-center gap-0.5">
+                                                        <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
+                                                        <span><?= number_format($avgRating, 1) ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Price -->
+                                            <div class="my-1 text-left px-1">
+                                                <?php if ($discount > 0): ?>
+                                                    <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <p class="text-sm text-black font-bold">
+                                                        ₱<?= number_format($finalPrice, 2) ?>
+                                                        <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
+                                                    </p>
+                                                <?php else: ?>
+                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Buttons -->
+                                            <div class="flex gap-1 mt-1 px-1">
+                                                <form action="index-product_view-page-4-AA" method="GET" class="flex-1">
+                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
+                                                    <button type="submit" class="w-full text-black hover:text-orange-500 transition font-medium text-xs py-1.5 border border-gray-300 rounded hover:border-orange-500">
+                                                        View
+                                                    </button>
+                                                </form>
+
+                                                <form class="productForm flex-1" data-product-id="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
+                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
+                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['size'] ?? '') ?>">
+                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
+                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
+                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
+                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="return_url" value="index">
+                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-1.5 rounded transition-all">
+                                                        Add to Cart
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
                         </div>
                     </div>
-                <?php endif; ?>
-
-                <style>
-                    /* Animated View Details Button Styles */
-                    .animated-view-btn {
-                        display: flex;
-                        align-items: center;
-                        justify-content: flex-start;
-                        width: 45px;
-                        height: 40px;
-                        border: none;
-                        cursor: pointer;
-                        position: relative;
-                        overflow: hidden;
-                        transition-duration: .3s;
-                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                    }
-
-                    /* Icon */
-                    .animated-view-btn .btn-sign {
-                        width: 100%;
-                        font-size: 1em;
-                        color: white;
-                        transition-duration: .3s;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-
-                    /* Text */
-                    .animated-view-btn .btn-text {
-                        position: absolute;
-                        right: 0%;
-                        width: 0%;
-                        opacity: 0;
-                        color: white;
-                        font-size: 0.85em;
-                        font-weight: 600;
-                        transition-duration: .3s;
-                        white-space: nowrap;
-                    }
-
-                    /* Hover effect */
-                    .animated-view-btn:hover {
-                        width: 120px;
-                        transition-duration: .3s;
-                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                    }
-
-                    .animated-view-btn:hover .btn-sign {
-                        width: 35%;
-                        transition-duration: .3s;
-                        padding-left: 12px;
-                    }
-
-                    .animated-view-btn:hover .btn-text {
-                        opacity: 1;
-                        width: 65%;
-                        transition-duration: .3s;
-                        padding-right: 12px;
-                    }
-
-                    /* Click effect */
-                    .animated-view-btn:active {
-                        transform: translate(1px, 1px);
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                    }
-
-                    /* Mobile adjustments */
-                    @media (max-width: 1024px) {
-                        .animated-view-btn {
-                            width: 42px;
-                            height: 38px;
-                        }
-
-                        .animated-view-btn .btn-sign {
-                            font-size: 0.9em;
-                        }
-
-                        .animated-view-btn:hover {
-                            width: 100px;
-                        }
-                    }
-                </style>
-            </section>
-        <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </section>
 
+    <script>
+        // Initialize separate Swiper instances for each section
+        document.addEventListener('DOMContentLoaded', function() {
+            new Swiper('.mySwiper-topsales', {
+                slidesPerView: 1,
+                spaceBetween: 10,
+                loop: true,
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                },
+                breakpoints: {
+                    640: {
+                        slidesPerView: 2,
+                    },
+                    1024: {
+                        slidesPerView: 4,
+                    }
+                }
+            });
 
+            new Swiper('.mySwiper-minimal', {
+                slidesPerView: 1,
+                spaceBetween: 10,
+                loop: true,
+                autoplay: {
+                    delay: 3500,
+                    disableOnInteraction: false,
+                },
+                breakpoints: {
+                    640: {
+                        slidesPerView: 2,
+                    },
+                    1024: {
+                        slidesPerView: 4,
+                    }
+                }
+            });
+        });
+    </script>
 
     <!-- Featured Categories Section - Vertical Carousel -->
     <section class="w-full relative overflow-hidden bg-white py-12">
@@ -3622,307 +3053,6 @@ function displayTrendingBadge($view_count)
             }
         </style>
     </section>
-
-
-
-    <section>
-        <?php
-        // Check if there are any products
-        $row_count = mysqli_num_rows($material_resultsone);
-        ?>
-
-        <?php if ($row_count > 0): ?>
-            <!-- Top Sales Section -->
-            <section class="px-4 py-10">
-                <!-- Header -->
-                <div class="text-center mb-10 relative">
-                    
-                    <h2 class="text-4xl text-black mb-2 tracking-tight" data-aos="fade-up">Discounted Minimal</h2>
-                    <h2 class="text-2xl text-black mb-2 tracking-tight" data-aos="fade-up">
-                        Get Up to <span class="text-red-500">5% Discount</span> on Select Items!
-                    </h2>
-                    <div class="mx-auto w-32 h-1 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-                </div>
-
-                <?php
-                // Check if there are any products
-                $row_count = mysqli_num_rows($material_resultsone);
-                ?>
-
-                <?php if ($row_count > 0): ?>
-                    <!-- Swiper Container -->
-                    <div class="swiper mySwiper-products w-full">
-                        <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
-                            <?php while ($row = mysqli_fetch_assoc($material_resultsone)) : ?>
-                                <?php
-                                $base = (float)$row['price'];
-                                $percent = (float)($row['percent'] ?? 0);
-                                $discount = (float)($row['discount'] ?? 0);
-                                $priceWithMarkup = $base + ($base * $percent / 100);
-                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-
-                                // Get stats
-                                $viewCount = (int)($row['view_count'] ?? 0);
-                                $soldCount = (int)($row['total_sold'] ?? 0);
-                                $avgRating = (float)($row['avg_rating'] ?? 0);
-                                $ratingCount = (int)($row['rating_count'] ?? 0);
-                                ?>
-                                <div class="swiper-slide p-2">
-                                    <div class="bg-white p-2 lg:p-3 group hover:shadow-xl transition duration-300 flex flex-col justify-between h-[380px] sm:h-[420px] lg:h-[480px] text-center relative">
-                                        <!-- Triangle Badge -->
-                                        <div class="absolute top-0 left-0 z-10">
-                                            <div class="w-8 h-8 lg:w-12 lg:h-12 relative">
-                                                <img src="../img/icon/d.png" alt="Icon" class="absolute top-1 left-1 w-6 h-6 lg:w-9 lg:h-9 object-contain" />
-                                            </div>
-                                        </div>
-
-                                        <!-- Product Image -->
-                                        <div class="aspect-square w-full rounded-lg overflow-hidden mb-2 lg:mb-4">
-                                            <?php if (!empty($row['type_image'])): ?>
-                                                <img src="../../<?= $row['type_image'] ?>" loading="lazy" alt="<?= htmlspecialchars($row['namevariant']) ?>"
-                                                    class="w-full h-full object-cover lg:object-contain transition-transform duration-300 " />
-                                            <?php else: ?>
-                                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <!-- Product Info -->
-                                        <div class="">
-                                            <div class="relative w-full">
-                                                <h3 class="text-xs lg:text-sm font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 text-center lg:text-left px-2 lg:pr-2">
-                                                    <?= htmlspecialchars($row['product_name']) ?>
-                                                </h3>
-                                            </div>
-
-                                            <!-- Description - Desktop Only -->
-                                            <div class="hidden lg:block relative w-full mt-1">
-                                                <p class="text-xs text-gray-500 leading-tight line-clamp-2 px-2 text-center lg:text-left">
-                                                    <?= htmlspecialchars($row['description'] ?? 'No description available') ?>
-                                                </p>
-                                            </div>
-
-                                            <!-- Stats Row (Views, Sold, Rating) -->
-                                            <div class="flex items-center justify-center lg:justify-start gap-1 mt-2 px-2 text-xs text-gray-600">
-                                                <!-- Views -->
-                                                <span><?= number_format($viewCount) ?> viewing</span>
-                                                <span>|</span>
-
-                                                <!-- Sold -->
-                                                <span><?= number_format($soldCount) ?> sold</span>
-
-                                                <!-- Rating -->
-                                                <?php if ($ratingCount > 0): ?>
-                                                    <span>|</span>
-                                                    <div class="flex items-center gap-1">
-                                                        <i class="fa-solid fa-star text-yellow-500"></i>
-                                                        <span><?= number_format($avgRating, 1) ?></span>
-                                                        <span class="text-gray-400">(<?= $ratingCount ?>)</span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-
-                                            <!-- Price + View Button Row - Desktop Only -->
-                                            <div class="hidden lg:flex items-center justify-between mt-2 px-2">
-                                                <!-- Pricing -->
-                                                <div>
-                                                    <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                        <p class="text-sm text-black font-bold">
-                                                            ₱<?= number_format($finalPrice, 2) ?>
-                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- View Button -->
-                                                <form action="index-product_view-page-4-AA" method="GET">
-                                                    <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                    <button type="submit" class="flex items-center gap-1 text-black hover:text-orange-500 transition font-medium text-xs">
-                                                        <i class="fa-solid fa-bag-shopping"></i>
-                                                        <span>View</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-
-                                            <!-- Mobile Layout (Original) -->
-                                            <div class="lg:hidden">
-                                                <!-- Pricing -->
-                                                <div class="my-1">
-                                                    <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                        <p class="text-sm text-black font-bold">
-                                                            ₱<?= number_format($finalPrice, 2) ?>
-                                                            <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
-                                                        </p>
-                                                    <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
-                                                    <?php endif; ?>
-                                                </div>
-
-                                                <!-- Buttons -->
-                                                <div class="flex flex-col gap-1.5 mt-1.5">
-                                                    <form action="index-product_view-page-4-AA" method="GET" class="w-full flex justify-center">
-                                                        <input type="hidden" name="id" value="<?= (int)$row['product_id'] ?>">
-                                                        <button type="submit" class="flex items-center gap-2 text-black hover:text-orange-500 transition font-medium text-sm">
-                                                            <i class="fa-solid fa-bag-shopping"></i>
-                                                            <span>View</span>
-                                                        </button>
-                                                    </form>
-
-                                                    <!-- Add to Cart Button -->
-                                                    <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                        <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                        <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                        <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                        <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                        <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                        <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                        <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                        <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                        <input type="hidden" name="return_url" value="index">
-                                                        <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                            <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
-                                                            Add to Cart
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-
-                                            <!-- Add to Cart Button - Desktop -->
-                                            <div class="hidden lg:block mt-2">
-                                                <form class="productForm" data-product-id="<?= (int)$row['product_id'] ?>">
-                                                    <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                                    <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                                    <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                                    <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_id" value="<?= (int)($row['color_id'] ?? 0) ?>">
-                                                    <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
-                                                    <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
-                                                    <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="return_url" value="index">
-                                                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
-                                                        <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />
-                                                        Add to Cart
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <!-- No Products Available Message -->
-                    <div class="flex flex-col items-center justify-center py-16 px-4" data-aos="fade-up">
-                        <div class="text-center max-w-md">
-                            <!-- Icon -->
-                            <div class="mb-6">
-                                <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                </svg>
-                            </div>
-
-                            <!-- Message -->
-                            <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3">
-                                No Products Available
-                            </h3>
-                            <p class="text-gray-500 text-sm sm:text-base mb-6">
-                                There are currently no discounted products available in this section. Please check back later for amazing deals!
-                            </p>
-                        </div>
-                    </div>
-                <?php endif; ?>
-                <style>
-                    /* Animated View Details Button Styles */
-                    .animated-view-btn {
-                        display: flex;
-                        align-items: center;
-                        justify-content: flex-start;
-                        width: 45px;
-                        height: 40px;
-                        border: none;
-                        cursor: pointer;
-                        position: relative;
-                        overflow: hidden;
-                        transition-duration: .3s;
-                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                    }
-
-                    /* Icon */
-                    .animated-view-btn .btn-sign {
-                        width: 100%;
-                        font-size: 1em;
-                        color: white;
-                        transition-duration: .3s;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-
-                    /* Text */
-                    .animated-view-btn .btn-text {
-                        position: absolute;
-                        right: 0%;
-                        width: 0%;
-                        opacity: 0;
-                        color: white;
-                        font-size: 0.85em;
-                        font-weight: 600;
-                        transition-duration: .3s;
-                        white-space: nowrap;
-                    }
-
-                    /* Hover effect */
-                    .animated-view-btn:hover {
-                        width: 120px;
-                        transition-duration: .3s;
-                        background: linear-gradient(135deg, #000000 0%, #000000 100%);
-                    }
-
-                    .animated-view-btn:hover .btn-sign {
-                        width: 35%;
-                        transition-duration: .3s;
-                        padding-left: 12px;
-                    }
-
-                    .animated-view-btn:hover .btn-text {
-                        opacity: 1;
-                        width: 65%;
-                        transition-duration: .3s;
-                        padding-right: 12px;
-                    }
-
-                    /* Click effect */
-                    .animated-view-btn:active {
-                        transform: translate(1px, 1px);
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                    }
-
-                    /* Mobile adjustments */
-                    @media (max-width: 1024px) {
-                        .animated-view-btn {
-                            width: 42px;
-                            height: 38px;
-                        }
-
-                        .animated-view-btn .btn-sign {
-                            font-size: 0.9em;
-                        }
-
-                        .animated-view-btn:hover {
-                            width: 100px;
-                        }
-                    }
-                </style>
-            </section>
-        <?php endif; ?>
-    </section>
-
 
     <section>
         <?php
@@ -4493,8 +3623,6 @@ function displayTrendingBadge($view_count)
             return message;
         }
     </script>
-    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-
 
     <style>
         /* Pagination dots */
@@ -4682,161 +3810,11 @@ function displayTrendingBadge($view_count)
         </div>
     </section>
 
-    <section class="py-12 md:py-24 px-4">
-        <div class="max-w-6xl mx-auto text-center mb-12 md:mb-20">
-            <h2 class="text-3xl md:text-5xl mb-4 md:mb-6 bg-clip-text text-black">What Our Customers Say</h2>
-            <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Here's what people are saying about their experience with us.</p>
-        </div>
-
-        <!-- Swiper Container -->
-        <div class="swiper reviewCarousel max-w-3xl mx-auto relative">
-            <div class="swiper-wrapper" id="reviewWrapper">
-                <!-- Loading placeholder -->
-                <div class="swiper-slide">
-                    <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
-                        <div class="text-center py-8">
-                            <div class="animate-pulse">
-                                <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-                                <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-                            </div>
-                            <p class="text-gray-500 mt-4">Loading reviews...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="swiper-pagination mt-8"></div>
-        </div>
-
-    </section>
-
-
-
-
     <?php include '../navbar/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
     <script>
         AOS.init();
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const reviewWrapper = document.getElementById("reviewWrapper");
-            let reviewSwiper = null;
-
-            // Initialize Swiper with dynamic loop
-            function initReviewSwiper(slideCount) {
-                // Destroy existing instance if any
-                if (reviewSwiper) {
-                    reviewSwiper.destroy(true, true);
-                }
-
-                reviewSwiper = new Swiper(".reviewCarousel", {
-                    loop: slideCount > 1, // Only loop if more than 1 review
-                    autoplay: slideCount > 1 ? {
-                        delay: 4000,
-                        disableOnInteraction: false
-                    } : false, // Disable autoplay for single slide
-                    pagination: {
-                        el: ".swiper-pagination",
-                        clickable: true
-                    },
-                    slidesPerView: 1,
-                    spaceBetween: 20,
-                    effect: "slide",
-                    speed: 700,
-                    breakpoints: {
-                        640: {
-                            spaceBetween: 30
-                        }
-                    }
-                });
-            }
-
-            async function loadReviews() {
-                try {
-                    const res = await fetch("index-profilefetch_reviews-E.php");
-                    const reviews = await res.json();
-
-                    reviewWrapper.innerHTML = "";
-
-                    if (reviews.length > 0) {
-                        reviews.forEach(r => {
-                            let stars = "";
-                            for (let i = 1; i <= 5; i++) {
-                                stars += `<i class="${i <= r.rating ? "fas" : "far"} fa-star text-lg md:text-xl text-yellow-400"></i>`;
-                            }
-
-                            reviewWrapper.innerHTML += `
-                        <div class="swiper-slide">
-                            <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
-                                <div class="flex justify-center mb-4 md:mb-6 space-x-1">
-                                    ${stars}
-                                </div>
-                                <p class="text-gray-700 italic leading-relaxed mb-6 md:mb-8 text-base md:text-lg text-center font-medium px-2 md:px-6">
-                                    "${r.comment}"
-                                </p>
-                                <div class="flex items-center justify-center space-x-3 md:space-x-4">
-                                    <div class="profile-ring">
-                                        <img src="${r.profile_picture}" alt="${r.name}"
-                                             class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover">
-                                    </div>
-                                    <div class="text-left">
-                                        <h4 class="name-highlight font-bold text-base md:text-lg">${r.name}</h4>
-                                        <p class="text-xs md:text-sm text-gray-500 font-medium">${new Date(r.created_at).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                        });
-
-                        // Re-initialize Swiper with the actual review count
-                        initReviewSwiper(reviews.length);
-                    } else {
-                        // Empty state - single slide
-                        reviewWrapper.innerHTML = `
-                    <div class="swiper-slide">
-                        <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
-                            <div class="text-center py-8 md:py-12">
-                                <p class="text-gray-600 text-base md:text-lg">No reviews yet.</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                        // Re-initialize with loop disabled for single slide
-                        initReviewSwiper(1);
-                    }
-                } catch (err) {
-                    console.error("Error fetching reviews:", err);
-
-                    // Error state - single slide
-                    reviewWrapper.innerHTML = `
-                <div class="swiper-slide">
-                    <div class="testimonial-card p-6 md:p-10 mx-2 md:mx-4">
-                        <div class="text-center py-8 md:py-12">
-                            <p class="text-red-500 text-base md:text-lg">Error loading reviews. Please try again.</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-                    // Re-initialize with loop disabled for single slide
-                    initReviewSwiper(1);
-                }
-            }
-
-            // Initial load
-            loadReviews();
-
-            // Auto refresh every 10 seconds
-            setInterval(loadReviews, 10000);
-        });
-
         // Initialize Lenis
         const lenis = new Lenis({
             duration: 3,
@@ -4857,18 +3835,20 @@ function displayTrendingBadge($view_count)
             }
         }
 
-        //  Product form submit handler
+        // Product form submit handler
         async function handleProductFormSubmit(e) {
             e.preventDefault();
 
             const form = this;
             const formData = new FormData(form);
             const button = form.querySelector('button[type="submit"]');
-            const originalText = button.innerHTML;
+            const originalText = button.textContent;
+            const originalClasses = button.className;
 
             // Show loading state
             button.disabled = true;
-            button.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Adding...';
+            button.textContent = 'Adding...';
+            button.classList.add('opacity-60');
 
             try {
                 // Defaults
@@ -4887,12 +3867,13 @@ function displayTrendingBadge($view_count)
                     showNotification(data.message || 'Added to cart', 'success');
                     updateCartCount(data.cart_count);
 
-                    button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added!';
-                    button.className = button.className.replace('bg-orange-500 hover:bg-orange-600', 'bg-green-500');
+                    // Simple text feedback - no styling changes
+                    button.textContent = '✓ Added!';
+                    button.disabled = true;
 
                     setTimeout(() => {
-                        button.innerHTML = originalText;
-                        button.className = button.className.replace('bg-green-500', 'bg-orange-500 hover:bg-orange-600');
+                        button.textContent = originalText;
+                        button.className = originalClasses;
                         button.disabled = false;
                     }, 2000);
                 } else {
@@ -4902,10 +3883,19 @@ function displayTrendingBadge($view_count)
                 showNotification(' ' + error.message, 'error');
                 console.error('Add to cart error:', error);
 
-                button.innerHTML = originalText;
+                button.textContent = originalText;
+                button.className = originalClasses;
                 button.disabled = false;
             }
         }
+
+        // Attach handler to all product forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('.productForm');
+            forms.forEach(form => {
+                form.addEventListener('submit', handleProductFormSubmit);
+            });
+        });
 
         // 🔔 Notification utility
         function showNotification(message, type = 'info') {

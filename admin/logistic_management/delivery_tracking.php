@@ -40,7 +40,7 @@ $sql = "SELECT
     o.final_total,
     o.status as order_status,
     tv.vehicle_type,
-    tv.courier_name,
+    COALESCE(db.courier_name, tv.courier_name) as courier_name,
     dispatcher.fullname as dispatcher_name,
     dispatcher.email as dispatcher_email,
     -- Count items based on type

@@ -2,6 +2,10 @@
 // generate_po_excel.php
 session_name("nobleadmin");
 session_start();
+
+// Start output buffering to prevent any output before headers
+ob_start();
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include '../../connection/connect.php';
@@ -70,21 +74,26 @@ $itemStmt = $conn->prepare("
         oi.codename,
         oi.descrip6,
         oi.descrip7,
-        oi.price,
+        oi.price as order_price,
         oi.quantity,
-        oi.subtotal,
+        oi.subtotal as original_subtotal,
         oi.origin,
         oi.supplier_id,
         oi.manual_supplier_name,
-        pv.original_price,
+        oi.po_number,
+        slp.supplier_price,
+        COALESCE(slp.supplier_price, oi.price) as unit_price,
+        (COALESCE(slp.supplier_price, oi.price) * oi.quantity) as calculated_subtotal,
         sl.business_name,
         sl.primary_contact_name,
         sl.email_address,
         sl.phone_number,
         sl.business_address
     FROM order_items oi
-    LEFT JOIN product_variants pv ON oi.product_id = pv.id
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
+    LEFT JOIN supp_link_products slp ON oi.product_id = slp.product_id 
+        AND oi.supplier_id = slp.supplier_id 
+        AND slp.status = 'active'
     WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
     ORDER BY oi.id
 ");
@@ -103,10 +112,7 @@ foreach ($allItems as $item) {
         'manual_' . $item['manual_supplier_name'];
     
     if ($itemSupplierKey === $supplier_key) {
-        // Use original_price if available, otherwise fall back to the existing price
-        $item['unit_price'] = $item['original_price'] ?? $item['price'];
-        // Recalculate subtotal using original_price
-        $item['calculated_subtotal'] = $item['unit_price'] * $item['quantity'];
+        // unit_price and calculated_subtotal are already computed in the SQL query
         
         $supplierItems[] = $item;
         if (!$supplierInfo) {
@@ -127,7 +133,7 @@ if (empty($supplierItems)) {
 }
 
 // Load the template
-$templatePath = '../template/p.o_template.xlsx';
+$templatePath = '../template/p.o_templates.xlsx';
 if (!file_exists($templatePath)) {
     die("Template file not found: " . $templatePath);
 }
@@ -249,7 +255,7 @@ $worksheet->setCellValue('D11', $payment_terms);
         // Quantity (Column E)
         $worksheet->setCellValue('E' . $rowIndex, $item['quantity']);
         
-        // Unit Price (Column F) - using original_price or fallback to price
+        // Unit Price (Column F) - using supplier_price or fallback to price
         $worksheet->setCellValue('F' . $rowIndex, number_format(floatval($item['unit_price']), 2));
         
         // Total Price (Column G) - using calculated subtotal
@@ -297,15 +303,20 @@ $worksheet->setCellValue('D11', $payment_terms);
         $worksheet->getColumnDimension($columnID)->setAutoSize(true);
     }
     
+    // Clean any output buffer before sending headers
+    ob_end_clean();
+    
     // Generate filename with custom P.O. number
-$sanitizedPreparedBy = preg_replace('/[^A-Za-z0-9]/', '_', $prepared_by);
-$filename = 'PO_' . $custom_po_number . '_' . 
-            preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
-            $sanitizedPreparedBy . '.xlsx';
+    $sanitizedPreparedBy = preg_replace('/[^A-Za-z0-9]/', '_', $prepared_by);
+    $filename = 'PO_' . $custom_po_number . '_' . 
+                preg_replace('/[^A-Za-z0-9]/', '_', $supplierInfo['name']) . '_' . 
+                $sanitizedPreparedBy . '.xlsx';
     
     // Set headers for download
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Pragma: public');
     header('Cache-Control: max-age=0');
     
     // Save to output
@@ -339,7 +350,19 @@ if (!empty($itemIds)) {
 error_log("P.O Generated - Order ID: $order_id, Supplier: " . $supplierInfo['name'] . ", Prepared By: $prepared_by, User Role: $user_role, P.O. Number: $custom_po_number");
 
 } catch (Exception $e) {
+    // Clear any output buffer
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    
     error_log("Error generating P.O.: " . $e->getMessage());
-    die('Error generating P.O.: ' . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
+    // Return to previous page with error
+    echo "<script>
+        alert('Error generating P.O.: " . addslashes($e->getMessage()) . "');
+        window.close();
+    </script>";
+    die();
 }
 ?>

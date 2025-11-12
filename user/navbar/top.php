@@ -984,231 +984,422 @@ $hidden_pages = ['help.php', 'about.php'];
           }
         </style>
 
-        <!-- Products/Shop Dropdown with Hover -->
-        <div class="relative" x-data="{ 
-    productsOpen: false, 
-    selectedCategory: null,
-    selectedCategoryData: null,
-    subcategorySlideIndex: 0,
-    hoverTimeout: null
-    }">
-          <!-- Shop Link with Hover Functionality -->
-          <a href="javascript:void(0)"
-            onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
-            @mouseenter="
-       clearTimeout(hoverTimeout);
-       hoverTimeout = setTimeout(() => { productsOpen = true; }, 150);
-     "
-            @mouseleave="
-       clearTimeout(hoverTimeout);
-       hoverTimeout = setTimeout(() => { productsOpen = false; selectedCategory = null; }, 200);
-     "
-            class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-3 text-md font-roboto relative">
+<!-- Shop Link with Three-Level Navigation (Updated for JSON Support) -->
+<?php
+// MariaDB-compatible query that handles JSON arrays in subcategory_name and sub_subcategory_ids
+$nav_query = "
+  SELECT 
+    c.id as category_id,
+    c.name as category_name,
+    c.image_path as category_image,
+    ps.id as subcategory_id,
+    ps.subcategory_name,
+    ps.subcategory_slug,
+    ps.image_path as sub_image_path,
+    pss.id as sub_subcategory_id,
+    pss.sub_subcategory_name,
+    pss.sub_subcategory_slug,
+    pss.image_path as sub_sub_image_path,
+    -- Count DISTINCT PRODUCTS with this category
+    (SELECT COUNT(DISTINCT pv.product_id) 
+     FROM product_variants pv 
+     WHERE pv.category_id = c.id
+    ) as category_product_count,
+    -- Count distinct products with this subcategory (supports JSON arrays like [\"AAC block\",\"wall\"])
+    (SELECT COUNT(DISTINCT pv.product_id)
+     FROM product_variants pv
+     WHERE pv.category_id = c.id
+     AND (
+       pv.subcategory_name LIKE CONCAT('%\"', ps.subcategory_name, '\"%')
+       OR pv.subcategory_name LIKE CONCAT('%', ps.subcategory_name, '%')
+       OR pv.subcategory_name = ps.subcategory_name
+     )
+    ) as subcategory_product_count,
+    -- Count distinct products with this sub-subcategory (supports JSON arrays like [4,5,3,1,2])
+    (SELECT COUNT(DISTINCT pv.product_id)
+     FROM product_variants pv
+     WHERE pv.category_id = c.id
+     AND (
+       pv.sub_subcategory_ids LIKE CONCAT('%\"', pss.id, '\"%')
+       OR pv.sub_subcategory_ids LIKE CONCAT('%,', pss.id, ',%')
+       OR pv.sub_subcategory_ids LIKE CONCAT('[', pss.id, ',%')
+       OR pv.sub_subcategory_ids LIKE CONCAT('%,', pss.id, ']')
+       OR pv.sub_subcategory_ids LIKE CONCAT('[', pss.id, ']')
+       OR pv.sub_subcategory_id = pss.id
+     )
+    ) as sub_subcategory_product_count
+  FROM categories c
+  LEFT JOIN product_subcategories ps ON c.id = ps.category_id
+  LEFT JOIN product_sub_subcategories pss ON ps.id = pss.subcategory_id
+  WHERE c.id IS NOT NULL
+  GROUP BY c.id, ps.id, pss.id
+  ORDER BY c.name, ps.subcategory_name, pss.sub_subcategory_name
+";
 
-            <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-            Shop
+
+$nav_result = $conn->query($nav_query);
+
+if (!$nav_result) {
+    die("Query Error: " . $conn->error);
+}
+
+$nav_categories = [];
+
+while ($row = $nav_result->fetch_assoc()) {
+  $cat_id = $row['category_id'];
+  $sub_id = $row['subcategory_id'];
+
+  if (!isset($nav_categories[$cat_id])) {
+    $nav_categories[$cat_id] = [
+      'id' => $row['category_id'],
+      'name' => $row['category_name'],
+      'image_path' => $row['category_image'],
+      'product_count' => (int)$row['category_product_count'],
+      'subcategories' => []
+    ];
+  }
+
+  if ($sub_id && !isset($nav_categories[$cat_id]['subcategories'][$sub_id])) {
+    $nav_categories[$cat_id]['subcategories'][$sub_id] = [
+      'id' => $row['subcategory_id'],
+      'name' => $row['subcategory_name'],
+      'slug' => $row['subcategory_slug'],
+      'image_path' => $row['sub_image_path'],
+      'product_count' => (int)$row['subcategory_product_count'],
+      'sub_subcategories' => []
+    ];
+  }
+
+  if ($row['sub_subcategory_id']) {
+    $nav_categories[$cat_id]['subcategories'][$sub_id]['sub_subcategories'][] = [
+      'id' => $row['sub_subcategory_id'],
+      'name' => $row['sub_subcategory_name'],
+      'slug' => $row['sub_subcategory_slug'],
+      'image_path' => $row['sub_sub_image_path'],
+      'parent_slug' => $row['subcategory_slug'],
+      'product_count' => (int)$row['sub_subcategory_product_count']
+    ];
+  }
+}
+?>
+
+<div x-data="{ 
+  productsOpen: false, 
+  selectedCategory: null, 
+  selectedSubcategory: null,
+  hoverTimeout: null,
+  searchTerm: '',
+  isSearching: false
+}">
+
+  <!-- Shop Link -->
+  <a href="javascript:void(0)"
+    onclick="navigateWithLoading('../otherpage/index-shop-page-2')"
+    @mouseenter="
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => { productsOpen = true; }, 150);
+    "
+    @mouseleave="
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => { 
+        productsOpen = false; 
+        selectedCategory = null; 
+        selectedSubcategory = null;
+        searchTerm = '';
+      }, 200);
+    "
+    class="<?= basename($_SERVER['PHP_SELF']) == 'index-shop-page-2.php' ? 'text-orange-600 underline ' : 'text-black' ?> hover:text-orange-500 transition inline-flex items-center gap-3 text-md font-roboto relative">
+
+    <svg class="w-4 h-4 transition-transform" :class="productsOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+    Shop
+  </a>
+
+  <!-- Overlay -->
+  <div x-show="productsOpen"
+    @click="productsOpen = false"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 bg-black bg-opacity-30 z-40"
+    style="top: 80px; pointer-events: none;"
+    x-cloak>
+  </div>
+
+  <!-- Dropdown Menu - Three Columns with Search -->
+  <div x-show="productsOpen"
+    @mouseenter="clearTimeout(hoverTimeout); productsOpen = true;"
+    @mouseleave="hoverTimeout = setTimeout(() => { 
+      productsOpen = false; 
+      selectedCategory = null; 
+      selectedSubcategory = null;
+      searchTerm = '';
+    }, 200);"
+    x-transition x-cloak
+    class="fixed left-[150px] right-0 bg-white shadow-lg z-50 border border-gray-200 max-w-6xl mx-auto"
+    style="top: 80px; max-height: 600px;"
+    @click.outside="productsOpen = false"
+    @keydown.escape="productsOpen = false">
+
+
+    <div class="h-full flex" style="max-height: 550px;">
+
+      <!-- COLUMN 1: Categories -->
+      <div class="w-1/3 border-r border-gray-200 p-2 bg-gray-50 overflow-y-scroll scrollbar-thin"
+        style="max-height: 550px;"
+        @wheel.stop>
+
+        <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
+          <h3 class="font-roboto text-xs text-black uppercase">Categories</h3>
+          <a href="../otherpage/index-shop-page-2.php"
+            class="text-[11px] text-orange-500 hover:text-orange-600 font-medium transition-all">
+            View All →
           </a>
+        </div>
 
-          <!-- Overlay -->
-          <div x-show="productsOpen"
-            @click="productsOpen = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="fixed inset-0 bg-black bg-opacity-30 z-40"
-            style="top: 80px; pointer-events: none;"
-            x-cloak>
-          </div>
-
-          <!-- Dropdown Menu -->
-          <div x-show="productsOpen"
-            @mouseenter="clearTimeout(hoverTimeout); productsOpen = true;"
-            @mouseleave="hoverTimeout = setTimeout(() => { productsOpen = false; selectedCategory = null; }, 200);"
-            x-transition x-cloak
-            class="fixed left-[150px] right-0 bg-white shadow-lg z-50 border border-gray-200 max-w-4xl mx-auto"
-            style="top: 80px; max-height: 550px;"
-            @click.outside="productsOpen = false">
-
-            <div class="h-full flex">
-              <!-- Left Side - Categories List -->
-              <div class="w-1/3 border-r border-gray-200 p-2 bg-gray-50 overflow-y-scroll scrollbar-thin"
-                style="max-height: 550px;"
-                @wheel.stop>
-                <div class="flex items-center justify-between mb-2 px-1 sticky top-0 bg-gray-50 pb-1 z-10">
-                  <h3 class="font-roboto text-xs text-black uppercase">Products</h3>
-                  <a href="../otherpage/index-shop-page-2.php"
-                    class="text-[11px] text-orange-500 hover:text-orange-600 font-medium transition-all">
-                    View All →
-                  </a>
-                </div>
-
-                <div class="space-y-0.5">
-                  <?php if (!empty($display_categories)): ?>
-                    <?php foreach ($display_categories as $category): ?>
-                      <button
-                        @click="
+        <div class="space-y-0.5">
+          <?php if (!empty($nav_categories)): ?>
+            <?php foreach ($nav_categories as $category): ?>
+              <button
+                x-show="searchTerm === '' || '<?= strtolower($category['name']) ?>'.includes(searchTerm.toLowerCase())"
+                @click="
                   selectedCategory = 'cat_<?= $category['id'] ?>';
-                  selectedCategoryData = <?= htmlspecialchars(json_encode($category)) ?>;
-                  subcategorySlideIndex = 0;
+                  selectedSubcategory = null;
                   $nextTick(() => {
                     if ($refs.subcategoryPanel) {
                       $refs.subcategoryPanel.scrollTop = 0;
                     }
                   });
                 "
-                        class="w-full p-1.5 rounded hover:bg-white text-left transition-all duration-200 group flex items-center gap-1.5"
-                        :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
+                class="w-full p-1.5 rounded hover:bg-white text-left transition-all duration-200 group flex items-center gap-1.5"
+                :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
-                        <!-- Category Image -->
-                        <?php if (!empty($category['image_path'])): ?>
+                <?php if (!empty($category['image_path'])): ?>
+                  <div class="flex-shrink-0">
+                    <img
+                      src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
+                      alt="<?= htmlspecialchars($category['name']) ?>"
+                      class="w-8 h-8 object-contain rounded"
+                      loading="lazy"
+                      onerror="this.style.display='none'">
+                  </div>
+                <?php endif; ?>
+
+                <div class="flex-1 min-w-0">
+                  <div class="font-roboto text-xs group-hover:text-orange-500 truncate uppercase"
+                    :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
+                    <?= htmlspecialchars($category['name']) ?>
+                  </div>
+                 
+                </div>
+
+                <svg class="w-3 h-3 flex-shrink-0 transition-colors"
+                  :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-400'"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div class="text-center py-4">
+              <p class="text-gray-500 italic text-xs">No categories available</p>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: Subcategories -->
+      <div class="w-1/3 border-r border-gray-200 p-2 bg-gray-50 overflow-y-scroll scrollbar-thin"
+        style="max-height: 550px;"
+        @wheel.stop
+        x-ref="subcategoryPanel">
+
+        <!-- Default State -->
+        <div x-show="!selectedCategory && searchTerm === ''" class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            <p class="text-gray-500 text-xs">Select a category</p>
+          </div>
+        </div>
+
+        <!-- Subcategories List -->
+        <?php if (!empty($nav_categories)): ?>
+          <?php foreach ($nav_categories as $category): ?>
+            <div x-show="selectedCategory === 'cat_<?= $category['id'] ?>'"
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 translate-x-2"
+              x-transition:enter-end="opacity-100 translate-x-0"
+              class="space-y-0.5"
+              x-cloak>
+
+              <div class="mb-2 sticky top-0 bg-gray-50 pb-1 z-10">
+                <h4 class="text-xs text-black uppercase font-medium">
+                  <?= htmlspecialchars($category['name']) ?> Types
+                </h4>
+              </div>
+
+              <?php if (!empty($category['subcategories'])): ?>
+                <?php foreach ($category['subcategories'] as $sub): ?>
+                  <button
+                    x-show="searchTerm === '' || '<?= strtolower($sub['name']) ?>'.includes(searchTerm.toLowerCase())"
+                    @click="
+                      selectedSubcategory = 'sub_<?= $sub['id'] ?>';
+                      $nextTick(() => {
+                        if ($refs.subSubPanel) {
+                          $refs.subSubPanel.scrollTop = 0;
+                        }
+                      });
+                    "
+                    class="w-full flex items-center gap-2 p-1.5 rounded hover:bg-white transition-all duration-200 group text-left"
+                    :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'bg-white border-l-2 border-blue-500 shadow-sm' : ''">
+
+                    <?php if (!empty($sub['image_path'])): ?>
+                      <div class="flex-shrink-0">
+                        <img
+                          src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
+                          alt="<?= htmlspecialchars($sub['name']) ?>"
+                          class="w-9 h-9 object-cover rounded"
+                          loading="lazy"
+                          onerror="this.style.display='none'">
+                      </div>
+                    <?php endif; ?>
+
+                    <div class="flex-1 min-w-0">
+                      <div class="text-xs group-hover:text-blue-500 transition truncate"
+                        :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-blue-500 font-medium' : 'text-gray-800'">
+                        <?= htmlspecialchars($sub['name']) ?>
+                      </div>
+                      
+                    </div>
+
+                    <svg class="w-3 h-3 text-gray-400 group-hover:text-blue-500 transition flex-shrink-0"
+                      :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-blue-500' : ''"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="text-center py-4">
+                  <p class="text-gray-500 italic text-xs">No products available</p>
+                </div>
+              <?php endif; ?>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+
+      <!-- COLUMN 3: Sub-Subcategories -->
+      <div class="w-1/3 p-2 bg-white overflow-y-scroll scrollbar-thin"
+        style="max-height: 550px;"
+        @wheel.stop
+        x-ref="subSubPanel">
+
+        <!-- Default State -->
+        <div x-show="!selectedSubcategory && searchTerm === ''" class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p class="text-gray-500 text-xs">Select a product type</p>
+          </div>
+        </div>
+
+        <!-- Sub-Subcategories List -->
+        <?php if (!empty($nav_categories)): ?>
+          <?php foreach ($nav_categories as $category): ?>
+            <?php if (!empty($category['subcategories'])): ?>
+              <?php foreach ($category['subcategories'] as $sub): ?>
+                <div x-show="selectedSubcategory === 'sub_<?= $sub['id'] ?>'"
+                  x-transition:enter="transition ease-out duration-200"
+                  x-transition:enter-start="opacity-0 translate-x-2"
+                  x-transition:enter-end="opacity-100 translate-x-0"
+                  class="space-y-0.5"
+                  x-cloak>
+
+                  <div class="mb-2 sticky top-0 bg-white pb-1 z-10">
+                    <h4 class="text-xs text-black uppercase font-medium">
+                      <?= htmlspecialchars($sub['name']) ?> Collections
+                    </h4>
+                  </div>
+
+                  <?php if (!empty($sub['sub_subcategories'])): ?>
+                    <?php foreach ($sub['sub_subcategories'] as $subsub): ?>
+                      <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?sub_subcategory_id=<?= $subsub['id'] ?>"
+                        x-show="searchTerm === '' || '<?= strtolower($subsub['name']) ?>'.includes(searchTerm.toLowerCase())"
+                        class="flex items-center gap-2 p-1.5 rounded hover:bg-purple-50 transition-all duration-200 group cursor-pointer border border-transparent hover:border-purple-200">
+
+                        <?php if (!empty($subsub['image_path'])): ?>
                           <div class="flex-shrink-0">
                             <img
-                              src="../../uploads/categories/<?= htmlspecialchars($category['image_path']) ?>"
-                              alt="<?= htmlspecialchars($category['name']) ?>"
-                              class="w-8 h-8 object-contain rounded"
+                              src="../../uploads/<?= htmlspecialchars($subsub['parent_slug']) ?>/<?= htmlspecialchars($subsub['slug']) ?>/<?= htmlspecialchars($subsub['image_path']) ?>"
+                              alt="<?= htmlspecialchars($subsub['name']) ?>"
+                              class="w-10 h-10 object-cover rounded"
+                              loading="lazy"
                               onerror="this.style.display='none'">
                           </div>
                         <?php endif; ?>
 
-                        <!-- Text Content -->
                         <div class="flex-1 min-w-0">
-                          <div class="font-roboto text-xs group-hover:text-orange-500 truncate uppercase"
-                            :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-800'">
-                            <?= htmlspecialchars($category['name']) ?>
+                          <div class="text-xs group-hover:text-purple-600 transition font-medium text-gray-800 truncate">
+                            <?= htmlspecialchars($subsub['name']) ?>
                           </div>
-                          <div class="text-[9px] text-gray-500">
-                            <?= count($category['subcategories'] ?? []) ?> variants
-                          </div>
+                        
                         </div>
 
-                        <!-- Arrow -->
-                        <svg class="w-3 h-3 flex-shrink-0 transition-colors"
-                          :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500' : 'text-gray-400'"
-                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 text-gray-400 group-hover:text-purple-600 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
-                      </button>
+                      </a>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <div class="text-center py-4">
-                      <p class="text-gray-500 italic text-xs">No categories available</p>
+                      <p class="text-gray-500 italic text-xs">No collections available</p>
                     </div>
                   <?php endif; ?>
                 </div>
-              </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+</div>
 
-              <!-- Right Side - Subcategories Panel -->
-              <div class="w-2/3 p-2 bg-white overflow-y-scroll scrollbar-thin relative"
-                style="max-height: 450px;"
-                @wheel.stop
-                x-ref="subcategoryPanel">
-                <!-- Default State -->
-                <div x-show="!selectedCategory" class="flex items-center justify-center py-12">
-                  <div class="text-center">
-                    <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    <p class="text-gray-500 text-xs">Select a category to view subcategories</p>
-                  </div>
-                </div>
+<style>
+  [x-cloak] {
+    display: none !important;
+  }
 
-                <!-- Subcategories Content -->
-                <?php if (!empty($display_categories)): ?>
-                  <?php foreach ($display_categories as $category): ?>
-                    <div x-show="selectedCategory === 'cat_<?= $category['id'] ?>'"
-                      x-transition:enter="transition ease-out duration-200"
-                      x-transition:enter-start="opacity-0 translate-y-2"
-                      x-transition:enter-end="opacity-100 translate-y-0"
-                      x-transition:leave="transition ease-in duration-150"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
-                      class="absolute inset-0 p-2"
-                      x-cloak>
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
 
-                      <div class="flex justify-between items-center mb-2 sticky top-0 bg-white pb-1 z-10">
-                        <h4 class="text-xs text-black uppercase">
-                          <?= htmlspecialchars($category['name']) ?> Subcategories
-                        </h4>
-                      </div>
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
 
-                      <!-- Subcategories List -->
-                      <div class="space-y-0.5">
-                        <?php if (!empty($category['subcategories'])): ?>
-                          <?php foreach ($category['subcategories'] as $sub): ?>
-                            <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?subcategory_id=<?= $sub['id'] ?>"
-                              class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 transition-all duration-200 group cursor-pointer">
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+  }
 
-                              <!-- Subcategory Image -->
-                              <?php if (!empty($sub['image_path'])): ?>
-                                <div class="flex-shrink-0">
-                                  <img
-                                    src="../../uploads/<?= htmlspecialchars($sub['slug']) ?>/<?= htmlspecialchars($sub['image_path']) ?>"
-                                    alt="<?= htmlspecialchars($sub['name']) ?>"
-                                    class="w-9 h-9 object-cover rounded"
-                                    onerror="this.style.display='none'">
-                                </div>
-                              <?php endif; ?>
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 
-                              <div class="flex-1">
-                                <div class="text-xs group-hover:text-orange-500 transition text-black">
-                                  <?= htmlspecialchars($sub['name']) ?>
-                                </div>
-                              </div>
-
-                              <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                              </svg>
-                            </a>
-                          <?php endforeach; ?>
-                        <?php else: ?>
-                          <div class="text-center py-4">
-                            <p class="text-gray-500 italic text-xs">No subcategories available</p>
-                          </div>
-                        <?php endif; ?>
-                      </div>
-                    </div>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <style>
-          /* x-cloak helper */
-          [x-cloak] {
-            display: none !important;
-          }
-
-          /* Simplified scrollbar styling */
-          .scrollbar-thin::-webkit-scrollbar {
-            width: 4px;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar-track {
-            background: #f1f1f1;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 2px;
-          }
-
-          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: #555;
-          }
-
-          /* Ensure smooth scrolling */
-          .overflow-y-scroll {
-            overflow-y: scroll !important;
-            -webkit-overflow-scrolling: touch;
-          }
-        </style>
+  .overflow-y-scroll {
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
 
         <!-- Cart Link with Hover Modal -->
         <div class="relative" id="cart-container">
@@ -1407,18 +1598,51 @@ $hidden_pages = ['help.php', 'about.php'];
             }
           }
 
-          /* Hide scrollbar for cart items container */
-          #cart-items-container {
-            scrollbar-width: none;
-            /* Firefox */
-            -ms-overflow-style: none;
-            /* Internet Explorer 10+ */
-          }
+#cart-items-container {
+    max-height: 400px; /* Increase from 240px/256px */
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+}
 
-          #cart-items-container::-webkit-scrollbar {
-            display: none;
-            /* WebKit */
-          }
+/* WebKit browsers scrollbar */
+#cart-items-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#cart-items-container::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+}
+
+#cart-items-container::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+#cart-items-container::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    #cart-items-container {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 480px) {
+    #cart-items-container {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 375px) {
+    #cart-items-container {
+        max-height: 250px;
+    }
+}
 
           /* Responsive positioning */
           @media (max-width: 640px) {

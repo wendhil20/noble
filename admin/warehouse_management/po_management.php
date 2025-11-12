@@ -57,9 +57,9 @@ $itemStmt = $conn->prepare("
         oi.descrip6,
         oi.descrip7,
         oi.price as order_price,
-        COALESCE(pv.original_price, oi.price) as current_price,
+        COALESCE(slp.supplier_price, oi.price) as current_price,
         oi.quantity,
-        (COALESCE(pv.original_price, oi.price) * oi.quantity) as calculated_subtotal,
+        (COALESCE(slp.supplier_price, oi.price) * oi.quantity) as calculated_subtotal,
         oi.subtotal as original_subtotal,
         oi.origin,
         oi.supplier_id,
@@ -68,12 +68,15 @@ $itemStmt = $conn->prepare("
         p.codename as product_code,
         o.created_at as order_date,
         o.status as order_status,
-        pv.original_price,
+        slp.supplier_price,
         pv.id as variant_id
     FROM order_items oi
     LEFT JOIN products p ON oi.product_id = p.id
     LEFT JOIN product_variants pv ON oi.product_id = pv.id
     LEFT JOIN orders o ON oi.order_id = o.id
+    LEFT JOIN supp_link_products slp ON oi.product_id = slp.product_id 
+        AND oi.supplier_id = slp.supplier_id 
+        AND slp.status = 'active'
     WHERE oi.order_id = ?
     ORDER BY oi.id
 ");
@@ -93,6 +96,9 @@ $unassignedCount = 0;
 $primaryAvailableCount = 0;
 
 // For each item, get available suppliers from supp_link_products
+$autoAssignedCount = 0;
+$autoAssignedItems = [];
+
 for ($i = 0; $i < count($allItems); $i++) {
     // Initialize arrays to prevent undefined key errors
     $allItems[$i]['linked_suppliers'] = [];
@@ -109,28 +115,29 @@ for ($i = 0; $i < count($allItems); $i++) {
     // Get linked suppliers with proper JOIN
     if ($allItems[$i]['product_id']) {
         $linkedSuppStmt = $conn->prepare("
-            SELECT 
-                slp.supplier_id,
-                slp.supplier_type,
-                sl.business_name,
-                sl.primary_contact_name,
-                sl.email_address,
-                sl.phone_number,
-                slp.status as link_status,
-                sl.status as supplier_status
-            FROM supp_link_products slp
-            INNER JOIN supplier_list sl ON slp.supplier_id = sl.id
-            WHERE slp.product_id = ? 
-                AND slp.status = 'active' 
-                AND sl.status = 'active'
-            ORDER BY 
-                CASE slp.supplier_type 
-                    WHEN 'primary' THEN 1 
-                    WHEN 'secondary' THEN 2 
-                    ELSE 3 
-                END ASC, 
-                sl.business_name ASC
-        ");
+    SELECT 
+        slp.supplier_id,
+        slp.supplier_type,
+        slp.supplier_price,
+        sl.business_name,
+        sl.primary_contact_name,
+        sl.email_address,
+        sl.phone_number,
+        slp.status as link_status,
+        sl.status as supplier_status
+    FROM supp_link_products slp
+    INNER JOIN supplier_list sl ON slp.supplier_id = sl.id
+    WHERE slp.product_id = ? 
+        AND slp.status = 'active' 
+        AND sl.status = 'active'
+    ORDER BY 
+        CASE slp.supplier_type 
+            WHEN 'primary' THEN 1 
+            WHEN 'secondary' THEN 2 
+            ELSE 3 
+        END ASC, 
+        sl.business_name ASC
+");
         $linkedSuppStmt->bind_param("i", $allItems[$i]['product_id']);
         $linkedSuppStmt->execute();
         $linkedResult = $linkedSuppStmt->get_result();
@@ -143,6 +150,29 @@ for ($i = 0; $i < count($allItems); $i++) {
                 $allItems[$i]['primary_supplier'] = $supplier;
                 if ($isUnassigned) {
                     $primaryAvailableCount++;
+                    
+                    // AUTO-ASSIGN: If item is unassigned and has a primary supplier, assign it automatically
+                    $autoAssignStmt = $conn->prepare("
+                        UPDATE order_items 
+                        SET supplier_id = ?, 
+                            manual_supplier_name = NULL 
+                        WHERE id = ?
+                    ");
+                    $autoAssignStmt->bind_param("ii", $supplier['supplier_id'], $allItems[$i]['item_id']);
+                    
+                    if ($autoAssignStmt->execute()) {
+                        // Update the current item data to reflect the assignment
+                        $allItems[$i]['supplier_id'] = $supplier['supplier_id'];
+                        $allItems[$i]['manual_supplier_name'] = null;
+                        $autoAssignedCount++;
+                        $autoAssignedItems[] = [
+                            'item_id' => $allItems[$i]['item_id'],
+                            'product_name' => $allItems[$i]['product_name'],
+                            'supplier_name' => $supplier['business_name']
+                        ];
+                        $unassignedCount--; // Decrease unassigned count
+                    }
+                    $autoAssignStmt->close();
                 }
                 break;
             }
@@ -246,6 +276,36 @@ for ($i = 0; $i < count($allItems); $i++) {
     <!-- Main Content -->
 <div class="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="alertContainer" class="mb-6"></div>
+
+        <!-- Auto-Assignment Notification -->
+        <?php if ($autoAssignedCount > 0): ?>
+        <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg shadow-sm">
+            <div class="flex items-center mb-2">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-semibold text-green-900">
+                        Auto-Assignment Complete!
+                    </h3>
+                    <p class="text-green-700 text-sm mt-1">
+                        Successfully assigned <?php echo $autoAssignedCount; ?> item<?php echo $autoAssignedCount > 1 ? 's' : ''; ?> to their primary suppliers.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Details of auto-assigned items -->
+            <div class="ml-9 mt-3 space-y-2">
+                <?php foreach ($autoAssignedItems as $assignedItem): ?>
+                    <div class="text-sm text-green-800 bg-green-100 px-3 py-2 rounded">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        <strong><?php echo htmlspecialchars($assignedItem['product_name']); ?></strong>
+                        → <?php echo htmlspecialchars($assignedItem['supplier_name']); ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Bulk Assignment Section -->
         <?php if ($unassignedCount > 0 && $primaryAvailableCount > 0): ?>
@@ -354,20 +414,20 @@ for ($i = 0; $i < count($allItems); $i++) {
 
             <!-- Price Update Notice -->
             <?php if ($newOrderTotal != $order['total']): ?>
-                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-amber-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-amber-700">
-                                <strong>Price Update Notice:</strong> Some items are now using updated prices from the product variants.
-                                The total has been recalculated from ₱<?php echo number_format($order['total'], 2); ?> to ₱<?php echo number_format($newOrderTotal, 2); ?>.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-400"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-amber-700">
+                    <strong>Price Update Notice:</strong> Some items are now using supplier prices from assigned suppliers.
+                    The total has been recalculated from ₱<?php echo number_format($order['total'], 2); ?> to ₱<?php echo number_format($newOrderTotal, 2); ?>.
+                </p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
             <!-- Order Items -->
             <?php if (!empty($allItems)): ?>
@@ -385,44 +445,44 @@ for ($i = 0; $i < count($allItems); $i++) {
                                     </div>
 
                                     <!-- Price Information with Update Indicator -->
-                                    <div class="mt-2 text-sm text-gray-600">
-                                        <div class="flex flex-wrap items-center gap-4">
-                                            <div>
-                                                <strong>Price:</strong>
-                                                <?php if ($item['current_price'] != $item['order_price']): ?>
-                                                    <span class="line-through text-gray-400">₱<?php echo number_format($item['order_price'], 2); ?></span>
-                                                    <span class="price-updated ml-1">₱<?php echo number_format($item['current_price'], 2); ?></span>
-                                                    <i class="fas fa-arrow-up text-amber-500 ml-1" title="Price updated from product variant"></i>
-                                                <?php else: ?>
-                                                    ₱<?php echo number_format($item['current_price'], 2); ?>
-                                                <?php endif; ?>
-                                            </div>
+<div class="mt-2 text-sm text-gray-600">
+    <div class="flex flex-wrap items-center gap-4">
+        <div>
+            <strong>Price:</strong>
+            <?php if ($item['current_price'] != $item['order_price']): ?>
+                <span class="line-through text-gray-400">₱<?php echo number_format($item['order_price'], 2); ?></span>
+                <span class="price-updated ml-1">₱<?php echo number_format($item['current_price'], 2); ?></span>
+                <i class="fas fa-arrow-up text-amber-500 ml-1" title="Price updated from supplier"></i>
+            <?php else: ?>
+                ₱<?php echo number_format($item['current_price'], 2); ?>
+            <?php endif; ?>
+        </div>
 
-                                            <div>
-                                                <strong>Subtotal:</strong>
-                                                <?php if ($item['calculated_subtotal'] != $item['original_subtotal']): ?>
-                                                    <span class="line-through text-gray-400">₱<?php echo number_format($item['original_subtotal'], 2); ?></span>
-                                                    <span class="price-updated ml-1">₱<?php echo number_format($item['calculated_subtotal'], 2); ?></span>
-                                                    <i class="fas fa-calculator text-amber-500 ml-1" title="Subtotal recalculated"></i>
-                                                <?php else: ?>
-                                                    ₱<?php echo number_format($item['calculated_subtotal'], 2); ?>
-                                                <?php endif; ?>
-                                            </div>
+        <div>
+            <strong>Subtotal:</strong>
+            <?php if ($item['calculated_subtotal'] != $item['original_subtotal']): ?>
+                <span class="line-through text-gray-400">₱<?php echo number_format($item['original_subtotal'], 2); ?></span>
+                <span class="price-updated ml-1">₱<?php echo number_format($item['calculated_subtotal'], 2); ?></span>
+                <i class="fas fa-calculator text-amber-500 ml-1" title="Subtotal recalculated"></i>
+            <?php else: ?>
+                ₱<?php echo number_format($item['calculated_subtotal'], 2); ?>
+            <?php endif; ?>
+        </div>
 
-                                            <?php if ($item['origin']): ?>
-                                                <div>
-                                                    <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
+        <?php if ($item['origin']): ?>
+            <div>
+                <strong>Origin:</strong> <?php echo htmlspecialchars($item['origin']); ?>
+            </div>
+        <?php endif; ?>
+    </div>
 
-                                        <?php if ($item['original_price'] && $item['current_price'] != $item['order_price']): ?>
-                                            <div class="mt-1 text-xs text-amber-600">
-                                                <i class="fas fa-info-circle mr-1"></i>
-                                                Using current price from product variant (ID: <?php echo $item['variant_id']; ?>)
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+    <?php if ($item['supplier_price'] && $item['current_price'] != $item['order_price']): ?>
+        <div class="mt-1 text-xs text-amber-600">
+            <i class="fas fa-info-circle mr-1"></i>
+            Using supplier price: ₱<?php echo number_format($item['supplier_price'], 2); ?>
+        </div>
+    <?php endif; ?>
+</div>
                                 </div>
                             </div>
 
@@ -516,20 +576,31 @@ for ($i = 0; $i < count($allItems); $i++) {
                                                             <h4 class="font-semibold text-gray-900 mb-1 text-sm"><?php echo htmlspecialchars($supplier['business_name']); ?></h4>
 
                                                             <!-- Contact Info -->
-                                                            <div class="text-xs text-gray-600 space-y-1">
-                                                                <div class="flex items-center">
-                                                                    <i class="fas fa-user mr-1"></i>
-                                                                    <span><?php echo htmlspecialchars($supplier['primary_contact_name']); ?></span>
-                                                                </div>
-                                                                <div class="flex items-center">
-                                                                    <i class="fas fa-envelope mr-1"></i>
-                                                                    <span><?php echo htmlspecialchars($supplier['email_address']); ?></span>
-                                                                </div>
-                                                                <div class="flex items-center">
-                                                                    <i class="fas fa-phone mr-1"></i>
-                                                                    <span><?php echo htmlspecialchars($supplier['phone_number']); ?></span>
-                                                                </div>
-                                                            </div>
+<div class="text-xs text-gray-600 space-y-1">
+    <div class="flex items-center">
+        <i class="fas fa-user mr-1"></i>
+        <span><?php echo htmlspecialchars($supplier['primary_contact_name']); ?></span>
+    </div>
+    <div class="flex items-center">
+        <i class="fas fa-envelope mr-1"></i>
+        <span><?php echo htmlspecialchars($supplier['email_address']); ?></span>
+    </div>
+    <div class="flex items-center">
+        <i class="fas fa-phone mr-1"></i>
+        <span><?php echo htmlspecialchars($supplier['phone_number']); ?></span>
+    </div>
+    <?php if ($supplier['supplier_price']): ?>
+        <div class="flex items-center mt-2 pt-2 border-t border-gray-200">
+            <i class="fas fa-tag mr-1 text-green-600"></i>
+            <span class="font-semibold text-green-700">₱<?php echo number_format($supplier['supplier_price'], 2); ?></span>
+        </div>
+    <?php else: ?>
+        <div class="flex items-center mt-2 pt-2 border-t border-gray-200">
+            <i class="fas fa-exclamation-circle mr-1 text-yellow-600"></i>
+            <span class="text-yellow-700 italic">Price not set</span>
+        </div>
+    <?php endif; ?>
+</div>
 
                                                             <!-- Action Buttons -->
                                                             <div class="flex space-x-2 mt-3">

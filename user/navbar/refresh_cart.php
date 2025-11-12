@@ -53,8 +53,53 @@ try {
     // Generate cart HTML
     ob_start();
     
-    if (count($cart_items) > 0) {
-        echo '<div class="space-y-3">';
+  if (count($cart_items) > 0) {
+    echo '<div class="space-y-3" style="/* Better cart scroll fix */
+#cart-items-container {
+    max-height: 400px; /* Increase from 240px/256px */
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+}
+
+/* WebKit browsers scrollbar */
+#cart-items-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#cart-items-container::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+}
+
+#cart-items-container::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+#cart-items-container::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    #cart-items-container {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 480px) {
+    #cart-items-container {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 375px) {
+    #cart-items-container {
+        max-height: 250px;
+    }
+}">';
         foreach ($cart_items as $item) {
             $unit_price = floatval($item['price']);
             $quantity = intval($item['quantity']);

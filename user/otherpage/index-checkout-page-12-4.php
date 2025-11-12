@@ -172,10 +172,10 @@ if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'de
     $delivery_fee = 0.00;
 }
 
-// Calculate final totals
-$subtotal_with_delivery = $subtotal_after_discount + $delivery_fee;
-$vat_amount = $subtotal_with_delivery * 0.12;
-$grand_total = $subtotal_with_delivery + $vat_amount;
+// Calculate final totals - VAT on items only (not delivery)
+$vat_amount = $subtotal_after_discount * 0.12;  // VAT based on items subtotal only
+$subtotal_with_vat = $subtotal_after_discount + $vat_amount;
+$grand_total = $subtotal_with_vat + $delivery_fee;  // Add delivery after VAT
 
 function generateReferenceNumber()
 {
@@ -644,69 +644,74 @@ if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
                 $delivery_distance = 0.00;
             }
 
-            // Use conditional INSERT based on delivery_type
-            if ($delivery_type_value === 'pickup') {
-                // For pickup orders, exclude vehicle fields
-                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // ✅ RE-CALCULATE VAT for Bank/QR (VAT on items only, not delivery)
+$vat_amount = $subtotal_after_discount * 0.12;
 
-                $stmt->bind_param(
-                    "ssssssdsiddidddsssss",
-                    $customer_name,
-                    $customer_email,
-                    $customer_mobile,
-                    $customer_address,
-                    $customer_zipcode,
-                    $payment_method,
-                    $grand_total,
-                    $reference_no,
-                    $billing_address_id,
-                    $customer_latitude,
-                    $customer_longitude,
-                    $user_id,
-                    $delivery_distance,
-                    $delivery_fee,
-                    $subtotal_after_discount,
-                    $bank_type,
-                    $screenshot_filename,
-                    $reference_number,
-                    $payment_status,
-                    $delivery_type_value
-                );
-            } else {
-                // For delivery orders, include vehicle fields (as NULL for bank/QR payment)
-                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+// Use conditional INSERT based on delivery_type
+if ($delivery_type_value === 'pickup') {
+    // For pickup orders, exclude vehicle fields but INCLUDE vat_amount
+    $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-                $stmt->bind_param(
-                    "ssssssdsiddidddssssisddddds",
-                    $customer_name,
-                    $customer_email,
-                    $customer_mobile,
-                    $customer_address,
-                    $customer_zipcode,
-                    $payment_method,
-                    $grand_total,
-                    $reference_no,
-                    $billing_address_id,
-                    $customer_latitude,
-                    $customer_longitude,
-                    $user_id,
-                    $delivery_distance,
-                    $delivery_fee,
-                    $subtotal_after_discount,
-                    $bank_type,
-                    $screenshot_filename,
-                    $reference_number,
-                    $payment_status,
-                    $assigned_vehicle_id,
-                    $assigned_vehicle_type,
-                    $total_cubic_meters,
-                    $total_weight_kg,
-                    $total_width,
-                    $total_height,
-                    $total_length,
-                    $delivery_type_value
-                );
-            }
+    $stmt->bind_param(
+        "ssssssdsiddiddddsssss",
+        $customer_name,
+        $customer_email,
+        $customer_mobile,
+        $customer_address,
+        $customer_zipcode,
+        $payment_method,
+        $grand_total,
+        $reference_no,
+        $billing_address_id,
+        $customer_latitude,
+        $customer_longitude,
+        $user_id,
+        $delivery_distance,
+        $delivery_fee,
+        $subtotal_after_discount,
+        $vat_amount,  // ← NEW: VAT amount
+        $bank_type,
+        $screenshot_filename,
+        $reference_number,
+        $payment_status,
+        $delivery_type_value
+    );
+} else {
+    // For delivery orders, include vehicle fields AND vat_amount
+    $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    $stmt->bind_param(
+        "ssssssdsiddiddddssssisddddds",
+        $customer_name,
+        $customer_email,
+        $customer_mobile,
+        $customer_address,
+        $customer_zipcode,
+        $payment_method,
+        $grand_total,
+        $reference_no,
+        $billing_address_id,
+        $customer_latitude,
+        $customer_longitude,
+        $user_id,
+        $delivery_distance,
+        $delivery_fee,
+        $subtotal_after_discount,
+        $vat_amount,  // ← NEW: VAT amount
+        $bank_type,
+        $screenshot_filename,
+        $reference_number,
+        $payment_status,
+        $assigned_vehicle_id,
+        $assigned_vehicle_type,
+        $total_cubic_meters,
+        $total_weight_kg,
+        $total_width,
+        $total_height,
+        $total_length,
+        $delivery_type_value
+    );
+}
 
             if ($stmt->execute()) {
                 $order_id = $stmt->insert_id;
@@ -1169,51 +1174,51 @@ foreach ($cart_items as $item) {
                     <!-- Totals -->
                     <div class="bg-gray-50 p-4 border-t">
                         <div class="space-y-2 text-sm">
-                            <div class="flex justify-between <?= $tiered_discount['has_discount'] ? 'text-gray-500 line-through' : '' ?>">
-                                <span>Items Subtotal:</span>
-                                <span>₱<?= number_format($items_subtotal, 2) ?></span>
-                            </div>
+    <div class="flex justify-between <?= $tiered_discount['has_discount'] ? 'text-gray-500 line-through' : '' ?>">
+        <span>Items Subtotal:</span>
+        <span>₱<?= number_format($items_subtotal, 2) ?></span>
+    </div>
 
-                            <?php if ($tiered_discount['has_discount']): ?>
-                                <div class="flex justify-between text-green-600 font-semibold">
-                                    <span>Volume Discount:</span>
-                                    <span>-₱<?= number_format($discount_amount, 2) ?></span>
-                                </div>
-                                <div class="flex justify-between font-medium text-orange-600">
-                                    <span>Subtotal After Discount:</span>
-                                    <span>₱<?= number_format($subtotal_after_discount, 2) ?></span>
-                                </div>
-                            <?php endif; ?>
+    <?php if ($tiered_discount['has_discount']): ?>
+        <div class="flex justify-between text-green-600 font-semibold">
+            <span>Volume Discount:</span>
+            <span>-₱<?= number_format($discount_amount, 2) ?></span>
+        </div>
+        <div class="flex justify-between font-medium text-orange-600">
+            <span>Subtotal After Discount:</span>
+            <span>₱<?= number_format($subtotal_after_discount, 2) ?></span>
+        </div>
+    <?php endif; ?>
 
-                            <div class="flex justify-between">
-                                <span>Delivery Fee:
-                                    <?php if ($tiered_discount['free_shipping']): ?>
-                                        <span class="text-green-600 font-semibold ml-1">FREE! 🎉</span>
-                                    <?php endif; ?>
-                                </span>
-                                <span class="<?= $tiered_discount['free_shipping'] ? 'line-through text-gray-400' : '' ?>">
-                                    ₱<?= number_format($delivery_data['delivery_fee'], 2) ?>
-                                </span>
-                            </div>
+    <div class="flex justify-between">
+        <span>VAT (12% on items):</span>
+        <span class="font-medium text-orange-600">₱<?= number_format($vat_amount, 2) ?></span>
+    </div>
 
-                            <div class="border-t pt-2">
-                                <div class="flex justify-between">
-                                    <span>Subtotal (Items + Delivery):</span>
-                                    <span class="font-medium">₱<?= number_format($subtotal_with_delivery, 2) ?></span>
-                                </div>
-                            </div>
+    <div class="border-t pt-2">
+        <div class="flex justify-between">
+            <span>Subtotal (Items + VAT):</span>
+            <span class="font-medium">₱<?= number_format($subtotal_with_vat, 2) ?></span>
+        </div>
+    </div>
 
-                            <div class="flex justify-between">
-                                <span>VAT (12%):</span>
-                                <span class="font-medium text-orange-600">₱<?= number_format($vat_amount, 2) ?></span>
-                            </div>
+    <div class="flex justify-between">
+        <span>Delivery Fee:
+            <?php if ($tiered_discount['free_shipping']): ?>
+                <span class="text-green-600 font-semibold ml-1">FREE! 🎉</span>
+            <?php endif; ?>
+        </span>
+        <span class="<?= $tiered_discount['free_shipping'] ? 'line-through text-gray-400' : '' ?>">
+            ₱<?= number_format($delivery_fee, 2) ?>
+        </span>
+    </div>
 
-                            <div class="border-t pt-2">
-                                <div class="flex justify-between text-lg font-bold">
-                                    <span>Grand Total:</span>
-                                    <span id="grandTotalDisplay" class="text-green-700">₱<?= number_format($grand_total, 2) ?></span>
-                                </div>
-                            </div>
+    <div class="border-t pt-2">
+        <div class="flex justify-between text-lg font-bold">
+            <span>Grand Total:</span>
+            <span id="grandTotalDisplay" class="text-green-700">₱<?= number_format($grand_total, 2) ?></span>
+        </div>
+    </div>
 
                             <?php if ($tiered_discount['has_discount']): ?>
                                 <div class="bg-green-100 border border-green-300 rounded p-3 mt-3">

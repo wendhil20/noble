@@ -40,7 +40,9 @@ $stmt = $conn->prepare("
         created_at,
         COALESCE(status, 'pending')         AS status,
         COALESCE(payment_status, 'pending') AS payment_status,
-        COALESCE(delivery_fee, 0)           AS delivery_fee
+        COALESCE(delivery_fee, 0)           AS delivery_fee,
+        COALESCE(vat_amount, 0)             AS vat_amount,
+        COALESCE(subtotal, 0)               AS subtotal
     FROM orders
     WHERE emp_id = ?
     ORDER BY created_at DESC

@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
 // delivery_date_orders.php
 session_name("nobleadmin");
 session_start();
@@ -7,7 +10,6 @@ include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
 
-// Redirect dispatchers to their own dashboard
 if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
     header("Location: dispatcher_dashboard.php");
     exit();
@@ -18,16 +20,14 @@ if (!isset($_SESSION['noble_user'])) {
     exit();
 }
 
-// Get the selected date from URL parameter
 $selectedDate = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 
-// Validate date format
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
     header("Location: logistics_dashboard_view.php");
     exit();
 }
 
-// Get all orders scheduled for delivery on the selected date
+// SIMPLIFIED: No subqueries, no replacement_requests JOIN
 $ordersSql = "SELECT 
     ds.id as delivery_id,
     ds.order_id,
@@ -44,74 +44,10 @@ $ordersSql = "SELECT
     o.status as order_status,
     o.final_total,
     o.delivery_fee,
-    o.delivery_type,
-    -- For replacement, calculate weight/volume from replacement items only
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN (
-            SELECT SUM(
-                CASE 
-                    WHEN LOWER(pv.weight_unit) = 'kg' THEN pv.weight * rr.replacement_quantity
-                    WHEN LOWER(pv.weight_unit) IN ('g', 'grams') THEN (pv.weight / 1000) * rr.replacement_quantity
-                    WHEN LOWER(pv.weight_unit) IN ('lbs', 'lb') THEN (pv.weight * 0.453592) * rr.replacement_quantity
-                    ELSE 0
-                END
-            )
-            FROM replacement_requests rr
-            INNER JOIN order_items oi ON rr.order_item_id = oi.id
-            LEFT JOIN product_variants pv ON oi.product_id = pv.product_id
-            WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id
-        )
-        ELSE o.total_weight_kg
-    END as total_weight_kg,
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN (
-            SELECT SUM(
-                CASE 
-                    WHEN LOWER(pv.dimension_unit) = 'cm' THEN 
-                        (pv.width / 100) * (pv.height / 100) * (pv.length / 100) * rr.replacement_quantity
-                    WHEN LOWER(pv.dimension_unit) = 'mm' THEN 
-                        (pv.width / 1000) * (pv.height / 1000) * (pv.length / 1000) * rr.replacement_quantity
-                    WHEN LOWER(pv.dimension_unit) IN ('in', 'inch') THEN 
-                        (pv.width * 0.0254) * (pv.height * 0.0254) * (pv.length * 0.0254) * rr.replacement_quantity
-                    WHEN LOWER(pv.dimension_unit) IN ('ft', 'feet') THEN 
-                        (pv.width * 0.3048) * (pv.height * 0.3048) * (pv.length * 0.3048) * rr.replacement_quantity
-                    WHEN LOWER(pv.dimension_unit) = 'm' THEN 
-                        pv.width * pv.height * pv.length * rr.replacement_quantity
-                    ELSE 0
-                END
-            )
-            FROM replacement_requests rr
-            INNER JOIN order_items oi ON rr.order_item_id = oi.id
-            LEFT JOIN product_variants pv ON oi.product_id = pv.product_id
-            WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id
-        )
-        ELSE o.total_cubic_meters
-    END as total_cubic_meters,
+    o.total_weight_kg,
+    o.total_cubic_meters,
     o.assigned_vehicle_id,
     o.assigned_vehicle_type,
-    -- For replacement deliveries, count only replacement items
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN (SELECT COUNT(DISTINCT rr.id) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id)
-        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id)
-    END as total_items,
-    -- For replacement deliveries, sum only replacement quantities
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN (SELECT IFNULL(SUM(rr.replacement_quantity), 0) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id)
-        ELSE (SELECT SUM(quantity) FROM order_items WHERE order_id = ds.order_id)
-    END as total_quantity,
-    -- For replacement deliveries, check replacement request status instead
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN (SELECT COUNT(*) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id AND rr.status = 'ready_for_pickup')
-        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id AND tracking_status = 'ready_for_pickup')
-    END as ready_items,
-    CASE 
-        WHEN ds.item_type = 'replacement' THEN (SELECT COUNT(*) FROM replacement_requests rr WHERE rr.delivery_schedule_id = ds.id AND rr.order_id = ds.order_id AND rr.status = 'item_is_loaded')
-        ELSE (SELECT COUNT(*) FROM order_items WHERE order_id = ds.order_id AND tracking_status = 'item_is_loaded')
-    END as loaded_items,
-    rr.reason as replacement_reason,
-    rr.details as replacement_details,
-    rr.replacement_quantity,
-    rr.status as replacement_status,
     tv.vehicle_type,
     tv.courier_name,
     db.id as booking_id,
@@ -128,27 +64,61 @@ FROM delivery_schedules ds
 INNER JOIN orders o ON ds.order_id = o.id
 LEFT JOIN transportify_vehicle_list tv ON o.assigned_vehicle_id = tv.id
 LEFT JOIN delivery_bookings db ON ds.id = db.delivery_schedule_id
-LEFT JOIN replacement_requests rr ON ds.id = rr.delivery_schedule_id AND ds.item_type = 'replacement'
 WHERE ds.delivery_date = ?
-AND (
-    ? = '' OR 
-    ds.order_id LIKE ? OR 
-    o.customer_name LIKE ? OR 
-    db.tracking_number LIKE ?
-)
 ORDER BY ds.delivery_time ASC, ds.order_id ASC";
 
-// Get search query from URL
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
-$searchParam = '%' . $searchQuery . '%';
 
 $stmt = $conn->prepare($ordersSql);
-$stmt->bind_param("sssss", $selectedDate, $searchQuery, $searchParam, $searchParam, $searchParam);
+$stmt->bind_param("s", $selectedDate);
 $stmt->execute();
-$orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$result = $stmt->get_result();
+$orders = [];
+
+while ($row = $result->fetch_assoc()) {
+    // GET ITEM COUNTS IN PHP
+    $countSql = "SELECT COUNT(*) as total_items, IFNULL(SUM(quantity), 0) as total_quantity FROM order_items WHERE order_id = ?";
+    $countStmt = $conn->prepare($countSql);
+    $countStmt->bind_param("i", $row['order_id']);
+    $countStmt->execute();
+    $countResult = $countStmt->get_result()->fetch_assoc();
+    $countStmt->close();
+    
+    $row['total_items'] = $countResult['total_items'] ?? 0;
+    $row['total_quantity'] = $countResult['total_quantity'] ?? 0;
+    
+    // GET REPLACEMENT DATA IN PHP
+    if ($row['item_type'] === 'replacement') {
+        $repSql = "SELECT reason, details, replacement_quantity, status FROM replacement_requests WHERE delivery_schedule_id = ? LIMIT 1";
+        $repStmt = $conn->prepare($repSql);
+        $repStmt->bind_param("i", $row['delivery_id']);
+        $repStmt->execute();
+        $repResult = $repStmt->get_result()->fetch_assoc();
+        $repStmt->close();
+        
+        $row['replacement_reason'] = $repResult['reason'] ?? null;
+        $row['replacement_details'] = $repResult['details'] ?? null;
+        $row['replacement_quantity'] = $repResult['replacement_quantity'] ?? null;
+        $row['replacement_status'] = $repResult['status'] ?? null;
+    } else {
+        $row['replacement_reason'] = null;
+        $row['replacement_details'] = null;
+        $row['replacement_quantity'] = null;
+        $row['replacement_status'] = null;
+    }
+    
+    // APPLY SEARCH FILTER IN PHP
+    if ($searchQuery === '' ||
+        strpos((string)$row['order_id'], $searchQuery) !== false ||
+        stripos($row['customer_name'], $searchQuery) !== false ||
+        stripos($row['tracking_number'] ?? '', $searchQuery) !== false) {
+        $orders[] = $row;
+    }
+}
+
 $stmt->close();
 
-// Get statistics for this date
+// Get statistics
 $totalOrders = count($orders);
 $deliveryOrders = count(array_filter($orders, fn($o) => $o['delivery_type'] === 'delivery'));
 $pickupOrders = count(array_filter($orders, fn($o) => $o['delivery_type'] === 'pickup'));
@@ -158,6 +128,7 @@ $bookedOrders = count(array_filter($orders, fn($o) => $o['booking_id'] !== null)
 $overdueOrders = count(array_filter($orders, fn($o) => $o['delivery_status'] === 'overdue'));
 
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

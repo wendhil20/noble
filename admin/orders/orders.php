@@ -201,41 +201,27 @@ if (!isset($_SESSION['noble_user'])) {
   });
 
   function calculateOrderTotal(order) {
-    let itemsNetTotal = 0;
-    let itemsSubtotal = 0;
-    let totalDeliveryFees = 0;
-
-    if (order.items && Array.isArray(order.items)) {
-      order.items.forEach(item => {
-        const price = parseFloat(item.price) || 0;
-        const quantity = parseInt(item.quantity) || 0;
-        itemsNetTotal += price * quantity;
-        itemsSubtotal += parseFloat(item.subtotal) || 0;
-
-        if (item.delivery_fee_per_item && item.quantity) {
-          totalDeliveryFees += parseFloat(item.delivery_fee_per_item) * parseInt(item.quantity);
-        } else if (item.item_total_delivery) {
-          totalDeliveryFees += parseFloat(item.item_total_delivery) || 0;
-        }
-      });
-    }
-
-    const vatAmount = itemsNetTotal * VAT_RATE;
-    const itemsWithVAT = itemsNetTotal + vatAmount;
-    const finalTotal = itemsWithVAT + totalDeliveryFees;
+    // ✅ Use values directly from database instead of calculating
+    const subtotal = parseFloat(order.subtotal) || 0;
+    const vatAmount = parseFloat(order.vat_amount) || 0;
+    const deliveryFee = parseFloat(order.delivery_fee) || 0;
+    const finalTotal = parseFloat(order.total) || 0;
+    
+    // Calculate items with VAT (subtotal + vat)
+    const itemsWithVAT = subtotal + vatAmount;
 
     return {
-      itemsNetTotal: itemsNetTotal.toFixed(2),
-      itemsWithVAT: itemsWithVAT.toFixed(2),
-      itemsSubtotal: itemsSubtotal.toFixed(2),
-      totalDeliveryFees: totalDeliveryFees.toFixed(2),
-      vatAmount: vatAmount.toFixed(2),
-      finalTotal: finalTotal.toFixed(2),
-      finalItemsWithVAT: itemsWithVAT.toFixed(2),
-      finalItemsNetTotal: itemsNetTotal.toFixed(2),
-      finalDeliveryTotal: totalDeliveryFees.toFixed(2),
-      finalVATAmount: vatAmount.toFixed(2),
-      finalTotalWithoutVAT: (itemsNetTotal + totalDeliveryFees).toFixed(2)
+      itemsNetTotal: subtotal.toFixed(2),           // Items without VAT
+      itemsWithVAT: itemsWithVAT.toFixed(2),        // Items + VAT
+      itemsSubtotal: subtotal.toFixed(2),           // Same as itemsNetTotal
+      totalDeliveryFees: deliveryFee.toFixed(2),    // Delivery fee from DB
+      vatAmount: vatAmount.toFixed(2),              // VAT from DB
+      finalTotal: finalTotal.toFixed(2),            // Grand total from DB
+      finalItemsWithVAT: itemsWithVAT.toFixed(2),   // Items + VAT
+      finalItemsNetTotal: subtotal.toFixed(2),      // Items only
+      finalDeliveryTotal: deliveryFee.toFixed(2),   // Delivery fee
+      finalVATAmount: vatAmount.toFixed(2),         // VAT amount
+      finalTotalWithoutVAT: (subtotal + deliveryFee).toFixed(2)  // Items + Delivery (no VAT)
     };
   }
 
@@ -583,18 +569,8 @@ if (!isset($_SESSION['noble_user'])) {
               </div>
 
               <div class="mb-4">
-                <div class="grid grid-cols-1 gap-4 mb-4">
-                  <div class=" p-3 md:p-4 rounded-lg">
-                    <div class="text-center">
-                      <div class="text-xs md:text-sm text-black mb-1">Final Total</div>
-                      <div class="text-lg md:text-xl font-bold text-black">₱${totals.finalTotal}</div>
-                      <div class="text-xs text-gray-500">(VAT Inclusive)</div>
-                    </div>
-                  </div>
-                </div>
-                
-                ${getVATBreakdownHTML(totals)}
-              </div>
+  ${getVATBreakdownHTML(totals)}
+</div>
 
               <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 pt-4 border-t border-gray-200">
                 <div class="flex flex-wrap gap-2">

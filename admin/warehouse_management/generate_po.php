@@ -62,29 +62,30 @@ $itemStmt = $conn->prepare("
         oi.size,
         oi.variant_color,
         oi.codename,
-        oi.supplier_id,
         oi.descrip6,
         oi.descrip7,
-        oi.price,
+        oi.price as order_price,
         oi.quantity,
-        oi.subtotal,
+        oi.subtotal as original_subtotal,
         oi.origin,
         oi.supplier_id,
         oi.manual_supplier_name,
         oi.po_number,
-        pv.original_price,
-        COALESCE(pv.original_price, oi.price) as computed_price,
-        (oi.quantity * COALESCE(pv.original_price, oi.price)) as computed_subtotal,
+        slp.supplier_price,
+        COALESCE(slp.supplier_price, oi.price) as current_price,
+        (COALESCE(slp.supplier_price, oi.price) * oi.quantity) as calculated_subtotal,
         sl.business_name,
         sl.primary_contact_name,
         sl.email_address,
         sl.phone_number,
         sl.business_address
     FROM order_items oi
-    LEFT JOIN product_variants pv ON oi.product_id = pv.id
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
+    LEFT JOIN supp_link_products slp ON oi.product_id = slp.product_id 
+        AND oi.supplier_id = slp.supplier_id 
+        AND slp.status = 'active'
     WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
-    ORDER BY COALESCE(sl.business_name, oi.manual_supplier_name), oi.id
+    ORDER BY oi.id
 ");
 $itemStmt->bind_param("i", $order_id);
 $itemStmt->execute();
@@ -757,56 +758,67 @@ foreach ($allItems as $item) {
         }
 
         function updateItemsPreview(supplierKey) {
-            const supplier = supplierData[supplierKey];
-            console.log('Updating preview for supplier:', supplierKey, supplier);
-            
-            const previewContent = document.getElementById('previewContent');
-            
-            let html = `
-                <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 class="font-semibold text-gray-900">${supplier.supplier_info.name}</h3>
-                    <p class="text-sm text-gray-600">${supplier.items.length} item(s) will be included in this P.O.</p>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specification</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-            `;
-            
-            supplier.items.forEach(item => {
-                // Use computed_price (which uses original_price if available, otherwise falls back to item.price)
-                const unitPrice = item.computed_price ? parseFloat(item.computed_price) : parseFloat(item.price);
-                const totalPrice = item.computed_subtotal ? parseFloat(item.computed_subtotal) : parseFloat(item.subtotal);
-                
-                html += `
+    const supplier = supplierData[supplierKey];
+    console.log('Updating preview for supplier:', supplierKey, supplier);
+    
+    // DEBUG: Check first item's pricing data
+    if (supplier.items.length > 0) {
+        console.log('First item pricing:', {
+            current_price: supplier.items[0].current_price,
+            calculated_subtotal: supplier.items[0].calculated_subtotal,
+            supplier_price: supplier.items[0].supplier_price,
+            order_price: supplier.items[0].order_price,
+            price: supplier.items[0].price
+        });
+    }
+    
+    const previewContent = document.getElementById('previewContent');
+    
+    let html = `
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-semibold text-gray-900">${supplier.supplier_info.name}</h3>
+            <p class="text-sm text-gray-600">${supplier.items.length} item(s) will be included in this P.O.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td class="px-4 py-4">
-                            <div class="font-medium text-gray-900">${item.product_name}</div>
-                            <div class="text-sm text-gray-500">${item.codename}</div>
-                        </td>
-                        <td class="px-4 py-4 text-sm text-gray-900">
-                            ${item.size} | ${item.variant_color}
-                        </td>
-                        <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
-                        <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
-                        <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString()}</td>
-                        <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString()}</td>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specification</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                     </tr>
-                `;
-            });
-            
-            html += `</tbody></table></div>`;
-            previewContent.innerHTML = html;
-        }
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+    `;
+    
+    supplier.items.forEach(item => {
+        // Match po_management.php exactly: use current_price and calculated_subtotal
+        const unitPrice = parseFloat(item.current_price || item.price || 0);
+        const totalPrice = parseFloat(item.calculated_subtotal || item.subtotal || 0);
+        
+        html += `
+            <tr>
+                <td class="px-4 py-4">
+                    <div class="font-medium text-gray-900">${item.product_name}</div>
+                    <div class="text-sm text-gray-500">${item.codename}</div>
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-900">
+                    ${item.size} | ${item.variant_color}
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
+                <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
+                <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            </tr>
+        `;
+    });
+    
+    html += `</tbody></table></div>`;
+    previewContent.innerHTML = html;
+}
 
         function generatePO() {
     if (!selectedSupplier) {

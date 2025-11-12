@@ -265,9 +265,9 @@ foreach ($subcategories as $sub) {
     </div>
 
     <!-- ORIGINAL: Subcategories Grid with Collections Below -->
-    <div class="container mx-auto px-6 py-12">
+    <div class="container mx-auto px-2 py-7">
         <?php if (!empty($subcategories)): ?>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
                 <?php foreach ($subcategories as $sub): ?>
                     <div class="space-y-4">
                         <!-- Subcategory Card -->

@@ -257,8 +257,8 @@ $query = "
     WHERE p.codename = ?
     GROUP BY p.id
     ORDER BY p.view_count DESC, RAND()
-    LIMIT 10
-";
+    LIMIT 10";
+
 $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $filter);
 $stmt->execute();
@@ -411,6 +411,14 @@ if (!empty($row['subcategory_name'])) {
     }
 }
 $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
+
+// Fetch active banners from discount_images table
+$banners_query = "SELECT di.*, c.name as category_name FROM discount_images di LEFT JOIN categories c ON di.category_id = c.id WHERE di.is_active = 1 AND di.category_id IS NOT NULL ORDER BY di.uploaded_at DESC LIMIT 10";
+$banners_result = $conn->query($banners_query);
+$banners = [];
+while ($row = $banners_result->fetch_assoc()) {
+    $banners[] = $row;
+}
 ?>
 
 
@@ -690,52 +698,76 @@ $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
     <?php endif; ?>
 
 
-    <!-- OPTION 1: Asymmetric Grid Layout -->
-    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-1">
-        <!-- Main Slider - Takes 8 columns -->
-        <div class="lg:col-span-8 relative overflow-hidden bg-gray-900">
-            <div class="mySwiper h-[250px] sm:h-[350px] lg:h-[400px]">
-                <div class="swiper-wrapper">
-                    <?php while ($row = $slideresult->fetch_assoc()): ?>
-                        <div class="swiper-slide">
-                            <img src="../../uploads/<?= htmlspecialchars($row['filename']) ?>"
-                                alt="Slide"
-                                class="w-full h-full object-cover" />
-                        </div>
-                    <?php endwhile; ?>
-                </div>
-                <div class="swiper-pagination"></div>
+   
+<!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
+<div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-1">
+    
+    <!-- Main Slider - Takes 8 columns -->
+    <div class="lg:col-span-8 relative overflow-hidden bg-gray-900">
+        <div class="mySwiper h-[250px] sm:h-[350px] lg:h-[400px]">
+            <div class="swiper-wrapper">
+                <?php if (!empty($banners)): ?>
+                    <?php foreach ($banners as $idx => $banner): ?>
+                        <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>" 
+                           class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
+                            <div class="relative w-full h-full overflow-hidden">
+                                <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                    alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
+                                    class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                    onerror="this.src='../../uploads/placeholder.jpg'" />
+                                
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="swiper-slide bg-gray-800 flex items-center justify-center">
+                        <p class="text-gray-400">No banners available</p>
+                    </div>
+                <?php endif; ?>
             </div>
-        </div>
-
-        <!-- Right Side Grid - Takes 4 columns, split into 2x2 -->
-        <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-1">
-            <!-- Card 1 -->
-            <a href="#recent" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group">
-                <div class="absolute inset-0 ">
-                    <img src="../img/gif1.gif" alt="" class="w-full h-full object-cover mix-blend-overlay" />
-                </div>
-                <div class="relative h-full flex flex-col justify-end p-4">
-                    <div class="text-white/80 text-[10px] uppercase mb-1">Quick Access</div>
-                    <div class="text-white font-bold text-sm">Recent View →</div>
-                </div>
-            </a>
-
-            <!-- Card 2 -->
-            <a href="#deals" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group">
-                <div class="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-1 rounded">
-                    HOT
-                </div>
-                <div class="absolute inset-0 ">
-                    <img src="../img/gif1.gif" alt="" class="w-full h-full object-cover mix-blend-overlay" />
-                </div>
-                <div class="relative h-full flex flex-col justify-end p-4">
-                    <div class="text-white/80 text-[10px] uppercase mb-1">Limited Time</div>
-                    <div class="text-white font-bold text-sm">Holiday Deals →</div>
-                </div>
-            </a>
+            <div class="swiper-pagination"></div>
         </div>
     </div>
+
+    <!-- Right Side Grid - Takes 4 columns, split into 2 cards -->
+    <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-1">
+        
+        <!-- Card 1: Recent Views -->
+        <a href="#recent" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group  transition-all ">
+            <div class="absolute inset-0">
+                <img src="../img/gif1.gif" alt="Recent" class="w-full h-full object-cover mix-blend-overlay" />
+            </div>
+            <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
+                <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Quick Access</div>
+                <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">Recent View →</div>
+            </div>
+        </a>
+
+        <!-- Card 2: Deals - Links to first banner category -->
+        <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>" 
+           class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group transition-all ">
+            <div class="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-1  z-10">
+                HOT
+            </div>
+            <div class="absolute inset-0">
+                <?php if (!empty($banners)): ?>
+                    <img src="../../uploads/<?= basename($banners[0]['filename']) ?>" 
+                         alt="<?= htmlspecialchars($banners[0]['category_name']) ?>" 
+                         class="w-full h-full object-cover"
+                         onerror="this.src='../../uploads/placeholder.jpg'" />
+                <?php else: ?>
+                    <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
+                <?php endif; ?>
+            </div>
+            <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
+                <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Limited Time</div>
+                <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">
+                    <?= !empty($banners) ? htmlspecialchars($banners[0]['category_name']) : 'Holiday Deals' ?> →
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
 
     <section class="bg-black hidden md:block border border-black/20">
         <div class="px-4 sm:px-8 lg:px-9">
@@ -1406,43 +1438,43 @@ $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
                         </p>
                     </div>
 
-    <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
-    <div class="flex flex-wrap gap-2 mb-3">
-        <?php
-        // Get 3 random subcategories for Furniture (category_id = 1)
-        $furniture_cat_id = 1;
-        
-        // First get the category name
-        $cat_name_query = $conn->prepare("SELECT name FROM categories WHERE id = ?");
-        $cat_name_query->bind_param("i", $furniture_cat_id);
-        $cat_name_query->execute();
-        $cat_name_result = $cat_name_query->get_result();
-        $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
-        $cat_name_query->close();
-        
-        $sub_query = $conn->prepare("
+                    <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <?php
+                        // Get 3 random subcategories for Furniture (category_id = 1)
+                        $furniture_cat_id = 1;
+
+                        // First get the category name
+                        $cat_name_query = $conn->prepare("SELECT name FROM categories WHERE id = ?");
+                        $cat_name_query->bind_param("i", $furniture_cat_id);
+                        $cat_name_query->execute();
+                        $cat_name_result = $cat_name_query->get_result();
+                        $furniture_cat_name = $cat_name_result->fetch_assoc()['name'] ?? 'furniture';
+                        $cat_name_query->close();
+
+                        $sub_query = $conn->prepare("
             SELECT DISTINCT id, subcategory_name 
             FROM product_subcategories 
             WHERE category_id = ? 
             ORDER BY RAND() 
             LIMIT 3
         ");
-        $sub_query->bind_param("i", $furniture_cat_id);
-        $sub_query->execute();
-        $sub_result = $sub_query->get_result();
+                        $sub_query->bind_param("i", $furniture_cat_id);
+                        $sub_query->execute();
+                        $sub_result = $sub_query->get_result();
 
-        while ($sub_row = $sub_result->fetch_assoc()):
-            $sub_name = $sub_row['subcategory_name'];
-            $sub_id = $sub_row['id'];
-        ?>
-            <!-- ✅ CHANGED: Now goes to Recommendations page with visual indicator -->
-            <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $sub_id ?>&from=home" 
-               class="furniture-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
-               
-                <?= ucfirst(htmlspecialchars($sub_name)) ?>
-            </a>
-        <?php endwhile; ?>
-    </div>
+                        while ($sub_row = $sub_result->fetch_assoc()):
+                            $sub_name = $sub_row['subcategory_name'];
+                            $sub_id = $sub_row['id'];
+                        ?>
+                            <!-- ✅ CHANGED: Now goes to Recommendations page with visual indicator -->
+                            <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $sub_id ?>&from=home"
+                                class="furniture-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
+
+                                <?= ucfirst(htmlspecialchars($sub_name)) ?>
+                            </a>
+                        <?php endwhile; ?>
+                    </div>
 
                     <!-- Product Swiper -->
                     <div class="swiper mySwiper-furniture w-full">
@@ -1611,48 +1643,48 @@ $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
                         </p>
                     </div>
 
-                 <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
-    <div class="flex flex-wrap gap-2 mb-3">
-        <?php
-        // Get subcategories for Tiles/Aircon from actual product variants
-        $tiles_cat_query = $conn->prepare("SELECT id FROM categories WHERE name LIKE '%aircon%' OR name LIKE '%tiles%' LIMIT 1");
-        $tiles_cat_query->execute();
-        $tiles_cat_result = $tiles_cat_query->get_result();
+                    <!-- ✅ UPDATED: Filter Buttons now link to Recommendations Page -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <?php
+                        // Get subcategories for Tiles/Aircon from actual product variants
+                        $tiles_cat_query = $conn->prepare("SELECT id FROM categories WHERE name LIKE '%aircon%' OR name LIKE '%tiles%' LIMIT 1");
+                        $tiles_cat_query->execute();
+                        $tiles_cat_result = $tiles_cat_query->get_result();
 
-        if ($tiles_cat_row = $tiles_cat_result->fetch_assoc()) {
-            $tiles_cat_id = $tiles_cat_row['id'];
-            $tiles_cat_query->close();
+                        if ($tiles_cat_row = $tiles_cat_result->fetch_assoc()) {
+                            $tiles_cat_id = $tiles_cat_row['id'];
+                            $tiles_cat_query->close();
 
-            // Get 3 random unique subcategories with their IDs
-            $tiles_sub_query = $conn->prepare("
+                            // Get 3 random unique subcategories with their IDs
+                            $tiles_sub_query = $conn->prepare("
                 SELECT DISTINCT ps.id, ps.subcategory_name
                 FROM product_subcategories ps
                 WHERE ps.category_id = ?
                 ORDER BY RAND()
                 LIMIT 3
             ");
-            $tiles_sub_query->bind_param("i", $tiles_cat_id);
-            $tiles_sub_query->execute();
-            $tiles_sub_result = $tiles_sub_query->get_result();
+                            $tiles_sub_query->bind_param("i", $tiles_cat_id);
+                            $tiles_sub_query->execute();
+                            $tiles_sub_result = $tiles_sub_query->get_result();
 
-            // ✅ CHANGED: Display filter buttons as RECOMMENDATIONS LINKS
-            while ($tiles_sub_row = $tiles_sub_result->fetch_assoc()):
-                $tiles_sub_name = $tiles_sub_row['subcategory_name'];
-                $tiles_sub_id = $tiles_sub_row['id'];
-        ?>
-                <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $tiles_sub_id ?>&from=home"
-                   class="bed-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
-                   
-                    <?= ucfirst(htmlspecialchars($tiles_sub_name)) ?>
-                </a>
-        <?php
-            endwhile;
-            $tiles_sub_query->close();
-        } else {
-            $tiles_cat_query->close();
-        }
-        ?>
-    </div>
+                            // ✅ CHANGED: Display filter buttons as RECOMMENDATIONS LINKS
+                            while ($tiles_sub_row = $tiles_sub_result->fetch_assoc()):
+                                $tiles_sub_name = $tiles_sub_row['subcategory_name'];
+                                $tiles_sub_id = $tiles_sub_row['id'];
+                        ?>
+                                <a href="../otherpage/index-subcategory-recommendations-page-15.php?subcategory_id=<?= $tiles_sub_id ?>&from=home"
+                                    class="bed-filter-btn px-4 py-2.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 hover:shadow-md hover:scale-105 inline-flex items-center gap-2 group">
+
+                                    <?= ucfirst(htmlspecialchars($tiles_sub_name)) ?>
+                                </a>
+                        <?php
+                            endwhile;
+                            $tiles_sub_query->close();
+                        } else {
+                            $tiles_cat_query->close();
+                        }
+                        ?>
+                    </div>
 
 
                     <!-- Product Swiper -->
@@ -2697,10 +2729,10 @@ $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
         });
     </script>
 
-<!-- Featured Categories Section - Dynamic from Database -->
-<?php
-// Fetch categories for featured section
-$featured_query = "
+    <!-- Featured Categories Section - Dynamic from Database -->
+    <?php
+    // Fetch categories for featured section
+    $featured_query = "
     SELECT 
         c.id,
         c.name,
@@ -2715,15 +2747,15 @@ $featured_query = "
     LIMIT 8
 ";
 
-$featured_result = $conn->query($featured_query);
-$featured_categories = [];
+    $featured_result = $conn->query($featured_query);
+    $featured_categories = [];
 
-if ($featured_result) {
-    while ($row = $featured_result->fetch_assoc()) {
-        $featured_categories[] = $row;
+    if ($featured_result) {
+        while ($row = $featured_result->fetch_assoc()) {
+            $featured_categories[] = $row;
+        }
     }
-}
-?>
+    ?>
 
 
     <section>

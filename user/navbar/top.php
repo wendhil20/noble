@@ -1190,7 +1190,7 @@ while ($row = $nav_result->fetch_assoc()) {
                 <?php endif; ?>
 
                 <div class="flex-1 min-w-0">
-                  <div class="font-roboto text-xs group-hover:text-orange-500 truncate uppercase"
+                  <div class="font-roboto text-sm group-hover:text-orange-500 truncate uppercase"
                     :class="selectedCategory === 'cat_<?= $category['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                     <?= htmlspecialchars($category['name']) ?>
                   </div>
@@ -1271,7 +1271,7 @@ while ($row = $nav_result->fetch_assoc()) {
                     <?php endif; ?>
 
                     <div class="flex-1 min-w-0">
-                      <div class="text-xs group-hover:text-blue-500 transition truncate"
+                      <div class="text-sm group-hover:text-blue-500 transition truncate"
                         :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-blue-500 font-medium' : 'text-gray-800'">
                         <?= htmlspecialchars($sub['name']) ?>
                       </div>
@@ -1347,7 +1347,7 @@ while ($row = $nav_result->fetch_assoc()) {
                         <?php endif; ?>
 
                         <div class="flex-1 min-w-0">
-                          <div class="text-xs group-hover:text-purple-600 transition font-medium text-gray-800 truncate">
+                          <div class="text-sm group-hover:text-purple-600 transition font-medium text-gray-800 truncate">
                             <?= htmlspecialchars($subsub['name']) ?>
                           </div>
                         

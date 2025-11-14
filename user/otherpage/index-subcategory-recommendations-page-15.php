@@ -67,7 +67,7 @@ if ($from_page === 'grid' && !empty($category_name)) {
     $back_url = 'index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($category_name));
 }
 
-// 🔥 GET ALL SUB-SUBCATEGORIES (COLLECTIONS) - SHOW EVEN IF NO PRODUCTS YET
+// GET ALL SUB-SUBCATEGORIES (COLLECTIONS)
 $collections_query = "
     SELECT 
         pss.id,
@@ -115,7 +115,7 @@ while ($collection = $collections_result->fetch_assoc()) {
 }
 $collections_stmt->close();
 
-// For each collection, get TOP 5 most viewed products
+// For each collection, get TOP 6 most viewed products
 foreach ($collections as &$collection) {
     $products_query = "
         SELECT DISTINCT
@@ -124,10 +124,25 @@ foreach ($collections as &$collection) {
             p.main_image,
             p.description,
             p.view_count,
-            pv.price,
-            pv.discount,
-            pv.size,
-            pv.color,
+            p.price as base_price,
+            
+            -- 🔥 SEPARATE SIZE & COLOR PRICES
+            COALESCE(MIN(pv.price), 0) as min_size_price,
+            COALESCE(MAX(pv.price), 0) as max_size_price,
+            COALESCE(MIN(pc.price), 0) as min_color_price,
+            COALESCE(MAX(pc.price), 0) as max_color_price,
+            
+            -- Base price (fallback)
+            COALESCE(
+                NULLIF(MIN(pv.price), 0),
+                NULLIF(MIN(pc.price), 0),
+                p.price
+            ) as price,
+            
+            -- Markup & Discount
+            COALESCE(MIN(pv.percent), 0) as percent,
+            COALESCE(MAX(pv.discount), 0) as discount,
+            
             GROUP_CONCAT(DISTINCT pc.color_name) as color_name
         FROM products p
         INNER JOIN product_variants pv ON p.id = pv.product_id
@@ -160,17 +175,62 @@ foreach ($collections as &$collection) {
 }
 unset($collection);
 
-// Helper functions
-function calculateSmartPriceDisplay($row) {
-    $price = (float)($row['price'] ?? 0);
-    $discount = (float)($row['discount'] ?? 0);
-    
-    if ($discount > 0) {
-        $discounted_price = $price * (1 - ($discount / 100));
-        return ['display_price' => '₱' . number_format($discounted_price, 2)];
+// 🔥 SMART PRICE DISPLAY - LAZADA STYLE
+function calculateSmartPriceDisplay($product)
+{
+    $min_size = floatval($product['min_size_price'] ?? 0);
+    $max_size = floatval($product['max_size_price'] ?? 0);
+    $min_color = floatval($product['min_color_price'] ?? 0);
+    $max_color = floatval($product['max_color_price'] ?? 0);
+    $base_price = floatval($product['base_price'] ?? $product['price'] ?? 0);
+
+    $discount = floatval($product['discount'] ?? 0);
+    $percent = floatval($product['percent'] ?? 0);
+
+    $all_prices = array_filter([
+        $min_size,
+        $max_size,
+        $min_color,
+        $max_color,
+        $base_price
+    ], function ($p) {
+        return $p > 0;
+    });
+
+    $result = [
+        'has_range' => false,
+        'min_price' => $base_price,
+        'max_price' => $base_price,
+        'display_price' => '₱' . number_format($base_price, 2)
+    ];
+
+    if (!empty($all_prices)) {
+        $min = min($all_prices);
+        $max = max($all_prices);
+
+        if ($percent > 0) {
+            $min = $min + ($min * $percent / 100);
+            $max = $max + ($max * $percent / 100);
+        }
+
+        if ($discount > 0) {
+            $min = $min - ($min * $discount / 100);
+            $max = $max - ($max * $discount / 100);
+        }
+
+        if ($min != $max) {
+            $result['has_range'] = true;
+            $result['min_price'] = $min;
+            $result['max_price'] = $max;
+            $result['display_price'] = '₱' . number_format($min, 2) . ' - ₱' . number_format($max, 2);
+        } else {
+            $result['min_price'] = $min;
+            $result['max_price'] = $min;
+            $result['display_price'] = '₱' . number_format($min, 2);
+        }
     }
-    
-    return ['display_price' => '₱' . number_format($price, 2)];
+
+    return $result;
 }
 
 function formatViewCount($count) {
@@ -239,7 +299,6 @@ function formatViewCount($count) {
                     <div class="flex items-center justify-between mb-6">
                         <div>
                             <div class="inline-flex items-center gap-2 <?= !empty($collection['products']) ? 'bg-orange-500' : 'bg-gray-400' ?> text-white px-4 py-2 rounded-full text-sm mb-3 font-semibold">
-                            
                                 <?= !empty($collection['products']) ? 'Recommended' : 'NO PRODUCTS YET' ?>
                             </div>
                             <h2 class="text-3xl font-bold text-gray-900 uppercase">
@@ -253,10 +312,34 @@ function formatViewCount($count) {
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             <?php foreach ($collection['products'] as $row): ?>
                                 <?php
-                                $priceData = calculateSmartPriceDisplay($row);
-                                $discount = (float)($row['discount'] ?? 0);
                                 $product_id = (int)$row['id'];
                                 $view_count = (int)($row['view_count'] ?? 0);
+                                
+                                // 🔥 Use the smart price display function
+                                $priceData = calculateSmartPriceDisplay($row);
+                                $discount = (float)($row['discount'] ?? 0);
+
+                                // Get rating
+                                $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
+                                $rating_q->bind_param("i", $product_id);
+                                $rating_q->execute();
+                                $rating_result = $rating_q->get_result()->fetch_assoc();
+                                $avg_rating = $rating_result['avg_rating'] ?? 0;
+                                $total_raters = $rating_result['total_raters'] ?? 0;
+                                $rating_q->close();
+
+                                // Calculate star display
+                                $full = floor($avg_rating);
+                                $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                                $empty = 5 - $full - $half;
+
+                                // Get sold count
+                                $sold_q = $conn->prepare("SELECT SUM(quantity) as total_sold FROM sold_items WHERE product_id = ?");
+                                $sold_q->bind_param("i", $product_id);
+                                $sold_q->execute();
+                                $sold_result = $sold_q->get_result()->fetch_assoc();
+                                $total_sold = (int)($sold_result['total_sold'] ?? 0);
+                                $sold_q->close();
 
                                 $colors = !empty($row['color_name']) ? explode(',', $row['color_name']) : [];
                                 $firstColor = !empty($colors) ? trim($colors[0]) : '';
@@ -290,26 +373,73 @@ function formatViewCount($count) {
                                     <!-- Product Details -->
                                     <div class="p-3">
                                         <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>">
-                                            <h3 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                                            <h3 class="text-sm font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors">
                                                 <?= htmlspecialchars($row['product_name']) ?>
-                                                <?php if (!empty($row['size'])): ?>
-                                                    <span class="text-gray-600">[<?= htmlspecialchars($row['size']) ?>]</span>
-                                                <?php endif; ?>
-                                                <?php if ($firstColor): ?>
-                                                    <span class="text-gray-600">[<?= htmlspecialchars($firstColor) ?>]</span>
-                                                <?php endif; ?>
                                             </h3>
+                                            <?php if (!empty($row['description'])): ?>
+                                                <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                                                    <?= htmlspecialchars($row['description']) ?>
+                                                </p>
+                                            <?php endif; ?>
                                         </a>
 
-                                        <!-- Price -->
-                                        <div class="flex items-baseline gap-2 mb-2">
-                                            <p class="text-base font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                        <!-- ⭐ RATING DISPLAY -->
+                                        <div class="mb-2">
+                                            <?php if ($total_raters > 0): ?>
+                                                <div class="flex items-center gap-2">
+                                                    <div class="flex text-yellow-400 text-xs">
+                                                        <?php
+                                                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                                                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                                                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star text-gray-300"></i>';
+                                                        ?>
+                                                    </div>
+                                                    <span class="text-xs text-gray-600 font-medium"><?= $avg_rating ?></span>
+                                                    <span class="text-xs text-gray-400">(<?= $total_raters ?>)</span>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="flex items-center gap-1">
+                                                    <div class="flex text-gray-300 text-xs">
+                                                        <?php for ($i = 0; $i < 5; $i++) echo '<i class="far fa-star"></i>'; ?>
+                                                    </div>
+                                                    <span class="text-xs text-gray-400">No rating</span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- 🔥 SMART PRICE RANGE DISPLAY -->
+                                        <div class="flex items-baseline gap-2 flex-wrap mb-2">
+                                            <p class="text-base font-bold text-gray-900">
+                                                <?= $priceData['display_price'] ?>
+                                            </p>
                                             <?php if ($discount > 0): ?>
-                                                <span class="text-xs font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">
+                                                <span class="text-xs font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
                                                     -<?= number_format($discount, 0) ?>%
                                                 </span>
                                             <?php endif; ?>
                                         </div>
+
+                                        <!-- View Count + Sold Count -->
+                                        <?php if ($view_count > 0 || $total_sold > 0): ?>
+                                            <div class="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                                                <?php if ($view_count > 0): ?>
+                                                    <span class="flex items-center gap-1">
+                                                     
+                                                        <?= formatViewCount($view_count) ?> viewing
+                                                    </span>
+                                                <?php endif; ?>
+                                                
+                                                <?php if ($total_sold > 0): ?>
+                                                    <?php if ($view_count > 0): ?>
+                                                        <span class="text-gray-300">|</span>
+                                                    <?php endif; ?>
+                                                    <span class="flex items-center gap-1">
+                                                        <i class="fas fa-shopping-bag text-gray-400"></i>
+                                                        <?= number_format($total_sold) ?> sold
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif; ?>
 
                                         <!-- Button -->
                                         <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>"
@@ -322,7 +452,7 @@ function formatViewCount($count) {
                         </div>
                     <?php else: ?>
                         <!-- Empty Collection State -->
-                        <div class="bg-gray-50 rounded-lg p-12 text-center ">
+                        <div class="bg-gray-50 rounded-lg p-12 text-center">
                             <div class="w-20 h-20 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
                                 <i class="fas fa-box-open text-3xl text-gray-400"></i>
                             </div>
@@ -357,6 +487,14 @@ function formatViewCount($count) {
     <?php include '../navbar/footer.php'; ?>
 
     <style>
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;

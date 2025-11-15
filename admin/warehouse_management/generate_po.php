@@ -58,6 +58,7 @@ $itemStmt = $conn->prepare("
         oi.id as item_id,
         oi.order_id,
         oi.product_id,
+        oi.variant_id,
         oi.product_name,
         oi.size,
         oi.variant_color,
@@ -78,10 +79,14 @@ $itemStmt = $conn->prepare("
         sl.primary_contact_name,
         sl.email_address,
         sl.phone_number,
-        sl.business_address
+        sl.business_address,
+        pv.namevariant,
+        pv.color as variant_color_db,
+        pv.size as variant_size_db
     FROM order_items oi
+    LEFT JOIN product_variants pv ON oi.variant_id = pv.id
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
-    LEFT JOIN supp_link_products slp ON oi.product_id = slp.product_id 
+    LEFT JOIN supp_link_products slp ON oi.variant_id = slp.variant_id 
         AND oi.supplier_id = slp.supplier_id 
         AND slp.status = 'active'
     WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
@@ -585,21 +590,22 @@ foreach ($allItems as $item) {
             `;
             
             supplier.items.forEach((item, index) => {
-                html += `
-                    <div class="bg-white p-3 rounded border">
-                        <label class="flex items-start space-x-3 cursor-pointer">
-                            <input type="checkbox" value="${item.item_id}" name="itemsToReassign" class="mt-1 text-amber-600">
-                            <div class="flex-1">
-                                <div class="font-medium text-sm text-gray-900">${item.product_name}</div>
-                                <div class="text-xs text-gray-600">
-                                    ${item.codename} | ${item.size} | ${item.variant_color} | Qty: ${item.quantity}
-                                </div>
-                                <div class="text-xs text-gray-600">₱${parseFloat(item.computed_price || item.price).toLocaleString()}</div>
-                            </div>
-                        </label>
+    html += `
+        <div class="bg-white p-3 rounded border">
+            <label class="flex items-start space-x-3 cursor-pointer">
+                <input type="checkbox" value="${item.item_id}" name="itemsToReassign" class="mt-1 text-amber-600">
+                <div class="flex-1">
+                    <div class="font-medium text-sm text-gray-900">${item.product_name}</div>
+                    ${item.namevariant ? `<div class="text-xs text-gray-500 italic">${item.namevariant}</div>` : ''}
+                    <div class="text-xs text-gray-600">
+                        Variant ID: ${item.variant_id} | ${item.codename} | ${item.variant_size_db || item.size} | ${item.variant_color_db || item.variant_color} | Qty: ${item.quantity}
                     </div>
-                `;
-            });
+                    <div class="text-xs text-gray-600">₱${parseFloat(item.current_price || item.price).toLocaleString()}</div>
+                </div>
+            </label>
+        </div>
+    `;
+});
             
             html += `
                         </div>
@@ -795,26 +801,28 @@ foreach ($allItems as $item) {
     `;
     
     supplier.items.forEach(item => {
-        // Match po_management.php exactly: use current_price and calculated_subtotal
-        const unitPrice = parseFloat(item.current_price || item.price || 0);
-        const totalPrice = parseFloat(item.calculated_subtotal || item.subtotal || 0);
-        
-        html += `
-            <tr>
-                <td class="px-4 py-4">
-                    <div class="font-medium text-gray-900">${item.product_name}</div>
-                    <div class="text-sm text-gray-500">${item.codename}</div>
-                </td>
-                <td class="px-4 py-4 text-sm text-gray-900">
-                    ${item.size} | ${item.variant_color}
-                </td>
-                <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
-                <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
-                <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            </tr>
-        `;
-    });
+    // Match po_management.php exactly: use current_price and calculated_subtotal
+    const unitPrice = parseFloat(item.current_price || item.price || 0);
+    const totalPrice = parseFloat(item.calculated_subtotal || item.subtotal || 0);
+    
+    html += `
+        <tr>
+            <td class="px-4 py-4">
+                <div class="font-medium text-gray-900">${item.product_name}</div>
+                ${item.namevariant ? `<div class="text-sm text-gray-500 italic">${item.namevariant}</div>` : ''}
+                <div class="text-sm text-gray-500">${item.codename}</div>
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-900">
+                <div>Variant ID: ${item.variant_id}</div>
+                <div>${item.variant_size_db || item.size} | ${item.variant_color_db || item.variant_color}</div>
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-900">${item.descrip6 || 'pcs'}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">${item.quantity}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">₱${unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">₱${totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        </tr>
+    `;
+});
     
     html += `</tbody></table></div>`;
     previewContent.innerHTML = html;

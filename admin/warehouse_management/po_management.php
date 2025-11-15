@@ -50,6 +50,7 @@ $itemStmt = $conn->prepare("
         oi.id as item_id,
         oi.order_id,
         oi.product_id,
+        oi.variant_id,
         oi.product_name,
         oi.size,
         oi.variant_color,
@@ -66,15 +67,17 @@ $itemStmt = $conn->prepare("
         oi.manual_supplier_name,
         p.product_name as product_full_name,
         p.codename as product_code,
+        pv.namevariant,
+        pv.color as variant_color_db,
+        pv.size as variant_size_db,
         o.created_at as order_date,
         o.status as order_status,
-        slp.supplier_price,
-        pv.id as variant_id
+        slp.supplier_price
     FROM order_items oi
-    LEFT JOIN products p ON oi.product_id = p.id
-    LEFT JOIN product_variants pv ON oi.product_id = pv.id
+    LEFT JOIN product_variants pv ON oi.variant_id = pv.id
+    LEFT JOIN products p ON pv.product_id = p.id
     LEFT JOIN orders o ON oi.order_id = o.id
-    LEFT JOIN supp_link_products slp ON oi.product_id = slp.product_id 
+    LEFT JOIN supp_link_products slp ON oi.variant_id = slp.variant_id 
         AND oi.supplier_id = slp.supplier_id 
         AND slp.status = 'active'
     WHERE oi.order_id = ?
@@ -112,33 +115,33 @@ for ($i = 0; $i < count($allItems); $i++) {
         $unassignedCount++;
     }
 
-    // Get linked suppliers with proper JOIN
-    if ($allItems[$i]['product_id']) {
-        $linkedSuppStmt = $conn->prepare("
-    SELECT 
-        slp.supplier_id,
-        slp.supplier_type,
-        slp.supplier_price,
-        sl.business_name,
-        sl.primary_contact_name,
-        sl.email_address,
-        sl.phone_number,
-        slp.status as link_status,
-        sl.status as supplier_status
-    FROM supp_link_products slp
-    INNER JOIN supplier_list sl ON slp.supplier_id = sl.id
-    WHERE slp.product_id = ? 
-        AND slp.status = 'active' 
-        AND sl.status = 'active'
-    ORDER BY 
-        CASE slp.supplier_type 
-            WHEN 'primary' THEN 1 
-            WHEN 'secondary' THEN 2 
-            ELSE 3 
-        END ASC, 
-        sl.business_name ASC
-");
-        $linkedSuppStmt->bind_param("i", $allItems[$i]['product_id']);
+    // Get linked suppliers with proper JOIN - using variant_id
+if ($allItems[$i]['variant_id']) {
+    $linkedSuppStmt = $conn->prepare("
+        SELECT 
+            slp.supplier_id,
+            slp.supplier_type,
+            slp.supplier_price,
+            sl.business_name,
+            sl.primary_contact_name,
+            sl.email_address,
+            sl.phone_number,
+            slp.status as link_status,
+            sl.status as supplier_status
+        FROM supp_link_products slp
+        INNER JOIN supplier_list sl ON slp.supplier_id = sl.id
+        WHERE slp.variant_id = ? 
+            AND slp.status = 'active' 
+            AND sl.status = 'active'
+        ORDER BY 
+            CASE slp.supplier_type 
+                WHEN 'primary' THEN 1 
+                WHEN 'secondary' THEN 2 
+                ELSE 3 
+            END ASC, 
+            sl.business_name ASC
+    ");
+    $linkedSuppStmt->bind_param("i", $allItems[$i]['variant_id']);
         $linkedSuppStmt->execute();
         $linkedResult = $linkedSuppStmt->get_result();
         $allItems[$i]['linked_suppliers'] = $linkedResult->fetch_all(MYSQLI_ASSOC);
@@ -436,13 +439,19 @@ for ($i = 0; $i < count($allItems); $i++) {
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6" id="item-<?php echo $item['item_id']; ?>">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex-1">
-                                    <h3 class="text-lg font-bold text-gray-900 mb-2"><?php echo htmlspecialchars($item['product_name']); ?></h3>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                                        <div><strong>Code:</strong> <?php echo htmlspecialchars($item['codename']); ?></div>
-                                        <div><strong>Size:</strong> <?php echo htmlspecialchars($item['size']); ?></div>
-                                        <div><strong>Color:</strong> <?php echo htmlspecialchars($item['variant_color']); ?></div>
-                                        <div><strong>Qty:</strong> <?php echo htmlspecialchars($item['quantity']); ?></div>
-                                    </div>
+                                    <h3 class="text-lg font-bold text-gray-900 mb-2">
+    <?php echo htmlspecialchars($item['product_name']); ?>
+    <?php if ($item['namevariant']): ?>
+        <span class="text-sm text-gray-600 font-normal">- <?php echo htmlspecialchars($item['namevariant']); ?></span>
+    <?php endif; ?>
+</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+    <div><strong>Variant ID:</strong> <?php echo htmlspecialchars($item['variant_id']); ?></div>
+    <div><strong>Code:</strong> <?php echo htmlspecialchars($item['codename']); ?></div>
+    <div><strong>Size:</strong> <?php echo htmlspecialchars($item['variant_size_db'] ?? $item['size']); ?></div>
+    <div><strong>Color:</strong> <?php echo htmlspecialchars($item['variant_color_db'] ?? $item['variant_color']); ?></div>
+    <div><strong>Qty:</strong> <?php echo htmlspecialchars($item['quantity']); ?></div>
+</div>
 
                                     <!-- Price Information with Update Indicator -->
 <div class="mt-2 text-sm text-gray-600">

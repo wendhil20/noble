@@ -1,4 +1,5 @@
 <?php
+//link_products.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -43,14 +44,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'link_product' && isset($_POST['product_id'])) {
     $product_id = intval($_POST['product_id']);
+    $variant_id = isset($_POST['variant_id']) ? intval($_POST['variant_id']) : null;
     $supplier_type = isset($_POST['supplier_type']) ? $_POST['supplier_type'] : 'secondary';
     $supplier_price = isset($_POST['supplier_price']) && !empty($_POST['supplier_price']) ? floatval($_POST['supplier_price']) : null;
     
     try {
-        // Check if link already exists for this supplier and product
-        $check_sql = "SELECT id, status, supplier_type FROM supp_link_products WHERE supplier_id = ? AND product_id = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("ii", $supplier_id, $product_id);
+        // Check if link already exists for this supplier and variant
+        if ($variant_id) {
+            $check_sql = "SELECT id, status, supplier_type FROM supp_link_products WHERE supplier_id = ? AND variant_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("ii", $supplier_id, $variant_id);
+        } else {
+            $check_sql = "SELECT id, status, supplier_type FROM supp_link_products WHERE supplier_id = ? AND product_id = ? AND variant_id IS NULL";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("ii", $supplier_id, $product_id);
+        }
         $check_stmt->execute();
         $existing = $check_stmt->get_result()->fetch_assoc();
         $check_stmt->close();
@@ -59,9 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($existing['status'] === 'active') {
                 // Already linked and active - update price if provided
                 if ($supplier_price !== null) {
-                    $update_price_sql = "UPDATE supp_link_products SET supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
-                    $update_price_stmt = $conn->prepare($update_price_sql);
-                    $update_price_stmt->bind_param("dii", $supplier_price, $supplier_id, $product_id);
+                    if ($variant_id) {
+                        $update_price_sql = "UPDATE supp_link_products SET supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND variant_id = ?";
+                        $update_price_stmt = $conn->prepare($update_price_sql);
+                        $update_price_stmt->bind_param("dii", $supplier_price, $supplier_id, $variant_id);
+                    } else {
+                        $update_price_sql = "UPDATE supp_link_products SET supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ? AND variant_id IS NULL";
+                        $update_price_stmt = $conn->prepare($update_price_sql);
+                        $update_price_stmt->bind_param("dii", $supplier_price, $supplier_id, $product_id);
+                    }
                     $update_price_stmt->execute();
                     $update_price_stmt->close();
                 }
@@ -69,9 +83,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             } else {
                 // Update status to active if link exists but inactive
-                $update_sql = "UPDATE supp_link_products SET status = 'active', supplier_type = ?, supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("sdii", $supplier_type, $supplier_price, $supplier_id, $product_id);
+                if ($variant_id) {
+                    $update_sql = "UPDATE supp_link_products SET status = 'active', supplier_type = ?, supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND variant_id = ?";
+                    $update_stmt = $conn->prepare($update_sql);
+                    $update_stmt->bind_param("sdii", $supplier_type, $supplier_price, $supplier_id, $variant_id);
+                } else {
+                    $update_sql = "UPDATE supp_link_products SET status = 'active', supplier_type = ?, supplier_price = ?, updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
+                    $update_stmt = $conn->prepare($update_sql);
+                    $update_stmt->bind_param("sdii", $supplier_type, $supplier_price, $supplier_id, $product_id);
+                }
                 $success = $update_stmt->execute();
                 $update_stmt->close();
                 
@@ -85,11 +105,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Check if trying to set as primary and there's already a primary supplier for this product
             if ($supplier_type === 'primary') {
-                $primary_check_sql = "SELECT sp.id, sl.business_name FROM supp_link_products sp 
-                                    LEFT JOIN supplier_list sl ON sp.supplier_id = sl.id 
-                                    WHERE sp.product_id = ? AND sp.supplier_type = 'primary' AND sp.status = 'active'";
-                $primary_check_stmt = $conn->prepare($primary_check_sql);
-                $primary_check_stmt->bind_param("i", $product_id);
+                if ($variant_id) {
+                    $primary_check_sql = "SELECT sp.id, sl.business_name FROM supp_link_products sp 
+                                        LEFT JOIN supplier_list sl ON sp.supplier_id = sl.id 
+                                        WHERE sp.variant_id = ? AND sp.supplier_type = 'primary' AND sp.status = 'active'";
+                    $primary_check_stmt = $conn->prepare($primary_check_sql);
+                    $primary_check_stmt->bind_param("i", $variant_id);
+                } else {
+                    $primary_check_sql = "SELECT sp.id, sl.business_name FROM supp_link_products sp 
+                                        LEFT JOIN supplier_list sl ON sp.supplier_id = sl.id 
+                                        WHERE sp.product_id = ? AND sp.variant_id IS NULL AND sp.supplier_type = 'primary' AND sp.status = 'active'";
+                    $primary_check_stmt = $conn->prepare($primary_check_sql);
+                    $primary_check_stmt->bind_param("i", $product_id);
+                }
                 $primary_check_stmt->execute();
                 $existing_primary = $primary_check_stmt->get_result()->fetch_assoc();
                 $primary_check_stmt->close();
@@ -102,9 +130,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Create new link with price (only store in supp_link_products)
-            $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, supplier_type, supplier_price, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', NOW(), NOW())";
-            $insert_stmt = $conn->prepare($insert_sql);
-            $insert_stmt->bind_param("iisd", $supplier_id, $product_id, $supplier_type, $supplier_price);
+            if ($variant_id) {
+                $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, variant_id, supplier_type, supplier_price, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'active', NOW(), NOW())";
+                $insert_stmt = $conn->prepare($insert_sql);
+                $insert_stmt->bind_param("iiisd", $supplier_id, $product_id, $variant_id, $supplier_type, $supplier_price);
+            } else {
+                $insert_sql = "INSERT INTO supp_link_products (supplier_id, product_id, supplier_type, supplier_price, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', NOW(), NOW())";
+                $insert_stmt = $conn->prepare($insert_sql);
+                $insert_stmt->bind_param("iisd", $supplier_id, $product_id, $supplier_type, $supplier_price);
+            }
             $success = $insert_stmt->execute();
             
             if ($success) {
@@ -125,12 +159,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($_POST['action'] === 'unlink_product' && isset($_POST['product_id'])) {
             $product_id = intval($_POST['product_id']);
+            $variant_id = isset($_POST['variant_id']) ? intval($_POST['variant_id']) : null;
             
             try {
-                // Set status to inactive instead of deleting
-                $update_sql = "UPDATE supp_link_products SET status = 'inactive', updated_at = NOW() WHERE supplier_id = ? AND product_id = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ii", $supplier_id, $product_id);
+                if ($variant_id) {
+                    $update_sql = "UPDATE supp_link_products SET status = 'inactive', updated_at = NOW() WHERE supplier_id = ? AND variant_id = ?";
+                    $update_stmt = $conn->prepare($update_sql);
+                    $update_stmt->bind_param("ii", $supplier_id, $variant_id);
+                } else {
+                    $update_sql = "UPDATE supp_link_products SET status = 'inactive', updated_at = NOW() WHERE supplier_id = ? AND product_id = ? AND variant_id IS NULL";
+                    $update_stmt = $conn->prepare($update_sql);
+                    $update_stmt->bind_param("ii", $supplier_id, $product_id);
+                }
                 $success = $update_stmt->execute();
                 $update_stmt->close();
                 
@@ -145,7 +185,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         }
+        
     }
+
+    if ($_POST['action'] === 'get_single_variant' && isset($_POST['variant_id']) && isset($_POST['product_id'])) {
+            $variant_id = intval($_POST['variant_id']);
+            $product_id = intval($_POST['product_id']);
+            
+            try {
+                $variant_sql = "
+                    SELECT pv.*, 
+                           CASE WHEN sp.status = 'active' THEN 1 ELSE 0 END as is_linked,
+                           sp.supplier_type,
+                           sp.supplier_price,
+                           sp.created_at as linked_at,
+                           (SELECT COUNT(*) FROM supp_link_products sp2 WHERE sp2.variant_id = pv.id AND sp2.supplier_type = 'primary' AND sp2.status = 'active') as has_primary
+                    FROM product_variants pv
+                    LEFT JOIN supp_link_products sp ON pv.id = sp.variant_id AND sp.supplier_id = ? AND sp.status = 'active'
+                    WHERE pv.id = ? AND pv.product_id = ?
+                ";
+                
+                $variant_stmt = $conn->prepare($variant_sql);
+                $variant_stmt->bind_param("iii", $supplier_id, $variant_id, $product_id);
+                $variant_stmt->execute();
+                $variant_result = $variant_stmt->get_result();
+                $variant = $variant_result->fetch_assoc();
+                $variant_stmt->close();
+                
+                if ($variant) {
+                    echo json_encode(['success' => true, 'variant' => $variant]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Variant not found']);
+                }
+                exit();
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error fetching variant: ' . $e->getMessage()]);
+                exit();
+            }
+        }
+
+
+    if ($_POST['action'] === 'get_product_counts' && isset($_POST['product_id'])) {
+            $product_id = intval($_POST['product_id']);
+            
+            try {
+                $counts_sql = "
+                    SELECT 
+                        (SELECT COUNT(*) FROM supp_link_products sp 
+                         WHERE sp.product_id = ? AND sp.supplier_id = ? 
+                         AND sp.status = 'active' AND sp.variant_id IS NOT NULL) as linked_count,
+                        (SELECT COUNT(*) FROM product_variants pv 
+                         WHERE pv.product_id = ?) as total_count
+                ";
+                
+                $counts_stmt = $conn->prepare($counts_sql);
+                $counts_stmt->bind_param("iii", $product_id, $supplier_id, $product_id);
+                $counts_stmt->execute();
+                $result = $counts_stmt->get_result();
+                $counts = $result->fetch_assoc();
+                $counts_stmt->close();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'linked_count' => $counts['linked_count'],
+                    'total_count' => $counts['total_count']
+                ]);
+                exit();
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error fetching counts: ' . $e->getMessage()]);
+                exit();
+            }
+        }
+
+        if ($_POST['action'] === 'get_variants' && isset($_POST['product_id'])) {
+            $product_id = intval($_POST['product_id']);
+            
+            try {
+                $variants_sql = "
+                    SELECT pv.*, 
+                           CASE WHEN sp.status = 'active' THEN 1 ELSE 0 END as is_linked,
+                           sp.supplier_type,
+                           sp.supplier_price,
+                           sp.created_at as linked_at,
+                           (SELECT COUNT(*) FROM supp_link_products sp2 WHERE sp2.variant_id = pv.id AND sp2.supplier_type = 'primary' AND sp2.status = 'active') as has_primary
+                    FROM product_variants pv
+                    LEFT JOIN supp_link_products sp ON pv.id = sp.variant_id AND sp.supplier_id = ? AND sp.status = 'active'
+                    WHERE pv.product_id = ?
+                    ORDER BY pv.namevariant ASC, pv.color ASC, pv.size ASC
+                ";
+                
+                $variants_stmt = $conn->prepare($variants_sql);
+                $variants_stmt->bind_param("ii", $supplier_id, $product_id);
+                $variants_stmt->execute();
+                $variants_result = $variants_stmt->get_result();
+                $variants = $variants_result->fetch_all(MYSQLI_ASSOC);
+                $variants_stmt->close();
+                
+                echo json_encode(['success' => true, 'variants' => $variants]);
+                exit();
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error fetching variants: ' . $e->getMessage()]);
+                exit();
+            }
+        }
     
     // If we get here, invalid action
     echo json_encode(['success' => false, 'message' => 'Invalid action']);
@@ -154,11 +296,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Handle search functionality
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$filter_product_id = isset($_GET['product_id']) ? intval($_GET['product_id']) : 0;
 
 // Build WHERE clause for products search
 $where_conditions = [];
 $params = [];
 $types = "";
+
+// Add product filter if specified
+if ($filter_product_id > 0) {
+    $where_conditions[] = "p.id = ?";
+    $params[] = $filter_product_id;
+    $types .= "i";
+}
 
 if (!empty($search)) {
     $where_conditions[] = "(p.product_name LIKE ? OR p.codename LIKE ? OR p.description LIKE ?)";
@@ -168,22 +318,16 @@ if (!empty($search)) {
 }
 
 $where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
-
 // Get all products with their link status for this supplier
 $products_sql = "
     SELECT p.*, 
-           CASE WHEN sp.status = 'active' THEN 1 ELSE 0 END as is_linked,
-           sp.supplier_type,
-           sp.supplier_price,
-           sp.created_at as linked_at,
-           pv.original_price as variant_original_price,
-           (SELECT COUNT(*) FROM supp_link_products sp2 WHERE sp2.product_id = p.id AND sp2.supplier_type = 'primary' AND sp2.status = 'active') as has_primary
+           (SELECT COUNT(*) FROM supp_link_products sp2 
+            WHERE sp2.product_id = p.id AND sp2.status = 'active' 
+            AND sp2.supplier_id = ? AND sp2.variant_id IS NOT NULL) as linked_variants_count,
+           (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) as total_variants_count
     FROM products p
-    LEFT JOIN supp_link_products sp ON p.id = sp.product_id AND sp.supplier_id = ? AND sp.status = 'active'
-    LEFT JOIN product_variants pv ON p.id = pv.product_id
     $where_clause
-    GROUP BY p.id
-    ORDER BY is_linked DESC, p.product_name ASC
+    ORDER BY p.product_name ASC
 ";
 
 try {
@@ -251,16 +395,16 @@ $linked_count_stmt->close();
     <?php include '../navbar/top.php'; ?>
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center space-x-4 mb-4">
-                <a href="suppliers_list.php" class="text-noble-primary hover:text-blue-700 transition-colors">
-                    <i class="fas fa-arrow-left text-xl"></i>
-                </a>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Link Products</h1>
-                    <p class="text-gray-600">Manage product links for <?= htmlspecialchars($supplier['business_name']) ?></p>
-                </div>
-            </div>
+<div class="mb-8">
+    <div class="flex items-center space-x-4 mb-4">
+        <a href="view_supplier.php?id=<?= $supplier_id ?>" class="text-noble-primary hover:text-blue-700 transition-colors">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Link Products</h1>
+            <p class="text-gray-600">Manage product links for <?= htmlspecialchars($supplier['business_name']) ?></p>
+        </div>
+    </div>
             
             <!-- Supplier Info Card -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -308,10 +452,13 @@ $linked_count_stmt->close();
         </div>
 
         <!-- Search Section -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-            <form method="GET" class="flex items-center space-x-4">
-                <input type="hidden" name="supplier_id" value="<?= $supplier_id ?>">
-                <div class="flex-1">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+    <form method="GET" class="flex items-center space-x-4">
+        <input type="hidden" name="supplier_id" value="<?= $supplier_id ?>">
+        <?php if ($filter_product_id > 0): ?>
+            <input type="hidden" name="product_id" value="<?= $filter_product_id ?>">
+        <?php endif; ?>
+        <div class="flex-1">
                     <div class="relative">
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
                                placeholder="Search products by name, code, or description..."
@@ -320,11 +467,42 @@ $linked_count_stmt->close();
                     </div>
                 </div>
                 <button type="submit" class="bg-noble-primary hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors duration-200">
-                    Search
-                </button>
-                <a href="?supplier_id=<?= $supplier_id ?>" class="text-gray-600 hover:text-gray-800 px-4 py-3">Clear</a>
-            </form>
+            Search
+        </button>
+        <?php if ($filter_product_id > 0): ?>
+            <a href="?supplier_id=<?= $supplier_id ?>" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors duration-200">
+                <i class="fas fa-times mr-1"></i>View All Products
+            </a>
+        <?php else: ?>
+            <a href="?supplier_id=<?= $supplier_id ?>" class="text-gray-600 hover:text-gray-800 px-4 py-3">Clear</a>
+        <?php endif; ?>
+    </form>
+</div>
+
+<!-- Filter Indicator -->
+<?php if ($filter_product_id > 0): 
+    // Get the filtered product name
+    $filtered_product = array_filter($products, function($p) use ($filter_product_id) {
+        return $p['id'] == $filter_product_id;
+    });
+    $filtered_product = reset($filtered_product);
+?>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-filter text-blue-500 mr-3"></i>
+                <div>
+                    <p class="text-blue-900 font-medium">Filtering by product:</p>
+                    <p class="text-blue-700"><?= htmlspecialchars($filtered_product['product_name'] ?? 'Unknown Product') ?></p>
+                </div>
+            </div>
+            <a href="?supplier_id=<?= $supplier_id ?>" 
+               class="text-blue-600 hover:text-blue-800 underline">
+                Clear filter
+            </a>
         </div>
+    </div>
+<?php endif; ?>
 
         <!-- Products Grid -->
         <?php if (empty($products)): ?>
@@ -338,215 +516,84 @@ $linked_count_stmt->close();
         <?php else: ?>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <?php foreach ($products as $product): ?>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 <?= $product['is_linked'] ? 'ring-2 ring-green-200' : '' ?>" 
-                         id="product-card-<?= $product['id'] ?>">
-                        <!-- Product Header -->
-                        <div class="p-6 border-b border-gray-100">
-                            <div class="flex items-start space-x-4">
-                                <!-- Product Image -->
-                                <div class="flex-shrink-0">
-                                    <?php 
-                                    $image_path = !empty($product['main_image']) ? '../../' . $product['main_image'] : '';
-                                    $image_exists = !empty($image_path) && file_exists($image_path);
-                                    
-                                    if ($image_exists): ?>
-                                        <img src="<?= htmlspecialchars($image_path) ?>" 
-                                             alt="<?= !empty($product['product_name']) ? htmlspecialchars($product['product_name']) : 'Product image' ?>"
-                                             class="w-16 h-16 rounded-lg object-cover border-2 border-gray-200">
-                                    <?php else: ?>
-                                        <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-                                            <i class="fas fa-box text-gray-400 text-xl"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Product Info -->
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
-                                        <?= !empty($product['product_name']) ? htmlspecialchars($product['product_name']) : 'Unnamed Product' ?>
-                                    </h3>
-                                    <p class="text-sm text-gray-600 mb-2">
-                                        <?= !empty($product['codename']) ? htmlspecialchars($product['codename']) : 'No code assigned' ?>
-                                    </p>
-                                    
-                                    <!-- Link Status -->
-                                    <?php if ($product['is_linked']): ?>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $product['supplier_type'] === 'primary' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' ?>">
-                                            <i class="fas fa-link mr-1"></i>
-                                            Linked (<?= ucfirst($product['supplier_type']) ?>)
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                            <i class="fas fa-unlink mr-1"></i>Not Linked
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Product Details -->
-                        <div class="p-6 space-y-3">
-                            <!-- Price and Quantity -->
-                            <div class="flex justify-between items-center text-sm">
-                                <div>
-                                    <span class="text-gray-600">Price:</span>
-                                    <?php if (!empty($product['price']) && $product['price'] > 0): ?>
-                                        <span class="font-semibold text-noble-primary">₱<?= number_format($product['price'], 2) ?></span>
-                                    <?php else: ?>
-                                        <span class="font-semibold text-gray-400 italic">Not set</span>
-                                    <?php endif; ?>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">Quantity:</span>
-                                    <?php if (isset($product['quantity']) && $product['quantity'] !== null): ?>
-                                        <span class="font-semibold"><?= number_format($product['quantity']) ?> <?= htmlspecialchars($product['unit'] ?? '') ?></span>
-                                    <?php else: ?>
-                                        <span class="font-semibold text-gray-400 italic">Not set</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-
-                            <!-- Description -->
-                            <div class="text-sm text-gray-600">
-                                <?php if (!empty($product['description']) && trim($product['description']) !== ''): ?>
-                                    <p class="line-clamp-3"><?= htmlspecialchars($product['description']) ?></p>
-                                <?php else: ?>
-                                    <p class="italic text-gray-400">No description available</p>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Specification -->
-                            <div class="text-sm">
-                                <span class="text-gray-600">Spec:</span>
-                                <?php if (!empty($product['specification']) && trim($product['specification']) !== ''): ?>
-                                    <span class="text-gray-700"><?= htmlspecialchars($product['specification']) ?></span>
-                                <?php else: ?>
-                                    <span class="text-gray-400 italic">Not specified</span>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Link Date -->
-                            <?php if ($product['is_linked']): ?>
-                                <div class="text-xs text-gray-500 pt-2 border-t border-gray-100">
-                                    <i class="fas fa-calendar mr-1"></i>
-                                    <?php if (!empty($product['linked_at'])): ?>
-                                        Linked <?= date('M j, Y g:i A', strtotime($product['linked_at'])) ?>
-                                    <?php else: ?>
-                                        <span class="italic">Link date not available</span>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Action Button -->
-<div class="px-6 pb-6">
-    <?php if ($product['is_linked']): ?>
-        <!-- Linked Product - Show Prices and Unlink -->
-        <div class="space-y-3">
-            <!-- Display Price Information -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                <!-- Supplier Price (Editable) -->
-                <?php if ($product['supplier_price']): ?>
-                    <div class="mb-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-blue-700 font-medium">Your Supplier Price:</span>
-                            <span class="text-lg font-bold text-blue-900">₱<?= number_format($product['supplier_price'], 2) ?></span>
-                        </div>
-                    </div>
-                <?php endif; ?>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200" 
+     id="product-card-<?= $product['id'] ?>">
+    <!-- Product Header -->
+    <div class="p-6 border-b border-gray-100">
+        <div class="flex items-start space-x-4">
+            <!-- Product Image -->
+            <div class="flex-shrink-0">
+                <?php 
+                $image_path = !empty($product['main_image']) ? '../../' . $product['main_image'] : '';
+                $image_exists = !empty($image_path) && file_exists($image_path);
                 
-                <!-- Original Price (Reference Only) -->
-                <?php if ($product['variant_original_price']): ?>
-                    <div class="pt-3 border-t border-blue-200">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-indigo-600">
-                                <i class="fas fa-info-circle mr-1"></i>Product Original Price (Reference):
-                            </span>
-                            <span class="text-sm font-semibold text-indigo-800">₱<?= number_format($product['variant_original_price'], 2) ?></span>
-                        </div>
-                    </div>
-                <?php endif; ?>
-                
-                <!-- Price Comparison -->
-                <?php if ($product['supplier_price'] && $product['variant_original_price']): ?>
-                    <?php 
-                    $difference = $product['supplier_price'] - $product['variant_original_price'];
-                    $percentage = ($difference / $product['variant_original_price']) * 100;
-                    ?>
-                    <div class="mt-2 text-xs">
-                        <?php if ($difference > 0): ?>
-                            <span class="text-red-600">
-                                <i class="fas fa-arrow-up mr-1"></i>
-                                +₱<?= number_format(abs($difference), 2) ?> (+<?= number_format(abs($percentage), 1) ?>%)
-                            </span>
-                        <?php elseif ($difference < 0): ?>
-                            <span class="text-green-600">
-                                <i class="fas fa-arrow-down mr-1"></i>
-                                -₱<?= number_format(abs($difference), 2) ?> (-<?= number_format(abs($percentage), 1) ?>%)
-                            </span>
-                        <?php else: ?>
-                            <span class="text-gray-600">
-                                <i class="fas fa-equals mr-1"></i>
-                                Same as original price
-                            </span>
-                        <?php endif; ?>
+                if ($image_exists): ?>
+                    <img src="<?= htmlspecialchars($image_path) ?>" 
+                         alt="<?= !empty($product['product_name']) ? htmlspecialchars($product['product_name']) : 'Product image' ?>"
+                         class="w-16 h-16 rounded-lg object-cover border-2 border-gray-200">
+                <?php else: ?>
+                    <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                        <i class="fas fa-box text-gray-400 text-xl"></i>
                     </div>
                 <?php endif; ?>
             </div>
-            
-            <!-- Update Price Button -->
-            <button onclick="showPriceModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>', <?= $product['supplier_price'] ?? 0 ?>, <?= $product['variant_original_price'] ?? 0 ?>)" 
-                    class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                <i class="fas fa-edit mr-2"></i>Update Supplier Price
-            </button>
-            
-            <!-- Unlink Button -->
-            <button onclick="unlinkProduct(<?= $product['id'] ?>)" 
-                    class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                    id="btn-<?= $product['id'] ?>">
-                <i class="fas fa-unlink mr-2"></i>Unlink Product
-            </button>
-        </div>
-    <?php else: ?>
-        <div class="space-y-2">
-            <!-- Show Original Price Reference Before Linking -->
-            <?php if ($product['variant_original_price']): ?>
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">
-                            <i class="fas fa-tag mr-1"></i>Original Price:
+
+            <!-- Product Info -->
+            <div class="flex-1 min-w-0">
+                <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                    <?= !empty($product['product_name']) ? htmlspecialchars($product['product_name']) : 'Unnamed Product' ?>
+                </h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    <?= !empty($product['codename']) ? htmlspecialchars($product['codename']) : 'No code assigned' ?>
+                </p>
+                
+                <!-- Variants Status -->
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-layer-group mr-1"></i>
+                        <?= $product['total_variants_count'] ?> Variants
+                    </span>
+                    <?php if ($product['linked_variants_count'] > 0): ?>
+                        <span class="linked-variants-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-link mr-1"></i>
+                            <?= $product['linked_variants_count'] ?> Linked
                         </span>
-                        <span class="font-semibold text-gray-900">₱<?= number_format($product['variant_original_price'], 2) ?></span>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">You can use this as reference when setting supplier price</p>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
-            
-            <!-- Primary Supplier Button -->
-            <?php if ($product['has_primary'] == 0): ?>
-                <button onclick="showLinkModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>', 'primary', <?= $product['variant_original_price'] ?? 0 ?>)" 
-                        class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                        id="btn-primary-<?= $product['id'] ?>">
-                    <i class="fas fa-star mr-2"></i>Link as Primary Supplier
-                </button>
-            <?php else: ?>
-                <button disabled 
-                        class="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg flex items-center justify-center cursor-not-allowed"
-                        title="This product already has a primary supplier">
-                    <i class="fas fa-star mr-2"></i>Primary Slot Taken
-                </button>
-            <?php endif; ?>
-            
-            <!-- Secondary Supplier Button -->
-            <button onclick="showLinkModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>', 'secondary', <?= $product['variant_original_price'] ?? 0 ?>)" 
-                    class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                    id="btn-secondary-<?= $product['id'] ?>">
-                <i class="fas fa-link mr-2"></i>Link as Secondary Supplier
-            </button>
+            </div>
         </div>
-    <?php endif; ?>
+    </div>
+
+    <!-- Product Details -->
+    <div class="p-6 space-y-3">
+        <!-- Description -->
+        <div class="text-sm text-gray-600">
+            <?php if (!empty($product['description']) && trim($product['description']) !== ''): ?>
+                <p class="line-clamp-2"><?= htmlspecialchars($product['description']) ?></p>
+            <?php else: ?>
+                <p class="italic text-gray-400">No description available</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- Specification -->
+        <div class="text-sm">
+            <span class="text-gray-600">Spec:</span>
+            <?php if (!empty($product['specification']) && trim($product['specification']) !== ''): ?>
+                <span class="text-gray-700"><?= htmlspecialchars($product['specification']) ?></span>
+            <?php else: ?>
+                <span class="text-gray-400 italic">Not specified</span>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Action Button -->
+    <div class="px-6 pb-6">
+        <button onclick="showVariantsModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>')" 
+                class="w-full bg-noble-primary hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
+            <i class="fas fa-list mr-2"></i>View & Link Variants
+        </button>
+    </div>
 </div>
-                    </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -576,7 +623,7 @@ $linked_count_stmt->close();
     </div>
 
     <!-- Price Modal -->
-<div id="priceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="priceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
@@ -626,6 +673,7 @@ $linked_count_stmt->close();
             </div>
             
             <input type="hidden" id="modalProductId">
+            <input type="hidden" id="modalVariantId">
             <input type="hidden" id="modalSupplierType">
             <input type="hidden" id="modalOriginalPriceValue">
             
@@ -645,198 +693,613 @@ $linked_count_stmt->close();
     </div>
 </div>
 
+<!-- Variants Modal -->
+<div id="variantsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-layer-group text-blue-500 mr-2"></i>
+                    Product Variants - <span id="variantsModalProductName"></span>
+                </h3>
+                <button onclick="closeVariantsModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6">
+            <div id="variantsLoadingSpinner" class="text-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-noble-primary mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading variants...</p>
+            </div>
+            
+            <div id="variantsContent" class="hidden space-y-4">
+                <!-- Variants will be loaded here dynamically -->
+            </div>
+            
+            <div id="variantsEmptyState" class="hidden text-center py-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <i class="fas fa-layer-group text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No variants found</h3>
+                <p class="text-gray-600">This product doesn't have any variants yet.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script>
+        // Toast and Loading Functions
         function showLoading() {
-    document.getElementById('loading-overlay').classList.remove('hidden');
-}
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
 
-function hideLoading() {
-    document.getElementById('loading-overlay').classList.add('hidden');
-}
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
 
-function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    const icon = document.getElementById('toast-icon');
-    const iconI = document.getElementById('toast-icon-i');
-    const messageEl = document.getElementById('toast-message');
-    
-    messageEl.textContent = message;
-    
-    if (type === 'success') {
-        icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-500';
-        iconI.className = 'fas fa-check text-white';
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const iconI = document.getElementById('toast-icon-i');
+            const messageEl = document.getElementById('toast-message');
+            
+            messageEl.textContent = message;
+            
+            if (type === 'success') {
+                icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-500';
+                iconI.className = 'fas fa-check text-white';
+            } else {
+                icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-500';
+                iconI.className = 'fas fa-times text-white';
+            }
+            
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                hideToast();
+            }, 3000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('hidden');
+        }
+
+        function closePriceModal() {
+            document.getElementById('priceModal').classList.add('hidden');
+        }
+
+        function submitPriceAndLink() {
+            const productId = document.getElementById('modalProductId').value;
+            const variantId = document.getElementById('modalVariantId').value;
+            const supplierType = document.getElementById('modalSupplierType').value;
+            const supplierPrice = document.getElementById('supplierPriceInput').value;
+            const submitBtn = document.getElementById('submitPriceBtn');
+            
+            if (!supplierPrice || parseFloat(supplierPrice) <= 0) {
+                showToast('Please enter a valid price', 'error');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=link_product&product_id=${productId}${variantId ? '&variant_id=' + variantId : ''}&supplier_type=${supplierType}&supplier_price=${supplierPrice}`
+            })
+            .then(response => response.json())
+            .then(data => {
+    if (data.success) {
+        showToast(data.message || 'Operation successful!', 'success');
+        closePriceModal();
+        
+        // Just reload the page after showing success message
+        setTimeout(() => {
+            location.reload();
+        }, 1500);
     } else {
-        icon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-500';
-        iconI.className = 'fas fa-times text-white';
-    }
-    
-    toast.classList.remove('hidden');
-    
-    setTimeout(() => {
-        hideToast();
-    }, 3000);
-}
+                    showToast(data.message || 'Error processing request. Please try again.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span id="submitBtnText">Link Product</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Network error. Please try again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span id="submitBtnText">Link Product</span>';
+            });
+        }
 
-function hideToast() {
-    document.getElementById('toast').classList.add('hidden');
-}
+        // Close modal when clicking outside
+        document.getElementById('priceModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePriceModal();
+            }
+        });
 
-function showLinkModal(productId, productName, supplierType, originalPrice = 0) {
-    document.getElementById('modalProductId').value = productId;
-    document.getElementById('modalProductName').textContent = productName;
-    document.getElementById('modalSupplierType').value = supplierType;
-    document.getElementById('supplierPriceInput').value = '';
-    document.getElementById('modalAction').textContent = 'Set';
-    document.getElementById('submitBtnText').textContent = 'Link Product';
-    document.getElementById('modalOriginalPriceValue').value = originalPrice;
-    document.getElementById('modalOriginalPrice').textContent = '₱' + parseFloat(originalPrice).toFixed(2);
+        // Allow Enter key to submit
+        document.getElementById('supplierPriceInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitPriceAndLink();
+            }
+        });
+        // Variants Modal Functions
+function showVariantsModal(productId, productName) {
+    document.getElementById('variantsModalProductName').textContent = productName;
+    document.getElementById('variantsModal').classList.remove('hidden');
+    document.getElementById('variantsLoadingSpinner').classList.remove('hidden');
+    document.getElementById('variantsContent').classList.add('hidden');
+    document.getElementById('variantsEmptyState').classList.add('hidden');
     
-    // Show/hide original price reference
-    const refDiv = document.getElementById('originalPriceReference');
-    if (originalPrice > 0) {
-        refDiv.classList.remove('hidden');
-    } else {
-        refDiv.classList.add('hidden');
-    }
+    // Clear previous content
+    document.getElementById('variantsContent').innerHTML = '';
     
-    document.getElementById('priceModal').classList.remove('hidden');
-    
-    // Focus on price input
-    setTimeout(() => {
-        document.getElementById('supplierPriceInput').focus();
-    }, 100);
-}
-
-function showPriceModal(productId, productName, currentPrice, originalPrice = 0) {
-    document.getElementById('modalProductId').value = productId;
-    document.getElementById('modalProductName').textContent = productName;
-    document.getElementById('modalSupplierType').value = 'update';
-    document.getElementById('supplierPriceInput').value = currentPrice || '';
-    document.getElementById('modalAction').textContent = 'Update';
-    document.getElementById('submitBtnText').textContent = 'Update Price';
-    document.getElementById('modalOriginalPriceValue').value = originalPrice;
-    document.getElementById('modalOriginalPrice').textContent = '₱' + parseFloat(originalPrice).toFixed(2);
-    
-    // Show/hide original price reference
-    const refDiv = document.getElementById('originalPriceReference');
-    if (originalPrice > 0) {
-        refDiv.classList.remove('hidden');
-    } else {
-        refDiv.classList.add('hidden');
-    }
-    
-    document.getElementById('priceModal').classList.remove('hidden');
-    
-    // Focus on price input
-    setTimeout(() => {
-        document.getElementById('supplierPriceInput').focus();
-    }, 100);
-}
-
-function closePriceModal() {
-    document.getElementById('priceModal').classList.add('hidden');
-}
-
-function submitPriceAndLink() {
-    const productId = document.getElementById('modalProductId').value;
-    const supplierType = document.getElementById('modalSupplierType').value;
-    const supplierPrice = document.getElementById('supplierPriceInput').value;
-    const submitBtn = document.getElementById('submitPriceBtn');
-    
-    if (!supplierPrice || parseFloat(supplierPrice) <= 0) {
-        showToast('Please enter a valid price', 'error');
-        return;
-    }
-    
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
-    
+    // Fetch variants
     fetch('', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `action=link_product&product_id=${productId}&supplier_type=${supplierType}&supplier_price=${supplierPrice}`
+        body: `action=get_variants&product_id=${productId}`
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            showToast(data.message || 'Operation successful!', 'success');
-            closePriceModal();
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+        document.getElementById('variantsLoadingSpinner').classList.add('hidden');
+        
+        if (data.success && data.variants && data.variants.length > 0) {
+            displayVariants(data.variants, productId);
         } else {
-            showToast(data.message || 'Error processing request. Please try again.', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span id="submitBtnText">Link Product</span>';
+            document.getElementById('variantsEmptyState').classList.remove('hidden');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Network error. Please try again.', 'error');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span id="submitBtnText">Link Product</span>';
+        document.getElementById('variantsLoadingSpinner').classList.add('hidden');
+        document.getElementById('variantsEmptyState').classList.remove('hidden');
     });
 }
 
-function unlinkProduct(productId) {
-    if (confirm('Are you sure you want to unlink this product from this supplier? The price data will be preserved.')) {
-        const button = document.getElementById(`btn-${productId}`);
+function closeVariantsModal() {
+    document.getElementById('variantsModal').classList.add('hidden');
+}
+
+function displayVariants(variants, productId) {
+    const content = document.getElementById('variantsContent');
+    content.innerHTML = '';
+    
+    variants.forEach(variant => {
+        const variantCard = createVariantCard(variant, productId);
+        content.appendChild(variantCard);
+    });
+    
+    content.classList.remove('hidden');
+}
+
+function createVariantCard(variant, productId) {
+    const card = document.createElement('div');
+    card.className = 'bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200';
+    card.id = `variant-card-${variant.id}`;
+    
+    const isLinked = variant.is_linked == 1;
+    const hasPrimary = variant.has_primary > 0;
+    
+    card.innerHTML = `
+        <div class="flex items-start space-x-4">
+            <!-- Variant Image -->
+            <div class="flex-shrink-0">
+                ${variant.image ? `
+                    <img src="../../${variant.image}" 
+                         alt="Variant image"
+                         class="w-20 h-20 rounded-lg object-cover border-2 border-gray-200">
+                ` : `
+                    <div class="w-20 h-20 rounded-lg bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                        <i class="fas fa-image text-gray-400 text-xl"></i>
+                    </div>
+                `}
+            </div>
+            
+            <!-- Variant Info -->
+            <div class="flex-1">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-1">
+                            ${variant.namevariant || 'Unnamed Variant'}
+                        </h4>
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            ${variant.color ? `
+                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-palette mr-1"></i>${variant.color}
+                                </span>
+                            ` : ''}
+                            ${variant.size ? `
+                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    <i class="fas fa-ruler mr-1"></i>${variant.size}
+                                </span>
+                            ` : ''}
+                            ${isLinked ? `
+                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${variant.supplier_type === 'primary' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                    <i class="fas fa-link mr-1"></i>Linked (${variant.supplier_type})
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Variant Details Grid -->
+                <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
+                    <div>
+                        <span class="text-gray-600">Original Price:</span>
+                        <span class="font-semibold text-gray-900">₱${parseFloat(variant.original_price || 0).toFixed(2)}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Selling Price:</span>
+                        <span class="font-semibold text-green-600">₱${parseFloat(variant.price || 0).toFixed(2)}</span>
+                    </div>
+                    ${variant.width || variant.height || variant.length ? `
+                        <div>
+                            <span class="text-gray-600">Dimensions:</span>
+                            <span class="font-semibold text-gray-900">
+                                ${variant.width || 0} × ${variant.height || 0} × ${variant.length || 0} ${variant.dimension_unit || 'cm'}
+                            </span>
+                        </div>
+                    ` : ''}
+                    ${variant.weight ? `
+                        <div>
+                            <span class="text-gray-600">Weight:</span>
+                            <span class="font-semibold text-gray-900">${variant.weight} ${variant.weight_unit || 'kg'}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Supplier Price Display (if linked) -->
+                ${isLinked && variant.supplier_price ? `
+                    <div class="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-blue-700 font-medium">Your Supplier Price:</span>
+                            <span class="text-lg font-bold text-blue-900">₱${parseFloat(variant.supplier_price).toFixed(2)}</span>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Action Buttons -->
+                <div class="mt-4 flex gap-2">
+                    ${isLinked ? `
+                        <button 
+                                data-action="update-price"
+                                data-product-id="${productId}"
+                                data-variant-id="${variant.id}"
+                                data-variant-name="${(variant.namevariant || 'Variant').replace(/"/g, '&quot;')}"
+                                data-current-price="${variant.supplier_price || 0}"
+                                data-original-price="${variant.original_price || 0}"
+                                class="variant-action-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+                            <i class="fas fa-edit mr-1"></i>Update Price
+                        </button>
+                        <button 
+                                data-action="unlink"
+                                data-product-id="${productId}"
+                                data-variant-id="${variant.id}"
+                                id="btn-variant-${variant.id}"
+                                class="variant-action-btn flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+                            <i class="fas fa-unlink mr-1"></i>Unlink
+                        </button>
+                    ` : `
+                        ${!hasPrimary ? `
+                            <button 
+                                    data-action="link"
+                                    data-product-id="${productId}"
+                                    data-variant-id="${variant.id}"
+                                    data-variant-name="${(variant.namevariant || 'Variant').replace(/"/g, '&quot;')}"
+                                    data-supplier-type="primary"
+                                    data-original-price="${variant.original_price || 0}"
+                                    class="variant-action-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+                                <i class="fas fa-star mr-1"></i>Link as Primary
+                            </button>
+                        ` : `
+                            <button disabled 
+                                    class="flex-1 bg-gray-300 text-gray-500 py-2 px-4 rounded-lg text-sm cursor-not-allowed">
+                                <i class="fas fa-star mr-1"></i>Primary Taken
+                            </button>
+                        `}
+                        <button 
+                                data-action="link"
+                                data-product-id="${productId}"
+                                data-variant-id="${variant.id}"
+                                data-variant-name="${(variant.namevariant || 'Variant').replace(/"/g, '&quot;')}"
+                                data-supplier-type="secondary"
+                                data-original-price="${variant.original_price || 0}"
+                                class="variant-action-btn flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+                            <i class="fas fa-link mr-1"></i>Link as Secondary
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function showLinkModalForVariant(productId, variantId, variantName, supplierType, originalPrice) {
+    // Add null checks for all elements
+    const modalProductId = document.getElementById('modalProductId');
+    const modalVariantId = document.getElementById('modalVariantId');
+    const modalProductName = document.getElementById('modalProductName');
+    const modalSupplierType = document.getElementById('modalSupplierType');
+    const supplierPriceInput = document.getElementById('supplierPriceInput');
+    const modalAction = document.getElementById('modalAction');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const modalOriginalPriceValue = document.getElementById('modalOriginalPriceValue');
+    const modalOriginalPrice = document.getElementById('modalOriginalPrice');
+    const priceModal = document.getElementById('priceModal');
+    
+    // Check if all elements exist
+    if (!modalProductId || !modalVariantId || !modalProductName || !modalSupplierType || 
+        !supplierPriceInput || !modalAction || !submitBtnText || !modalOriginalPriceValue || 
+        !modalOriginalPrice || !priceModal) {
+        console.error('Modal elements not found!');
+        showToast('Error: Modal elements not found. Please refresh the page.', 'error');
+        return;
+    }
+    
+    modalProductId.value = productId;
+    modalVariantId.value = variantId;
+    modalProductName.textContent = variantName;
+    modalSupplierType.value = supplierType;
+    supplierPriceInput.value = '';
+    modalAction.textContent = 'Set';
+    submitBtnText.textContent = 'Link Variant';
+    modalOriginalPriceValue.value = originalPrice;
+    modalOriginalPrice.textContent = '₱' + parseFloat(originalPrice).toFixed(2);
+    
+    const refDiv = document.getElementById('originalPriceReference');
+    if (refDiv) {
+        if (originalPrice > 0) {
+            refDiv.classList.remove('hidden');
+        } else {
+            refDiv.classList.add('hidden');
+        }
+    }
+    
+    priceModal.classList.remove('hidden');
+    setTimeout(() => {
+        if (supplierPriceInput) {
+            supplierPriceInput.focus();
+        }
+    }, 100);
+}
+
+function showPriceModalForVariant(productId, variantId, variantName, currentPrice, originalPrice) {
+    // Add null checks for all elements
+    const modalProductId = document.getElementById('modalProductId');
+    const modalVariantId = document.getElementById('modalVariantId');
+    const modalProductName = document.getElementById('modalProductName');
+    const modalSupplierType = document.getElementById('modalSupplierType');
+    const supplierPriceInput = document.getElementById('supplierPriceInput');
+    const modalAction = document.getElementById('modalAction');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const modalOriginalPriceValue = document.getElementById('modalOriginalPriceValue');
+    const modalOriginalPrice = document.getElementById('modalOriginalPrice');
+    const priceModal = document.getElementById('priceModal');
+    
+    // Check if all elements exist
+    if (!modalProductId || !modalVariantId || !modalProductName || !modalSupplierType || 
+        !supplierPriceInput || !modalAction || !submitBtnText || !modalOriginalPriceValue || 
+        !modalOriginalPrice || !priceModal) {
+        console.error('Modal elements not found!');
+        showToast('Error: Modal elements not found. Please refresh the page.', 'error');
+        return;
+    }
+    
+    modalProductId.value = productId;
+    modalVariantId.value = variantId;
+    modalProductName.textContent = variantName;
+    modalSupplierType.value = 'update';
+    supplierPriceInput.value = currentPrice || '';
+    modalAction.textContent = 'Update';
+    submitBtnText.textContent = 'Update Price';
+    modalOriginalPriceValue.value = originalPrice;
+    modalOriginalPrice.textContent = '₱' + parseFloat(originalPrice).toFixed(2);
+    
+    const refDiv = document.getElementById('originalPriceReference');
+    if (refDiv) {
+        if (originalPrice > 0) {
+            refDiv.classList.remove('hidden');
+        } else {
+            refDiv.classList.add('hidden');
+        }
+    }
+    
+    priceModal.classList.remove('hidden');
+    setTimeout(() => {
+        if (supplierPriceInput) {
+            supplierPriceInput.focus();
+        }
+    }, 100);
+}
+
+function unlinkVariant(productId, variantId) {
+    if (confirm('Are you sure you want to unlink this variant from this supplier? The price data will be preserved.')) {
+        const button = document.getElementById(`btn-variant-${variantId}`);
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Unlinking...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Unlinking...';
         
         fetch('', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `action=unlink_product&product_id=${productId}`
+            body: `action=unlink_product&product_id=${productId}&variant_id=${variantId}`
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast(data.message || 'Product unlinked successfully!', 'success');
+                showToast(data.message || 'Variant unlinked successfully!', 'success');
+                
+                // Just reload the page after showing success message
                 setTimeout(() => {
                     location.reload();
-                }, 1000);
+                }, 1500);
             } else {
-                showToast(data.message || 'Error unlinking product. Please try again.', 'error');
+                showToast(data.message || 'Error unlinking variant. Please try again.', 'error');
                 button.disabled = false;
-                button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
+                button.innerHTML = '<i class="fas fa-unlink mr-1"></i>Unlink';
             }
         })
         .catch(error => {
             console.error('Error:', error);
             showToast('Network error. Please try again.', 'error');
             button.disabled = false;
-            button.innerHTML = '<i class="fas fa-unlink mr-2"></i>Unlink Product';
+            button.innerHTML = '<i class="fas fa-unlink mr-1"></i>Unlink';
         });
     }
 }
 
-// Add hover effects
-document.querySelectorAll('[id^="product-card-"]').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-2px)';
+// Add this new function here:
+function updateProductCardCounts(productId) {
+    // Fetch updated counts for the product
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=get_product_counts&product_id=${productId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the badge on the product card
+            const productCard = document.getElementById(`product-card-${productId}`);
+            if (productCard) {
+                const linkedBadge = productCard.querySelector('.linked-variants-badge');
+                if (data.linked_count > 0) {
+                    if (linkedBadge) {
+                        linkedBadge.innerHTML = `<i class="fas fa-link mr-1"></i>${data.linked_count} Linked`;
+                    } else {
+                        // Create the badge if it doesn't exist
+                        const variantsStatusDiv = productCard.querySelector('.flex.items-center.space-x-2');
+                        if (variantsStatusDiv) {
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'linked-variants-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                            newBadge.innerHTML = `<i class="fas fa-link mr-1"></i>${data.linked_count} Linked`;
+                            variantsStatusDiv.appendChild(newBadge);
+                        }
+                    }
+                } else {
+                    // Remove the badge if no variants are linked
+                    if (linkedBadge) {
+                        linkedBadge.remove();
+                    }
+                }
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating counts:', error);
     });
-    
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0)';
-    });
-});
+}
 
-// Close modal when clicking outside
-document.getElementById('priceModal')?.addEventListener('click', function(e) {
-    if (e.target === this) {
-        closePriceModal();
+
+// Add this new function:
+function refreshSingleVariant(productId, variantId) {
+    // Fetch the updated variant data
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=get_single_variant&product_id=${productId}&variant_id=${variantId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.variant) {
+            // Find and replace the variant card
+            const oldCard = document.getElementById(`variant-card-${variantId}`);
+            if (oldCard) {
+                const newCard = createVariantCard(data.variant, productId);
+                oldCard.replaceWith(newCard);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing variant:', error);
+    });
+}
+
+// Add this NEW function here:
+function refreshSingleVariant(productId, variantId) {
+    console.log('Refreshing variant:', variantId); // Debug log
+    
+    // Fetch the updated variant data
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=get_single_variant&product_id=${productId}&variant_id=${variantId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Variant data received:', data); // Debug log
+        
+        if (data.success && data.variant) {
+            // Find the old variant card
+            const oldCard = document.getElementById(`variant-card-${variantId}`);
+            if (oldCard) {
+                // Create new card with updated data
+                const newCard = createVariantCard(data.variant, productId);
+                
+                // Replace the old card with the new one
+                oldCard.parentNode.replaceChild(newCard, oldCard);
+                
+                console.log('Variant card updated successfully'); // Debug log
+            } else {
+                console.error('Could not find variant card:', `variant-card-${variantId}`);
+            }
+        } else {
+            console.error('Failed to fetch variant:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing variant:', error);
+    });
+}
+
+// Event delegation for variant action buttons
+document.addEventListener('click', function(e) {
+    const button = e.target.closest('.variant-action-btn');
+    if (!button) return;
+    
+    const action = button.getAttribute('data-action');
+    const productId = parseInt(button.getAttribute('data-product-id'));
+    const variantId = parseInt(button.getAttribute('data-variant-id'));
+    
+    if (action === 'link') {
+        const variantName = button.getAttribute('data-variant-name');
+        const supplierType = button.getAttribute('data-supplier-type');
+        const originalPrice = parseFloat(button.getAttribute('data-original-price'));
+        
+        showLinkModalForVariant(productId, variantId, variantName, supplierType, originalPrice);
+    } else if (action === 'update-price') {
+        const variantName = button.getAttribute('data-variant-name');
+        const currentPrice = parseFloat(button.getAttribute('data-current-price'));
+        const originalPrice = parseFloat(button.getAttribute('data-original-price'));
+        
+        showPriceModalForVariant(productId, variantId, variantName, currentPrice, originalPrice);
+    } else if (action === 'unlink') {
+        unlinkVariant(productId, variantId);
     }
 });
 
-// Allow Enter key to submit
-document.getElementById('supplierPriceInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        submitPriceAndLink();
+// Close variants modal when clicking outside
+document.getElementById('variantsModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeVariantsModal();
     }
 });
     </script>

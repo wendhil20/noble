@@ -6,6 +6,7 @@ session_start();
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
+require_once '../warehouse_management/audit_trail_helper.php'; // ADD THIS LINE
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
@@ -129,6 +130,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         $booking_id = $conn->insert_id;
         $insertBooking->close();
+        
+        // LOG AUDIT TRAIL - CREATE BOOKING
+        logAuditTrail(
+            $conn,
+            'CREATE_DELIVERY_BOOKING',
+            'delivery_bookings',
+            $booking_id,
+            $order_id,
+            null, // no order_item_id for booking creation
+            null, // no old value
+            json_encode([
+                'booking_type' => $schedule['delivery_type'],
+                'tracking_number' => $tracking_number,
+                'courier_name' => $courier_name,
+                'pickup_person' => $pickup_person_name,
+                'pickup_contact' => $pickup_person_contact,
+                'driver_name' => $driver_name,
+                'vehicle_plate' => $vehicle_plate_number
+            ]),
+            "Created " . ucfirst($schedule['delivery_type']) . " booking with tracking #$tracking_number"
+        );
         
         // Update all order items to ready_for_pickup
         $updateItems = $conn->prepare("

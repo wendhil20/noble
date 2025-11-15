@@ -279,52 +279,61 @@ $reference_no = 'NH' . mt_rand(9800000, 9899999);
 
     // ✅ INSERT ORDER ITEMS
     $item_stmt = $conn->prepare("INSERT INTO order_items (
-        order_id, product_id, product_name, codename, type_name, 
-        variant_color, size, price, quantity, subtotal, 
-        descrip6, descrip7, origin
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    order_id, product_id, variant_id, product_name, codename, type_name, 
+    variant_color, size, price, quantity, subtotal, 
+    descrip6, descrip7, origin
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+// ↑ Now 14 placeholders instead of 13
 
-    if (!$item_stmt) {
-        $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
-        $conn->query("DELETE FROM orders WHERE id = $order_id");
-        throw new Exception('Failed to prepare items statement: ' . $conn->error);
-    }
+if (!$item_stmt) {
+    $conn->query("DELETE FROM order_items WHERE order_id = $order_id");
+    $conn->query("DELETE FROM orders WHERE id = $order_id");
+    throw new Exception('Failed to prepare items statement: ' . $conn->error);
+}
 
-    foreach ($cart_items as $item) {
-        $item_subtotal = floatval($item['price']) * intval($item['quantity']);
-        
-        $product_name = $item['variant_name'] ?? $item['product_name'] ?? 'Product';
-        $color = $item['color_name'] ?? $item['variant_color'] ?? '';
-        $codename = $item['codename'] ?? '';
-        $type_name = $item['type_name'] ?? '';
-        $size = $item['size'] ?? '';
-        $descrip6 = $item['descrip6'] ?? '';
-        $descrip7 = $item['descrip7'] ?? '';
-        $origin = $item['origin'] ?? '';
+foreach ($cart_items as $item) {
+    $item_subtotal = floatval($item['price']) * intval($item['quantity']);
+    
+    // ✅ Extract variant_id from cart item
+    $variant_id = isset($item['variant_id']) && !empty($item['variant_id']) 
+        ? intval($item['variant_id']) 
+        : null;
+    
+    $product_id = intval($item['product_id']);
+    $product_name = $item['variant_name'] ?? $item['product_name'] ?? 'Product';
+    $color = $item['color_name'] ?? $item['variant_color'] ?? '';
+    $codename = $item['codename'] ?? '';
+    $type_name = $item['type_name'] ?? '';
+    $size = $item['size'] ?? '';
+    $descrip6 = $item['descrip6'] ?? '';
+    $descrip7 = $item['descrip7'] ?? '';
+    $origin = $item['origin'] ?? '';
 
         $item_stmt->bind_param(
-            "iisssssdidsss",
-            $order_id,
-            $item['product_id'],
-            $product_name,
-            $codename,
-            $type_name,
-            $color,
-            $size,
-            $item['price'],
-            $item['quantity'],
-            $item_subtotal,
-            $descrip6,
-            $descrip7,
-            $origin
-        );
-        
-        if (!$item_stmt->execute()) {
-            error_log("Warning: Failed to insert item: " . $item_stmt->error);
-        }
-    }
+        "iiisssssdidsss",  // ← Changed from "iisssssdidsss" - added one 'i'
+        $order_id,         // i
+        $product_id,       // i
+        $variant_id,       // i ← NEW: variant_id (can be NULL)
+        $product_name,     // s
+        $codename,         // s
+        $type_name,        // s
+        $color,            // s
+        $size,             // s
+        $item['price'],    // d
+        $item['quantity'], // i
+        $item_subtotal,    // d
+        $descrip6,         // s
+        $descrip7,         // s
+        $origin            // s
+    );
     
-    $item_stmt->close();
+    if (!$item_stmt->execute()) {
+        error_log("Warning: Failed to insert item: " . $item_stmt->error);
+        // Note: We log but don't throw to allow order to complete with partial items
+    }
+}
+
+$item_stmt->close();
 
     // ✅ CREATE PAYMONGO CHECKOUT SESSION
     $amount_in_centavos = intval($amount * 100);

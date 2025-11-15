@@ -6,6 +6,7 @@ session_start();
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
+require_once '../warehouse_management/audit_trail_helper.php'; // ADD THIS LINE
 
 if (!isset($_SESSION['noble_user'])) {
     header("Location: ../../loginpage/index.php");
@@ -211,6 +212,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         $booking_id = $conn->insert_id;
         $insertBooking->close();
+        
+        // LOG AUDIT TRAIL - CREATE REPLACEMENT BOOKING
+        logAuditTrail(
+            $conn,
+            'CREATE_REPLACEMENT_BOOKING',
+            'delivery_bookings',
+            $booking_id,
+            $order_id,
+            null,
+            null,
+            json_encode([
+                'booking_type' => $schedule['order_delivery_type'],
+                'tracking_number' => $tracking_number,
+                'courier_name' => $courier_name,
+                'pickup_person' => $pickup_person_name,
+                'pickup_contact' => $pickup_person_contact,
+                'driver_name' => $driver_name,
+                'vehicle_plate' => $vehicle_plate_number,
+                'replacement_count' => count($replacements),
+                'total_quantity' => $totalReplacementQty
+            ]),
+            "Created replacement " . strtolower($schedule['order_delivery_type']) . " booking for " . count($replacements) . " items (Total Qty: $totalReplacementQty) with tracking #$tracking_number"
+        );
         
         // Update ALL replacement requests for this delivery schedule
 $updateReplacement = $conn->prepare("

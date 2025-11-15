@@ -1440,127 +1440,244 @@ while ($row = $nav_result->fetch_assoc()) {
               <p class="text-sm text-gray-500 mt-2">Updating cart...</p>
             </div>
 
-            <!-- Cart Items -->
-            <div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
-              <?php if ($total_cart_items > 0): ?>
-                <div class="space-y-3">
-                  <?php
-                  // Fetch cart items for modal display - FIXED: Added product_colors join
-                  $modal_stmt = $conn->prepare("
-                    SELECT 
-                      c.*, 
-                      t.type_image, 
-                      p.descrip6, 
-                      p.descrip7,
-                      p.product_name,
-                      p.main_image,
-                      pc.image as pc_image
-                    FROM user_cart_items c
-                    LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
-                    LEFT JOIN product_variants v ON c.variant_id = v.id
-                    LEFT JOIN products p ON c.product_id = p.id
-                    LEFT JOIN product_colors pc ON pc.id = c.color_id
-                    WHERE c.user_id = ?
-                   ");
-                  $modal_stmt->bind_param("i", $user_id);
-                  $modal_stmt->execute();
-                  $modal_result = $modal_stmt->get_result();
-
-                  while ($item = $modal_result->fetch_assoc()):
-                    $unit_price = floatval($item['price']);
-                    $quantity = intval($item['quantity']);
-                  ?>
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
-                      <?php if (!empty($item['pc_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                      <?php elseif (!empty($item['type_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                      <?php elseif (!empty($item['main_image'])): ?>
-                        <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
-                      <?php else: ?>
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <i class="fas fa-image text-gray-400 text-xs"></i>
-                        </div>
-                      <?php endif; ?>
-
-                      <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
-                          <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
-                        </h4>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">
-                          <?= htmlspecialchars($item['variant_name'] ?: '') ?>
-                          <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
-                          <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
-                        </p>
-
-                        <!-- Display descrip6 and descrip7 if available -->
-                        <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
-                          <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
-                            <?= htmlspecialchars($item['descrip6'] ?: '') ?>
-                            <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
-                            <?= htmlspecialchars($item['descrip7'] ?: '') ?>
-                          </p>
-                        <?php endif; ?>
-
-                        <div class="flex items-center justify-between mt-1">
-                          <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
-                          <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
-                        </div>
-                      </div>
-
-                      <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
-                        <i class="fas fa-times text-xs"></i>
-                      </a>
-                    </div>
-                  <?php
-                  endwhile;
-                  $modal_stmt->close();
-                  ?>
-                </div>
-              <?php else: ?>
-                <!-- Empty Cart -->
-                <div class="text-center py-8">
-                  <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
-                  <p class="text-gray-500 text-sm">Your cart is empty</p>
-                  <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm">
-                    Start Shopping
-                  </a>
-                </div>
-              <?php endif; ?>
+     <!-- Cart Items -->
+<div class="max-h-60 sm:max-h-64 overflow-y-auto p-3 sm:p-4" id="cart-items-container">
+  
+  <?php 
+    // ===== GUEST CART =====
+    if (!$user_id && isset($_SESSION['guest_cart']) && count($_SESSION['guest_cart']) > 0): 
+  ?>
+    <div class="space-y-3">
+      <?php 
+        $guest_total = 0;
+        foreach ($_SESSION['guest_cart'] as $item): 
+          $unit_price = floatval($item['price']);
+          $quantity = intval($item['quantity']);
+          $guest_total += $unit_price * $quantity;
+      ?>
+        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+          <!-- Product Image - UPDATED FOR GUESTS -->
+          <?php 
+            // Try to fetch product image from database for guests
+            $guest_img_stmt = $conn->prepare("SELECT main_image FROM products WHERE id = ? LIMIT 1");
+            $product_id = intval($item['product_id']);
+            $guest_img_stmt->bind_param("i", $product_id);
+            $guest_img_stmt->execute();
+            $guest_img_result = $guest_img_stmt->get_result();
+            $guest_img_row = $guest_img_result->fetch_assoc();
+            $guest_img_stmt->close();
+            
+            $has_image = !empty($guest_img_row['main_image']);
+          ?>
+          
+          <?php if ($has_image): ?>
+            <img src="../../<?= htmlspecialchars($guest_img_row['main_image']) ?>" 
+              alt="<?= htmlspecialchars($item['product_name']) ?>" 
+              class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0 bg-gray-50">
+          <?php else: ?>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-image text-gray-400 text-xs"></i>
             </div>
+          <?php endif; ?>
 
-            <!-- Modal Footer -->
-            <?php if ($total_cart_items > 0): ?>
-              <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
-                <!-- Total Price -->
-                <div class="flex justify-between items-center mb-3">
-                  <span class=" text-sm text-gray-700">Total:</span>
-                  <span class=" text-base sm:text-lg text-orange-600" id="cart-total">
-                    ₱<?php
-                      // Calculate total for modal
-                      $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
-                      $total_stmt->bind_param("i", $user_id);
-                      $total_stmt->execute();
-                      $total_result = $total_stmt->get_result();
-                      $total_row = $total_result->fetch_assoc();
-                      echo number_format($total_row['total'] ?? 0, 2);
-                      $total_stmt->close();
-                      ?>
-                  </span>
-                </div>
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2">
-                  <a href="../otherpage/index-cart_view-page-8.php"
-                    class=" text-white px-3 py-2 text-xs sm:text-sm  text-center  transition">
-                    View Cart
-                  </a>
-                  <a href="../otherpage/index-checkout-page-12.php"
-                    class="text-white px-3 py-2 text-xs sm:text-sm  text-center  transition">
-                    Checkout
-                  </a>
-                </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
+              <?= htmlspecialchars($item['product_name']) ?>
+            </h4>
+            <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+              <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+              <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+              <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+            </p>
+
+            <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+              <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
+                <?= htmlspecialchars($item['descrip6'] ?: '') ?>
+                <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
+                <?= htmlspecialchars($item['descrip7'] ?: '') ?>
+              </p>
+            <?php endif; ?>
+
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+              <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+            </div>
+          </div>
+
+          <!-- Remove Button (Disabled for guests) -->
+          <button onclick="showGuestLoginAlert()" 
+            class="text-gray-400 cursor-not-allowed p-1 flex-shrink-0" 
+            title="Login to remove items">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        </div>
+      <?php endforeach; ?>
+    </div>
+
+  <?php 
+    // ===== LOGGED IN USER CART (existing code) =====
+    elseif ($user_id && $total_cart_items > 0): 
+  ?>
+    <div class="space-y-3">
+      <?php
+        $modal_stmt = $conn->prepare("
+          SELECT 
+            c.*, 
+            t.type_image, 
+            p.descrip6, 
+            p.descrip7,
+            p.product_name,
+            p.main_image,
+            pc.image as pc_image
+          FROM user_cart_items c
+          LEFT JOIN product_types t ON t.product_id = c.product_id AND t.type_name = c.type_name
+          LEFT JOIN product_variants v ON c.variant_id = v.id
+          LEFT JOIN products p ON c.product_id = p.id
+          LEFT JOIN product_colors pc ON pc.id = c.color_id
+          WHERE c.user_id = ?
+         ");
+        $modal_stmt->bind_param("i", $user_id);
+        $modal_stmt->execute();
+        $modal_result = $modal_stmt->get_result();
+
+        while ($item = $modal_result->fetch_assoc()):
+          $unit_price = floatval($item['price']);
+          $quantity = intval($item['quantity']);
+        ?>
+          <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cart-item-slide">
+            <?php if (!empty($item['pc_image'])): ?>
+              <img src="../../<?= htmlspecialchars($item['pc_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+            <?php elseif (!empty($item['type_image'])): ?>
+              <img src="../../<?= htmlspecialchars($item['type_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+            <?php elseif (!empty($item['main_image'])): ?>
+              <img src="../../<?= htmlspecialchars($item['main_image']) ?>" alt="Product" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg flex-shrink-0">
+            <?php else: ?>
+              <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-image text-gray-400 text-xs"></i>
               </div>
             <?php endif; ?>
+
+            <div class="flex-1 min-w-0">
+              <h4 class="font-medium text-xs sm:text-sm text-gray-800 truncate">
+                <?= htmlspecialchars($item['product_name'] ?: $item['codename']) ?>
+              </h4>
+              <p class="text-[10px] sm:text-xs text-gray-500 truncate">
+                <?= htmlspecialchars($item['variant_name'] ?: '') ?>
+                <?= !empty($item['color_name']) ? ', ' . htmlspecialchars($item['color_name']) : '' ?>
+                <?= !empty($item['size']) ? ', ' . htmlspecialchars($item['size']) : '' ?>
+              </p>
+
+              <?php if (!empty($item['descrip6']) || !empty($item['descrip7'])): ?>
+                <p class="text-[9px] sm:text-[10px] text-gray-400 truncate mt-1">
+                  <?= htmlspecialchars($item['descrip6'] ?: '') ?>
+                  <?= !empty($item['descrip6']) && !empty($item['descrip7']) ? ' • ' : '' ?>
+                  <?= htmlspecialchars($item['descrip7'] ?: '') ?>
+                </p>
+              <?php endif; ?>
+
+              <div class="flex items-center justify-between mt-1">
+                <span class="text-xs sm:text-sm text-orange-600">₱<?= number_format($unit_price, 2) ?></span>
+                <span class="text-[10px] sm:text-xs text-gray-500">Qty: <?= $quantity ?></span>
+              </div>
+            </div>
+
+            <a href="javascript:void(0)" onclick="removeFromCart(<?= $item['id'] ?>)" class="text-red-500 hover:text-red-700 transition p-1 flex-shrink-0">
+              <i class="fas fa-times text-xs"></i>
+            </a>
+          </div>
+        <?php
+        endwhile;
+        $modal_stmt->close();
+        ?>
+      </div>
+
+  <?php else: ?>
+    <!-- Empty Cart -->
+    <div class="text-center py-8">
+      <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-3"></i>
+      <p class="text-gray-500 text-sm">Your cart is empty</p>
+      <a href="index-shop-page-2.php" class="inline-block mt-3 text-orange-600 hover:text-orange-700 text-sm">
+        Start Shopping
+      </a>
+    </div>
+  <?php endif; ?>
+</div>
+
+           <!-- Modal Footer -->
+<?php 
+  $show_footer = false;
+  $footer_total = 0;
+  
+  // Guest cart footer
+  if (!$user_id && isset($_SESSION['guest_cart']) && count($_SESSION['guest_cart']) > 0):
+    $show_footer = true;
+    foreach ($_SESSION['guest_cart'] as $item) {
+      $footer_total += floatval($item['price']) * intval($item['quantity']);
+    }
+?>
+  <div class="border-t border-gray-200 p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-b-xl" id="cart-footer">
+    <!-- Total Price -->
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-sm text-gray-700">Total:</span>
+      <span class="text-base sm:text-lg text-orange-600" id="cart-total">
+        ₱<?= number_format($footer_total, 2) ?>
+      </span>
+    </div>
+
+    <!-- Guest Alert Message -->
+    <div class="mb-3 p-2 bg-orange-200 border border-orange-400 rounded text-xs text-orange-800">
+      <i class="fas fa-info-circle mr-1"></i>
+      <strong>Guest Mode:</strong> Login to proceed with checkout
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="navigateWithLoading('../otherpage/index-cart_view-page-8')"
+        class="bg-black hover:bg-gray-800 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">
+        View Cart
+      </button>
+      <button onclick="showGuestLoginAlert()"
+        class="bg-gray-400 cursor-not-allowed text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition opacity-60">
+        Login to Checkout
+      </button>
+    </div>
+  </div>
+
+<?php 
+  // Logged in user footer (existing code)
+  elseif ($user_id && $total_cart_items > 0):
+    $show_footer = true;
+?>
+  <div class="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-b-xl" id="cart-footer">
+    <!-- Total Price -->
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-sm text-gray-700">Total:</span>
+      <span class="text-base sm:text-lg text-orange-600" id="cart-total">
+        ₱<?php
+          $total_stmt = $conn->prepare("SELECT SUM(price * quantity) as total FROM user_cart_items WHERE user_id = ?");
+          $total_stmt->bind_param("i", $user_id);
+          $total_stmt->execute();
+          $total_result = $total_stmt->get_result();
+          $total_row = $total_result->fetch_assoc();
+          echo number_format($total_row['total'] ?? 0, 2);
+          $total_stmt->close();
+        ?>
+      </span>
+    </div>
+    <!-- Action Buttons -->
+    <div class="grid grid-cols-2 gap-2">
+      <a href="../otherpage/index-cart_view-page-8.php"
+        class="bg-black hover:bg-gray-800 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">
+        View Cart
+      </a>
+      <a href="javascript:void(0)" onclick="proceedToCheckout()"
+        class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 text-xs sm:text-sm text-center rounded transition">
+        Checkout
+      </a>
+    </div>
+  </div>
+<?php endif; ?>
+
           </div>
         </div>
 
@@ -1885,157 +2002,171 @@ while ($row = $nav_result->fetch_assoc()) {
 
             </div>
           </div>
-        <?php else: ?>
-          <div class="relative">
-            <button @click="loginOpen = !loginOpen" class="text-black hover:text-orange-500 transition flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Login
+       <?php else: ?>
+  <!-- ===== GUEST MODE ===== -->
+  <div class="relative">
+    <!-- Guest Badge + Login Button Group -->
+    <div class="flex items-center gap-2">
+      <!-- Guest Badge -->
+      <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-gray-100 rounded-full border border-gray-300">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xs text-gray-600 font-medium">Guest</span>
+      </div>
+
+      <!-- Login Button -->
+      <button @click="loginOpen = !loginOpen" 
+        class="flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5.121 17.804A10.95 10.95 0 0112 15c2.385 0 4.579.832 6.314 2.204M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="hidden sm:inline">Login</span>
+      </button>
+    </div>
+
+    <!-- Desktop Login Dropdown -->
+    <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
+      class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50">
+
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Login</h2>
+
+      <form x-data="loginForm()" @submit.prevent="handleLogin($event)">
+        <!-- Email/Mobile Input -->
+        <div class="mb-4">
+          <label for="login_input" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
+          <input type="text" id="login_input" name="login" x-model="loginInput" @input="checkLoginType"
+            placeholder="you@example.com or 09123456789" required
+            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+        </div>
+
+        <!-- Password field (shown for mobile or after OTP verified for email) -->
+        <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="mb-4">
+          <label for="password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
+          <input type="password" id="password" name="password" x-model="password"
+            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+        </div>
+
+        <!-- OTP Send Button (shown for email before OTP is sent) -->
+        <div x-show="isEmail && !otpSent && !otpVerified" x-transition>
+          <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
+          <button
+            type="button"
+            @click="sendOTP"
+            :disabled="otpLoading || resendCooldown > 0"
+            class="w-full bg-black hover:bg-red-700 disabled:bg-black text-white px-4 py-3 rounded mb-2 flex items-center justify-center space-x-2">
+
+            <!-- Show "Send OTP" -->
+            <template x-if="!otpLoading && resendCooldown === 0">
+              <span>Send OTP</span>
+            </template>
+
+            <!-- Show animated spinner + "Loading..." -->
+            <template x-if="otpLoading">
+              <div class="flex items-center space-x-2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                  viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10"
+                    stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span>Verifying...</span>
+              </div>
+            </template>
+
+            <!-- Show "Resend in Xs" -->
+            <template x-if="!otpLoading && resendCooldown > 0">
+              <span>Resend in <span x-text="resendCooldown"></span>s</span>
+            </template>
+          </button>
+        </div>
+
+        <!-- OTP Input Section (shown after OTP is sent but not verified) -->
+        <div x-show="otpSent && !otpVerified" x-transition class="mb-4">
+          <label class="block text-sm font-medium text-gray-600 mb-2">Enter OTP</label>
+          <p class="text-xs text-gray-500 mb-2">We sent a verification code to your email</p>
+
+          <input type="text" x-model="otp" maxlength="6"
+            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 mb-3 text-center text-lg tracking-widest"
+            placeholder="000000">
+
+          <div class="flex gap-2">
+            <button type="button" @click="cancelOTP"
+              class="flex-1 py-2 bg-gray-300 rounded hover:bg-gray-400 text-sm">Cancel</button>
+            <button type="button" @click="verifyOTP" :disabled="!otp || otp.length < 4"
+              class="flex-1 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-orange-300 text-sm">
+              Verify
             </button>
-
-            <!-- Desktop Login Dropdown -->
-            <div x-show="loginOpen" @click.away="loginOpen = false" x-transition x-cloak
-              class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-6 z-50">
-
-              <h2 class="text-xl font-bold text-gray-800 mb-4">Login</h2>
-
-              <form x-data="loginForm()" @submit.prevent="handleLogin($event)">
-                <!-- Email/Mobile Input -->
-                <div class="mb-4">
-                  <label for="login_input" class="block text-sm font-medium text-gray-600 mb-2">Email or Mobile</label>
-                  <input type="text" id="login_input" name="login" x-model="loginInput" @input="checkLoginType"
-                    placeholder="you@example.com or 09123456789" required
-                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- Password field (shown for mobile or after OTP verified for email) -->
-                <div x-show="(isMobile) || (isEmail && otpVerified)" x-transition class="mb-4">
-                  <label for="password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
-                  <input type="password" id="password" name="password" x-model="password"
-                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <!-- OTP Send Button (shown for email before OTP is sent) -->
-                <div x-show="isEmail && !otpSent && !otpVerified" x-transition>
-                  <label class="block text-sm font-medium text-gray-600 mb-2">OTP Verification</label>
-                  <button
-                    type="button"
-                    @click="sendOTP"
-                    :disabled="otpLoading || resendCooldown > 0"
-                    class="w-full bg-black hover:bg-red-700 disabled:bg-black text-white px-4 py-3 rounded mb-2 flex items-center justify-center space-x-2">
-
-                    <!-- Show "Send OTP" -->
-                    <template x-if="!otpLoading && resendCooldown === 0">
-                      <span>Send OTP</span>
-                    </template>
-
-                    <!-- Show animated spinner + "Loading..." -->
-                    <template x-if="otpLoading">
-                      <div class="flex items-center space-x-2">
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                          viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10"
-                            stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                        </svg>
-                        <span>Verifying...</span>
-                      </div>
-                    </template>
-
-                    <!-- Show "Resend in Xs" -->
-                    <template x-if="!otpLoading && resendCooldown > 0">
-                      <span>Resend in <span x-text="resendCooldown"></span>s</span>
-                    </template>
-                  </button>
-                </div>
-
-
-                <!-- OTP Input Section (shown after OTP is sent but not verified) -->
-                <div x-show="otpSent && !otpVerified" x-transition class="mb-4">
-                  <label class="block text-sm font-medium text-gray-600 mb-2">Enter OTP</label>
-                  <p class="text-xs text-gray-500 mb-2">We sent a verification code to your email</p>
-
-                  <input type="text" x-model="otp" maxlength="6"
-                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 mb-3 text-center text-lg tracking-widest"
-                    placeholder="000000">
-
-                  <div class="flex gap-2">
-                    <button type="button" @click="cancelOTP"
-                      class="flex-1 py-2 bg-gray-300 rounded hover:bg-gray-400 text-sm">Cancel</button>
-                    <button type="button" @click="verifyOTP" :disabled="!otp || otp.length < 4"
-                      class="flex-1 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-orange-300 text-sm">
-                      Verify
-                    </button>
-                  </div>
-
-                  <!-- Resend OTP section -->
-                  <div class="mt-3 text-center">
-                    <template x-if="resendCooldown > 0">
-                      <p class="text-sm text-gray-500">Resend in <span x-text="resendCooldown"></span>s</p>
-                    </template>
-                    <template x-if="resendCooldown === 0">
-                      <button @click="sendOTP" class="text-blue-500 hover:underline text-sm" type="button">
-                        Resend OTP
-                      </button>
-                    </template>
-                  </div>
-                </div>
-
-                <!-- Remember Me (for mobile only) -->
-                <div class="flex items-center gap-2 mb-4" x-show="isMobile">
-                  <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
-                  <label for="remember" class="text-sm text-gray-600">Remember me</label>
-                </div>
-
-                <!-- Login Button (shown for mobile or after OTP verified for email) -->
-                <button
-                  type="submit"
-                  :disabled="submitLoading"
-                  x-show="(isMobile || (isEmail && otpVerified))"
-                  class="w-full mb-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-2 px-4 rounded-lg">
-                  <span x-show="!submitLoading">Log In</span>
-                  <span x-show="submitLoading">Logging in...</span>
-                </button>
-
-                <!-- Error/Success Messages -->
-                <div x-show="errorMessage" x-transition class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  <span x-text="errorMessage"></span>
-                </div>
-
-                <div x-show="successMessage" x-transition class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                  <span x-text="successMessage"></span>
-                </div>
-
-                <!-- Additional Links -->
-                <div class="text-center text-xs mb-2">
-                  <a href="../forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
-                </div>
-
-                <div class="text-center text-xs mb-4">
-                  <span>Don't have an account?</span>
-                  <a href="#" @click.prevent="registerOpen = true; loginOpen = false" class="text-orange-500 hover:underline font-medium">Register</a>
-                </div>
-
-                <!-- Google Login -->
-                <div class="text-center">
-                  <a href="../google-login.php"
-                    class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
-                    <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
-                      <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
-                      <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
-                      <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
-                      <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
-                    </svg>
-                    Login with Google
-                  </a>
-                </div>
-              </form>
-            </div>
           </div>
-        <?php endif; ?>
+
+          <!-- Resend OTP section -->
+          <div class="mt-3 text-center">
+            <template x-if="resendCooldown > 0">
+              <p class="text-sm text-gray-500">Resend in <span x-text="resendCooldown"></span>s</p>
+            </template>
+            <template x-if="resendCooldown === 0">
+              <button @click="sendOTP" class="text-blue-500 hover:underline text-sm" type="button">
+                Resend OTP
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Remember Me (for mobile only) -->
+        <div class="flex items-center gap-2 mb-4" x-show="isMobile">
+          <input type="checkbox" id="remember" name="remember" class="h-4 w-4">
+          <label for="remember" class="text-sm text-gray-600">Remember me</label>
+        </div>
+
+        <!-- Login Button (shown for mobile or after OTP verified for email) -->
+        <button
+          type="submit"
+          :disabled="submitLoading"
+          x-show="(isMobile || (isEmail && otpVerified))"
+          class="w-full mb-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-2 px-4 rounded-lg">
+          <span x-show="!submitLoading">Log In</span>
+          <span x-show="submitLoading">Logging in...</span>
+        </button>
+
+        <!-- Error/Success Messages -->
+        <div x-show="errorMessage" x-transition class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <span x-text="errorMessage"></span>
+        </div>
+
+        <div x-show="successMessage" x-transition class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          <span x-text="successMessage"></span>
+        </div>
+
+        <!-- Additional Links -->
+        <div class="text-center text-xs mb-2">
+          <a href="../forgot_password" class="text-orange-500 hover:underline">Forgot password?</a>
+        </div>
+
+        <div class="text-center text-xs mb-4">
+          <span>Don't have an account?</span>
+          <a href="#" @click.prevent="registerOpen = true; loginOpen = false" class="text-orange-500 hover:underline font-medium">Register</a>
+        </div>
+
+        <!-- Google Login -->
+        <div class="text-center">
+          <a href="../google-login.php"
+            class="inline-flex items-center justify-center w-full gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">
+            <svg class="w-5 h-5 bg-white rounded-full p-[2px]" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.3 3.2l6.2-6.2C34.8 2.6 29.7 0 24 0 14.8 0 6.8 5.9 3.2 14.1l7.3 5.7C12.7 13.2 17.9 9.5 24 9.5z" />
+              <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16.1-5.7l-7.4-6.1C30.5 38.7 27.5 40 24 40c-6 0-11.2-3.7-13.4-8.8l-7.2 5.5C6.3 43.8 14.6 48 24 48z" />
+              <path fill="#FBBC05" d="M43.6 20H24v8.4h11.3c-1.1 3.2-3.4 5.8-6.5 7.6l7.4 6.1c4.3-4 6.8-9.9 6.8-17.1 0-1.2-.1-2.3-.3-3.4z" />
+              <path fill="#4285F4" d="M10.6 29.6C9.7 27.2 9.2 24.7 9.2 22s.5-5.2 1.4-7.6l-7.4-5.7C1.1 13.6 0 17.7 0 22c0 4.2 1.1 8.3 3.2 11.8l7.4-4.2z" />
+            </svg>
+            Login with Google
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+<?php endif; ?>
       </div>
     </div>
 
@@ -3036,6 +3167,15 @@ while ($row = $nav_result->fetch_assoc()) {
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <script>
+  function showGuestLoginAlert() {
+    showNotification('Please login to proceed', 'info');
+    
+    setTimeout(() => {
+        document.querySelector('button[\\@click="loginOpen = true"]')?.click() ||
+        document.querySelector('button[\\@click="loginOpen = !loginOpen"]')?.click();
+    }, 500);
+}
+
   lucide.createIcons(); // initialize icons
 
   document.addEventListener("alpine:init", () => {

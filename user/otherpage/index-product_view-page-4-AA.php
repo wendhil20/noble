@@ -38,13 +38,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
-if (!isset($_SESSION['user_id'])) {
-  header('Location: ../google-callback.php');
-  exit;
-}
 
-// ✅ RETRIEVE USER INFO
-$user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? 'example@example.com';
 $user_picture = $_SESSION['user_picture'] ?? null;
@@ -236,35 +230,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
   $product = $ORIGINAL_PRODUCT;
 }
 
-// ============================================================
-// ALL DATA IS NOW READY - USE IT IN YOUR HTML/TEMPLATE
-// ============================================================
-
-// echo "<h2>Fetched Product Data:</h2>";
-// if ($product) {
-//   echo "<table border='1' cellpadding='10'>";
-//   echo "<tr><th>Field</th><th>Value</th></tr>";
-//   echo "<tr><td>ID</td><td>" . htmlspecialchars($product['id']) . "</td></tr>";
-//   echo "<tr><td>Product Name</td><td>" . htmlspecialchars($product['product_name']) . "</td></tr>";
-//   echo "<tr><td>Description</td><td>" . htmlspecialchars($product['description']) . "</td></tr>";
-//   echo "</table>";
-
-//   echo "<hr>";
-//   echo "<h3>✅ SUCCESS - Correct product fetched!</h3>";
-// } else {
-//   echo "<p style='color:red;'>❌ NO PRODUCT FOUND with ID: $product_id</p>";
-// }
-
-// // Test other IDs
-// echo "<hr>";
-// echo "<h2>Test Other Products:</h2>";
-// echo "<ul>";
-// echo "<li><a href='?id=8'>Test ID 8 (Marine)</a></li>";
-// echo "<li><a href='?id=21'>Test ID 21 (Sliding Window)</a></li>";
-// echo "<li><a href='?id=43'>Test ID 43 (Modern Dining Table)</a></li>";
-// echo "<li><a href='?id=48'>Test ID 48 (Modern King Bed)</a></li>";
-// echo "<li><a href='?id=53'>Test ID 53 (Classic Tufted King Bed)</a></li>";
-// echo "</ul>";
+$is_guest = !isset($_SESSION['user_id']);
 ?>
 
 <!DOCTYPE html>
@@ -839,7 +805,7 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
           <div class="relative">
             <!-- Product Image Container -->
             <div class="aspect-square mb-4 relative bg-gray-50 rounded-lg overflow-hidden 
-         w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
+                w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-full lg:h-auto mx-auto lg:mx-0"
               id="magnifier-container">
 
               <img id="main-product-image"
@@ -1808,21 +1774,21 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
 
 
   <?php if ($related_products->num_rows > 0): ?>
-<!-- RELATED PRODUCTS SECTION - MOBILE SIDEBAR & DESKTOP CAROUSEL -->
+    <!-- RELATED PRODUCTS SECTION - MOBILE SIDEBAR & DESKTOP CAROUSEL -->
 
-<!-- Mobile Trigger Button (Bottom Right) -->
-<button id="relatedProductsTrigger"
-  class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
-  <i class="fas fa-th-large text-sm"></i>
-  <span>Related (<?= $related_products->num_rows ?>)</span>
-</button>
+    <!-- Mobile Trigger Button (Bottom Right) -->
+    <button id="relatedProductsTrigger"
+      class="lg:hidden fixed bottom-20 right-4 z-[80] bg-black text-white px-4 py-2 text-sm rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1">
+      <i class="fas fa-th-large text-sm"></i>
+      <span>Related (<?= $related_products->num_rows ?>)</span>
+    </button>
 
-<!-- Overlay for mobile sidebar -->
-<div id="relatedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden lg:hidden transition-opacity duration-300"></div>
+    <!-- Overlay for mobile sidebar -->
+    <div id="relatedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden lg:hidden transition-opacity duration-300"></div>
 
-<!-- Related Products Section - Bottom Sheet on Mobile, Hidden on Desktop -->
-<section id="relatedProductsContainer"
-  class="fixed bottom-0 left-0 right-0
+    <!-- Related Products Section - Bottom Sheet on Mobile, Hidden on Desktop -->
+    <section id="relatedProductsContainer"
+      class="fixed bottom-0 left-0 right-0
        transform translate-y-full
        transition-transform duration-300 ease-out
        z-[111] bg-white 
@@ -1830,365 +1796,365 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
        max-h-[80vh] overflow-hidden flex flex-col
        lg:hidden">
 
-  <!-- Header -->
-  <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
-    <div>
-      <h2 class="text-base">Related Products</h2>
-      <p class="text-xs text-white">Similar items you may like</p>
-    </div>
-    <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
-      <i class="fas fa-times text-lg"></i>
-    </button>
-  </div>
-
-  <!-- Products Grid (Mobile) -->
-  <div class="overflow-y-auto flex-1 p-3 bg-gray-50">
-    <div class="grid grid-cols-2 gap-3">
-      <?php
-      $related_products->data_seek(0);
-      while ($row = $related_products->fetch_assoc()):
-      ?>
-        <div class="group">
-          <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-            class="block bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full hover:border-orange-300">
-
-            <!-- Product Image -->
-            <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
-              <?php if ($row['main_image']): ?>
-                <img src="../../<?= $row['main_image'] ?>"
-                  loading="lazy"
-                  class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                  alt="<?= htmlspecialchars($row['product_name']) ?>">
-              <?php else: ?>
-                <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                  <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span class="text-xs">No Image</span>
-                </div>
-              <?php endif; ?>
-            </div>
-
-            <!-- Product Information -->
-            <div class="p-2.5">
-              <h3 class="text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight">
-                <?= htmlspecialchars($row['product_name']) ?>
-              </h3>
-
-              <div class="mb-2">
-                <p class="text-gray-600 text-xs line-clamp-1 mb-1">
-                  <?= htmlspecialchars($row['description']) ?>
-                </p>
-                <?php if (!empty($row['descrip6'])): ?>
-                  <p class="text-gray-500 text-xs line-clamp-1">
-                    • <?= htmlspecialchars($row['descrip6']) ?>
-                  </p>
-                <?php endif; ?>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-xs px-2 py-0.5 bg-black text-white">
-                  <?= htmlspecialchars($row['codename']) ?>
-                </span>
-                <span class="text-xs text-gray-400">
-                  <i class="fas fa-arrow-right"></i>
-                </span>
-              </div>
-            </div>
-          </a>
-        </div>
-      <?php endwhile; ?>
-    </div>
-  </div>
-</section>
-
-<!-- DESKTOP RELATED PRODUCTS CAROUSEL - Shows above product specifications -->
-<section class="hidden lg:block mt-8 px-4 lg:px-0 max-w-7xl mx-auto">
-  <div class="bg-white rounded-xl overflow-hidden shadow-sm">
-    
-    <!-- Header -->
-    <div class="px-6 py-6 border-b border-gray-200">
-      <div class="flex items-center justify-between">
+      <!-- Header -->
+      <div class="sticky top-0 bg-black text-white px-4 py-3 flex items-center justify-between z-20 shadow-md">
         <div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-1">Related Products</h2>
-          <p class="text-sm text-gray-600">Similar items you might like</p>
+          <h2 class="text-base">Related Products</h2>
+          <p class="text-xs text-white">Similar items you may like</p>
         </div>
+        <button id="closeRelatedProducts" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
+          <i class="fas fa-times text-lg"></i>
+        </button>
       </div>
-    </div>
 
-    <!-- Carousel Container -->
-    <div class="p-6 bg-gray-50">
-      <div class="relative">
-        <!-- Swiper Container -->
-        <div class="swiper relatedProductsSwiper">
-          <div class="swiper-wrapper">
-            <?php
-            $related_products->data_seek(0);
-            while ($row = $related_products->fetch_assoc()):
-            ?>
-              <div class="swiper-slide">
-                <div class="group bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                  <!-- Product Image -->
-                  <div class="relative overflow-hidden bg-gray-100" style="height: 200px;">
-                    <?php if ($row['main_image']): ?>
-                      <img src="../../<?= $row['main_image'] ?>"
-                        loading="lazy"
-                        class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300"
-                        alt="<?= htmlspecialchars($row['product_name']) ?>">
-                    <?php else: ?>
-                      <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                        <i class="fas fa-image text-3xl mb-2"></i>
-                        <span class="text-sm">No Image</span>
-                      </div>
+      <!-- Products Grid (Mobile) -->
+      <div class="overflow-y-auto flex-1 p-3 bg-gray-50">
+        <div class="grid grid-cols-2 gap-3">
+          <?php
+          $related_products->data_seek(0);
+          while ($row = $related_products->fetch_assoc()):
+          ?>
+            <div class="group">
+              <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+                class="block bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full hover:border-orange-300">
+
+                <!-- Product Image -->
+                <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
+                  <?php if ($row['main_image']): ?>
+                    <img src="../../<?= $row['main_image'] ?>"
+                      loading="lazy"
+                      class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                      alt="<?= htmlspecialchars($row['product_name']) ?>">
+                  <?php else: ?>
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                      <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="text-xs">No Image</span>
+                    </div>
+                  <?php endif; ?>
+                </div>
+
+                <!-- Product Information -->
+                <div class="p-2.5">
+                  <h3 class="text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight">
+                    <?= htmlspecialchars($row['product_name']) ?>
+                  </h3>
+
+                  <div class="mb-2">
+                    <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                      <?= htmlspecialchars($row['description']) ?>
+                    </p>
+                    <?php if (!empty($row['descrip6'])): ?>
+                      <p class="text-gray-500 text-xs line-clamp-1">
+                        • <?= htmlspecialchars($row['descrip6']) ?>
+                      </p>
                     <?php endif; ?>
-                    
                   </div>
 
-           <!-- Product Info -->
-<div class="p-3 flex-1 flex flex-col">
-  <!-- Product Name -->
-  <h3 class="text-gray-900 font-semibold text-xs mb-1.5 line-clamp-2 leading-tight">
-    <?= htmlspecialchars($row['product_name']) ?>
-  </h3>
-
-  <!-- Product Description -->
-  <div class="mb-2 flex-1">
-    <p class="text-gray-600 text-xs line-clamp-2 mb-0.5">
-      <?= htmlspecialchars($row['description']) ?>
-    </p>
-    <?php if (!empty($row['descrip6'])): ?>
-      <p class="text-gray-500 text-xs line-clamp-1">
-        <?= htmlspecialchars($row['descrip6']) ?>
-      </p>
-    <?php endif; ?>
-  </div>
-
-  <!-- Product Code & Link -->
-  <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-    <span class="text-xs px-2 py-0.5 bg-black text-white rounded font-medium">
-      <?= htmlspecialchars($row['codename']) ?>
-    </span>
-    <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-      class="text-orange-500 hover:text-orange-600 font-medium text-xs transition-colors inline-flex items-center gap-1 group/link">
-      View <i class="fas fa-arrow-right text-xs group-hover/link:translate-x-0.5 transition-transform inline-block"></i>
-    </a>
-  </div>
-</div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs px-2 py-0.5 bg-black text-white">
+                      <?= htmlspecialchars($row['codename']) ?>
+                    </span>
+                    <span class="text-xs text-gray-400">
+                      <i class="fas fa-arrow-right"></i>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            <?php endwhile; ?>
+              </a>
+            </div>
+          <?php endwhile; ?>
+        </div>
+      </div>
+    </section>
+
+    <!-- DESKTOP RELATED PRODUCTS CAROUSEL - Shows above product specifications -->
+    <section class="hidden lg:block mt-8 px-4 lg:px-0 max-w-7xl mx-auto">
+      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+
+        <!-- Header -->
+        <div class="px-6 py-6 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 mb-1">Related Products</h2>
+              <p class="text-sm text-gray-600">Similar items you might like</p>
+            </div>
           </div>
         </div>
 
-        <!-- Navigation Buttons -->
-        <button class="relatedProducts-prev absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
-          <i class="fas fa-chevron-left text-sm"></i>
-        </button>
+        <!-- Carousel Container -->
+        <div class="p-6 bg-gray-50">
+          <div class="relative">
+            <!-- Swiper Container -->
+            <div class="swiper relatedProductsSwiper">
+              <div class="swiper-wrapper">
+                <?php
+                $related_products->data_seek(0);
+                while ($row = $related_products->fetch_assoc()):
+                ?>
+                  <div class="swiper-slide">
+                    <div class="group bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                      <!-- Product Image -->
+                      <div class="relative overflow-hidden bg-gray-100" style="height: 200px;">
+                        <?php if ($row['main_image']): ?>
+                          <img src="../../<?= $row['main_image'] ?>"
+                            loading="lazy"
+                            class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300"
+                            alt="<?= htmlspecialchars($row['product_name']) ?>">
+                        <?php else: ?>
+                          <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                            <i class="fas fa-image text-3xl mb-2"></i>
+                            <span class="text-sm">No Image</span>
+                          </div>
+                        <?php endif; ?>
 
-        <button class="relatedProducts-next absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
-          <i class="fas fa-chevron-right text-sm"></i>
-        </button>
+                      </div>
+
+                      <!-- Product Info -->
+                      <div class="p-3 flex-1 flex flex-col">
+                        <!-- Product Name -->
+                        <h3 class="text-gray-900 font-semibold text-xs mb-1.5 line-clamp-2 leading-tight">
+                          <?= htmlspecialchars($row['product_name']) ?>
+                        </h3>
+
+                        <!-- Product Description -->
+                        <div class="mb-2 flex-1">
+                          <p class="text-gray-600 text-xs line-clamp-2 mb-0.5">
+                            <?= htmlspecialchars($row['description']) ?>
+                          </p>
+                          <?php if (!empty($row['descrip6'])): ?>
+                            <p class="text-gray-500 text-xs line-clamp-1">
+                              <?= htmlspecialchars($row['descrip6']) ?>
+                            </p>
+                          <?php endif; ?>
+                        </div>
+
+                        <!-- Product Code & Link -->
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                          <span class="text-xs px-2 py-0.5 bg-black text-white rounded font-medium">
+                            <?= htmlspecialchars($row['codename']) ?>
+                          </span>
+                          <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+                            class="text-orange-500 hover:text-orange-600 font-medium text-xs transition-colors inline-flex items-center gap-1 group/link">
+                            View <i class="fas fa-arrow-right text-xs group-hover/link:translate-x-0.5 transition-transform inline-block"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <?php endwhile; ?>
+              </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <button class="relatedProducts-prev absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
+              <i class="fas fa-chevron-left text-sm"></i>
+            </button>
+
+            <button class="relatedProducts-next absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
+              <i class="fas fa-chevron-right text-sm"></i>
+            </button>
+          </div>
+
+          <!-- Pagination Dots -->
+          <div class="flex justify-center gap-2 mt-6">
+            <div class="swiper-pagination swiper-pagination-bullets"></div>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <!-- Pagination Dots -->
-      <div class="flex justify-center gap-2 mt-6">
-        <div class="swiper-pagination swiper-pagination-bullets"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<style>
-  /* Mobile Sidebar Styles */
-  #relatedProductsContainer.sidebar-open {
-    transform: translateY(0);
-  }
-
-  #relatedProductsContainer {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  #relatedProductsContainer::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  #relatedProductsContainer::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  #relatedProductsContainer::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 3px;
-  }
-
-  #relatedProductsContainer::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
-  }
-
-  body.related-sidebar-open {
-    overflow: hidden;
-  }
-
-  /* Desktop Carousel Styles */
-  .relatedProductsSwiper {
-    overflow: visible;
-  }
-
-  .relatedProductsSwiper .swiper-slide {
-    height: auto;
-  }
-
-  /* Pagination Dots */
-  .swiper-pagination-bullets.swiper-pagination-horizontal {
-    bottom: 0;
-  }
-
-  .swiper-pagination-bullet {
-    background-color: #d1d5db;
-    opacity: 1;
-  }
-
-  .swiper-pagination-bullet-active {
-    background-color: #f97316;
-  }
-
-  /* Ensure carousel shows properly */
-  @media (min-width: 1024px) {
-    .relatedProductsSwiper {
-      padding: 0;
-    }
-
-    .relatedProductsSwiper .swiper-wrapper {
-      gap: 20px;
-    }
-  }
-</style>
-
-<script>
-  // Mobile Sidebar Controls
-  document.addEventListener('DOMContentLoaded', function() {
-    const mobileTrigger = document.getElementById('relatedProductsTrigger');
-    const closeBtn = document.getElementById('closeRelatedProducts');
-    const overlay = document.getElementById('relatedOverlay');
-    const container = document.getElementById('relatedProductsContainer');
-
-    function openSidebar() {
-      container.classList.add('sidebar-open');
-      overlay.classList.remove('hidden');
-      document.body.classList.add('related-sidebar-open');
-
-      setTimeout(() => {
-        overlay.style.opacity = '1';
-      }, 10);
-    }
-
-    function closeSidebar() {
-      container.classList.remove('sidebar-open');
-      overlay.style.opacity = '0';
-      document.body.classList.remove('related-sidebar-open');
-
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-      }, 300);
-    }
-
-    if (mobileTrigger) {
-      mobileTrigger.addEventListener('click', openSidebar);
-    }
-
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeSidebar);
-    }
-
-    if (overlay) {
-      overlay.addEventListener('click', closeSidebar);
-    }
-
-    // Close on swipe down (mobile only)
-    let touchStartY = 0;
-    let touchEndY = 0;
-
-    if (container) {
-      container.addEventListener('touchstart', (e) => {
-        touchStartY = e.changedTouches[0].screenY;
-      }, {
-        passive: true
-      });
-
-      container.addEventListener('touchend', (e) => {
-        touchEndY = e.changedTouches[0].screenY;
-        const scrollTop = container.querySelector('.overflow-y-auto')?.scrollTop || 0;
-        if (scrollTop === 0 && touchEndY > touchStartY + 50) {
-          closeSidebar();
-        }
-      }, {
-        passive: true
-      });
-    }
-
-    // Close with Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && container.classList.contains('sidebar-open')) {
-        closeSidebar();
+    <style>
+      /* Mobile Sidebar Styles */
+      #relatedProductsContainer.sidebar-open {
+        transform: translateY(0);
       }
-    });
 
-    // Desktop Carousel (Swiper)
-    if (typeof Swiper !== 'undefined') {
-      const relatedSwiper = new Swiper('.relatedProductsSwiper', {
-        slidesPerView: 'auto',
-        spaceBetween: 20,
-        loop: false,
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-          type: 'bullets',
-        },
-        navigation: {
-          nextEl: '.relatedProducts-next',
-          prevEl: '.relatedProducts-prev',
-        },
-        keyboard: {
-          enabled: true,
-        },
-        grabCursor: true,
-        breakpoints: {
-          640: {
-            slidesPerView: 2,
-            spaceBetween: 15,
-          },
-          1024: {
-            slidesPerView: 4,
+      #relatedProductsContainer {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+      }
+
+      #relatedProductsContainer::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+      }
+
+      body.related-sidebar-open {
+        overflow: hidden;
+      }
+
+      /* Desktop Carousel Styles */
+      .relatedProductsSwiper {
+        overflow: visible;
+      }
+
+      .relatedProductsSwiper .swiper-slide {
+        height: auto;
+      }
+
+      /* Pagination Dots */
+      .swiper-pagination-bullets.swiper-pagination-horizontal {
+        bottom: 0;
+      }
+
+      .swiper-pagination-bullet {
+        background-color: #d1d5db;
+        opacity: 1;
+      }
+
+      .swiper-pagination-bullet-active {
+        background-color: #f97316;
+      }
+
+      /* Ensure carousel shows properly */
+      @media (min-width: 1024px) {
+        .relatedProductsSwiper {
+          padding: 0;
+        }
+
+        .relatedProductsSwiper .swiper-wrapper {
+          gap: 20px;
+        }
+      }
+    </style>
+
+    <script>
+      // Mobile Sidebar Controls
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileTrigger = document.getElementById('relatedProductsTrigger');
+        const closeBtn = document.getElementById('closeRelatedProducts');
+        const overlay = document.getElementById('relatedOverlay');
+        const container = document.getElementById('relatedProductsContainer');
+
+        function openSidebar() {
+          container.classList.add('sidebar-open');
+          overlay.classList.remove('hidden');
+          document.body.classList.add('related-sidebar-open');
+
+          setTimeout(() => {
+            overlay.style.opacity = '1';
+          }, 10);
+        }
+
+        function closeSidebar() {
+          container.classList.remove('sidebar-open');
+          overlay.style.opacity = '0';
+          document.body.classList.remove('related-sidebar-open');
+
+          setTimeout(() => {
+            overlay.classList.add('hidden');
+          }, 300);
+        }
+
+        if (mobileTrigger) {
+          mobileTrigger.addEventListener('click', openSidebar);
+        }
+
+        if (closeBtn) {
+          closeBtn.addEventListener('click', closeSidebar);
+        }
+
+        if (overlay) {
+          overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close on swipe down (mobile only)
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        if (container) {
+          container.addEventListener('touchstart', (e) => {
+            touchStartY = e.changedTouches[0].screenY;
+          }, {
+            passive: true
+          });
+
+          container.addEventListener('touchend', (e) => {
+            touchEndY = e.changedTouches[0].screenY;
+            const scrollTop = container.querySelector('.overflow-y-auto')?.scrollTop || 0;
+            if (scrollTop === 0 && touchEndY > touchStartY + 50) {
+              closeSidebar();
+            }
+          }, {
+            passive: true
+          });
+        }
+
+        // Close with Escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && container.classList.contains('sidebar-open')) {
+            closeSidebar();
+          }
+        });
+
+        // Desktop Carousel (Swiper)
+        if (typeof Swiper !== 'undefined') {
+          const relatedSwiper = new Swiper('.relatedProductsSwiper', {
+            slidesPerView: 'auto',
             spaceBetween: 20,
-          },
-          1280: {
-            slidesPerView: 4,
-            spaceBetween: 20,
-          },
-        },
+            loop: false,
+            pagination: {
+              el: '.swiper-pagination',
+              clickable: true,
+              type: 'bullets',
+            },
+            navigation: {
+              nextEl: '.relatedProducts-next',
+              prevEl: '.relatedProducts-prev',
+            },
+            keyboard: {
+              enabled: true,
+            },
+            grabCursor: true,
+            breakpoints: {
+              640: {
+                slidesPerView: 2,
+                spaceBetween: 15,
+              },
+              1024: {
+                slidesPerView: 4,
+                spaceBetween: 20,
+              },
+              1280: {
+                slidesPerView: 4,
+                spaceBetween: 20,
+              },
+            },
+          });
+
+          // Update button disabled state
+          const updateButtonState = () => {
+            const prevBtn = document.querySelector('.relatedProducts-prev');
+            const nextBtn = document.querySelector('.relatedProducts-next');
+
+            if (prevBtn) {
+              prevBtn.style.opacity = relatedSwiper.isBeginning ? '0.5' : '1';
+              prevBtn.style.pointerEvents = relatedSwiper.isBeginning ? 'none' : 'auto';
+            }
+            if (nextBtn) {
+              nextBtn.style.opacity = relatedSwiper.isEnd ? '0.5' : '1';
+              nextBtn.style.pointerEvents = relatedSwiper.isEnd ? 'none' : 'auto';
+            }
+          };
+
+          relatedSwiper.on('slideChange', updateButtonState);
+          updateButtonState();
+        }
       });
-
-      // Update button disabled state
-      const updateButtonState = () => {
-        const prevBtn = document.querySelector('.relatedProducts-prev');
-        const nextBtn = document.querySelector('.relatedProducts-next');
-        
-        if (prevBtn) {
-          prevBtn.style.opacity = relatedSwiper.isBeginning ? '0.5' : '1';
-          prevBtn.style.pointerEvents = relatedSwiper.isBeginning ? 'none' : 'auto';
-        }
-        if (nextBtn) {
-          nextBtn.style.opacity = relatedSwiper.isEnd ? '0.5' : '1';
-          nextBtn.style.pointerEvents = relatedSwiper.isEnd ? 'none' : 'auto';
-        }
-      };
-
-      relatedSwiper.on('slideChange', updateButtonState);
-      updateButtonState();
-    }
-  });
-</script>
+    </script>
   <?php endif; ?>
 
 
@@ -2725,8 +2691,6 @@ if (!isset($product['product_name']) || empty($product['product_name'])) {
       });
     </script>
   <?php endif; ?>
-
-
 
   <?php include '../navbar/footer.php'; ?>
   <script src="js/index-product-view-page-4-AA.js?v=<?= filemtime('js/index-product-view-page-4-AA.js') ?>"></script>

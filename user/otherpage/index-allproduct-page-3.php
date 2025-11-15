@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_id'] = $user['id']; null; 
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['user_email'] = $user['email'] ?? '';
         $_SESSION['user_mobile'] = $user['mobile'] ?? '';
@@ -26,12 +26,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-// Session check
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
-    exit;
-}
 
+$is_guest = !isset($_SESSION['user_id']);
 // Modified query to get products with colors and variants
 $material_query = "
     SELECT 

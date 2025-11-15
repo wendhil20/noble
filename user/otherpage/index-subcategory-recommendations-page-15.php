@@ -26,13 +26,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
-    exit;
-}
+$is_guest = !isset($_SESSION['user_id']);
 
 $from_page = isset($_GET['from']) ? $_GET['from'] : '';
-$user_id = $_SESSION['user_id'];
+
 $subcategory_id = isset($_GET['subcategory_id']) ? (int)$_GET['subcategory_id'] : 0;
 
 if ($subcategory_id === 0) {

@@ -1,5 +1,7 @@
 <?php 
+session_name("nobleuser");
 session_start(); 
+
 // Set content type to JSON early
 header('Content-Type: application/json; charset=utf-8');
 // Prevent caching
@@ -20,36 +22,16 @@ try {
     foreach ($connection_paths as $path) {
         if (file_exists($path)) {
             require_once $path;
-            error_log("Database connection loaded from: " . $path);
+            error_log("✅ Database connection loaded from: " . $path);
             break;
         }
     }
     
     if (!isset($conn) || $conn === null) {
-        throw new Exception('Database connection file not found');
+        throw new Exception('❌ Database connection file not found');
     }
 
-    // Check if request is AJAX
-    if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || 
-        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Direct access not allowed'
-        ]);
-        exit;
-    }
-
-    // Check if request method is POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid request method. Expected POST, got ' . $_SERVER['REQUEST_METHOD']
-        ]);
-        exit;
-    }
-
-    // ✅ Restore session from remember_token (email or mobile-based or Google)
+    // ✅ Restore session from remember_token
     if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
         $token = $_COOKIE['remember_token'];
         $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
@@ -59,101 +41,168 @@ try {
         
         if ($res->num_rows > 0) {
             $user = $res->fetch_assoc();
-            
-            // 🔐 Store essential user session info
-            $_SESSION['user_id']    = $user['id'];
-            $_SESSION['user_name']  = $user['name'];
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['name'];
             $_SESSION['user_email'] = $user['email'] ?? '';
             $_SESSION['user_mobile'] = $user['mobile'] ?? '';
             
-            // 👤 Check if it's a Google account (optional)
             if (!empty($user['google_id'])) {
                 $_SESSION['google_logged_in'] = true;
                 $_SESSION['user_picture'] = $user['profile_picture'] ?? null;
             }
             
-            error_log("Session restored from remember_token for user ID: " . $user['id']);
-        } else {
-            error_log("Invalid remember_token found: " . substr($token, 0, 10) . '...');
-            // Clear invalid cookie
-            setcookie('remember_token', '', time() - 3600, '/');
+            error_log("✅ Session restored for user ID: " . $user['id']);
         }
-        
         $stmt->close();
     }
 
+    // Determine if user is logged in or guest
+    $is_guest = !isset($_SESSION['user_id']) || empty($_SESSION['user_id']);
+    $user_id = $is_guest ? null : intval($_SESSION['user_id']);
+    
+    error_log("🔍 REMOVE CART DEBUG:");
+    error_log("   - Guest mode: " . ($is_guest ? 'YES' : 'NO'));
+    error_log("   - User ID: " . ($user_id ?? 'N/A'));
+    error_log("   - Session ID: " . session_id());
+    error_log("   - Request Method: " . $_SERVER['REQUEST_METHOD']);
 
-    // ✅ Final session check
-    if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-        // For AJAX requests, don't redirect - return JSON error instead
-        echo json_encode([
-            'success' => false,
-            'message' => 'User not logged in',
-            'redirect' => '../google-callback.php', // Frontend can handle redirect
-            'session_id' => session_id(),
-            'session_status' => session_status(),
-            'debug' => [
-                'session_exists' => isset($_SESSION),
-                'user_id_set' => isset($_SESSION['user_id']),
-                'user_id_value' => $_SESSION['user_id'] ?? 'not set',
-                'remember_token_exists' => isset($_COOKIE['remember_token'])
-            ]
-        ]);
-        exit;
+    // Get item ID/key from various sources
+    $cart_key = null;
+
+    // 1. Try GET parameter (most common for direct links)
+    if (isset($_GET['key']) && !empty($_GET['key'])) {
+        $cart_key = $_GET['key'];
+        error_log("   - Cart key from GET: " . $cart_key);
     }
-
-    $user_id = intval($_SESSION['user_id']);
-    $item_id = null;
-
-    // Log received data
-    error_log("POST data: " . print_r($_POST, true));
-    $raw_input = file_get_contents('php://input');
-    error_log("Raw input: " . $raw_input);
-
-    // Handle different input formats
-    // First try to get from POST data (form-encoded)
-    if (isset($_POST['key']) && is_numeric($_POST['key'])) {
-        $item_id = intval($_POST['key']);
-        error_log("Item ID from POST key: " . $item_id);
-    } 
-    // Then try JSON input
-    else if (!empty($raw_input)) {
-        $input = json_decode($raw_input, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            if (isset($input['item_id']) && is_numeric($input['item_id'])) {
-                $item_id = intval($input['item_id']);
-                error_log("Item ID from JSON item_id: " . $item_id);
-            } elseif (isset($input['key']) && is_numeric($input['key'])) {
-                $item_id = intval($input['key']);
-                error_log("Item ID from JSON key: " . $item_id);
+    // 2. Try POST parameter
+    elseif (isset($_POST['key']) && !empty($_POST['key'])) {
+        $cart_key = $_POST['key'];
+        error_log("   - Cart key from POST: " . $cart_key);
+    }
+    // 3. Try JSON input
+    else {
+        $raw_input = file_get_contents('php://input');
+        if (!empty($raw_input)) {
+            $input = json_decode($raw_input, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $cart_key = $input['key'] ?? $input['item_id'] ?? null;
+                error_log("   - Cart key from JSON: " . $cart_key);
             }
-        } else {
-            error_log("JSON decode error: " . json_last_error_msg());
         }
     }
 
-    // Validate item_id
-    if ($item_id === null || $item_id <= 0) {
+    error_log("   - Final cart_key: " . ($cart_key ?? 'NULL'));
+
+    // Validate cart key
+    if ($cart_key === null || $cart_key === '') {
+        error_log("❌ No cart key provided!");
+        error_log("   GET: " . print_r($_GET, true));
+        error_log("   POST: " . print_r($_POST, true));
+        
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid item ID provided',
-            'received_data' => [
+            'message' => 'No item key provided',
+            'debug' => [
+                'get' => $_GET,
                 'post' => $_POST,
-                'raw_input' => $raw_input,
-                'parsed_item_id' => $item_id
+                'is_guest' => $is_guest
             ]
         ]);
         exit;
     }
 
-    error_log("Processing removal for item ID: " . $item_id . " by user ID: " . $user_id);
+    // ====================================================
+    // GUEST MODE: Remove from session
+    // ====================================================
+    if ($is_guest) {
+        error_log("👤 GUEST MODE - Removing item");
+        
+        // Initialize guest cart if not exists
+        if (!isset($_SESSION['guest_cart'])) {
+            $_SESSION['guest_cart'] = [];
+            error_log("   - Initialized empty guest cart");
+        }
+
+        error_log("   - Current guest cart keys: " . json_encode(array_keys($_SESSION['guest_cart'])));
+        error_log("   - Trying to remove key: " . $cart_key);
+
+        // Check if item exists in guest cart
+        if (isset($_SESSION['guest_cart'][$cart_key])) {
+            $removed_item = $_SESSION['guest_cart'][$cart_key];
+            unset($_SESSION['guest_cart'][$cart_key]);
+            
+            error_log("✅ GUEST: Successfully removed item");
+            error_log("   - Removed item: " . json_encode($removed_item));
+
+            // Calculate updated totals
+            $total_items = 0;
+            $total_amount = 0;
+            
+            foreach ($_SESSION['guest_cart'] as $item) {
+                $qty = intval($item['quantity'] ?? 0);
+                $price = floatval($item['price'] ?? 0);
+                $total_items += $qty;
+                $total_amount += ($qty * $price);
+            }
+
+            error_log("   - Remaining items: " . count($_SESSION['guest_cart']));
+            error_log("   - Total quantity: " . $total_items);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Item removed from cart',
+                'total_items' => $total_items,
+                'total_amount' => $total_amount,
+                'item_count' => count($_SESSION['guest_cart']),
+                'cart_key' => $cart_key,
+                'is_guest' => true,
+                'removed_item' => $removed_item
+            ]);
+            exit;
+            
+        } else {
+            error_log("❌ GUEST: Item not found in cart");
+            error_log("   - Looking for: " . $cart_key);
+            error_log("   - Available keys: " . json_encode(array_keys($_SESSION['guest_cart'])));
+            
+            echo json_encode([
+                'success' => false,
+                'message' => 'Item not found in guest cart',
+                'cart_key' => $cart_key,
+                'is_guest' => true,
+                'available_keys' => array_keys($_SESSION['guest_cart']),
+                'guest_cart_content' => $_SESSION['guest_cart']
+            ]);
+            exit;
+        }
+    }
+
+    // ====================================================
+    // LOGGED-IN USER MODE: Remove from database
+    // ====================================================
+    
+    if (!is_numeric($cart_key)) {
+        error_log("❌ LOGGED-IN: Invalid item ID format (not numeric): " . $cart_key);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid item ID format',
+            'cart_key' => $cart_key,
+            'is_guest' => false
+        ]);
+        exit;
+    }
+    
+    $item_id = intval($cart_key);
+    error_log("🔐 LOGGED-IN MODE - Removing item");
+    error_log("   - Item ID: " . $item_id);
+    error_log("   - User ID: " . $user_id);
 
     // Start transaction
     $conn->autocommit(false);
 
     try {
-        // Verify the item belongs to the current user before deleting
-        $verify_stmt = $conn->prepare("SELECT id FROM user_cart_items WHERE id = ? AND user_id = ?");
+        // Verify the item belongs to the current user
+        $verify_stmt = $conn->prepare("SELECT id, product_id, quantity FROM user_cart_items WHERE id = ? AND user_id = ?");
         $verify_stmt->bind_param("ii", $item_id, $user_id);
         $verify_stmt->execute();
         $verify_result = $verify_stmt->get_result();
@@ -162,16 +211,34 @@ try {
             $verify_stmt->close();
             $conn->rollback();
             
-            error_log("Item not found or access denied - Item ID: " . $item_id . ", User ID: " . $user_id);
+            error_log("❌ LOGGED-IN: Item not found or access denied");
+            
+            // Check if item exists but belongs to different user
+            $check_stmt = $conn->prepare("SELECT user_id FROM user_cart_items WHERE id = ?");
+            $check_stmt->bind_param("i", $item_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            
+            if ($check_result->num_rows > 0) {
+                $row = $check_result->fetch_assoc();
+                error_log("   - Item exists but belongs to user: " . $row['user_id']);
+            } else {
+                error_log("   - Item does not exist in database");
+            }
+            $check_stmt->close();
             
             echo json_encode([
                 'success' => false,
                 'message' => 'Item not found or access denied',
                 'item_id' => $item_id,
-                'user_id' => $user_id
+                'user_id' => $user_id,
+                'is_guest' => false
             ]);
             exit;
         }
+        
+        $item_data = $verify_result->fetch_assoc();
+        error_log("   - Found item: " . json_encode($item_data));
         $verify_stmt->close();
 
         // Delete the item
@@ -179,19 +246,16 @@ try {
         $delete_stmt->bind_param("ii", $item_id, $user_id);
         
         if (!$delete_stmt->execute()) {
-            throw new Exception("Failed to execute delete statement: " . $conn->error);
+            throw new Exception("Failed to delete: " . $conn->error);
         }
         
         $affected_rows = $delete_stmt->affected_rows;
         $delete_stmt->close();
 
-        if ($affected_rows === 0) {
-            throw new Exception("No item was deleted - possibly already removed");
-        }
+        error_log("✅ LOGGED-IN: Deleted successfully");
+        error_log("   - Affected rows: " . $affected_rows);
 
-        error_log("Successfully deleted item ID: " . $item_id . " (affected rows: " . $affected_rows . ")");
-
-        // Get updated cart count and total
+        // Get updated cart totals
         $count_stmt = $conn->prepare("
             SELECT 
                 COUNT(*) as count, 
@@ -215,52 +279,45 @@ try {
         $conn->commit();
         $conn->autocommit(true);
 
-        error_log("Cart updated - Total items: " . $total_cart_items . ", Total amount: " . $total_amount);
+        error_log("   - Remaining items: " . $item_count);
+        error_log("   - Total quantity: " . $total_cart_items);
 
         echo json_encode([
             'success' => true,
-            'message' => 'Item removed from cart successfully',
+            'message' => 'Item removed successfully',
             'total_items' => $total_cart_items,
             'total_amount' => $total_amount,
             'item_count' => $item_count,
             'item_id' => $item_id,
-            'user_id' => $user_id
+            'user_id' => $user_id,
+            'is_guest' => false
         ]);
 
     } catch (Exception $e) {
-        // Rollback transaction on error
         $conn->rollback();
         $conn->autocommit(true);
-        error_log("Database transaction error: " . $e->getMessage());
+        error_log("❌ LOGGED-IN: Transaction error: " . $e->getMessage());
         throw $e;
     }
 
 } catch (Exception $e) {
-    // Log comprehensive error information
-    error_log("Cart item removal error: " . $e->getMessage() . 
-              " | Item ID: " . ($item_id ?? 'unknown') . 
-              " | User ID: " . ($user_id ?? 'unknown') .
-              " | File: " . $e->getFile() . 
-              " | Line: " . $e->getLine());
+    error_log("❌ FATAL ERROR: " . $e->getMessage());
+    error_log("   File: " . $e->getFile());
+    error_log("   Line: " . $e->getLine());
     
     echo json_encode([
         'success' => false,
-        'message' => 'Error removing item from cart please relogin',
-        'error_details' => $e->getMessage(),
+        'message' => 'Error removing item',
+        'error' => $e->getMessage(),
         'debug' => [
-            'item_id' => $item_id ?? null,
+            'cart_key' => $cart_key ?? null,
             'user_id' => $user_id ?? null,
-            'post_data' => $_POST ?? [],
-            'raw_input' => file_get_contents('php://input'),
-            'session_data' => [
-                'session_id' => session_id(),
-                'user_id_set' => isset($_SESSION['user_id']),
-                'user_id_value' => $_SESSION['user_id'] ?? null
-            ]
+            'is_guest' => $is_guest ?? true,
+            'get' => $_GET ?? [],
+            'post' => $_POST ?? []
         ]
     ]);
 } finally {
-    // Ensure database connection is closed
     if (isset($conn) && $conn !== null) {
         $conn->close();
     }

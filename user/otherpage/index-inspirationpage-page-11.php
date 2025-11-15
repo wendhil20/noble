@@ -25,13 +25,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     }
     $stmt->close();
 }
-
-// ✅ Final check if logged in (either normal or Google)
-if (!isset($_SESSION['user_id'])) {
-    // Not logged in, redirect to login/Google callback
-    header('Location: ../google-callback.php');
-    exit;
-}
+$is_guest = !isset($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">

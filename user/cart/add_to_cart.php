@@ -4,6 +4,9 @@ session_start();
 include '../../connection/connect.php';
 header('Content-Type: application/json');
 
+// ===== GUEST MODE: Allow guests to add to cart =====
+// No user_id check here - guests can proceed!
+
 // Reset AUTO_INCREMENT if table is empty
 $tables = ['user_cart_items'];
 foreach ($tables as $table) {
@@ -29,40 +32,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'You must be logged in to pre-order.']);
-    exit;
-}
-
-// Check if user account is verified
-$user_id = $_SESSION['user_id'];
-$verify_stmt = $conn->prepare("SELECT ud.is_verified FROM user_details ud WHERE ud.user_id = ?");
-$verify_stmt->bind_param("i", $user_id);
-$verify_stmt->execute();
-$verify_result = $verify_stmt->get_result();
-$verify_stmt->close();
-
-if ($verify_result->num_rows === 0) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false, 
-        'message' => 'Your account details are incomplete. Please complete your profile verification to add items to cart.',
-        'error_code' => 'PROFILE_INCOMPLETE'
-    ]);
-    exit;
-}
-
-$user_verification = $verify_result->fetch_assoc();
-if (!$user_verification['is_verified'] || $user_verification['is_verified'] == 0) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false, 
-        'message' => 'Your account is not verified. Please verify your account to add items to cart.',
-        'error_code' => 'ACCOUNT_NOT_VERIFIED'
-    ]);
-    exit;
-}
+// ===== GUEST MODE: Check if user is logged in after this point =====
+$user_id = $_SESSION['user_id'] ?? null;
+$is_guest = !$user_id; // True if guest, False if logged in
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -175,6 +147,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $price = round($color_price + $discounted_variant_price, 2);
         if ($price <= 0) throw new Exception('Invalid price computation.');
 
+        // ===== GUEST MODE: If guest, save to temp session instead of database =====
+        if ($is_guest) {
+            // Initialize guest cart in session
+            if (!isset($_SESSION['guest_cart'])) {
+                $_SESSION['guest_cart'] = [];
+            }
+
+            // Create unique key for this item
+            $item_key = md5($product_id . '_' . $color_id . '_' . $variant_id_db);
+
+            // Check if item already exists
+            if (isset($_SESSION['guest_cart'][$item_key])) {
+                $_SESSION['guest_cart'][$item_key]['quantity'] += $quantity;
+                $action_message = "Added $quantity more piece(s) to cart. Total: " . $_SESSION['guest_cart'][$item_key]['quantity'];
+                $final_quantity = $_SESSION['guest_cart'][$item_key]['quantity'];
+            } else {
+                $_SESSION['guest_cart'][$item_key] = [
+                    'product_id' => $product_id,
+                    'product_name' => $product['product_name'],
+                    'color_id' => $color_id,
+                    'color_name' => $color_name,
+                    'variant_id' => $variant_id_db,
+                    'type_name' => $type_name,
+                    'variant_name' => $variant_name,
+                    'size' => $size,
+                    'codename' => $codename,
+                    'descrip6' => $unit,
+                    'descrip7' => $specification,
+                    'price' => $price,
+                    'quantity' => $quantity
+                ];
+                $action_message = "Added $quantity piece(s) to cart";
+                $final_quantity = $quantity;
+            }
+
+            // Return guest response with warning
+            echo json_encode([
+                'success' => true,
+                'is_guest' => true,
+                'message' => $action_message,
+                'warning' => 'You are in guest mode. Please login to checkout.',
+                'cart_count' => count($_SESSION['guest_cart']),
+                'item_added' => [
+                    'name' => $product['product_name'],
+                    'color' => $color_name ?: '—',
+                    'type' => $type_name ?: '—',
+                    'variant' => $variant_name ?: '—',
+                    'size' => $size ?: '—',
+                    'unit' => $unit ?: '—',
+                    'specification' => $specification ?: '—',
+                    'price' => $price,
+                    'quantity' => $final_quantity,
+                    'quantity_added' => $quantity
+                ]
+            ]);
+            exit;
+        }
+
+        // ===== LOGGED IN USER: Normal database save =====
+        
+        // Check if user account is verified (only for logged in users)
+        $verify_stmt = $conn->prepare("SELECT ud.is_verified FROM user_details ud WHERE ud.user_id = ?");
+        $verify_stmt->bind_param("i", $user_id);
+        $verify_stmt->execute();
+        $verify_result = $verify_stmt->get_result();
+        $verify_stmt->close();
+
+        if ($verify_result->num_rows === 0) {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Your account details are incomplete. Please complete your profile verification to add items to cart.',
+                'error_code' => 'PROFILE_INCOMPLETE'
+            ]);
+            exit;
+        }
+
+        $user_verification = $verify_result->fetch_assoc();
+        if (!$user_verification['is_verified'] || $user_verification['is_verified'] == 0) {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Your account is not verified. Please verify your account to add items to cart.',
+                'error_code' => 'ACCOUNT_NOT_VERIFIED'
+            ]);
+            exit;
+        }
+
         // Check if item already exists in cart
         $check_stmt = $conn->prepare("SELECT id, quantity FROM user_cart_items WHERE user_id = ? AND product_id = ? AND color_id <=> ? AND variant_id <=> ?");
         $check_stmt->bind_param("iiii", $user_id, $product_id, $color_id, $variant_id_db);
@@ -215,6 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         echo json_encode([
             'success' => true,
+            'is_guest' => false,
             'message' => $action_message,
             'cart_count' => getCartCount($conn, $user_id),
             'item_added' => [

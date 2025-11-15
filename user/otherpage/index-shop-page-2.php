@@ -3,7 +3,10 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 
-// Session restoration from remember_token
+// ===== GUEST MODE: Allow guests to browse =====
+// Removed: redirect to login requirement
+
+// Session restoration from remember_token (KEEP THIS)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt = $conn->prepare("SELECT * FROM users WHERE remember_token = ?");
     $stmt->bind_param("s", $_COOKIE['remember_token']);
@@ -27,10 +30,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
-    exit;
-}
+// ===== NO REDIRECT - Just let guests continue =====
+// Removed the redirect check that was here
 
 // Input validation
 $selected_categories = $_GET['category'] ?? [];
@@ -114,6 +115,9 @@ foreach ($all_categories as $cat_key => $cat_name) {
 }
 
 $active_filters = count($selected_categories) + (!empty($search_keyword) ? 1 : 0);
+
+// ===== CHECK IF GUEST =====
+$is_guest = !isset($_SESSION['user_id']);
 ?>
 
 <!DOCTYPE html>

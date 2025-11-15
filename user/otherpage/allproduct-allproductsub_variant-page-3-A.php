@@ -27,11 +27,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-// ✅ Session check 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
-    exit;
-}
+// ✅ CRITICAL: Allow guest access - Set defaults for guests
+$is_guest = !isset($_SESSION['user_id']);
+
 
 // Get parameters from URL
 $subcategory_id = isset($_GET['subcategory_id']) ? (int)$_GET['subcategory_id'] : 0;
@@ -137,10 +135,9 @@ if ($sub_subcategory_id > 0) {
     }
 }
 
-// FIXED: Sale filter logic
 
-if (isset($_GET['sale']) && $_GET['sale'] == 1) {
-    // Only add discount filter when explicitly showing sale items
+// FIXED: Sale filter logic - Make sure we only filter when sale=1
+if (isset($_GET['sale']) && intval($_GET['sale']) === 1) {
     $where_conditions[] = "pv.discount > 0";
 }
 // When sale=0 or not set → Don't add any discount filter (show ALL products)

@@ -27,10 +27,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../google-callback.php');
-    exit;
-}
+// ✅ CRITICAL: Allow guest access
+$is_guest = !isset($_SESSION['user_id']);
+
 
 // Fetch all categories
 $categories_query = "SELECT * FROM categories ORDER BY name ASC";

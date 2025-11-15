@@ -80,68 +80,112 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
-// ✅ Final session check
-if (!isset($_SESSION['user_id'])) {
-  // Not logged in — redirect to login or Google auth
-  header('Location: ../google-callback.php'); // You may replace with `index.php` if default login
-  exit;
-}
 
-// ✅ Retrieve user info
-$user_id = $_SESSION['user_id'];
+$is_guest = !isset($_SESSION['user_id']);
+// ADD THIS LINE:
+$user_id = $_SESSION['user_id'] ?? null;
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? 'example@example.com';
 $user_picture = $_SESSION['user_picture'] ?? null;
 
 $cart_items = [];
-$total_price = 0; // Initialize here
+$total_price = 0;
 $notice = $_SESSION['checkout_notice'] ?? null;
 unset($_SESSION['checkout_notice']);
 
-// ✅ Fetch cart items from database - FIXED: descrip6, descrip7 from products table
+// ✅ Fetch cart items - BOTH logged-in users AND guests
 if ($user_id) {
-  $stmt = $conn->prepare("
-    SELECT 
-        c.*, 
-        t.type_image, 
-        p.descrip6, 
-        p.descrip7, 
-        p.product_name,
-        p.main_image,
-        v.origin,
-        v.discount,
-        v.percent,
-        v.status,
-        v.lead_count,
-        v.lead_interval,
-        v.lead_gap
-    FROM user_cart_items c
-    LEFT JOIN product_types t 
-        ON t.product_id = c.product_id AND t.type_name = c.type_name
-    LEFT JOIN product_variants v 
-        ON c.variant_id = v.id
-    LEFT JOIN products p 
-        ON c.product_id = p.id
-    WHERE c.user_id = ?
-    ORDER BY c.id DESC
-");
+    // LOGGED-IN USER: Fetch from database
+    $stmt = $conn->prepare("
+        SELECT 
+            c.*, 
+            t.type_image, 
+            p.descrip6, 
+            p.descrip7, 
+            p.product_name,
+            p.main_image,
+            v.origin,
+            v.discount,
+            v.percent,
+            v.status,
+            v.lead_count,
+            v.lead_interval,
+            v.lead_gap
+        FROM user_cart_items c
+        LEFT JOIN product_types t 
+            ON t.product_id = c.product_id AND t.type_name = c.type_name
+        LEFT JOIN product_variants v 
+            ON c.variant_id = v.id
+        LEFT JOIN products p 
+            ON c.product_id = p.id
+        WHERE c.user_id = ?
+        ORDER BY c.id DESC
+    ");
 
-  $stmt->bind_param("i", $user_id);
-  $stmt->execute();
-  $result = $stmt->get_result();
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-  // ✅ FIXED: Calculate total price properly while fetching data
-  while ($row = $result->fetch_assoc()) {
-    $cart_items[] = $row;
-    // Calculate total price correctly - only once here
-    $item_total = floatval($row['price']) * intval($row['quantity']);
-    $total_price += $item_total;
-  }
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $item_total = floatval($row['price']) * intval($row['quantity']);
+        $total_price += $item_total;
+    }
 
-  $stmt->close();
+    $stmt->close();
+} else {
+    // GUEST USER: Fetch from session
+    if (isset($_SESSION['guest_cart']) && !empty($_SESSION['guest_cart'])) {
+        foreach ($_SESSION['guest_cart'] as $cart_id => $guest_item) {
+            // Fetch product details from database
+            $stmt = $conn->prepare("
+                SELECT 
+                    p.id as product_id,
+                    p.product_name,
+                    p.descrip6,
+                    p.descrip7,
+                    p.main_image,
+                    t.type_image,
+                    v.origin,
+                    v.discount,
+                    v.percent,
+                    v.status,
+                    v.lead_count,
+                    v.lead_interval,
+                    v.lead_gap
+                FROM products p
+                LEFT JOIN product_types t 
+                    ON t.product_id = p.id AND t.type_name = ?
+                LEFT JOIN product_variants v 
+                    ON v.id = ?
+                WHERE p.id = ?
+            ");
+
+            $stmt->bind_param("sii", 
+                $guest_item['type_name'], 
+                $guest_item['variant_id'], 
+                $guest_item['product_id']
+            );
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0) {
+                $product_data = $result->fetch_assoc();
+                
+                // Merge guest cart data with product data
+                $item = array_merge($guest_item, $product_data);
+                $item['id'] = $cart_id; // Use session key as ID
+                
+                $cart_items[] = $item;
+                $item_total = floatval($item['price']) * intval($item['quantity']);
+                $total_price += $item_total;
+            }
+
+            $stmt->close();
+        }
+    }
 }
 
-// Calculate total cart items count
 $total_cart_items = count($cart_items);
 ?>
 

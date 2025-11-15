@@ -5,11 +5,8 @@ include '../../connection/connect.php';
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Not authenticated']);
-    exit;
-}
+// Allow both authenticated users and guests
+$is_guest = !isset($_SESSION['user_id']);
 
 // Get category ID from request
 $category_id = isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0;
@@ -32,7 +29,7 @@ while ($row = $result->fetch_assoc()) {
         'category_id' => $row['category_id'],
         'subcategory_name' => $row['subcategory_name'],
         'subcategory_slug' => $row['subcategory_slug'],
-        'image_path' => $row['image_path'] // This field is now properly included
+        'image_path' => $row['image_path']
     ];
 }
 
@@ -41,6 +38,7 @@ $stmt->close();
 echo json_encode([
     'success' => true,
     'subcategories' => $subcategories,
-    'count' => count($subcategories)
+    'count' => count($subcategories),
+    'is_guest' => $is_guest // Optional: para malaman ng frontend kung guest mode
 ]);
 ?>

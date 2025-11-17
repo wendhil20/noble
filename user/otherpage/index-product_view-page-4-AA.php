@@ -192,18 +192,44 @@ while ($row = $types_result->fetch_assoc()) {
   }
 }
 $stmt->close();
-// ✅ FETCH RELATED PRODUCTS
+
+// ✅ FETCH RELATED PRODUCTS - Same pattern as your homepage query
 $codename = $product['codename'];
 $stmt = $conn->prepare("
-  SELECT id, product_name, codename, quantity, price, main_image, sub_images, description, descrip6, descrip7
-  FROM products 
-  WHERE codename = ? AND id != ? 
-  ORDER BY RAND()
+  SELECT 
+    p.*, 
+    p.descrip6, 
+    p.descrip7,
+    p.view_count,
+    p.unique_view_count,
+    v.origin,
+    v.discount,
+    v.percent,
+    v.status,
+    COALESCE(MIN(pv.price), 0) as min_size_price,  
+    COALESCE(MAX(pv.price), 0) as max_size_price,  
+    COALESCE(MIN(pc.price), 0) as min_color_price,
+    COALESCE(MAX(pc.price), 0) as max_color_price,
+    COUNT(DISTINCT pc.id) as color_count,
+    AVG(r.rating) AS avg_rating,
+    COUNT(r.rating) AS rating_count,
+    COALESCE(SUM(si.quantity), 0) AS total_sold
+  FROM products p
+  LEFT JOIN product_variants v ON v.product_id = p.id
+  LEFT JOIN product_variants pv ON p.id = pv.product_id
+  LEFT JOIN product_colors pc ON p.id = pc.product_id
+  LEFT JOIN product_ratings r ON r.product_id = p.id
+  LEFT JOIN sold_items si ON si.product_id = p.id
+  WHERE p.codename = ? AND p.id != ?
+  GROUP BY p.id
+  ORDER BY p.view_count DESC, RAND()
+  LIMIT 10
 ");
 $stmt->bind_param("si", $codename, $product_id);
 $stmt->execute();
 $related_products = $stmt->get_result();
 $stmt->close();
+
 
 // ✅ CHECK IF WINDOWS CATEGORY
 $is_windows_category = strtolower($product['codename']) === 'windows';
@@ -861,8 +887,6 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
             </div>
           <?php endif; ?>
-
-
         </div>
 
         <!-- Mobile Sidebar Toggle Button -->
@@ -1773,6 +1797,7 @@ $is_guest = !isset($_SESSION['user_id']);
   </style>
 
 
+
   <?php if ($related_products->num_rows > 0): ?>
     <!-- RELATED PRODUCTS SECTION - MOBILE SIDEBAR & DESKTOP CAROUSEL -->
 
@@ -1813,57 +1838,90 @@ $is_guest = !isset($_SESSION['user_id']);
           <?php
           $related_products->data_seek(0);
           while ($row = $related_products->fetch_assoc()):
-          ?>
-            <div class="group">
-              <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-                class="block bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden h-full hover:border-orange-300">
+            // 🔥 USE SMART PRICE DISPLAY FUNCTION (same as Document 4)
+            $priceData = calculateSmartPriceDisplay($row);
+            $discount = (float)($row['discount'] ?? 0);
 
-                <!-- Product Image -->
-                <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
-                  <?php if ($row['main_image']): ?>
-                    <img src="../../<?= $row['main_image'] ?>"
-                      loading="lazy"
-                      class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                      alt="<?= htmlspecialchars($row['product_name']) ?>">
+            // Get total sold count
+            $total_sold = (int)($row['total_sold'] ?? 0);
+            $view_count = (int)($row['view_count'] ?? 0);
+          ?>
+            <!-- Buong card ay clickable na -->
+            <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+              class="group block bg-white hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden hover:border-orange-300 cursor-pointer rounded-lg">
+
+              <!-- Product Image -->
+              <div class="relative overflow-hidden bg-gray-50" style="height: 140px;">
+                <?php if ($row['main_image']): ?>
+                  <img src="../../<?= $row['main_image'] ?>"
+                    loading="lazy"
+                    class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                    alt="<?= htmlspecialchars($row['product_name']) ?>">
+                <?php else: ?>
+                  <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                    <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-xs">No Image</span>
+                  </div>
+                <?php endif; ?>
+              </div>
+
+              <!-- Product Information -->
+              <div class="p-2.5">
+                <h3 class="text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight font-medium">
+                  <?= htmlspecialchars($row['product_name']) ?>
+                </h3>
+
+                <div class="mb-2">
+                  <p class="text-gray-600 text-xs line-clamp-1 mb-1">
+                    <?= htmlspecialchars($row['description']) ?>
+                  </p>
+                  <?php if (!empty($row['descrip6'])): ?>
+                    <p class="text-gray-500 text-xs line-clamp-1">
+                      • <?= htmlspecialchars($row['descrip6']) ?>
+                    </p>
+                  <?php endif; ?>
+                </div>
+
+                <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
+                <div class="flex items-baseline gap-1 flex-wrap mb-2">
+                  <?php if ($discount > 0): ?>
+                    <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                    <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                   <?php else: ?>
-                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                      <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span class="text-xs">No Image</span>
+                    <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                  <?php endif; ?>
+                </div>
+
+                <!-- View count + Sold count (styled like Document 4) -->
+                <div class="flex items-center gap-2 text-[9px] text-gray-500 mb-2">
+                  <?php if ($view_count > 0): ?>
+                    <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                      viewing
+                      <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                    </div>
+                  <?php endif; ?>
+
+                  <?php if ($total_sold > 0): ?>
+                    <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                      sold
+                      <span class="font-medium"><?= number_format($total_sold) ?></span>
                     </div>
                   <?php endif; ?>
                 </div>
 
-                <!-- Product Information -->
-                <div class="p-2.5">
-                  <h3 class="text-gray-800 text-xs mb-1.5 line-clamp-2 leading-tight">
-                    <?= htmlspecialchars($row['product_name']) ?>
-                  </h3>
-
-                  <div class="mb-2">
-                    <p class="text-gray-600 text-xs line-clamp-1 mb-1">
-                      <?= htmlspecialchars($row['description']) ?>
-                    </p>
-                    <?php if (!empty($row['descrip6'])): ?>
-                      <p class="text-gray-500 text-xs line-clamp-1">
-                        • <?= htmlspecialchars($row['descrip6']) ?>
-                      </p>
-                    <?php endif; ?>
-                  </div>
-
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs px-2 py-0.5 bg-black text-white">
-                      <?= htmlspecialchars($row['codename']) ?>
-                    </span>
-                    <span class="text-xs text-gray-400">
-                      <i class="fas fa-arrow-right"></i>
-                    </span>
-                  </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs px-2 py-0.5 bg-black text-white rounded">
+                    <?= htmlspecialchars($row['codename']) ?>
+                  </span>
+                  <span class="text-xs text-gray-400">
+                    <i class="fas fa-arrow-right"></i>
+                  </span>
                 </div>
-              </a>
-            </div>
+              </div>
+            </a>
           <?php endwhile; ?>
         </div>
       </div>
@@ -1892,9 +1950,19 @@ $is_guest = !isset($_SESSION['user_id']);
                 <?php
                 $related_products->data_seek(0);
                 while ($row = $related_products->fetch_assoc()):
+                  // 🔥 USE SMART PRICE DISPLAY FUNCTION (same as Document 4)
+                  $priceData = calculateSmartPriceDisplay($row);
+                  $discount = (float)($row['discount'] ?? 0);
+
+                  // Get total sold count
+                  $total_sold = (int)($row['total_sold'] ?? 0);
+                  $view_count = (int)($row['view_count'] ?? 0);
                 ?>
                   <div class="swiper-slide">
-                    <div class="group bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                    <!-- Buong card ay clickable na -->
+                    <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
+                      class="group block bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col cursor-pointer">
+
                       <!-- Product Image -->
                       <div class="relative overflow-hidden bg-gray-100" style="height: 200px;">
                         <?php if ($row['main_image']): ?>
@@ -1908,19 +1976,18 @@ $is_guest = !isset($_SESSION['user_id']);
                             <span class="text-sm">No Image</span>
                           </div>
                         <?php endif; ?>
-
                       </div>
 
                       <!-- Product Info -->
-                      <div class="p-3 flex-1 flex flex-col">
+                      <div class="p-4 flex-1 flex flex-col">
                         <!-- Product Name -->
-                        <h3 class="text-gray-900 font-semibold text-xs mb-1.5 line-clamp-2 leading-tight">
+                        <h3 class="text-gray-900 font-semibold text-[15px] mb-2 line-clamp-2 leading-tight">
                           <?= htmlspecialchars($row['product_name']) ?>
                         </h3>
 
                         <!-- Product Description -->
-                        <div class="mb-2 flex-1">
-                          <p class="text-gray-600 text-xs line-clamp-2 mb-0.5">
+                        <div class="mb-3 flex-1">
+                          <p class="text-gray-600 text-xs line-clamp-2 mb-1 text-[11px]">
                             <?= htmlspecialchars($row['description']) ?>
                           </p>
                           <?php if (!empty($row['descrip6'])): ?>
@@ -1930,18 +1997,44 @@ $is_guest = !isset($_SESSION['user_id']);
                           <?php endif; ?>
                         </div>
 
-                        <!-- Product Code & Link -->
-                        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-                          <span class="text-xs px-2 py-0.5 bg-black text-white rounded font-medium">
+                        <!-- 🔥 SMART PRICE DISPLAY (exactly like Document 4) -->
+                        <div class="flex items-baseline gap-1 flex-wrap mb-3">
+                          <?php if ($discount > 0): ?>
+                            <p class="text-[13px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                            <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
+                          <?php else: ?>
+                            <p class="text-[13px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                          <?php endif; ?>
+                        </div>
+
+                        <!-- View count + Sold count (styled like Document 4) -->
+                        <div class="flex items-center gap-2 text-[9px] text-gray-500 mb-3">
+                          <?php if ($view_count > 0): ?>
+                            <div class="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                              viewing
+                              <span class="font-medium"><?= formatViewCount($view_count) ?></span>
+                            </div>
+                          <?php endif; ?>
+
+                          <?php if ($total_sold > 0): ?>
+                            <div class="flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                              sold
+                              <span class="font-medium"><?= number_format($total_sold) ?></span>
+                            </div>
+                          <?php endif; ?>
+                        </div>
+
+                        <!-- Product Code & Arrow -->
+                        <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                          <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded font-medium uppercase">
                             <?= htmlspecialchars($row['codename']) ?>
                           </span>
-                          <a href="index-product_view-page-4-AA.php?id=<?= $row['id'] ?>"
-                            class="text-orange-500 hover:text-orange-600 font-medium text-xs transition-colors inline-flex items-center gap-1 group/link">
-                            View <i class="fas fa-arrow-right text-xs group-hover/link:translate-x-0.5 transition-transform inline-block"></i>
-                          </a>
+                          <span class="text-orange-500 group-hover:text-orange-600 font-medium text-xs transition-colors inline-flex items-center gap-1">
+                            view <i class="fas fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform inline-block"></i>
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    </a>
                   </div>
                 <?php endwhile; ?>
               </div>
@@ -1955,11 +2048,6 @@ $is_guest = !isset($_SESSION['user_id']);
             <button class="relatedProducts-next absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
               <i class="fas fa-chevron-right text-sm"></i>
             </button>
-          </div>
-
-          <!-- Pagination Dots -->
-          <div class="flex justify-center gap-2 mt-6">
-            <div class="swiper-pagination swiper-pagination-bullets"></div>
           </div>
         </div>
       </div>
@@ -2532,7 +2620,6 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -2693,7 +2780,7 @@ $is_guest = !isset($_SESSION['user_id']);
   <?php endif; ?>
 
   <?php include '../navbar/footer.php'; ?>
-  <script src="js/index-product-view-page-4-AA.js?v=<?= filemtime('js/index-product-view-page-4-AA.js') ?>"></script>
+  <script src="js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime('js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
 </body>
 
 </html>

@@ -506,12 +506,12 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <?php if (hasAnyRole(['superadmin', 'productspecialist'])): ?>
                                     <div class="px-3 py-2">
                                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Product Management</div>
-                                        <a href="../shop/adminshop.php"
+                                        <a href="../shop/main-adminshop-page-1.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-add-circle-line text-lg"></i>
                                             <span>Add Product</span>
                                         </a>
-                                        <a href="../shop/adminupdateshop.php"
+                                        <a href="../shop/main-adminupdateshop-page-2.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-edit-line text-lg"></i>
                                             <span>Update Product</span>
@@ -531,12 +531,12 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <i class="ri-truck-line text-lg"></i>
                                             <span>Supplier Management</span>
                                         </a>
-                                        <a href="../shop/navbar.php"
+                                        <a href="../shop/main-category-product-page-3.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-folder-line text-lg"></i>
                                             <span>Category Management</span>
                                         </a>
-                                        <a href="../shop/add_bestseller.php"
+                                        <a href="../shop/main-add_bestseller-page-4.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-star-line text-lg"></i>
                                             <span>Bestseller Management</span>

@@ -667,10 +667,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 
     <!-- Core Scripts (Order Matters!) -->
-    <script src="js/index-checkout-main-page-12-3.js?v=<?= filemtime('js/index-checkout-main-page-12-3.js')?>"></script>
-    <script src="js/index-checkout-stepNavigation-page-12-3.js?v=<?= filemtime('js/index-stepNavigation-page-12-3.js')?>"></script>
-    <script src="js/index-checkout-distanceCalculation-page-12-3.js?v=<?= filemtime('js/index-checkout-distanceCalculation-page-12-3.js')?>"></script>
-    <script src="js/index-checkout-mapModal-page-12-3.js?v=<?= filemtime('js/index-checkout-mapModal-page-12-3.js')?>"></script>
+    <script src="js/index-checkout-main-page-12-3.obfuscated.obfuscated.js?v=<?= filemtime('js/index-checkout-main-page-12-3.obfuscated.js')?>"></script>
+    <script src="js/index-checkout-stepNavigation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-stepNavigation-page-12-3.obfuscated.js')?>"></script>
+    <script src="js/index-checkout-distanceCalculation-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-distanceCalculation-page-12-3.obfuscated.js')?>"></script>
+    <script src="js/index-checkout-mapModal-page-12-3.obfuscated.js?v=<?= filemtime('js/index-checkout-mapModal-page-12-3.obfuscated.js')?>"></script>
 
     <!-- Initialize Step 3 -->
     <script>

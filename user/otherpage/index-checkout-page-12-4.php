@@ -718,58 +718,61 @@ if ($delivery_type_value === 'pickup') {
 
                 // Insert order items
                 foreach ($cart_items as $item) {
-                    $subtotal_item = $item['price'] * $item['quantity'];
-                    $leadTimeRange = calculateLeadTimeRange(
-                        $item['lead_count'] ?? null,
-                        $item['lead_interval'] ?? null,
-                        $item['lead_gap'] ?? null
-                    );
+    $subtotal_item = $item['price'] * $item['quantity'];
+    $leadTimeRange = calculateLeadTimeRange(
+        $item['lead_count'] ?? null,
+        $item['lead_interval'] ?? null,
+        $item['lead_gap'] ?? null
+    );
 
-                    $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
-                    $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
+    $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
+    $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
 
-                    // ✅ Extract item values as variables
-                    $item_product_id = $item['product_id'];
-                    $item_product_name = $item['product_name'] ?? $item['variant_name'];
-                    $item_codename = $item['codename'] ?? '';
-                    $item_type_name = $item['type_name'] ?? '';
-                    $item_variant_color = $item['variant_color'] ?? '';
-                    $item_size = $item['size'] ?? '';
-                    $item_price = $item['price'];
-                    $item_quantity = $item['quantity'];
-                    $item_descrip6 = $item['descrip6'] ?? '';
-                    $item_descrip7 = $item['descrip7'] ?? '';
-                    $item_origin = $item['origin'] ?? '';
+    // ✅ Extract both product_id AND variant_id
+    $item_product_id = $item['product_id'];
+    $item_variant_id = $item['variant_id'] ?? null;  // ← NEW: Get variant_id
+    $item_product_name = $item['product_name'] ?? $item['variant_name'];
+    $item_codename = $item['codename'] ?? '';
+    $item_type_name = $item['type_name'] ?? '';
+    $item_variant_color = $item['variant_color'] ?? '';
+    $item_size = $item['size'] ?? '';
+    $item_price = $item['price'];
+    $item_quantity = $item['quantity'];
+    $item_descrip6 = $item['descrip6'] ?? '';
+    $item_descrip7 = $item['descrip7'] ?? '';
+    $item_origin = $item['origin'] ?? '';
 
-                    // ✅ Extract variant_color separately to ensure it's available
-                    $item_variant_color_value = isset($item['variant_color']) && !empty($item['variant_color'])
-                        ? $item['variant_color']
-                        : '';
+    // ✅ MODIFIED: Add variant_id to the INSERT statement
+    $stmt2 = $conn->prepare("INSERT INTO order_items 
+        (order_id, product_id, variant_id, product_name, codename, type_name, 
+         variant_color, size, price, quantity, subtotal, 
+         descrip6, descrip7, origin, lt_from, lt_to) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-                    $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, lt_from, lt_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // ✅ MODIFIED: Add variant_id parameter (now 16 parameters instead of 15)
+    $stmt2->bind_param(
+        "iiisssssdiisssss",  // ← Changed from "iisssssdiisssss" - added one 'i' for variant_id
+        $order_id,
+        $item_product_id,
+        $item_variant_id,     // ← NEW: variant_id parameter
+        $item_product_name,
+        $item_codename,
+        $item_type_name,
+        $item_variant_color,
+        $item_size,
+        $item_price,
+        $item_quantity,
+        $subtotal_item,
+        $item_descrip6,
+        $item_descrip7,
+        $item_origin,
+        $lt_from,
+        $lt_to
+    );
 
-                    $stmt2->bind_param(
-                        "iisssssdiisssss",
-                        $order_id,
-                        $item_product_id,
-                        $item_product_name,
-                        $item_codename,
-                        $item_type_name,
-                        $item_variant_color_value,
-                        $item_size,
-                        $item_price,
-                        $item_quantity,
-                        $subtotal_item,
-                        $item_descrip6,
-                        $item_descrip7,
-                        $item_origin,
-                        $lt_from,
-                        $lt_to
-                    );
-
-                    $stmt2->execute();
-                    $stmt2->close();
-                }
+    $stmt2->execute();
+    $stmt2->close();
+}
 
                 // Clear cart
                 $stmt3 = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");

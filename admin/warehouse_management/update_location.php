@@ -7,6 +7,7 @@ ini_set('display_errors', 1);
 
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
+require_once 'audit_trail_helper.php'; // ADD THIS LINE
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse']);
 
 header('Content-Type: application/json');
@@ -58,10 +59,10 @@ try {
     
     // Verify the item exists in the correct table
     if ($isReplacement) {
-        $checkStmt = $conn->prepare("SELECT id, warehouse_location FROM replacement_requests WHERE id = ?");
+        $checkStmt = $conn->prepare("SELECT id, warehouse_location, order_id FROM replacement_requests WHERE id = ?");
         $tableName = "replacement_requests";
     } else {
-        $checkStmt = $conn->prepare("SELECT id, warehouse_location FROM order_items WHERE id = ?");
+        $checkStmt = $conn->prepare("SELECT id, warehouse_location, order_id FROM order_items WHERE id = ?");
         $tableName = "order_items";
     }
     
@@ -95,6 +96,23 @@ try {
         $stmt->close();
         
         error_log("Update successful in $tableName - Affected rows: $affectedRows");
+        
+        // LOG AUDIT TRAIL - ADD THIS BLOCK
+        $oldLocation = $itemData['warehouse_location'] ?? 'Not Set';
+        $order_id = $itemData['order_id'] ?? null;
+        
+        logAuditTrail(
+            $conn,
+            'UPDATE_WAREHOUSE_LOCATION',
+            $tableName,
+            $itemId,
+            $order_id,
+            $itemId,
+            $oldLocation,
+            $warehouseLocation,
+            "Updated warehouse location from '$oldLocation' to '$warehouseLocation' for " . 
+            ($isReplacement ? "replacement item" : "order item")
+        );
         
         // Log the action
         $user_info = is_array($_SESSION['noble_user']) ? 

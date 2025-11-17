@@ -6,6 +6,7 @@ session_start();
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin', 'sales', 'warehouse', 'logistic']);
+require_once '../warehouse_management/audit_trail_helper.php'; // ADD THIS LINE
 
 // Redirect dispatchers to their own dashboard
 if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'dispatcher') {
@@ -162,10 +163,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'assign_dispatcher') {
         $dispatcher_id = !empty($_POST['dispatcher_id']) ? intval($_POST['dispatcher_id']) : null;
         
+        // GET OLD DISPATCHER FOR AUDIT
+        $oldDispatcherStmt = $conn->prepare("SELECT dispatcher_id FROM delivery_bookings WHERE id = ?");
+        $oldDispatcherStmt->bind_param("i", $booking_id);
+        $oldDispatcherStmt->execute();
+        $oldDispatcherResult = $oldDispatcherStmt->get_result()->fetch_assoc();
+        $old_dispatcher_id = $oldDispatcherResult['dispatcher_id'];
+        $oldDispatcherStmt->close();
+        
+        // Get dispatcher names for better logging
+        $old_dispatcher_name = 'Unassigned';
+        $new_dispatcher_name = 'Unassigned';
+        
+        if ($old_dispatcher_id) {
+            $oldNameStmt = $conn->prepare("SELECT fullname FROM nobleaccount WHERE id = ?");
+            $oldNameStmt->bind_param("i", $old_dispatcher_id);
+            $oldNameStmt->execute();
+            $oldNameResult = $oldNameStmt->get_result()->fetch_assoc();
+            $old_dispatcher_name = $oldNameResult['fullname'] ?? 'Unknown';
+            $oldNameStmt->close();
+        }
+        
+        if ($dispatcher_id) {
+            $newNameStmt = $conn->prepare("SELECT fullname FROM nobleaccount WHERE id = ?");
+            $newNameStmt->bind_param("i", $dispatcher_id);
+            $newNameStmt->execute();
+            $newNameResult = $newNameStmt->get_result()->fetch_assoc();
+            $new_dispatcher_name = $newNameResult['fullname'] ?? 'Unknown';
+            $newNameStmt->close();
+        }
+        
         $updateDispatcher = $conn->prepare("UPDATE delivery_bookings SET dispatcher_id = ? WHERE id = ?");
         $updateDispatcher->bind_param("ii", $dispatcher_id, $booking_id);
         
         if ($updateDispatcher->execute()) {
+            // LOG AUDIT TRAIL - ASSIGN DISPATCHER
+            logAuditTrail(
+                $conn,
+                'ASSIGN_DISPATCHER',
+                'delivery_bookings',
+                $booking_id,
+                $booking['order_id'],
+                null,
+                $old_dispatcher_name,
+                $new_dispatcher_name,
+                $dispatcher_id ? 
+                    "Assigned dispatcher: $new_dispatcher_name (was: $old_dispatcher_name)" : 
+                    "Unassigned dispatcher (was: $old_dispatcher_name)"
+            );
+            
             if ($dispatcher_id) {
                 $_SESSION['success_message'] = "Dispatcher assigned successfully!";
             } else {
@@ -220,6 +266,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if (imagewebp($image, $webp_path, 85)) {
                 imagedestroy($image);
                 
+                // Get old status for audit
+                $oldStatusStmt = $conn->prepare("SELECT booking_status FROM delivery_bookings WHERE id = ?");
+                $oldStatusStmt->bind_param("i", $booking_id);
+                $oldStatusStmt->execute();
+                $oldStatusResult = $oldStatusStmt->get_result()->fetch_assoc();
+                $old_status = $oldStatusResult['booking_status'];
+                $oldStatusStmt->close();
+                
                 // Update booking with proof
 $updateProof = $conn->prepare("
     UPDATE delivery_bookings 
@@ -234,6 +288,29 @@ $updateProof = $conn->prepare("
 $updateProof->bind_param("si", $webp_filename, $booking_id);
 
 if ($updateProof->execute()) {
+    $new_status = ($booking['booking_type'] === 'pickup') ? 'picked_up' : 'delivered';
+    
+    // LOG AUDIT TRAIL - UPLOAD DELIVERY PROOF
+    logAuditTrail(
+        $conn,
+        'UPLOAD_DELIVERY_PROOF',
+        'delivery_bookings',
+        $booking_id,
+        $booking['order_id'],
+        null,
+        json_encode([
+            'old_status' => $old_status,
+            'proof_image' => null
+        ]),
+        json_encode([
+            'new_status' => $new_status,
+            'proof_image' => $webp_filename
+        ]),
+        ($booking['booking_type'] === 'pickup' ? 'Pickup' : 'Delivery') . 
+        " proof uploaded and status updated from '$old_status' to '$new_status'" .
+        ($isReplacement ? ' (Replacement)' : '')
+    );
+    
     // Check if this is a replacement booking
     if ($isReplacement) {
         // For replacements, update ALL replacement_requests status for this delivery schedule

@@ -1,5 +1,5 @@
 <?php
-// generate_po_excel.php
+// generate_po_pdf.php
 session_name("nobleadmin");
 session_start();
 
@@ -68,6 +68,7 @@ $itemStmt = $conn->prepare("
         oi.id as item_id,
         oi.order_id,
         oi.product_id,
+        oi.variant_id,
         oi.product_name,
         oi.size,
         oi.variant_color,
@@ -88,10 +89,14 @@ $itemStmt = $conn->prepare("
         sl.primary_contact_name,
         sl.email_address,
         sl.phone_number,
-        sl.business_address
+        sl.business_address,
+        pv.namevariant,
+        pv.color as variant_color_db,
+        pv.size as variant_size_db
     FROM order_items oi
+    LEFT JOIN product_variants pv ON oi.variant_id = pv.id
     LEFT JOIN supplier_list sl ON oi.supplier_id = sl.id
-    LEFT JOIN supp_link_products slp ON oi.product_id = slp.product_id 
+    LEFT JOIN supp_link_products slp ON oi.variant_id = slp.variant_id 
         AND oi.supplier_id = slp.supplier_id 
         AND slp.status = 'active'
     WHERE oi.order_id = ? AND (oi.supplier_id IS NOT NULL OR oi.manual_supplier_name IS NOT NULL)
@@ -233,20 +238,26 @@ $worksheet->setCellValue('D11', $payment_terms);
     
     // Fill in all items starting from row 15
     foreach ($supplierItems as $index => $item) {
-        $rowIndex = $startRow + $index;
-        
-        // Item No. (Column A)
-        $worksheet->setCellValue('A' . $rowIndex, $index + 1);
-        
-        // Item Name (Column B)
-        $worksheet->setCellValue('B' . $rowIndex, $item['product_name']);
-        
-        // Specification (Column C) - combining size and color
-        $specification = $item['size'] . ' | ' . $item['variant_color'];
-        if (!empty($item['descrip7'])) {
-            $specification .= ' | ' . $item['descrip7'];
-        }
-        $worksheet->setCellValue('C' . $rowIndex, $specification);
+    $rowIndex = $startRow + $index;
+    
+    // Item No. (Column A)
+    $worksheet->setCellValue('A' . $rowIndex, $index + 1);
+    
+    // Item Name (Column B) - include variant name if available
+    $productName = $item['product_name'];
+    if (!empty($item['namevariant'])) {
+        $productName .= ' - ' . $item['namevariant'];
+    }
+    $worksheet->setCellValue('B' . $rowIndex, $productName);
+    
+    // Specification (Column C) - use variant-specific data, combining size and color
+    $size = !empty($item['variant_size_db']) ? $item['variant_size_db'] : $item['size'];
+    $color = !empty($item['variant_color_db']) ? $item['variant_color_db'] : $item['variant_color'];
+    $specification = 'Variant ID: ' . $item['variant_id'] . ' | ' . $size . ' | ' . $color;
+    if (!empty($item['descrip7'])) {
+        $specification .= ' | ' . $item['descrip7'];
+    }
+    $worksheet->setCellValue('C' . $rowIndex, $specification);
         
         // Unit (Column D) - using descrip6 as the unit
         $unit = !empty($item['descrip6']) ? $item['descrip6'] : 'pcs';

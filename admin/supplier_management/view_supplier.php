@@ -1,4 +1,5 @@
 <?php
+//view_supplier.php
 session_name("nobleadmin");
 session_start();
 error_reporting(E_ALL);
@@ -36,11 +37,42 @@ if (!$supplier) {
     exit();
 }
 
-// Get linked products for this supplier
-$products_sql = "SELECT p.*, slp.status as link_status, slp.created_at as linked_date
-                 FROM supp_link_products slp
-                 INNER JOIN products p ON slp.product_id = p.id
-                 WHERE slp.supplier_id = ?
+// Handle AJAX request for variants
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'get_variants') {
+    header('Content-Type: application/json');
+    $product_id = intval($_POST['product_id']);
+    
+    $variants_sql = "SELECT pv.*, 
+                     CASE WHEN slp.status = 'active' THEN 1 ELSE 0 END as is_linked,
+                     slp.supplier_type,
+                     slp.supplier_price
+                     FROM product_variants pv
+                     LEFT JOIN supp_link_products slp ON pv.id = slp.variant_id 
+                         AND slp.supplier_id = ? AND slp.status = 'active'
+                     WHERE pv.product_id = ?
+                     ORDER BY pv.namevariant ASC, pv.color ASC, pv.size ASC";
+    
+    $variants_stmt = $conn->prepare($variants_sql);
+    $variants_stmt->bind_param("ii", $supplier_id, $product_id);
+    $variants_stmt->execute();
+    $variants_result = $variants_stmt->get_result();
+    $variants = $variants_result->fetch_all(MYSQLI_ASSOC);
+    $variants_stmt->close();
+    
+    echo json_encode(['success' => true, 'variants' => $variants]);
+    exit();
+}
+
+// Get linked products for this supplier (now getting unique products with variant counts)
+$products_sql = "SELECT p.*, 
+                 COUNT(DISTINCT CASE WHEN slp.status = 'active' AND slp.variant_id IS NOT NULL THEN slp.variant_id END) as linked_variants_count,
+                 COUNT(DISTINCT pv.id) as total_variants_count,
+                 MIN(slp.created_at) as linked_date
+                 FROM products p
+                 INNER JOIN supp_link_products slp ON p.id = slp.product_id
+                 LEFT JOIN product_variants pv ON p.id = pv.product_id
+                 WHERE slp.supplier_id = ? AND slp.status = 'active'
+                 GROUP BY p.id
                  ORDER BY p.product_name ASC";
 
 $products_stmt = $conn->prepare($products_sql);
@@ -50,11 +82,9 @@ $products_result = $products_stmt->get_result();
 $linked_products = $products_result->fetch_all(MYSQLI_ASSOC);
 $products_stmt->close();
 
-// Count active and inactive linked products
-$active_products = count(array_filter($linked_products, function($product) {
-    return $product['link_status'] === 'active';
-}));
-$inactive_products = count($linked_products) - $active_products;
+// Count linked products
+$active_products = count($linked_products);
+$total_linked_variants = array_sum(array_column($linked_products, 'linked_variants_count'));
 ?>
 
 <!DOCTYPE html>
@@ -179,21 +209,21 @@ $inactive_products = count($linked_products) - $active_products;
                                 </div>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <a href="edit_supplier.php?edit_id=<?= $supplier['id'] ?>" 
-                                   class="bg-noble-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
-                                    <i class="fas fa-edit mr-2"></i>Edit Supplier
-                                </a>
-                                <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
-                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
-                                    <i class="fas fa-link mr-2"></i>Link Products
-                                </a>
-                                <!-- Status Toggle Button -->
-                                <button onclick="toggleSupplierStatus(<?= $supplier['id'] ?>, '<?= $supplier['status'] ?>', '<?= htmlspecialchars($supplier['business_name'], ENT_QUOTES) ?>')"
-                                        class="<?= $supplier['status'] == 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' ?> text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
-                                    <i class="fas fa-<?= $supplier['status'] == 'active' ? 'pause' : 'play' ?> mr-2"></i>
-                                    <?= $supplier['status'] == 'active' ? 'Deactivate' : 'Activate' ?>
-                                </button>
-                            </div>
+    <a href="edit_supplier.php?edit_id=<?= $supplier['id'] ?>" 
+       class="bg-noble-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+        <i class="fas fa-edit mr-2"></i>Edit Supplier
+    </a>
+    <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
+       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+        <i class="fas fa-link mr-2"></i>Add Products
+    </a>
+    <!-- Status Toggle Button -->
+    <button onclick="toggleSupplierStatus(<?= $supplier['id'] ?>, '<?= $supplier['status'] ?>', '<?= htmlspecialchars($supplier['business_name'], ENT_QUOTES) ?>')"
+            class="<?= $supplier['status'] == 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' ?> text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center">
+        <i class="fas fa-<?= $supplier['status'] == 'active' ? 'pause' : 'play' ?> mr-2"></i>
+        <?= $supplier['status'] == 'active' ? 'Deactivate' : 'Activate' ?>
+    </button>
+</div>
                         </div>
 
                         <!-- Contact Information Grid -->
@@ -259,17 +289,15 @@ $inactive_products = count($linked_products) - $active_products;
                         <p class="text-gray-600">Products associated with this supplier</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <div class="text-sm">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <span class="w-1.5 h-1.5 rounded-full bg-green-400 mr-1"></span>
-                                <?= $active_products ?> Active
+                        <div class="flex items-center space-x-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-box mr-1"></i>
+                                <?= $active_products ?> Products
                             </span>
-                            <?php if ($inactive_products > 0): ?>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400 mr-1"></span>
-                                    <?= $inactive_products ?> Inactive
-                                </span>
-                            <?php endif; ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-layer-group mr-1"></i>
+                                <?= $total_linked_variants ?> Variants Linked
+                            </span>
                         </div>
                         <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>" 
                            class="bg-noble-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 inline-flex items-center text-sm">
@@ -312,15 +340,15 @@ $inactive_products = count($linked_products) - $active_products;
                         </div>
                     <?php endif; ?>
                     
-                    <!-- Status Badge -->
+                    <!-- Variant Count Badge -->
+                    <?php if ($product['linked_variants_count'] > 0): ?>
                     <div class="absolute top-3 right-3">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                            <?= $product['link_status'] == 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                            <span class="w-1.5 h-1.5 rounded-full mr-1 
-                                <?= $product['link_status'] == 'active' ? 'bg-green-400' : 'bg-red-400' ?>"></span>
-                            <?= $product['link_status'] == 'active' ? 'Active' : 'Inactive' ?>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-link mr-1"></i>
+                            <?= $product['linked_variants_count'] ?> linked
                         </span>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Product Info -->
@@ -333,28 +361,19 @@ $inactive_products = count($linked_products) - $active_products;
                     </div>
 
                     <div class="space-y-2 text-sm">
+                        <!-- Variants Count -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Variants:</span>
+                            <span class="font-medium text-blue-600">
+                                <?= $product['linked_variants_count'] ?> / <?= $product['total_variants_count'] ?> linked
+                            </span>
+                        </div>
+
                         <!-- Code -->
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Code:</span>
                             <span class="font-medium text-gray-900 truncate ml-2" title="<?= htmlspecialchars($product['codename']) ?>">
                                 <?= !empty($product['codename']) ? htmlspecialchars($product['codename']) : 'No code' ?>
-                            </span>
-                        </div>
-
-                        <!-- Price -->
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Price:</span>
-                            <span class="font-medium text-gray-900">
-                                <?= !empty($product['price']) ? '₱' . number_format($product['price'], 2) : 'No price set' ?>
-                            </span>
-                        </div>
-
-                        <!-- Quantity -->
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Stock:</span>
-                            <span class="font-medium text-gray-900">
-                                <?= !empty($product['quantity']) ? number_format($product['quantity']) : '0' ?> 
-                                <?= !empty($product['unit']) ? htmlspecialchars($product['unit']) : 'units' ?>
                             </span>
                         </div>
 
@@ -369,17 +388,16 @@ $inactive_products = count($linked_products) - $active_products;
 
                     <!-- Action Buttons -->
                     <div class="mt-4 flex space-x-2">
-                        <a href="product_details.php?id=<?= $product['id'] ?>" 
+                        <button onclick="showVariantsModal(<?= $product['id'] ?>, '<?= htmlspecialchars(addslashes($product['product_name'])) ?>')"
                            class="flex-1 bg-noble-primary hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200 text-center"
-                           title="View Product Details">
-                            <i class="fas fa-eye mr-1"></i>View
-                        </a>
-                        <button onclick="toggleLinkStatus(<?= $supplier['id'] ?>, <?= $product['id'] ?>, '<?= $product['link_status'] ?>')"
-                                class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200" 
-                                title="<?= $product['link_status'] == 'active' ? 'Deactivate' : 'Activate' ?> Link">
-                            <i class="fas fa-<?= $product['link_status'] == 'active' ? 'pause' : 'play' ?> mr-1"></i>
-                            <?= $product['link_status'] == 'active' ? 'Deactivate' : 'Activate' ?>
+                           title="View Linked Variants">
+                            <i class="fas fa-list mr-1"></i>View Variants
                         </button>
+                        <a href="link_products.php?supplier_id=<?= $supplier['id'] ?>&product_id=<?= $product['id'] ?>" 
+   class="bg-green-500 hover:bg-green-600 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200" 
+   title="Link More Variants">
+    <i class="fas fa-link"></i>
+</a>
                         <button onclick="unlinkProduct(<?= $supplier['id'] ?>, <?= $product['id'] ?>, '<?= htmlspecialchars($product['product_name'], ENT_QUOTES) ?>')"
                                 class="bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200" 
                                 title="Unlink Product">
@@ -401,6 +419,43 @@ $inactive_products = count($linked_products) - $active_products;
         </div>
     </div>
 
+    <!-- Variants Modal -->
+    <div id="variantsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-layer-group text-blue-500 mr-2"></i>
+                        Linked Variants - <span id="variantsModalProductName"></span>
+                    </h3>
+                    <button onclick="closeVariantsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="variantsLoadingSpinner" class="text-center py-12">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-noble-primary mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading variants...</p>
+                </div>
+                
+                <div id="variantsContent" class="hidden space-y-4">
+                    <!-- Variants will be loaded here dynamically -->
+                </div>
+                
+                <div id="variantsEmptyState" class="hidden text-center py-12">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                        <i class="fas fa-layer-group text-gray-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No variants found</h3>
+                    <p class="text-gray-600">This product doesn't have any variants.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script></script>
     <script>
         function toggleSupplierStatus(supplierId, currentStatus, supplierName) {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
@@ -498,6 +553,155 @@ $inactive_products = count($linked_products) - $active_products;
                     }, 500);
                 }, 5000);
             });
+        });
+
+        // Variants Modal Functions
+        function showVariantsModal(productId, productName) {
+            document.getElementById('variantsModalProductName').textContent = productName;
+            document.getElementById('variantsModal').classList.remove('hidden');
+            document.getElementById('variantsLoadingSpinner').classList.remove('hidden');
+            document.getElementById('variantsContent').classList.add('hidden');
+            document.getElementById('variantsEmptyState').classList.add('hidden');
+            
+            // Fetch variants
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=get_variants&product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('variantsLoadingSpinner').classList.add('hidden');
+                
+                if (data.success && data.variants && data.variants.length > 0) {
+                    displayVariants(data.variants);
+                } else {
+                    document.getElementById('variantsEmptyState').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('variantsLoadingSpinner').classList.add('hidden');
+                document.getElementById('variantsEmptyState').classList.remove('hidden');
+            });
+        }
+
+        function closeVariantsModal() {
+            document.getElementById('variantsModal').classList.add('hidden');
+        }
+
+        function displayVariants(variants) {
+            const content = document.getElementById('variantsContent');
+            content.innerHTML = '';
+            
+            // Separate linked and unlinked variants
+            const linkedVariants = variants.filter(v => v.is_linked == 1);
+            const unlinkedVariants = variants.filter(v => v.is_linked == 0);
+            
+            // Show linked variants first
+            if (linkedVariants.length > 0) {
+                const linkedHeader = document.createElement('h4');
+                linkedHeader.className = 'text-md font-semibold text-gray-900 mb-3 flex items-center';
+                linkedHeader.innerHTML = '<i class="fas fa-link text-green-500 mr-2"></i>Linked Variants (' + linkedVariants.length + ')';
+                content.appendChild(linkedHeader);
+                
+                linkedVariants.forEach(variant => {
+                    content.appendChild(createVariantCard(variant, true));
+                });
+            }
+            
+            // Show unlinked variants
+            if (unlinkedVariants.length > 0) {
+                const unlinkedHeader = document.createElement('h4');
+                unlinkedHeader.className = 'text-md font-semibold text-gray-500 mb-3 mt-6 flex items-center';
+                unlinkedHeader.innerHTML = '<i class="fas fa-unlink text-gray-400 mr-2"></i>Not Linked (' + unlinkedVariants.length + ')';
+                content.appendChild(unlinkedHeader);
+                
+                unlinkedVariants.forEach(variant => {
+                    content.appendChild(createVariantCard(variant, false));
+                });
+            }
+            
+            content.classList.remove('hidden');
+        }
+
+        function createVariantCard(variant, isLinked) {
+            const card = document.createElement('div');
+            card.className = 'bg-gray-50 rounded-lg border ' + (isLinked ? 'border-green-200 bg-green-50' : 'border-gray-200') + ' p-4';
+            
+            card.innerHTML = `
+                <div class="flex items-start space-x-4">
+                    <!-- Variant Image -->
+                    <div class="flex-shrink-0">
+                        ${variant.image ? `
+                            <img src="../../${variant.image}" 
+                                 alt="Variant image"
+                                 class="w-16 h-16 rounded-lg object-cover border-2 border-gray-200">
+                        ` : `
+                            <div class="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                                <i class="fas fa-image text-gray-400"></i>
+                            </div>
+                        `}
+                    </div>
+                    
+                    <!-- Variant Info -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h5 class="font-semibold text-gray-900 mb-1">
+                                    ${variant.namevariant || 'Unnamed Variant'}
+                                </h5>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    ${variant.color ? `
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                            <i class="fas fa-palette mr-1"></i>${variant.color}
+                                        </span>
+                                    ` : ''}
+                                    ${variant.size ? `
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                            <i class="fas fa-ruler mr-1"></i>${variant.size}
+                                        </span>
+                                    ` : ''}
+                                    ${isLinked ? `
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${variant.supplier_type === 'primary' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                            <i class="fas fa-link mr-1"></i>${variant.supplier_type}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Variant Details Grid -->
+                        <div class="grid grid-cols-2 gap-3 mt-2 text-sm">
+                            <div>
+                                <span class="text-gray-600">Original Price:</span>
+                                <span class="font-semibold text-gray-900">₱${parseFloat(variant.original_price || 0).toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Selling Price:</span>
+                                <span class="font-semibold text-green-600">₱${parseFloat(variant.price || 0).toFixed(2)}</span>
+                            </div>
+                            ${isLinked && variant.supplier_price ? `
+                                <div class="col-span-2">
+                                    <span class="text-blue-700 font-medium">Your Supplier Price:</span>
+                                    <span class="font-bold text-blue-900">₱${parseFloat(variant.supplier_price).toFixed(2)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('variantsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeVariantsModal();
+            }
         });
     </script>
 </body>

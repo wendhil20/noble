@@ -697,77 +697,74 @@ while ($row = $banners_result->fetch_assoc()) {
         <?php unset($_SESSION['login_error']); ?>
     <?php endif; ?>
 
+    <!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-1">
 
-   
-<!-- DYNAMIC BANNER SLIDER WITH CATEGORY LINKS -->
-<div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-1">
-    
-    <!-- Main Slider - Takes 8 columns -->
-    <div class="lg:col-span-8 relative overflow-hidden bg-gray-900">
-        <div class="mySwiper h-[250px] sm:h-[350px] lg:h-[400px]">
-            <div class="swiper-wrapper">
-                <?php if (!empty($banners)): ?>
-                    <?php foreach ($banners as $idx => $banner): ?>
-                        <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>" 
-                           class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
-                            <div class="relative w-full h-full overflow-hidden">
-                                <img src="../../uploads/<?= basename($banner['filename']) ?>"
-                                    alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
-                                    class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                                    onerror="this.src='../../uploads/placeholder.jpg'" />
-                                
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="swiper-slide bg-gray-800 flex items-center justify-center">
-                        <p class="text-gray-400">No banners available</p>
-                    </div>
-                <?php endif; ?>
+        <!-- Main Slider - Takes 8 columns -->
+        <div class="lg:col-span-8 relative overflow-hidden bg-gray-900">
+            <div class="mySwiper h-[250px] sm:h-[350px] lg:h-[400px]">
+                <div class="swiper-wrapper">
+                    <?php if (!empty($banners)): ?>
+                        <?php foreach ($banners as $idx => $banner): ?>
+                            <a href="../otherpage/index-subcategory_grid_page-14.php?category_name=<?= urlencode(strtolower($banner['category_name'])) ?>"
+                                class="swiper-slide block cursor-pointer hover:opacity-90 transition-opacity group">
+                                <div class="relative w-full h-full overflow-hidden">
+                                    <img src="../../uploads/<?= basename($banner['filename']) ?>"
+                                        alt="<?= htmlspecialchars($banner['category_name'] ?? 'Banner') ?>"
+                                        class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                        onerror="this.src='../../uploads/placeholder.jpg'" />
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="swiper-slide bg-gray-800 flex items-center justify-center">
+                            <p class="text-gray-400">No banners available</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="swiper-pagination"></div>
             </div>
-            <div class="swiper-pagination"></div>
+        </div>
+
+        <!-- Right Side Grid - Takes 4 columns, split into 2 cards -->
+        <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-1">
+
+            <!-- Card 1: Recent Views -->
+            <a href="#recent" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group  transition-all ">
+                <div class="absolute inset-0">
+                    <img src="../img/gif1.gif" alt="Recent" class="w-full h-full object-cover mix-blend-overlay" />
+                </div>
+                <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
+                    <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Quick Access</div>
+                    <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">Recent View →</div>
+                </div>
+            </a>
+
+            <!-- Card 2: Deals - Links to first banner category -->
+            <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
+                class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group transition-all ">
+                <div class="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-1  z-10">
+                    HOT
+                </div>
+                <div class="absolute inset-0">
+                    <?php if (!empty($banners)): ?>
+                        <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
+                            alt="<?= htmlspecialchars($banners[0]['category_name']) ?>"
+                            class="w-full h-full object-cover"
+                            onerror="this.src='../../uploads/placeholder.jpg'" />
+                    <?php else: ?>
+                        <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
+                    <?php endif; ?>
+                </div>
+                <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
+                    <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Limited Time</div>
+                    <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">
+                        <?= !empty($banners) ? htmlspecialchars($banners[0]['category_name']) : 'Holiday Deals' ?> →
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
-
-    <!-- Right Side Grid - Takes 4 columns, split into 2 cards -->
-    <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-1">
-        
-        <!-- Card 1: Recent Views -->
-        <a href="#recent" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group  transition-all ">
-            <div class="absolute inset-0">
-                <img src="../img/gif1.gif" alt="Recent" class="w-full h-full object-cover mix-blend-overlay" />
-            </div>
-            <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
-                <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Quick Access</div>
-                <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">Recent View →</div>
-            </div>
-        </a>
-
-        <!-- Card 2: Deals - Links to first banner category -->
-        <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>" 
-           class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group transition-all ">
-            <div class="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-1  z-10">
-                HOT
-            </div>
-            <div class="absolute inset-0">
-                <?php if (!empty($banners)): ?>
-                    <img src="../../uploads/<?= basename($banners[0]['filename']) ?>" 
-                         alt="<?= htmlspecialchars($banners[0]['category_name']) ?>" 
-                         class="w-full h-full object-cover"
-                         onerror="this.src='../../uploads/placeholder.jpg'" />
-                <?php else: ?>
-                    <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
-                <?php endif; ?>
-            </div>
-            <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
-                <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Limited Time</div>
-                <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">
-                    <?= !empty($banners) ? htmlspecialchars($banners[0]['category_name']) : 'Holiday Deals' ?> →
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
 
     <section class="bg-black hidden md:block border border-black/20">
         <div class="px-4 sm:px-8 lg:px-9">
@@ -1066,7 +1063,6 @@ while ($row = $banners_result->fetch_assoc()) {
             }
         </style>
     </section>
-
 
     <section>
         <!-- Modal for "Not Available" -->

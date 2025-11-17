@@ -271,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
     <?php include '../navbar/footer.php'; ?>
-    <script src="js/index-checkout-addressZone-page-12-2.js?v=<?= filemtime('js/index-checkout-addressZone-page-12-2.js')?>"></script>
+    <script src="js/index-checkout-addressZone-page-12-2.obfuscated.js?v=<?= filemtime('js/index-checkout-addressZone-page-12-2.obfuscated.js')?>"></script>
 
     <script>
         console.log('🚀 Initializing Step 2...');

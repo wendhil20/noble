@@ -84,51 +84,50 @@ try {
             }
         }
 
-       foreach ($current_sub_images as $index => $sub_image_path) {
-    if (isset($keep_sub_images[$index]) && $keep_sub_images[$index] == '1') {
-        // Keep original value (already may ../sub_images/)
-        $final_sub_images[] = $sub_image_path;
-    } else {
-        // Delete file
-        $file_to_delete = "../../sub_images/" . basename($sub_image_path);
-        if (file_exists($file_to_delete)) {
-            unlink($file_to_delete);
-            echo "Deleted sub-image: " . basename($file_to_delete) . "<br>";
+        foreach ($current_sub_images as $index => $sub_image_path) {
+            if (isset($keep_sub_images[$index]) && $keep_sub_images[$index] == '1') {
+                // Keep original value (already may ../sub_images/)
+                $final_sub_images[] = $sub_image_path;
+            } else {
+                // Delete file
+                $file_to_delete = "../../sub_images/" . basename($sub_image_path);
+                if (file_exists($file_to_delete)) {
+                    unlink($file_to_delete);
+                    echo "Deleted sub-image: " . basename($file_to_delete) . "<br>";
+                }
+            }
         }
-    }
-}
-
     }
 
     // Handle new sub-images upload
-if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name'][0])) {
-    $upload_dir = "../../sub_images/";
+    if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name'][0])) {
+        $upload_dir = "../../sub_images/";
 
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
-    }
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
 
-    foreach ($_FILES['new_sub_images']['tmp_name'] as $key => $tmp_name) {
-        if (!empty($tmp_name) && $_FILES['new_sub_images']['error'][$key] == 0) {
-            $file_name = $_FILES['new_sub_images']['name'][$key];
-            $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
+        foreach ($_FILES['new_sub_images']['tmp_name'] as $key => $tmp_name) {
+            if (!empty($tmp_name) && $_FILES['new_sub_images']['error'][$key] == 0) {
+                $file_name = $_FILES['new_sub_images']['name'][$key];
+                $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
 
-            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            if (!in_array(strtolower($file_extension), $allowed_extensions)) {
-                continue;
-            }
+                $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                if (!in_array(strtolower($file_extension), $allowed_extensions)) {
+                    continue;
+                }
 
-            $new_filename = 'img_' . uniqid('', true) . '.webp';
-            $target_path = $upload_dir . $new_filename;
+                $new_filename = 'img_' . uniqid('', true) . '.webp';
+                $target_path = $upload_dir . $new_filename;
 
-            if (saveImageAsWebP($tmp_name, $target_path)) {
-                // ✅ Save with ../sub_images/ prefix (para tugma lahat)
-                $final_sub_images[] = "../sub_images/" . $new_filename;
-                echo "Uploaded new sub-image: ../sub_images/" . $new_filename . "<br>";
+                if (saveImageAsWebP($tmp_name, $target_path)) {
+                    // ✅ Save with ../sub_images/ prefix (para tugma lahat)
+                    $final_sub_images[] = "../sub_images/" . $new_filename;
+                    echo "Uploaded new sub-image: ../sub_images/" . $new_filename . "<br>";
+                }
             }
         }
     }
-}
 
     // Handle Main Image Upload
     $main_image_path = $current_product['main_image']; // Keep current if no new upload
@@ -375,49 +374,49 @@ if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name']
                 }
 
                 // Process variant updates and additions
-foreach ($_POST['variant_id'][$index] as $v_index => $variant_id) {
-    // Skip if marked for deletion
-    if (isset($_POST['delete_variant'][$index]) && in_array($variant_id, $_POST['delete_variant'][$index])) {
-        continue;
-    }
+                foreach ($_POST['variant_id'][$index] as $v_index => $variant_id) {
+                    // Skip if marked for deletion
+                    if (isset($_POST['delete_variant'][$index]) && in_array($variant_id, $_POST['delete_variant'][$index])) {
+                        continue;
+                    }
 
-    $size = $conn->real_escape_string($_POST['variant_size'][$index][$v_index] ?? '');
-    $namevariant = $conn->real_escape_string($_POST['variant_namevariant'][$index][$v_index] ?? '');
+                    $size = $conn->real_escape_string($_POST['variant_size'][$index][$v_index] ?? '');
+                    $namevariant = $conn->real_escape_string($_POST['variant_namevariant'][$index][$v_index] ?? '');
 
-    // NEW: Get the already-calculated final price from the hidden field
-    $final_price = floatval($_POST['variant_price'][$index][$v_index] ?? 0);
+                    // NEW: Get the already-calculated final price from the hidden field
+                    $final_price = floatval($_POST['variant_price'][$index][$v_index] ?? 0);
 
-    // Get original price, percent, and discount for storage
-    $original_price = floatval($_POST['variant_original_price'][$index][$v_index] ?? 0);
-    $percent = floatval($_POST['variant_percent'][$index][$v_index] ?? 0);
-    $discount = floatval($_POST['variant_discount'][$index][$v_index] ?? 0);
+                    // Get original price, percent, and discount for storage
+                    $original_price = floatval($_POST['variant_original_price'][$index][$v_index] ?? 0);
+                    $percent = floatval($_POST['variant_percent'][$index][$v_index] ?? 0);
+                    $discount = floatval($_POST['variant_discount'][$index][$v_index] ?? 0);
 
-    // NEW: Extract dimension and weight data
-    $width = !empty($_POST['variant_width'][$index][$v_index]) ? floatval($_POST['variant_width'][$index][$v_index]) : null;
-    $height = !empty($_POST['variant_height'][$index][$v_index]) ? floatval($_POST['variant_height'][$index][$v_index]) : null;
-    $length = !empty($_POST['variant_length'][$index][$v_index]) ? floatval($_POST['variant_length'][$index][$v_index]) : null;
-    $dimension_unit = $conn->real_escape_string($_POST['variant_dimension_unit'][$index][$v_index] ?? 'cm');
-    $weight = !empty($_POST['variant_weight'][$index][$v_index]) ? floatval($_POST['variant_weight'][$index][$v_index]) : null;
-    $weight_unit = $conn->real_escape_string($_POST['variant_weight_unit'][$index][$v_index] ?? 'kg');
+                    // NEW: Extract dimension and weight data
+                    $width = !empty($_POST['variant_width'][$index][$v_index]) ? floatval($_POST['variant_width'][$index][$v_index]) : null;
+                    $height = !empty($_POST['variant_height'][$index][$v_index]) ? floatval($_POST['variant_height'][$index][$v_index]) : null;
+                    $length = !empty($_POST['variant_length'][$index][$v_index]) ? floatval($_POST['variant_length'][$index][$v_index]) : null;
+                    $dimension_unit = $conn->real_escape_string($_POST['variant_dimension_unit'][$index][$v_index] ?? 'cm');
+                    $weight = !empty($_POST['variant_weight'][$index][$v_index]) ? floatval($_POST['variant_weight'][$index][$v_index]) : null;
+                    $weight_unit = $conn->real_escape_string($_POST['variant_weight_unit'][$index][$v_index] ?? 'kg');
 
-    if ($variant_id === 'new') {
-        // Insert new variant
-        $insert_variant_sql = "INSERT INTO product_variants (product_id, type_id, size, original_price, price, percent, discount, namevariant, width, height, length, dimension_unit, weight, weight_unit) 
-            VALUES ($product_id, $current_type_id, '$size', $original_price, $final_price, $percent, $discount, '$namevariant', " . 
-            ($width !== null ? $width : "NULL") . ", " . 
-            ($height !== null ? $height : "NULL") . ", " . 
-            ($length !== null ? $length : "NULL") . ", " . 
-            "'$dimension_unit', " . 
-            ($weight !== null ? $weight : "NULL") . ", " . 
-            "'$weight_unit')";
+                    if ($variant_id === 'new') {
+                        // Insert new variant
+                        $insert_variant_sql = "INSERT INTO product_variants (product_id, type_id, size, original_price, price, percent, discount, namevariant, width, height, length, dimension_unit, weight, weight_unit) 
+            VALUES ($product_id, $current_type_id, '$size', $original_price, $final_price, $percent, $discount, '$namevariant', " .
+                            ($width !== null ? $width : "NULL") . ", " .
+                            ($height !== null ? $height : "NULL") . ", " .
+                            ($length !== null ? $length : "NULL") . ", " .
+                            "'$dimension_unit', " .
+                            ($weight !== null ? $weight : "NULL") . ", " .
+                            "'$weight_unit')";
 
-        if (!$conn->query($insert_variant_sql)) {
-            throw new Exception("Failed to insert variant: " . $conn->error);
-        }
-        echo "Added new variant: $size for type $type_name<br>";
-    } else {
-        // Update existing variant
-        $update_variant_sql = "UPDATE product_variants SET 
+                        if (!$conn->query($insert_variant_sql)) {
+                            throw new Exception("Failed to insert variant: " . $conn->error);
+                        }
+                        echo "Added new variant: $size for type $type_name<br>";
+                    } else {
+                        // Update existing variant
+                        $update_variant_sql = "UPDATE product_variants SET 
             size = '$size',
             original_price = $original_price,
             price = $final_price,
@@ -432,12 +431,12 @@ foreach ($_POST['variant_id'][$index] as $v_index => $variant_id) {
             weight_unit = '$weight_unit'
             WHERE id = $variant_id";
 
-        if (!$conn->query($update_variant_sql)) {
-            throw new Exception("Failed to update variant: " . $conn->error);
-        }
-        echo "Updated variant: $size<br>";
-    }
-}
+                        if (!$conn->query($update_variant_sql)) {
+                            throw new Exception("Failed to update variant: " . $conn->error);
+                        }
+                        echo "Updated variant: $size<br>";
+                    }
+                }
             }
         }
     }

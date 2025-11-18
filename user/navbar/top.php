@@ -1257,7 +1257,7 @@ $hidden_pages = ['help.php', 'about.php'];
                       });
                     "
                             class="w-full flex items-center gap-2 p-1.5 rounded hover:bg-white transition-all duration-200 group text-left"
-                            :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'bg-white border-l-2 border-blue-500 shadow-sm' : ''">
+                            :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'bg-white border-l-2 border-orange-500 shadow-sm' : ''">
 
                             <?php if (!empty($sub['image_path'])): ?>
                               <div class="flex-shrink-0">
@@ -1271,15 +1271,15 @@ $hidden_pages = ['help.php', 'about.php'];
                             <?php endif; ?>
 
                             <div class="flex-1 min-w-0">
-                              <div class="text-sm group-hover:text-blue-500 transition truncate"
-                                :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-blue-500 font-medium' : 'text-gray-800'">
+                              <div class="text-sm group-hover:text-orange-500 transition truncate"
+                                :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500 font-medium' : 'text-gray-800'">
                                 <?= htmlspecialchars($sub['name']) ?>
                               </div>
 
                             </div>
 
-                            <svg class="w-3 h-3 text-gray-400 group-hover:text-blue-500 transition flex-shrink-0"
-                              :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-blue-500' : ''"
+                            <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition flex-shrink-0"
+                              :class="selectedSubcategory === 'sub_<?= $sub['id'] ?>' ? 'text-orange-500' : ''"
                               fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
@@ -1333,7 +1333,7 @@ $hidden_pages = ['help.php', 'about.php'];
                             <?php foreach ($sub['sub_subcategories'] as $subsub): ?>
                               <a href="../otherpage/allproduct-allproductsub_variant-page-3-A.php?sub_subcategory_id=<?= $subsub['id'] ?>"
                                 x-show="searchTerm === '' || '<?= strtolower($subsub['name']) ?>'.includes(searchTerm.toLowerCase())"
-                                class="flex items-center gap-2 p-1.5 rounded hover:bg-purple-50 transition-all duration-200 group cursor-pointer border border-transparent hover:border-purple-200">
+                                class="flex items-center gap-2 p-1.5 rounded hover:bg-purple-50 transition-all duration-200 group cursor-pointer border border-transparent hover:border-orange-200">
 
                                 <?php if (!empty($subsub['image_path'])): ?>
                                   <div class="flex-shrink-0">
@@ -1347,13 +1347,13 @@ $hidden_pages = ['help.php', 'about.php'];
                                 <?php endif; ?>
 
                                 <div class="flex-1 min-w-0">
-                                  <div class="text-sm group-hover:text-purple-600 transition font-medium text-gray-800 truncate">
+                                  <div class="text-sm group-hover:text-orange-600 transition font-medium text-gray-800 truncate">
                                     <?= htmlspecialchars($subsub['name']) ?>
                                   </div>
 
                                 </div>
 
-                                <svg class="w-3 h-3 text-gray-400 group-hover:text-purple-600 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
                               </a>
@@ -1978,7 +1978,7 @@ $hidden_pages = ['help.php', 'about.php'];
             <button @click="profileOpen = !profileOpen" class="flex items-center gap-2 focus:outline-none">
               <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
                 <?php if (!empty($_SESSION['user_picture'])): ?>
-                  <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile" class="w-full h-full object-cover">
+                  <img src="<?= htmlspecialchars($_SESSION['user_picture']) ?>" alt="Profile" class="w-full h-full object-contain">
                 <?php else: ?>
                   <div class="w-full h-full flex items-center justify-center bg-orange-100">
                     <span class="text-xs font-bold text-orange-800 font-mont">
@@ -1991,11 +1991,14 @@ $hidden_pages = ['help.php', 'about.php'];
 
             <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" x-transition
               class="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-              <div class="py-2 px-2 text-sm text-gray-700 border-b max-w-full overflow-x-auto whitespace-nowrap">
-                <span class="block w-max"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
-              </div>
+         <div class="py-2 px-3 text-sm text-gray-800 border-b bg-gray-50 rounded-sm">
+  <span class="block truncate font-medium">
+    <?= htmlspecialchars($_SESSION['user_name']) ?>
+  </span>
+</div>
+
               <a href="../otherpage/index-profilepersonal-page-7.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                profile
+                Profile
               </a>
               <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                 Logout

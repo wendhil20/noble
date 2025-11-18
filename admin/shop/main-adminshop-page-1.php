@@ -48,7 +48,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
 
   <div class=" bg-white p-6 rounded-lg shadow mt-5">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Add Product</h2>
-    
+
     <!-- CSV Import Section - NO VALIDATION -->
     <div class="bg-white p-6 rounded-lg shadow mt-5">
       <h2 class="text-2xl font-bold mb-4 text-orange-600">Import Products via CSV</h2>
@@ -63,17 +63,17 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
 
     <!-- Product Upload Form -->
     <form id="product-upload-form" action="upload_process-page-1-A.php" method="POST" enctype="multipart/form-data" class="mt-5">
-      
+
       <!-- Product Name -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Product Name</label>
-        <input type="text" name="product_name"  class="w-full border p-2 rounded" />
+        <input type="text" name="product_name" class="w-full border p-2 rounded" />
       </div>
 
       <!-- Main Image -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Main Image</label>
-        <input type="file" name="main_image" accept="image/*"  class="w-full border p-2 rounded" onchange="previewMainImage(this)" />
+        <input type="file" name="main_image" accept="image/*" class="w-full border p-2 rounded" onchange="previewMainImage(this)" />
         <div id="main-image-preview" class="mt-2"></div>
       </div>
 
@@ -104,7 +104,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       <!-- Category -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Category</label>
-        <select name="codename"  class="w-full border p-2 rounded">
+        <select name="codename" class="w-full border p-2 rounded">
           <option value="">-- Select Category --</option>
           <?php while ($row = mysqli_fetch_assoc($categoryResult)): ?>
             <option value="<?= htmlspecialchars($row['name']) ?>">
@@ -117,13 +117,13 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       <!-- Quantity -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Quantity</label>
-        <input type="number" name="quantity"  class="w-full border p-2 rounded" min="0" />
+        <input type="number" name="quantity" class="w-full border p-2 rounded" min="0" />
       </div>
 
       <!-- Description -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Description</label>
-        <textarea name="description" rows="4" class="w-full border p-2 rounded resize-none" placeholder="Write product description here..." ></textarea>
+        <textarea name="description" rows="4" class="w-full border p-2 rounded resize-none" placeholder="Write product description here..."></textarea>
       </div>
 
       <!-- Dynamic Types + Variants -->
@@ -149,7 +149,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
 
       <!-- Update Product Link -->
       <div class="mt-4">
-        <a href="adminupdateshop" class="inline-block bg-orange-600 text-white px-6 py-3 rounded hover:bg-orange-700 font-semibold text-decoration-none">
+        <a href="main-adminupdateshop-page-2.php" class="inline-block bg-orange-600 text-white px-6 py-3 rounded hover:bg-orange-700 font-semibold text-decoration-none">
           Update Existing Product
         </a>
       </div>
@@ -164,7 +164,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     function previewMainImage(input) {
       const preview = document.getElementById('main-image-preview');
       preview.innerHTML = '';
-      
+
       if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -181,7 +181,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     function previewSubImage(input) {
       const preview = input.parentElement.querySelector('.sub-image-preview');
       preview.innerHTML = '';
-      
+
       if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -200,7 +200,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       const subImagesSection = document.getElementById('sub-images-section');
       const div = document.createElement('div');
       div.classList.add('sub-image-item', 'flex', 'gap-2', 'mb-3', 'items-start', 'p-3', 'bg-white', 'rounded', 'border');
-      
+
       div.innerHTML = `
         <div class="flex-1">
           <input type="file" name="sub_images[]" accept="image/*" class="w-full border p-2 rounded" onchange="previewSubImage(this)" />
@@ -210,7 +210,7 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
           Remove
         </button>
       `;
-      
+
       subImagesSection.appendChild(div);
     }
 
@@ -291,8 +291,8 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
     }
 
     // HTML template for variant row
-function variantRowHTML(index) {
-  return `
+    function variantRowHTML(index) {
+      return `
     <div class="variant-row bg-blue-50 p-4 rounded border mb-3">
       <!-- Row 1: Basic Info -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
@@ -380,7 +380,7 @@ function variantRowHTML(index) {
       </div>
     </div>
   `;
-}
+    }
 
     // Function to add color
     function addColor(index) {
@@ -402,7 +402,7 @@ function variantRowHTML(index) {
     function removeColor(button) {
       const colorSection = button.closest('[id^="color-section-"]');
       const colorRows = colorSection.querySelectorAll('.color-row');
-      
+
       if (colorRows.length > 1) {
         button.closest('.color-row').remove();
       } else {
@@ -414,7 +414,7 @@ function variantRowHTML(index) {
     function removeVariant(button) {
       const variantSection = button.closest('[id^="variant-section-"]');
       const variantRows = variantSection.querySelectorAll('.variant-row');
-      
+
       if (variantRows.length > 1) {
         button.closest('.variant-row').remove();
       } else {
@@ -426,51 +426,51 @@ function variantRowHTML(index) {
     function removeType(button) {
       const typesSection = document.getElementById('types-section');
       const typeWrappers = typesSection.querySelectorAll('[data-type-index]');
-      
+
       if (typeWrappers.length > 0) {
         button.closest('[data-type-index]').remove();
       }
     }
 
     // Function to update price from percent
-function updatePriceFromPercent(percentInput) {
-  const parent = percentInput.closest('.variant-row');
-  const originalPriceInput = parent.querySelector('input[name^="variant_original_price"]');
-  const priceInput = parent.querySelector('input[name^="variant_price"]');
+    function updatePriceFromPercent(percentInput) {
+      const parent = percentInput.closest('.variant-row');
+      const originalPriceInput = parent.querySelector('input[name^="variant_original_price"]');
+      const priceInput = parent.querySelector('input[name^="variant_price"]');
 
-  // Use original price as base, fall back to current price if original is empty
-  const basePrice = parseFloat(originalPriceInput.value) || parseFloat(priceInput.value) || 0;
-  const percent = parseFloat(percentInput.value) || 0;
+      // Use original price as base, fall back to current price if original is empty
+      const basePrice = parseFloat(originalPriceInput.value) || parseFloat(priceInput.value) || 0;
+      const percent = parseFloat(percentInput.value) || 0;
 
-  if (basePrice > 0) {
-    const finalPrice = basePrice + (basePrice * percent / 100);
-    priceInput.value = finalPrice.toFixed(2);
-    
-    // Create a visual indicator of the calculated price
-    let indicator = parent.querySelector('.price-indicator');
-    if (!indicator) {
-      indicator = document.createElement('small');
-      indicator.classList.add('price-indicator', 'text-gray-600', 'ml-1');
-      percentInput.parentNode.appendChild(indicator);
+      if (basePrice > 0) {
+        const finalPrice = basePrice + (basePrice * percent / 100);
+        priceInput.value = finalPrice.toFixed(2);
+
+        // Create a visual indicator of the calculated price
+        let indicator = parent.querySelector('.price-indicator');
+        if (!indicator) {
+          indicator = document.createElement('small');
+          indicator.classList.add('price-indicator', 'text-gray-600', 'ml-1');
+          percentInput.parentNode.appendChild(indicator);
+        }
+        indicator.textContent = `Final: ₱${finalPrice.toFixed(2)}`;
+      }
     }
-    indicator.textContent = `Final: ₱${finalPrice.toFixed(2)}`;
-  }
-}
 
-// Function to copy original price to base price
-function copyToBasePrice(originalPriceInput) {
-  const parent = originalPriceInput.closest('.variant-row');
-  const basePriceInput = parent.querySelector('input[name^="variant_price"]');
-  
-  // Copy the original price value to base price
-  basePriceInput.value = originalPriceInput.value;
-  
-  // Also trigger the percent calculation if there's a percent value
-  const percentInput = parent.querySelector('input[name^="variant_percent"]');
-  if (percentInput && percentInput.value) {
-    updatePriceFromPercent(percentInput);
-  }
-}
+    // Function to copy original price to base price
+    function copyToBasePrice(originalPriceInput) {
+      const parent = originalPriceInput.closest('.variant-row');
+      const basePriceInput = parent.querySelector('input[name^="variant_price"]');
+
+      // Copy the original price value to base price
+      basePriceInput.value = originalPriceInput.value;
+
+      // Also trigger the percent calculation if there's a percent value
+      const percentInput = parent.querySelector('input[name^="variant_percent"]');
+      if (percentInput && percentInput.value) {
+        updatePriceFromPercent(percentInput);
+      }
+    }
 
     // Function to reset form
     function resetForm() {
@@ -478,7 +478,7 @@ function copyToBasePrice(originalPriceInput) {
         document.getElementById('main-image-preview').innerHTML = '';
         document.querySelectorAll('.sub-image-preview').forEach(preview => preview.innerHTML = '');
         document.getElementById('types-section').innerHTML = '<h3 class="text-lg font-semibold mb-2 text-gray-700">Product Types & Variants</h3><div class="text-sm text-gray-600 mb-3">Add different types of this product (e.g., different materials, styles, etc.) with their own colors and variants.</div>';
-        
+
         // Reset sub images section to initial state
         const subImagesSection = document.getElementById('sub-images-section');
         subImagesSection.innerHTML = `
@@ -492,7 +492,7 @@ function copyToBasePrice(originalPriceInput) {
             </button>
           </div>
         `;
-        
+
         typeIndex = 0;
         subImageCounter = 1;
       }
@@ -522,7 +522,7 @@ function copyToBasePrice(originalPriceInput) {
       const submitBtn = this.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Uploading...';
-      
+
       // Re-enable button after 30 seconds (in case of errors)
       setTimeout(() => {
         submitBtn.disabled = false;
@@ -536,7 +536,7 @@ function copyToBasePrice(originalPriceInput) {
       const submitBtn = this.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Importing...';
-      
+
       // Re-enable button after 30 seconds (in case of errors)
       setTimeout(() => {
         submitBtn.disabled = false;
@@ -558,8 +558,6 @@ function copyToBasePrice(originalPriceInput) {
 
     // Save form data every 30 seconds
     setInterval(saveFormData, 30000);
-
-   
   </script>
 </body>
 

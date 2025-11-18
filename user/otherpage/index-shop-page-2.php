@@ -774,10 +774,10 @@ $is_guest = !isset($_SESSION['user_id']);
         $empty_stars = 5 - $full_stars - $half_star;
         ?>
 
-        <div class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+        <div class="card-hover bg-white overflow-hidden flex flex-col group rounded-lg hover:shadow-xl transition-all duration-300">
             <a href="index-product_view-page-4-AA.php?id=<?= $product_id ?>" class="flex flex-col h-full">
                 <!-- Image Container - Fixed Square -->
-                <div class="relative w-full bg-gray-50" style="padding-bottom: 100%;">
+                <div class="relative w-full " style="padding-bottom: 100%;">
                     <div class="absolute inset-0 p-2 sm:p-4">
                         <?php if (!empty($row['main_image'])): ?>
                             <img src="../../<?= htmlspecialchars($row['main_image']) ?>"

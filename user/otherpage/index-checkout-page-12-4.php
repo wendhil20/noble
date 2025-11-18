@@ -489,112 +489,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Handle PayMongo
-if ($payment_method === 'PayMongo') {
-    // ✅ Extract vehicle data from POST or Session
-    $assigned_vehicle_id = isset($_POST['assigned_vehicle_id']) ? intval($_POST['assigned_vehicle_id']) : NULL;
-    $assigned_vehicle_type = isset($_POST['assigned_vehicle_type']) ? trim($_POST['assigned_vehicle_type']) : NULL;
-    $total_cubic_meters = isset($_POST['total_cubic_meters']) ? floatval($_POST['total_cubic_meters']) : NULL;
-    $total_weight_kg = isset($_POST['total_weight_kg']) ? floatval($_POST['total_weight_kg']) : NULL;
-    $total_width = isset($_POST['total_width']) ? floatval($_POST['total_width']) : NULL;
-    $total_height = isset($_POST['total_height']) ? floatval($_POST['total_height']) : NULL;
-    $total_length = isset($_POST['total_length']) ? floatval($_POST['total_length']) : NULL;
+    if ($payment_method === 'PayMongo') {
+        // ✅ Extract vehicle data from POST or Session
+        $assigned_vehicle_id = isset($_POST['assigned_vehicle_id']) ? intval($_POST['assigned_vehicle_id']) : NULL;
+        $assigned_vehicle_type = isset($_POST['assigned_vehicle_type']) ? trim($_POST['assigned_vehicle_type']) : NULL;
+        $total_cubic_meters = isset($_POST['total_cubic_meters']) ? floatval($_POST['total_cubic_meters']) : NULL;
+        $total_weight_kg = isset($_POST['total_weight_kg']) ? floatval($_POST['total_weight_kg']) : NULL;
+        $total_width = isset($_POST['total_width']) ? floatval($_POST['total_width']) : NULL;
+        $total_height = isset($_POST['total_height']) ? floatval($_POST['total_height']) : NULL;
+        $total_length = isset($_POST['total_length']) ? floatval($_POST['total_length']) : NULL;
 
-    // Fallback to session data if POST is empty
-    if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
-        $step3 = $_SESSION['checkout_step3'];
-        $assigned_vehicle_id = isset($step3['assigned_vehicle_id']) ? intval($step3['assigned_vehicle_id']) : NULL;
-        $assigned_vehicle_type = isset($step3['assigned_vehicle_type']) ? $step3['assigned_vehicle_type'] : NULL;
-        $total_cubic_meters = isset($step3['total_cubic_meters']) ? floatval($step3['total_cubic_meters']) : NULL;
-        $total_weight_kg = isset($step3['total_weight_kg']) ? floatval($step3['total_weight_kg']) : NULL;
-        $total_width = isset($step3['total_width']) ? floatval($step3['total_width']) : NULL;
-        $total_height = isset($step3['total_height']) ? floatval($step3['total_height']) : NULL;
-        $total_length = isset($step3['total_length']) ? floatval($step3['total_length']) : NULL;
-    }
+        // Fallback to session data if POST is empty
+        if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
+            $step3 = $_SESSION['checkout_step3'];
+            $assigned_vehicle_id = isset($step3['assigned_vehicle_id']) ? intval($step3['assigned_vehicle_id']) : NULL;
+            $assigned_vehicle_type = isset($step3['assigned_vehicle_type']) ? $step3['assigned_vehicle_type'] : NULL;
+            $total_cubic_meters = isset($step3['total_cubic_meters']) ? floatval($step3['total_cubic_meters']) : NULL;
+            $total_weight_kg = isset($step3['total_weight_kg']) ? floatval($step3['total_weight_kg']) : NULL;
+            $total_width = isset($step3['total_width']) ? floatval($step3['total_width']) : NULL;
+            $total_height = isset($step3['total_height']) ? floatval($step3['total_height']) : NULL;
+            $total_length = isset($step3['total_length']) ? floatval($step3['total_length']) : NULL;
+        }
 
-    // Get delivery distance from POST or session
-    $delivery_distance = 0.00;
-    if (isset($delivery_data['delivery_distance'])) {
-        $delivery_distance = $delivery_data['delivery_distance'];
-    } elseif (isset($_POST['delivery_distance'])) {
-        $delivery_distance = floatval($_POST['delivery_distance']);
-    }
+        // Get delivery distance from POST or session
+        $delivery_distance = 0.00;
+        if (isset($delivery_data['delivery_distance'])) {
+            $delivery_distance = $delivery_data['delivery_distance'];
+        } elseif (isset($_POST['delivery_distance'])) {
+            $delivery_distance = floatval($_POST['delivery_distance']);
+        }
 
-    $_SESSION['paymongo_order_data'] = [
-        'customer_name' => $customer_data['customer_name'],
-        'email' => $customer_data['email'],
-        'mobile' => $address_data['mobile'],
-        'address' => $address_data['address'],
-        'zipcode' => $address_data['zipcode'],
-        'billing_address_id' => $address_data['billing_address_id'],
-        'latitude' => $address_data['latitude'],
-        'longitude' => $address_data['longitude'],
-        'delivery_fee' => $delivery_fee,
-        'delivery_distance' => $delivery_distance,
-        'subtotal' => $subtotal_after_discount,
-        'vat_amount' => $vat_amount,
-        'grand_total' => $grand_total,
-        'user_id' => $user_id,
-        'cart_items' => $cart_items,
-        'delivery_type' => $delivery_data['delivery_type'],
-        'assigned_vehicle_id' => $assigned_vehicle_id,
-        'assigned_vehicle_type' => $assigned_vehicle_type,
-        'total_cubic_meters' => $total_cubic_meters,
-        'total_weight_kg' => $total_weight_kg,
-        'total_width' => $total_width,
-        'total_height' => $total_height,
-        'total_length' => $total_length
-    ];
+        $_SESSION['paymongo_order_data'] = [
+            'customer_name' => $customer_data['customer_name'],
+            'email' => $customer_data['email'],
+            'mobile' => $address_data['mobile'],
+            'address' => $address_data['address'],
+            'zipcode' => $address_data['zipcode'],
+            'billing_address_id' => $address_data['billing_address_id'],
+            'latitude' => $address_data['latitude'],
+            'longitude' => $address_data['longitude'],
+            'delivery_fee' => $delivery_fee,
+            'delivery_distance' => $delivery_distance,
+            'subtotal' => $subtotal_after_discount,
+            'vat_amount' => $vat_amount,
+            'grand_total' => $grand_total,
+            'user_id' => $user_id,
+            'cart_items' => $cart_items,
+            'delivery_type' => $delivery_data['delivery_type'],
+            'assigned_vehicle_id' => $assigned_vehicle_id,
+            'assigned_vehicle_type' => $assigned_vehicle_type,
+            'total_cubic_meters' => $total_cubic_meters,
+            'total_weight_kg' => $total_weight_kg,
+            'total_width' => $total_width,
+            'total_height' => $total_height,
+            'total_length' => $total_length
+        ];
 
 ?>
         <script>
-    // Get all vehicle data from hidden fields
-    const vehicleData = {
-        amount: <?= $grand_total ?>,
-        delivery_fee: <?= $delivery_fee ?>,
-        order_details: {
-            customer_name: '<?= addslashes($customer_data['customer_name']) ?>',
-            email: '<?= addslashes($customer_data['email']) ?>',
-            mobile: '<?= addslashes($address_data['mobile']) ?>',
-            address: '<?= addslashes($address_data['address']) ?>',
-            zipcode: '<?= addslashes($address_data['zipcode']) ?>',
-            billing_address_id: <?= intval($address_data['billing_address_id'] ?? 0) ?>,
-            latitude: <?= floatval($address_data['latitude'] ?? 0) ?>,
-            longitude: <?= floatval($address_data['longitude'] ?? 0) ?>,
-            delivery_distance: <?= floatval($delivery_data['delivery_distance'] ?? 0) ?>,
-            delivery_type: '<?= $delivery_data['delivery_type'] ?>',
-            assigned_vehicle_id: <?= intval($delivery_data['assigned_vehicle_id'] ?? 0) ?>,
-            assigned_vehicle_type: '<?= addslashes($delivery_data['assigned_vehicle_type'] ?? '') ?>',
-            total_cubic_meters: <?= floatval($delivery_data['total_cubic_meters'] ?? 0) ?>,
-            total_weight_kg: <?= floatval($delivery_data['total_weight_kg'] ?? 0) ?>,
-            total_width: <?= floatval($delivery_data['total_width'] ?? 0) ?>,
-            total_height: <?= floatval($delivery_data['total_height'] ?? 0) ?>,
-            total_length: <?= floatval($delivery_data['total_length'] ?? 0) ?>
-        }
-    };
+            // Get all vehicle data from hidden fields
+            const vehicleData = {
+                amount: <?= $grand_total ?>,
+                delivery_fee: <?= $delivery_fee ?>,
+                order_details: {
+                    customer_name: '<?= addslashes($customer_data['customer_name']) ?>',
+                    email: '<?= addslashes($customer_data['email']) ?>',
+                    mobile: '<?= addslashes($address_data['mobile']) ?>',
+                    address: '<?= addslashes($address_data['address']) ?>',
+                    zipcode: '<?= addslashes($address_data['zipcode']) ?>',
+                    billing_address_id: <?= intval($address_data['billing_address_id'] ?? 0) ?>,
+                    latitude: <?= floatval($address_data['latitude'] ?? 0) ?>,
+                    longitude: <?= floatval($address_data['longitude'] ?? 0) ?>,
+                    delivery_distance: <?= floatval($delivery_data['delivery_distance'] ?? 0) ?>,
+                    delivery_type: '<?= $delivery_data['delivery_type'] ?>',
+                    assigned_vehicle_id: <?= intval($delivery_data['assigned_vehicle_id'] ?? 0) ?>,
+                    assigned_vehicle_type: '<?= addslashes($delivery_data['assigned_vehicle_type'] ?? '') ?>',
+                    total_cubic_meters: <?= floatval($delivery_data['total_cubic_meters'] ?? 0) ?>,
+                    total_weight_kg: <?= floatval($delivery_data['total_weight_kg'] ?? 0) ?>,
+                    total_width: <?= floatval($delivery_data['total_width'] ?? 0) ?>,
+                    total_height: <?= floatval($delivery_data['total_height'] ?? 0) ?>,
+                    total_length: <?= floatval($delivery_data['total_length'] ?? 0) ?>
+                }
+            };
 
-    console.log('Sending PayMongo data:', vehicleData);
+            console.log('Sending PayMongo data:', vehicleData);
 
-    fetch('checkout-paymongo-create-sessions-page-12-A.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(vehicleData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
-                window.location.href = data.data.attributes.checkout_url;
-            } else {
-                alert('PayMongo session creation failed.');
-                console.error('PayMongo error:', data);
-            }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            alert('Error connecting to payment gateway.');
-        });
-</script>
+            fetch('checkout-paymongo-create-sessions-page-12-A.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(vehicleData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
+                        window.location.href = data.data.attributes.checkout_url;
+                    } else {
+                        alert('PayMongo session creation failed.');
+                        console.error('PayMongo error:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('Error connecting to payment gateway.');
+                });
+        </script>
 <?php
         exit;
     }
@@ -606,25 +606,25 @@ if ($payment_method === 'PayMongo') {
             $payment_status = 'pending';
 
             // ✅ Extract vehicle data from hidden form fields OR session
-$assigned_vehicle_id = isset($_POST['assigned_vehicle_id']) ? intval($_POST['assigned_vehicle_id']) : NULL;
-$assigned_vehicle_type = isset($_POST['assigned_vehicle_type']) ? trim($_POST['assigned_vehicle_type']) : NULL;
-$total_cubic_meters = isset($_POST['total_cubic_meters']) ? floatval($_POST['total_cubic_meters']) : NULL;
-$total_weight_kg = isset($_POST['total_weight_kg']) ? floatval($_POST['total_weight_kg']) : NULL;
-$total_width = isset($_POST['total_width']) ? floatval($_POST['total_width']) : NULL;
-$total_height = isset($_POST['total_height']) ? floatval($_POST['total_height']) : NULL;
-$total_length = isset($_POST['total_length']) ? floatval($_POST['total_length']) : NULL;
+            $assigned_vehicle_id = isset($_POST['assigned_vehicle_id']) ? intval($_POST['assigned_vehicle_id']) : NULL;
+            $assigned_vehicle_type = isset($_POST['assigned_vehicle_type']) ? trim($_POST['assigned_vehicle_type']) : NULL;
+            $total_cubic_meters = isset($_POST['total_cubic_meters']) ? floatval($_POST['total_cubic_meters']) : NULL;
+            $total_weight_kg = isset($_POST['total_weight_kg']) ? floatval($_POST['total_weight_kg']) : NULL;
+            $total_width = isset($_POST['total_width']) ? floatval($_POST['total_width']) : NULL;
+            $total_height = isset($_POST['total_height']) ? floatval($_POST['total_height']) : NULL;
+            $total_length = isset($_POST['total_length']) ? floatval($_POST['total_length']) : NULL;
 
-// If not in POST, try to get from session (Step 3 data)
-if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
-    $step3 = $_SESSION['checkout_step3'];
-    $assigned_vehicle_id = isset($step3['assigned_vehicle_id']) ? intval($step3['assigned_vehicle_id']) : NULL;
-    $assigned_vehicle_type = isset($step3['assigned_vehicle_type']) ? $step3['assigned_vehicle_type'] : NULL;
-    $total_cubic_meters = isset($step3['total_cubic_meters']) ? floatval($step3['total_cubic_meters']) : NULL;
-    $total_weight_kg = isset($step3['total_weight_kg']) ? floatval($step3['total_weight_kg']) : NULL;
-    $total_width = isset($step3['total_width']) ? floatval($step3['total_width']) : NULL;
-    $total_height = isset($step3['total_height']) ? floatval($step3['total_height']) : NULL;
-    $total_length = isset($step3['total_length']) ? floatval($step3['total_length']) : NULL;
-}
+            // If not in POST, try to get from session (Step 3 data)
+            if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
+                $step3 = $_SESSION['checkout_step3'];
+                $assigned_vehicle_id = isset($step3['assigned_vehicle_id']) ? intval($step3['assigned_vehicle_id']) : NULL;
+                $assigned_vehicle_type = isset($step3['assigned_vehicle_type']) ? $step3['assigned_vehicle_type'] : NULL;
+                $total_cubic_meters = isset($step3['total_cubic_meters']) ? floatval($step3['total_cubic_meters']) : NULL;
+                $total_weight_kg = isset($step3['total_weight_kg']) ? floatval($step3['total_weight_kg']) : NULL;
+                $total_width = isset($step3['total_width']) ? floatval($step3['total_width']) : NULL;
+                $total_height = isset($step3['total_height']) ? floatval($step3['total_height']) : NULL;
+                $total_length = isset($step3['total_length']) ? floatval($step3['total_length']) : NULL;
+            }
 
             // ✅ Extract all values as variables
             $customer_name = $customer_data['customer_name'];
@@ -645,134 +645,134 @@ if ($assigned_vehicle_id === NULL && isset($_SESSION['checkout_step3'])) {
             }
 
             // ✅ RE-CALCULATE VAT for Bank/QR (VAT on items only, not delivery)
-$vat_amount = $subtotal_after_discount * 0.12;
+            $vat_amount = $subtotal_after_discount * 0.12;
 
-// Use conditional INSERT based on delivery_type
-if ($delivery_type_value === 'pickup') {
-    // For pickup orders, exclude vehicle fields but INCLUDE vat_amount
-    $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // Use conditional INSERT based on delivery_type
+            if ($delivery_type_value === 'pickup') {
+                // For pickup orders, exclude vehicle fields but INCLUDE vat_amount
+                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param(
-        "ssssssdsiddiddddsssss",
-        $customer_name,
-        $customer_email,
-        $customer_mobile,
-        $customer_address,
-        $customer_zipcode,
-        $payment_method,
-        $grand_total,
-        $reference_no,
-        $billing_address_id,
-        $customer_latitude,
-        $customer_longitude,
-        $user_id,
-        $delivery_distance,
-        $delivery_fee,
-        $subtotal_after_discount,
-        $vat_amount,  // ← NEW: VAT amount
-        $bank_type,
-        $screenshot_filename,
-        $reference_number,
-        $payment_status,
-        $delivery_type_value
-    );
-} else {
-    // For delivery orders, include vehicle fields AND vat_amount
-    $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param(
+                    "ssssssdsiddiddddsssss",
+                    $customer_name,
+                    $customer_email,
+                    $customer_mobile,
+                    $customer_address,
+                    $customer_zipcode,
+                    $payment_method,
+                    $grand_total,
+                    $reference_no,
+                    $billing_address_id,
+                    $customer_latitude,
+                    $customer_longitude,
+                    $user_id,
+                    $delivery_distance,
+                    $delivery_fee,
+                    $subtotal_after_discount,
+                    $vat_amount,  // ← NEW: VAT amount
+                    $bank_type,
+                    $screenshot_filename,
+                    $reference_number,
+                    $payment_status,
+                    $delivery_type_value
+                );
+            } else {
+                // For delivery orders, include vehicle fields AND vat_amount
+                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param(
-        "ssssssdsiddiddddssssisddddds",
-        $customer_name,
-        $customer_email,
-        $customer_mobile,
-        $customer_address,
-        $customer_zipcode,
-        $payment_method,
-        $grand_total,
-        $reference_no,
-        $billing_address_id,
-        $customer_latitude,
-        $customer_longitude,
-        $user_id,
-        $delivery_distance,
-        $delivery_fee,
-        $subtotal_after_discount,
-        $vat_amount,  // ← NEW: VAT amount
-        $bank_type,
-        $screenshot_filename,
-        $reference_number,
-        $payment_status,
-        $assigned_vehicle_id,
-        $assigned_vehicle_type,
-        $total_cubic_meters,
-        $total_weight_kg,
-        $total_width,
-        $total_height,
-        $total_length,
-        $delivery_type_value
-    );
-}
+                $stmt->bind_param(
+                    "ssssssdsiddiddddssssisddddds",
+                    $customer_name,
+                    $customer_email,
+                    $customer_mobile,
+                    $customer_address,
+                    $customer_zipcode,
+                    $payment_method,
+                    $grand_total,
+                    $reference_no,
+                    $billing_address_id,
+                    $customer_latitude,
+                    $customer_longitude,
+                    $user_id,
+                    $delivery_distance,
+                    $delivery_fee,
+                    $subtotal_after_discount,
+                    $vat_amount,  // ← NEW: VAT amount
+                    $bank_type,
+                    $screenshot_filename,
+                    $reference_number,
+                    $payment_status,
+                    $assigned_vehicle_id,
+                    $assigned_vehicle_type,
+                    $total_cubic_meters,
+                    $total_weight_kg,
+                    $total_width,
+                    $total_height,
+                    $total_length,
+                    $delivery_type_value
+                );
+            }
 
             if ($stmt->execute()) {
                 $order_id = $stmt->insert_id;
 
                 // Insert order items
                 foreach ($cart_items as $item) {
-    $subtotal_item = $item['price'] * $item['quantity'];
-    $leadTimeRange = calculateLeadTimeRange(
-        $item['lead_count'] ?? null,
-        $item['lead_interval'] ?? null,
-        $item['lead_gap'] ?? null
-    );
+                    $subtotal_item = $item['price'] * $item['quantity'];
+                    $leadTimeRange = calculateLeadTimeRange(
+                        $item['lead_count'] ?? null,
+                        $item['lead_interval'] ?? null,
+                        $item['lead_gap'] ?? null
+                    );
 
-    $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
-    $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
+                    $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
+                    $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
 
-    // ✅ Extract both product_id AND variant_id
-    $item_product_id = $item['product_id'];
-    $item_variant_id = $item['variant_id'] ?? null;  // ← NEW: Get variant_id
-    $item_product_name = $item['product_name'] ?? $item['variant_name'];
-    $item_codename = $item['codename'] ?? '';
-    $item_type_name = $item['type_name'] ?? '';
-    $item_variant_color = $item['variant_color'] ?? '';
-    $item_size = $item['size'] ?? '';
-    $item_price = $item['price'];
-    $item_quantity = $item['quantity'];
-    $item_descrip6 = $item['descrip6'] ?? '';
-    $item_descrip7 = $item['descrip7'] ?? '';
-    $item_origin = $item['origin'] ?? '';
+                    // ✅ Extract both product_id AND variant_id
+                    $item_product_id = $item['product_id'];
+                    $item_variant_id = $item['variant_id'] ?? null;  // ← NEW: Get variant_id
+                    $item_product_name = $item['product_name'] ?? $item['variant_name'];
+                    $item_codename = $item['codename'] ?? '';
+                    $item_type_name = $item['type_name'] ?? '';
+                    $item_variant_color = $item['variant_color'] ?? '';
+                    $item_size = $item['size'] ?? '';
+                    $item_price = $item['price'];
+                    $item_quantity = $item['quantity'];
+                    $item_descrip6 = $item['descrip6'] ?? '';
+                    $item_descrip7 = $item['descrip7'] ?? '';
+                    $item_origin = $item['origin'] ?? '';
 
-    // ✅ MODIFIED: Add variant_id to the INSERT statement
-    $stmt2 = $conn->prepare("INSERT INTO order_items 
+                    // ✅ MODIFIED: Add variant_id to the INSERT statement
+                    $stmt2 = $conn->prepare("INSERT INTO order_items 
         (order_id, product_id, variant_id, product_name, codename, type_name, 
          variant_color, size, price, quantity, subtotal, 
          descrip6, descrip7, origin, lt_from, lt_to) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    // ✅ MODIFIED: Add variant_id parameter (now 16 parameters instead of 15)
-    $stmt2->bind_param(
-        "iiisssssdiisssss",  // ← Changed from "iisssssdiisssss" - added one 'i' for variant_id
-        $order_id,
-        $item_product_id,
-        $item_variant_id,     // ← NEW: variant_id parameter
-        $item_product_name,
-        $item_codename,
-        $item_type_name,
-        $item_variant_color,
-        $item_size,
-        $item_price,
-        $item_quantity,
-        $subtotal_item,
-        $item_descrip6,
-        $item_descrip7,
-        $item_origin,
-        $lt_from,
-        $lt_to
-    );
+                    // ✅ MODIFIED: Add variant_id parameter (now 16 parameters instead of 15)
+                    $stmt2->bind_param(
+                        "iiisssssdiisssss",  // ← Changed from "iisssssdiisssss" - added one 'i' for variant_id
+                        $order_id,
+                        $item_product_id,
+                        $item_variant_id,     // ← NEW: variant_id parameter
+                        $item_product_name,
+                        $item_codename,
+                        $item_type_name,
+                        $item_variant_color,
+                        $item_size,
+                        $item_price,
+                        $item_quantity,
+                        $subtotal_item,
+                        $item_descrip6,
+                        $item_descrip7,
+                        $item_origin,
+                        $lt_from,
+                        $lt_to
+                    );
 
-    $stmt2->execute();
-    $stmt2->close();
-}
+                    $stmt2->execute();
+                    $stmt2->close();
+                }
 
                 // Clear cart
                 $stmt3 = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
@@ -902,13 +902,13 @@ foreach ($cart_items as $item) {
         <form method="POST" id="paymentForm" class="space-y-6" enctype="multipart/form-data">
 
             <!-- ✅ ADD THESE HIDDEN FIELDS HERE -->
-    <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="<?= $delivery_data['assigned_vehicle_id'] ?? 0 ?>">
-    <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="<?= htmlspecialchars($delivery_data['assigned_vehicle_type'] ?? '') ?>">
-    <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="<?= $delivery_data['total_cubic_meters'] ?? 0 ?>">
-    <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="<?= $delivery_data['total_weight_kg'] ?? 0 ?>">
-    <input type="hidden" name="total_width" id="totalWidth" value="<?= $delivery_data['total_width'] ?? 0 ?>">
-    <input type="hidden" name="total_height" id="totalHeight" value="<?= $delivery_data['total_height'] ?? 0 ?>">
-    <input type="hidden" name="total_length" id="totalLength" value="<?= $delivery_data['total_length'] ?? 0 ?>">
+            <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="<?= $delivery_data['assigned_vehicle_id'] ?? 0 ?>">
+            <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="<?= htmlspecialchars($delivery_data['assigned_vehicle_type'] ?? '') ?>">
+            <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="<?= $delivery_data['total_cubic_meters'] ?? 0 ?>">
+            <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="<?= $delivery_data['total_weight_kg'] ?? 0 ?>">
+            <input type="hidden" name="total_width" id="totalWidth" value="<?= $delivery_data['total_width'] ?? 0 ?>">
+            <input type="hidden" name="total_height" id="totalHeight" value="<?= $delivery_data['total_height'] ?? 0 ?>">
+            <input type="hidden" name="total_length" id="totalLength" value="<?= $delivery_data['total_length'] ?? 0 ?>">
 
             <div class="bg-purple-50 p-4 rounded-lg mb-6">
                 <div class="flex items-center">
@@ -1177,51 +1177,51 @@ foreach ($cart_items as $item) {
                     <!-- Totals -->
                     <div class="bg-gray-50 p-4 border-t">
                         <div class="space-y-2 text-sm">
-    <div class="flex justify-between <?= $tiered_discount['has_discount'] ? 'text-gray-500 line-through' : '' ?>">
-        <span>Items Subtotal:</span>
-        <span>₱<?= number_format($items_subtotal, 2) ?></span>
-    </div>
+                            <div class="flex justify-between <?= $tiered_discount['has_discount'] ? 'text-gray-500 line-through' : '' ?>">
+                                <span>Items Subtotal:</span>
+                                <span>₱<?= number_format($items_subtotal, 2) ?></span>
+                            </div>
 
-    <?php if ($tiered_discount['has_discount']): ?>
-        <div class="flex justify-between text-green-600 font-semibold">
-            <span>Volume Discount:</span>
-            <span>-₱<?= number_format($discount_amount, 2) ?></span>
-        </div>
-        <div class="flex justify-between font-medium text-orange-600">
-            <span>Subtotal After Discount:</span>
-            <span>₱<?= number_format($subtotal_after_discount, 2) ?></span>
-        </div>
-    <?php endif; ?>
+                            <?php if ($tiered_discount['has_discount']): ?>
+                                <div class="flex justify-between text-green-600 font-semibold">
+                                    <span>Volume Discount:</span>
+                                    <span>-₱<?= number_format($discount_amount, 2) ?></span>
+                                </div>
+                                <div class="flex justify-between font-medium text-orange-600">
+                                    <span>Subtotal After Discount:</span>
+                                    <span>₱<?= number_format($subtotal_after_discount, 2) ?></span>
+                                </div>
+                            <?php endif; ?>
 
-    <div class="flex justify-between">
-        <span>VAT (12% on items):</span>
-        <span class="font-medium text-orange-600">₱<?= number_format($vat_amount, 2) ?></span>
-    </div>
+                            <div class="flex justify-between">
+                                <span>VAT (12% on items):</span>
+                                <span class="font-medium text-orange-600">₱<?= number_format($vat_amount, 2) ?></span>
+                            </div>
 
-    <div class="border-t pt-2">
-        <div class="flex justify-between">
-            <span>Subtotal (Items + VAT):</span>
-            <span class="font-medium">₱<?= number_format($subtotal_with_vat, 2) ?></span>
-        </div>
-    </div>
+                            <div class="border-t pt-2">
+                                <div class="flex justify-between">
+                                    <span>Subtotal (Items + VAT):</span>
+                                    <span class="font-medium">₱<?= number_format($subtotal_with_vat, 2) ?></span>
+                                </div>
+                            </div>
 
-    <div class="flex justify-between">
-        <span>Delivery Fee:
-            <?php if ($tiered_discount['free_shipping']): ?>
-                <span class="text-green-600 font-semibold ml-1">FREE! 🎉</span>
-            <?php endif; ?>
-        </span>
-        <span class="<?= $tiered_discount['free_shipping'] ? 'line-through text-gray-400' : '' ?>">
-            ₱<?= number_format($delivery_fee, 2) ?>
-        </span>
-    </div>
+                            <div class="flex justify-between">
+                                <span>Delivery Fee:
+                                    <?php if ($tiered_discount['free_shipping']): ?>
+                                        <span class="text-green-600 font-semibold ml-1">FREE! 🎉</span>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="<?= $tiered_discount['free_shipping'] ? 'line-through text-gray-400' : '' ?>">
+                                    ₱<?= number_format($delivery_fee, 2) ?>
+                                </span>
+                            </div>
 
-    <div class="border-t pt-2">
-        <div class="flex justify-between text-lg font-bold">
-            <span>Grand Total:</span>
-            <span id="grandTotalDisplay" class="text-green-700">₱<?= number_format($grand_total, 2) ?></span>
-        </div>
-    </div>
+                            <div class="border-t pt-2">
+                                <div class="flex justify-between text-lg font-bold">
+                                    <span>Grand Total:</span>
+                                    <span id="grandTotalDisplay" class="text-green-700">₱<?= number_format($grand_total, 2) ?></span>
+                                </div>
+                            </div>
 
                             <?php if ($tiered_discount['has_discount']): ?>
                                 <div class="bg-green-100 border border-green-300 rounded p-3 mt-3">
@@ -1265,7 +1265,7 @@ foreach ($cart_items as $item) {
     <?php include '../navbar/footer.php'; ?>
 
     <script src="js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js?v=<?= filemtime('js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js') ?>"></script>
-    <script src="js/index-bank-qr-payment-module-page-12-4.obfuscated.js?v=<?= filemtime('js/index-bank-qr-payment-module-page-12-4.obfuscated.js')?>"></script>
+    <script src="js/index-bank-qr-payment-module-page-12-4.obfuscated.js?v=<?= filemtime('js/index-bank-qr-payment-module-page-12-4.obfuscated.js') ?>"></script>
     <script>
         // Pass data to JavaScript
         window.grandTotal = <?= $grand_total ?>;

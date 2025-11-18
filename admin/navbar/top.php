@@ -376,14 +376,14 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                 <div class="p-6">
                                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Management</h3>
                                     <div class="grid grid-cols-1 gap-2">
-                                        <a href="../shop/adminshop.php"
+                                        <a href="../shop/main-adminshop-page-1.php"
                                             class="submenu-item block px-4 py-3 text-gray-700 hover:text-orange-600 rounded-lg transition-all duration-200">
                                             <div class="flex items-center space-x-3">
                                                 <i class="ri-add-circle-line text-xl"></i>
                                                 <span>Upload Product</span>
                                             </div>
                                         </a>
-                                        <a href="../shop/adminupdateshop.php"
+                                        <a href="../shop/main-adminupdateshop-page-2.php"
                                             class="submenu-item block px-4 py-3 text-gray-700 hover:text-orange-600 rounded-lg transition-all duration-200">
                                             <div class="flex items-center space-x-3">
                                                 <i class="ri-edit-line text-xl"></i>
@@ -516,12 +516,12 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                             <i class="ri-edit-line text-lg"></i>
                                             <span>Update Product</span>
                                         </a>
-                                        <a href="../Specification/variants_list"
+                                        <a href="../shop/main-variants_list-page-5.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-file-list-3-line text-lg"></i>
                                             <span>Specification Products</span>
                                         </a>
-                                        <a href="../Specification/banner"
+                                        <a href="../shop/main-banner-page-6.php"
                                             class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
                                             <i class="ri-price-tag-3-line text-lg"></i>
                                             <span>Banner Discount</span>

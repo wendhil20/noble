@@ -275,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_code'])) {
                         <div class="flex gap-2">
                             <input type="text" id="referralLink" readonly
                                 value="<?php 
-                                    $base_url = "https://yourwebsite.com/shop"; // Change this to your actual website
+                                    $base_url = "http://localhost/noble/user/otherpage/index-page-1-A-B-C-D-E.php"; // Change this to your actual website
                                     echo htmlspecialchars($base_url . "?ref=" . $referral_data['code']); 
                                 ?>"
                                 class="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-mono">

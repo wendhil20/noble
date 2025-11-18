@@ -545,38 +545,68 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <hr class="my-2 border-gray-200">
                                 <?php endif; ?>
 
-                                <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
-                                    <div class="px-3 py-2">
-                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Sales</div>
-                                        <a href="../orders/unassigned_orders.php"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-user-follow-line text-lg"></i>
-                                            <span>Client List</span>
-                                        </a>
-                                        <a href="../orders/ordering"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-shopping-cart-line text-lg"></i>
-                                            <span>Orders</span>
-                                        </a>
-                                        <a href="../orders/dashboardorder"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-bar-chart-box-line text-lg"></i>
-                                            <span>Dashboard Sales</span>
-                                        </a>
-                                        <a href="../orders/add_tiercard"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-bank-card-line text-lg"></i>
-                                            <span>TierCard Management</span>
-                                        </a>
+                      <?php if (hasAnyRole(['superadmin', 'sales'])): ?>
+    <div class="px-3 py-2">
 
-                                        <a href="../orders/target-price-management.php"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-bank-card-line text-lg"></i>
-                                            <span>Target price Management</span>
-                                        </a>
-                                    </div>
-                                    <hr class="my-2 border-gray-200">
-                                <?php endif; ?>
+        <!-- SALES HEADER WITH ICON -->
+        <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
+            <i class="ri-store-2-line text-base"></i>
+            <span>Sales</span>
+        </div>
+
+        <!-- Client List -->
+        <a href="../orders/unassigned_orders.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-user-3-line text-lg"></i>
+            <span>Client List</span>
+        </a>
+
+        <!-- Orders -->
+        <a href="../orders/ordering"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-shopping-cart-2-line text-lg"></i>
+            <span>Orders</span>
+        </a>
+
+        <!-- Dashboard Sales -->
+        <a href="../orders/dashboardorder"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-bar-chart-grouped-line text-lg"></i>
+            <span>Dashboard Sales</span>
+        </a>
+
+        <!-- TierCard Management -->
+        <a href="../orders/add_tiercard"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-vip-diamond-line text-lg"></i>
+            <span>TierCard Management</span>
+        </a>
+
+        <!-- Target Price Management -->
+        <a href="../orders/target-price-management.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-price-tag-3-line text-lg"></i>
+            <span>Target Price Management</span>
+        </a>
+
+        <!-- Referral Code Generator -->
+        <a href="../orders/generate_referral.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-gift-line text-lg"></i>
+            <span>Referral Generate Code</span>
+        </a>
+
+    </div>
+
+    <hr class="my-2 border-gray-200">
+<?php endif; ?>
+
 
                                 <?php if (hasAnyRole(['superadmin', 'logistic'])): ?>
                                     <div class="px-3 py-2">
@@ -693,26 +723,50 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
                                     <hr class="my-2 border-gray-200">
                                 <?php endif; ?>
 
-                                <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
-                                    <div class="px-3 py-2">
-                                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Accountant</div>
-                                        <a href="../accountant/accountantdashboard.php"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-money-dollar-circle-line text-lg"></i>
-                                            <span>Revenue Accountant</span>
-                                        </a>
-                                        <a href="../accountant/manage_qr_codes.php"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-qr-code-line text-lg"></i>
-                                            <span>Add QR Code</span>
-                                        </a>
-                                        <a href="../accountant/accountantexcel.php"
-                                            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
-                                            <i class="ri-file-excel-line text-lg"></i>
-                                            <span>Project Excel</span>
-                                        </a>
-                                    </div>
-                                <?php endif; ?>
+                       <?php if (hasAnyRole(['superadmin', 'accountant'])): ?>
+    <div class="px-3 py-2">
+
+        <!-- ACCOUNTANT HEADER WITH ICON -->
+        <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
+            <i class="ri-calculator-line text-base"></i>
+            <span>Accountant</span>
+        </div>
+
+        <!-- Revenue Accountant -->
+        <a href="../accountant/accountantdashboard.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-money-dollar-circle-line text-lg"></i>
+            <span>Revenue Accountant</span>
+        </a>
+
+        <!-- Add QR Code -->
+        <a href="../accountant/manage_qr_codes.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-qr-code-line text-lg"></i>
+            <span>Add QR Code</span>
+        </a>
+
+        <!-- Project Excel -->
+        <a href="../accountant/accountantexcel.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-file-excel-2-line text-lg"></i>
+            <span>Project Excel</span>
+        </a>
+
+        <!-- Accountant Management -->
+        <a href="../accountant/accountant.php"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-briefcase-4-line text-lg"></i>
+            <span>Accountant Management</span>
+        </a>
+
+    </div>
+<?php endif; ?>
+
 
                             </div>
                         </div>

@@ -1996,13 +1996,18 @@ $hidden_pages = ['help.php', 'about.php'];
     <?= htmlspecialchars($_SESSION['user_name']) ?>
   </span>
 </div>
+<a href="../otherpage/index-profilepersonal-page-7.php" 
+   class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+  <i class="fas fa-user text-black"></i>
+  <span>Profile</span>
+</a>
 
-              <a href="../otherpage/index-profilepersonal-page-7.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                Profile
-              </a>
-              <a href="../logout.php" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                Logout
-              </a>
+<a href="../logout.php" 
+   class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-black hover:bg-red-50">
+  <i class="fas fa-sign-out-alt text-black"></i>
+  <span>Logout</span>
+</a>
+
 
             </div>
           </div>

@@ -1,375 +1,395 @@
-<?php
-ob_start();
-session_name("nobleuser");
-session_start();
-include '../connection/connect.php';
-
-// Check login notification
-if (isset($_SESSION['login_needed'])) {
-    $notification_message = $_SESSION['login_needed'];
-    unset($_SESSION['login_needed']);
-}
-
-// Handle Add to Cart
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
-    }
-    
-    $product_id = (int)$_POST['product_id'];
-    $variant_id = (int)$_POST['variant_id'];
-    $selected_variant = $_POST['selected_variant'] ?? '';
-    $selected_type = $_POST['selected_type'] ?? '';
-    $color_name = $_POST['selected_color_name'] ?? '';
-    $variant_price = (float)$_POST['variant_price'];
-    
-    $cart_key = $product_id . '_' . $variant_id;
-    
-    if (isset($_SESSION['cart'][$cart_key])) {
-        $_SESSION['cart'][$cart_key]['quantity'] += 1;
-    } else {
-        $_SESSION['cart'][$cart_key] = [
-            'product_id' => $product_id,
-            'variant_id' => $variant_id,
-            'variant_name' => $selected_variant,
-            'type_name' => $selected_type,
-            'color_name' => $color_name,
-            'price' => $variant_price,
-            'quantity' => 1
-        ];
-    }
-    
-    $_SESSION['cart_message'] = "Product added to cart!";
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit();
-}
-
-// KUHAIN LAHAT NG VARIANTS + PRODUCT + COLOR INFO + RATINGS (ISANG QUERY LANG)
-$allQuery = "
-    SELECT 
-        pv.*, pv.origin,
-        pt.type_name, pt.type_image, pt.product_id,
-        p.product_name, p.codename, p.main_image, p.description,
-        pc.id AS color_id, pc.color_name AS color, pc.color_code, pc.price AS color_price,
-        r.avg_rating, r.total_raters
-    FROM product_variants pv
-    JOIN product_types pt ON pv.type_id = pt.id
-    JOIN products p ON pt.product_id = p.id
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
-    LEFT JOIN (
-        SELECT 
-            product_id,
-            ROUND(AVG(rating), 1) AS avg_rating,
-            COUNT(*) AS total_raters
-        FROM product_ratings
-        GROUP BY product_id
-    ) r ON p.id = r.product_id
-    ORDER BY pv.percent ASC, p.id ASC, pc.id ASC
-";
-$allResult = mysqli_query($conn, $allQuery);
-
-$allProducts = [];
-while ($row = mysqli_fetch_assoc($allResult)) {
-    $allProducts[] = $row;
-}
-
-// ----------------- PHP FILTERING ----------------- //
-
-// 1. Basic variants list
-$result_variants = array_map(function($p) {
-    return [
-        'id' => $p['id'],
-        'type_id' => $p['type_id'],
-        'color' => $p['color'],
-        'size' => $p['size'],
-        'price' => $p['price'],
-        'percent' => $p['percent'],
-        'image' => $p['image'],
-        'origin' => $p['origin']
-    ];
-}, $allProducts);
-
-// 2. Furniture product list
-$SYCJ_result = array_filter($allProducts, fn($p) => $p['codename'] === 'furniture');
-
-// 3. Discount 30% materials
-$material_results = array_filter($allProducts, fn($p) => $p['discount'] == 30);
-
-// 4. Discount between 1-15%
-$material_resultsone = array_filter($allProducts, fn($p) => $p['discount'] >= 1 && $p['discount'] <= 15);
-
-// 5. Status = new
-$material_resultstwo = array_filter($allProducts, fn($p) => strtolower($p['status']) === 'new');
-
-// 6. Products without discount
-$discount_result = array_filter($allProducts, fn($p) => empty($p['discount']) || $p['discount'] == 0);
-
-// 7. Furniture codename filter
-$result = array_filter($allProducts, fn($p) => $p['codename'] === 'furniture');
-
-// 8. Material codename filter
-$results = array_filter($allProducts, fn($p) => $p['codename'] === 'material');
-
-// 9. Bedfurniture codename filter
-$resultss = array_filter($allProducts, fn($p) => $p['codename'] === 'bedfurniture');
-
-// 10. Organize discount products into columns
-$products = $discount_result;
-$columns = count($products) > 0 ? array_chunk($products, ceil(count($products) / 3)) : [[], [], []];
-
-// 11. Slider images
-$sql = "SELECT filename FROM discount_images ORDER BY uploaded_at DESC";
-$slideresult = $conn->query($sql);
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Furniture Slider</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Address Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            max-height: 20rem;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+            z-index: 50;
+        }
 
-<!-- Swiper CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
-<!-- Font Awesome (for stars) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item.active {
+            background-color: #dbeafe;
+            padding-left: 20px;
+        }
+
+        .suggestion-item.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .suggestion-item.active .location-text {
+            color: #dbeafe;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .map-container {
+            height: 400px;
+            border-radius: 1rem;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen p-6">
 
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Real-time Address Search</h1>
+        <p class="text-gray-600 mb-8">Type instantly - suggestions appear as you type (like Google Maps)</p>
 
-
-<!-- First Swiper Section -->
-<div class="swiper mySwiper-indoor-1 p-4">
-    <div class="swiper-wrapper">
-        <?php foreach ($result as $row): ?>
-            <div class="swiper-slide flex-shrink-0" data-aos="fade-up">
-                <div class="flex flex-col justify-between h-[460px] bg-white rounded-lg shadow-lg p-4 group text-center w-full max-w-[300px] sm:max-w-[280px] md:max-w-[260px] xl:max-w-[250px] relative">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <!-- Search Input -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Search Your Address</label>
+                <div class="relative">
+                    <input
+                        type="text"
+                        id="addressSearch"
+                        placeholder="Try: 'SM North EDSA', 'Barangay 1 Caloocan', 'Makati'..."
+                        class="w-full px-5 py-4 text-lg border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-all"
+                        autocomplete="off">
                     
-                    <!-- Ribbon Icon -->
-                    <div class="absolute top-0 left-0 w-14 h-14 z-10">
-                        <div class="w-16 h-16 relative">
-                            <img src="../img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
-                        </div>
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="absolute right-4 top-1/2 transform -translate-y-1/2" style="display: none;">
+                        <div class="loading-spinner"></div>
                     </div>
 
-                    <!-- Image -->
-                    <div class="w-full aspect-square mb-3">
-                        <?php if (!empty($row['main_image'])): ?>
-                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy"
-                                class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
-                                alt="<?= htmlspecialchars($row['product_name']) ?>" />
-                        <?php else: ?>
-                            <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500 text-sm">
-                                No Image
+                    <!-- Search Icon -->
+                    <svg id="searchIcon" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+
+                    <!-- Suggestions Dropdown -->
+                    <div id="suggestions" class="suggestions-dropdown hidden"></div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Or Click on Map</label>
+                <div id="map" class="map-container border-2 border-gray-300 rounded-xl"></div>
+            </div>
+
+            <!-- Selected Address Display -->
+            <div id="resultContainer" style="display: none;">
+                <div class="bg-green-50 border-2 border-green-300 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-green-900 mb-4">✓ Address Selected</h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="text-green-700 font-semibold">Full Address:</p>
+                            <p class="text-green-900" id="resultAddress"></p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-green-700 font-semibold">City:</p>
+                                <p class="text-green-900" id="resultCity"></p>
                             </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Info -->
-                    <div class="mt-auto text-left space-y-2">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-sm font-bold text-orange-600 underline underline-offset-4 truncate max-w-[60%]">
-                                <?= htmlspecialchars($row['product_name']) ?>
-                            </h2>
-
-                            <?php
-                            $avg_rating = $row['avg_rating'] ?? 0;
-                            $total_raters = $row['total_raters'] ?? 0;
-                            ?>
-                            <?php if ($total_raters > 0): ?>
-                                <div class="flex items-center gap-1 text-orange-400 text-xs">
-                                    <?php
-                                    $full = floor($avg_rating);
-                                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                                    $empty = 5 - $full - $half;
-                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                                    ?>
-                                    <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-gray-400 text-xs italic">No ratings</div>
-                            <?php endif; ?>
+                            <div>
+                                <p class="text-green-700 font-semibold">Province:</p>
+                                <p class="text-green-900" id="resultState"></p>
+                            </div>
                         </div>
-
-                        <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                            <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
-                                <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-                            </p>
-                            <p class="text-sm text-gray-600">
-                                Origin:
-                                <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                    <?= ucfirst($row['origin']) ?>
-                                </span>
-                            </p>
-                        <?php else: ?>
-                            <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                        <?php endif; ?>
-
-                        <!-- Buttons -->
-                        <div class="mt-2 space-y-2">
-                            <!-- View Button -->
-                            <a href="product_view?id=<?= (int)$row['product_id'] ?>"
-                                class="p-2 inline-block text-center w-full bg-black hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
-                                View Product
-                            </a>
-                            
-                            <!-- Add to Cart Button -->
-                            <form method="POST" class="productForm">
-                                <input type="hidden" name="add_to_cart" value="1">
-                                <input type="hidden" name="product_id" value="<?= (int)$row['product_id'] ?>">
-                                <input type="hidden" name="variant_id" value="<?= (int)($row['id'] ?? 0) ?>">
-                                <input type="hidden" name="selected_variant" value="<?= htmlspecialchars($row['namevariant'] ?? '') ?>">
-                                <input type="hidden" name="selected_type" value="<?= htmlspecialchars($row['type_name'] ?? '') ?>">
-                                <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
-                                <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                
-                                <button type="submit"
-                                    class="w-full bg-orange-500 text-white text-sm px-3 py-1.5 rounded hover:bg-orange-600 transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
-                                    <img src="../img/ecommerce.png" alt="Cart" class="w-4 h-4" />
-                                    Add to Cart
-                                </button>
-                            </form>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-green-700 font-semibold">Coordinates:</p>
+                                <p class="text-green-900 text-xs" id="resultCoords"></p>
+                            </div>
+                            <div>
+                                <p class="text-green-700 font-semibold">Postal Code:</p>
+                                <p class="text-green-900" id="resultPostal"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        <?php endforeach; ?>
+        </div>
+
+        <!-- Tips -->
+        <div class="mt-8 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+            <h3 class="font-semibold text-blue-900 mb-2">💡 Search Tips:</h3>
+            <ul class="text-sm text-blue-800 space-y-1">
+                <li>✓ Start typing - suggestions appear instantly (no 800ms delay!)</li>
+                <li>✓ Arrow keys to navigate, Enter to select</li>
+                <li>✓ Try: "Quezon City", "Makati", "BGY 1", "Rizal Ave Manila"</li>
+            </ul>
+        </div>
     </div>
 
-    
-</div>
+    <script>
+        let map, marker;
+        let currentResults = [];
+        let highlightedIndex = -1;
+        let abortController = null;
 
-<!-- Second Swiper Section (View Only) -->
-<div class="swiper mySwiper-indoor-2 p-4">
-    <div class="swiper-wrapper">
-        <?php foreach ($result as $row): ?>
-            <div class="swiper-slide flex-shrink-0" data-aos="fade-up">
-                <div class="flex flex-col justify-between h-[460px] bg-white rounded-lg shadow-lg p-4 group text-center w-full max-w-[300px] sm:max-w-[280px] md:max-w-[260px] xl:max-w-[250px] relative">
-                    <!-- Ribbon Icon -->
-                    <div class="absolute top-0 left-0 w-14 h-14 z-10">
-                        <div class="w-16 h-16 relative">
-                            <img src="../img/icon/d.png" alt="Icon" class="absolute top-1.5 left-1.5 w-9 h-9 object-contain" />
-                        </div>
-                    </div>
-                    <!-- Image -->
-                    <div class="w-full aspect-square mb-3">
-                        <?php if (!empty($row['main_image'])): ?>
-                            <img src="../../<?= htmlspecialchars($row['main_image']) ?>" loading="lazy"
-                                class="w-full h-full object-contain bg-gray-100 rounded group-hover:scale-105 transition-transform duration-300 mx-auto"
-                                alt="<?= htmlspecialchars($row['product_name']) ?>" />
-                        <?php else: ?>
-                            <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded text-gray-500 text-sm">
-                                No Image
-                            </div>
-                        <?php endif; ?>
-                    </div>
+        // Initialize Map
+        function initMap() {
+            const defaultLat = 14.5995;
+            const defaultLng = 120.9842;
 
-                    <!-- Info -->
-                    <div class="mt-auto text-left space-y-2">
-                        <!-- Name + Ratings -->
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-sm font-bold text-orange-600 underline underline-offset-4 truncate max-w-[60%]">
-                                <?= htmlspecialchars($row['product_name']) ?>
-                            </h2>
-                            
-                            <?php
-                            $avg_rating = $row['avg_rating'] ?? 0;
-                            $total_raters = $row['total_raters'] ?? 0;
-                            ?>
-                            
-                            <?php if ($total_raters > 0): ?>
-                                <div class="flex items-center gap-1 text-orange-400 text-xs">
-                                    <?php
-                                    $full = floor($avg_rating);
-                                    $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                                    $empty = 5 - $full - $half;
-                                    for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                                    if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                                    for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                                    ?>
-                                    <span class="text-gray-600">(<?= $avg_rating ?>/5)</span>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-gray-400 text-xs italic">No ratings</div>
-                            <?php endif; ?>
-                        </div>
+            map = L.map('map').setView([defaultLat, defaultLng], 12);
 
-                        <!-- Description -->
-                        <?php if (!empty($row['descrip6']) || !empty($row['descrip7'])): ?>
-                            <p class="text-xs text-gray-700 leading-snug h-10 overflow-hidden">
-                                <?= htmlspecialchars($row['descrip6'] ?? '') ?>
-                                <?= (!empty($row['descrip6']) && !empty($row['descrip7'])) ? '<br>' : '' ?>
-                                <?= htmlspecialchars($row['descrip7'] ?? '') ?>
-                            </p>
-                            <!-- Display Origin (Local / International) -->
-                            <p class="text-sm text-gray-600">
-                                Origin:
-                                <span class="<?= $row['origin'] === 'international' ? 'text-red-500' : 'text-blue-500' ?>">
-                                    <?= ucfirst($row['origin']) ?>
-                                </span>
-                            </p>
-                        <?php else: ?>
-                            <p class="text-xs text-gray-400 italic h-10">No description.</p>
-                        <?php endif; ?>
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
 
-                        <!-- View Button Only -->
-                        <div class="mt-2">
-                            <a href="product_view?id=<?= (int)$row['product_id'] ?>"
-                                class="p-2 inline-block text-center w-full bg-black hover:bg-orange-600 text-white text-sm font-semibold py-1.5 rounded transition duration-200">
-                                View Product
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</div>
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div style="background-color: #3B82F6; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
 
-<!-- Swiper JS -->
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Initialize both swipers with different selectors
-    new Swiper(".mySwiper-indoor-1", {
-        slidesPerView: 1,
-        spaceBetween: 10,
-        loop: true,
-        autoplay: {
-            delay: 3000,
-            disableOnInteraction: false
-        },
-        breakpoints: {
-            640: { slidesPerView: 2, spaceBetween: 15 },
-            768: { slidesPerView: 3, spaceBetween: 20 },
-            1024: { slidesPerView: 4, spaceBetween: 25 }
-        },
-        pagination: {
-            el: ".swiper-pagination",
-            clickable: true
+            marker = L.marker([defaultLat, defaultLng], { icon: customIcon, draggable: true }).addTo(map);
+
+            map.on('click', (e) => {
+                selectLocation(e.latlng.lat, e.latlng.lng);
+            });
+
+            marker.on('dragend', () => {
+                selectLocation(marker.getLatLng().lat, marker.getLatLng().lng);
+            });
+
+            // Try to get user location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    map.setView([lat, lng], 14);
+                    marker.setLatLng([lat, lng]);
+                });
+            }
         }
-    });
-    
-    new Swiper(".mySwiper-indoor-2", {
-        slidesPerView: 1,
-        spaceBetween: 10,
-        loop: true,
-        autoplay: {
-            delay: 3500, // Different delay to avoid sync
-            disableOnInteraction: false
-        },
-        breakpoints: {
-            640: { slidesPerView: 2, spaceBetween: 15 },
-            768: { slidesPerView: 3, spaceBetween: 20 },
-            1024: { slidesPerView: 4, spaceBetween: 25 }
+
+        // REAL-TIME Search - NO DELAY!
+        document.getElementById('addressSearch').addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            highlightedIndex = -1;
+
+            // Abort previous request
+            if (abortController) {
+                abortController.abort();
+            }
+
+            if (query.length < 2) {
+                document.getElementById('suggestions').classList.add('hidden');
+                return;
+            }
+
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('searchIcon').style.display = 'none';
+
+            try {
+                abortController = new AbortController();
+
+                // Search with Philippines restriction
+                const url = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
+                    q: `${query}, Philippines`,
+                    format: 'json',
+                    addressdetails: 1,
+                    limit: 8,
+                    countrycodes: 'ph',
+                    viewbox: '119.0,4.5,131.0,21.0',
+                    bounded: 1,
+                });
+
+                const response = await fetch(url, { signal: abortController.signal });
+                currentResults = await response.json();
+
+                // If no results, try without Philippines suffix
+                if (currentResults.length === 0) {
+                    const url2 = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
+                        q: query,
+                        format: 'json',
+                        addressdetails: 1,
+                        limit: 8,
+                        countrycodes: 'ph',
+                    });
+                    currentResults = await fetch(url2, { signal: abortController.signal }).then(r => r.json());
+                }
+
+                displaySuggestions(currentResults);
+
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Search error:', error);
+                }
+            } finally {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('searchIcon').style.display = 'block';
+            }
+        });
+
+        // Display Suggestions
+        function displaySuggestions(results) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = '';
+
+            if (results.length === 0) {
+                suggestionsDiv.innerHTML = `
+                    <div class="p-4 text-center text-gray-600">
+                        <p class="font-medium">No results found</p>
+                        <p class="text-xs text-gray-500 mt-1">Try: City name, Barangay, Street, or Landmark</p>
+                    </div>
+                `;
+                suggestionsDiv.classList.remove('hidden');
+                return;
+            }
+
+            results.forEach((place, index) => {
+                const address = place.address || {};
+                const mainName = address.road || address.suburb || address.neighbourhood || place.name || place.display_name.split(',')[0];
+                const locationDetails = [address.city || address.municipality, address.state || address.province].filter(Boolean).join(', ');
+
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.setAttribute('data-index', index);
+                item.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        <div>
+                            <div class="font-semibold text-gray-900">${mainName}</div>
+                            <div class="text-xs location-text text-gray-600">${locationDetails}</div>
+                        </div>
+                    </div>
+                `;
+
+                item.addEventListener('click', () => selectAddress(place));
+                suggestionsDiv.appendChild(item);
+            });
+
+            suggestionsDiv.classList.remove('hidden');
         }
-    });
-});
-</script>
+
+        // Select Address
+        function selectAddress(place) {
+            const address = place.address || {};
+            const lat = parseFloat(place.lat);
+            const lng = parseFloat(place.lon);
+
+            // Update map
+            map.setView([lat, lng], 16);
+            marker.setLatLng([lat, lng]);
+
+            // Populate form
+            const fullAddress = [address.house_number, address.road, address.suburb || address.neighbourhood].filter(Boolean).join(' ') || place.display_name.split(',')[0];
+            
+            document.getElementById('addressSearch').value = fullAddress;
+            document.getElementById('suggestions').classList.add('hidden');
+
+            // Show results
+            document.getElementById('resultContainer').style.display = 'block';
+            document.getElementById('resultAddress').textContent = fullAddress;
+            document.getElementById('resultCity').textContent = address.city || address.municipality || 'N/A';
+            document.getElementById('resultState').textContent = address.state || address.province || 'N/A';
+            document.getElementById('resultPostal').textContent = address.postcode || 'N/A';
+            document.getElementById('resultCoords').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            // Scroll to results
+            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Click on map
+        function selectLocation(lat, lng) {
+            marker.setLatLng([lat, lng]);
+            reverseGeocode(lat, lng);
+        }
+
+        // Reverse Geocode (click on map)
+        async function reverseGeocode(lat, lng) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                selectAddress(data);
+            } catch (error) {
+                console.error('Reverse geocode error:', error);
+            }
+        }
+
+        // Keyboard Navigation
+        document.getElementById('addressSearch').addEventListener('keydown', (e) => {
+            if (currentResults.length === 0) return;
+
+            const suggestionsDiv = document.getElementById('suggestions');
+            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                    updateHighlight(items);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                    updateHighlight(items);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (highlightedIndex >= 0) {
+                        selectAddress(currentResults[highlightedIndex]);
+                    }
+                    break;
+                case 'Escape':
+                    suggestionsDiv.classList.add('hidden');
+                    break;
+            }
+        });
+
+        function updateHighlight(items) {
+            items.forEach((item, i) => {
+                item.classList.toggle('active', i === highlightedIndex);
+            });
+            if (highlightedIndex >= 0) {
+                items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+
 </body>
 </html>

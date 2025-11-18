@@ -511,10 +511,6 @@ document.addEventListener('DOMContentLoaded', function () {
         triggerCartUpdate();
     };
 
-    // ===== INITIALIZE SYSTEM =====
-    // Try WebSocket first, fallback to enhanced polling
-    initWebSocket();
-    
     // Initial update
     setTimeout(() => {
         queueUpdate(() => silentCartUpdate(true));

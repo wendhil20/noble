@@ -80,49 +80,33 @@ class BankQRPaymentModule {
     }
 
     selectBank(bankCode, bankInfo) {
-        console.log('🏦 Bank selected:', bankCode);
-        
-        const selectedBankInput = document.getElementById('selectedBank');
-        if (selectedBankInput) {
-            selectedBankInput.value = bankCode;
-        }
-
-        this.showBankDetails(bankInfo);
-        
-        // ✅ Set vehicle data to NULL for bank transfer (no delivery calculation yet)
-        const vehicleInputs = [
-            'assigned_vehicle_id',
-            'assigned_vehicle_type',
-            'total_cubic_meters',
-            'total_weight_kg',
-            'total_width',
-            'total_height',
-            'total_length'
-        ];
-        
-        vehicleInputs.forEach(inputName => {
-            let input = document.getElementById(inputName);
-            if (!input) {
-                input = document.createElement('input');
-                input.type = 'hidden';
-                input.id = inputName;
-                input.name = inputName;
-                document.querySelector('form').appendChild(input);
-            }
-            input.value = ''; // Empty = NULL in database
-        });
-        
-        console.log('✅ Vehicle data cleared for bank transfer');
-        
-        // Enable button after bank selection (before screenshot upload)
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-        if (placeOrderBtn) {
-            placeOrderBtn.disabled = true; // Still disabled until screenshot
-            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-            console.log('🏦 Bank selected, waiting for screenshot...');
-        }
+    console.log('🏦 Bank selected:', bankCode);
+    
+    const selectedBankInput = document.getElementById('selectedBank');
+    if (selectedBankInput) {
+        selectedBankInput.value = bankCode;
     }
+
+    this.showBankDetails(bankInfo);
+    
+    // ✅ NOW set screenshot to required since bank is selected
+    setTimeout(() => {
+        const bankScreenshot = document.querySelector('input[name="payment_screenshot"]');
+        if (bankScreenshot) {
+            bankScreenshot.setAttribute('required', 'required');
+            console.log('✓ Bank screenshot now required');
+        }
+    }, 100);
+    
+    // Keep button disabled until screenshot is uploaded
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        console.log('🏦 Bank selected, waiting for screenshot...');
+    }
+}
 
     showBankDetails(bankInfo) {
         const bankDetailsArea = document.getElementById('bankDetailsArea');
@@ -131,8 +115,8 @@ class BankQRPaymentModule {
             return;
         }
 
-        const grandTotalElement = document.getElementById('grandTotalDisplay');
-        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
+        // Use window.grandTotal instead of searching for DOM element
+const totalAmount = window.grandTotal ? '₱' + parseFloat(window.grandTotal).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '₱0.00';
 
         bankDetailsArea.classList.remove('hidden');
         bankDetailsArea.innerHTML = `
@@ -264,40 +248,33 @@ class BankQRPaymentModule {
     }
 
     selectQRMethod(methodId, methodInfo) {
-        console.log('📱 QR method selected:', methodId);
-        
-        const selectedQRInput = document.getElementById('selectedQRMethod');
-        if (selectedQRInput) {
-            selectedQRInput.value = methodId;
-        }
-
-        // ✅ Set vehicle data to NULL for QR payment (no delivery calculation yet)
-        const vehicleInputs = [
-            'assigned_vehicle_id',
-            'assigned_vehicle_type',
-            'total_cubic_meters',
-            'total_weight_kg',
-            'total_width',
-            'total_height',
-            'total_length'
-        ];
-        
-        vehicleInputs.forEach(inputName => {
-            let input = document.getElementById(inputName);
-            if (!input) {
-                input = document.createElement('input');
-                input.type = 'hidden';
-                input.id = inputName;
-                input.name = inputName;
-                document.querySelector('form').appendChild(input);
-            }
-            input.value = ''; // Empty = NULL in database
-        });
-        
-        console.log('✅ Vehicle data cleared for QR payment');
-
-        this.showQRDetails(methodInfo);
+    console.log('📱 QR method selected:', methodId);
+    
+    const selectedQRInput = document.getElementById('selectedQRMethod');
+    if (selectedQRInput) {
+        selectedQRInput.value = methodId;
     }
+
+    this.showQRDetails(methodInfo);
+    
+    // ✅ NOW set screenshot to required since QR method is selected
+    setTimeout(() => {
+        const qrScreenshot = document.querySelector('input[name="qr_payment_screenshot"]');
+        if (qrScreenshot) {
+            qrScreenshot.setAttribute('required', 'required');
+            console.log('✓ QR screenshot now required');
+        }
+    }, 100);
+    
+    // Keep button disabled until screenshot is uploaded
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        console.log('📱 QR selected, waiting for screenshot...');
+    }
+}
 
     showQRDetails(methodInfo) {
         const qrDetailsArea = document.getElementById('qrDetailsArea');
@@ -306,8 +283,8 @@ class BankQRPaymentModule {
             return;
         }
 
-        const grandTotalElement = document.getElementById('grandTotalDisplay');
-        const totalAmount = grandTotalElement ? grandTotalElement.textContent : '₱0.00';
+        // Use window.grandTotal instead of searching for DOM element
+const totalAmount = window.grandTotal ? '₱' + parseFloat(window.grandTotal).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '₱0.00';
 
         qrDetailsArea.classList.remove('hidden');
         qrDetailsArea.innerHTML = `

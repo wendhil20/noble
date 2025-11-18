@@ -1,8 +1,14 @@
 <?php
+//index-page-1-A-B-C-D-E.php
 ob_start();
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
+
+// ✅ Track referral visits FIRST (before anything else)
+require_once '../../includes/referral_tracker.php';
+trackReferralVisit($conn);
+
 // Include the handler
 include 'index-recent_views_handler-page-14.php';
 

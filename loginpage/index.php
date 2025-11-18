@@ -21,7 +21,7 @@ function determineRedirect($userLevel) {
         'sales' => "../admin/orders/ordering",
         'accountant' => "../admin/accountant/accountant",
         'supplier' => "../admin/suppliermain/suppliercompany",
-        'productspecialist' => "../admin/shop/adminshop",
+        'productspecialist' => "../admin/shop/main-adminshop-page-1",
         'logistic' => "../admin/logistic_management/main_dashboard",
         'warehouse' => "../admin/warehouse_management/order_list",
         'hr' => "../admin/hr/account",

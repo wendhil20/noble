@@ -3385,11 +3385,8 @@ while ($row = $banners_result->fetch_assoc()) {
             <!-- Section Header -->
             <div class="text-center mb-16">
                 <div class="inline-block mb-6">
-                    <span class="text-sm  text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
-                    <h2 class="text-4xl md:text-5xl  text-gray-900 mb-4 tracking-tight">
-                        We Design, We build, and We deliver
-                    </h2>
-                    <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-6"></div>
+                    <span class="text-lg  text-gray-500 tracking-wider uppercase mb-2 block">Our NobleHome</span>
+                    <div class="w-24 h-1 bg-gradient-to-r from-slate-600 to-slate-800 mx-auto mb-3"></div>
                 </div>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
                     Discover our premium collection through detailed product demonstrations and professional showcases

@@ -455,7 +455,7 @@ try {
     echo "</div>";
 
     echo "<script>";
-    echo "setTimeout(function(){ window.location.href = 'adminupdateshop.php?id=$product_id'; }, 2000);";
+    echo "setTimeout(function(){ window.location.href = 'main-adminupdateshop-page-2.php?id=$product_id'; }, 2000);";
     echo "</script>";
 } catch (Exception $e) {
     $conn->rollback();
@@ -464,7 +464,7 @@ try {
     echo "</div>";
 
     echo "<script>";
-    echo "setTimeout(function(){ window.location.href = 'adminupdateshop.php?id=$product_id'; }, 3000);";
+    echo "setTimeout(function(){ window.location.href = 'main-adminupdateshop-page-2.php?id=$product_id'; }, 3000);";
     echo "</script>";
 }
 

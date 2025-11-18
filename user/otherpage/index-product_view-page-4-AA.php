@@ -55,18 +55,46 @@ if (!$product_id || !is_numeric($product_id) || $product_id <= 0) {
 // FETCH ORDER: PRODUCTS → PRODUCT_TYPES → PRODUCT_COLORS → PRODUCT_VARIANTS
 // ============================================================
 
-// ✅ STEP 1: FETCH FROM PRODUCTS TABLE
+// ✅ STEP 1: FETCH FROM PRODUCTS TABLE - WITH ALL COLUMNS INCLUDING descriptionpic
 $stmt = $conn->prepare("
-  SELECT id, product_name, codename, quantity, price, main_image, sub_images, 
-         description, descrip1, descrip2, descrip3, descrip4, descrip5,
-         descrip6, descrip7, descrip8, descrip9, descrip10 ,  guide_enabled
+  SELECT 
+    id, 
+    product_name, 
+    codename, 
+    quantity, 
+    price, 
+    main_image, 
+    sub_images, 
+    description,
+    descrip1, 
+    descrip2, 
+    descrip3, 
+    descrip4, 
+    descrip5,
+    descrip6, 
+    descrip7, 
+    descrip8, 
+    descrip9, 
+    descrip10, 
+    guide_enabled,
+    product_images, 
+    descriptionpic,
+    qr_code
   FROM products 
   WHERE id = ? 
   LIMIT 1
 ");
+
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
-$product = $stmt->get_result()->fetch_assoc();
+$result = $stmt->get_result();
+
+if (!$result || $result->num_rows === 0) {
+  echo "Product not found.";
+  exit;
+}
+
+$product = $result->fetch_assoc();
 $stmt->close();
 
 if (!$product) {
@@ -74,14 +102,23 @@ if (!$product) {
   exit;
 }
 
-// ✅ CREATE BACKUP OF ORIGINAL PRODUCT DATA (To prevent overwriting)
-$ORIGINAL_PRODUCT = $product;
 
-// Debug log
-error_log("=== PRODUCT DATA FETCHED ===");
+// ✅ Debug output - REMOVE after testing
+error_log("=== PRODUCT FETCH DEBUG ===");
 error_log("Product ID: " . $product['id']);
 error_log("Product Name: " . $product['product_name']);
-error_log("Description: " . substr($product['description'], 0, 100));
+error_log("Has descriptionpic: " . (!empty($product['descriptionpic']) ? 'YES (' . strlen($product['descriptionpic']) . ' chars)' : 'NO'));
+error_log("Has product_images: " . (!empty($product['product_images']) ? 'YES (' . strlen($product['product_images']) . ' chars)' : 'NO'));
+error_log("Product Images Content: " . substr($product['product_images'] ?? '', 0, 100));
+
+// ✅ CREATE BACKUP OF ORIGINAL PRODUCT DATA
+$ORIGINAL_PRODUCT = $product;
+
+// ✅ Verify all descriptions
+for ($i = 1; $i <= 10; $i++) {
+  $key = "descrip$i";
+  error_log("$key: " . (!empty($product[$key]) ? htmlspecialchars($product[$key]) : 'EMPTY'));
+}
 
 // ✅ STEP 2: FETCH FROM PRODUCT_TYPES TABLE
 $type_main_image = null;
@@ -109,6 +146,34 @@ $stmt->close();
 $display_image = !empty($type_main_image) ? $type_main_image : $product['main_image'];
 $display_name = !empty($type_main_name) ? $type_main_name : $product['product_name'];
 
+// ✅ PROCESS PRODUCT IMAGES GALLERY (from product_images JSON)
+$product_images = [];
+
+if (!empty($product['product_images'])) {
+  // Decode JSON array
+  $decoded_images = json_decode($product['product_images'], true);
+
+  if (is_array($decoded_images) && !empty($decoded_images)) {
+    foreach ($decoded_images as $idx => $imagePath) {
+      // Clean path (remove escaped slashes)
+      $cleanPath = str_replace(['\\/', '\\'], ['/', ''], $imagePath);
+      $cleanPath = trim($cleanPath, '/');
+
+      // Build full path for src attribute
+      $imageSrc = "../../" . $cleanPath;
+
+      // Verify file exists before adding
+      if (file_exists($imageSrc)) {
+        $product_images[] = [
+          'index' => $idx,
+          'path' => $cleanPath,
+          'src' => $imageSrc
+        ];
+      }
+    }
+  }
+}
+
 // Process sub images
 $sub_images = [];
 if (!empty($product['sub_images'])) {
@@ -135,7 +200,7 @@ while ($row = $colors_result->fetch_assoc()) {
 }
 $stmt->close();
 
-// ✅ STEP 4: FETCH FROM PRODUCT_TYPES AND PRODUCT_VARIANTS TABLES (FIXED)
+// ✅ STEP 4: FETCH FROM PRODUCT_TYPES AND PRODUCT_VARIANTS TABLES (FIXED WITH STOCK)
 $stmt = $conn->prepare("
   SELECT 
     pt.id as type_id,
@@ -152,7 +217,8 @@ $stmt = $conn->prepare("
     pv.sku_info,
     pv.width,
     pv.height,
-    pv.length
+    pv.length,
+    pv.stock
   FROM product_types pt
   LEFT JOIN product_variants pv ON pt.id = pv.type_id 
   WHERE pt.product_id = ?
@@ -174,7 +240,7 @@ while ($row = $types_result->fetch_assoc()) {
     ];
   }
   if ($row['variant_id']) {
-    // ✅ ADD dimensions to variant data
+    // ✅ ADD stock to variant data
     $types_data[$type_name]['variants'][] = [
       'variant_id' => $row['variant_id'],
       'namevariant' => $row['namevariant'],
@@ -187,7 +253,8 @@ while ($row = $types_result->fetch_assoc()) {
       'sku_info' => $row['sku_info'],
       'width' => $row['width'] ?? 0,
       'height' => $row['height'] ?? 0,
-      'length' => $row['length'] ?? 0
+      'length' => $row['length'] ?? 0,
+      'stock' => $row['stock'] ?? 0  // ✅ ADD THIS
     ];
   }
 }
@@ -801,6 +868,20 @@ $is_guest = !isset($_SESSION['user_id']);
         z-index: -1;
       }
     }
+
+    .scrollbar-thin::-webkit-scrollbar {
+      height: 4px;
+      /* Nipis scroll bar */
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #c4c4c4;
+      border-radius: 4px;
+    }
   </style>
 </head>
 
@@ -869,16 +950,16 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="flex gap-1 sm:gap-2 pb-2 justify-center lg:justify-start">
 
                   <!-- Main Thumbnail -->
-                  <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="0">
+                  <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg" data-index="0">
                     <img src="../../<?= htmlspecialchars($display_image) ?>" loading="lazy"
                       class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200 thumbnail-active"
                       alt="Main Image">
                   </div>
 
-                  <!-- Sub Images Thumbnails -->
+                  <!-- Sub Images Thumbnails - FIXED PATH -->
                   <?php foreach ($sub_images as $index => $sub_image): ?>
-                    <div class="thumbnail-item cursor-pointer flex-shrink-0" data-index="<?= $index + 1 ?>">
-                      <img src="../<?= htmlspecialchars($sub_image) ?>" loading="lazy"
+                    <div class="thumbnail-item cursor-pointer flex-shrink-0 border border-gray-200 rounded-lg" data-index="<?= $index + 1 ?>">
+                      <img src="../../uploads/<?= htmlspecialchars($sub_image) ?>" loading="lazy"
                         class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain rounded-lg border-2 border-transparent hover:border-blue-500 transition-all duration-200"
                         alt="Sub Image <?= $index + 1 ?>">
                     </div>
@@ -917,66 +998,71 @@ $is_guest = !isset($_SESSION['user_id']);
 
             <!-- Product Info Section -->
             <div class="space-y-4 lg:space-y-6">
-              <!-- Customer Rating -->
-              <div>
-                <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
-                <?php if ($total_raters > 0): ?>
-                  <div class="flex items-center gap-2 text-yellow-400">
-                    <div class="flex text-lg">
-                      <?php
-                      $full = floor($avg_rating);
-                      $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                      $empty = 5 - $full - $half;
-
-                      for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                      if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                      for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                      ?>
-                    </div>
-                    <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
-                    <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
-                  </div>
-                <?php else: ?>
-                  <p class="text-sm text-gray-500">No reviews yet</p>
-                <?php endif; ?>
-              </div>
 
               <!-- Product Name & Price Display -->
               <div>
-                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-2">
-                  <h1 class="text-xl sm:text-2xl lg:text-3xl text-orange-600">
-                    <?php
-                    $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
-                    echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
-                    ?>
-                  </h1>
+            <div class="flex items-center justify-between gap-4">
 
-                  <!-- Dynamic Price Display -->
-                  <div id="product-price-display" class="hidden">
-                    <div class="text-right">
-                      <div id="original-price-container" class="hidden">
-                        <span class="text-sm text-gray-500 line-through" id="original-price">₱0.00</span>
-                      </div>
-                      <div class="text-2xl lg:text-3xl text-black" id="final-price">₱0.00</div>
-                      <div id="discount-badge" class="hidden mt-1">
-                        <span class="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                          <span id="discount-percent">0</span>% OFF
-                        </span>
-                      </div>
-                      <div id="selected-size-info" class="text-xs text-gray-500 mt-1">
-                        Size: <span class="font-semibold" id="selected-size-text">-</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+  <!-- PRODUCT NAME -->
+  <h1 class="text-xl sm:text-2xl lg:text-3xl text-black font-bold">
+    <?php
+    $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
+    echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
+    ?>
+  </h1>
 
-                <div class="flex flex-wrap gap-2 mb-3">
-                  <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium uppercase">
+  <!-- RIGHT SIDE BUTTONS -->
+  <div class="flex items-center gap-3">
+
+    <!-- Share -->
+    <button onclick="shareProduct()" 
+            class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
+      <i class="fas fa-share-alt text-lg text-black"></i>
+      <span class="hidden sm:inline text-sm font-medium">Share</span>
+    </button>
+
+    <!-- Customer Service -->
+    <button onclick="window.location.href='#contact'"
+            class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
+      <i class="fas fa-headset text-lg text-black"></i>
+      <span class="hidden sm:inline text-sm font-medium">Customer Service</span>
+    </button>
+
+  </div>
+</div>
+
+
+                <div class="flex flex-wrap gap-2 mb-3 mt-2">
+                  <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium uppercase">
                     <?php
                     $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
                     echo htmlspecialchars($safe_product['codename']);
                     ?>
                   </span>
+                </div>
+
+                <!-- Customer Rating -->
+                <div>
+                  <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
+                  <?php if ($total_raters > 0): ?>
+                    <div class="flex items-center gap-2 text-yellow-400">
+                      <div class="flex text-lg">
+                        <?php
+                        $full = floor($avg_rating);
+                        $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
+                        $empty = 5 - $full - $half;
+
+                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
+                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
+                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
+                        ?>
+                      </div>
+                      <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
+                      <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
+                    </div>
+                  <?php else: ?>
+                    <p class="text-sm text-gray-500">No reviews yet</p>
+                  <?php endif; ?>
                 </div>
               </div>
 
@@ -1109,6 +1195,7 @@ $is_guest = !isset($_SESSION['user_id']);
                           $price = floatval($variant['variant_price']);
                           $percent = floatval($variant['percent']);
                           $discount = floatval($variant['discount'] ?? 0);
+                          $stock = intval($variant['stock'] ?? 0);
                           $priceWithMarkup = $price + ($price * $percent / 100);
                           $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                           $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
@@ -1116,18 +1203,33 @@ $is_guest = !isset($_SESSION['user_id']);
                           <button type="button"
                             onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this);"
                             class="variant-btn border-2 border-gray-300 hover:border-orange-500 bg-white rounded
-                   px-2 py-2 text-center transition-all duration-200 min-h-[40px] flex items-center justify-center"
+   px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
                             data-price="<?= $price ?>"
                             data-percent="<?= $percent ?>"
                             data-discount="<?= $discount ?>"
                             data-variant-id="<?= $variant['variant_id'] ?>"
+                            data-stock="<?= $stock ?>"
                             data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
                             data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
                             data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
                             data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'>
+
+                            <!-- Size Text -->
                             <div class="text-gray-700 text-[11px] font-medium leading-tight">
                               <?= htmlspecialchars($variant['size']) ?>
                             </div>
+
+                            <!-- Stock Display -->
+                            <div class="text-[9px] font-bold mt-0.5">
+                              <?php if ($stock <= 0): ?>
+                                <span class="text-red-600">OUT OF STOCK</span>
+                              <?php elseif ($stock <= 5): ?>
+                                <span class="text-orange-600"><?= $stock ?> left</span>
+                              <?php else: ?>
+                                <span class="text-green-600"><?= $stock ?> in stock</span>
+                              <?php endif; ?>
+                            </div>
+
                             <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
                           </button>
                         <?php endforeach; ?>
@@ -1987,7 +2089,7 @@ $is_guest = !isset($_SESSION['user_id']);
 
                         <!-- Product Description -->
                         <div class="mb-3 flex-1">
-                          <p class="text-gray-600 text-xs line-clamp-2 mb-1 text-[11px]">
+                          <p class="text-gray-600 text-xs line-clamp-2 mb-1 text-[13px]">
                             <?= htmlspecialchars($row['description']) ?>
                           </p>
                           <?php if (!empty($row['descrip6'])): ?>
@@ -2458,6 +2560,7 @@ $is_guest = !isset($_SESSION['user_id']);
             </div>
           </div>
 
+
           <!-- Product Info Tab Content -->
           <div id="content-productinfo" class="tab-content hidden">
 
@@ -2471,21 +2574,30 @@ $is_guest = !isset($_SESSION['user_id']);
 
             <div class="space-y-8">
 
-              <!-- Product Images Section -->
-              <div class="bg-white rounded-2xl  overflow-hidden">
+              <!-- PRODUCT SPECIFICATIONS SECTION -->
+              <?php
+              $has_specs = false;
+              for ($i = 1; $i <= 10; $i++) {
+                if (!empty($product_specs["descrip$i"])) {
+                  $has_specs = true;
+                  break;
+                }
+              }
+              ?>
+
+              <!-- PRODUCT IMAGES SECTION -->
+              <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
                 <!-- Section Header -->
-                <div class=" px-6 py-4 ">
+                <div class="px-6 py-4 border-b border-gray-200">
                   <div class="flex items-center justify-between">
-                    <?php
-                    // Get product images
-                    $product_images = [];
-                    if (!empty($product['product_images'])) {
-                      $decoded_images = json_decode($product['product_images'], true);
-                      if (is_array($decoded_images)) {
-                        $product_images = $decoded_images;
-                      }
-                    }
-                    ?>
+                    <div class="flex items-center gap-3">
+
+                      <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Product</h3>
+                        <p class="text-xs text-gray-500">High-quality product images</p>
+                      </div>
+                    </div>
+                    <!-- ✅ FIXED: $product_images already processed above - no need to decode again! -->
                     <?php if (!empty($product_images)): ?>
                       <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
                         <?= count($product_images) ?> <?= count($product_images) == 1 ? 'Image' : 'Images' ?>
@@ -2498,28 +2610,20 @@ $is_guest = !isset($_SESSION['user_id']);
                 <div class="p-6">
                   <?php if (!empty($product_images)): ?>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      <?php foreach ($product_images as $index => $imagePath): ?>
+                      <!-- ✅ FIXED: Use pre-processed $product_images array -->
+                      <?php foreach ($product_images as $imageData): ?>
                         <div class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-md hover:shadow-2xl transition-all duration-300">
-                          <!-- Image Number Badge -->
-                          <div class="absolute top-3 left-3 z-10 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                            #<?= $index + 1 ?>
-                          </div>
 
                           <!-- Zoom Icon -->
                           <div class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
                             <i class="fas fa-search-plus text-gray-700 text-sm"></i>
                           </div>
 
-                          <?php
-                          $cleanPath = str_replace('\\/', '/', $imagePath);
-                          $imageSrc = "../../" . $cleanPath;
-                          ?>
-
                           <!-- Image -->
-                          <div class="aspect-square relative overflow-hidden cursor-pointer" onclick="openImageModal('<?= htmlspecialchars($imageSrc) ?>')">
+                          <div class="aspect-square relative overflow-hidden cursor-pointer" onclick="openImageModal('<?= htmlspecialchars($imageData['src']) ?>')">
                             <img
-                              src="<?= htmlspecialchars($imageSrc) ?>"
-                              alt="Product Image <?= $index + 1 ?>"
+                              src="<?= htmlspecialchars($imageData['src']) ?>"
+                              alt="Product Image <?= $imageData['index'] + 1 ?>"
                               class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
                               loading="lazy"
                               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -2553,71 +2657,34 @@ $is_guest = !isset($_SESSION['user_id']);
                 </div>
               </div>
 
-              <!-- Product Description Section -->
-              <div class="bg-white rounded-2xl  overflow-hidden">
-                <!-- Section Header -->
-                <div class=" px-6 py-4 ">
-                  <div class="flex items-center gap-3">
-                    <div>
-                      <h3 class="text-lg font-semibold text-gray-900">Detailed Description</h3>
-                      <p class="text-xs text-gray-500">Complete product information and features</p>
+              <!-- DETAILED DESCRIPTION SECTION - DESCRIPTIONPIC -->
+              <?php if (!empty($product_specs['descriptionpic'])): ?>
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm">
+                  <!-- Section Header -->
+                  <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                      <i class="fas fa-file-alt text-purple-500 text-xl"></i>
+                      <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Detailed Description</h3>
+                        <p class="text-xs text-gray-500">Complete product information</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Description Content -->
-                <div class="p-6">
-                  <?php if (!empty($product['descriptionpic'])): ?>
-                    <div class="prose prose-gray max-w-none">
-                      <div class="bg-gradient-to-br from-orange-50 to-blue-50 rounded-xl p-6 border border-orange-100">
+                  <!-- Description Content -->
+                  <div class="p-6">
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                      <div class="prose prose-gray max-w-none">
                         <p class="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
-                          <?= htmlspecialchars($product['descriptionpic']) ?>
+                          <?= nl2br(htmlspecialchars($product_specs['descriptionpic'])) ?>
                         </p>
                       </div>
                     </div>
-                  <?php else: ?>
-                    <!-- Empty State -->
-                    <div class="text-center py-16 px-4">
-                      <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-4">
-                        <i class="fas fa-file-alt text-4xl text-gray-400"></i>
-                      </div>
-                      <h4 class="text-lg font-semibold text-gray-700 mb-2">No Description Available</h4>
-                      <p class="text-sm text-gray-500 max-w-sm mx-auto">Detailed product description hasn't been added yet. Please contact us for more information.</p>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              </div>
-
-              <!-- Action Cards -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Share Card -->
-                <div class="group rounded-2xl p-3   transition-all duration-300 cursor-pointer" onclick="shareProduct()">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <i class="fas fa-share-alt text-2xl text-black"></i>
-                    </div>
-                    <div class="flex-1">
-                      <h4 class="text-black font-bold text-lg mb-1">Share Product</h4>
-                      <p class="text-black text-sm">Share with friends & family</p>
-                    </div>
-                    <i class="fas fa-arrow-right text-white text-xl opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300"></i>
                   </div>
                 </div>
+              <?php endif; ?>
 
-                <!-- Contact Card -->
-                <div class="group  rounded-2xl p-3 transition-all duration-300 cursor-pointer" onclick="window.location.href='#contact'">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <i class="fas fa-headset text-2xl text-black"></i>
-                    </div>
-                    <div class="flex-1">
-                      <h4 class="text-black font-bold text-lg mb-1">Need Help?</h4>
-                      <p class="text-black text-sm">Contact our support team</p>
-                    </div>
-                    <i class="fas fa-arrow-right text-white text-xl opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300"></i>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>

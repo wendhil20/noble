@@ -233,7 +233,7 @@ try {
         'sales' => "../admin/orders/ordering",
         'accountant' => "../admin/accountant/accountant",
         'supplier' => "../admin/suppliermain/suppliercompany",
-        'productspecialist' => "../admin/shop/adminshop",
+        'productspecialist' => "../admin/shop/main-adminshop-page-1.php",
         'logistic' => "../admin/logistic_management/main_dashboard",
         'warehouse' => match (strtolower($user['subrole'] ?? '')) {
         'warehouse_receiver' => "../admin/warehouse_management/qr_scanner",

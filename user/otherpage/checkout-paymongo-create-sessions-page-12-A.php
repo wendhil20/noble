@@ -1,5 +1,5 @@
 <?php
-// paymongo-create-sessions.php - FINAL DEBUG VERSION
+// paymongo-create-sessions.php - FINAL DEBUG VERSION WITH STOCK DEDUCTION
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -403,6 +403,89 @@ foreach ($cart_items as $item) {
 }
 
 $item_stmt->close();
+
+// ✅✅✅ STOCK DEDUCTION FOR PAYMONGO PAYMENTS ✅✅✅
+// This deducts stock IMMEDIATELY when PayMongo session is created
+
+error_log("=== PAYMONGO STOCK DEDUCTION START ===");
+error_log("Order ID: " . $order_id);
+error_log("Total items to process: " . count($cart_items));
+
+foreach ($cart_items as $item) {
+    $item_variant_id = $item['variant_id'] ?? null;
+    $item_color_id = $item['color_id'] ?? null;
+    $item_quantity = $item['quantity'];
+
+    error_log("Processing: Product #" . $item['product_id'] . ", Variant #$item_variant_id, Color #$item_color_id, Qty: $item_quantity");
+
+    // PRIMARY: Deduct from product_variant_colors (Junction Table)
+    if (!empty($item_variant_id) && !empty($item_color_id)) {
+        error_log("  → Attempting junction table update...");
+        
+        $deduct_junction = $conn->prepare("
+            UPDATE product_variant_colors 
+            SET stock_quantity = stock_quantity - ?
+            WHERE variant_id = ? AND color_id = ?
+        ");
+        
+        if (!$deduct_junction) {
+            error_log("  ✗ Prepare failed: " . $conn->error);
+        } else {
+            $deduct_junction->bind_param("iii", $item_quantity, $item_variant_id, $item_color_id);
+            
+            if (!$deduct_junction->execute()) {
+                error_log("  ✗ Execute failed: " . $deduct_junction->error);
+            } else {
+                error_log("  ✓ Rows affected: " . $deduct_junction->affected_rows);
+                
+                // Check remaining stock IMMEDIATELY
+                $check_stock = $conn->prepare("
+                    SELECT stock_quantity 
+                    FROM product_variant_colors 
+                    WHERE variant_id = ? AND color_id = ?
+                ");
+                $check_stock->bind_param("ii", $item_variant_id, $item_color_id);
+                $check_stock->execute();
+                $stock_result = $check_stock->get_result();
+                
+                if ($stock_row = $stock_result->fetch_assoc()) {
+                    error_log("  → New stock: {$stock_row['stock_quantity']} units");
+                } else {
+                    error_log("  ✗ Record not found after update!");
+                }
+                $check_stock->close();
+            }
+            $deduct_junction->close();
+        }
+    } 
+    // FALLBACK: If no color_id, deduct from variant only
+    elseif (!empty($item_variant_id)) {
+        error_log("  → No color_id, using variant fallback...");
+        
+        $deduct_variant = $conn->prepare("
+            UPDATE product_variants 
+            SET stock = stock - ?
+            WHERE id = ?
+        ");
+        
+        if (!$deduct_variant) {
+            error_log("  ✗ Prepare failed: " . $conn->error);
+        } else {
+            $deduct_variant->bind_param("ii", $item_quantity, $item_variant_id);
+            
+            if (!$deduct_variant->execute()) {
+                error_log("  ✗ Execute failed: " . $deduct_variant->error);
+            } else {
+                error_log("  ✓ Variant rows affected: " . $deduct_variant->affected_rows);
+            }
+            $deduct_variant->close();
+        }
+    } else {
+        error_log("  ✗ No variant_id or color_id found!");
+    }
+}
+
+error_log("=== PAYMONGO STOCK DEDUCTION END ===");
 
     // ✅ CREATE PAYMONGO CHECKOUT SESSION
     $amount_in_centavos = intval($amount * 100);

@@ -63,8 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $type_name = $variant_name = $color_name = $size = '';
         $color_price = 0;
         $variant_price = 0;
-        $discount_percent = 0;
-        $discount_fixed = 0;
         $variant_id_db = null;
         $color_id = null;  // ✅ Initialize as NULL
         $codename = $product['codename'];
@@ -98,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $type_id = $type_data['id'];
                 $type_name = $selected_type;
 
-                $variant_stmt = $conn->prepare("SELECT id, namevariant, size, price, percent, discount FROM product_variants WHERE type_id = ? AND namevariant = ?");
+                $variant_stmt = $conn->prepare("SELECT id, namevariant, size, price FROM product_variants WHERE type_id = ? AND namevariant = ?");
                 $variant_stmt->bind_param("is", $type_id, $selected_variant);
                 $variant_stmt->execute();
                 $variant_data = $variant_stmt->get_result()->fetch_assoc();
@@ -108,16 +106,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $variant_id_db = $variant_data['id'];
                     $variant_name = $variant_data['namevariant'];
                     $size = $variant_data['size'];
+                    // ✅ CRITICAL: price column in product_variants is ALREADY the FINAL price!
+                    // NO recalculation needed - just use it directly
                     $variant_price = floatval($variant_data['price']);
-                    $discount_percent = floatval($variant_data['percent']);
-                    $discount_fixed = floatval($variant_data['discount']);
                 }
             }
         }
 
         // Fallback by variant_id if previous method fails
         if (!$variant_id_db && $variant_id > 0) {
-            $variant_stmt = $conn->prepare("SELECT v.id, v.namevariant, v.size, v.price, v.percent, v.discount, t.type_name FROM product_variants v JOIN product_types t ON v.type_id = t.id WHERE v.id = ?");
+            $variant_stmt = $conn->prepare("SELECT v.id, v.namevariant, v.size, v.price, t.type_name FROM product_variants v JOIN product_types t ON v.type_id = t.id WHERE v.id = ?");
             $variant_stmt->bind_param("i", $variant_id);
             $variant_stmt->execute();
             $variant_data = $variant_stmt->get_result()->fetch_assoc();
@@ -128,23 +126,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $variant_name = $variant_data['namevariant'];
                 $size = $variant_data['size'];
                 $type_name = $variant_data['type_name'];
+                // ✅ CRITICAL: price is ALREADY the FINAL price!
                 $variant_price = floatval($variant_data['price']);
-                $discount_percent = floatval($variant_data['percent']);
-                $discount_fixed = floatval($variant_data['discount']);
             }
         }
 
-        // Final price calculation
-        $discounted_variant_price = $variant_price;
-        if ($discount_percent > 0) {
-            $discounted_variant_price -= $variant_price * ($discount_percent / 100);
-        }
-        if ($discount_fixed > 0) {
-            $discounted_variant_price -= $variant_price * ($discount_fixed / 100);
-        }
-        $discounted_variant_price = max($discounted_variant_price, 0);
-
-        $price = round($color_price + $discounted_variant_price, 2);
+        // ✅ SIMPLE PRICE CALCULATION: Just add color price to variant price
+        // No need for discount calculations - price column already has final price!
+        $price = round($color_price + $variant_price, 2);
         if ($price <= 0) throw new Exception('Invalid price computation.');
 
         // ===== GUEST MODE: If guest, save to temp session instead of database =====

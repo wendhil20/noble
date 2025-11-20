@@ -760,63 +760,64 @@ class ProductSelector {
     this.updateDisplay();
   }
 
-  setVariantSelection(button, size, color = null) {
-    document.querySelectorAll(".variant-btn").forEach((btn) => {
-      btn.classList.remove(
-        "selected",
-        "border-orange-500",
-        "bg-orange-50",
-        "ring-1",
-        "ring-orange-500"
-      );
-      btn.classList.add("border-gray-200", "bg-white");
-    });
-
-    button.classList.add(
+setVariantSelection(button, size, color = null) {
+  document.querySelectorAll(".variant-btn").forEach((btn) => {
+    btn.classList.remove(
       "selected",
       "border-orange-500",
       "bg-orange-50",
       "ring-1",
       "ring-orange-500"
     );
-    button.classList.remove("border-gray-200", "bg-white");
+    btn.classList.add("border-gray-200", "bg-white");
+  });
 
-    const price = parseFloat(button.dataset.price);
-    const percent = parseFloat(button.dataset.percent);
-    const discount = parseFloat(button.dataset.discount);
-    const variantId = button.dataset.variantId;
+  button.classList.add(
+    "selected",
+    "border-orange-500",
+    "bg-orange-50",
+    "ring-1",
+    "ring-orange-500"
+  );
+  button.classList.remove("border-gray-200", "bg-white");
 
-    const priceWithMarkup = price + (price * percent) / 100;
-    const finalPrice = priceWithMarkup - (priceWithMarkup * discount) / 100;
+  // ✅ KEY FIX: Use price DIRECTLY - it's already the final price!
+  // NO RECALCULATION NEEDED!
+  const finalPrice = parseFloat(button.dataset.price); // This is already ₱60.91
+  
+  // Store these for reference only (NOT for recalculation)
+  const originalPrice = parseFloat(button.dataset.originalPrice) || 0;
+  const percent = parseFloat(button.dataset.percent) || 0;
+  const discount = parseFloat(button.dataset.discount) || 0;
+  const variantId = button.dataset.variantId;
 
-    this.selectedVariantData = {
-      price,
-      percent,
-      discount,
-      finalPrice,
-      priceWithMarkup,
-      variantId,
-      size: size,
-      color: color || "",
-    };
+  this.selectedVariantData = {
+    price: finalPrice, // ✅ THIS IS THE FINAL PRICE - USE DIRECTLY
+    originalPrice: originalPrice, // For display purposes only
+    percent: percent, // For display purposes only
+    discount: discount, // For display purposes only
+    variantId: variantId,
+    size: size,
+    color: color || "",
+  };
 
-    if (this.elements.selectedVariant) {
-      this.elements.selectedVariant.value = size;
-    }
-    if (this.elements.variantId) {
-      this.elements.variantId.value = variantId;
-    }
 
-    this.updateProductHeaderPrice();
-
-    setTimeout(() => {
-      if (typeof updateAllPriceDisplays === "function") {
-        updateAllPriceDisplays();
-      }
-      // ✅ VALIDATE AFTER SELECTION
-      validateSelectedVariant();
-    }, 100);
+ if (this.elements.selectedVariant) {
+    this.elements.selectedVariant.value = size;
   }
+  if (this.elements.variantId) {
+    this.elements.variantId.value = variantId;
+  }
+
+  this.updateProductHeaderPrice();
+
+  setTimeout(() => {
+    if (typeof updateAllPriceDisplays === "function") {
+      updateAllPriceDisplays();
+    }
+    validateSelectedVariant();
+  }, 100);
+}
 
   unselectVariant(button) {
     button.classList.remove(
@@ -859,103 +860,109 @@ class ProductSelector {
     });
   }
 
-  calculateTotalPrice() {
-    let totalPrice = 0;
-    const hasSelections = this.selectedColorData || this.selectedVariantData;
 
-    if (hasSelections) {
-      if (this.selectedVariantData) {
-        let basePrice = this.selectedVariantData.priceWithMarkup;
-        
-        if (this.selectedColorData && this.selectedColorData.price) {
-          basePrice += parseFloat(this.selectedColorData.price);
-        }
-        
-        totalPrice = this.selectedVariantData.discount > 0
-          ? basePrice - (basePrice * this.selectedVariantData.discount) / 100
-          : basePrice;
-      } else {
-        totalPrice = this.basePrice;
+// ✅ Update calculateTotalPrice() - USE FINAL PRICE DIRECTLY
+calculateTotalPrice() {
+  let totalPrice = 0;
+  const hasSelections = this.selectedColorData || this.selectedVariantData;
+
+  if (hasSelections) {
+    if (this.selectedVariantData) {
+      // ✅ SIMPLE: Just use the final price directly!
+      let finalPrice = parseFloat(this.selectedVariantData.price) || 0;
+      
+      // Add color price
+      if (this.selectedColorData && this.selectedColorData.price) {
+        finalPrice += parseFloat(this.selectedColorData.price);
       }
+      
+      totalPrice = Math.round(finalPrice * 100) / 100;
+    } else {
+      totalPrice = this.basePrice;
     }
-
-    return { totalPrice, hasSelections };
   }
 
-  updateProductHeaderPrice() {
-    if (!this.selectedVariantData) {
-      this.hideProductHeaderPrice();
-      return;
-    }
+  return { totalPrice, hasSelections };
+}
 
-    const priceDisplay = document.getElementById("product-price-display");
-    const originalPriceContainer = document.getElementById(
-      "original-price-container"
-    );
-    const originalPriceElement = document.getElementById("original-price");
-    const finalPriceElement = document.getElementById("final-price");
-    const discountBadge = document.getElementById("discount-badge");
-    const discountPercent = document.getElementById("discount-percent");
-    const selectedSizeText = document.getElementById("selected-size-text");
+// ✅ Update updateProductHeaderPrice() - NO RECALCULATION!
+updateProductHeaderPrice() {
+  if (!this.selectedVariantData) {
+    this.hideProductHeaderPrice();
+    return;
+  }
 
-    if (!priceDisplay || !finalPriceElement) return;
+  const priceDisplay = document.getElementById("product-price-display");
+  const originalPriceContainer = document.getElementById(
+    "original-price-container"
+  );
+  const originalPriceElement = document.getElementById("original-price");
+  const finalPriceElement = document.getElementById("final-price");
+  const discountBadge = document.getElementById("discount-badge");
+  const discountPercent = document.getElementById("discount-percent");
+  const selectedSizeText = document.getElementById("selected-size-text");
 
-    priceDisplay.classList.remove("hidden");
+  if (!priceDisplay || !finalPriceElement) return;
 
-    let basePrice = parseFloat(this.selectedVariantData.priceWithMarkup) || 0;
+  priceDisplay.classList.remove("hidden");
 
-    if (this.selectedColorData && this.selectedColorData.price) {
-      basePrice += parseFloat(this.selectedColorData.price);
-    }
+  // ✅ USE FINAL PRICE DIRECTLY - NO RECALCULATION!
+  let displayPrice = parseFloat(this.selectedVariantData.price) || 0;
 
-    if (selectedSizeText && this.selectedVariantData.size) {
-      selectedSizeText.textContent = this.selectedVariantData.size;
-    }
+  // Add color price
+  if (this.selectedColorData && this.selectedColorData.price) {
+    displayPrice += parseFloat(this.selectedColorData.price);
+  }
 
-    const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
+  if (selectedSizeText && this.selectedVariantData.size) {
+    selectedSizeText.textContent = this.selectedVariantData.size;
+  }
 
-    if (discountValue > 0) {
-      if (originalPriceContainer && originalPriceElement) {
-        originalPriceContainer.classList.remove("hidden");
-        originalPriceElement.textContent = `₱${basePrice.toLocaleString(
-          "en-PH",
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }
-        )}`;
+  // Show discount badge only if there WAS a discount applied
+  const discountValue = parseFloat(this.selectedVariantData.discount) || 0;
+  
+  if (discountValue > 0) {
+    if (originalPriceContainer && originalPriceElement) {
+      originalPriceContainer.classList.remove("hidden");
+      
+      // Show original price BEFORE discount (for information)
+      const originalWithMarkup = this.selectedVariantData.originalPrice + 
+        (this.selectedVariantData.originalPrice * this.selectedVariantData.percent / 100);
+      let priceBeforeDiscount = originalWithMarkup;
+      
+      if (this.selectedColorData && this.selectedColorData.price) {
+        priceBeforeDiscount += parseFloat(this.selectedColorData.price);
       }
-
-      const discountedPrice = basePrice - (basePrice * discountValue) / 100;
-      finalPriceElement.textContent = `₱${discountedPrice.toLocaleString(
+      
+      originalPriceElement.textContent = `₱${priceBeforeDiscount.toLocaleString(
         "en-PH",
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }
       )}`;
-
-      if (discountBadge && discountPercent) {
-        discountBadge.classList.remove("hidden");
-        discountPercent.textContent = Math.round(discountValue);
-      }
-    } else {
-      if (originalPriceContainer) {
-        originalPriceContainer.classList.add("hidden");
-      }
-
-      finalPriceElement.textContent = `₱${basePrice.toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-
-      if (discountBadge) {
-        discountBadge.classList.add("hidden");
-      }
     }
 
-    this.updateTotalPrice();
+    if (discountBadge && discountPercent) {
+      discountBadge.classList.remove("hidden");
+      discountPercent.textContent = Math.round(discountValue);
+    }
+  } else {
+    if (originalPriceContainer) {
+      originalPriceContainer.classList.add("hidden");
+    }
+    if (discountBadge) {
+      discountBadge.classList.add("hidden");
+    }
   }
+
+  finalPriceElement.textContent = `₱${displayPrice.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+  this.updateTotalPrice();
+}
 
   hideProductHeaderPrice() {
     const priceDisplay = document.getElementById("product-price-display");
@@ -1511,6 +1518,7 @@ function setQuantity(amount) {
   }
 }
 
+// ✅ Update the global updateAllPriceDisplays() function
 function updateAllPriceDisplays() {
   if (!window.productSelector || !window.productSelector.selectedVariantData) {
     hideAllPriceDisplays();
@@ -1518,15 +1526,49 @@ function updateAllPriceDisplays() {
   }
 
   const variant = window.productSelector.selectedVariantData;
-  const quantity =
-    parseInt(document.getElementById("quantityInput")?.value) || 1;
+  const quantity = parseInt(document.getElementById("quantityInput")?.value) || 1;
+  const colorPrice = window.productSelector.selectedColorData?.price || 0;
 
-  updateProductHeaderPrice(variant);
-  updateQuantityPreview(variant, quantity);
-  updateTotalPrice(variant, quantity);
+  // ✅ USE FINAL PRICE DIRECTLY
+  const unitPrice = Math.round((parseFloat(variant.price) + parseFloat(colorPrice)) * 100) / 100;
+  const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
+
+  // Update header
+  const finalPriceElement = document.getElementById("final-price");
+  if (finalPriceElement) {
+    finalPriceElement.textContent = `₱${unitPrice.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+  // Update quantity preview
+  const previewContainer = document.getElementById("quantityPricePreview");
+  const previewQty = document.getElementById("previewQty");
+  const previewTotal = document.getElementById("previewTotal");
+
+  if (previewQty && previewTotal && previewContainer) {
+    previewQty.textContent = quantity;
+    previewTotal.textContent = `₱${totalPrice.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+    previewContainer.classList.remove("hidden");
+  }
+
+  // Update total
+  const totalPriceElement = document.getElementById("totalPrice");
+  if (totalPriceElement) {
+    totalPriceElement.textContent = `₱${totalPrice.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
   updatePurchaseButton();
 }
 
+// ✅ UPDATE PRODUCT HEADER PRICE
 function updateProductHeaderPrice(variant) {
   const priceDisplay = document.getElementById("product-price-display");
   const originalPriceElement = document.getElementById("original-price");
@@ -1543,48 +1585,96 @@ function updateProductHeaderPrice(variant) {
     selectedSizeText.textContent = variant.size;
   }
 
-  let basePrice = variant.priceWithMarkup;
-  if (window.productSelector?.selectedColorData?.price) {
-    basePrice += parseFloat(window.productSelector.selectedColorData.price);
+  // ✅ CORRECT CALCULATION (NO VAT HERE - VAT is for checkout only):
+  // 1. Start with original price
+  let basePrice = parseFloat(variant.price) || 0;
+  
+  // 2. Apply markup
+  const markupPercent = parseFloat(variant.percent) || 0;
+  basePrice = basePrice + (basePrice * markupPercent / 100);
+  
+  // 3. Apply discount
+  const discountValue = parseFloat(variant.discount) || 0;
+  let finalPrice = basePrice;
+  
+  if (discountValue > 0) {
+    finalPrice = basePrice - (basePrice * discountValue / 100);
   }
+  
+  // 4. Add color price (NO VAT - this is just add-on price)
+  if (window.productSelector?.selectedColorData?.price) {
+    finalPrice += parseFloat(window.productSelector.selectedColorData.price);
+  }
+  
+  // ✅ ROUND to 2 decimals ONLY - NO VAT multiplication
+  finalPrice = Math.round(finalPrice * 100) / 100;
 
-  if (variant.discount > 0) {
-    if (originalPriceElement) {
-      document
-        .getElementById("original-price-container")
-        ?.classList.remove("hidden");
-      originalPriceElement.textContent = `₱${basePrice.toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
+  // Display original price if discount exists
+  if (discountValue > 0) {
+    if (originalPriceElement && originalPriceElement.parentElement) {
+      originalPriceElement.parentElement.classList.remove("hidden");
+      
+      // Show price BEFORE discount (after markup, before discount)
+      const priceBeforeDiscount = basePrice + 
+        (window.productSelector?.selectedColorData?.price || 0);
+      
+      originalPriceElement.textContent = `₱${priceBeforeDiscount.toLocaleString(
+        "en-PH",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      )}`;
     }
 
-    const discountedPrice = basePrice - (basePrice * variant.discount) / 100;
-    finalPriceElement.textContent = `₱${discountedPrice.toLocaleString(
-      "en-PH",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    )}`;
-
-    if (discountBadge && discountPercent) {
-      discountBadge.classList.remove("hidden");
-      discountPercent.textContent = Math.round(variant.discount);
-    }
-  } else {
-    document
-      .getElementById("original-price-container")
-      ?.classList.add("hidden");
-    finalPriceElement.textContent = `₱${basePrice.toLocaleString("en-PH", {
+    finalPriceElement.textContent = `₱${finalPrice.toLocaleString("en-PH", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
 
-    if (discountBadge) discountBadge.classList.add("hidden");
+    if (discountBadge && discountPercent) {
+      discountBadge.classList.remove("hidden");
+      discountPercent.textContent = Math.round(discountValue);
+    }
+  } else {
+    if (originalPriceElement && originalPriceElement.parentElement) {
+      originalPriceElement.parentElement.classList.add("hidden");
+    }
+
+    finalPriceElement.textContent = `₱${finalPrice.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+    if (discountBadge) {
+      discountBadge.classList.add("hidden");
+    }
   }
+
+  this.updateTotalPrice?.();
 }
 
+
+// ✅ HELPER: Format display price
+function formatPrice(amount) {
+  return `₱${parseFloat(amount).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+// ✅ HELPER: Hide all price displays
+function hideAllPriceDisplays() {
+  document.getElementById("product-price-display")?.classList.add("hidden");
+  document.getElementById("quantityPricePreview")?.classList.add("hidden");
+  const totalPrice = document.getElementById("totalPrice");
+  if (totalPrice) totalPrice.textContent = "₱0.00";
+  
+  const selectionStatus = document.getElementById("selectionStatus");
+  if (selectionStatus) selectionStatus.textContent = "Complete steps 1-3 to see price";
+}
+
+// ✅ UPDATE QUANTITY PREVIEW (NO VAT - just product price)
 function updateQuantityPreview(variant, quantity) {
   const previewContainer = document.getElementById("quantityPricePreview");
   const previewQty = document.getElementById("previewQty");
@@ -1592,17 +1682,25 @@ function updateQuantityPreview(variant, quantity) {
 
   if (!previewContainer || !previewQty || !previewTotal) return;
 
-  let basePrice = variant.priceWithMarkup;
+  // ✅ SAME CALCULATION - NO VAT
+  let basePrice = parseFloat(variant.price) || 0;
+  const markupPercent = parseFloat(variant.percent) || 0;
+  basePrice = basePrice + (basePrice * markupPercent / 100);
   
-  if (window.productSelector?.selectedColorData?.price) {
-    basePrice += parseFloat(window.productSelector.selectedColorData.price);
+  const discountValue = parseFloat(variant.discount) || 0;
+  let unitPrice = basePrice;
+  
+  if (discountValue > 0) {
+    unitPrice = basePrice - (basePrice * discountValue / 100);
   }
 
-  const unitPrice = variant.discount > 0 
-    ? basePrice - (basePrice * variant.discount) / 100
-    : basePrice;
+  if (window.productSelector?.selectedColorData?.price) {
+    unitPrice += parseFloat(window.productSelector.selectedColorData.price);
+  }
 
-  const totalPrice = unitPrice * quantity;
+  // ✅ ROUND properly
+  unitPrice = Math.round(unitPrice * 100) / 100;
+  const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
 
   previewQty.textContent = quantity;
   previewTotal.textContent = `₱${totalPrice.toLocaleString("en-PH", {
@@ -1613,23 +1711,32 @@ function updateQuantityPreview(variant, quantity) {
   previewContainer.classList.remove("hidden");
 }
 
+// ✅ UPDATE TOTAL PRICE (NO VAT - just product price)
 function updateTotalPrice(variant, quantity) {
   const totalPriceElement = document.getElementById("totalPrice");
   const selectionStatus = document.getElementById("selectionStatus");
 
   if (!totalPriceElement) return;
 
-  let basePrice = variant.priceWithMarkup;
+  // ✅ SAME CALCULATION - NO VAT
+  let basePrice = parseFloat(variant.price) || 0;
+  const markupPercent = parseFloat(variant.percent) || 0;
+  basePrice = basePrice + (basePrice * markupPercent / 100);
   
-  if (window.productSelector?.selectedColorData?.price) {
-    basePrice += parseFloat(window.productSelector.selectedColorData.price);
+  const discountValue = parseFloat(variant.discount) || 0;
+  let unitPrice = basePrice;
+  
+  if (discountValue > 0) {
+    unitPrice = basePrice - (basePrice * discountValue / 100);
   }
 
-  const unitPrice = variant.discount > 0 
-    ? basePrice - (basePrice * variant.discount) / 100
-    : basePrice;
+  if (window.productSelector?.selectedColorData?.price) {
+    unitPrice += parseFloat(window.productSelector.selectedColorData.price);
+  }
 
-  const totalPrice = unitPrice * quantity;
+  // ✅ ROUND properly
+  unitPrice = Math.round(unitPrice * 100) / 100;
+  const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
 
   totalPriceElement.textContent = `₱${totalPrice.toLocaleString("en-PH", {
     minimumFractionDigits: 2,
@@ -1638,10 +1745,10 @@ function updateTotalPrice(variant, quantity) {
 
   if (selectionStatus) {
     const status = [];
-    if (window.productSelector.selectedTypeId) {
+    if (window.productSelector?.selectedTypeId) {
       status.push(`Type: ${document.getElementById("selected_type")?.value}`);
     }
-    if (window.productSelector.selectedColorData) {
+    if (window.productSelector?.selectedColorData) {
       status.push(`Color: ${window.productSelector.selectedColorData.name}`);
     }
     if (variant) {

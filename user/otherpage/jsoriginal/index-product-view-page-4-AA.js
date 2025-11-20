@@ -308,7 +308,7 @@ document.addEventListener("keydown", function (e) {
   }
 });
 
-// ===== AUTO-HIDE SINGLE OPTION STEPS =====
+// ===== AUTO-HIDE SINGLE OPTION STEPS WITH STOCK DISPLAY =====
 
 class ProductSelector {
   constructor() {
@@ -391,6 +391,7 @@ class ProductSelector {
       document.querySelector('[id^="tab-"] .step-section') ||
       document.querySelectorAll(".step-section")[0];
 
+    // ✅ AUTO-SELECT SINGLE TYPE & SHOW STOCK
     if (typeButtons.length === 1) {
       const singleType = typeButtons[0];
       const typeName =
@@ -402,6 +403,7 @@ class ProductSelector {
       if (typeId) {
         this.setTypeSelection(singleType, parseInt(typeId), typeName);
         this.hideSectionByButton(singleType);
+        this.showStockIndicatorForHiddenType(typeName);
       }
     }
 
@@ -410,6 +412,7 @@ class ProductSelector {
     );
     const colorSection = this.findSectionByTitle("Choose Color");
 
+    // ✅ AUTO-SELECT SINGLE COLOR & SHOW STOCK
     if (colorButtons.length === 1) {
       const singleColor = colorButtons[0];
       const colorId = singleColor.dataset.colorId;
@@ -427,6 +430,8 @@ class ProductSelector {
         );
         if (colorSection) {
           colorSection.style.display = "none";
+          // ✅ SHOW STOCK INDICATOR
+          this.showStockIndicatorForHiddenColor(colorName);
         }
       }
     }
@@ -444,6 +449,7 @@ class ProductSelector {
     );
     const variantSection = this.findSectionByTitle("Choose Size");
 
+    // ✅ AUTO-SELECT SINGLE SIZE & SHOW STOCK
     if (visibleVariantButtons.length === 1) {
       const singleVariant = visibleVariantButtons[0];
       const size = singleVariant
@@ -454,9 +460,91 @@ class ProductSelector {
         this.setVariantSelection(singleVariant, size, null);
         if (variantSection) {
           variantSection.style.display = "none";
+          // ✅ SHOW STOCK INDICATOR
+          this.showStockIndicatorForHiddenVariant(size);
         }
       }
     }
+  }
+
+  // ✅ NEW: Show stock indicator when type is hidden
+  showStockIndicatorForHiddenType(typeName) {
+    let container = document.getElementById("hidden-type-indicator");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "hidden-type-indicator";
+      container.className = "";
+      
+      const typeSection = this.findSectionByTitle("Choose Color") || 
+                          document.querySelector(".step-section");
+      if (typeSection) {
+        typeSection.parentNode.insertBefore(container, typeSection);
+      }
+    }
+    
+    container.innerHTML = `
+      <div class="text-sm text-gray-700">
+        <strong>Selected: </strong> <span class="text-orange-600 ">${typeName}</span>
+      </div>
+    `;
+  }
+
+  // ✅ NEW: Show stock indicator when color is hidden
+  showStockIndicatorForHiddenColor(colorName) {
+    let container = document.getElementById("hidden-color-indicator");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "hidden-color-indicator";
+      container.className = "";
+      
+      const sizeSection = this.findSectionByTitle("Choose Size") || 
+                          document.querySelector(".step-section:last-of-type");
+      if (sizeSection) {
+        sizeSection.parentNode.insertBefore(container, sizeSection);
+      }
+    }
+    
+    container.innerHTML = `
+      <div class="text-sm text-gray-700 ">
+        <strong>Color:</strong> <span class="text-orange-600 ">${colorName}</span>
+      </div>
+    `;
+  }
+
+  // ✅ NEW: Show stock indicator when size is hidden
+  showStockIndicatorForHiddenVariant(size) {
+    let container = document.getElementById("hidden-size-indicator");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "hidden-size-indicator";
+      container.className = "p-3 mb-2";
+      
+      const quantitySection = document.getElementById("quantityInput")?.closest("div") || 
+                             document.querySelector(".step-section:last-of-type");
+      if (quantitySection) {
+        quantitySection.parentNode.insertBefore(container, quantitySection);
+      }
+    }
+    
+    // Get stock from selected variant button
+    const selectedVariantBtn = document.querySelector('.variant-btn.selected');
+    const stock = selectedVariantBtn ? parseInt(selectedVariantBtn.dataset.stock || 0) : 0;
+    
+    let stockDisplay = '';
+    if (stock <= 0) {
+      stockDisplay = '<span class="ml-2 inline-block px-2 py-1 bg-red-100 text-red-700 text-xs rounded font-semibold">OUT OF STOCK</span>';
+    } else if (stock <= 5) {
+      stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-semibold">${stock} left</span>`;
+    } else {
+      stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">${stock} in stock</span>`;
+    }
+    
+    container.innerHTML = `
+      <div class="text-sm text-gray-700">
+        <strong>Size Selected:</strong> <span class="text-orange-600 font-semibold">${size}</span>
+        ${stockDisplay}
+      </div>
+    `;
   }
 
   findSectionByTitle(title) {
@@ -1133,77 +1221,106 @@ class ProductSelector {
 
 function checkVariantStock() {
   const variantButtons = document.querySelectorAll('.variant-btn');
+  console.log(`Checking stock for ${variantButtons.length} variants`);
   
-  variantButtons.forEach(button => {
+  variantButtons.forEach((button, index) => {
     const stock = parseInt(button.dataset.stock || 0);
+    const size = button.dataset.size || 'Unknown';
+    const variantId = button.dataset.variantId || 'N/A';
+    
+    console.log(`Variant ${index}: Size=${size}, Stock=${stock}, ID=${variantId}`);
+    
+    // Remove existing badges
+    const existingBadge = button.querySelector('.stock-badge');
+    const existingLowStock = button.querySelector('.low-stock-badge');
+    if (existingBadge) existingBadge.remove();
+    if (existingLowStock) existingLowStock.remove();
     
     if (stock <= 0) {
+      // OUT OF STOCK
       button.disabled = true;
       button.classList.add('opacity-50', 'cursor-not-allowed', 'bg-red-50', 'border-red-300');
-      button.classList.remove('hover:border-orange-500');
+      button.classList.remove('hover:border-orange-500', 'hover:shadow-md');
+      button.style.pointerEvents = 'none';
       
-      if (!button.querySelector('.stock-badge')) {
-        const badge = document.createElement('div');
-        badge.className = 'stock-badge absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-10';
-        badge.textContent = 'OUT';
-        button.style.position = 'relative';
-        button.appendChild(badge);
-      }
-    } else {
+      const badge = document.createElement('div');
+      badge.className = 'stock-badge absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-10';
+      badge.textContent = 'OUT';
+      button.style.position = 'relative';
+      button.appendChild(badge);
+      
+      console.log(`✗ ${size} - OUT OF STOCK`);
+      
+    } else if (stock <= 5 && stock > 0) {
+      // LOW STOCK
       button.disabled = false;
       button.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-red-50', 'border-red-300');
-      button.classList.add('hover:border-orange-500');
+      button.classList.add('hover:border-orange-500', 'hover:shadow-md');
+      button.style.pointerEvents = 'auto';
       
-      const badge = button.querySelector('.stock-badge');
-      if (badge) {
-        badge.remove();
-      }
+      const lowStockBadge = document.createElement('div');
+      lowStockBadge.className = 'low-stock-badge absolute top-1 right-1 bg-yellow-500 text-white text-[8px] px-1 py-0.5 rounded-full font-bold z-10 animate-pulse';
+      lowStockBadge.textContent = `${stock} left`;
+      button.style.position = 'relative';
+      button.appendChild(lowStockBadge);
       
-      if (stock <= 5 && stock > 0 && !button.querySelector('.low-stock-badge')) {
-        const lowStockBadge = document.createElement('div');
-        lowStockBadge.className = 'low-stock-badge absolute top-1 right-1 bg-yellow-500 text-white text-[8px] px-1 py-0.5 rounded-full font-bold z-10';
-        lowStockBadge.textContent = `${stock} left`;
-        button.style.position = 'relative';
-        button.appendChild(lowStockBadge);
-      }
+      console.log(`⚠ ${size} - LOW STOCK: ${stock} remaining`);
+      
+    } else {
+      // IN STOCK
+      button.disabled = false;
+      button.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-red-50', 'border-red-300');
+      button.classList.add('hover:border-orange-500', 'hover:shadow-md');
+      button.style.pointerEvents = 'auto';
+      
+      console.log(`✓ ${size} - IN STOCK: ${stock} available`);
     }
   });
 }
 
+
 function checkAvailableVariants() {
   const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
   const variantContainer = document.getElementById('variant-container');
+  
+  console.log(`Available variants: ${variantButtons.length}`);
   
   if (variantButtons.length === 0 && variantContainer) {
     variantContainer.innerHTML = `
       <div class="text-center p-6 bg-red-50 rounded-lg border-2 border-red-200">
         <i class="fas fa-exclamation-circle text-red-500 text-3xl mb-2 block"></i>
         <p class="text-red-700 font-semibold">All variants out of stock</p>
-        <p class="text-red-600 text-sm mt-1">Please check back later</p>
+        <p class="text-red-600 text-sm mt-1">Please check back later or contact us</p>
       </div>
     `;
   }
 }
+
 
 function validateSelectedVariant() {
   const selectedVariantId = document.getElementById('variant_id')?.value;
   const addToCartBtn = document.getElementById('addToCartBtn');
   
   if (!selectedVariantId) {
+    console.log('No variant selected');
     return false;
   }
   
   const selectedButton = document.querySelector(`[data-variant-id="${selectedVariantId}"]`);
+  console.log('Selected variant button:', selectedButton);
   
   if (selectedButton && selectedButton.disabled) {
+    console.log('Selected variant is disabled/out of stock');
+    
     if (addToCartBtn) {
       addToCartBtn.disabled = true;
       addToCartBtn.classList.add('bg-red-400', 'cursor-not-allowed');
       addToCartBtn.classList.remove('bg-gray-400', 'bg-black', 'hover:bg-orange-600');
+      
       const btnText = document.getElementById('btnText');
       if (btnText) {
         btnText.innerHTML = `
-          <i class="fas fa-times-circle text-sm lg:text-base"></i>
+          <i class="fas fa-times-circle mr-2"></i>
           Out of Stock
         `;
       }
@@ -1211,6 +1328,7 @@ function validateSelectedVariant() {
     return false;
   }
   
+  console.log('Selected variant is available');
   return true;
 }
 
@@ -1224,11 +1342,13 @@ function injectStockStyles() {
         cursor: not-allowed !important;
         background-color: #fee2e2 !important;
         border-color: #fca5a5 !important;
+        pointer-events: none !important;
       }
       
       .variant-btn[disabled]:hover {
         transform: none !important;
         box-shadow: none !important;
+        border-color: #fca5a5 !important;
       }
       
       .variant-btn[disabled] .text-gray-700 {
@@ -1236,8 +1356,18 @@ function injectStockStyles() {
         text-decoration: line-through;
       }
       
+      .variant-btn:not([disabled]) {
+        cursor: pointer;
+        pointer-events: auto;
+      }
+      
       .low-stock-badge {
         animation: pulse 2s infinite;
+      }
+      
+      .stock-badge {
+        z-index: 50;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       }
       
       @keyframes pulse {
@@ -1246,11 +1376,14 @@ function injectStockStyles() {
       }
     `;
     document.head.appendChild(styleElement);
+    console.log('Stock styles injected');
   }
 }
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
+  console.log('=== INITIALIZING STOCK CHECK ===');
+  
   if (typeof ProductSelector !== "undefined") {
     window.productSelector = new ProductSelector();
 
@@ -1259,11 +1392,15 @@ document.addEventListener("DOMContentLoaded", function () {
       mainImage.dataset.originalSrc = mainImage.src;
     }
 
-    // ✅ INJECT STOCK STYLES AND CHECK
+    // Inject styles first
     injectStockStyles();
+    
+    // Check stock
     checkVariantStock();
     checkAvailableVariants();
     validateSelectedVariant();
+    
+    console.log('=== STOCK CHECK COMPLETE ===');
 
   } else {
     console.error("ProductSelector class not found");
@@ -1284,6 +1421,15 @@ document.addEventListener("DOMContentLoaded", function () {
     quantityInput.addEventListener("change", validateQuantity);
   }
 });
+
+// Reinitialize stock check after selections
+function reinitializeStockCheck() {
+  setTimeout(() => {
+    checkVariantStock();
+    checkAvailableVariants();
+    validateSelectedVariant();
+  }, 100);
+}
 
 // ===== GLOBAL FUNCTIONS =====
 function showVariants(typeId, typeName) {
@@ -1795,3 +1941,5 @@ document.addEventListener("keydown", function (e) {
     }
   }
 });
+
+

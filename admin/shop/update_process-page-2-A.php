@@ -1,471 +1,284 @@
 <?php
-//update_process.php
+//update_process-page-2-A.php
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
-include '../role/roleaccount.php';
-require_role(['productspecialist', 'superadmin']);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
-    header("Location: ../../loginpage/index.php");
-    exit();
+  header("Location: ../../loginpage/index.php");
+  exit();
 }
 
-// Get product ID
 $product_id = $_POST['product_id'] ?? null;
 
 if (!$product_id) {
-    echo "Missing product ID.";
-    exit;
-}
-
-// Function to save image as WebP (consistent with insertion)
-function saveImageAsWebP($tmp_name, $target_path)
-{
-    $imageType = mime_content_type($tmp_name);
-    $sourceImage = null;
-
-    switch ($imageType) {
-        case 'image/jpeg':
-        case 'image/jpg':
-            $sourceImage = imagecreatefromjpeg($tmp_name);
-            break;
-        case 'image/png':
-            $sourceImage = imagecreatefrompng($tmp_name);
-            imagepalettetotruecolor($sourceImage);
-            imagealphablending($sourceImage, true);
-            imagesavealpha($sourceImage, true);
-            break;
-        case 'image/gif':
-            $sourceImage = imagecreatefromgif($tmp_name);
-            imagepalettetotruecolor($sourceImage);
-            imagealphablending($sourceImage, true);
-            imagesavealpha($sourceImage, true);
-            break;
-        case 'image/webp':
-            // Already WebP, move directly
-            return move_uploaded_file($tmp_name, $target_path);
-        default:
-            return false; // Unsupported format
-    }
-
-    if ($sourceImage && imagewebp($sourceImage, $target_path, 80)) {
-        imagedestroy($sourceImage);
-        return true;
-    }
-
-    return false;
+  die("Invalid product ID");
 }
 
 try {
-    $conn->begin_transaction();
+  $conn->begin_transaction();
 
-    // Get current product data
-    $current_product = $conn->query("SELECT * FROM products WHERE id = $product_id")->fetch_assoc();
+  // 1. UPDATE BASIC PRODUCT INFO
+  $product_name = $conn->real_escape_string($_POST['product_name']);
+  $quantity = (int)$_POST['quantity'];
+  $description = $conn->real_escape_string($_POST['description']);
+  $category = $conn->real_escape_string($_POST['category']);
 
-    if (!$current_product) {
-        throw new Exception("Product not found");
+  $updateProductSQL = "UPDATE products 
+                      SET product_name = '$product_name',
+                          quantity = $quantity,
+                          description = '$description',
+                          codename = '$category'
+                      WHERE id = $product_id";
+  
+  if (!$conn->query($updateProductSQL)) {
+    throw new Exception("Failed to update product: " . $conn->error);
+  }
+
+  // 2. HANDLE PRODUCT COLORS (Simple colors attached to product)
+  if (isset($_POST['color_id'])) {
+    $colorIds = $_POST['color_id'] ?? [];
+    $colorNames = $_POST['color_name'] ?? [];
+    $colorCodes = $_POST['color_code'] ?? [];
+    $colorPrices = $_POST['color_price'] ?? [];
+
+    foreach ($colorIds as $index => $colorId) {
+      $colorName = $conn->real_escape_string($colorNames[$index]);
+      $colorCode = $conn->real_escape_string($colorCodes[$index]);
+      $colorPrice = (float)$colorPrices[$index];
+
+      // Delete color
+      if (isset($_POST['delete_color']) && in_array($colorId, $_POST['delete_color'])) {
+        // Delete from junction table first
+        $conn->query("DELETE FROM product_variant_colors WHERE color_id = $colorId");
+        // Then delete color
+        $conn->query("DELETE FROM product_colors WHERE id = $colorId");
+        continue;
+      }
+
+      if ($colorId === 'new') {
+        // Insert new color
+        $colorImagePath = '';
+        if (!empty($_FILES['color_image']['name'][$index])) {
+          $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$index]);
+          $colorImagePath = '../../uploads/color_images/' . $colorImageName;
+          
+          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$index], $colorImagePath)) {
+            $colorImagePath = 'uploads/color_images/' . $colorImageName;
+          } else {
+            $colorImagePath = '';
+          }
+        }
+        
+        $insertColorSQL = "INSERT INTO product_colors (product_id, color_name, color_code, price, image) 
+                         VALUES ($product_id, '$colorName', '$colorCode', $colorPrice, '$colorImagePath')";
+        
+        if (!$conn->query($insertColorSQL)) {
+          throw new Exception("Failed to insert color: " . $conn->error);
+        }
+      } else {
+        // Update existing color
+        if (!empty($_FILES['color_image']['name'][$index])) {
+          $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$index]);
+          $colorImagePath = '../../uploads/color_images/' . $colorImageName;
+          
+          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$index], $colorImagePath)) {
+            $colorImagePath = 'uploads/color_images/' . $colorImageName;
+            $conn->query("UPDATE product_colors 
+                         SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice, image = '$colorImagePath'
+                         WHERE id = $colorId");
+          }
+        } else {
+          $conn->query("UPDATE product_colors 
+                       SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice
+                       WHERE id = $colorId");
+        }
+      }
     }
+  }
 
-    // Handle Sub-Images Update and Deletion
-    $final_sub_images = [];
+  // 3. HANDLE TYPES AND VARIANTS
+  if (isset($_POST['type_id'])) {
+    $typeIds = $_POST['type_id'] ?? [];
 
-    // Process existing sub-images  
-    if (isset($_POST['keep_sub_image'])) {
-        $keep_sub_images = $_POST['keep_sub_image'];
+    foreach ($typeIds as $typeIndex => $typeId) {
+      $typeName = $conn->real_escape_string($_POST['type_name'][$typeIndex] ?? '');
 
-        // Get current sub-images from database
-        $current_sub_images = [];
-        if (!empty($current_product['sub_images'])) {
-            $decoded_sub_images = json_decode($current_product['sub_images'], true);
-            if (is_array($decoded_sub_images)) {
-                $current_sub_images = $decoded_sub_images;
-            }
+      // Delete type
+      if (isset($_POST['delete_type']) && in_array($typeId, $_POST['delete_type'])) {
+        // Delete variants and their color relationships first
+        $variantCheck = $conn->query("SELECT id FROM product_variants WHERE type_id = $typeId");
+        if ($variantCheck && $variantCheck->num_rows > 0) {
+          while ($vrow = $variantCheck->fetch_assoc()) {
+            $conn->query("DELETE FROM product_variant_colors WHERE variant_id = " . $vrow['id']);
+          }
+        }
+        $conn->query("DELETE FROM product_variants WHERE type_id = $typeId");
+        $conn->query("DELETE FROM product_types WHERE id = $typeId");
+        continue;
+      }
+
+      // Handle type image
+      $typeImagePath = null;
+      if ($typeId === 'new') {
+        if (!empty($_FILES['type_image']['name'][$typeIndex])) {
+          $typeImageName = time() . '_' . basename($_FILES['type_image']['name'][$typeIndex]);
+          $uploadPath = '../../uploads/type_images/' . $typeImageName;
+          if (move_uploaded_file($_FILES['type_image']['tmp_name'][$typeIndex], $uploadPath)) {
+            $typeImagePath = 'uploads/type_images/' . $typeImageName;
+          }
         }
 
-        foreach ($current_sub_images as $index => $sub_image_path) {
-            if (isset($keep_sub_images[$index]) && $keep_sub_images[$index] == '1') {
-                // Keep original value (already may ../sub_images/)
-                $final_sub_images[] = $sub_image_path;
-            } else {
-                // Delete file
-                $file_to_delete = "../../sub_images/" . basename($sub_image_path);
-                if (file_exists($file_to_delete)) {
-                    unlink($file_to_delete);
-                    echo "Deleted sub-image: " . basename($file_to_delete) . "<br>";
+        $insertTypeSQL = "INSERT INTO product_types (product_id, type_name, type_image) 
+                         VALUES ($product_id, '$typeName', " . ($typeImagePath ? "'$typeImagePath'" : "NULL") . ")";
+        if (!$conn->query($insertTypeSQL)) {
+          throw new Exception("Failed to insert type: " . $conn->error);
+        }
+        $typeId = $conn->insert_id;
+      } else {
+        if (!empty($_FILES['type_image']['name'][$typeIndex])) {
+          $typeImageName = time() . '_' . basename($_FILES['type_image']['name'][$typeIndex]);
+          $uploadPath = '../../uploads/type_images/' . $typeImageName;
+          if (move_uploaded_file($_FILES['type_image']['tmp_name'][$typeIndex], $uploadPath)) {
+            $typeImagePath = 'uploads/type_images/' . $typeImageName;
+            $conn->query("UPDATE product_types SET type_name = '$typeName', type_image = '$typeImagePath' WHERE id = $typeId");
+          }
+        } else {
+          $conn->query("UPDATE product_types SET type_name = '$typeName' WHERE id = $typeId");
+        }
+      }
+
+      // Handle variants for this type
+      if (isset($_POST['variant_id'][$typeIndex])) {
+        $variantIds = $_POST['variant_id'][$typeIndex] ?? [];
+        $variantSizes = $_POST['variant_size'][$typeIndex] ?? [];
+        $variantNamevariants = $_POST['variant_namevariant'][$typeIndex] ?? [];
+        $variantOriginalPrices = $_POST['variant_original_price'][$typeIndex] ?? [];
+        $variantPercents = $_POST['variant_percent'][$typeIndex] ?? [];
+        $variantDiscounts = $_POST['variant_discount'][$typeIndex] ?? [];
+        $variantPrices = $_POST['variant_price'][$typeIndex] ?? [];
+        $variantWidths = $_POST['variant_width'][$typeIndex] ?? [];
+        $variantHeights = $_POST['variant_height'][$typeIndex] ?? [];
+        $variantLengths = $_POST['variant_length'][$typeIndex] ?? [];
+        $variantDimensionUnits = $_POST['variant_dimension_unit'][$typeIndex] ?? [];
+        $variantWeights = $_POST['variant_weight'][$typeIndex] ?? [];
+        $variantWeightUnits = $_POST['variant_weight_unit'][$typeIndex] ?? [];
+
+        foreach ($variantIds as $variantIndex => $variantId) {
+          $variantSize = $conn->real_escape_string($variantSizes[$variantIndex] ?? '');
+          $variantNamevariant = $conn->real_escape_string($variantNamevariants[$variantIndex] ?? '');
+          $variantOriginalPrice = (float)($variantOriginalPrices[$variantIndex] ?? 0);
+          $variantPercent = (float)($variantPercents[$variantIndex] ?? 0);
+          $variantDiscount = (float)($variantDiscounts[$variantIndex] ?? 0);
+          $variantPrice = (float)($variantPrices[$variantIndex] ?? 0);
+          $variantWidth = !empty($variantWidths[$variantIndex]) ? (float)$variantWidths[$variantIndex] : null;
+          $variantHeight = !empty($variantHeights[$variantIndex]) ? (float)$variantHeights[$variantIndex] : null;
+          $variantLength = !empty($variantLengths[$variantIndex]) ? (float)$variantLengths[$variantIndex] : null;
+          $variantDimensionUnit = $conn->real_escape_string($variantDimensionUnits[$variantIndex] ?? 'cm');
+          $variantWeight = !empty($variantWeights[$variantIndex]) ? (float)$variantWeights[$variantIndex] : null;
+          $variantWeightUnit = $conn->real_escape_string($variantWeightUnits[$variantIndex] ?? 'kg');
+
+          // Delete variant
+          if (isset($_POST['delete_variant'][$typeIndex]) && in_array($variantId, $_POST['delete_variant'][$typeIndex])) {
+            // Delete from junction table
+            $conn->query("DELETE FROM product_variant_colors WHERE variant_id = $variantId");
+            // Delete variant
+            $conn->query("DELETE FROM product_variants WHERE id = $variantId");
+            continue;
+          }
+
+          // Insert or update variant
+          if ($variantId === 'new') {
+            $insertVariantSQL = "INSERT INTO product_variants 
+                                (type_id, size, namevariant, original_price, percent, discount, price, width, height, length, dimension_unit, weight, weight_unit)
+                                VALUES ($typeId, '$variantSize', '$variantNamevariant', $variantOriginalPrice, $variantPercent, $variantDiscount, $variantPrice, 
+                                        " . ($variantWidth !== null ? $variantWidth : "NULL") . ", " .
+                                        ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
+                                        ($variantLength !== null ? $variantLength : "NULL") . ", " .
+                                        "'$variantDimensionUnit', " .
+                                        ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
+                                        "'$variantWeightUnit')";
+            if (!$conn->query($insertVariantSQL)) {
+              throw new Exception("Failed to insert variant: " . $conn->error);
+            }
+            $variantId = $conn->insert_id;
+          } else {
+            $updateVariantSQL = "UPDATE product_variants 
+                                SET size = '$variantSize', namevariant = '$variantNamevariant', original_price = $variantOriginalPrice,
+                                    percent = $variantPercent, discount = $variantDiscount, price = $variantPrice,
+                                    width = " . ($variantWidth !== null ? $variantWidth : "NULL") . ", " .
+                                    "height = " . ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
+                                    "length = " . ($variantLength !== null ? $variantLength : "NULL") . ", " .
+                                    "dimension_unit = '$variantDimensionUnit',
+                                    weight = " . ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
+                                    "weight_unit = '$variantWeightUnit'
+                                WHERE id = $variantId";
+            if (!$conn->query($updateVariantSQL)) {
+              throw new Exception("Failed to update variant: " . $conn->error);
+            }
+          }
+
+          // 4. HANDLE VARIANT-COLOR JUNCTION (variant can have multiple colors)
+          
+          // Delete variant-color relationships marked for deletion
+          if (isset($_POST['delete_variant_color'][$typeIndex][$variantId])) {
+            foreach ($_POST['delete_variant_color'][$typeIndex][$variantId] as $vcId) {
+              $conn->query("DELETE FROM product_variant_colors WHERE id = $vcId");
+            }
+          }
+
+          // Update existing variant-color stock quantities
+          if (isset($_POST['variant_color_id'][$typeIndex][$variantId])) {
+            $variantColorIds = $_POST['variant_color_id'][$typeIndex][$variantId] ?? [];
+            $variantColorStocks = $_POST['variant_color_stock'][$typeIndex][$variantId] ?? [];
+            
+            foreach ($variantColorIds as $vcIndex => $vcId) {
+              $stock = (int)($variantColorStocks[$vcIndex] ?? 0);
+              $conn->query("UPDATE product_variant_colors SET stock_quantity = $stock WHERE id = $vcId");
+            }
+          }
+
+          // Add new variant-color combinations
+          if (isset($_POST['new_variant_color'][$typeIndex][$variantId])) {
+            $newColorIds = $_POST['new_variant_color'][$typeIndex][$variantId] ?? [];
+            $newColorStocks = $_POST['new_variant_color_stock'][$typeIndex][$variantId] ?? [];
+            
+            foreach ($newColorIds as $colorIndex => $newColorId) {
+              if (!empty($newColorId)) {
+                $stock = (int)($newColorStocks[$colorIndex] ?? 0);
+                
+                // Check if already exists
+                $checkSQL = "SELECT id FROM product_variant_colors 
+                            WHERE variant_id = $variantId AND color_id = $newColorId";
+                $checkResult = $conn->query($checkSQL);
+                
+                if (!$checkResult || $checkResult->num_rows === 0) {
+                  $insertJunctionSQL = "INSERT INTO product_variant_colors (variant_id, color_id, stock_quantity) 
+                                       VALUES ($variantId, $newColorId, $stock)";
+                  $conn->query($insertJunctionSQL);
                 }
+              }
             }
+          }
         }
+      }
     }
+  }
 
-    // Handle new sub-images upload
-    if (isset($_FILES['new_sub_images']) && !empty($_FILES['new_sub_images']['name'][0])) {
-        $upload_dir = "../../sub_images/";
+  $conn->commit();
 
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
+  // Success - redirect back
+  $_SESSION['success_message'] = "Product updated successfully!";
+  header("Location: update_product-page-2-A.php?id=$product_id&success=1");
+  exit();
 
-        foreach ($_FILES['new_sub_images']['tmp_name'] as $key => $tmp_name) {
-            if (!empty($tmp_name) && $_FILES['new_sub_images']['error'][$key] == 0) {
-                $file_name = $_FILES['new_sub_images']['name'][$key];
-                $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-
-                $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                if (!in_array(strtolower($file_extension), $allowed_extensions)) {
-                    continue;
-                }
-
-                $new_filename = 'img_' . uniqid('', true) . '.webp';
-                $target_path = $upload_dir . $new_filename;
-
-                if (saveImageAsWebP($tmp_name, $target_path)) {
-                    // ✅ Save with ../sub_images/ prefix (para tugma lahat)
-                    $final_sub_images[] = "../sub_images/" . $new_filename;
-                    echo "Uploaded new sub-image: ../sub_images/" . $new_filename . "<br>";
-                }
-            }
-        }
-    }
-
-    // Handle Main Image Upload
-    $main_image_path = $current_product['main_image']; // Keep current if no new upload
-
-    if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] == 0) {
-        $upload_dir = "../../uploads/";
-
-        // Create directory if it doesn't exist
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
-
-        $file_name = $_FILES['main_image']['name'];
-        $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-
-        // Validate image
-        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        if (in_array(strtolower($file_extension), $allowed_extensions)) {
-            $new_filename = uniqid('img_', true) . '.webp';
-            $target_path = $upload_dir . $new_filename;
-
-            // Convert and save as WebP
-            if (saveImageAsWebP($_FILES['main_image']['tmp_name'], $target_path)) {
-                // Delete old main image if it exists
-                if (!empty($current_product['main_image']) && file_exists("../../" . $current_product['main_image'])) {
-                    unlink("../../" . $current_product['main_image']);
-                }
-
-                $main_image_path = "uploads/" . $new_filename;
-                echo "Uploaded new main image: " . $new_filename . "<br>";
-            }
-        }
-    }
-
-    // Update Product Basic Info
-    $product_name = $conn->real_escape_string($_POST['product_name']);
-    $codename = $conn->real_escape_string($_POST['category']); // Form field is 'category' but DB column is 'codename'
-    $quantity = intval($_POST['quantity']);
-    $description = $conn->real_escape_string($_POST['description'] ?? '');
-    $sub_images_json = $conn->real_escape_string(json_encode($final_sub_images));
-
-    $update_product_sql = "UPDATE products SET 
-        product_name = '$product_name',
-        codename = '$codename',
-        quantity = $quantity,
-        description = '$description',
-        main_image = '$main_image_path',
-        sub_images = '$sub_images_json'
-        WHERE id = $product_id";
-
-    if (!$conn->query($update_product_sql)) {
-        throw new Exception("Failed to update product: " . $conn->error);
-    }
-
-    // Handle Product Colors
-    if (isset($_POST['color_id'])) {
-        // First, handle deletions
-        if (isset($_POST['delete_color'])) {
-            foreach ($_POST['delete_color'] as $color_id) {
-                // Get color image path before deletion
-                $color_result = $conn->query("SELECT image FROM product_colors WHERE id = $color_id");
-                if ($color_result && $color_row = $color_result->fetch_assoc()) {
-                    if (!empty($color_row['image']) && file_exists("../../" . $color_row['image'])) {
-                        unlink("../../" . $color_row['image']);
-                    }
-                }
-
-                $conn->query("DELETE FROM product_colors WHERE id = $color_id");
-                echo "Deleted color ID: $color_id<br>";
-            }
-        }
-
-        // Process color updates and additions
-        foreach ($_POST['color_id'] as $index => $color_id) {
-            // Skip if marked for deletion
-            if (isset($_POST['delete_color']) && in_array($color_id, $_POST['delete_color'])) {
-                continue;
-            }
-
-            $color_name = $conn->real_escape_string($_POST['color_name'][$index]);
-            $color_code = $conn->real_escape_string($_POST['color_code'][$index] ?? '');
-            $color_price = floatval($_POST['color_price'][$index]);
-
-            // Handle color image upload
-            $color_image_path = '';
-
-            if ($color_id !== 'new') {
-                // Get existing image path
-                $existing_color = $conn->query("SELECT image FROM product_colors WHERE id = $color_id")->fetch_assoc();
-                $color_image_path = $existing_color['image'] ?? '';
-            }
-
-            if (isset($_FILES['color_image']['tmp_name'][$index]) && $_FILES['color_image']['error'][$index] == 0) {
-                $upload_dir = "../../uploads/";
-
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0777, true);
-                }
-
-                $file_name = $_FILES['color_image']['name'][$index];
-                $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-
-                $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                if (in_array(strtolower($file_extension), $allowed_extensions)) {
-                    $new_filename = uniqid('img_', true) . '_color.webp';
-                    $target_path = $upload_dir . $new_filename;
-
-                    if (saveImageAsWebP($_FILES['color_image']['tmp_name'][$index], $target_path)) {
-                        // Delete old color image if updating
-                        if (!empty($color_image_path) && file_exists("../../" . $color_image_path)) {
-                            unlink("../../" . $color_image_path);
-                        }
-
-                        $color_image_path = "uploads/" . $new_filename;
-                    }
-                }
-            }
-
-            if ($color_id === 'new') {
-                // Insert new color
-                $insert_color_sql = "INSERT INTO product_colors (product_id, color_name, color_code, image, price) 
-                    VALUES ($product_id, '$color_name', '$color_code', '$color_image_path', $color_price)";
-
-                if (!$conn->query($insert_color_sql)) {
-                    throw new Exception("Failed to insert color: " . $conn->error);
-                }
-                echo "Added new color: $color_name<br>";
-            } else {
-                // Update existing color
-                $update_color_sql = "UPDATE product_colors SET 
-                    color_name = '$color_name',
-                    color_code = '$color_code',
-                    image = '$color_image_path',
-                    price = $color_price
-                    WHERE id = $color_id";
-
-                if (!$conn->query($update_color_sql)) {
-                    throw new Exception("Failed to update color: " . $conn->error);
-                }
-                echo "Updated color: $color_name<br>";
-            }
-        }
-    }
-
-    // Handle Product Types and Variants
-    if (isset($_POST['type_id'])) {
-        // First, handle type deletions
-        if (isset($_POST['delete_type'])) {
-            foreach ($_POST['delete_type'] as $type_id) {
-                // Delete variants first
-                $conn->query("DELETE FROM product_variants WHERE type_id = $type_id");
-
-                // Get type image path before deletion
-                $type_result = $conn->query("SELECT type_image FROM product_types WHERE id = $type_id");
-                if ($type_result && $type_row = $type_result->fetch_assoc()) {
-                    if (!empty($type_row['type_image']) && file_exists("../../" . $type_row['type_image'])) {
-                        unlink("../../" . $type_row['type_image']);
-                    }
-                }
-
-                $conn->query("DELETE FROM product_types WHERE id = $type_id");
-                echo "Deleted type ID: $type_id<br>";
-            }
-        }
-
-        // Process type updates and additions
-        foreach ($_POST['type_id'] as $index => $type_id) {
-            // Skip if marked for deletion
-            if (isset($_POST['delete_type']) && in_array($type_id, $_POST['delete_type'])) {
-                continue;
-            }
-
-            $type_name = $conn->real_escape_string($_POST['type_name'][$index]);
-
-            // Handle type image upload
-            $type_image_path = '';
-
-            if ($type_id !== 'new') {
-                // Get existing image path
-                $existing_type = $conn->query("SELECT type_image FROM product_types WHERE id = $type_id")->fetch_assoc();
-                $type_image_path = $existing_type['type_image'] ?? '';
-            }
-
-            if (isset($_FILES['type_image']['tmp_name'][$index]) && $_FILES['type_image']['error'][$index] == 0) {
-                $upload_dir = "../../uploads/";
-
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0777, true);
-                }
-
-                $file_name = $_FILES['type_image']['name'][$index];
-                $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
-
-                $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                if (in_array(strtolower($file_extension), $allowed_extensions)) {
-                    $new_filename = uniqid('img_', true) . '_type.webp';
-                    $target_path = $upload_dir . $new_filename;
-
-                    if (saveImageAsWebP($_FILES['type_image']['tmp_name'][$index], $target_path)) {
-                        // Delete old type image if updating
-                        if (!empty($type_image_path) && file_exists("../../" . $type_image_path)) {
-                            unlink("../../" . $type_image_path);
-                        }
-
-                        $type_image_path = "uploads/" . $new_filename;
-                    }
-                }
-            }
-
-            $current_type_id = $type_id;
-
-            if ($type_id === 'new') {
-                // Insert new type
-                $insert_type_sql = "INSERT INTO product_types (product_id, type_name, type_image) 
-                    VALUES ($product_id, '$type_name', '$type_image_path')";
-
-                if (!$conn->query($insert_type_sql)) {
-                    throw new Exception("Failed to insert type: " . $conn->error);
-                }
-
-                $current_type_id = $conn->insert_id;
-                echo "Added new type: $type_name (ID: $current_type_id)<br>";
-            } else {
-                // Update existing type
-                $update_type_sql = "UPDATE product_types SET 
-                    type_name = '$type_name',
-                    type_image = '$type_image_path'
-                    WHERE id = $type_id";
-
-                if (!$conn->query($update_type_sql)) {
-                    throw new Exception("Failed to update type: " . $conn->error);
-                }
-                echo "Updated type: $type_name<br>";
-            }
-
-            // Handle variants for this type
-            if (isset($_POST['variant_id'][$index])) {
-                // Handle variant deletions first
-                if (isset($_POST['delete_variant'][$index])) {
-                    foreach ($_POST['delete_variant'][$index] as $variant_id) {
-                        $conn->query("DELETE FROM product_variants WHERE id = $variant_id");
-                        echo "Deleted variant ID: $variant_id<br>";
-                    }
-                }
-
-                // Process variant updates and additions
-                foreach ($_POST['variant_id'][$index] as $v_index => $variant_id) {
-                    // Skip if marked for deletion
-                    if (isset($_POST['delete_variant'][$index]) && in_array($variant_id, $_POST['delete_variant'][$index])) {
-                        continue;
-                    }
-
-                    $size = $conn->real_escape_string($_POST['variant_size'][$index][$v_index] ?? '');
-                    $namevariant = $conn->real_escape_string($_POST['variant_namevariant'][$index][$v_index] ?? '');
-
-                    // NEW: Get the already-calculated final price from the hidden field
-                    $final_price = floatval($_POST['variant_price'][$index][$v_index] ?? 0);
-
-                    // Get original price, percent, and discount for storage
-                    $original_price = floatval($_POST['variant_original_price'][$index][$v_index] ?? 0);
-                    $percent = floatval($_POST['variant_percent'][$index][$v_index] ?? 0);
-                    $discount = floatval($_POST['variant_discount'][$index][$v_index] ?? 0);
-
-                    // NEW: Extract dimension and weight data
-                    $width = !empty($_POST['variant_width'][$index][$v_index]) ? floatval($_POST['variant_width'][$index][$v_index]) : null;
-                    $height = !empty($_POST['variant_height'][$index][$v_index]) ? floatval($_POST['variant_height'][$index][$v_index]) : null;
-                    $length = !empty($_POST['variant_length'][$index][$v_index]) ? floatval($_POST['variant_length'][$index][$v_index]) : null;
-                    $dimension_unit = $conn->real_escape_string($_POST['variant_dimension_unit'][$index][$v_index] ?? 'cm');
-                    $weight = !empty($_POST['variant_weight'][$index][$v_index]) ? floatval($_POST['variant_weight'][$index][$v_index]) : null;
-                    $weight_unit = $conn->real_escape_string($_POST['variant_weight_unit'][$index][$v_index] ?? 'kg');
-
-                    if ($variant_id === 'new') {
-                        // Insert new variant
-                        $insert_variant_sql = "INSERT INTO product_variants (product_id, type_id, size, original_price, price, percent, discount, namevariant, width, height, length, dimension_unit, weight, weight_unit) 
-            VALUES ($product_id, $current_type_id, '$size', $original_price, $final_price, $percent, $discount, '$namevariant', " .
-                            ($width !== null ? $width : "NULL") . ", " .
-                            ($height !== null ? $height : "NULL") . ", " .
-                            ($length !== null ? $length : "NULL") . ", " .
-                            "'$dimension_unit', " .
-                            ($weight !== null ? $weight : "NULL") . ", " .
-                            "'$weight_unit')";
-
-                        if (!$conn->query($insert_variant_sql)) {
-                            throw new Exception("Failed to insert variant: " . $conn->error);
-                        }
-                        echo "Added new variant: $size for type $type_name<br>";
-                    } else {
-                        // Update existing variant
-                        $update_variant_sql = "UPDATE product_variants SET 
-            size = '$size',
-            original_price = $original_price,
-            price = $final_price,
-            percent = $percent,
-            discount = $discount,
-            namevariant = '$namevariant',
-            width = " . ($width !== null ? $width : "NULL") . ",
-            height = " . ($height !== null ? $height : "NULL") . ",
-            length = " . ($length !== null ? $length : "NULL") . ",
-            dimension_unit = '$dimension_unit',
-            weight = " . ($weight !== null ? $weight : "NULL") . ",
-            weight_unit = '$weight_unit'
-            WHERE id = $variant_id";
-
-                        if (!$conn->query($update_variant_sql)) {
-                            throw new Exception("Failed to update variant: " . $conn->error);
-                        }
-                        echo "Updated variant: $size<br>";
-                    }
-                }
-            }
-        }
-    }
-
-    $conn->commit();
-
-    // Success message with sub images count
-    $sub_images_count = count($final_sub_images);
-    $success_message = "Product updated successfully!";
-    if ($sub_images_count > 0) {
-        $success_message .= " ($sub_images_count sub images included)";
-    }
-
-    echo "<div class='bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4'>";
-    echo $success_message;
-    echo "</div>";
-
-    echo "<script>";
-    echo "setTimeout(function(){ window.location.href = 'main-adminupdateshop-page-2.php?id=$product_id'; }, 2000);";
-    echo "</script>";
 } catch (Exception $e) {
-    $conn->rollback();
-    echo "<div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>";
-    echo "Error updating product: " . $e->getMessage();
-    echo "</div>";
-
-    echo "<script>";
-    echo "setTimeout(function(){ window.location.href = 'main-adminupdateshop-page-2.php?id=$product_id'; }, 3000);";
-    echo "</script>";
+  $conn->rollback();
+  error_log("Update Product Error: " . $e->getMessage());
+  
+  $_SESSION['error_message'] = "Error: " . $e->getMessage();
+  header("Location: update_product-page-2-A.php?id=$product_id&error=1");
+  exit();
 }
-
-$conn->close();

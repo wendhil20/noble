@@ -66,12 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $discount_percent = 0;
         $discount_fixed = 0;
         $variant_id_db = null;
-        $color_id = null;
+        $color_id = null;  // ✅ Initialize as NULL
         $codename = $product['codename'];
         $unit = $product['descrip6'] ?? '';
         $specification = $product['descrip7'] ?? '';
 
-        // Get color info
+        // ✅ GET COLOR INFO AND STORE color_id
         if ($selected_color_id > 0) {
             $color_stmt = $conn->prepare("SELECT id, color_name, price FROM product_colors WHERE id = ? AND product_id = ?");
             $color_stmt->bind_param("ii", $selected_color_id, $product_id);
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $color_stmt->close();
 
             if ($color_data) {
-                $color_id = $color_data['id'];
+                $color_id = $color_data['id'];  // ✅ STORE THE COLOR ID
                 $color_name = $color_data['color_name'];
                 $color_price = floatval($color_data['price']);
             }
@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['guest_cart'] = [];
             }
 
-            // Create unique key for this item
+            // ✅ UPDATED: Include color_id in the unique key
             $item_key = md5($product_id . '_' . $color_id . '_' . $variant_id_db);
 
             // Check if item already exists
@@ -163,10 +163,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $action_message = "Added $quantity more piece(s) to cart. Total: " . $_SESSION['guest_cart'][$item_key]['quantity'];
                 $final_quantity = $_SESSION['guest_cart'][$item_key]['quantity'];
             } else {
+                // ✅ UPDATED: Store color_id in guest cart
                 $_SESSION['guest_cart'][$item_key] = [
                     'product_id' => $product_id,
                     'product_name' => $product['product_name'],
-                    'color_id' => $color_id,
+                    'color_id' => $color_id,  // ✅ STORE COLOR_ID
                     'color_name' => $color_name,
                     'variant_id' => $variant_id_db,
                     'type_name' => $type_name,
@@ -235,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // Check if item already exists in cart
+        // ✅ UPDATED: Include color_id in the comparison
         $check_stmt = $conn->prepare("SELECT id, quantity FROM user_cart_items WHERE user_id = ? AND product_id = ? AND color_id <=> ? AND variant_id <=> ?");
         $check_stmt->bind_param("iiii", $user_id, $product_id, $color_id, $variant_id_db);
         $check_stmt->execute();
@@ -253,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $final_quantity = $new_qty;
             $action_message = "Added $quantity more piece(s) to cart. Total: $new_qty";
         } else {
-            // ✅ INSERT WITH THE REQUESTED QUANTITY
+            // ✅ UPDATED: INSERT with color_id
             $insert_stmt = $conn->prepare("
                 INSERT INTO user_cart_items (
                     user_id, product_id, color_id, variant_id, quantity, price,

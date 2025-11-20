@@ -51,12 +51,13 @@ $paymongo_config = [
     'cancel_url' => 'http://localhost/noble/user/otherpage/index-checkout-page-12-3.php'
 ];
 
-// Fetch cart items - CORRECTED to use color_name from user_cart_items
+// ✅ UPDATED: Include color_id from user_cart_items
 $cart_items = [];
 $total_price = 0;
 
 $stmt = $conn->prepare("
     SELECT uci.*,
+           uci.color_id,
            COALESCE(pv.origin, '') as origin,
            pv.width, pv.height, pv.length, pv.dimension_unit,
            pv.weight, pv.weight_unit,
@@ -190,7 +191,7 @@ if (isset($_POST['apply_referral_only'])) {
         $stmt->bind_param("s", $ref_code_input);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result->num_rows > 0 && $result->fetch_assoc()['discount_enabled'] == 1) {
             $_SESSION['applied_referral_code'] = $ref_code_input;
             $_SESSION['referral_applied'] = true;
@@ -224,16 +225,16 @@ if (!empty($ref_code_input)) {
     $stmt->bind_param("s", $ref_code_input);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $ref_data = $result->fetch_assoc();
-        
+
         if ($ref_data['discount_enabled'] == 1) {
             $referral_code_used = $ref_code_input;
             $referral_user_id = $ref_data['user_id'];
             $referral_discount_type = $ref_data['discount_type'];
             $referral_discount_value = $ref_data['discount_value'];
-            
+
             // ✅ Calculate referral discount on subtotal AFTER tiered discount
             if ($referral_discount_type === 'percentage') {
                 $referral_discount = $subtotal_after_tiered * ($referral_discount_value / 100);
@@ -577,6 +578,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt2->close();
                     }
 
+
+
                     // Get approval URL
                     $approval_url = null;
                     foreach ($paypal_order['links'] as $link) {
@@ -631,36 +634,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $delivery_distance = floatval($_POST['delivery_distance']);
         }
 
-    $_SESSION['paymongo_order_data'] = [
-    'customer_name' => $customer_data['customer_name'],
-    'email' => $customer_data['email'],
-    'mobile' => $address_data['mobile'],
-    'address' => $address_data['address'],
-    'zipcode' => $address_data['zipcode'],
-    'billing_address_id' => $address_data['billing_address_id'],
-    'latitude' => $address_data['latitude'],
-    'longitude' => $address_data['longitude'],
-    'delivery_fee' => $delivery_fee,
-    'delivery_distance' => $delivery_distance,
-    'subtotal' => $subtotal_after_discount,  // ← After ALL discounts
-    'vat_amount' => $vat_amount,
-    'grand_total' => $grand_total,  // ← Final total with all discounts
-    'items_subtotal' => $items_subtotal,
-    'tiered_discount' => $tiered_discount_amount,
-    'referral_discount' => $referral_discount,
-    'referral_code' => $referral_code_used,
-    'referral_user_id' => $referral_user_id,
-    'user_id' => $user_id,
-    'cart_items' => $cart_items,
-    'delivery_type' => $delivery_data['delivery_type'],
-    'assigned_vehicle_id' => $assigned_vehicle_id,
-    'assigned_vehicle_type' => $assigned_vehicle_type,
-    'total_cubic_meters' => $total_cubic_meters,
-    'total_weight_kg' => $total_weight_kg,
-    'total_width' => $total_width,
-    'total_height' => $total_height,
-    'total_length' => $total_length
-];
+        $_SESSION['paymongo_order_data'] = [
+            'customer_name' => $customer_data['customer_name'],
+            'email' => $customer_data['email'],
+            'mobile' => $address_data['mobile'],
+            'address' => $address_data['address'],
+            'zipcode' => $address_data['zipcode'],
+            'billing_address_id' => $address_data['billing_address_id'],
+            'latitude' => $address_data['latitude'],
+            'longitude' => $address_data['longitude'],
+            'delivery_fee' => $delivery_fee,
+            'delivery_distance' => $delivery_distance,
+            'subtotal' => $subtotal_after_discount,  // ← After ALL discounts
+            'vat_amount' => $vat_amount,
+            'grand_total' => $grand_total,  // ← Final total with all discounts
+            'items_subtotal' => $items_subtotal,
+            'tiered_discount' => $tiered_discount_amount,
+            'referral_discount' => $referral_discount,
+            'referral_code' => $referral_code_used,
+            'referral_user_id' => $referral_user_id,
+            'user_id' => $user_id,
+            'cart_items' => $cart_items,
+            'delivery_type' => $delivery_data['delivery_type'],
+            'assigned_vehicle_id' => $assigned_vehicle_id,
+            'assigned_vehicle_type' => $assigned_vehicle_type,
+            'total_cubic_meters' => $total_cubic_meters,
+            'total_weight_kg' => $total_weight_kg,
+            'total_width' => $total_width,
+            'total_height' => $total_height,
+            'total_length' => $total_length
+        ];
 
 ?>
         <script>
@@ -764,77 +767,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ✅ RE-CALCULATE VAT for Bank/QR (VAT on items only, not delivery)
             $vat_amount = $subtotal_after_discount * 0.12;
 
-// Use conditional INSERT based on delivery_type
-if ($delivery_type_value === 'pickup') {
-    // For pickup orders, exclude vehicle fields but INCLUDE vat_amount
-    $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, delivery_type, referral_code, referral_user_id, referral_discount_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?");
+            // Use conditional INSERT based on delivery_type
+            if ($delivery_type_value === 'pickup') {
+                // For pickup orders, exclude vehicle fields but INCLUDE vat_amount
+                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, delivery_type, referral_code, referral_user_id, referral_discount_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?");
 
-    $stmt->bind_param(
-        "ssssssdsiddiddddssssssid",
-        $customer_name,
-        $customer_email,
-        $customer_mobile,
-        $customer_address,
-        $customer_zipcode,
-        $payment_method,
-        $grand_total,
-        $reference_no,
-        $billing_address_id,
-        $customer_latitude,
-        $customer_longitude,
-        $user_id,
-        $delivery_distance,
-        $delivery_fee,
-        $subtotal_after_discount,
-        $vat_amount,  // ← NEW: VAT amount
-        $bank_type,
-        $screenshot_filename,
-        $reference_number,
-        $payment_status,
-        $delivery_type_value,
-        $referral_code_used,        
-        $referral_user_id,           
-        $referral_discount           
-    );
-} else {
-    // For delivery orders, include vehicle fields AND vat_amount
-    $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type, referral_code, referral_user_id, referral_discount_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param(
+                    "ssssssdsiddiddddssssssid",
+                    $customer_name,
+                    $customer_email,
+                    $customer_mobile,
+                    $customer_address,
+                    $customer_zipcode,
+                    $payment_method,
+                    $grand_total,
+                    $reference_no,
+                    $billing_address_id,
+                    $customer_latitude,
+                    $customer_longitude,
+                    $user_id,
+                    $delivery_distance,
+                    $delivery_fee,
+                    $subtotal_after_discount,
+                    $vat_amount,  // ← NEW: VAT amount
+                    $bank_type,
+                    $screenshot_filename,
+                    $reference_number,
+                    $payment_status,
+                    $delivery_type_value,
+                    $referral_code_used,
+                    $referral_user_id,
+                    $referral_discount
+                );
+            } else {
+                // For delivery orders, include vehicle fields AND vat_amount
+                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, vat_amount, bank_type, payment_screenshot, reference_number, payment_status, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type, referral_code, referral_user_id, referral_discount_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param(
-        "ssssssdsiddiddddssssisdddddssid",
-        $customer_name,
-        $customer_email,
-        $customer_mobile,
-        $customer_address,
-        $customer_zipcode,
-        $payment_method,
-        $grand_total,
-        $reference_no,
-        $billing_address_id,
-        $customer_latitude,
-        $customer_longitude,
-        $user_id,
-        $delivery_distance,
-        $delivery_fee,
-        $subtotal_after_discount,
-        $vat_amount,  // ← NEW: VAT amount
-        $bank_type,
-        $screenshot_filename,
-        $reference_number,
-        $payment_status,
-        $assigned_vehicle_id,
-        $assigned_vehicle_type,
-        $total_cubic_meters,
-        $total_weight_kg,
-        $total_width,
-        $total_height,
-        $total_length,
-        $delivery_type_value,
-        $referral_code_used,        
-        $referral_user_id,           
-        $referral_discount  
-    );
-}
+                $stmt->bind_param(
+                    "ssssssdsiddiddddssssisdddddssid",
+                    $customer_name,
+                    $customer_email,
+                    $customer_mobile,
+                    $customer_address,
+                    $customer_zipcode,
+                    $payment_method,
+                    $grand_total,
+                    $reference_no,
+                    $billing_address_id,
+                    $customer_latitude,
+                    $customer_longitude,
+                    $user_id,
+                    $delivery_distance,
+                    $delivery_fee,
+                    $subtotal_after_discount,
+                    $vat_amount,  // ← NEW: VAT amount
+                    $bank_type,
+                    $screenshot_filename,
+                    $reference_number,
+                    $payment_status,
+                    $assigned_vehicle_id,
+                    $assigned_vehicle_type,
+                    $total_cubic_meters,
+                    $total_weight_kg,
+                    $total_width,
+                    $total_height,
+                    $total_length,
+                    $delivery_type_value,
+                    $referral_code_used,
+                    $referral_user_id,
+                    $referral_discount
+                );
+            }
 
             if ($stmt->execute()) {
                 $order_id = $stmt->insert_id;
@@ -865,36 +868,105 @@ if ($delivery_type_value === 'pickup') {
                     $item_descrip7 = $item['descrip7'] ?? '';
                     $item_origin = $item['origin'] ?? '';
 
-                    // ✅ MODIFIED: Add variant_id to the INSERT statement
+                    // FIXED: Line 881 in index-checkout-page-12-4.php
+                    // Replace the entire INSERT INTO order_items section
+
                     $stmt2 = $conn->prepare("INSERT INTO order_items 
-        (order_id, product_id, variant_id, product_name, codename, type_name, 
-         variant_color, size, price, quantity, subtotal, 
-         descrip6, descrip7, origin, lt_from, lt_to) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    (order_id, product_id, variant_id, color_id, product_name, codename, type_name, 
+     variant_color, size, price, quantity, subtotal, 
+     descrip6, descrip7, origin, lt_from, lt_to) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-                    // ✅ MODIFIED: Add variant_id parameter (now 16 parameters instead of 15)
-                    $stmt2->bind_param(
-                        "iiisssssdiisssss",  // ← Changed from "iisssssdiisssss" - added one 'i' for variant_id
-                        $order_id,
-                        $item_product_id,
-                        $item_variant_id,     // ← NEW: variant_id parameter
-                        $item_product_name,
-                        $item_codename,
-                        $item_type_name,
-                        $item_variant_color,
-                        $item_size,
-                        $item_price,
-                        $item_quantity,
-                        $subtotal_item,
-                        $item_descrip6,
-                        $item_descrip7,
-                        $item_origin,
-                        $lt_from,
-                        $lt_to
-                    );
+                    if (!$stmt2) {
+                        error_log("Prepare failed: " . $conn->error);
+                    } else {
+                        // Get color_id from cart item
+                        $item_color_id = $item['color_id'] ?? null;
 
-                    $stmt2->execute();
-                    $stmt2->close();
+                        // ✅ CORRECT: 17 types for 17 bind variables
+                        // i=int, s=string, d=double
+                        $stmt2->bind_param(
+                            "iiiisssssdidsssss",  // ← 18 characters = 18 parameters
+                            $order_id,             // 1: i - int
+                            $item_product_id,      // 2: i - int
+                            $item_variant_id,      // 3: i - int
+                            $item_color_id,        // 4: i - int
+                            $item_product_name,    // 5: s - string
+                            $item_codename,        // 6: s - string
+                            $item_type_name,       // 7: s - string
+                            $item_variant_color,   // 8: s - string
+                            $item_size,            // 9: s - string
+                            $item_price,           // 10: d - double
+                            $item_quantity,        // 11: i - int
+                            $subtotal_item,        // 12: d - double
+                            $item_descrip6,        // 13: s - string
+                            $item_descrip7,        // 14: s - string
+                            $item_origin,          // 15: s - string
+                            $lt_from,              // 16: s - string
+                            $lt_to                 // 17: s - string
+                        );
+
+                        if (!$stmt2->execute()) {
+                            error_log("Insert item failed: " . $stmt2->error);
+                        }
+                        $stmt2->close();
+                    }
+                }
+                // ✅✅✅ STOCK DEDUCTION FOR BANK/QR/PAYPAL PAYMENTS ✅✅✅
+                // This deducts stock IMMEDIATELY when order is placed
+
+                foreach ($cart_items as $item) {
+                    $item_variant_id = $item['variant_id'] ?? null;
+                    $item_color_id = $item['color_id'] ?? null;
+                    $item_quantity = $item['quantity'];
+
+                    // PRIMARY: Deduct from product_variant_colors (Junction Table)
+                    if (!empty($item_variant_id) && !empty($item_color_id)) {
+                        $deduct_junction = $conn->prepare("
+            UPDATE product_variant_colors 
+            SET stock_quantity = stock_quantity - ?
+            WHERE variant_id = ? AND color_id = ?
+        ");
+                        $deduct_junction->bind_param("iii", $item_quantity, $item_variant_id, $item_color_id);
+
+                        if ($deduct_junction->execute()) {
+                            error_log("✓ Bank/QR/PayPal: Stock deducted from junction table - Variant #$item_variant_id, Color #$item_color_id by $item_quantity units");
+                        } else {
+                            error_log("✗ Bank/QR/PayPal: Failed to deduct junction stock - " . $deduct_junction->error);
+                        }
+                        $deduct_junction->close();
+
+                        // Log remaining stock
+                        $check_stock = $conn->prepare("
+            SELECT stock_quantity 
+            FROM product_variant_colors 
+            WHERE variant_id = ? AND color_id = ?
+        ");
+                        $check_stock->bind_param("ii", $item_variant_id, $item_color_id);
+                        $check_stock->execute();
+                        $stock_result = $check_stock->get_result();
+
+                        if ($stock_row = $stock_result->fetch_assoc()) {
+                            error_log("→ Bank/QR/PayPal: Remaining stock: {$stock_row['stock_quantity']} units");
+                        }
+                        $check_stock->close();
+                    }
+                    // FALLBACK: If no color_id, deduct from variant only
+                    elseif (!empty($item_variant_id)) {
+                        $deduct_variant = $conn->prepare("
+            UPDATE product_variants 
+            SET stock = stock - ?
+            WHERE id = ?
+        ");
+                        $deduct_variant->bind_param("ii", $item_quantity, $item_variant_id);
+
+                        if ($deduct_variant->execute()) {
+                            error_log("✓ Bank/QR/PayPal: Stock deducted from variant fallback - Variant #$item_variant_id by $item_quantity units");
+                        } else {
+                            error_log("✗ Bank/QR/PayPal: Failed to deduct variant stock - " . $deduct_variant->error);
+                        }
+                        $deduct_variant->close();
+                    }
                 }
 
                 // Clear cart
@@ -1025,19 +1097,19 @@ foreach ($cart_items as $item) {
 
         <form method="POST" id="paymentForm" class="space-y-6" enctype="multipart/form-data">
 
-        <!-- ✅ MOVE THIS HERE - Always include referral code if applied -->
-    <input type="hidden" name="referral_code" value="<?= htmlspecialchars($referral_code_used ?? '') ?>">
+            <!-- ✅ MOVE THIS HERE - Always include referral code if applied -->
+            <input type="hidden" name="referral_code" value="<?= htmlspecialchars($referral_code_used ?? '') ?>">
 
             <!-- ✅ ADD THESE HIDDEN FIELDS HERE -->
-    <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="<?= $delivery_data['assigned_vehicle_id'] ?? 0 ?>">
-    <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="<?= htmlspecialchars($delivery_data['assigned_vehicle_type'] ?? '') ?>">
-    <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="<?= $delivery_data['total_cubic_meters'] ?? 0 ?>">
-    <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="<?= $delivery_data['total_weight_kg'] ?? 0 ?>">
-    <input type="hidden" name="total_width" id="totalWidth" value="<?= $delivery_data['total_width'] ?? 0 ?>">
-    <input type="hidden" name="total_height" id="totalHeight" value="<?= $delivery_data['total_height'] ?? 0 ?>">
-    <input type="hidden" name="total_length" id="totalLength" value="<?= $delivery_data['total_length'] ?? 0 ?>">
-    <!-- Grand Total Display for JavaScript -->
-<input type="hidden" id="grandTotalDisplay" value="<?= number_format($grand_total, 2, '.', '') ?>">
+            <input type="hidden" name="assigned_vehicle_id" id="assignedVehicleId" value="<?= $delivery_data['assigned_vehicle_id'] ?? 0 ?>">
+            <input type="hidden" name="assigned_vehicle_type" id="assignedVehicleType" value="<?= htmlspecialchars($delivery_data['assigned_vehicle_type'] ?? '') ?>">
+            <input type="hidden" name="total_cubic_meters" id="totalCubicMeters" value="<?= $delivery_data['total_cubic_meters'] ?? 0 ?>">
+            <input type="hidden" name="total_weight_kg" id="totalWeightKg" value="<?= $delivery_data['total_weight_kg'] ?? 0 ?>">
+            <input type="hidden" name="total_width" id="totalWidth" value="<?= $delivery_data['total_width'] ?? 0 ?>">
+            <input type="hidden" name="total_height" id="totalHeight" value="<?= $delivery_data['total_height'] ?? 0 ?>">
+            <input type="hidden" name="total_length" id="totalLength" value="<?= $delivery_data['total_length'] ?? 0 ?>">
+            <!-- Grand Total Display for JavaScript -->
+            <input type="hidden" id="grandTotalDisplay" value="<?= number_format($grand_total, 2, '.', '') ?>">
 
             <div class="bg-purple-50 p-4 rounded-lg mb-6">
                 <div class="flex items-center">
@@ -1264,108 +1336,108 @@ foreach ($cart_items as $item) {
                     </div>
 
                     <!-- ✅ REFERRAL CODE INPUT SECTION -->
-<div class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-t border-purple-200">
-    <h5 class="font-bold text-purple-800 mb-3 flex items-center">
-        <i class="fas fa-gift mr-2"></i>Have a Referral Code?
-    </h5>
-    
-    <?php if (!$referral_code_used): ?>
-        <!-- Show input when NO code is applied -->
-        <div class="space-y-3">
-            <div class="relative">
-                <input type="text" 
-       id="referralCodeInput" 
-       name="referral_code"
-       placeholder="Enter referral code (e.g., NH-ABC123)" 
-       class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 uppercase font-mono text-lg"
-       maxlength="10"
-       value="">
-                <button type="button" 
-                        id="applyReferralBtn"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition font-medium">
-                    Apply
-                </button>
-            </div>
-            
-            <!-- Verification Status -->
-            <div id="referralStatus" class="hidden"></div>
-        </div>
-    <?php else: ?>
-        <!-- Show applied code details when code IS applied -->
-        <div class="space-y-3">
-            <div class="bg-white rounded-lg p-4 border-2 border-purple-400">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center">
-                        <i class="fas fa-check-circle text-green-600 mr-2 text-xl"></i>
-                        <span class="font-bold text-purple-800 text-lg">Referral Code Applied!</span>
+                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-t border-purple-200">
+                        <h5 class="font-bold text-purple-800 mb-3 flex items-center">
+                            <i class="fas fa-gift mr-2"></i>Have a Referral Code?
+                        </h5>
+
+                        <?php if (!$referral_code_used): ?>
+                            <!-- Show input when NO code is applied -->
+                            <div class="space-y-3">
+                                <div class="relative">
+                                    <input type="text"
+                                        id="referralCodeInput"
+                                        name="referral_code"
+                                        placeholder="Enter referral code (e.g., NH-ABC123)"
+                                        class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 uppercase font-mono text-lg"
+                                        maxlength="10"
+                                        value="">
+                                    <button type="button"
+                                        id="applyReferralBtn"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition font-medium">
+                                        Apply
+                                    </button>
+                                </div>
+
+                                <!-- Verification Status -->
+                                <div id="referralStatus" class="hidden"></div>
+                            </div>
+                        <?php else: ?>
+                            <!-- Show applied code details when code IS applied -->
+                            <div class="space-y-3">
+                                <div class="bg-white rounded-lg p-4 border-2 border-purple-400">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-600 mr-2 text-xl"></i>
+                                            <span class="font-bold text-purple-800 text-lg">Referral Code Applied!</span>
+                                        </div>
+                                        <span class="bg-purple-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold">
+                                            <?= htmlspecialchars($referral_code_used) ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="bg-green-50 rounded-lg p-3 mb-3">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-700 font-medium">
+                                                Discount Applied:
+                                                <span class="text-green-700 font-bold ml-2">
+                                                    <?php
+                                                    if ($referral_discount_type === 'percentage') {
+                                                        echo number_format($referral_discount_value, 0) . '% OFF';
+                                                    } else {
+                                                        echo '₱' . number_format($referral_discount_value, 2) . ' OFF';
+                                                    }
+                                                    ?>
+                                                </span>
+                                            </span>
+                                            <span class="text-xl font-bold text-green-700">
+                                                -₱<?= number_format($referral_discount, 2) ?>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <button type="button"
+                                        onclick="removeReferralCode()"
+                                        class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-lg transition font-medium flex items-center justify-center">
+                                        <i class="fas fa-times-circle mr-2"></i>
+                                        Remove Referral Code
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- ✅ ADD THIS HIDDEN INPUT HERE - RIGHT BEFORE THE CLOSING </div> -->
+                        <input type="hidden" name="referral_code" id="referralCodeHidden" value="<?= htmlspecialchars($referral_code_used ?? '') ?>">
+
+                        <!-- ✅ ADD THIS: Show success message after applying referral code -->
+                        <?php if (isset($_SESSION['referral_applied'])): ?>
+                            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mt-3 animate-pulse">
+                                <strong>✓ Referral code applied!</strong> Your discount has been calculated.
+                            </div>
+                            <?php unset($_SESSION['referral_applied']); ?>
+                        <?php endif; ?>
+
+                        <?php if (isset($_SESSION['referral_error'])): ?>
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mt-3">
+                                <strong>✗ Error:</strong> <?= htmlspecialchars($_SESSION['referral_error']) ?>
+                            </div>
+                            <?php unset($_SESSION['referral_error']); ?>
+                        <?php endif; ?>
+
+                        <?php if (isset($_SESSION['referral_removed'])): ?>
+                            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg mt-3">
+                                <strong>ℹ Referral code removed.</strong> Totals have been updated.
+                            </div>
+                            <?php unset($_SESSION['referral_removed']); ?>
+                        <?php endif; ?>
+
+
                     </div>
-                    <span class="bg-purple-600 text-white px-4 py-1.5 rounded-full text-sm font-bold">
-                        <?= htmlspecialchars($referral_code_used) ?>
-                    </span>
-                </div>
-                
-                <div class="bg-green-50 rounded-lg p-3 mb-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-700 font-medium">
-                            Discount Applied:
-                            <span class="text-green-700 font-bold ml-2">
-                                <?php 
-                                if ($referral_discount_type === 'percentage') {
-                                    echo number_format($referral_discount_value, 0) . '% OFF';
-                                } else {
-                                    echo '₱' . number_format($referral_discount_value, 2) . ' OFF';
-                                }
-                                ?>
-                            </span>
-                        </span>
-                        <span class="text-xl font-bold text-green-700">
-                            -₱<?= number_format($referral_discount, 2) ?>
-                        </span>
-                    </div>
-                </div>
-                
-                <button type="button" 
-        onclick="removeReferralCode()"
-        class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-lg transition font-medium flex items-center justify-center">
-    <i class="fas fa-times-circle mr-2"></i>
-    Remove Referral Code
-</button>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <!-- ✅ ADD THIS HIDDEN INPUT HERE - RIGHT BEFORE THE CLOSING </div> -->
-<input type="hidden" name="referral_code" id="referralCodeHidden" value="<?= htmlspecialchars($referral_code_used ?? '') ?>">
-
-<!-- ✅ ADD THIS: Show success message after applying referral code -->
-<?php if (isset($_SESSION['referral_applied'])): ?>
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mt-3 animate-pulse">
-        <strong>✓ Referral code applied!</strong> Your discount has been calculated.
-    </div>
-    <?php unset($_SESSION['referral_applied']); ?>
-<?php endif; ?>
-
-<?php if (isset($_SESSION['referral_error'])): ?>
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mt-3">
-        <strong>✗ Error:</strong> <?= htmlspecialchars($_SESSION['referral_error']) ?>
-    </div>
-    <?php unset($_SESSION['referral_error']); ?>
-<?php endif; ?>
-
-<?php if (isset($_SESSION['referral_removed'])): ?>
-    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg mt-3">
-        <strong>ℹ Referral code removed.</strong> Totals have been updated.
-    </div>
-    <?php unset($_SESSION['referral_removed']); ?>
-<?php endif; ?>
-
-    
-</div>
 
                     <!-- Discount Section -->
                     <?php if ($tiered_discount['has_discount']): ?>
                         <div class="bg-green-50 p-4 border-t">
-                            <h5 class="font-bold text-green-800 mb-3">💰 Volume Discount Applied</h5>
+                            <h5 class="font-bold text-green-800 mb-3"> Volume Discount Applied</h5>
                             <?php foreach ($tiered_discount['tier_details'] as $tier): ?>
                                 <div class="bg-white rounded p-3 mb-2">
                                     <div class="flex justify-between items-center">
@@ -1403,119 +1475,119 @@ foreach ($cart_items as $item) {
                     <?php endif; ?>
 
                     <!-- Totals -->
-<div class="bg-gray-50 p-4 border-t">
-    <div class="space-y-2 text-sm">
-        <!-- Always show original items subtotal -->
-        <div class="flex justify-between">
-            <span>Items Subtotal:</span>
-            <span class="<?= ($tiered_discount_amount > 0 || $referral_discount > 0) ? 'text-gray-500 line-through' : 'font-medium' ?>">
-                ₱<?= number_format($items_subtotal, 2) ?>
-            </span>
-        </div>
+                    <div class="bg-gray-50 p-4 border-t">
+                        <div class="space-y-2 text-sm">
+                            <!-- Always show original items subtotal -->
+                            <div class="flex justify-between">
+                                <span>Items Subtotal:</span>
+                                <span class="<?= ($tiered_discount_amount > 0 || $referral_discount > 0) ? 'text-gray-500 line-through' : 'font-medium' ?>">
+                                    ₱<?= number_format($items_subtotal, 2) ?>
+                                </span>
+                            </div>
 
-        <!-- Show tiered discount if applicable -->
-        <?php if ($tiered_discount_amount > 0): ?>
-            <div class="flex justify-between text-green-600 font-semibold bg-green-50 px-2 py-1 rounded">
-                <span>
-                    <i class="fas fa-tag mr-1"></i>Volume Discount:
-                </span>
-                <span>-₱<?= number_format($tiered_discount_amount, 2) ?></span>
-            </div>
-            <div class="flex justify-between text-sm">
-                <span>After Volume Discount:</span>
-                <span class="font-medium">₱<?= number_format($subtotal_after_tiered, 2) ?></span>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Show referral discount if applicable -->
-        <?php if ($referral_discount > 0): ?>
-            <div class="flex justify-between text-purple-600 font-semibold bg-purple-50 px-2 py-1 rounded">
-                <span>
-                    <i class="fas fa-gift mr-1"></i>Referral Discount 
-                    <span class="text-xs font-mono bg-purple-200 px-2 py-0.5 rounded">(<?= htmlspecialchars($referral_code_used) ?>)</span>:
-                </span>
-                <span>-₱<?= number_format($referral_discount, 2) ?></span>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Show subtotal after all discounts if any discounts applied -->
-        <?php if ($tiered_discount_amount > 0 || $referral_discount > 0): ?>
-            <div class="flex justify-between font-semibold text-orange-600 border-t border-orange-200 pt-2 mt-2 bg-orange-50 px-2 py-1 rounded">
-                <span>Subtotal After ALL Discounts:</span>
-                <span class="text-lg">₱<?= number_format($subtotal_after_discount, 2) ?></span>
-            </div>
-        <?php endif; ?>
+                            <!-- Show tiered discount if applicable -->
+                            <?php if ($tiered_discount_amount > 0): ?>
+                                <div class="flex justify-between text-green-600 font-semibold bg-green-50 px-2 py-1 rounded">
+                                    <span>
+                                        <i class="fas fa-tag mr-1"></i>Volume Discount:
+                                    </span>
+                                    <span>-₱<?= number_format($tiered_discount_amount, 2) ?></span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span>After Volume Discount:</span>
+                                    <span class="font-medium">₱<?= number_format($subtotal_after_tiered, 2) ?></span>
+                                </div>
+                            <?php endif; ?>
 
-        <!-- VAT Calculation -->
-        <div class="flex justify-between border-t pt-2 mt-2">
-            <span>VAT (12% on <?= ($tiered_discount_amount > 0 || $referral_discount > 0) ? 'discounted' : '' ?> items):</span>
-            <span class="font-medium text-orange-600">₱<?= number_format($vat_amount, 2) ?></span>
-        </div>
+                            <!-- Show referral discount if applicable -->
+                            <?php if ($referral_discount > 0): ?>
+                                <div class="flex justify-between text-purple-600 font-semibold bg-purple-50 px-2 py-1 rounded">
+                                    <span>
+                                        <i class="fas fa-gift mr-1"></i>Referral Discount
+                                        <span class="text-xs font-mono bg-purple-200 px-2 py-0.5 rounded">(<?= htmlspecialchars($referral_code_used) ?>)</span>:
+                                    </span>
+                                    <span>-₱<?= number_format($referral_discount, 2) ?></span>
+                                </div>
+                            <?php endif; ?>
 
-        <!-- Subtotal with VAT -->
-        <div class="flex justify-between bg-gray-100 px-2 py-1 rounded">
-            <span class="font-medium">Subtotal (Items + VAT):</span>
-            <span class="font-semibold">₱<?= number_format($subtotal_with_vat, 2) ?></span>
-        </div>
+                            <!-- Show subtotal after all discounts if any discounts applied -->
+                            <?php if ($tiered_discount_amount > 0 || $referral_discount > 0): ?>
+                                <div class="flex justify-between font-semibold text-orange-600 border-t border-orange-200 pt-2 mt-2 bg-orange-50 px-2 py-1 rounded">
+                                    <span>Subtotal After ALL Discounts:</span>
+                                    <span class="text-lg">₱<?= number_format($subtotal_after_discount, 2) ?></span>
+                                </div>
+                            <?php endif; ?>
 
-        <!-- Delivery Fee -->
-        <div class="flex justify-between">
-            <span>Delivery Fee:
-                <?php if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery'): ?>
-                    <span class="text-green-600 font-semibold ml-1">FREE! 🎉</span>
-                <?php endif; ?>
-            </span>
-            <span class="<?= ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery') ? 'line-through text-gray-400' : 'font-medium' ?>">
-                ₱<?= number_format($delivery_data['delivery_fee'], 2) ?>
-            </span>
-        </div>
+                            <!-- VAT Calculation -->
+                            <div class="flex justify-between border-t pt-2 mt-2">
+                                <span>VAT (12% on <?= ($tiered_discount_amount > 0 || $referral_discount > 0) ? 'discounted' : '' ?> items):</span>
+                                <span class="font-medium text-orange-600">₱<?= number_format($vat_amount, 2) ?></span>
+                            </div>
 
-        <!-- Grand Total -->
-        <div class="border-t-2 border-gray-400 pt-3 mt-3">
-            <div class="flex justify-between text-xl font-bold">
-                <span>Grand Total:</span>
-                <span class="text-green-700">₱<?= number_format($grand_total, 2) ?></span>
-            </div>
-            <div class="text-xs text-gray-500 text-right mt-1">
-                <?php if ($referral_discount > 0): ?>
-                    (Includes <?= htmlspecialchars($referral_code_used) ?> discount)
-                <?php endif; ?>
-            </div>
-        </div>
+                            <!-- Subtotal with VAT -->
+                            <div class="flex justify-between bg-gray-100 px-2 py-1 rounded">
+                                <span class="font-medium">Subtotal (Items + VAT):</span>
+                                <span class="font-semibold">₱<?= number_format($subtotal_with_vat, 2) ?></span>
+                            </div>
 
-        <!-- Savings Summary -->
-        <?php 
-        $total_savings = $tiered_discount_amount + $referral_discount;
-        if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery') {
-            $total_savings += $delivery_data['delivery_fee'];
-        }
-        
-        if ($total_savings > 0): 
-        ?>
-            <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 mt-4 text-white shadow-lg">
-                <div class="text-center">
-                    <div class="text-xs font-bold uppercase tracking-wider mb-1">💰 Total Savings 💰</div>
-                    <div class="text-3xl font-black">₱<?= number_format($total_savings, 2) ?></div>
-                    <div class="text-xs mt-2 opacity-90 font-medium">
-                        <?php 
-                        $savings_breakdown = [];
-                        if ($tiered_discount_amount > 0) {
-                            $savings_breakdown[] = 'Volume: ₱' . number_format($tiered_discount_amount, 2);
-                        }
-                        if ($referral_discount > 0) {
-                            $savings_breakdown[] = 'Referral: ₱' . number_format($referral_discount, 2);
-                        }
-                        if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery') {
-                            $savings_breakdown[] = 'Free Shipping: ₱' . number_format($delivery_data['delivery_fee'], 2);
-                        }
-                        echo implode(' + ', $savings_breakdown);
-                        ?>
+                            <!-- Delivery Fee -->
+                            <div class="flex justify-between">
+                                <span>Delivery Fee:
+                                    <?php if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery'): ?>
+                                        <span class="text-green-600 font-semibold ml-1">FREE!</span>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="<?= ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery') ? 'line-through text-gray-400' : 'font-medium' ?>">
+                                    ₱<?= number_format($delivery_data['delivery_fee'], 2) ?>
+                                </span>
+                            </div>
+
+                            <!-- Grand Total -->
+                            <div class="border-t-2 border-gray-400 pt-3 mt-3">
+                                <div class="flex justify-between text-xl font-bold">
+                                    <span>Grand Total:</span>
+                                    <span class="text-green-700">₱<?= number_format($grand_total, 2) ?></span>
+                                </div>
+                                <div class="text-xs text-gray-500 text-right mt-1">
+                                    <?php if ($referral_discount > 0): ?>
+                                        (Includes <?= htmlspecialchars($referral_code_used) ?> discount)
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <!-- Savings Summary -->
+                            <?php
+                            $total_savings = $tiered_discount_amount + $referral_discount;
+                            if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery') {
+                                $total_savings += $delivery_data['delivery_fee'];
+                            }
+
+                            if ($total_savings > 0):
+                            ?>
+                                <div class=" p-4 mt-4 text-black ">
+                                    <div class="text-center">
+                                        <div class="text-xs  uppercase tracking-wider mb-1"> Total Savings </div>
+                                        <div class="text-3xl ">₱<?= number_format($total_savings, 2) ?></div>
+                                        <div class="text-xs mt-2 opacity-90 font-medium">
+                                            <?php
+                                            $savings_breakdown = [];
+                                            if ($tiered_discount_amount > 0) {
+                                                $savings_breakdown[] = 'Volume: ₱' . number_format($tiered_discount_amount, 2);
+                                            }
+                                            if ($referral_discount > 0) {
+                                                $savings_breakdown[] = 'Referral: ₱' . number_format($referral_discount, 2);
+                                            }
+                                            if ($tiered_discount['free_shipping'] && $delivery_data['delivery_type'] === 'delivery') {
+                                                $savings_breakdown[] = 'Free Shipping: ₱' . number_format($delivery_data['delivery_fee'], 2);
+                                            }
+                                            echo implode(' + ', $savings_breakdown);
+                                            ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
                 </div>
             </div>
 
@@ -1547,37 +1619,37 @@ foreach ($cart_items as $item) {
     <?php include '../navbar/footer.php'; ?>
 
     <script src="js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js?v=<?= filemtime('js/index-checkout-paymentquickFixPayment-page-12-4.obfuscated.js') ?>"></script>
-    <script src="js/index-bank-qr-payment-module-page-12-4.obfuscated.js?v=<?= filemtime('js/index-bank-qr-payment-module-page-12-4.obfuscated.js')?>"></script>
+    <script src="js/index-bank-qr-payment-module-page-12-4.obfuscated.js?v=<?= filemtime('js/index-bank-qr-payment-module-page-12-4.obfuscated.js') ?>"></script>
     <script src="js/referral-code-validation.obfuscated.js?v=<?= time() ?>"></script>
     <script>
         // Pass data to JavaScript
         // Pass comprehensive data to JavaScript
-window.grandTotal = <?= $grand_total ?>;
-window.deliveryFee = <?= $delivery_fee ?>;
-window.subtotalAfterDiscount = <?= $subtotal_after_discount ?>;
-window.vatAmount = <?= $vat_amount ?>;
-window.subtotalWithVat = <?= $subtotal_with_vat ?>;
-window.itemsSubtotal = <?= $items_subtotal ?>;
-window.tieredDiscount = <?= $tiered_discount_amount ?>;
-window.referralDiscount = <?= $referral_discount ?>;
+        window.grandTotal = <?= $grand_total ?>;
+        window.deliveryFee = <?= $delivery_fee ?>;
+        window.subtotalAfterDiscount = <?= $subtotal_after_discount ?>;
+        window.vatAmount = <?= $vat_amount ?>;
+        window.subtotalWithVat = <?= $subtotal_with_vat ?>;
+        window.itemsSubtotal = <?= $items_subtotal ?>;
+        window.tieredDiscount = <?= $tiered_discount_amount ?>;
+        window.referralDiscount = <?= $referral_discount ?>;
         // Remove referral code function
-function removeReferralCode() {
-    if (confirm('Remove this referral code? Your discount will be lost.')) {
-        // Create form to submit removal request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = window.location.href;
-        
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'remove_referral';
-        input.value = '1';
-        
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
+        function removeReferralCode() {
+            if (confirm('Remove this referral code? Your discount will be lost.')) {
+                // Create form to submit removal request
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = window.location.href;
+
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'remove_referral';
+                input.value = '1';
+
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
     </script>
 </body>
 

@@ -288,37 +288,63 @@ $stmt->bind_param(
     error_log("✓ Order created: ID=$order_id");
     $stmt->close();
 
-    // ✅ GET CART ITEMS
-    $cart_stmt = $conn->prepare("
-        SELECT uci.*, 
-               COALESCE(pv.origin, '') as origin
-        FROM user_cart_items uci 
-        LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
-        WHERE uci.user_id = ?
-    ");
-    
-    if (!$cart_stmt) {
-        $conn->query("DELETE FROM orders WHERE id = $order_id");
-        throw new Exception('Failed to prepare cart statement: ' . $conn->error);
-    }
+// ✅ FIXED: paymongo-create-sessions.php - GET CART ITEMS with explicit color_id
+// Replace the "GET CART ITEMS" section (around line 85-105)
 
-    $cart_stmt->bind_param("i", $user_id);
-    if (!$cart_stmt->execute()) {
-        $conn->query("DELETE FROM orders WHERE id = $order_id");
-        throw new Exception('Failed to get cart items: ' . $cart_stmt->error);
-    }
+// ✅ GET CART ITEMS - EXPLICITLY SELECT color_id
+$cart_stmt = $conn->prepare("
+    SELECT 
+        uci.id,
+        uci.user_id,
+        uci.product_id,
+        uci.variant_id,
+        uci.color_id,
+        uci.quantity,
+        uci.price,
+        uci.type_name,
+        uci.variant_name,
+        uci.color_name,
+        uci.size,
+        uci.codename,
+        uci.descrip6,
+        uci.descrip7,
+        COALESCE(pv.origin, '') as origin
+    FROM user_cart_items uci 
+    LEFT JOIN product_variants pv ON uci.variant_id = pv.id 
+    WHERE uci.user_id = ?
+");
 
-    $cart_result = $cart_stmt->get_result();
-    $cart_items = [];
-    while ($row = $cart_result->fetch_assoc()) {
-        $cart_items[] = $row;
-    }
-    $cart_stmt->close();
+if (!$cart_stmt) {
+    $conn->query("DELETE FROM orders WHERE id = $order_id");
+    throw new Exception('Failed to prepare cart statement: ' . $conn->error);
+}
 
-    if (empty($cart_items)) {
-        $conn->query("DELETE FROM orders WHERE id = $order_id");
-        throw new Exception('No items found in cart');
-    }
+$cart_stmt->bind_param("i", $user_id);
+if (!$cart_stmt->execute()) {
+    $conn->query("DELETE FROM orders WHERE id = $order_id");
+    throw new Exception('Failed to get cart items: ' . $cart_stmt->error);
+}
+
+$cart_result = $cart_stmt->get_result();
+$cart_items = [];
+
+error_log("=== CART ITEMS DEBUG ===");
+error_log("Fetching cart items for user: $user_id");
+
+while ($row = $cart_result->fetch_assoc()) {
+    $cart_items[] = $row;
+    error_log("Item: Product={$row['product_id']}, Variant={$row['variant_id']}, Color={$row['color_id']}, Qty={$row['quantity']}");
+}
+
+error_log("Total cart items: " . count($cart_items));
+error_log("=== END CART DEBUG ===");
+
+$cart_stmt->close();
+
+if (empty($cart_items)) {
+    $conn->query("DELETE FROM orders WHERE id = $order_id");
+    throw new Exception('No items found in cart');
+}
 
     // ✅ INSERT ORDER ITEMS
     $item_stmt = $conn->prepare("INSERT INTO order_items (

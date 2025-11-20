@@ -1,5 +1,5 @@
 <?php
-//update_product.php
+//update_product.php - UPDATED WITH STOCK HANDLING
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
@@ -8,15 +8,11 @@ ini_set('display_errors', 1);
 include '../role/roleaccount.php';
 require_role(['productspecialist', 'superadmin']);
 
-// Check if user is logged in
 if (!isset($_SESSION['noble_user'])) {
-  // Redirect to login page
   header("Location: ../../loginpage/index.php");
   exit();
 }
 
-
-// Update last activity time
 $_SESSION['last_activity'] = time();
 
 $product_id = $_GET['id'] ?? null;
@@ -46,7 +42,6 @@ if (!empty($product['sub_images'])) {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -58,7 +53,6 @@ if (!empty($product['sub_images'])) {
       display: inline-block;
       transition: all 0.3s ease;
     }
-
     .remove-sub-image {
       position: absolute;
       top: -8px;
@@ -75,11 +69,9 @@ if (!empty($product['sub_images'])) {
       align-items: center;
       justify-content: center;
     }
-
     .remove-sub-image:hover {
       background: #dc2626;
     }
-
     .restore-sub-image {
       position: absolute;
       top: -8px;
@@ -96,23 +88,19 @@ if (!empty($product['sub_images'])) {
       align-items: center;
       justify-content: center;
     }
-
     .restore-sub-image:hover {
       background: #059669;
     }
-
     .image-preview {
       max-width: 80px;
       max-height: 80px;
       object-fit: cover;
       border-radius: 4px;
     }
-
     .marked-for-deletion {
       opacity: 0.5;
       border: 2px dashed #ef4444 !important;
     }
-
     .marked-for-deletion .restore-sub-image {
       display: flex;
     }
@@ -123,7 +111,7 @@ if (!empty($product['sub_images'])) {
 
   <?php include '../navbar/top.php'; ?>
 
-  <div class="bg-white p-6 rounded-lg shadow mt-5">
+  <div class="bg-white p-6 rounded-lg shadow mt-5 max-w-7xl mx-auto">
     <h2 class="text-2xl font-bold mb-4 text-orange-600">Update Product</h2>
 
     <form action="update_process-page-2-A.php" method="POST" enctype="multipart/form-data">
@@ -195,23 +183,15 @@ if (!empty($product['sub_images'])) {
               </div>
             </div>
           </div>
-
-          <div class="text-sm text-gray-600">
-            <p>• You can remove existing sub images by clicking the × button</p>
-            <p>• Restore removed images by clicking the ↻ button before saving</p>
-            <p>• Add new sub images using the file inputs below</p>
-            <p>• Leave file inputs empty if you don't want to add new images</p>
-          </div>
         </div>
       </div>
 
-      <!-- REPLACED CODENAME WITH CATEGORY DROPDOWN -->
+      <!-- Category Dropdown -->
       <div class="mb-4">
         <label class="block font-semibold mb-1">Category</label>
         <select name="category" required class="w-full border p-2 rounded bg-white">
           <option value="">Select a Category</option>
           <?php
-          // Reset the result pointer to reuse the categories
           $categories->data_seek(0);
           while ($category = $categories->fetch_assoc()):
           ?>
@@ -221,8 +201,8 @@ if (!empty($product['sub_images'])) {
             </option>
           <?php endwhile; ?>
         </select>
-        <p class="text-xs text-gray-500 mt-1">Choose the category this product belongs to</p>
       </div>
+
       <div class="mb-4">
         <label class="block font-semibold mb-1">Quantity</label>
         <input type="number" name="quantity" value="<?php echo htmlspecialchars($product['quantity']); ?>" required class="w-full border p-2 rounded" />
@@ -266,6 +246,9 @@ if (!empty($product['sub_images'])) {
               <!-- Price -->
               <input type="number" step="0.01" name="color_price[]" value="<?php echo htmlspecialchars($color['price']); ?>" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
 
+              <!-- Stock (NEW) -->
+              <input type="number" name="color_stock[]" value="<?php echo htmlspecialchars($color['stock'] ?? 0); ?>" placeholder="Stock" class="border p-2 w-1/6 rounded" required />
+
               <!-- Remove Button -->
               <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
             </div>
@@ -280,7 +263,7 @@ if (!empty($product['sub_images'])) {
       <div id="types-section">
         <?php
         $typeIndex = 0;
-        $types->data_seek(0); // Reset result set
+        $types->data_seek(0);
         while ($type = $types->fetch_assoc()) {
           $type_id = $type['id'];
           $variants = $conn->query("SELECT * FROM product_variants WHERE type_id = $type_id");
@@ -313,19 +296,24 @@ if (!empty($product['sub_images'])) {
 
             <label class="block font-medium mb-1">Variants (Sizes, etc.):</label>
             <div id="variant-section-<?php echo $typeIndex; ?>">
-              <?php while ($variant = $variants->fetch_assoc()) { ?>
+              <?php while ($variant = $variants->fetch_assoc()) { 
+                $variant_id = $variant['id'];
+                $variantColorQuery = "SELECT pvc.*, pc.id as color_id, pc.color_name, pc.color_code 
+                                     FROM product_variant_colors pvc 
+                                     JOIN product_colors pc ON pvc.color_id = pc.id 
+                                     WHERE pvc.variant_id = $variant_id";
+                $variantColors = $conn->query($variantColorQuery);
+              ?>
                 <div class="bg-blue-50 p-4 rounded border mb-3">
                   <input type="hidden" name="variant_id[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
 
                   <!-- Row 1: Delete & Basic Info -->
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                    <!-- Delete Checkbox -->
                     <div class="flex items-center">
                       <input type="checkbox" name="delete_variant[<?php echo $typeIndex; ?>][]" value="<?php echo $variant['id']; ?>" />
                       <label class="text-sm text-gray-600 ml-1">Delete</label>
                     </div>
 
-                    <!-- Size -->
                     <div>
                       <label class="text-xs font-medium text-gray-600">Size/Type</label>
                       <input type="text" name="variant_size[<?php echo $typeIndex; ?>][]"
@@ -333,7 +321,6 @@ if (!empty($product['sub_images'])) {
                         placeholder="Size" class="border p-2 w-full rounded text-sm" />
                     </div>
 
-                    <!-- Name Variant -->
                     <div>
                       <label class="text-xs font-medium text-gray-600">Variant Name</label>
                       <input type="text" name="variant_namevariant[<?php echo $typeIndex; ?>][]"
@@ -341,12 +328,8 @@ if (!empty($product['sub_images'])) {
                         placeholder="Name Variant" class="border p-2 w-full rounded text-sm" />
                     </div>
 
-                    <!-- Original Price (THE TRUE BASE) -->
                     <div>
-                      <label class="text-xs font-medium text-gray-600 flex items-center gap-1">
-                        Original Price
-                        <span class="text-blue-500 text-xs" title="This is the base price for calculations">ℹ️</span>
-                      </label>
+                      <label class="text-xs font-medium text-gray-600">Original Price</label>
                       <input type="number" step="0.01"
                         name="variant_original_price[<?php echo $typeIndex; ?>][]"
                         value="<?php echo htmlspecialchars($variant['original_price'] ?? ''); ?>"
@@ -358,7 +341,6 @@ if (!empty($product['sub_images'])) {
 
                   <!-- Row 2: Pricing Calculations -->
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-                    <!-- Markup % -->
                     <div>
                       <label class="text-xs font-medium text-gray-600">Markup %</label>
                       <input type="number" step="0.01"
@@ -369,13 +351,11 @@ if (!empty($product['sub_images'])) {
                         data-variant-index="<?php echo $typeIndex; ?>" />
                     </div>
 
-                    <!-- Markup Display (Calculated) -->
                     <div>
                       <label class="text-xs font-medium text-gray-600">After Markup</label>
                       <div class="markup-preview text-sm text-green-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
                     </div>
 
-                    <!-- Discount % -->
                     <div>
                       <label class="text-xs font-medium text-gray-600">Discount %</label>
                       <input type="number" step="0.01"
@@ -386,14 +366,12 @@ if (!empty($product['sub_images'])) {
                         data-variant-index="<?php echo $typeIndex; ?>" />
                     </div>
 
-                    <!-- Final Price Display (Calculated) -->
                     <div>
                       <label class="text-xs font-medium text-gray-600">Final Price</label>
                       <div class="final-preview text-sm text-red-600 font-semibold border p-2 rounded bg-white">₱0.00</div>
                     </div>
                   </div>
 
-                  <!-- Hidden field to store the computed final price (this is what gets saved as 'price') -->
                   <input type="hidden"
                     name="variant_price[<?php echo $typeIndex; ?>][]"
                     value="<?php echo htmlspecialchars($variant['price']); ?>"
@@ -455,6 +433,100 @@ if (!empty($product['sub_images'])) {
                     </div>
                   </div>
 
+                  <!-- Row 5: Available Colors for this Variant with STOCK -->
+                  <div class="bg-white p-3 rounded mb-2 border-2 border-purple-200">
+                    <label class="text-xs font-semibold text-gray-700 block mb-2">🎨 Available Colors & Stock for this Variant</label>
+                    
+                    <div id="variant-colors-section-<?php echo $typeIndex; ?>-<?php echo $variant_id; ?>" class="space-y-2 mb-3">
+                      <?php 
+                      if ($variantColors && $variantColors->num_rows > 0):
+                        while ($vc = $variantColors->fetch_assoc()):
+                      ?>
+                        <div class="flex gap-2 items-center bg-gray-50 p-2 rounded border variant-color-item">
+                          <input type="hidden" name="variant_color_id[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
+                                 value="<?php echo $vc['id']; ?>" />
+                          
+                          <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="delete_variant_color[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
+                                   value="<?php echo $vc['id']; ?>" />
+                            <label class="text-xs text-gray-600 ml-1">Delete</label>
+                          </div>
+                          
+                          <div class="w-8 h-8 rounded border" 
+                               style="background-color: <?php echo htmlspecialchars($vc['color_code']); ?>"
+                               title="<?php echo htmlspecialchars($vc['color_name']); ?>"></div>
+                          
+                          <span class="text-sm font-medium text-gray-700 min-w-24">
+                            <?php echo htmlspecialchars($vc['color_name']); ?>
+                          </span>
+                          
+                          <!-- STOCK INPUT (NEW - PER SIZE+COLOR COMBO) -->
+                          <input type="number" 
+                                 name="variant_color_stock[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
+                                 value="<?php echo (int)$vc['stock_quantity']; ?>" 
+                                 placeholder="Stock" 
+                                 class="border p-2 w-24 rounded text-sm font-semibold" 
+                                 min="0" required />
+                        </div>
+                      <?php 
+                        endwhile;
+                      endif;
+                      ?>
+                    </div>
+
+                    <!-- Add new colors to variant -->
+                    <div class="pt-2 border-t">
+                      <p class="text-xs text-gray-600 mb-2">Add color options to this variant:</p>
+                      <div id="new-variant-colors-<?php echo $typeIndex; ?>-<?php echo $variant_id; ?>" class="space-y-2">
+                        <div class="flex gap-2 items-center">
+                          <?php 
+                          // Get colors already assigned to this variant
+                          $assignedColorsQuery = "SELECT color_id FROM product_variant_colors WHERE variant_id = $variant_id";
+                          $assignedColorsResult = $conn->query($assignedColorsQuery);
+                          $assignedColorIds = [];
+                          while ($assignedColor = $assignedColorsResult->fetch_assoc()) {
+                            $assignedColorIds[] = $assignedColor['color_id'];
+                          }
+                          ?>
+                          <select name="new_variant_color[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
+                                  class="border p-2 rounded text-sm flex-1">
+                            <option value="">-- Select a Color --</option>
+                            <?php 
+                            $allColorsQuery = "SELECT id, color_name, color_code FROM product_colors WHERE product_id = $product_id";
+                            $allColors = $conn->query($allColorsQuery);
+                            
+                            while ($color = $allColors->fetch_assoc()):
+                              // Skip colors already assigned to this variant
+                              if (!in_array($color['id'], $assignedColorIds)):
+                            ?>
+                              <option value="<?php echo $color['id']; ?>">
+                                <?php echo htmlspecialchars($color['color_name']); ?>
+                              </option>
+                            <?php 
+                              endif;
+                            endwhile; 
+                            ?>
+                          </select>
+                          
+                          <!-- STOCK INPUT FOR NEW COLORS -->
+                          <input type="number" 
+                                 name="new_variant_color_stock[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
+                                 placeholder="Stock qty" 
+                                 value="0"
+                                 class="border p-2 w-32 rounded text-sm font-semibold" 
+                                 min="0" required />
+                          
+                          <button type="button" 
+                                  onclick="addColorToVariant(<?php echo $typeIndex; ?>, <?php echo $variant_id; ?>)" 
+                                  class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 whitespace-nowrap">
+                            + Add
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Remove Button -->
                   <div class="flex justify-end">
                     <button type="button" onclick="removeVariant(this)" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Remove Variant</button>
@@ -478,19 +550,13 @@ if (!empty($product['sub_images'])) {
   <script>
     let typeIndex = <?php echo $typeIndex; ?>;
 
-    // Function to remove existing sub image
     function removeExistingSubImage(button, imageIndex) {
       const imageItem = button.closest('.sub-image-item');
       const keepInput = imageItem.querySelector('input[name*="keep_sub_image"]');
 
       if (confirm('Are you sure you want to remove this sub image? This will permanently delete the file.')) {
-        // Set the keep input to 0 to mark for deletion
         keepInput.value = '0';
-
-        // Add visual indication that it will be deleted
         imageItem.classList.add('marked-for-deletion');
-
-        // Add a "Will be deleted" label
         if (!imageItem.querySelector('.deletion-notice')) {
           const notice = document.createElement('div');
           notice.className = 'deletion-notice text-xs text-red-600 text-center mt-1 font-semibold';
@@ -500,23 +566,17 @@ if (!empty($product['sub_images'])) {
       }
     }
 
-    // Function to restore sub-image if user changes mind
     function restoreExistingSubImage(button, imageIndex) {
       const imageItem = button.closest('.sub-image-item');
       const keepInput = imageItem.querySelector('input[name*="keep_sub_image"]');
-
-      // Restore the image
       keepInput.value = '1';
       imageItem.classList.remove('marked-for-deletion');
-
-      // Remove deletion notice
       const notice = imageItem.querySelector('.deletion-notice');
       if (notice) {
         notice.remove();
       }
     }
 
-    // Function to preview new sub image
     function previewNewSubImage(input) {
       const preview = input.parentElement.querySelector('.new-sub-image-preview');
       preview.innerHTML = '';
@@ -533,7 +593,6 @@ if (!empty($product['sub_images'])) {
       }
     }
 
-    // Function to add new sub image input
     function addNewSubImage() {
       const newSubImagesSection = document.getElementById('new-sub-images-section');
       const div = document.createElement('div');
@@ -552,7 +611,6 @@ if (!empty($product['sub_images'])) {
       newSubImagesSection.appendChild(div);
     }
 
-    // Function to remove new sub image input
     function removeNewSubImage(button) {
       const newSubImageItems = document.querySelectorAll('.new-sub-image-item');
       if (newSubImageItems.length > 1) {
@@ -567,11 +625,11 @@ if (!empty($product['sub_images'])) {
     }
 
     function removeVariant(button) {
-      button.parentElement.remove();
+      button.closest('.bg-blue-50').remove();
     }
 
     function removeColor(button) {
-      button.parentElement.remove();
+      button.closest('.flex.gap-2').remove();
     }
 
     function addColor() {
@@ -581,92 +639,84 @@ if (!empty($product['sub_images'])) {
 
       div.innerHTML = `
         <input type="hidden" name="color_id[]" value="new" />
-        
-        <!-- Delete placeholder for new colors -->
         <div class="flex items-center">
           <span class="text-sm text-gray-400 w-[50px]">New</span>
         </div>
-        
-        <!-- Color Name -->
         <input type="text" name="color_name[]" placeholder="Color Name" class="border p-2 w-1/5 rounded" required />
-        
-        <!-- Color Code -->
         <input type="text" name="color_code[]" placeholder="Color Code (#hex)" class="border p-2 w-1/5 rounded" />
-        
-        <!-- Image -->
         <div class="w-1/5">
           <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" required />
         </div>
-        
-        <!-- Price -->
         <input type="number" step="0.01" name="color_price[]" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
-        
-        <!-- Remove Button -->
+        <input type="number" name="color_stock[]" placeholder="Stock" value="0" class="border p-2 w-1/6 rounded" required />
         <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
       `;
 
       colorsSection.appendChild(div);
     }
 
-    function createInput(type, name, placeholder, className = '', value = '') {
-      const input = document.createElement('input');
-      input.type = type;
-      input.name = name;
-      input.placeholder = placeholder;
-      input.className = `border p-2 rounded ${className}`;
-      if (value) {
-        input.value = value;
-      }
-      return input;
+    function addColorToVariant(typeIndex, variantId) {
+      const newColorsSection = document.getElementById(`new-variant-colors-${typeIndex}-${variantId}`);
+      const div = document.createElement('div');
+      div.className = 'flex gap-2 items-center';
+      
+      const firstSelect = document.querySelector(`select[name="new_variant_color[${typeIndex}][${variantId}][]"]`);
+      const colorOptions = Array.from(firstSelect.options).map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('');
+      
+      div.innerHTML = `
+        <select name="new_variant_color[${typeIndex}][${variantId}][]" 
+                class="border p-2 rounded text-sm flex-1">
+          <option value="">-- Select a Color --</option>
+          ${colorOptions}
+        </select>
+        
+        <input type="number" 
+               name="new_variant_color_stock[${typeIndex}][${variantId}][]" 
+               placeholder="Stock qty" 
+               value="0"
+               class="border p-2 w-32 rounded text-sm font-semibold" 
+               min="0" required />
+        
+        <button type="button" 
+                onclick="removeColorFromVariant(this)" 
+                class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+          Remove
+        </button>
+      `;
+      
+      newColorsSection.appendChild(div);
     }
 
-    function getLastVariantData(index) {
-      const variantSection = document.getElementById('variant-section-' + index);
-      const lastVariant = variantSection.querySelector('.flex:last-child');
-
-      if (!lastVariant) return null;
-
-      return {
-        size: lastVariant.querySelector('input[name*="variant_size"]')?.value || '',
-        price: lastVariant.querySelector('input[name*="variant_price"]')?.value || '',
-        percent: lastVariant.querySelector('input[name*="variant_percent"]')?.value || '',
-        discount: lastVariant.querySelector('input[name*="variant_discount"]')?.value || '',
-        namevariant: lastVariant.querySelector('input[name*="variant_namevariant"]')?.value || ''
-      };
+    function removeColorFromVariant(button) {
+      button.closest('div').remove();
     }
 
     function addVariant(index) {
       const variantSection = document.getElementById('variant-section-' + index);
-
       const div = document.createElement('div');
       div.classList.add('bg-blue-50', 'p-4', 'rounded', 'border', 'mb-3');
 
       div.innerHTML = `
     <input type="hidden" name="variant_id[${index}][]" value="new" />
 
-    <!-- Row 1: Delete & Basic Info -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
       <div class="flex items-center">
         <span class="text-sm text-gray-400">New</span>
       </div>
       <div>
         <label class="text-xs font-medium text-gray-600">Size/Type</label>
-        <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-full rounded text-sm" />
+        <input type="text" name="variant_size[${index}][]" placeholder="Size" class="border p-2 w-full rounded text-sm" required />
       </div>
       <div>
         <label class="text-xs font-medium text-gray-600">Variant Name</label>
         <input type="text" name="variant_namevariant[${index}][]" placeholder="Name Variant" class="border p-2 w-full rounded text-sm" />
       </div>
       <div>
-        <label class="text-xs font-medium text-gray-600 flex items-center gap-1">
-          Original Price 
-          <span class="text-blue-500 text-xs" title="This is the base price for calculations">ℹ️</span>
-        </label>
-        <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 w-full rounded text-sm original-price-input" data-variant-index="${index}" />
+        <label class="text-xs font-medium text-gray-600">Original Price</label>
+        <input type="number" step="0.01" name="variant_original_price[${index}][]" placeholder="Original Price" class="border p-2 w-full rounded text-sm original-price-input" data-variant-index="${index}" required />
       </div>
     </div>
 
-    <!-- Row 2: Pricing Calculations -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
       <div>
         <label class="text-xs font-medium text-gray-600">Markup %</label>
@@ -686,10 +736,8 @@ if (!empty($product['sub_images'])) {
       </div>
     </div>
 
-    <!-- Hidden computed price field -->
     <input type="hidden" name="variant_price[${index}][]" value="0" class="computed-price-input" />
 
-    <!-- Row 3: Dimensions -->
     <div class="bg-white p-3 rounded mb-2">
       <label class="text-xs font-semibold text-gray-700 block mb-2">📏 Dimensions</label>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -717,7 +765,6 @@ if (!empty($product['sub_images'])) {
       </div>
     </div>
 
-    <!-- Row 4: Weight -->
     <div class="bg-white p-3 rounded mb-2">
       <label class="text-xs font-semibold text-gray-700 block mb-2">⚖️ Weight</label>
       <div class="grid grid-cols-2 gap-2">
@@ -737,7 +784,19 @@ if (!empty($product['sub_images'])) {
       </div>
     </div>
 
-    <!-- Remove Button -->
+    <div class="bg-white p-3 rounded mb-2 border-2 border-purple-200">
+      <label class="text-xs font-semibold text-gray-700 block mb-2">🎨 Available Colors & Stock</label>
+      <div id="new-variant-colors-${index}-new-combo" class="space-y-2">
+        <div class="flex gap-2 items-center">
+          <select name="new_variant_color[${index}][new-${Date.now()}][]" class="border p-2 rounded text-sm flex-1">
+            <option value="">-- Select a Color --</option>
+          </select>
+          <input type="number" name="new_variant_color_stock[${index}][new-${Date.now()}][]" placeholder="Stock qty" value="0" class="border p-2 w-32 rounded text-sm font-semibold" min="0" required />
+          <button type="button" class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 whitespace-nowrap" onclick="addColorToVariant(${index}, 'new-combo')">+ Add</button>
+        </div>
+      </div>
+    </div>
+
     <div class="flex justify-end">
       <button type="button" onclick="removeVariant(this)" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Remove Variant</button>
     </div>
@@ -745,7 +804,6 @@ if (!empty($product['sub_images'])) {
 
       variantSection.appendChild(div);
 
-      // Add event listeners for price calculation
       const originalPriceInput = div.querySelector('.original-price-input');
       const percentInput = div.querySelector('.percent-input');
       const discountInput = div.querySelector('.discount-input');
@@ -791,15 +849,12 @@ if (!empty($product['sub_images'])) {
       const discount = parseFloat(discountInput.value) || 0;
 
       if (originalPrice > 0) {
-        // Calculate price after markup
         const priceAfterMarkup = originalPrice + (originalPrice * percent / 100);
         markupDisplay.textContent = '₱' + priceAfterMarkup.toFixed(2);
 
-        // Calculate final price after discount
         const finalPrice = priceAfterMarkup - (priceAfterMarkup * discount / 100);
         finalDisplay.textContent = '₱' + finalPrice.toFixed(2);
 
-        // Update the hidden computed price field (this is what gets saved to DB)
         if (computedPriceInput) {
           computedPriceInput.value = finalPrice.toFixed(2);
         }
@@ -812,9 +867,7 @@ if (!empty($product['sub_images'])) {
       }
     }
 
-    // Hook inputs on page load (existing data)
     document.addEventListener('DOMContentLoaded', () => {
-      // Process all existing variant rows
       document.querySelectorAll('.bg-blue-50.p-4.rounded.border.mb-3').forEach((variantDiv) => {
         const originalPriceInput = variantDiv.querySelector('.original-price-input');
         const percentInput = variantDiv.querySelector('.percent-input');
@@ -830,7 +883,6 @@ if (!empty($product['sub_images'])) {
           percentInput.addEventListener('input', hook);
           if (discountInput) discountInput.addEventListener('input', hook);
 
-          // Trigger initial display
           hook();
         }
       });

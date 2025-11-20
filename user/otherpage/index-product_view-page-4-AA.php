@@ -2,7 +2,6 @@
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
-// Sa taas ng file, kasama ng ibang includes
 
 include 'index-recent_views_handler-page-14.php';
 
@@ -38,7 +37,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
   $stmt->close();
 }
 
-
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 $user_email = $_SESSION['user_email'] ?? 'example@example.com';
 $user_picture = $_SESSION['user_picture'] ?? null;
@@ -55,7 +53,7 @@ if (!$product_id || !is_numeric($product_id) || $product_id <= 0) {
 // FETCH ORDER: PRODUCTS → PRODUCT_TYPES → PRODUCT_COLORS → PRODUCT_VARIANTS
 // ============================================================
 
-// ✅ STEP 1: FETCH FROM PRODUCTS TABLE - WITH ALL COLUMNS INCLUDING descriptionpic
+// ✅ STEP 1: FETCH FROM PRODUCTS TABLE
 $stmt = $conn->prepare("
   SELECT 
     id, 
@@ -102,8 +100,6 @@ if (!$product) {
   exit;
 }
 
-
-// ✅ Debug output - REMOVE after testing
 error_log("=== PRODUCT FETCH DEBUG ===");
 error_log("Product ID: " . $product['id']);
 error_log("Product Name: " . $product['product_name']);
@@ -111,10 +107,8 @@ error_log("Has descriptionpic: " . (!empty($product['descriptionpic']) ? 'YES ('
 error_log("Has product_images: " . (!empty($product['product_images']) ? 'YES (' . strlen($product['product_images']) . ' chars)' : 'NO'));
 error_log("Product Images Content: " . substr($product['product_images'] ?? '', 0, 100));
 
-// ✅ CREATE BACKUP OF ORIGINAL PRODUCT DATA
 $ORIGINAL_PRODUCT = $product;
 
-// ✅ Verify all descriptions
 for ($i = 1; $i <= 10; $i++) {
   $key = "descrip$i";
   error_log("$key: " . (!empty($product[$key]) ? htmlspecialchars($product[$key]) : 'EMPTY'));
@@ -142,27 +136,22 @@ if ($result->num_rows > 0) {
 }
 $stmt->close();
 
-// Determine display image and name
 $display_image = !empty($type_main_image) ? $type_main_image : $product['main_image'];
 $display_name = !empty($type_main_name) ? $type_main_name : $product['product_name'];
 
-// ✅ PROCESS PRODUCT IMAGES GALLERY (from product_images JSON)
+// ✅ PROCESS PRODUCT IMAGES GALLERY
 $product_images = [];
 
 if (!empty($product['product_images'])) {
-  // Decode JSON array
   $decoded_images = json_decode($product['product_images'], true);
 
   if (is_array($decoded_images) && !empty($decoded_images)) {
     foreach ($decoded_images as $idx => $imagePath) {
-      // Clean path (remove escaped slashes)
       $cleanPath = str_replace(['\\/', '\\'], ['/', ''], $imagePath);
       $cleanPath = trim($cleanPath, '/');
 
-      // Build full path for src attribute
       $imageSrc = "../../" . $cleanPath;
 
-      // Verify file exists before adding
       if (file_exists($imageSrc)) {
         $product_images[] = [
           'index' => $idx,
@@ -200,7 +189,7 @@ while ($row = $colors_result->fetch_assoc()) {
 }
 $stmt->close();
 
-// ✅ STEP 4: FETCH FROM PRODUCT_TYPES AND PRODUCT_VARIANTS TABLES (FIXED WITH STOCK)
+// ✅ STEP 4: FETCH VARIANTS WITH JUNCTION TABLE STOCK (ONLY ONE QUERY!)
 $stmt = $conn->prepare("
   SELECT 
     pt.id as type_id,
@@ -218,10 +207,14 @@ $stmt = $conn->prepare("
     pv.width,
     pv.height,
     pv.length,
-    pv.stock
+    pv.stock as variant_fallback_stock,
+    COALESCE(SUM(pvc.stock_quantity), 0) as total_variant_stock
   FROM product_types pt
   LEFT JOIN product_variants pv ON pt.id = pv.type_id 
+  LEFT JOIN product_variant_colors pvc ON pv.id = pvc.variant_id
   WHERE pt.product_id = ?
+  GROUP BY pv.id, pt.id, pt.type_name, pt.type_image, pv.namevariant, pv.color, pv.size, 
+           pv.price, pv.percent, pv.discount, pv.image, pv.sku_info, pv.width, pv.height, pv.length, pv.stock
   ORDER BY pt.id ASC, pv.size ASC
 ");
 $stmt->bind_param("i", $product_id);
@@ -240,7 +233,8 @@ while ($row = $types_result->fetch_assoc()) {
     ];
   }
   if ($row['variant_id']) {
-    // ✅ ADD stock to variant data
+    $stock = $row['total_variant_stock'] > 0 ? $row['total_variant_stock'] : $row['variant_fallback_stock'];
+
     $types_data[$type_name]['variants'][] = [
       'variant_id' => $row['variant_id'],
       'namevariant' => $row['namevariant'],
@@ -254,13 +248,53 @@ while ($row = $types_result->fetch_assoc()) {
       'width' => $row['width'] ?? 0,
       'height' => $row['height'] ?? 0,
       'length' => $row['length'] ?? 0,
-      'stock' => $row['stock'] ?? 0  // ✅ ADD THIS
+      'stock' => $stock
     ];
   }
 }
 $stmt->close();
 
-// ✅ FETCH RELATED PRODUCTS - Same pattern as your homepage query
+// ✅ FETCH VARIANT-COLOR COMBINATIONS WITH INDIVIDUAL STOCK FOR DYNAMIC DISPLAY
+$stmt_variant_colors = $conn->prepare("
+  SELECT 
+    pv.id as variant_id,
+    pv.size,
+    pc.id as color_id,
+    pc.color_name,
+    pvc.stock_quantity,
+    pvc.id as junction_id
+  FROM product_variant_colors pvc
+  JOIN product_variants pv ON pvc.variant_id = pv.id
+  JOIN product_colors pc ON pvc.color_id = pc.id
+  WHERE pv.type_id IN (
+    SELECT id FROM product_types WHERE product_id = ?
+  )
+  ORDER BY pv.id, pc.color_name
+");
+$stmt_variant_colors->bind_param("i", $product_id);
+$stmt_variant_colors->execute();
+$variant_colors_result = $stmt_variant_colors->get_result();
+
+// Create nested array: variant_id => [color_id => stock]
+$variant_color_stock_map = [];
+while ($row = $variant_colors_result->fetch_assoc()) {
+  $variant_id = $row['variant_id'];
+  $color_id = $row['color_id'];
+  $stock = intval($row['stock_quantity']);
+
+  if (!isset($variant_color_stock_map[$variant_id])) {
+    $variant_color_stock_map[$variant_id] = [];
+  }
+
+  $variant_color_stock_map[$variant_id][$color_id] = $stock;
+}
+$stmt_variant_colors->close();
+
+$stock_json = json_encode($variant_color_stock_map);
+
+error_log("Stock map: " . $stock_json);
+
+// ✅ FETCH RELATED PRODUCTS
 $codename = $product['codename'];
 $stmt = $conn->prepare("
   SELECT 
@@ -297,11 +331,9 @@ $stmt->execute();
 $related_products = $stmt->get_result();
 $stmt->close();
 
-
 // ✅ CHECK IF WINDOWS CATEGORY
 $is_windows_category = strtolower($product['codename']) === 'windows';
 
-// ✅ USE ALREADY FETCHED PRODUCT DATA FOR SPECIFICATIONS
 $product_specs = $product;
 
 // ✅ GET AVERAGE RATING
@@ -317,7 +349,6 @@ $avg_rating = $avg_data['avg_rating'] ?? 0;
 $total_raters = $avg_data['total_raters'] ?? 0;
 $avg_stmt->close();
 
-// ✅ FINAL VALIDATION: Ensure product data is intact
 if (!isset($product['product_name']) || empty($product['product_name'])) {
   error_log("⚠️ WARNING: Product name missing! Using backup data.");
   $product = $ORIGINAL_PRODUCT;
@@ -1001,35 +1032,35 @@ $is_guest = !isset($_SESSION['user_id']);
 
               <!-- Product Name & Price Display -->
               <div>
-            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center justify-between gap-4">
 
-  <!-- PRODUCT NAME -->
-  <h1 class="text-xl sm:text-2xl lg:text-3xl text-black font-bold">
-    <?php
-    $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
-    echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
-    ?>
-  </h1>
+                  <!-- PRODUCT NAME -->
+                  <h1 class="text-xl sm:text-2xl lg:text-3xl text-black font-bold">
+                    <?php
+                    $safe_product = isset($ORIGINAL_PRODUCT) ? $ORIGINAL_PRODUCT : $product;
+                    echo htmlspecialchars($display_name ?? $safe_product['product_name'] ?? 'Product');
+                    ?>
+                  </h1>
 
-  <!-- RIGHT SIDE BUTTONS -->
-  <div class="flex items-center gap-3">
+                  <!-- RIGHT SIDE BUTTONS -->
+                  <div class="flex items-center gap-3">
 
-    <!-- Share -->
-    <button onclick="shareProduct()" 
-            class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
-      <i class="fas fa-share-alt text-lg text-black"></i>
-      <span class="hidden sm:inline text-sm font-medium">Share</span>
-    </button>
+                    <!-- Share -->
+                    <button onclick="shareProduct()"
+                      class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
+                      <i class="fas fa-share-alt text-lg text-black"></i>
+                      <span class="hidden sm:inline text-sm font-medium">Share</span>
+                    </button>
 
-    <!-- Customer Service -->
-    <button onclick="window.location.href='#contact'"
-            class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
-      <i class="fas fa-headset text-lg text-black"></i>
-      <span class="hidden sm:inline text-sm font-medium">Customer Service</span>
-    </button>
+                    <!-- Customer Service -->
+                    <button onclick="window.location.href='#contact'"
+                      class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200 transition">
+                      <i class="fas fa-headset text-lg text-black"></i>
+                      <span class="hidden sm:inline text-sm font-medium">Customer Service</span>
+                    </button>
 
-  </div>
-</div>
+                  </div>
+                </div>
 
 
                 <div class="flex flex-wrap gap-2 mb-3 mt-2">
@@ -1116,12 +1147,17 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
             <?php endif; ?>
 
+            <!-- Store stock data as JSON for JavaScript -->
+            <script>
+              const variantColorStockMap = <?php echo $stock_json; ?>;
+              console.log('Stock Map Loaded:', variantColorStockMap);
+            </script>
+
             <!-- STEP 2: COLOR SELECTION -->
             <?php if (!empty($product_colors)): ?>
               <div class="step-section">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="text-base lg:text-xl font-semibold text-gray-800">
-
                     Choose Color
                   </h3>
                   <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
@@ -1148,15 +1184,19 @@ $is_guest = !isset($_SESSION['user_id']);
                         <button type="button"
                           onclick="selectColorFromGrid(<?= $color['id'] ?>, '<?= addslashes($color['color_name']) ?>', <?= $color['price'] ?>, '<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>', '<?= htmlspecialchars($color['color_code']) ?>')"
                           class="color-btn border-2 border-gray-300 hover:border-orange-500 bg-white rounded
-                           px-2 py-1.5 text-xs transition-all duration-200 text-center
-                           disabled:opacity-50 disabled:cursor-not-allowed w-full min-h-[32px]"
+               px-2 py-1.5 text-xs transition-all duration-200 text-center w-full min-h-[32px]"
                           data-color-id="<?= $color['id'] ?>"
                           data-color-name="<?= addslashes($color['color_name']) ?>"
                           data-price="<?= $color['price'] ?>"
                           data-color-code="<?= htmlspecialchars($color['color_code']) ?>"
-                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>"
-                          disabled>
-                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium"><?= htmlspecialchars($color['color_name']) ?></span>
+                          data-image="<?= !empty($color['image']) ? htmlspecialchars($color['image']) : '' ?>">
+                          <span class="text-gray-700 block truncate text-[10px] lg:text-[11px] leading-tight font-medium">
+                            <?= htmlspecialchars($color['color_name']) ?>
+                          </span>
+                          <!-- Stock indicator - Shows total stock for this color across ALL sizes -->
+                          <span class="color-stock-display text-[8px] lg:text-[9px] text-gray-500 font-semibold block mt-1">
+                            -
+                          </span>
                         </button>
                       <?php endforeach; ?>
                     </div>
@@ -1174,7 +1214,6 @@ $is_guest = !isset($_SESSION['user_id']);
             <div class="step-section">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base lg:text-xl font-semibold text-gray-800">
-
                   Choose Size
                 </h3>
                 <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
@@ -1195,14 +1234,15 @@ $is_guest = !isset($_SESSION['user_id']);
                           $price = floatval($variant['variant_price']);
                           $percent = floatval($variant['percent']);
                           $discount = floatval($variant['discount'] ?? 0);
-                          $stock = intval($variant['stock'] ?? 0);
+                          $stock = intval($variant['stock']);
                           $priceWithMarkup = $price + ($price * $percent / 100);
                           $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
                           $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
+                          $is_out_of_stock = $stock <= 0;
                           ?>
                           <button type="button"
-                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this);"
-                            class="variant-btn border-2 border-gray-300 hover:border-orange-500 bg-white rounded
+                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
+                            class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded
    px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
                             data-price="<?= $price ?>"
                             data-percent="<?= $percent ?>"
@@ -1212,7 +1252,8 @@ $is_guest = !isset($_SESSION['user_id']);
                             data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
                             data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
                             data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
-                            data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'>
+                            data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'
+                            <?= $is_out_of_stock ? 'disabled' : '' ?>>
 
                             <!-- Size Text -->
                             <div class="text-gray-700 text-[11px] font-medium leading-tight">
@@ -1240,6 +1281,86 @@ $is_guest = !isset($_SESSION['user_id']);
                   <?php endif; ?>
                 </div>
               <?php endforeach; ?>
+
+              <script>
+                // ✅ Show total stock for each color (sum of all variants)
+                function initializeColorStockDisplay() {
+                  console.log('Initializing color stock display...');
+
+                  document.querySelectorAll('.color-btn').forEach(btn => {
+                    const colorId = parseInt(btn.dataset.colorId);
+                    let totalStock = 0;
+
+                    // Sum stock across ALL variants for this color
+                    for (const variantId in variantColorStockMap) {
+                      const stock = variantColorStockMap[variantId][colorId] ?? 0;
+                      totalStock += stock;
+                    }
+
+                    console.log(`Color ${colorId} - Total stock across all sizes:`, totalStock);
+
+                    // Update display
+                    let stockSpan = btn.querySelector('.color-stock-display');
+                    if (stockSpan) {
+                      if (totalStock > 0) {
+                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-green-600 font-semibold block mt-1';
+                        stockSpan.textContent = totalStock + ' total';
+                      } else {
+                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
+                        stockSpan.textContent = 'OUT OF STOCK';
+                      }
+                    }
+                  });
+                }
+
+                // ✅ Update color stock display for SELECTED size
+                function updateColorStockDisplay() {
+                  const selectedVariantBtn = document.querySelector('.variant-btn.selected');
+
+                  if (!selectedVariantBtn) {
+                    // If no size selected, show total stock
+                    initializeColorStockDisplay();
+                    return;
+                  }
+
+                  const variantId = parseInt(selectedVariantBtn.dataset.variantId);
+
+                  console.log('Updating color display for variant:', variantId);
+                  console.log('Stock map:', variantColorStockMap);
+
+                  // Update ALL color buttons with their respective stock for THIS VARIANT
+                  document.querySelectorAll('.color-btn').forEach(btn => {
+                    const btnColorId = parseInt(btn.dataset.colorId);
+                    const btnStock = variantColorStockMap[variantId]?.[btnColorId] ?? 0;
+
+                    console.log(`Color ${btnColorId} for variant ${variantId} - Stock:`, btnStock);
+
+                    // Update the color button display
+                    let stockSpan = btn.querySelector('.color-stock-display');
+                    if (stockSpan) {
+                      if (btnStock > 0) {
+                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-green-600 font-semibold block mt-1';
+                        stockSpan.textContent = btnStock + ' avail';
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'border-red-300');
+                        btn.classList.add('border-gray-300', 'hover:border-orange-500');
+                        btn.disabled = false;
+                      } else {
+                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
+                        stockSpan.textContent = 'NOT AVAIL';
+                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'border-red-300');
+                        btn.classList.remove('border-gray-300', 'hover:border-orange-500');
+                        btn.disabled = true;
+                      }
+                    }
+                  });
+                }
+
+                // ✅ Initialize on page load
+                document.addEventListener('DOMContentLoaded', function() {
+                  initializeColorStockDisplay();
+                });
+              </script>
+
 
               <!-- Calculator Guide Display -->
               <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
@@ -1542,9 +1663,8 @@ $is_guest = !isset($_SESSION['user_id']);
 
             <!-- STEP 4: QUANTITY SELECTION -->
             <div class="step-section">
-              <div class="flex items-start justify-start mb-3">
+              <div class="flex items-start justify-start mb-2">
                 <h3 class="text-base lg:text-lg font-semibold text-gray-900">
-
                   Quantity
                 </h3>
               </div>
@@ -1577,7 +1697,7 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
 
               <!-- Quick Buttons -->
-              <div class="flex flex-wrap gap-2 justify-start">
+              <div class="flex flex-wrap gap-2 justify-start mb-3">
                 <button type="button" onclick="setQuantity(5)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">5</button>
                 <button type="button" onclick="setQuantity(10)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">10</button>
                 <button type="button" onclick="setQuantity(25)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">25</button>
@@ -2847,6 +2967,7 @@ $is_guest = !isset($_SESSION['user_id']);
   <?php endif; ?>
 
   <?php include '../navbar/footer.php'; ?>
+  <script src="js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime('js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
   <script src="js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime('js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
 </body>
 

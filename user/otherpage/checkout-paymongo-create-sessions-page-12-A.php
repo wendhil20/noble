@@ -48,6 +48,43 @@ try {
     $delivery_fee = floatval($input['delivery_fee'] ?? 0);
     $order_details = $input['order_details'] ?? [];
     
+    // ✅ NEW: Get referral discount data from SESSION (saved during checkout)
+    $referral_code = isset($_SESSION['applied_referral_code']) ? trim($_SESSION['applied_referral_code']) : null;
+    $referral_user_id = null;
+    $referral_discount = 0.00;
+    
+    // If referral code exists, validate and get discount info
+    if (!empty($referral_code)) {
+        $stmt = $conn->prepare("SELECT user_id, discount_type, discount_value 
+                               FROM referral_codes 
+                               WHERE referral_code = ? AND is_active = 1 AND discount_enabled = 1 
+                               LIMIT 1");
+        $stmt->bind_param("s", $referral_code);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $ref_data = $result->fetch_assoc();
+            $referral_user_id = $ref_data['user_id'];
+            
+            // Calculate discount based on subtotal (before VAT and delivery)
+            $subtotal = ($amount - $delivery_fee) / 1.12; // Remove VAT to get base
+            
+            if ($ref_data['discount_type'] === 'percentage') {
+                $referral_discount = $subtotal * ($ref_data['discount_value'] / 100);
+            } else {
+                $referral_discount = min($ref_data['discount_value'], $subtotal);
+            }
+        }
+        $stmt->close();
+    }
+    
+    error_log("=== PAYMONGO REFERRAL DEBUG ===");
+    error_log("Referral Code: " . ($referral_code ?? 'NONE'));
+    error_log("Referral Discount: ₱" . number_format($referral_discount, 2));
+    error_log("Referral User ID: " . ($referral_user_id ?? 'NONE'));
+    error_log("==============================");
+    
     // Extract order details with fallbacks to session
     $customer_name = trim($order_details['customer_name'] ?? $_SESSION['checkout_step1']['customer_name'] ?? '');
     $email = trim($order_details['email'] ?? $_SESSION['checkout_step1']['email'] ?? '');
@@ -166,75 +203,81 @@ $reference_no = 'NH' . mt_rand(9800000, 9899999);
     error_log("Reference: $reference_no, Amount: $amount");
     error_log("==================");
 
-    // ✅ INSERT ORDER
-    $insert_sql = "INSERT INTO orders (
-        user_id, 
-        customer_name, 
-        email, 
-        mobile, 
-        address, 
-        zipcode,
-        subtotal, 
-        delivery_fee, 
-        total, 
-        vat_amount,
-        discount,
-        mode_payment, 
-        payment_status, 
-        reference_no,
-        status,
-        delivery_type, 
-        assigned_vehicle_id, 
-        assigned_vehicle_type,
-        total_cubic_meters, 
-        total_weight_kg, 
-        total_width, 
-        total_height, 
-        total_length,
-        latitude,
-        longitude,
-        billing_address_id,
-        delivery_distance
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // ✅ INSERT ORDER WITH REFERRAL FIELDS
+$insert_sql = "INSERT INTO orders (
+    user_id, 
+    customer_name, 
+    email, 
+    mobile, 
+    address, 
+    zipcode,
+    subtotal, 
+    delivery_fee, 
+    total, 
+    vat_amount,
+    discount,
+    mode_payment, 
+    payment_status, 
+    reference_no,
+    status,
+    delivery_type, 
+    assigned_vehicle_id, 
+    assigned_vehicle_type,
+    total_cubic_meters, 
+    total_weight_kg, 
+    total_width, 
+    total_height, 
+    total_length,
+    latitude,
+    longitude,
+    billing_address_id,
+    delivery_distance,
+    referral_code,
+    referral_user_id,
+    referral_discount_amount
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($insert_sql);
-    if (!$stmt) {
-        throw new Exception('Prepare failed: ' . $conn->error);
-    }
+if (!$stmt) {
+    throw new Exception('Prepare failed: ' . $conn->error);
+}
 
-    // Type string for 27 parameters
-    $types = "isssssdddddsssssissdddddddi";
-    
-    $stmt->bind_param(
-        $types,
-        $user_id,                  // i
-        $customer_name,            // s
-        $email,                    // s
-        $mobile,                   // s
-        $address,                  // s
-        $zipcode,                  // s
-        $items_without_vat,        // d
-        $delivery_fee,             // d
-        $amount,                   // d
-        $vat_amount,               // d
-        $discount_amount,          // d
-        $payment_method,           // s
-        $payment_status,           // s
-        $reference_no,             // s
-        $order_status,             // s
-        $delivery_type,            // s
-        $assigned_vehicle_id,      // i (NULL if not validated)
-        $assigned_vehicle_type,    // s
-        $total_cubic_meters,       // d
-        $total_weight_kg,          // d
-        $total_width,              // d
-        $total_height,             // d
-        $total_length,             // d
-        $latitude,                 // d
-        $longitude,                // d
-        $billing_address_id,       // i
-        $delivery_distance         // d
-    );
+// Type string for 30 parameters (added 3 for referral)
+$types = "isssssdddddsssssissddddddidsid";
+
+$stmt->bind_param(
+    $types,
+    $user_id,                  // i
+    $customer_name,            // s
+    $email,                    // s
+    $mobile,                   // s
+    $address,                  // s
+    $zipcode,                  // s
+    $items_without_vat,        // d
+    $delivery_fee,             // d
+    $amount,                   // d
+    $vat_amount,               // d
+    $discount_amount,          // d
+    $payment_method,           // s
+    $payment_status,           // s
+    $reference_no,             // s
+    $order_status,             // s
+    $delivery_type,            // s
+    $assigned_vehicle_id,      // i (NULL if not validated)
+    $assigned_vehicle_type,    // s
+    $total_cubic_meters,       // d
+    $total_weight_kg,          // d
+    $total_width,              // d
+    $total_height,             // d
+    $total_length,             // d
+    $latitude,                 // d
+    $longitude,                // d
+    $billing_address_id,       // i
+    $delivery_distance,        // d
+    $referral_code,            // s ← NEW
+    $referral_user_id,         // i ← NEW
+    $referral_discount         // d ← NEW
+);
     
     if (!$stmt->execute()) {
         error_log("INSERT FAILED: " . $stmt->error);
@@ -415,15 +458,18 @@ $item_stmt->close();
     }
 
     // ✅ STORE IN SESSION
-    $_SESSION['pending_paymongo_order'] = [
-        'order_id' => $order_id,
-        'session_id' => $session_id,
-        'reference_no' => $reference_no,
-        'amount' => $amount
-    ];
+$_SESSION['pending_paymongo_order'] = [
+    'order_id' => $order_id,
+    'session_id' => $session_id,
+    'reference_no' => $reference_no,
+    'amount' => $amount
+];
 
-    ob_end_clean();
-    echo json_encode($paymongo_response);
+// ✅ Clear referral code after order is created (will be removed after payment confirmation)
+// Don't clear here - wait for payment success
+
+ob_end_clean();
+echo json_encode($paymongo_response);
 
 } catch (Exception $e) {
     ob_end_clean();

@@ -62,61 +62,39 @@ try {
         $stmt->close();
         
         if ($order_found) {
-    // Check payment status and update if needed
-    if ($order['payment_status'] === 'pending_paymongo') {
-    // ✅ NEW PAYMENT - Update status and clear cart ONLY ONCE
-    $update_stmt = $conn->prepare("
-        UPDATE orders 
-        SET payment_status = 'pending', updated_at = NOW() 
-        WHERE id = ? AND user_id = ?
-    ");
-    $update_stmt->bind_param("ii", $order['id'], $user_id);
-    
-    if ($update_stmt->execute()) {
-        $payment_success = true;
-        
-        // ✅ ONLY clear cart when status was 'pending_paymongo' (first-time success)
-        $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-        $cart_stmt->bind_param("i", $user_id);
-        $cart_stmt->execute();
-        $cart_stmt->close();
-        
-        $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
-    } else {
-        $error_message = "Failed to update payment status";
-    }
-    
-    $update_stmt->close();
-    
-} else if ($order['payment_status'] === 'pending') {
-    // ✅ Payment already completed - just show success (DON'T clear cart again)
-    $payment_success = true;
-    $_SESSION['checkout_notice'] = 'Order already completed!';
-        // ✅ NEW PAYMENT - Update status and clear cart ONLY ONCE
-        $update_stmt = $conn->prepare("
-            UPDATE orders 
-            SET payment_status = 'pending', updated_at = NOW() 
-            WHERE id = ? AND user_id = ?
-        ");
-        $update_stmt->bind_param("ii", $order['id'], $user_id);
-        
-        if ($update_stmt->execute()) {
-            $payment_success = true;
+            // ✅ CORRECTED: Since your orders start with 'pending' status
+            $payment_success = true; // Order found means payment was successful
             
-            // ✅ ONLY clear cart when status was 'pending_paymongo' (first-time success)
-            $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
-            $cart_stmt->bind_param("i", $user_id);
-            $cart_stmt->execute();
-            $cart_stmt->close();
+            // ✅ Check if this is the FIRST TIME visiting success page
+            // We use a flag in the order to track if cart was already cleared
+            if (!isset($_SESSION['paymongo_cart_cleared_' . $order['id']])) {
+                // ✅ FIRST-TIME SUCCESS - Clear cart and session
+                
+                // Clear cart
+                $cart_stmt = $conn->prepare("DELETE FROM user_cart_items WHERE user_id = ?");
+                $cart_stmt->bind_param("i", $user_id);
+                $cart_stmt->execute();
+                $cart_stmt->close();
+                
+                // ✅ Clear ALL checkout session data including referral code
+                unset($_SESSION['applied_referral_code']);
+                unset($_SESSION['checkout_step1']);
+                unset($_SESSION['checkout_step2']);
+                unset($_SESSION['checkout_step3']);
+                unset($_SESSION['pending_paymongo_order']);
+                unset($_SESSION['paymongo_order_data']);
+                
+                // ✅ Mark this order as processed to prevent clearing cart on page refresh
+                $_SESSION['paymongo_cart_cleared_' . $order['id']] = true;
+                
+                $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
+            } else {
+                // ✅ Page refresh - Don't clear cart again
+                $_SESSION['checkout_notice'] = 'Order already processed!';
+            }
             
-            $_SESSION['checkout_notice'] = 'PayMongo payment completed successfully!';
-        } else {
-            $error_message = "Failed to update payment status";
-        }
-        
-        $update_stmt->close();
-        
-    } else if ($order['payment_status'] === 'cancelled' || $order['payment_status'] === 'failed') {
+            // Check for failed/cancelled status
+            if ($order['payment_status'] === 'cancelled' || $order['payment_status'] === 'failed') {
         // ✅ Payment failed or cancelled - show error
         $payment_success = false;
         $error_message = "This payment was " . $order['payment_status'];
@@ -232,32 +210,77 @@ if ($order && !empty($order['reference_no'])) {
                     </div>
 
                     <!-- Payment Summary -->
-                    <div class="bg-blue-50 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                            </svg>
-                            Payment Summary
-                        </h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Items Subtotal:</span>
-                                <span class="font-medium">₱<?= number_format($order['subtotal'] ?? 0, 2) ?></span>
-                            </div>
-                            <?php if (isset($order['delivery_fee']) && $order['delivery_fee'] > 0): ?>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Delivery Fee:</span>
-                                <span class="font-medium">₱<?= number_format($order['delivery_fee'], 2) ?></span>
-                            </div>
-                            <?php endif; ?>
-                            <div class="border-t pt-3">
-                                <div class="flex justify-between text-lg">
-                                    <span class="font-bold text-gray-800">Total Paid:</span>
-                                    <span class="font-bold text-green-600">₱<?= number_format($order['total'], 2) ?></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="bg-blue-50 rounded-xl p-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+        </svg>
+        Payment Summary
+    </h3>
+    <div class="space-y-3">
+        <div class="flex justify-between">
+            <span class="text-gray-600">Items Subtotal:</span>
+            <span class="font-medium">₱<?= number_format($order['subtotal'] ?? 0, 2) ?></span>
+        </div>
+        
+        <!-- ✅ NEW: Show Referral Discount if applied -->
+        <?php if (isset($order['referral_code']) && !empty($order['referral_code']) && isset($order['referral_discount_amount']) && $order['referral_discount_amount'] > 0): ?>
+        <div class="flex justify-between text-purple-600 bg-purple-50 px-3 py-2 rounded-lg -mx-3">
+            <span class="font-medium flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"/>
+                </svg>
+                Referral Discount (<?= htmlspecialchars($order['referral_code']) ?>):
+            </span>
+            <span class="font-bold">-₱<?= number_format($order['referral_discount_amount'], 2) ?></span>
+        </div>
+        <?php endif; ?>
+        
+        <!-- ✅ NEW: Show VAT breakdown -->
+        <?php if (isset($order['vat_amount']) && $order['vat_amount'] > 0): ?>
+        <div class="flex justify-between text-sm">
+            <span class="text-gray-500">VAT (12%):</span>
+            <span class="text-gray-700">₱<?= number_format($order['vat_amount'], 2) ?></span>
+        </div>
+        <?php endif; ?>
+        
+        <?php if (isset($order['delivery_fee']) && $order['delivery_fee'] > 0): ?>
+        <div class="flex justify-between">
+            <span class="text-gray-600">Delivery Fee:</span>
+            <span class="font-medium">₱<?= number_format($order['delivery_fee'], 2) ?></span>
+        </div>
+        <?php endif; ?>
+        
+        <div class="border-t pt-3">
+            <div class="flex justify-between text-lg">
+                <span class="font-bold text-gray-800">Total Paid:</span>
+                <span class="font-bold text-green-600">₱<?= number_format($order['total'], 2) ?></span>
+            </div>
+        </div>
+        
+        <!-- ✅ NEW: Show total savings if discount was applied -->
+        <?php 
+        $total_savings = 0;
+        if (isset($order['referral_discount_amount'])) {
+            $total_savings += $order['referral_discount_amount'];
+        }
+        if ($total_savings > 0): 
+        ?>
+        <div class="bg-green-100 border border-green-300 rounded-lg p-3 mt-3">
+            <div class="flex justify-between items-center">
+                <span class="text-green-700 font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                    </svg>
+                    You Saved:
+                </span>
+                <span class="text-green-700 font-bold text-lg">₱<?= number_format($total_savings, 2) ?></span>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
                 </div>
 
                 <!-- Order Items -->
@@ -302,6 +325,34 @@ if ($order && !empty($order['reference_no'])) {
                     </div>
                 </div>
                 <?php endif; ?>
+
+                <!-- ✅ NEW: Referral Code Thank You Message -->
+<?php if (isset($order['referral_code']) && !empty($order['referral_code'])): ?>
+<div class="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-xl p-6 mb-8">
+    <div class="flex items-start">
+        <div class="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mr-4">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"/>
+            </svg>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-bold text-purple-900 mb-2">
+                🎉 Referral Code Applied!
+            </h3>
+            <p class="text-purple-700 mb-2">
+                You used referral code <strong class="bg-purple-200 px-2 py-1 rounded font-mono"><?= htmlspecialchars($order['referral_code']) ?></strong> 
+                and saved <strong class="text-green-700">₱<?= number_format($order['referral_discount_amount'], 2) ?></strong> on this order!
+            </p>
+            <p class="text-purple-600 text-sm">
+                Thank you for supporting our sales representatives. Your discount has been applied to this order.
+            </p>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- What's Next Section -->
+<div class="bg-blue-50 rounded-xl p-6 mb-8"></div>
 
                 <!-- What's Next Section -->
                 <div class="bg-blue-50 rounded-xl p-6 mb-8">

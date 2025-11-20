@@ -65,75 +65,81 @@ class PaymentSystem {
 
     // ✅ FIX: Dynamically manage 'required' attribute based on visibility
     switchPaymentMethod(method) {
-        console.log('Switching to payment method:', method);
+    console.log('Switching to payment method:', method);
+    
+    // Hide all payment fields
+    const bankFields = document.getElementById('bankTransferFields');
+    const paypalFields = document.getElementById('paypalFields'); 
+    const paymongoFields = document.getElementById('paymongoFields');
+    const qrFields = document.getElementById('qrPaymentFields');
+    
+    if (bankFields) bankFields.classList.add('hidden');
+    if (paypalFields) paypalFields.classList.add('hidden');
+    if (paymongoFields) paymongoFields.classList.add('hidden');
+    if (qrFields) qrFields.classList.add('hidden');
+
+    // ✅ Remove 'required' from ALL hidden fields
+    this.removeRequiredFromHidden();
+
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+    // Show relevant fields based on method
+    if (method === 'Bank Transfer') {
+        if (bankFields) {
+            bankFields.classList.remove('hidden');
+            this.renderBankTransferInterface();
+            // Wait for DOM update before setting required
+            setTimeout(() => this.setRequiredForBankTransfer(), 100);
+        }
+        if (placeOrderBtn) {
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            placeOrderBtn.textContent = 'Place Order';
+        }
         
-        // Hide all payment fields
-        const bankFields = document.getElementById('bankTransferFields');
-        const paypalFields = document.getElementById('paypalFields'); 
-        const paymongoFields = document.getElementById('paymongoFields');
-        const qrFields = document.getElementById('qrPaymentFields');
+    } else if (method === 'PayPal') {
+        if (paypalFields) {
+            paypalFields.classList.remove('hidden');
+            this.renderPayPalInterface();
+        }
+        if (placeOrderBtn) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            placeOrderBtn.textContent = 'Continue to PayPal';
+        }
         
-        if (bankFields) bankFields.classList.add('hidden');
-        if (paypalFields) paypalFields.classList.add('hidden');
-        if (paymongoFields) paymongoFields.classList.add('hidden');
-        if (qrFields) qrFields.classList.add('hidden');
-
-        // ✅ Remove 'required' from ALL hidden fields
-        this.removeRequiredFromHidden();
-
-        const placeOrderBtn = document.getElementById('placeOrderBtn');
-
-        // Show relevant fields based on method
-        if (method === 'Bank Transfer') {
-            if (bankFields) {
-                bankFields.classList.remove('hidden');
-                this.renderBankTransferInterface();
-                // ✅ Set required only for bank transfer fields
-                this.setRequiredForBankTransfer();
-            }
-            if (placeOrderBtn) {
-                placeOrderBtn.style.display = 'inline-block';
-                placeOrderBtn.disabled = true;
-                placeOrderBtn.textContent = 'Place Order';
-            }
-            
-        } else if (method === 'PayPal') {
-            if (paypalFields) {
-                paypalFields.classList.remove('hidden');
-                this.renderPayPalInterface();
-            }
-            if (placeOrderBtn) {
-                placeOrderBtn.style.display = 'inline-block';
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.textContent = 'Continue to PayPal';
-            }
-            
-        } else if (method === 'PayMongo') {
-            if (paymongoFields) {
-                paymongoFields.classList.remove('hidden');
-                this.renderPayMongoInterface();
-            }
-            if (placeOrderBtn) {
-                placeOrderBtn.style.display = 'inline-block';
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.textContent = 'Pay with PayMongo';
-            }
-            this.updatePayMongoAmount();
-            
-        } else if (method === 'QR Payment') {
-            if (qrFields) {
-                qrFields.classList.remove('hidden');
-                this.renderQRPaymentInterface();
-                // ✅ Set required only for QR payment fields
-                this.setRequiredForQRPayment();
-            }
-            if (placeOrderBtn) {
-                placeOrderBtn.style.display = 'inline-block';
-                placeOrderBtn.disabled = true;
-                placeOrderBtn.textContent = 'Place Order';
-            }
+    } else if (method === 'PayMongo') {
+        if (paymongoFields) {
+            paymongoFields.classList.remove('hidden');
+            this.renderPayMongoInterface();
+        }
+        if (placeOrderBtn) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            placeOrderBtn.textContent = 'Pay with PayMongo';
+        }
+        this.updatePayMongoAmount();
+        
+    } else if (method === 'QR Payment') {
+        if (qrFields) {
+            qrFields.classList.remove('hidden');
+            this.renderQRPaymentInterface();
+            // Wait for DOM update before setting required
+            setTimeout(() => this.setRequiredForQRPayment(), 100);
+        }
+        if (placeOrderBtn) {
+            placeOrderBtn.disabled = true;
+            placeOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            placeOrderBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            placeOrderBtn.textContent = 'Place Order';
         }
     }
+    
+    console.log(`✓ Switched to ${method}, button state:`, placeOrderBtn ? !placeOrderBtn.disabled : 'N/A');
+}
 
     // ✅ NEW: Remove 'required' from all payment method fields
     removeRequiredFromHidden() {
@@ -153,30 +159,43 @@ class PaymentSystem {
     }
 
     // ✅ NEW: Set required for Bank Transfer fields
-    setRequiredForBankTransfer() {
-        const bankRadios = document.querySelectorAll('input[name="bank_selection"]');
-        bankRadios.forEach(radio => radio.setAttribute('required', 'required'));
-        
-        // Screenshot will be set to required after bank is selected
-        console.log('✓ Set required for Bank Transfer fields');
+setRequiredForBankTransfer() {
+    const bankRadios = document.querySelectorAll('input[name="bank_selection"]');
+    bankRadios.forEach(radio => {
+        radio.setAttribute('required', 'required');
+        console.log('✓ Set required on bank radio:', radio.value);
+    });
+    
+    // Screenshot will be dynamically set to required after bank selection
+    const bankScreenshot = document.querySelector('input[name="payment_screenshot"]');
+    if (bankScreenshot) {
+        // Only set required after bank is selected - handled in bank-qr module
+        console.log('✓ Bank screenshot field found (will be required after bank selection)');
     }
+}
 
     // ✅ NEW: Set required for QR Payment fields
-    setRequiredForQRPayment() {
-        const qrRadios = document.querySelectorAll('input[name="qr_payment_selection"]');
-        qrRadios.forEach(radio => radio.setAttribute('required', 'required'));
-        
-        // Screenshot will be set to required after QR method is selected
-        console.log('✓ Set required for QR Payment fields');
+setRequiredForQRPayment() {
+    const qrRadios = document.querySelectorAll('input[name="qr_payment_selection"]');
+    qrRadios.forEach(radio => {
+        radio.setAttribute('required', 'required');
+        console.log('✓ Set required on QR radio:', radio.value);
+    });
+    
+    // Screenshot will be dynamically set to required after QR method selection
+    const qrScreenshot = document.querySelector('input[name="qr_payment_screenshot"]');
+    if (qrScreenshot) {
+        console.log('✓ QR screenshot field found (will be required after QR selection)');
     }
+}
 
     updatePayMongoAmount() {
-        const paymongoAmount = document.getElementById('paymongoAmount');
-        const grandTotal = document.getElementById('grandTotalDisplay');
-        if (paymongoAmount && grandTotal) {
-            paymongoAmount.textContent = grandTotal.textContent;
-        }
+    const paymongoAmount = document.getElementById('paymongoAmount');
+    if (paymongoAmount && window.grandTotal) {
+        const formatted = '₱' + parseFloat(window.grandTotal).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        paymongoAmount.textContent = formatted;
     }
+}
 
     renderPayMongoInterface() {
         const paymongoFields = document.getElementById('paymongoFields');
@@ -249,42 +268,61 @@ class PaymentSystem {
     }
 
     setupFormSubmission() {
-        const paymentForm = document.getElementById('paymentForm') || document.getElementById('checkoutForm');
-        if (!paymentForm) {
-            console.warn('⚠️ Payment form not found');
-            return;
+    const paymentForm = document.getElementById('paymentForm') || document.getElementById('checkoutForm');
+    if (!paymentForm) {
+        console.warn('⚠️ Payment form not found');
+        return;
+    }
+
+    console.log('✓ Form found:', paymentForm.id);
+
+    paymentForm.addEventListener('submit', (e) => {
+        if (this.isSubmitting) {
+            e.preventDefault();
+            console.log('⚠️ Already submitting, ignoring...');
+            return false;
         }
 
-        console.log('✓ Form found:', paymentForm.id);
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+        
+        if (!selectedMethod) {
+            e.preventDefault();
+            showNotification('Please select a payment method', 'error');
+            return false;
+        }
 
-        paymentForm.addEventListener('submit', (e) => {
-            if (this.isSubmitting) {
+        console.log('📝 Form submitted with method:', selectedMethod.value);
+
+        // Validate based on payment method
+        if (selectedMethod.value === 'Bank Transfer') {
+            const bankValid = window.bankQRModule ? window.bankQRModule.validateBankTransferForm() : false;
+            if (!bankValid) {
                 e.preventDefault();
+                showNotification('Please complete bank transfer details', 'error');
                 return false;
             }
-
-            const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
-            
-            if (!selectedMethod) {
+        } else if (selectedMethod.value === 'QR Payment') {
+            const qrValid = window.bankQRModule ? window.bankQRModule.validateQRPaymentForm() : false;
+            if (!qrValid) {
                 e.preventDefault();
-                showNotification('Please select a payment method', 'error');
+                showNotification('Please complete QR payment details', 'error');
                 return false;
             }
+        }
 
-            console.log('Form submitted with method:', selectedMethod.value);
+        // Handle PayMongo with AJAX
+        if (selectedMethod.value === 'PayMongo') {
+            e.preventDefault();
+            this.handlePayMongoPayment();
+            return false;
+        }
 
-            // Handle PayMongo with AJAX
-            if (selectedMethod.value === 'PayMongo') {
-                e.preventDefault();
-                this.handlePayMongoPayment();
-                return false;
-            }
-
-            // Let other methods submit normally
-            this.isSubmitting = true;
-            showNotification(`Processing ${selectedMethod.value}...`, 'info');
-        });
-    }
+        // Let other methods submit normally
+        this.isSubmitting = true;
+        showNotification(`Processing ${selectedMethod.value}...`, 'info', 2000);
+        console.log('✅ Form submission allowed for:', selectedMethod.value);
+    });
+}
 
   // FIXED handlePayMongoPayment() method
 // Replace the existing method in index-checkout-paymentquickFixPayment-page-12-4.js
@@ -300,41 +338,56 @@ async handlePayMongoPayment() {
     }
 
     try {
-        // Get grand total
+        // ✅ FIX: Get grand total from hidden input VALUE attribute, not textContent
         const grandTotalElement = document.getElementById('grandTotalDisplay');
         if (!grandTotalElement) {
-            throw new Error('Cannot find total amount');
+            throw new Error('Cannot find total amount element');
         }
         
-        const totalText = grandTotalElement.textContent.replace(/[₱,]/g, '').trim();
-        const amount = parseFloat(totalText);
+        // Read from the VALUE attribute (which contains the number)
+        const totalText = grandTotalElement.value || grandTotalElement.textContent;
+        const cleanedAmount = totalText.replace(/[₱,\s]/g, '').trim();
+        const amount = parseFloat(cleanedAmount);
+        
+        console.log('Debug - Grand Total Element:', grandTotalElement);
+        console.log('Debug - Total Text:', totalText);
+        console.log('Debug - Cleaned Amount:', cleanedAmount);
+        console.log('Debug - Parsed Amount:', amount);
         
         if (isNaN(amount) || amount <= 0) {
-            throw new Error('Invalid amount: ' + totalText);
+            throw new Error('Invalid amount: ' + cleanedAmount + ' (parsed: ' + amount + ')');
         }
 
-        // Get delivery fee
+        // ✅ Get delivery fee from window or hidden input
         let deliveryFee = 0;
-        const feeEl = document.getElementById('deliveryFee');
-        if (feeEl) {
-            deliveryFee = parseFloat(feeEl.value) || 0;
-        } else if (window.deliveryFee !== undefined) {
-            deliveryFee = parseFloat(window.deliveryFee) || 0;
+        if (window.deliveryFee !== undefined) {
+            deliveryFee = parseFloat(window.deliveryFee);
         }
 
-        // ✅ FIX: Get actual customer data from form
-        const formData = new FormData(document.getElementById('paymentForm'));
-        
-        // Get data from previous steps (these are in the PHP session)
-        // We need to extract them from the page or send them as hidden inputs
+        // ✅ Get vehicle data from hidden inputs
+        const vehicleData = {
+            assigned_vehicle_id: parseInt(document.getElementById('assignedVehicleId')?.value || '0'),
+            assigned_vehicle_type: document.getElementById('assignedVehicleType')?.value || '',
+            total_cubic_meters: parseFloat(document.getElementById('totalCubicMeters')?.value || '0'),
+            total_weight_kg: parseFloat(document.getElementById('totalWeightKg')?.value || '0'),
+            total_width: parseFloat(document.getElementById('totalWidth')?.value || '0'),
+            total_height: parseFloat(document.getElementById('totalHeight')?.value || '0'),
+            total_length: parseFloat(document.getElementById('totalLength')?.value || '0')
+        };
+
+        // ✅ Get referral code if applied
+        const referralCode = document.getElementById('referralCodeHidden')?.value || '';
+
         const requestData = {
             amount: amount,
             delivery_fee: deliveryFee,
-            // PayMongo session creation - actual data is in PHP session
-            // This will be retrieved by the PHP script from $_SESSION
+            order_details: {
+                ...vehicleData,
+                referral_code: referralCode
+            }
         };
 
-        console.log('Sending PayMongo request:', requestData);
+        console.log('✓ Sending PayMongo request:', requestData);
 
         const response = await fetch('checkout-paymongo-create-sessions-page-12-A.php', {
             method: 'POST',
@@ -345,14 +398,14 @@ async handlePayMongoPayment() {
         });
 
         const text = await response.text();
-        console.log('PayMongo response:', text);
+        console.log('PayMongo raw response:', text);
         
         let data;
         try {
             data = JSON.parse(text);
         } catch (e) {
-            console.error('Failed to parse JSON:', text);
-            throw new Error('Server returned invalid JSON');
+            console.error('❌ Failed to parse JSON:', text);
+            throw new Error('Server returned invalid response: ' + text.substring(0, 100));
         }
 
         if (data.error) {
@@ -361,15 +414,16 @@ async handlePayMongoPayment() {
 
         if (data.data && data.data.attributes && data.data.attributes.checkout_url) {
             console.log('✓ Redirecting to PayMongo:', data.data.attributes.checkout_url);
+            showNotification('Redirecting to payment gateway...', 'success', 2000);
             window.location.href = data.data.attributes.checkout_url;
         } else {
-            console.error('Invalid response structure:', data);
+            console.error('❌ Invalid response structure:', data);
             throw new Error('No checkout URL in response');
         }
 
     } catch (error) {
         console.error('❌ PayMongo error:', error);
-        showNotification('PayMongo error: ' + error.message, 'error');
+        showNotification('Payment error: ' + error.message, 'error', 5000);
         
         const placeOrderBtn = document.getElementById('placeOrderBtn');
         if (placeOrderBtn) {

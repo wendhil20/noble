@@ -536,70 +536,70 @@
             </div>
 
             <!-- Order Summary Card -->
-            <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-slide-in">
-                <div class="flex flex-col gap-4 sm:gap-6">
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <div class="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Order #<?= $order['id'] ?></h2>
-                            <p class="text-sm sm:text-base text-gray-600"><?= date('M j, Y g:i A', strtotime($order['created_at'])) ?></p>
-                            <p class="text-xs sm:text-sm text-gray-500"><?= count($order_items) ?> item(s)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between border-t pt-4">
-                        <div>
-                            <p class="text-2xl sm:text-3xl font-bold text-gray-900">₱<?= number_format($order['final_total'], 2) ?></p>
-                        </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <!-- Payment Status -->
-                            <span class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full
-                                <?php
-                                $payment_status = $order['payment_status'] ?? 'pending';
-                                switch (strtolower($payment_status)) {
-                                    case 'verified':
-                                        echo 'bg-green-100 text-green-800';
-                                        break;
-                                    case 'rejected':
-                                        echo 'bg-red-100 text-red-800';
-                                        break;
-                                    case 'pending':
-                                    default:
-                                        echo 'bg-yellow-100 text-yellow-800';
-                                        break;
-                                }
-                                ?>">
-                                Pay: <?= ucfirst($payment_status) ?>
-                            </span>
-                            
-                            <!-- Order Status -->
-    <span class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full
-        <?php
-        // Normalize status for comparison
-        $order_status = strtolower(str_replace(' ', '_', $order['status']));
-        if (in_array($order_status, ['delivered', 'picked_up'])) {
-            echo 'bg-green-100 text-green-800';
-        } elseif (in_array($order_status, ['out_for_delivery', 'out_for_pickup', 'ready_for_pickup'])) {
-            echo 'bg-blue-100 text-blue-800';
-        } elseif ($order_status === 'processing') {
-            echo 'bg-yellow-100 text-yellow-800';
-        } else {
-            echo 'bg-gray-100 text-gray-800';
-        }
-        ?>">
-        <?php
-        // Display the status nicely formatted
-        echo htmlspecialchars($order['status']);
-        ?>
-    </span>
-                        </div>
-                    </div>
-                </div>
+<div class="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-slide-in">
+    <div class="flex flex-col gap-4 sm:gap-6">
+        <div class="flex items-center gap-3 sm:gap-4">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
             </div>
+            <div class="flex-1">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Order #<?= $order['id'] ?></h2>
+                <p class="text-sm sm:text-base text-gray-600"><?= date('M j, Y g:i A', strtotime($order['created_at'])) ?></p>
+                <p class="text-xs sm:text-sm text-gray-500"><?= count($order_items) ?> item(s)</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-between border-t pt-4">
+            <div>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-900">₱<?= number_format($order['final_total'], 2) ?></p>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+                <!-- Payment Status -->
+                <span class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full
+                    <?php
+                    $payment_status = $order['payment_status'] ?? 'pending';
+                    switch (strtolower($payment_status)) {
+                        case 'verified':
+                            echo 'bg-green-100 text-green-800';
+                            break;
+                        case 'rejected':
+                            echo 'bg-red-100 text-red-800';
+                            break;
+                        case 'pending':
+                        default:
+                            echo 'bg-yellow-100 text-yellow-800';
+                            break;
+                    }
+                    ?>">
+                    Pay: <?= ucfirst($payment_status) ?>
+                </span>
+                
+                <!-- Order Status -->
+                <span class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full
+                    <?php
+                    // Normalize status for comparison
+                    $order_status = strtolower(str_replace(' ', '_', $order['status']));
+                    if (in_array($order_status, ['delivered', 'picked_up', 'completed'])) {
+                        echo 'bg-green-100 text-green-800';
+                    } elseif (in_array($order_status, ['out_for_delivery', 'out_for_pickup', 'ready_for_pickup'])) {
+                        echo 'bg-blue-100 text-blue-800';
+                    } elseif ($order_status === 'processing') {
+                        echo 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        echo 'bg-gray-100 text-gray-800';
+                    }
+                    ?>">
+                    <?php
+                    // Display the status nicely formatted
+                    echo htmlspecialchars($order['status']);
+                    ?>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- Delivery Route Map -->
             <?php if ($show_map): ?>
@@ -650,31 +650,49 @@
             <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-slide-in">
                 <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Order Status</h3>
                 
-                <!-- Desktop/Tablet Horizontal Steps -->
+               <!-- Desktop/Tablet Horizontal Steps -->
                 <div class="hidden sm:flex items-center justify-between relative">
                     <?php 
                     $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
                     $order_steps = getOrderStatusSteps($delivery_type);
-                    $current_order_index = getOrderStepIndex($order['status'], $delivery_type);
+                    
+                    // Normalize status for comparison
+                    $normalized_status = strtolower(str_replace(' ', '_', $order['status']));
+                    
+                    // If status is "completed", show all steps as completed
+                    if ($normalized_status === 'completed') {
+                        $current_order_index = count($order_steps); // All steps completed
+                    } else {
+                        $current_order_index = getOrderStepIndex($order['status'], $delivery_type);
+                    }
+                    
                     $step_count = 0;
                     $total_steps = count($order_steps);
                     
                     foreach ($order_steps as $step_key => $step_data): 
-                        $is_completed = $step_count <= $current_order_index;
-                        $is_current = $step_count === $current_order_index;
+                        $is_completed = $step_count < $current_order_index;
+                        $is_current = $step_count === $current_order_index && $normalized_status !== 'completed';
                         $is_last = $step_count === $total_steps - 1;
+                        
+                        // For completed orders, show the last step as completed
+                        if ($normalized_status === 'completed' && $is_last) {
+                            $is_completed = true;
+                            $is_current = false;
+                        }
                     ?>
                         <div class="flex flex-col items-center flex-1">
                             <!-- Status Circle -->
                             <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 z-10
                                 <?php 
                                 if ($is_completed) {
-                                    echo $is_current ? 'bg-primary text-white animate-pulse-slow' : 'bg-success text-white';
+                                    echo 'bg-success text-white';
+                                } elseif ($is_current) {
+                                    echo 'bg-primary text-white animate-pulse-slow';
                                 } else {
                                     echo 'bg-gray-200 text-gray-400';
                                 }
                                 ?>">
-                                <?php if ($is_completed && !$is_current): ?>
+                                <?php if ($is_completed): ?>
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                     </svg>
@@ -687,10 +705,10 @@
                             
                             <!-- Status Text -->
                             <div class="text-center">
-                                <h4 class="text-sm font-semibold <?= $is_completed ? 'text-gray-900' : 'text-gray-400' ?>">
+                                <h4 class="text-sm font-semibold <?= ($is_completed || $is_current) ? 'text-gray-900' : 'text-gray-400' ?>">
                                     <?= $step_data['name'] ?>
                                 </h4>
-                                <p class="text-xs <?= $is_completed ? 'text-gray-600' : 'text-gray-400' ?> mt-1">
+                                <p class="text-xs <?= ($is_completed || $is_current) ? 'text-gray-600' : 'text-gray-400' ?> mt-1">
                                     <?= $step_data['description'] ?>
                                 </p>
                                 <?php if ($is_current): ?>
@@ -703,7 +721,7 @@
                         
                         <!-- Connecting Line -->
                         <?php if (!$is_last): ?>
-                            <div class="flex-1 h-0.5 mx-4 <?= $is_completed && $step_count < $current_order_index ? 'bg-success' : 'bg-gray-200' ?>"></div>
+                            <div class="flex-1 h-0.5 mx-4 <?= $is_completed ? 'bg-success' : 'bg-gray-200' ?>"></div>
                         <?php endif; ?>
                         
                     <?php 
@@ -717,26 +735,48 @@
                     <?php 
                     $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
                     $order_steps = getOrderStatusSteps($delivery_type);
-                    $current_order_index = getOrderStepIndex($order['status'], $delivery_type);
+                    
+                    // Normalize status for comparison
+                    $normalized_status = strtolower(str_replace(' ', '_', $order['status']));
+                    
+                    // If status is "completed", show all steps as completed
+                    if ($normalized_status === 'completed') {
+                        $current_order_index = count($order_steps); // All steps completed
+                    } else {
+                        $current_order_index = getOrderStepIndex($order['status'], $delivery_type);
+                    }
+                    
                     $step_count = 0;
                     $total_steps = count($order_steps);
                     
                     foreach ($order_steps as $step_key => $step_data): 
-                        $is_completed = $step_count <= $current_order_index;
-                        $is_current = $step_count === $current_order_index;
+                        $is_completed = $step_count < $current_order_index;
+                        $is_current = $step_count === $current_order_index && $normalized_status !== 'completed';
                         $is_last = $step_count === $total_steps - 1;
+                        
+                        // For completed orders, show the last step as completed
+                        if ($normalized_status === 'completed' && $is_last) {
+                            $is_completed = true;
+                            $is_current = false;
+                        }
                     ?>
                         <div class="mobile-step-item">
                             <!-- Status Circle -->
                             <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
                                 <?php 
                                 if ($is_completed) {
-                                    echo $is_current ? 'bg-primary text-white animate-pulse-slow' : 'bg-success text-white';
+                                    echo 'bg-success text-white';
+                                } elseif ($is_current) {
+                                    echo 'bg-primary text-white animate-pulse-slow';
                                 } else {
                                     echo 'bg-gray-200 text-gray-400';
                                 }
                                 ?>">
-                                <?php if ($is_completed && !$is_current): ?>
+                                <?php if ($is_completed): ?>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                <?php else: ?>
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $step_data['icon'] ?>"/>
                                     </svg>
@@ -745,10 +785,10 @@
                             
                             <!-- Status Text -->
                             <div class="mobile-step-content">
-                                <h4 class="text-sm font-semibold <?= $is_completed ? 'text-gray-900' : 'text-gray-400' ?>">
+                                <h4 class="text-sm font-semibold <?= ($is_completed || $is_current) ? 'text-gray-900' : 'text-gray-400' ?>">
                                     <?= $step_data['name'] ?>
                                 </h4>
-                                <p class="text-xs <?= $is_completed ? 'text-gray-600' : 'text-gray-400' ?>">
+                                <p class="text-xs <?= ($is_completed || $is_current) ? 'text-gray-600' : 'text-gray-400' ?>">
                                     <?= $step_data['description'] ?>
                                 </p>
                                 <?php if ($is_current): ?>
@@ -761,7 +801,7 @@
                         
                         <!-- Vertical Connecting Line -->
                         <?php if (!$is_last): ?>
-                            <div class="mobile-step-line <?= $is_completed && $step_count < $current_order_index ? 'bg-success' : 'bg-gray-200' ?>"></div>
+                            <div class="mobile-step-line <?= $is_completed ? 'bg-success' : 'bg-gray-200' ?>"></div>
                         <?php endif; ?>
                         
                     <?php 
@@ -769,6 +809,142 @@
                     endforeach; 
                     ?>
                 </div>
+
+                <?php
+                // Check if order is fully delivered/picked up and eligible for feedback
+                $all_items_completed = true;
+                $delivery_type = strtolower($order['delivery_type'] ?? 'delivery');
+                $completion_status = ($delivery_type === 'pickup') ? 'picked_up' : 'delivered';
+                
+                foreach ($order_items as $item) {
+                    $item_status = strtolower($item['tracking_status'] ?? '');
+                    if ($item_status !== $completion_status) {
+                        $all_items_completed = false;
+                        break;
+                    }
+                }
+                
+                // Check if feedback already exists
+                $stmt = $conn->prepare("SELECT id, rating, feedback_text, delivery_rating, product_quality_rating, created_at FROM order_feedback WHERE order_id = ?");
+                $stmt->bind_param("i", $order_id);
+                $stmt->execute();
+                $feedback_result = $stmt->get_result();
+                $existing_feedback = $feedback_result->fetch_assoc();
+                $stmt->close();
+                
+                $order_status_lower = strtolower(str_replace(' ', '_', $order['status']));
+                $show_feedback_button = $all_items_completed && 
+                                        !in_array($order_status_lower, ['completed']) && 
+                                        !$existing_feedback;
+                ?>
+
+                <!-- Complete Order Button (shown when all items delivered but order not marked complete) -->
+                <?php if ($show_feedback_button): ?>
+                <div class="mt-6 border-t pt-6">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-green-900 mb-1">All items have been <?= $delivery_type === 'pickup' ? 'picked up' : 'delivered' ?>!</h4>
+                                <p class="text-sm text-green-700">Help us improve by sharing your experience with this order.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="openFeedbackModal()" 
+                            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                        Complete Order & Leave Feedback
+                    </button>
+                </div>
+                <?php endif; ?>
+
+                <!-- Show existing feedback -->
+                <?php if ($existing_feedback): ?>
+                <div class="mt-6 border-t pt-6">
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold text-green-800 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Order Completed
+                            </h4>
+                            <span class="text-xs text-green-600">
+                                <?= date('M j, Y', strtotime($existing_feedback['created_at'])) ?>
+                            </span>
+                        </div>
+                        
+                        <!-- Overall Rating -->
+                        <div class="mb-3">
+                            <p class="text-xs font-medium text-green-700 mb-1">Overall Experience</p>
+                            <div class="flex items-center gap-1">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <svg class="w-5 h-5 <?= $i <= $existing_feedback['rating'] ? 'text-yellow-400' : 'text-gray-300' ?>" 
+                                         fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                <?php endfor; ?>
+                                <span class="ml-2 text-sm font-semibold text-green-800"><?= $existing_feedback['rating'] ?>/5</span>
+                            </div>
+                        </div>
+
+                        <!-- Additional Ratings -->
+                        <?php if ($existing_feedback['delivery_rating'] || $existing_feedback['product_quality_rating']): ?>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <?php if ($existing_feedback['delivery_rating']): ?>
+                            <div>
+                                <p class="text-xs font-medium text-green-700 mb-1">
+                                    <?= $delivery_type === 'pickup' ? 'Pickup' : 'Delivery' ?> Service
+                                </p>
+                                <div class="flex items-center gap-1">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <svg class="w-4 h-4 <?= $i <= $existing_feedback['delivery_rating'] ? 'text-yellow-400' : 'text-gray-300' ?>" 
+                                             fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                        </svg>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if ($existing_feedback['product_quality_rating']): ?>
+                            <div>
+                                <p class="text-xs font-medium text-green-700 mb-1">Product Quality</p>
+                                <div class="flex items-center gap-1">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <svg class="w-4 h-4 <?= $i <= $existing_feedback['product_quality_rating'] ? 'text-yellow-400' : 'text-gray-300' ?>" 
+                                             fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                        </svg>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Feedback Text -->
+                        <?php if ($existing_feedback['feedback_text']): ?>
+                        <div class="border-t border-green-200 pt-3">
+                            <p class="text-sm text-green-700 italic">"<?= htmlspecialchars($existing_feedback['feedback_text']) ?>"</p>
+                        </div>
+                        <?php endif; ?>
+
+                        <p class="text-xs text-green-600 mt-3 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            Thank you for your feedback!
+                        </p>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Items List -->
@@ -1463,6 +1639,205 @@
                     }
                     <?php endif; ?>
                 }, 300);
+            });
+        </script>
+
+        <!-- Feedback Modal -->
+        <div id="feedbackModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900">Complete Your Order</h3>
+                        <button onclick="closeFeedbackModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="feedbackForm" class="space-y-6">
+                        <input type="hidden" name="order_id" value="<?= $order_id ?>">
+                        
+                        <!-- Overall Rating -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2">Overall Experience *</label>
+                            <div class="flex items-center gap-2">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('overall', <?= $i ?>)" 
+                                        class="rating-star overall-rating transition-all hover:scale-110" 
+                                        data-value="<?= $i ?>">
+                                    <svg class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </button>
+                                <?php endfor; ?>
+                                <span id="overallRatingText" class="ml-2 text-sm text-gray-600"></span>
+                            </div>
+                            <input type="hidden" name="rating" id="overallRatingInput" required>
+                        </div>
+
+                        <!-- Delivery Rating -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                <?= $delivery_type === 'pickup' ? 'Pickup' : 'Delivery' ?> Service
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('delivery', <?= $i ?>)" 
+                                        class="rating-star delivery-rating transition-all hover:scale-110" 
+                                        data-value="<?= $i ?>">
+                                    <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </button>
+                                <?php endfor; ?>
+                            </div>
+                            <input type="hidden" name="delivery_rating" id="deliveryRatingInput">
+                        </div>
+
+                        <!-- Product Quality Rating -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2">Product Quality</label>
+                            <div class="flex items-center gap-2">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('product', <?= $i ?>)" 
+                                        class="rating-star product-rating transition-all hover:scale-110" 
+                                        data-value="<?= $i ?>">
+                                    <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </button>
+                                <?php endfor; ?>
+                            </div>
+                            <input type="hidden" name="product_quality_rating" id="productRatingInput">
+                        </div>
+
+                        <!-- Feedback Text -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                Your Feedback (Optional)
+                            </label>
+                            <textarea name="feedback_text" 
+                                      rows="4" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                      placeholder="Share your experience with us..."></textarea>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="feedbackError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm"></div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-3">
+                            <button type="button" 
+                                    onclick="closeFeedbackModal()" 
+                                    class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    id="submitFeedbackBtn"
+                                    class="flex-1 bg-gradient-to-r from-primary to-secondary text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transition-all">
+                                Submit & Complete Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Rating functionality
+            const ratingLabels = {
+                1: 'Poor',
+                2: 'Fair',
+                3: 'Good',
+                4: 'Very Good',
+                5: 'Excellent'
+            };
+
+            function setRating(type, value) {
+                const stars = document.querySelectorAll(`.${type}-rating`);
+                const input = document.getElementById(`${type}RatingInput`);
+                
+                stars.forEach((star, index) => {
+                    const svg = star.querySelector('svg');
+                    if (index < value) {
+                        svg.classList.remove('text-gray-300');
+                        svg.classList.add('text-yellow-400');
+                    } else {
+                        svg.classList.remove('text-yellow-400');
+                        svg.classList.add('text-gray-300');
+                    }
+                });
+                
+                input.value = value;
+                
+                if (type === 'overall') {
+                    document.getElementById('overallRatingText').textContent = ratingLabels[value];
+                }
+            }
+
+            function openFeedbackModal() {
+                document.getElementById('feedbackModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeFeedbackModal() {
+                document.getElementById('feedbackModal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+
+            // Handle form submission
+            document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const overallRating = document.getElementById('overallRatingInput').value;
+                
+                if (!overallRating) {
+                    document.getElementById('feedbackError').textContent = 'Please provide an overall rating';
+                    document.getElementById('feedbackError').classList.remove('hidden');
+                    return;
+                }
+                
+                document.getElementById('feedbackError').classList.add('hidden');
+                const submitBtn = document.getElementById('submitFeedbackBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch('submit_feedback.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        closeFeedbackModal();
+                        // Show success message and reload
+                        alert('Thank you for your feedback! Your order has been completed.');
+                        window.location.reload();
+                    } else {
+                        document.getElementById('feedbackError').textContent = result.message || 'Failed to submit feedback';
+                        document.getElementById('feedbackError').classList.remove('hidden');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit & Complete Order';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('feedbackError').textContent = 'An error occurred. Please try again.';
+                    document.getElementById('feedbackError').classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit & Complete Order';
+                }
+            });
+
+            // Close modal on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeFeedbackModal();
+                }
             });
         </script>
     </body>

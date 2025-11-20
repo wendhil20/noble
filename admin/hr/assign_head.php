@@ -14,6 +14,7 @@ $department_subroles = [
     'sales' => [
     ],
     'accountant' => [
+        'document_controller'
     ],
     'hr' => [
     ],

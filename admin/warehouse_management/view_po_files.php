@@ -33,7 +33,14 @@ if (!$order) {
 }
 
 // Get P.O. attachments
-$attachmentsSql = "SELECT * FROM po_attachments WHERE order_id = ? ORDER BY supplier_name, uploaded_at DESC";
+$attachmentsSql = "SELECT pa.*, 
+                   requester.fullname as requested_by_name,
+                   approver.fullname as approved_by_name
+                   FROM po_attachments pa
+                   LEFT JOIN nobleaccount requester ON pa.approval_requested_by = requester.id
+                   LEFT JOIN nobleaccount approver ON pa.approved_by = approver.id
+                   WHERE pa.order_id = ? 
+                   ORDER BY pa.supplier_name, pa.uploaded_at DESC";
 $attachmentsStmt = $conn->prepare($attachmentsSql);
 $attachmentsStmt->bind_param("i", $order_id);
 $attachmentsStmt->execute();
@@ -69,6 +76,58 @@ if (isset($_GET['download']) && isset($_GET['file_id'])) {
     } else {
         $error_message = "File not found or has been deleted.";
     }
+}
+
+// Handle mark as ordered
+if (isset($_POST['mark_as_ordered'])) {
+    $file_ids = isset($_POST['file_ids']) ? $_POST['file_ids'] : [];
+    $current_user_id = $_SESSION['noble_id'] ?? 0;
+    
+    if (!empty($file_ids)) {
+        $file_ids_str = implode(',', array_map('intval', $file_ids));
+        
+        $markSql = "UPDATE po_attachments 
+                    SET marked_as_ordered = 1,
+                        marked_as_ordered_at = NOW(),
+                        marked_as_ordered_by = ?
+                    WHERE id IN ($file_ids_str) 
+                    AND order_id = ? 
+                    AND approval_status = 'approved'";
+        $markStmt = $conn->prepare($markSql);
+        $markStmt->bind_param("ii", $current_user_id, $order_id);
+        
+        if ($markStmt->execute()) {
+            $success_message = "P.O. file(s) marked as ordered successfully.";
+            header("Location: view_po_files.php?order_id=" . $order_id);
+            exit();
+        } else {
+            $error_message = "Failed to mark files as ordered.";
+        }
+        $markStmt->close();
+    }
+}
+
+// Handle approval request
+if (isset($_POST['request_approval'])) {
+    $file_id = (int)$_POST['file_id'];
+    $current_user_id = $_SESSION['noble_id'] ?? 0;
+    
+    $requestSql = "UPDATE po_attachments 
+                   SET approval_status = 'pending', 
+                       approval_requested_at = NOW(),
+                       approval_requested_by = ?
+                   WHERE id = ? AND order_id = ?";
+    $requestStmt = $conn->prepare($requestSql);
+    $requestStmt->bind_param("iii", $current_user_id, $file_id, $order_id);
+    
+    if ($requestStmt->execute()) {
+        $success_message = "Approval request submitted successfully.";
+        header("Location: view_po_files.php?order_id=" . $order_id);
+        exit();
+    } else {
+        $error_message = "Failed to submit approval request.";
+    }
+    $requestStmt->close();
 }
 
 // Handle file deletion
@@ -199,6 +258,92 @@ if (isset($_POST['delete_file'])) {
             </div>
         </div>
 
+        <!-- Statistics and Filter Section -->
+        <?php
+        // Count approved files ready to order
+        $approvedCount = 0;
+        $pendingCount = 0;
+        $orderedCount = 0;
+        $totalFiles = count($attachments);
+        
+        foreach ($attachments as $att) {
+            if ($att['approval_status'] == 'approved' && $att['marked_as_ordered'] == 0) {
+                $approvedCount++;
+            } elseif ($att['approval_status'] == 'pending') {
+                $pendingCount++;
+            } elseif ($att['marked_as_ordered'] == 1) {
+                $orderedCount++;
+            }
+        }
+        
+        $allApproved = ($approvedCount > 0 && $pendingCount == 0);
+        ?>
+        
+        <?php if ($totalFiles > 0): ?>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center space-x-4">
+                    <h3 class="text-lg font-bold text-gray-900">P.O. Status Overview</h3>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <?php if ($approvedCount > 0): ?>
+                        <div class="bg-green-50 border border-green-200 px-4 py-2 rounded-lg">
+                            <span class="text-green-700 font-medium">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                <?php echo $approvedCount; ?> Ready to Order
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($pendingCount > 0): ?>
+                        <div class="bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-lg">
+                            <span class="text-yellow-700 font-medium">
+                                <i class="fas fa-clock mr-1"></i>
+                                <?php echo $pendingCount; ?> Pending Approval
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($orderedCount > 0): ?>
+                        <div class="bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg">
+                            <span class="text-blue-700 font-medium">
+                                <i class="fas fa-shipping-fast mr-1"></i>
+                                <?php echo $orderedCount; ?> Already Ordered
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Filter Dropdown -->
+                    <select id="statusFilter" onchange="filterFiles()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Files</option>
+                        <option value="ready">Ready to Order</option>
+                        <option value="pending">Pending Approval</option>
+                        <option value="ordered">Already Ordered</option>
+                    </select>
+                </div>
+            </div>
+            
+            <?php if ($allApproved): ?>
+                <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-600 text-2xl mr-3"></i>
+                        <div>
+                            <p class="font-semibold text-green-900">All P.O. Files Approved!</p>
+                            <p class="text-sm text-green-700">You can now mark this order as sent to suppliers.</p>
+                        </div>
+                    </div>
+                    <button onclick="markAllAsOrdered()" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2 font-medium">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Mark All as Ordered</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
         <!-- P.O. Files by Supplier -->
         <?php if (!empty($attachmentsBySupplier)): ?>
             <div class="space-y-6">
@@ -218,7 +363,9 @@ if (isset($_POST['delete_file'])) {
                         <div class="p-6">
                             <div class="space-y-4">
                                 <?php foreach ($supplierFiles as $file): ?>
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="file-card flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
+                                         data-status="<?php echo $file['approval_status']; ?>"
+                                         data-ordered="<?php echo $file['marked_as_ordered']; ?>">
                                         <div class="flex items-center space-x-3">
                                             <div class="bg-green-100 p-2 rounded-lg">
                                                 <i class="fas fa-file-excel text-green-600 text-xl"></i>
@@ -232,17 +379,65 @@ if (isset($_POST['delete_file'])) {
                                             </div>
                                         </div>
                                         <div class="flex items-center space-x-2">
-                                            <a href="?order_id=<?php echo $order_id; ?>&download=1&file_id=<?php echo $file['id']; ?>" 
-                                               class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-                                                <i class="fas fa-download"></i>
-                                                <span>Download</span>
-                                            </a>
-                                            <button onclick="confirmDelete(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
-                                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-                                                <i class="fas fa-trash"></i>
-                                                <span>Delete</span>
-                                            </button>
-                                        </div>
+    <!-- Ordered Badge -->
+    <?php if ($file['marked_as_ordered'] == 1): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+            <i class="fas fa-shipping-fast mr-1"></i>
+            Ordered on <?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>
+        </span>
+    <?php endif; ?>
+    
+    <!-- Approval Status Badge -->
+    <?php if ($file['approval_status'] == 'pending'): ?>
+        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+            <i class="fas fa-clock mr-1"></i>
+            Pending Approval
+        </span>
+    <?php elseif ($file['approval_status'] == 'approved'): ?>
+        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+            <i class="fas fa-check-circle mr-1"></i>
+            Approved
+        </span>
+    <?php elseif ($file['approval_status'] == 'rejected'): ?>
+        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+            <i class="fas fa-times-circle mr-1"></i>
+            Rejected
+        </span>
+    <?php endif; ?>
+    
+    <a href="?order_id=<?php echo $order_id; ?>&download=1&file_id=<?php echo $file['id']; ?>" 
+       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+        <i class="fas fa-download"></i>
+        <span>Download</span>
+    </a>
+    
+    <?php if ($file['marked_as_ordered'] == 0): ?>
+        <?php if ($file['approval_status'] != 'pending' && $file['approval_requested_at'] == null): ?>
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
+                <button type="submit" name="request_approval"
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+                    <i class="fas fa-check"></i>
+                    <span>Request Approval</span>
+                </button>
+            </form>
+        <?php endif; ?>
+        
+        <?php if ($file['approval_status'] == 'approved'): ?>
+            <button onclick="markSingleAsOrdered(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                    class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+                <i class="fas fa-paper-plane"></i>
+                <span>Mark as Ordered</span>
+            </button>
+        <?php endif; ?>
+    <?php endif; ?>
+    
+    <button onclick="confirmDelete(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+            class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+        <i class="fas fa-trash"></i>
+        <span>Delete</span>
+    </button>
+</div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -292,6 +487,77 @@ if (isset($_POST['delete_file'])) {
         </div>
     </div>
 
+    <!-- Mark as Ordered Modal (Single File) -->
+    <div id="markOrderedModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form method="POST">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-purple-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-paper-plane text-purple-600 text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900">Mark as Ordered</h3>
+                        </div>
+                        <p class="text-gray-600 mb-6">
+                            Are you sure you want to mark <strong id="orderedFileName"></strong> as ordered? 
+                            This means you have already sent this P.O. to the supplier.
+                        </p>
+                        <input type="hidden" name="file_ids[]" id="orderedFileId">
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="closeMarkOrderedModal()" 
+                                    class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                                Cancel
+                            </button>
+                            <button type="submit" name="mark_as_ordered" 
+                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                                <i class="fas fa-paper-plane mr-2"></i>Mark as Ordered
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark All as Ordered Modal -->
+    <div id="markAllOrderedModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form method="POST">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-green-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-paper-plane text-green-600 text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900">Mark All as Ordered</h3>
+                        </div>
+                        <p class="text-gray-600 mb-4">
+                            Are you sure you want to mark <strong>all approved P.O. files</strong> as ordered?
+                        </p>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                            <p class="text-sm text-blue-800">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                This will mark <strong><?php echo $approvedCount; ?> file(s)</strong> as sent to suppliers.
+                            </p>
+                        </div>
+                        <div id="markAllFileIds"></div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="closeMarkAllOrderedModal()" 
+                                    class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                                Cancel
+                            </button>
+                            <button type="submit" name="mark_as_ordered" 
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                                <i class="fas fa-paper-plane mr-2"></i>Mark All as Ordered
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         function confirmDelete(fileId, fileName) {
             document.getElementById('deleteFileId').value = fileId;
@@ -303,11 +569,86 @@ if (isset($_POST['delete_file'])) {
             document.getElementById('deleteModal').classList.add('hidden');
         }
 
-        // Close modal when clicking outside
+        function markSingleAsOrdered(fileId, fileName) {
+            document.getElementById('orderedFileId').value = fileId;
+            document.getElementById('orderedFileName').textContent = fileName;
+            document.getElementById('markOrderedModal').classList.remove('hidden');
+        }
+
+        function closeMarkOrderedModal() {
+            document.getElementById('markOrderedModal').classList.add('hidden');
+        }
+
+        function markAllAsOrdered() {
+            // Get all approved file IDs
+            const approvedFiles = <?php 
+                $approvedFileIds = [];
+                foreach ($attachments as $att) {
+                    if ($att['approval_status'] == 'approved' && $att['marked_as_ordered'] == 0) {
+                        $approvedFileIds[] = $att['id'];
+                    }
+                }
+                echo json_encode($approvedFileIds);
+            ?>;
+            
+            // Add hidden inputs for all file IDs
+            const container = document.getElementById('markAllFileIds');
+            container.innerHTML = '';
+            approvedFiles.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'file_ids[]';
+                input.value = id;
+                container.appendChild(input);
+            });
+            
+            document.getElementById('markAllOrderedModal').classList.remove('hidden');
+        }
+
+        function closeMarkAllOrderedModal() {
+            document.getElementById('markAllOrderedModal').classList.add('hidden');
+        }
+
+        // Filter files by status
+        function filterFiles() {
+            const filter = document.getElementById('statusFilter').value;
+            const fileCards = document.querySelectorAll('.file-card');
+            
+            fileCards.forEach(card => {
+                const status = card.getAttribute('data-status');
+                const ordered = card.getAttribute('data-ordered');
+                
+                let show = false;
+                
+                if (filter === 'all') {
+                    show = true;
+                } else if (filter === 'ready') {
+                    show = (status === 'approved' && ordered === '0');
+                } else if (filter === 'pending') {
+                    show = (status === 'pending');
+                } else if (filter === 'ordered') {
+                    show = (ordered === '1');
+                }
+                
+                if (show) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Close modals when clicking outside
         document.getElementById('deleteModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDeleteModal();
-            }
+            if (e.target === this) closeDeleteModal();
+        });
+
+        document.getElementById('markOrderedModal').addEventListener('click', function(e) {
+            if (e.target === this) closeMarkOrderedModal();
+        });
+
+        document.getElementById('markAllOrderedModal').addEventListener('click', function(e) {
+            if (e.target === this) closeMarkAllOrderedModal();
         });
     </script>
 </body>

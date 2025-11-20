@@ -128,6 +128,7 @@ $show_replacements = isset($_GET['replacements']) ? (bool)$_GET['replacements'] 
 $show_ready_for_schedule = isset($_GET['ready_schedule']) ? (bool)$_GET['ready_schedule'] : false;
 $show_defects = isset($_GET['defects']) ? (bool)$_GET['defects'] : false;
 $show_ready_replacements = isset($_GET['ready_replacements']) ? (bool)$_GET['ready_replacements'] : false;
+$show_ready_to_order = isset($_GET['ready_to_order']) ? (bool)$_GET['ready_to_order'] : false;
 
 // --- Build WHERE conditions ---
 // IMPORTANT: We ALWAYS restrict by warehouse_employee_id = logged in user
@@ -136,7 +137,7 @@ $params = [$user_id];
 $types = 'i';
 
 // For "My Orders" (no status filter), only show orders that are NOT 100% assigned
-if ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements) {
+if ($status_filter === '' && !$show_replacements && !$show_ready_for_schedule && !$show_defects && !$show_ready_replacements && !$show_ready_to_order) {
     $whereParts[] = "(
         (SELECT COUNT(*) FROM order_items oi_check 
          WHERE oi_check.order_id = o.id 
@@ -218,6 +219,16 @@ if ($show_ready_replacements) {
         WHERE rr4.order_id = o.id 
         AND rr4.status IN ('approved', 'processing', 'In Warehouse')
     ) > 0";
+}
+
+// Add ready to order filter
+if ($show_ready_to_order) {
+    $whereParts[] = "EXISTS (
+        SELECT 1 FROM po_attachments pa 
+        WHERE pa.order_id = o.id 
+        AND pa.approval_status = 'approved'
+        AND pa.marked_as_ordered = 0
+    )";
 }
 
 $whereClause = 'WHERE ' . implode(' AND ', $whereParts);
@@ -623,6 +634,46 @@ if ($defectsOrdersCount > 0): ?>
                             <?php endif; ?>
                         </a>
                     <?php endif; ?>
+
+<!-- Ready to Order Filter - NEW -->
+<?php 
+$readyToOrderCountSql = "
+    SELECT COUNT(DISTINCT o.id) as count 
+    FROM orders o 
+    WHERE o.warehouse_employee_id = ? 
+    AND EXISTS (
+        SELECT 1 FROM po_attachments pa 
+        WHERE pa.order_id = o.id 
+        AND pa.approval_status = 'approved'
+        AND pa.marked_as_ordered = 0
+    )
+";
+$readyToOrderFilterCount = 0;
+if ($stmt_ready_order = $conn->prepare($readyToOrderCountSql)) {
+    $stmt_ready_order->bind_param("i", $user_id);
+    $stmt_ready_order->execute();
+    $r_ready_order = $stmt_ready_order->get_result();
+    if ($r_ready_order) {
+        $readyOrderResult = $r_ready_order->fetch_assoc();
+        $readyToOrderFilterCount = (int)$readyOrderResult['count'];
+    }
+    $stmt_ready_order->close();
+}
+
+$show_ready_to_order = isset($_GET['ready_to_order']) ? (bool)$_GET['ready_to_order'] : false;
+
+if ($readyToOrderFilterCount > 0): ?>
+    <a href="?ready_to_order=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 relative <?php echo $show_ready_to_order ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200 pulse-notification'; ?>">
+        <i class="fas fa-bell mr-1"></i>
+        Ready to Order (<?php echo $readyToOrderFilterCount; ?>)
+        <?php if (!$show_ready_to_order): ?>
+            <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full animate-ping"></span>
+            <span class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
+        <?php endif; ?>
+    </a>
+<?php endif; ?>
+
                     <!-- Replacements Ready for Schedule Filter - NEW -->
 <?php if ($readyReplacementsCount > 0): ?>
     <a href="?ready_replacements=1<?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?><?php echo !empty($date_from) ? '&date_from=' . urlencode($date_from) : ''; ?><?php echo !empty($date_to) ? '&date_to=' . urlencode($date_to) : ''; ?>"
@@ -782,21 +833,57 @@ if ($replacementsReady): ?>
                                         <div class="mt-1 text-gray-500"><?php echo $assignedItems; ?>/<?php echo $item_count; ?> assigned</div>
 
                                         <?php if ($hasPOFiles): ?>
-                                            <div class="mt-2 text-green-600">
-                                                <i class="fas fa-file-excel mr-1"></i>
-                                                <?php echo $po_attachment_count; ?> P.O. file(s)
-                                            </div>
-                                        <?php endif; ?>
+    <div class="mt-2 text-green-600">
+        <i class="fas fa-file-excel mr-1"></i>
+        <?php echo $po_attachment_count; ?> P.O. file(s)
+    </div>
+    <?php
+    // Check if there are approved POs ready to order
+    $readyToOrderSql = "SELECT COUNT(*) as count FROM po_attachments 
+                        WHERE order_id = ? AND approval_status = 'approved' 
+                        AND marked_as_ordered = 0";
+    $readyToOrderStmt = $conn->prepare($readyToOrderSql);
+    $readyToOrderStmt->bind_param("i", $order['id']);
+    $readyToOrderStmt->execute();
+    $readyToOrderResult = $readyToOrderStmt->get_result()->fetch_assoc();
+    $readyToOrderStmt->close();
+    $readyToOrderCount = (int)$readyToOrderResult['count'];
+    
+    if ($readyToOrderCount > 0): ?>
+        <div class="mt-1 flex items-center">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 pulse-notification">
+                <i class="fas fa-bell mr-1"></i>
+                <?php echo $readyToOrderCount; ?> Ready to Order
+            </span>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
                                     </div>
                                 </div>
 
                                 <div class="flex flex-col items-center space-y-2 ml-4">
-                                    <?php if (!$hasPOFiles): ?>
-                                        <!-- Show Manage P.O. only when no P.O. files are attached -->
-                                        <a href="po_management.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                            <i class="fas fa-cogs"></i><span>Manage P.O.</span>
-                                        </a>
-                                    <?php endif; ?>
+                                    <?php 
+// Check if all PO files are approved
+$allPOApprovedSql = "SELECT 
+    COUNT(*) as total_pos,
+    SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) as approved_pos
+    FROM po_attachments WHERE order_id = ?";
+$allPOApprovedStmt = $conn->prepare($allPOApprovedSql);
+$allPOApprovedStmt->bind_param("i", $order['id']);
+$allPOApprovedStmt->execute();
+$allPOApprovedResult = $allPOApprovedStmt->get_result()->fetch_assoc();
+$allPOApprovedStmt->close();
+
+$totalPOs = (int)$allPOApprovedResult['total_pos'];
+$approvedPOs = (int)$allPOApprovedResult['approved_pos'];
+$allPOsApproved = ($totalPOs > 0 && $totalPOs === $approvedPOs);
+
+// Show Manage P.O. only if: no PO files OR not all POs are approved
+if (!$hasPOFiles || !$allPOsApproved): ?>
+    <a href="po_management.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+        <i class="fas fa-cogs"></i><span>Manage P.O.</span>
+    </a>
+<?php endif; ?>
 
                                     <?php if ($assignmentPercentage >= 100 && !$hasPOFiles): ?>
                                         <button onclick="openAttachmentModal(<?php echo $order['id']; ?>)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
@@ -808,12 +895,33 @@ if ($replacementsReady): ?>
                                         </a>
                                     <?php endif; ?>
 
-                                    <?php if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', 'Delivered', 'Out for Delivery'])): ?>
-                                        <a href="order_tracking.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm">
-                                            <i class="fas fa-route"></i><span>Track Items</span>
-                                        </a>
-                                    <?php endif; ?>
-
+                                    <?php 
+// Only show Track Items if PO files exist AND all are marked as ordered
+if (in_array($order['status'], ['processing', 'Ready for Pickup', 'Picked Up', 'Delivered', 'Out for Delivery']) && $hasPOFiles) {
+    // Check if all PO files are marked as ordered
+    $checkOrderedSql = "SELECT 
+        COUNT(*) as total_pos,
+        SUM(CASE WHEN marked_as_ordered = 1 THEN 1 ELSE 0 END) as ordered_pos
+        FROM po_attachments WHERE order_id = ?";
+    $checkOrderedStmt = $conn->prepare($checkOrderedSql);
+    $checkOrderedStmt->bind_param("i", $order['id']);
+    $checkOrderedStmt->execute();
+    $checkOrderedResult = $checkOrderedStmt->get_result()->fetch_assoc();
+    $checkOrderedStmt->close();
+    
+    $totalPOsCheck = (int)$checkOrderedResult['total_pos'];
+    $orderedPOsCheck = (int)$checkOrderedResult['ordered_pos'];
+    $allPOsOrderedCheck = ($totalPOsCheck > 0 && $totalPOsCheck === $orderedPOsCheck);
+    
+    if ($allPOsOrderedCheck):
+?>
+    <a href="order_tracking.php?order_id=<?php echo urlencode($order['id']); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm">
+        <i class="fas fa-route"></i><span>Track Items</span>
+    </a>
+<?php 
+    endif;
+}
+?>
                                     <!-- Defect Reports Button -->
                                     <?php if ($unresolved_defects_count > 0): ?>
     <a href="view_defects.php?order_id=<?php echo urlencode($order['id']); ?>"
@@ -837,6 +945,8 @@ if ($replacementsReady): ?>
                     <p class="text-sm">
                         <?php if ($show_replacements): ?>
     You don't have any orders with approved replacement requests.
+    <?php elseif ($show_ready_to_order): ?>
+    You don't have any orders with P.O. files ready to order from suppliers.
 <?php elseif ($show_ready_for_schedule): ?>
     You don't have any orders ready for delivery scheduling.
 <?php elseif ($show_defects): ?>

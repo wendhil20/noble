@@ -101,14 +101,15 @@ function generateCleanCode($conn, $user_id) {
 }
 
 // ✅ Check if user already has an active referral code
-$stmt = $conn->prepare("SELECT referral_code, qr_code_path, total_scans, total_conversions, total_revenue, created_at, discount_enabled, discount_type, discount_value FROM referral_codes WHERE user_id = ? AND is_active = 1 LIMIT 1");
+$stmt = $conn->prepare("SELECT referral_code, qr_code_path, base_url, total_scans, total_conversions, total_revenue, created_at, discount_enabled, discount_type, discount_value FROM referral_codes WHERE user_id = ? AND is_active = 1 LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->bind_result($existing_code, $qr_path, $scans, $conversions, $revenue, $created, $discount_enabled, $discount_type, $discount_value);
+$stmt->bind_result($existing_code, $qr_path, $base_url, $scans, $conversions, $revenue, $created, $discount_enabled, $discount_type, $discount_value);
 if ($stmt->fetch()) {
     $referral_data = [
         'code' => $existing_code,
         'qr_path' => $qr_path,
+        'base_url' => $base_url,
         'scans' => $scans,
         'conversions' => $conversions,
         'revenue' => $revenue,
@@ -235,42 +236,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_code'])) {
     if ($referral_data !== null) {
         $error = "You already have an active referral code!";
     } else {
+        // Determine base URL dynamically
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        
+        // Check if localhost or production
+        if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
+            $base_url = "http://localhost/noble/user/otherpage/index-page-1-A-B-C-D-E.php";
+        } else {
+            $base_url = "https://noblehomedepot.com/user/otherpage/index-page-1-A-B-C-D-E";
+        }
+        
         // Generate new code
         $referral_code = generateCleanCode($conn, $user_id);
         
-        // Insert into database
-        $stmt = $conn->prepare("INSERT INTO referral_codes (user_id, referral_code, is_active) VALUES (?, ?, 1)");
-        $stmt->bind_param("is", $user_id, $referral_code);
+        // Insert into database with base_url
+        $stmt = $conn->prepare("INSERT INTO referral_codes (user_id, referral_code, base_url, is_active) VALUES (?, ?, ?, 1)");
+        $stmt->bind_param("iss", $user_id, $referral_code, $base_url);
         
         if ($stmt->execute()) {
-    $message = "Referral code generated successfully!";
-    
-    // Refresh data
-    $referral_data = [
-        'code' => $referral_code,
-        'qr_path' => null,
-        'scans' => 0,
-        'conversions' => 0,
-        'revenue' => 0.00,
-        'created' => date('Y-m-d H:i:s'),
-        'discount_enabled' => 0,
-        'discount_type' => 'percentage',
-        'discount_value' => 0.00
-    ];
-    
-} else {
-    $error = "Failed to generate referral code. Please try again.";
-}
+            $message = "Referral code generated successfully!";
+            
+            // Refresh data
+            $referral_data = [
+                'code' => $referral_code,
+                'qr_path' => null,
+                'base_url' => $base_url,
+                'scans' => 0,
+                'conversions' => 0,
+                'revenue' => 0.00,
+                'created' => date('Y-m-d H:i:s'),
+                'discount_enabled' => 0,
+                'discount_type' => 'percentage',
+                'discount_value' => 0.00
+            ];
+        } else {
+            $error = "Failed to generate referral code. Please try again.";
+        }
         $stmt->close();
     }
 }
-
 // ✅ Handle REMAKE referral code
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     
     if ($referral_data === null) {
         $error = "No active referral code found!";
     } else {
+        // Determine base URL dynamically
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        
+        if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
+            $base_url = "http://localhost/noble/user/otherpage/index-page-1-A-B-C-D-E.php";
+        } else {
+            $base_url = "https://noblehomedepot.com/user/otherpage/index-page-1-A-B-C-D-E";
+        }
+        
         // Deactivate old code
         $stmt = $conn->prepare("UPDATE referral_codes SET is_active = 0 WHERE user_id = ? AND is_active = 1");
         $stmt->bind_param("i", $user_id);
@@ -280,29 +301,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
         // Generate new code
         $new_referral_code = generateCleanCode($conn, $user_id);
         
-        // Insert new code
-        $stmt = $conn->prepare("INSERT INTO referral_codes (user_id, referral_code, is_active) VALUES (?, ?, 1)");
-        $stmt->bind_param("is", $user_id, $new_referral_code);
+        // Insert new code with base_url
+        $stmt = $conn->prepare("INSERT INTO referral_codes (user_id, referral_code, base_url, is_active) VALUES (?, ?, ?, 1)");
+        $stmt->bind_param("iss", $user_id, $new_referral_code, $base_url);
         
         if ($stmt->execute()) {
-    $message = "New referral code generated successfully! Your old code has been deactivated.";
-    
-    // Refresh data
-    $referral_data = [
-        'code' => $new_referral_code,
-        'qr_path' => null,
-        'scans' => 0,
-        'conversions' => 0,
-        'revenue' => 0.00,
-        'created' => date('Y-m-d H:i:s'),
-        'discount_enabled' => 0,
-        'discount_type' => 'percentage',
-        'discount_value' => 0.00
-    ];
-    
-} else {
-    $error = "Failed to generate new referral code. Please try again.";
-}
+            $message = "New referral code generated successfully! Your old code has been deactivated.";
+            
+            // Refresh data
+            $referral_data = [
+                'code' => $new_referral_code,
+                'qr_path' => null,
+                'base_url' => $base_url,
+                'scans' => 0,
+                'conversions' => 0,
+                'revenue' => 0.00,
+                'created' => date('Y-m-d H:i:s'),
+                'discount_enabled' => 0,
+                'discount_type' => 'percentage',
+                'discount_value' => 0.00
+            ];
+        } else {
+            $error = "Failed to generate new referral code. Please try again.";
+        }
         $stmt->close();
     }
 }
@@ -317,6 +338,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     <title>My Referral Code - Noble Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- QR Code Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -462,16 +485,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                     </div>
                     
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-link mr-1"></i>Referral Link
-                        </label>
-                        <div class="flex gap-2">
-                            <input type="text" id="referralLink" readonly
-                                value="<?php 
-                                    //$base_url = "https://noblehomedepot.com/user/otherpage/index-page-1-A-B-C-D-E"; 
-                                    $base_url = "http://localhost/noble/user/otherpage/index-page-1-A-B-C-D-E.php";
-                                    echo htmlspecialchars($base_url . "?ref=" . $referral_data['code']); 
-                                ?>"
+    <label class="block text-sm font-medium text-gray-700 mb-2">
+        <i class="fas fa-link mr-1"></i>Referral Link
+    </label>
+    <div class="flex gap-2">
+        <input type="text" id="referralLink" readonly
+            value="<?php 
+                $saved_base_url = $referral_data['base_url'] ?? '';
+                echo htmlspecialchars($saved_base_url . "?ref=" . $referral_data['code']); 
+            ?>"
                                 class="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-mono">
                             <button onclick="copyLink()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
                                 <i class="fas fa-link"></i>
@@ -479,9 +501,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             </button>
                         </div>
                         <p class="text-xs text-gray-500 mt-2">Share this link with customers to track your referrals</p>
-                    </div>
-                    
-                    <!-- Stats Grid -->
+</div>
+
+<!-- QR Code Section -->
+<div class="mb-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border-2 border-purple-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-purple-900 flex items-center">
+            <i class="fas fa-qrcode mr-2"></i>QR Code
+        </h3>
+        <?php if (!empty($referral_data['qr_path'])): ?>
+            <span class="bg-green-500 px-3 py-1 rounded-full text-xs font-medium text-white">
+                <i class="fas fa-check-circle mr-1"></i>Generated
+            </span>
+        <?php endif; ?>
+    </div>
+    
+    <!-- ALWAYS render the qr-display div, but hide it if no QR exists -->
+    <div id="qr-container" class="<?php echo empty($referral_data['qr_path']) ? 'hidden' : ''; ?>">
+        <div class="text-center mb-4">
+            <div class="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg shadow-sm">
+                <div id="qr-display" class="qr-code-display"></div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="downloadQRCode()" 
+                class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                <i class="fas fa-download"></i>
+                <span>Download QR</span>
+            </button>
+            <button onclick="regenerateQR()" 
+                class="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                <i class="fas fa-sync-alt"></i>
+                <span>Regenerate</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Generate button (shown when no QR exists) -->
+    <div id="qr-generate-section" class="<?php echo !empty($referral_data['qr_path']) ? 'hidden' : ''; ?>">
+        <div class="text-center py-8">
+            <i class="fas fa-qrcode text-purple-300 text-6xl mb-4"></i>
+            <p class="text-purple-700 mb-4">No QR code generated yet</p>
+            <button onclick="generateQRCode()" 
+                class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 mx-auto">
+                <i class="fas fa-magic"></i>
+                <span>Generate QR Code</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
                     <!-- Discount/Voucher Section -->
 <div class="mt-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange-300 overflow-hidden">
     <div class="bg-gradient-to-r from-orange-400 to-yellow-400 px-4 py-2 flex items-center justify-between">
@@ -530,6 +600,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
             </div>
         <?php endif; ?>
     </div>
+</div>
+
+<!-- Discount Settings Form (Hidden by default) -->
+<div id="discountForm" class="hidden mt-6 bg-white rounded-lg border-2 border-gray-300 p-6">
+    <h3 class="text-lg font-bold text-gray-900 mb-4">
+        <i class="fas fa-cog mr-2 text-gray-600"></i>Configure Discount/Voucher
+    </h3>
+    
+    <form method="POST" class="space-y-4">
+        <!-- Enable/Disable Discount -->
+        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <input type="checkbox" id="enableDiscount" name="discount_enabled" value="1" 
+                <?php echo (($referral_data['discount_enabled'] ?? 0) == 1) ? 'checked' : ''; ?>
+                class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
+            <label for="enableDiscount" class="text-sm font-medium text-gray-700">
+                Enable discount/voucher for this referral code
+            </label>
+        </div>
+        
+        <!-- Discount Type Selection -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Discount Type</label>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition
+                    <?php echo ($referral_data['discount_type'] == 'percentage') ? 'border-orange-500 bg-orange-50' : 'border-gray-300'; ?>">
+                    <input type="radio" name="discount_type" value="percentage" 
+                        <?php echo (($referral_data['discount_type'] ?? 'percentage') == 'percentage') ? 'checked' : ''; ?>
+                        class="sr-only" onchange="this.form.querySelectorAll('label').forEach(l => l.classList.remove('border-orange-500', 'bg-orange-50')); this.closest('label').classList.add('border-orange-500', 'bg-orange-50');">
+                    <div class="flex-1 text-center">
+                        <i class="fas fa-percent text-2xl text-orange-600 mb-2"></i>
+                        <div class="font-bold text-gray-900">Percentage</div>
+                        <div class="text-xs text-gray-600">e.g., 10% off</div>
+                    </div>
+                </label>
+                
+                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition
+                    <?php echo ($referral_data['discount_type'] == 'fixed') ? 'border-orange-500 bg-orange-50' : 'border-gray-300'; ?>">
+                    <input type="radio" name="discount_type" value="fixed" 
+                        <?php echo ($referral_data['discount_type'] == 'fixed') ? 'checked' : ''; ?>
+                        class="sr-only" onchange="this.form.querySelectorAll('label').forEach(l => l.classList.remove('border-orange-500', 'bg-orange-50')); this.closest('label').classList.add('border-orange-500', 'bg-orange-50');">
+                    <div class="flex-1 text-center">
+                        <i class="fas fa-coins text-2xl text-orange-600 mb-2"></i>
+                        <div class="font-bold text-gray-900">Fixed Amount</div>
+                        <div class="text-xs text-gray-600">e.g., ₱100 off</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Discount Value Input -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Discount Value</label>
+            <div class="relative">
+                <input type="number" name="discount_value" step="0.01" min="0" 
+                    value="<?php echo htmlspecialchars($referral_data['discount_value'] ?? '0'); ?>"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg font-bold"
+                    placeholder="Enter amount"
+                    required>
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                    <span id="discountUnit"><?php echo ($referral_data['discount_type'] == 'percentage') ? '%' : '₱'; ?></span>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+                <i class="fas fa-info-circle mr-1"></i>
+                <span id="discountHint">
+                    <?php 
+                    if ($referral_data['discount_type'] == 'percentage') {
+                        echo 'Enter percentage (e.g., 10 for 10% discount)';
+                    } else {
+                        echo 'Enter amount in pesos (e.g., 100 for ₱100 voucher)';
+                    }
+                    ?>
+                </span>
+            </p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-4 border-t border-gray-200">
+            <button type="button" onclick="toggleDiscountForm()" 
+                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition">
+                Cancel
+            </button>
+            <button type="submit" name="update_discount" 
+                class="flex-1 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white px-4 py-3 rounded-lg font-medium transition">
+                <i class="fas fa-save mr-2"></i>Save Discount
+            </button>
+        </div>
+    </form>
 </div>
 
 <!-- ✅ CUSTOMERS WHO USED CODE SECTION -->
@@ -633,93 +791,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     </div>
 </div>
 
-<!-- Discount Settings Form (Hidden by default) -->
-<div id="discountForm" class="hidden mt-6 bg-white rounded-lg border-2 border-gray-300 p-6">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">
-        <i class="fas fa-cog mr-2 text-gray-600"></i>Configure Discount/Voucher
-    </h3>
-    
-    <form method="POST" class="space-y-4">
-        <!-- Enable/Disable Discount -->
-        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-            <input type="checkbox" id="enableDiscount" name="discount_enabled" value="1" 
-                <?php echo (($referral_data['discount_enabled'] ?? 0) == 1) ? 'checked' : ''; ?>
-                class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
-            <label for="enableDiscount" class="text-sm font-medium text-gray-700">
-                Enable discount/voucher for this referral code
-            </label>
-        </div>
-        
-        <!-- Discount Type Selection -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Discount Type</label>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition
-                    <?php echo ($referral_data['discount_type'] == 'percentage') ? 'border-orange-500 bg-orange-50' : 'border-gray-300'; ?>">
-                    <input type="radio" name="discount_type" value="percentage" 
-                        <?php echo (($referral_data['discount_type'] ?? 'percentage') == 'percentage') ? 'checked' : ''; ?>
-                        class="sr-only" onchange="this.form.querySelectorAll('label').forEach(l => l.classList.remove('border-orange-500', 'bg-orange-50')); this.closest('label').classList.add('border-orange-500', 'bg-orange-50');">
-                    <div class="flex-1 text-center">
-                        <i class="fas fa-percent text-2xl text-orange-600 mb-2"></i>
-                        <div class="font-bold text-gray-900">Percentage</div>
-                        <div class="text-xs text-gray-600">e.g., 10% off</div>
-                    </div>
-                </label>
-                
-                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition
-                    <?php echo ($referral_data['discount_type'] == 'fixed') ? 'border-orange-500 bg-orange-50' : 'border-gray-300'; ?>">
-                    <input type="radio" name="discount_type" value="fixed" 
-                        <?php echo ($referral_data['discount_type'] == 'fixed') ? 'checked' : ''; ?>
-                        class="sr-only" onchange="this.form.querySelectorAll('label').forEach(l => l.classList.remove('border-orange-500', 'bg-orange-50')); this.closest('label').classList.add('border-orange-500', 'bg-orange-50');">
-                    <div class="flex-1 text-center">
-                        <i class="fas fa-coins text-2xl text-orange-600 mb-2"></i>
-                        <div class="font-bold text-gray-900">Fixed Amount</div>
-                        <div class="text-xs text-gray-600">e.g., ₱100 off</div>
-                    </div>
-                </label>
-            </div>
-        </div>
-        
-        <!-- Discount Value Input -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Discount Value</label>
-            <div class="relative">
-                <input type="number" name="discount_value" step="0.01" min="0" 
-                    value="<?php echo htmlspecialchars($referral_data['discount_value'] ?? '0'); ?>"
-                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg font-bold"
-                    placeholder="Enter amount"
-                    required>
-                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                    <span id="discountUnit"><?php echo ($referral_data['discount_type'] == 'percentage') ? '%' : '₱'; ?></span>
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">
-                <i class="fas fa-info-circle mr-1"></i>
-                <span id="discountHint">
-                    <?php 
-                    if ($referral_data['discount_type'] == 'percentage') {
-                        echo 'Enter percentage (e.g., 10 for 10% discount)';
-                    } else {
-                        echo 'Enter amount in pesos (e.g., 100 for ₱100 voucher)';
-                    }
-                    ?>
-                </span>
-            </p>
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex gap-3 pt-4 border-t border-gray-200">
-            <button type="button" onclick="toggleDiscountForm()" 
-                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition">
-                Cancel
-            </button>
-            <button type="submit" name="update_discount" 
-                class="flex-1 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white px-4 py-3 rounded-lg font-medium transition">
-                <i class="fas fa-save mr-2"></i>Save Discount
-            </button>
-        </div>
-    </form>
-</div>
+
                 </div>
             </div>
 
@@ -1286,6 +1358,178 @@ function copyHistoryCode(code) {
         showNotification('Failed to copy code', 'error');
     });
 }
+
+// QR Code Functions
+let qrCodeGenerated = false;
+
+function generateQRCode() {
+    const referralLink = document.getElementById('referralLink').value;
+    
+    if (!referralLink) {
+        showNotification('Referral link not found', 'error');
+        return;
+    }
+    
+    // Show the QR container
+    const qrContainer = document.getElementById('qr-container');
+    const generateSection = document.getElementById('qr-generate-section');
+    
+    // Clear previous QR if any
+    const qrDisplay = document.getElementById('qr-display');
+    if (qrDisplay) {
+        qrDisplay.innerHTML = '';
+        
+        // Generate QR code
+        new QRCode(qrDisplay, {
+            text: referralLink,
+            width: 200,
+            height: 200,
+            colorDark: "#7c3aed",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        qrCodeGenerated = true;
+        
+        // Show QR container and hide generate button
+        if (qrContainer) qrContainer.classList.remove('hidden');
+        if (generateSection) generateSection.classList.add('hidden');
+        
+        // Save to database
+        saveQRCodeToDatabase(referralLink);
+    } else {
+        showNotification('QR display element not found', 'error');
+    }
+}
+
+function saveQRCodeToDatabase(qrData) {
+    fetch('save_referral_qr.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            qr_data: qrData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('✓ QR code generated and saved! Reloading...', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showNotification('Failed to save QR code: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Failed to save QR code', 'error');
+    });
+}
+
+function downloadQRCode() {
+    const qrCanvas = document.querySelector('#qr-display canvas');
+    
+    if (!qrCanvas) {
+        showNotification('QR code not found. Please generate it first.', 'error');
+        return;
+    }
+    
+    const referralCode = '<?php echo $referral_data['code'] ?? ''; ?>';
+    const userName = '<?php echo htmlspecialchars($fullname); ?>';
+    
+    // Create enhanced canvas with info
+    const finalCanvas = document.createElement('canvas');
+    const ctx = finalCanvas.getContext('2d');
+    
+    const qrSize = 300;
+    const padding = 20;
+    const infoHeight = 150;
+    finalCanvas.width = qrSize + (padding * 2);
+    finalCanvas.height = qrSize + infoHeight + (padding * 3);
+    
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+    
+    // Border
+    ctx.strokeStyle = '#7c3aed';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(5, 5, finalCanvas.width - 10, finalCanvas.height - 10);
+    
+    // Draw QR code
+    ctx.drawImage(qrCanvas, padding, padding, qrSize, qrSize);
+    
+    // Info section
+    let yPos = qrSize + padding * 2 + 20;
+    
+    // Title
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('REFERRAL CODE', finalCanvas.width / 2, yPos);
+    
+    yPos += 30;
+    
+    // Referral Code
+    ctx.fillStyle = '#7c3aed';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(referralCode, finalCanvas.width / 2, yPos);
+    
+    yPos += 30;
+    
+    // Sales Representative
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '12px Arial';
+    ctx.fillText('Sales Representative:', finalCanvas.width / 2, yPos);
+    
+    yPos += 18;
+    
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 14px Arial';
+    ctx.fillText(userName, finalCanvas.width / 2, yPos);
+    
+    // Convert to blob and download
+    finalCanvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Referral_QR_${referralCode}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('✓ QR code downloaded!', 'success');
+    }, 'image/png');
+}
+
+function regenerateQR() {
+    if (!confirm('Are you sure you want to regenerate the QR code?')) {
+        return;
+    }
+    
+    generateQRCode();
+}
+
+// Generate QR on page load if it exists
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if (!empty($referral_data['qr_path'])): ?>
+        const referralLink = document.getElementById('referralLink');
+        const qrDisplay = document.getElementById('qr-display');
+        
+        if (referralLink && qrDisplay && referralLink.value) {
+            new QRCode(qrDisplay, {
+                text: referralLink.value,
+                width: 200,
+                height: 200,
+                colorDark: "#7c3aed",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+    <?php endif; ?>
+});
     </script>
 </body>
 </html>

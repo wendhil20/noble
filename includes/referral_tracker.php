@@ -1,11 +1,11 @@
 <?php
 // ============================================
-// FILE: referral_tracker.php (FIXED VERSION)
+// FILE: referral_tracker.php (CORRECTED VERSION)
 // Place this in: /noble/includes/referral_tracker.php
 // ============================================
 
 /**
- * Track referral visits with date analytics
+ * Track referral visits - counts each new browser session
  * Call this function at the top of your landing page
  */
 function trackReferralVisit($conn) {
@@ -14,7 +14,7 @@ function trackReferralVisit($conn) {
         return false;
     }
     
-    // ✅ FIX 1: Convert to uppercase to match database format
+    // Convert to uppercase to match database format
     $ref_code = trim(strtoupper($_GET['ref']));
     
     // Validate referral code format (NH-XXXXXX)
@@ -38,30 +38,17 @@ function trackReferralVisit($conn) {
     $user_id = $row['user_id'];
     $stmt->close();
     
+    // ✅ CHECK SESSION FIRST - Only count once per browser session
+    $session_key = 'ref_tracked_' . $referral_id;
+    if (isset($_SESSION[$session_key]) && $_SESSION[$session_key] === true) {
+        return true; // Already counted in this session
+    }
+    
     // Get visitor info
     $visitor_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
     $visit_date = date('Y-m-d');
     $visit_time = date('Y-m-d H:i:s');
-    
-    // ✅ FIX 2: Check if this IP already visited TODAY (not just in session)
-    // This allows counting the same person on different days
-    $check_stmt = $conn->prepare("
-        SELECT id FROM referral_visits 
-        WHERE referral_id = ? 
-        AND visitor_ip = ? 
-        AND visit_date = ? 
-        LIMIT 1
-    ");
-    $check_stmt->bind_param("iss", $referral_id, $visitor_ip, $visit_date);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
-    
-    if ($check_result->num_rows > 0) {
-        $check_stmt->close();
-        return true; // Already counted this IP today
-    }
-    $check_stmt->close();
     
     // Start transaction
     $conn->begin_transaction();
@@ -73,7 +60,7 @@ function trackReferralVisit($conn) {
         $stmt->execute();
         $stmt->close();
         
-        // 2. Insert detailed visit log
+        // 2. Insert detailed visit log (every visit gets logged)
         $stmt = $conn->prepare("
             INSERT INTO referral_visits 
             (referral_id, user_id, referral_code, visit_date, visit_time, visitor_ip, user_agent) 
@@ -86,8 +73,8 @@ function trackReferralVisit($conn) {
         // Commit transaction
         $conn->commit();
         
-        // ✅ FIX 3: Store in session to prevent multiple DB hits during same visit
-        $_SESSION['ref_tracked_' . $referral_id . '_' . $visit_date] = true;
+        // ✅ Mark as tracked in THIS browser session
+        $_SESSION[$session_key] = true;
         
         return true;
         

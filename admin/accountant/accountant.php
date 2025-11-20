@@ -1,4 +1,5 @@
 <?php
+//accountant.php
 session_name("nobleadmin");
 session_start();
 
@@ -206,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $total_amount = isset($order_data['total']) ? (float)$order_data['total'] : 0.00;
 
                 // Update order with verification details and set final_total to the order's total
-                $stmt = $conn->prepare("UPDATE orders SET payment_status = 'verified', confirmed_at = CURRENT_TIMESTAMP, verified_by = ?, final_total = ? WHERE id = ?");
+                $stmt = $conn->prepare("UPDATE orders SET payment_status = 'verified', status = 'Ongoing', confirmed_at = CURRENT_TIMESTAMP, verified_by = ?, final_total = ? WHERE id = ?");
                 if (!$stmt) {
                     throw new Exception("Database prepare failed for update");
                 }
@@ -543,6 +544,20 @@ $orders_result = $conn->query($orders_query);
             }
         }
     </script>
+    <style>
+    .order-row-clickable {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .order-row-clickable:hover {
+        background-color: #f3f4f6 !important;
+        transform: scale(1.01);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .order-row-clickable:active {
+        transform: scale(0.99);
+    }
+</style>
 </head>
 
 <body class="bg-gray-50">
@@ -1095,10 +1110,13 @@ $orders_result = $conn->query($orders_query);
                         <tbody class="bg-white divide-y divide-gray-200">
                             <?php if ($orders_result && $orders_result->num_rows > 0): ?>
                                 <?php while ($order = $orders_result->fetch_assoc()): ?>
-                                    <tr class="hover:bg-gray-50 transition-colors" id="order-row-<?php echo $order['id']; ?>">
+                                    <tr class="order-row-clickable hover:bg-gray-50 transition-colors" id="order-row-<?php echo $order['id']; ?>" onclick="viewOrderDetails(<?php echo $order['id']; ?>)" title="Click to view order details">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            <span class="bg-gray-100 px-2 py-1 rounded-md">#<?php echo $order['id']; ?></span>
-                                        </td>
+    <span class="bg-gray-100 px-2 py-1 rounded-md inline-flex items-center">
+        <i class="fas fa-eye text-noble-orange mr-2 text-xs"></i>
+        #<?php echo $order['id']; ?>
+    </span>
+</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
@@ -1218,7 +1236,7 @@ $orders_result = $conn->query($orders_query);
                                                 <?php echo date('H:i', strtotime($order['created_at'])); ?>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" onclick="event.stopPropagation()">
     <?php if ($order['payment_status'] === 'pending'): ?>
         <div class="flex space-x-2">
             <?php if ($order['payment_screenshot']): ?>
@@ -1669,6 +1687,20 @@ $orders_result = $conn->query($orders_query);
         function closeScreenshotModal() {
             document.getElementById('screenshotModal').classList.add('hidden');
         }
+
+        function viewOrderDetails(orderId) {
+    // Open order details in a new window/tab
+    const width = 1200;
+    const height = 800;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    window.open(
+        'order_details.php?id=' + orderId,
+        'OrderDetails',
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+}
 
         function showRejectModal(orderId) {
             currentOrderId = orderId;

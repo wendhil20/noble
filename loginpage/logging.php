@@ -231,7 +231,10 @@ try {
     $redirect = match (strtolower($user['lvl'])) {
         'superadmin', 'admin' => "../admin/client/dashboard",
         'sales' => "../admin/orders/ordering",
-        'accountant' => "../admin/accountant/accountant",
+        'accountant' => match (strtolower($user['subrole'] ?? '')) {
+        'document_controller' => "../admin/accountant/accountant_view_orders",
+        default => "../admin/accountant/accountant"
+    },
         'supplier' => "../admin/suppliermain/suppliercompany",
         'productspecialist' => "../admin/shop/main-adminshop-page-1.php",
         'logistic' => "../admin/logistic_management/main_dashboard",

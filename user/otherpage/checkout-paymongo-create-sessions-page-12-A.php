@@ -50,34 +50,70 @@ try {
     $delivery_fee = floatval($input['delivery_fee'] ?? 0);
     $order_details = $input['order_details'] ?? [];
     
-    // Get referral discount data from SESSION
-    $referral_code = isset($_SESSION['applied_referral_code']) ? trim($_SESSION['applied_referral_code']) : null;
-    $referral_user_id = null;
-    $referral_discount = 0.00;
+    // ✅ STEP 1: Get referral code from SESSION first
+$referral_code = isset($_SESSION['applied_referral_code']) ? trim($_SESSION['applied_referral_code']) : null;
+$referral_user_id = null;
+$referral_discount = 0.00;
+
+error_log("=== CHECKING FOR REFERRAL CODE ===");
+error_log("Session applied_referral_code: " . ($referral_code ?? 'NULL'));
+
+// ✅ STEP 2: Process referral code if we have one
+if (!empty($referral_code)) {
+    $stmt = $conn->prepare("SELECT user_id, discount_type, discount_value 
+                           FROM referral_codes 
+                           WHERE referral_code = ? AND is_active = 1 AND discount_enabled = 1 
+                           LIMIT 1");
+    $stmt->bind_param("s", $referral_code);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
-    if (!empty($referral_code)) {
-        $stmt = $conn->prepare("SELECT user_id, discount_type, discount_value 
-                               FROM referral_codes 
-                               WHERE referral_code = ? AND is_active = 1 AND discount_enabled = 1 
-                               LIMIT 1");
-        $stmt->bind_param("s", $referral_code);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $ref_data = $result->fetch_assoc();
+        $referral_user_id = $ref_data['user_id'];
         
-        if ($result->num_rows > 0) {
-            $ref_data = $result->fetch_assoc();
-            $referral_user_id = $ref_data['user_id'];
-            
-            $subtotal = ($amount - $delivery_fee) / 1.12;
-            
-            if ($ref_data['discount_type'] === 'percentage') {
-                $referral_discount = $subtotal * ($ref_data['discount_value'] / 100);
-            } else {
-                $referral_discount = min($ref_data['discount_value'], $subtotal);
-            }
+        // ✅ STEP 3: Get ORIGINAL cart subtotal (before ANY discounts)
+        $cart_stmt = $conn->prepare("
+            SELECT SUM(price * quantity) as original_subtotal
+            FROM user_cart_items 
+            WHERE user_id = ?
+        ");
+        $cart_stmt->bind_param("i", $user_id);
+        $cart_stmt->execute();
+        $cart_result = $cart_stmt->get_result();
+        $cart_row = $cart_result->fetch_assoc();
+        $original_subtotal = floatval($cart_row['original_subtotal'] ?? 0);
+        $cart_stmt->close();
+        
+        error_log("=== REFERRAL DISCOUNT CALCULATION (PayMongo) ===");
+        error_log("Original Cart Subtotal: ₱" . number_format($original_subtotal, 2));
+        error_log("Referral Type: " . $ref_data['discount_type']);
+        error_log("Referral Value: " . $ref_data['discount_value']);
+        
+        // ✅ STEP 4: Apply discount on ORIGINAL subtotal
+        if ($ref_data['discount_type'] === 'percentage') {
+            $referral_discount = $original_subtotal * ($ref_data['discount_value'] / 100);
+            error_log("Calculation: ₱" . number_format($original_subtotal, 2) . " × " . $ref_data['discount_value'] . "% = ₱" . number_format($referral_discount, 2));
+        } else {
+            $referral_discount = min($ref_data['discount_value'], $original_subtotal);
+            error_log("Calculation: min(₱" . number_format($ref_data['discount_value'], 2) . ", ₱" . number_format($original_subtotal, 2) . ") = ₱" . number_format($referral_discount, 2));
         }
-        $stmt->close();
+        
+        error_log(">>> FINAL REFERRAL DISCOUNT: ₱" . number_format($referral_discount, 2));
+        error_log("===============================================");
+    } else {
+        error_log("⚠️ Referral code not found in database!");
     }
+    $stmt->close();
+} else {
+    error_log("⚠️ No referral code in session");
+}
+
+error_log("=== PAYMONGO SESSION CREATION ===");
+error_log("Referral Code: " . ($referral_code ?? 'NONE'));
+error_log("Referral User ID: " . ($referral_user_id ?? 'NONE'));
+error_log("Referral Discount: ₱" . number_format($referral_discount, 2));
+error_log("Amount: ₱" . number_format($amount, 2));
     
     error_log("=== PAYMONGO SESSION CREATION ===");
     error_log("Referral Code: " . ($referral_code ?? 'NONE'));
@@ -378,8 +414,8 @@ try {
                                    " + Delivery: ₱" . number_format($delivery_fee, 2)
                 ]],
                 "payment_method_types" => ["gcash", "paymaya", "card", "grab_pay"],
-                "success_url" => "https://noblehomedepot.com/user/otherpage/checkout-paymongo-success-page-12-A.php?order_id=" . $order_id . "&ref=" . $reference_no,
-                "cancel_url" => "https://noblehomedepot.com/user/otherpage/index-checkout-page-12.php?payment_cancelled=1&order_id=" . $order_id,
+                "success_url" => "http://localhost/noble/user/otherpage/checkout-paymongo-success-page-12-A.php?order_id=" . $order_id . "&ref=" . $reference_no,
+                "cancel_url" => "http://localhost/noble/user/otherpage/index-checkout-page-12.php?payment_cancelled=1&order_id=" . $order_id,
                 "description" => "Noble Home Construction - Order #" . $reference_no,
                 "metadata" => [
                     "user_id" => strval($user_id),

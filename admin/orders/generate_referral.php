@@ -1384,7 +1384,7 @@ function generateQRCode() {
             text: referralLink,
             width: 200,
             height: 200,
-            colorDark: "#7c3aed",
+            colorDark: "#f97316",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
@@ -1453,7 +1453,7 @@ function downloadQRCode() {
     ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
     
     // Border
-    ctx.strokeStyle = '#7c3aed';
+    ctx.strokeStyle = '#f97316';
     ctx.lineWidth = 3;
     ctx.strokeRect(5, 5, finalCanvas.width - 10, finalCanvas.height - 10);
     
@@ -1472,7 +1472,7 @@ function downloadQRCode() {
     yPos += 30;
     
     // Referral Code
-    ctx.fillStyle = '#7c3aed';
+    ctx.fillStyle = '#f97316';
     ctx.font = 'bold 24px monospace';
     ctx.fillText(referralCode, finalCanvas.width / 2, yPos);
     
@@ -1523,7 +1523,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: referralLink.value,
                 width: 200,
                 height: 200,
-                colorDark: "#7c3aed",
+                colorDark: "#f97316",
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.H
             });

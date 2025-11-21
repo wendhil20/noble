@@ -341,15 +341,15 @@ $tracking_status_colors = [
         <p class="text-sm text-gray-600">Delivery Fee</p>
     </div>
     <div class="text-center p-4 bg-noble-orange rounded-lg">
-        <p class="text-2xl font-bold text-white">₱<?php echo number_format($order['final_total'], 2); ?></p>
-        <p class="text-sm text-orange-100">Expected Final Total</p>
-    </div>
+    <p class="text-2xl font-bold text-white">₱<?php echo number_format($order['total'], 2); ?></p>
+    <p class="text-sm text-orange-100">Total</p>
+</div>
 </div>
 </div>
 
 <!-- Profit & Discount Analysis -->
 <?php
-// Calculate totals
+// Calculate totals using ACTUAL subtotals from database
 $total_original_cost = 0;
 $total_selling_price = 0;
 $total_item_discount = 0;
@@ -364,25 +364,27 @@ while ($item = $items_result->fetch_assoc()) {
     $items_for_analysis[] = $item;
     
     $original_price = $item['original_price'] ?? $item['price'];
-    $markup_percent = $item['markup_percent'] ?? 0;
-    $discount_percent = $item['variant_discount'] ?? 0;
     $quantity = $item['quantity'];
     
-    // Calculate price after markup
+    // Use ACTUAL subtotal from database (includes color costs, etc.)
+    $actual_subtotal = $item['subtotal'];
+    $actual_final_price = $actual_subtotal / $quantity;
+    
+    // Calculate markup and discount for display purposes
+    $markup_percent = $item['markup_percent'] ?? 0;
+    $discount_percent = $item['variant_discount'] ?? 0;
+    
     $markup_amount = $original_price * ($markup_percent / 100);
     $price_with_markup = $original_price + $markup_amount;
-    
-    // Calculate discount amount from marked up price
     $discount_amount = $price_with_markup * ($discount_percent / 100);
-    $final_price = $price_with_markup - $discount_amount;
     
-    // Add to totals
+    // Add to totals - use ACTUAL subtotal
     $total_original_cost += ($original_price * $quantity);
     $total_markup_amount += ($markup_amount * $quantity);
     $price_after_markup += ($price_with_markup * $quantity);
     $total_item_discount += ($discount_amount * $quantity);
-    $price_after_discount += ($final_price * $quantity);
-    $total_selling_price += ($final_price * $quantity);
+    $total_selling_price += $actual_subtotal; // Use actual subtotal
+    $price_after_discount += $actual_subtotal; // Use actual subtotal
 }
 
 $gross_profit = $total_selling_price - $total_original_cost;
@@ -471,10 +473,10 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
     <?php if (count($items_for_analysis) > 0): ?>
         <?php foreach ($items_for_analysis as $item): 
             $original_price = $item['original_price'] ?? $item['price'];
-$selling_price = $item['current_variant_price'] ?? $item['price'];  // ← Use product_variants price
 $quantity = $item['quantity'];
-$item_profit = ($selling_price - $original_price) * $quantity;
-$discount_amount = ($original_price - $selling_price) * $quantity;
+$actual_subtotal = $item['subtotal'];
+$actual_selling_price = $actual_subtotal / $quantity;
+$item_profit = $actual_subtotal - ($original_price * $quantity);
         ?>
                                 <tr>
                                     <td class="px-4 py-4">
@@ -506,11 +508,17 @@ $discount_amount = ($original_price - $selling_price) * $quantity;
     $item_original = $item['original_price'] ?? $item['price'];
     $item_markup_pct = $item['markup_percent'] ?? 0;
     $item_discount_pct = $item['variant_discount'] ?? 0;
+    $quantity = $item['quantity'];
     
     $item_markup_amt = $item_original * ($item_markup_pct / 100);
     $item_price_with_markup = $item_original + $item_markup_amt;
     $item_discount_amt = $item_price_with_markup * ($item_discount_pct / 100);
-    $item_final_price = $item_price_with_markup - $item_discount_amt;
+    $item_price_after_discount = $item_price_with_markup - $item_discount_amt;
+    
+    // Calculate color cost from actual subtotal
+    $actual_subtotal = $item['subtotal'];
+    $actual_final_price = $actual_subtotal / $quantity;
+    $color_cost = $actual_final_price - $item_price_after_discount;
     ?>
     <div class="text-xs space-y-1">
         <div class="text-gray-600">Base: <span class="font-medium">₱<?php echo number_format($item_original, 2); ?></span></div>
@@ -528,10 +536,18 @@ $discount_amount = ($original_price - $selling_price) * $quantity;
             <span class="font-medium">-<?php echo number_format($item_discount_pct, 1); ?>%</span> 
             (₱<?php echo number_format($item_discount_amt, 2); ?>)
         </div>
+        <div class="text-purple-600 font-medium">= ₱<?php echo number_format($item_price_after_discount, 2); ?></div>
+        <?php endif; ?>
+        
+        <?php if (abs($color_cost) > 0.01): // Show if color cost exists ?>
+        <div class="text-pink-600">
+            <span class="font-medium">Color Cost:</span> 
+            +₱<?php echo number_format($color_cost, 2); ?>
+        </div>
         <?php endif; ?>
         
         <div class="text-green-700 font-bold text-sm pt-1 border-t">
-            Final: ₱<?php echo number_format($item_final_price, 2); ?>
+            Final: ₱<?php echo number_format($actual_final_price, 2); ?>
         </div>
     </div>
 </td>

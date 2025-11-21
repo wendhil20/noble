@@ -761,6 +761,14 @@ class ProductSelector {
   }
 
 setVariantSelection(button, size, color = null) {
+  // ✅ CHECK STOCK FIRST
+  const stock = parseInt(button.dataset.stock || 0);
+  if (stock <= 0) {
+    this.showNotification('This variant is out of stock', 'error');
+    disableAddToCartButton();
+    return;
+  }
+  
   document.querySelectorAll(".variant-btn").forEach((btn) => {
     btn.classList.remove(
       "selected",
@@ -781,28 +789,24 @@ setVariantSelection(button, size, color = null) {
   );
   button.classList.remove("border-gray-200", "bg-white");
 
-  // ✅ KEY FIX: Use price DIRECTLY - it's already the final price!
-  // NO RECALCULATION NEEDED!
-  const finalPrice = parseFloat(button.dataset.price); // This is already ₱60.91
-  
-  // Store these for reference only (NOT for recalculation)
+  const finalPrice = parseFloat(button.dataset.price);
   const originalPrice = parseFloat(button.dataset.originalPrice) || 0;
   const percent = parseFloat(button.dataset.percent) || 0;
   const discount = parseFloat(button.dataset.discount) || 0;
   const variantId = button.dataset.variantId;
 
   this.selectedVariantData = {
-    price: finalPrice, // ✅ THIS IS THE FINAL PRICE - USE DIRECTLY
-    originalPrice: originalPrice, // For display purposes only
-    percent: percent, // For display purposes only
-    discount: discount, // For display purposes only
+    price: finalPrice,
+    originalPrice: originalPrice,
+    percent: percent,
+    discount: discount,
     variantId: variantId,
     size: size,
     color: color || "",
+    stock: stock // ✅ STORE STOCK INFO
   };
 
-
- if (this.elements.selectedVariant) {
+  if (this.elements.selectedVariant) {
     this.elements.selectedVariant.value = size;
   }
   if (this.elements.variantId) {
@@ -816,8 +820,16 @@ setVariantSelection(button, size, color = null) {
       updateAllPriceDisplays();
     }
     validateSelectedVariant();
+    
+    // ✅ CHECK STOCK AND UPDATE BUTTON
+    if (stock <= 0) {
+      disableAddToCartButton();
+    } else {
+      this.updatePurchaseButton();
+    }
   }, 100);
 }
+
 
   unselectVariant(button) {
     button.classList.remove(
@@ -998,50 +1010,73 @@ updateProductHeaderPrice() {
     }
   }
 
-  updatePurchaseButton() {
-    const hasRequiredSelections =
-      this.selectedTypeId && this.selectedColorData && this.selectedVariantData;
+updatePurchaseButton() {
+  // ✅ SAFETY CHECK: Make sure productSelector exists
+  if (!window.productSelector) {
+    console.warn('ProductSelector not initialized yet');
+    return;
+  }
 
-    if (this.isWindows) {
-      const contactBtn = this.elements.contactUsBtn;
-      const contactBtnText = this.elements.contactBtnText;
+  const hasRequiredSelections =
+    this.selectedTypeId &&
+    this.selectedColorData &&
+    this.selectedVariantData;
 
-      if (contactBtn && contactBtnText) {
-        if (hasRequiredSelections) {
-          contactBtn.disabled = false;
-          contactBtn.className =
-            "w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white";
-          contactBtnText.innerHTML =
-            '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
-        } else {
-          contactBtn.disabled = true;
-          contactBtn.className =
-            "w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75";
-          contactBtnText.innerHTML =
-            '<i class="fas fa-phone mr-2"></i>Select all options to contact us';
-        }
+  // ✅ CHECK STOCK
+  let isOutOfStock = false;
+  if (hasRequiredSelections) {
+    const selectedBtn = document.querySelector('.variant-btn.selected');
+    if (selectedBtn) {
+      const stock = parseInt(selectedBtn.dataset.stock || 0);
+      isOutOfStock = stock <= 0;
+    }
+  }
+
+  const isWindows =
+    document.querySelector('[name="is_windows"]')?.value === "1";
+
+  if (isWindows) {
+    const contactBtn = this.elements.contactUsBtn;
+    const contactBtnText = this.elements.contactBtnText;
+    
+    if (contactBtn && contactBtnText) {
+      if (hasRequiredSelections && !isOutOfStock) {
+        contactBtn.disabled = false;
+        contactBtn.className =
+          "w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white";
+        contactBtnText.innerHTML =
+          '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
+      } else {
+        contactBtn.disabled = true;
+        contactBtn.className =
+          "w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
+        const msg = isOutOfStock ? "Selected option is out of stock" : "Select all options first";
+        contactBtnText.innerHTML =
+          `<i class="fas fa-phone mr-2"></i>${msg}`;
       }
-    } else {
-      const addToCartBtn = this.elements.addToCartBtn;
-      const btnText = this.elements.btnText;
-
-      if (addToCartBtn && btnText) {
-        if (hasRequiredSelections) {
-          addToCartBtn.disabled = false;
-          addToCartBtn.className =
-            "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white";
-          btnText.innerHTML =
-            '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
-        } else {
-          addToCartBtn.disabled = true;
-          addToCartBtn.className =
-            "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75";
-          btnText.innerHTML =
-            '<i class="fas fa-shopping-cart mr-2"></i> Select first';
-        }
+    }
+  } else {
+    const addToCartBtn = this.elements.addToCartBtn;
+    const btnText = this.elements.btnText;
+    
+    if (addToCartBtn && btnText) {
+      if (hasRequiredSelections && !isOutOfStock) {
+        addToCartBtn.disabled = false;
+        addToCartBtn.className =
+          "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white";
+        btnText.innerHTML =
+          '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
+      } else {
+        addToCartBtn.disabled = true;
+        addToCartBtn.className =
+          "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
+        const msg = isOutOfStock ? "Out of Stock" : "Select all options first";
+        btnText.innerHTML =
+          `<i class="fas fa-shopping-cart mr-2"></i> ${msg}`;
       }
     }
   }
+}
 
   updateDisplay() {
     this.updateTotalPrice();
@@ -1049,13 +1084,25 @@ updateProductHeaderPrice() {
     this.updateVariantAvailability();
   }
 
-  validateSelections() {
-    const errors = [];
-    if (!this.selectedTypeId) errors.push("Please select an item type");
-    if (!this.selectedColorData) errors.push("Please select a color");
-    if (!this.selectedVariantData) errors.push("Please select a size");
-    return errors;
+validateSelections() {
+  const errors = [];
+  if (!this.selectedTypeId) errors.push("Please select an item type");
+  if (!this.selectedColorData) errors.push("Please select a color");
+  if (!this.selectedVariantData) errors.push("Please select a size");
+  
+  // ✅ ADD STOCK VALIDATION
+  if (this.selectedVariantData) {
+    const selectedBtn = document.querySelector('.variant-btn.selected');
+    if (selectedBtn) {
+      const stock = parseInt(selectedBtn.dataset.stock || 0);
+      if (stock <= 0) {
+        errors.push("Selected variant is out of stock");
+      }
+    }
   }
+  
+  return errors;
+}
 
   handleFormSubmit(e) {
     e.preventDefault();
@@ -1247,7 +1294,7 @@ function checkVariantStock() {
       // OUT OF STOCK
       button.disabled = true;
       button.classList.add('opacity-50', 'cursor-not-allowed', 'bg-red-50', 'border-red-300');
-      button.classList.remove('hover:border-orange-500', 'hover:shadow-md');
+      button.classList.remove('hover:border-orange-500', 'hover:shadow-md', 'selected');
       button.style.pointerEvents = 'none';
       
       const badge = document.createElement('div');
@@ -1257,6 +1304,11 @@ function checkVariantStock() {
       button.appendChild(badge);
       
       console.log(`✗ ${size} - OUT OF STOCK`);
+      
+      // ✅ IF THIS VARIANT IS CURRENTLY SELECTED, DISABLE ADD TO CART
+      if (button.classList.contains('selected')) {
+        disableAddToCartButton();
+      }
       
     } else if (stock <= 5 && stock > 0) {
       // LOW STOCK
@@ -1283,6 +1335,13 @@ function checkVariantStock() {
       console.log(`✓ ${size} - IN STOCK: ${stock} available`);
     }
   });
+  
+  // ✅ AFTER CHECKING ALL VARIANTS, UPDATE BUTTON STATE
+  setTimeout(() => {
+    if (window.productSelector && window.productSelector.updatePurchaseButton) {
+      window.productSelector.updatePurchaseButton();
+    }
+  }, 100);
 }
 
 
@@ -1316,23 +1375,14 @@ function validateSelectedVariant() {
   const selectedButton = document.querySelector(`[data-variant-id="${selectedVariantId}"]`);
   console.log('Selected variant button:', selectedButton);
   
-  if (selectedButton && selectedButton.disabled) {
-    console.log('Selected variant is disabled/out of stock');
+  if (selectedButton) {
+    const stock = parseInt(selectedButton.dataset.stock || 0);
     
-    if (addToCartBtn) {
-      addToCartBtn.disabled = true;
-      addToCartBtn.classList.add('bg-red-400', 'cursor-not-allowed');
-      addToCartBtn.classList.remove('bg-gray-400', 'bg-black', 'hover:bg-orange-600');
-      
-      const btnText = document.getElementById('btnText');
-      if (btnText) {
-        btnText.innerHTML = `
-          <i class="fas fa-times-circle mr-2"></i>
-          Out of Stock
-        `;
-      }
+    if (stock <= 0 || selectedButton.disabled) {
+      console.log('Selected variant is disabled/out of stock');
+      disableAddToCartButton();
+      return false;
     }
-    return false;
   }
   
   console.log('Selected variant is available');
@@ -1387,11 +1437,11 @@ function injectStockStyles() {
   }
 }
 
-// Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
   console.log('=== INITIALIZING STOCK CHECK ===');
   
   if (typeof ProductSelector !== "undefined") {
+    // ✅ Initialize ProductSelector FIRST
     window.productSelector = new ProductSelector();
 
     const mainImage = document.getElementById("main-product-image");
@@ -1399,15 +1449,25 @@ document.addEventListener("DOMContentLoaded", function () {
       mainImage.dataset.originalSrc = mainImage.src;
     }
 
-    // Inject styles first
+    // ✅ THEN inject styles and check stock
     injectStockStyles();
     
-    // Check stock
-    checkVariantStock();
-    checkAvailableVariants();
-    validateSelectedVariant();
-    
-    console.log('=== STOCK CHECK COMPLETE ===');
+    // ✅ Use setTimeout to ensure DOM is fully ready
+    setTimeout(() => {
+      checkVariantStock();
+      checkAvailableVariants();
+      validateSelectedVariant();
+    // ✅ IMMEDIATE STOCK CHECK FOR SELECTED VARIANT
+      const selectedVariant = document.querySelector('.variant-btn.selected');
+      if (selectedVariant) {
+        const stock = parseInt(selectedVariant.dataset.stock || 0);
+        if (stock <= 0) {
+          disableAddToCartButton();
+        }
+      }
+      
+      console.log('=== STOCK CHECK COMPLETE ===');
+    }, 100);
 
   } else {
     console.error("ProductSelector class not found");
@@ -1428,6 +1488,7 @@ document.addEventListener("DOMContentLoaded", function () {
     quantityInput.addEventListener("change", validateQuantity);
   }
 });
+
 
 // Reinitialize stock check after selections
 function reinitializeStockCheck() {
@@ -1467,8 +1528,14 @@ function selectColorFromGrid(colorId, colorName, price, image, colorCode) {
 }
 
 function selectVariant(button, size, color = null) {
+  // ✅ PREVENT SELECTION IF OUT OF STOCK
   if (button.disabled) {
-    alert('This variant is out of stock');
+    const stock = parseInt(button.dataset.stock || 0);
+    const msg = stock <= 0 
+      ? 'This size is out of stock for the selected color' 
+      : 'This size variant is currently unavailable';
+    
+    window.productSelector?.showNotification(msg, 'error');
     return false;
   }
   
@@ -1767,46 +1834,68 @@ function hideAllPriceDisplays() {
 }
 
 function updatePurchaseButton() {
+  // ✅ SAFETY CHECK
+  if (!window.productSelector) {
+    console.warn('ProductSelector not ready');
+    return;
+  }
+
   const hasRequiredSelections =
     window.productSelector.selectedTypeId &&
     window.productSelector.selectedColorData &&
     window.productSelector.selectedVariantData;
+
+  // ✅ CHECK STOCK
+  let isOutOfStock = false;
+  if (hasRequiredSelections) {
+    const selectedBtn = document.querySelector('.variant-btn.selected');
+    if (selectedBtn) {
+      const stock = parseInt(selectedBtn.dataset.stock || 0);
+      isOutOfStock = stock <= 0;
+    }
+  }
 
   const isWindows =
     document.querySelector('[name="is_windows"]')?.value === "1";
 
   if (isWindows) {
     const contactBtn = document.getElementById("contactUsBtn");
-    if (contactBtn) {
-      if (hasRequiredSelections) {
+    const contactBtnText = document.getElementById("contactBtnText");
+    
+    if (contactBtn && contactBtnText) {
+      if (hasRequiredSelections && !isOutOfStock) {
         contactBtn.disabled = false;
         contactBtn.className =
           "w-full py-3 lg:py-4 font-bold text-lg transition-all duration-300 bg-black hover:bg-blue-600 text-white";
-        document.getElementById("contactBtnText").innerHTML =
+        contactBtnText.innerHTML =
           '<i class="fas fa-phone mr-2"></i>Contact Us for Quote';
       } else {
         contactBtn.disabled = true;
         contactBtn.className =
           "w-full py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
-        document.getElementById("contactBtnText").innerHTML =
-          '<i class="fas fa-phone mr-2"></i>Select all options first';
+        const msg = isOutOfStock ? "Selected option is out of stock" : "Select all options first";
+        contactBtnText.innerHTML =
+          `<i class="fas fa-phone mr-2"></i>${msg}`;
       }
     }
   } else {
     const addToCartBtn = document.getElementById("addToCartBtn");
-    if (addToCartBtn) {
-      if (hasRequiredSelections) {
+    const btnText = document.getElementById("btnText");
+    
+    if (addToCartBtn && btnText) {
+      if (hasRequiredSelections && !isOutOfStock) {
         addToCartBtn.disabled = false;
         addToCartBtn.className =
           "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-black hover:bg-orange-600 text-white";
-        document.getElementById("btnText").innerHTML =
+        btnText.innerHTML =
           '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
       } else {
         addToCartBtn.disabled = true;
         addToCartBtn.className =
           "flex-1 py-3 lg:py-4 text-lg transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed";
-        document.getElementById("btnText").innerHTML =
-          '<i class="fas fa-shopping-cart mr-2"></i> Select all options first';
+        const msg = isOutOfStock ? "Out of Stock" : "Select all options first";
+        btnText.innerHTML =
+          `<i class="fas fa-shopping-cart mr-2"></i> ${msg}`;
       }
     }
   }

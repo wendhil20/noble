@@ -4,9 +4,6 @@ session_start();
 include '../../connection/connect.php';
 header('Content-Type: application/json');
 
-// ===== GUEST MODE: Allow guests to add to cart =====
-// No user_id check here - guests can proceed!
-
 // Reset AUTO_INCREMENT if table is empty
 $tables = ['user_cart_items'];
 foreach ($tables as $table) {
@@ -32,26 +29,25 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $stmt->close();
 }
 
-// ===== GUEST MODE: Check if user is logged in after this point =====
 $user_id = $_SESSION['user_id'] ?? null;
-$is_guest = !$user_id; // True if guest, False if logged in
+$is_guest = !$user_id;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // ✅ STEP 1: GET ALL POST DATA FIRST
         $product_id = (int)($_POST['product_id'] ?? 0);
         $selected_type = trim($_POST['selected_type'] ?? '');
         $selected_variant = trim($_POST['selected_variant'] ?? '');
         $selected_color_id = (int)($_POST['selected_color_id'] ?? 0);
         $variant_id = (int)($_POST['variant_id'] ?? 0);
         
-        // ✅ GET QUANTITY FROM POST (Default to 1 if not provided)
         $quantity = (int)($_POST['quantity'] ?? 1);
         if ($quantity < 1) $quantity = 1;
         if ($quantity > 9999) $quantity = 9999;
 
         if (!$product_id) throw new Exception('Product ID is required.');
 
-        // Get basic product data including descrip6 and descrip7
+        // Get basic product data
         $stmt = $conn->prepare("SELECT product_name, codename, descrip6, descrip7 FROM products WHERE id = ?");
         $stmt->bind_param("i", $product_id);
         $stmt->execute();
@@ -64,12 +60,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $color_price = 0;
         $variant_price = 0;
         $variant_id_db = null;
-        $color_id = null;  // ✅ Initialize as NULL
+        $color_id = null;
         $codename = $product['codename'];
         $unit = $product['descrip6'] ?? '';
         $specification = $product['descrip7'] ?? '';
 
-        // ✅ GET COLOR INFO AND STORE color_id
+        // ✅ STEP 2: GET COLOR INFO
         if ($selected_color_id > 0) {
             $color_stmt = $conn->prepare("SELECT id, color_name, price FROM product_colors WHERE id = ? AND product_id = ?");
             $color_stmt->bind_param("ii", $selected_color_id, $product_id);
@@ -78,13 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $color_stmt->close();
 
             if ($color_data) {
-                $color_id = $color_data['id'];  // ✅ STORE THE COLOR ID
+                $color_id = $color_data['id'];
                 $color_name = $color_data['color_name'];
                 $color_price = floatval($color_data['price']);
             }
         }
 
-        // Get variant info via type and variant name
+        // ✅ STEP 3: GET VARIANT INFO
         if (!empty($selected_type) && !empty($selected_variant)) {
             $type_stmt = $conn->prepare("SELECT id FROM product_types WHERE product_id = ? AND type_name = ?");
             $type_stmt->bind_param("is", $product_id, $selected_type);
@@ -106,14 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $variant_id_db = $variant_data['id'];
                     $variant_name = $variant_data['namevariant'];
                     $size = $variant_data['size'];
-                    // ✅ CRITICAL: price column in product_variants is ALREADY the FINAL price!
-                    // NO recalculation needed - just use it directly
                     $variant_price = floatval($variant_data['price']);
                 }
             }
         }
 
-        // Fallback by variant_id if previous method fails
+        // Fallback by variant_id
         if (!$variant_id_db && $variant_id > 0) {
             $variant_stmt = $conn->prepare("SELECT v.id, v.namevariant, v.size, v.price, t.type_name FROM product_variants v JOIN product_types t ON v.type_id = t.id WHERE v.id = ?");
             $variant_stmt->bind_param("i", $variant_id);
@@ -126,37 +120,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $variant_name = $variant_data['namevariant'];
                 $size = $variant_data['size'];
                 $type_name = $variant_data['type_name'];
-                // ✅ CRITICAL: price is ALREADY the FINAL price!
                 $variant_price = floatval($variant_data['price']);
             }
         }
 
-        // ✅ SIMPLE PRICE CALCULATION: Just add color price to variant price
-        // No need for discount calculations - price column already has final price!
+        // ✅ STEP 4: NOW CHECK STOCK (after we have variant_id_db and color_id)
+        if (!$variant_id_db || !$color_id) {
+            throw new Exception('Please select both color and size');
+        }
+
+        // ✅ FETCH AVAILABLE STOCK FROM JUNCTION TABLE
+        $stock_stmt = $conn->prepare("
+            SELECT stock_quantity 
+            FROM product_variant_colors 
+            WHERE variant_id = ? AND color_id = ?
+        ");
+        $stock_stmt->bind_param("ii", $variant_id_db, $color_id);
+        $stock_stmt->execute();
+        $stock_result = $stock_stmt->get_result();
+
+        $available_stock = 0;
+        
+        if ($stock_result->num_rows > 0) {
+            $stock_row = $stock_result->fetch_assoc();
+            $available_stock = intval($stock_row['stock_quantity']);
+        }
+        $stock_stmt->close();
+
+        // ✅ VALIDATION 1: Check if out of stock
+        if ($available_stock <= 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => "This item is OUT OF STOCK. No units available."
+            ]);
+            exit;
+        }
+
+        // ✅ VALIDATION 2: Check if requested quantity exceeds available stock
+        if ($quantity > $available_stock) {
+            echo json_encode([
+                'success' => false,
+                'message' => " Not enough stock! You requested {$quantity} units but only {$available_stock} available in stock. Max: {$available_stock}"
+            ]);
+            exit;
+        }
+
+        // ✅ STEP 5: CALCULATE PRICE
         $price = round($color_price + $variant_price, 2);
         if ($price <= 0) throw new Exception('Invalid price computation.');
 
-        // ===== GUEST MODE: If guest, save to temp session instead of database =====
+        // ✅ STEP 6: SAVE TO CART (guest or logged in)
         if ($is_guest) {
-            // Initialize guest cart in session
             if (!isset($_SESSION['guest_cart'])) {
                 $_SESSION['guest_cart'] = [];
             }
 
-            // ✅ UPDATED: Include color_id in the unique key
             $item_key = md5($product_id . '_' . $color_id . '_' . $variant_id_db);
 
-            // Check if item already exists
             if (isset($_SESSION['guest_cart'][$item_key])) {
-                $_SESSION['guest_cart'][$item_key]['quantity'] += $quantity;
-                $action_message = "Added $quantity more piece(s) to cart. Total: " . $_SESSION['guest_cart'][$item_key]['quantity'];
-                $final_quantity = $_SESSION['guest_cart'][$item_key]['quantity'];
+                $new_qty = $_SESSION['guest_cart'][$item_key]['quantity'] + $quantity;
+                
+                // ✅ CHECK TOTAL QUANTITY DOESN'T EXCEED STOCK
+                if ($new_qty > $available_stock) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => " Cannot add! You already have {$_SESSION['guest_cart'][$item_key]['quantity']} in cart. Adding {$quantity} more would exceed stock limit of {$available_stock}. Max total: {$available_stock}"
+                    ]);
+                    exit;
+                }
+                
+                $_SESSION['guest_cart'][$item_key]['quantity'] = $new_qty;
+                $action_message = "✅ Added {$quantity} more piece(s) to cart. Total: {$new_qty}";
+                $final_quantity = $new_qty;
             } else {
-                // ✅ UPDATED: Store color_id in guest cart
                 $_SESSION['guest_cart'][$item_key] = [
                     'product_id' => $product_id,
                     'product_name' => $product['product_name'],
-                    'color_id' => $color_id,  // ✅ STORE COLOR_ID
+                    'color_id' => $color_id,
                     'color_name' => $color_name,
                     'variant_id' => $variant_id_db,
                     'type_name' => $type_name,
@@ -168,17 +208,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'price' => $price,
                     'quantity' => $quantity
                 ];
-                $action_message = "Added $quantity piece(s) to cart";
+                $action_message = "✅ Added {$quantity} piece(s) to cart";
                 $final_quantity = $quantity;
             }
 
-            // Return guest response with warning
             echo json_encode([
                 'success' => true,
                 'is_guest' => true,
                 'message' => $action_message,
                 'warning' => 'You are in guest mode. Please login to checkout.',
                 'cart_count' => count($_SESSION['guest_cart']),
+                'available_stock' => $available_stock,
                 'item_added' => [
                     'name' => $product['product_name'],
                     'color' => $color_name ?: '—',
@@ -195,9 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // ===== LOGGED IN USER: Normal database save =====
-        
-        // Check if user account is verified (only for logged in users)
+        // LOGGED IN USER
         $verify_stmt = $conn->prepare("SELECT ud.is_verified FROM user_details ud WHERE ud.user_id = ?");
         $verify_stmt->bind_param("i", $user_id);
         $verify_stmt->execute();
@@ -225,7 +263,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // ✅ UPDATED: Include color_id in the comparison
         $check_stmt = $conn->prepare("SELECT id, quantity FROM user_cart_items WHERE user_id = ? AND product_id = ? AND color_id <=> ? AND variant_id <=> ?");
         $check_stmt->bind_param("iiii", $user_id, $product_id, $color_id, $variant_id_db);
         $check_stmt->execute();
@@ -233,17 +270,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check_stmt->close();
 
         if ($existing) {
-            // ✅ ADD THE REQUESTED QUANTITY to existing quantity
             $new_qty = $existing['quantity'] + $quantity;
+            
+            // ✅ CHECK TOTAL QUANTITY DOESN'T EXCEED STOCK
+            if ($new_qty > $available_stock) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => " Cannot add! You already have {$existing['quantity']} in cart. Adding {$quantity} more would exceed stock limit of {$available_stock}. Max total: {$available_stock}"
+                ]);
+                exit;
+            }
+            
             $update_stmt = $conn->prepare("UPDATE user_cart_items SET quantity = ?, price = ?, added_at = NOW() WHERE id = ?");
             $update_stmt->bind_param("idi", $new_qty, $price, $existing['id']);
             $update_stmt->execute();
             $update_stmt->close();
             
             $final_quantity = $new_qty;
-            $action_message = "Added $quantity more piece(s) to cart. Total: $new_qty";
+            $action_message = " Added {$quantity} more piece(s) to cart. Total: {$new_qty}";
         } else {
-            // ✅ UPDATED: INSERT with color_id
             $insert_stmt = $conn->prepare("
                 INSERT INTO user_cart_items (
                     user_id, product_id, color_id, variant_id, quantity, price,
@@ -260,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert_stmt->close();
             
             $final_quantity = $quantity;
-            $action_message = "Added $quantity piece(s) to cart";
+            $action_message = "Added {$quantity} piece(s) to cart";
         }
 
         echo json_encode([
@@ -268,6 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'is_guest' => false,
             'message' => $action_message,
             'cart_count' => getCartCount($conn, $user_id),
+            'available_stock' => $available_stock,
             'item_added' => [
                 'name' => $product['product_name'],
                 'color' => $color_name ?: '—',
@@ -284,14 +330,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         error_log("Cart Error: " . $e->getMessage());
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => '❌ ' . $e->getMessage()]);
     }
 } else {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
 }
 
-// Helper function to get total cart item count
 function getCartCount($conn, $user_id) {
     $stmt = $conn->prepare("SELECT SUM(quantity) AS total FROM user_cart_items WHERE user_id = ?");
     $stmt->bind_param("i", $user_id);

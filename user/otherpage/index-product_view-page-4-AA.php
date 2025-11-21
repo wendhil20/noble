@@ -1303,8 +1303,8 @@ $is_guest = !isset($_SESSION['user_id']);
                     let stockSpan = btn.querySelector('.color-stock-display');
                     if (stockSpan) {
                       if (totalStock > 0) {
-                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-green-600 font-semibold block mt-1';
-                        stockSpan.textContent = totalStock + ' total';
+                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
+                        stockSpan.textContent = totalStock + ' Stock';
                       } else {
                         stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
                         stockSpan.textContent = 'OUT OF STOCK';
@@ -1340,7 +1340,7 @@ $is_guest = !isset($_SESSION['user_id']);
                     if (stockSpan) {
                       if (btnStock > 0) {
                         stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-green-600 font-semibold block mt-1';
-                        stockSpan.textContent = btnStock + ' avail';
+                        stockSpan.textContent = btnStock + ' stock';
                         btn.classList.remove('opacity-50', 'cursor-not-allowed', 'border-red-300');
                         btn.classList.add('border-gray-300', 'hover:border-orange-500');
                         btn.disabled = false;

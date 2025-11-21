@@ -106,8 +106,10 @@ async function updateVariantStockByColor(colorId) {
 const originalSelectColorFromGrid = window.selectColorFromGrid || (() => {});
 
 window.selectColorFromGrid = async function(colorId, colorName, price, image, colorCode) {
-  // Call original function
-  originalSelectColorFromGrid.call(this, colorId, colorName, price, image, colorCode);
+  // Call original function first (if it exists)
+  if (typeof originalSelectColorFromGrid === 'function') {
+    originalSelectColorFromGrid.call(this, colorId, colorName, price, image, colorCode);
+  }
   
   // Update variant stock based on this color
   console.log(`Color selected: ${colorName} (ID: ${colorId})`);
@@ -115,6 +117,15 @@ window.selectColorFromGrid = async function(colorId, colorName, price, image, co
   
   // Check available variants
   checkAvailableVariants();
+  
+  // ✅ SAFELY UPDATE PURCHASE BUTTON
+  setTimeout(() => {
+    if (window.productSelector && typeof window.productSelector.updatePurchaseButton === 'function') {
+      window.productSelector.updatePurchaseButton();
+    } else if (typeof updatePurchaseButton === 'function') {
+      updatePurchaseButton();
+    }
+  }, 150);
 };
 
 /**

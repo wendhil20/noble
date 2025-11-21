@@ -121,6 +121,14 @@ if ($stmt->fetch()) {
 }
 $stmt->close();
 
+// Calculate conversion rate early
+if ($referral_data !== null) {
+    $total_visits = $referral_data['scans'];
+    $total_conversions = $referral_data['conversions'];
+    $conversion_rate = $total_visits > 0 ? ($total_conversions / $total_visits) * 100 : 0;
+    $referral_data['conversion_rate'] = $conversion_rate;
+}
+
 // ✅ NEW: Count unique users who used this referral code
 if ($referral_data !== null) {
     // Count unique customers who placed orders with this referral code
@@ -805,42 +813,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                 </div>
                 
                 <div class="p-4 sm:p-6">
-                    <!-- Time Period Stats -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 text-center">
-                            <div class="text-3xl font-bold text-green-600 mb-1">
-                                <?php echo number_format($referral_data['today_visits'] ?? 0); ?>
-                            </div>
-                            <div class="text-sm text-green-700 font-medium">Today's Visits</div>
-                            <div class="text-xs text-green-600 mt-1">
-                                <i class="fas fa-calendar-day mr-1"></i><?php echo date('F j, Y'); ?>
-                            </div>
-                            <div class="text-xs text-green-600 mt-1">
-    <i class="fas fa-shopping-cart mr-1"></i>
-    <?php echo number_format($referral_data['conversion_rate'], 1); ?>% conversion
+                    <?php
+// Calculate today's conversion rate
+$today_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE referral_code = ? AND DATE(created_at) = CURDATE()");
+$today_orders_stmt->bind_param("s", $referral_data['code']);
+$today_orders_stmt->execute();
+$today_orders_stmt->bind_result($today_orders);
+$today_orders_stmt->fetch();
+$today_orders_stmt->close();
+
+$today_visits = $referral_data['today_visits'] ?? 0;
+$today_conversion = $today_visits > 0 ? (($today_orders ?? 0) / $today_visits) * 100 : 0;
+
+// Calculate this week's stats
+$week_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE referral_code = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+$week_orders_stmt->bind_param("s", $referral_data['code']);
+$week_orders_stmt->execute();
+$week_orders_stmt->bind_result($week_orders);
+$week_orders_stmt->fetch();
+$week_orders_stmt->close();
+
+$week_visits = $referral_data['week_visits'] ?? 0;
+$week_conversion = $week_visits > 0 ? (($week_orders ?? 0) / $week_visits) * 100 : 0;
+
+// Calculate this month's stats
+$month_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE referral_code = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
+$month_orders_stmt->bind_param("s", $referral_data['code']);
+$month_orders_stmt->execute();
+$month_orders_stmt->bind_result($month_orders);
+$month_orders_stmt->fetch();
+$month_orders_stmt->close();
+
+$month_visits = $referral_data['month_visits'] ?? 0;
+$month_conversion = $month_visits > 0 ? (($month_orders ?? 0) / $month_visits) * 100 : 0;
+?>
+
+<!-- Time Period Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 text-center">
+        <div class="text-3xl font-bold text-green-600 mb-1">
+            <?php echo number_format($today_visits); ?>
+        </div>
+        <div class="text-sm text-green-700 font-medium">Today's Visits</div>
+        <div class="text-xs text-green-600 mt-1">
+            <i class="fas fa-calendar-day mr-1"></i><?php echo date('F j, Y'); ?>
+        </div>
+        <div class="text-xs text-green-600 mt-1">
+            <i class="fas fa-shopping-cart mr-1"></i>
+            <?php echo number_format($today_conversion, 1); ?>% conversion
+        </div>
+        <?php if ($today_orders > 0): ?>
+            <div class="text-xs text-green-700 mt-1 font-semibold">
+                <i class="fas fa-check-circle mr-1"></i><?php echo $today_orders; ?> order<?php echo $today_orders != 1 ? 's' : ''; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    
+    <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 text-center">
+        <div class="text-3xl font-bold text-blue-600 mb-1">
+            <?php echo number_format($week_visits); ?>
+        </div>
+        <div class="text-sm text-blue-700 font-medium">This Week</div>
+        <div class="text-xs text-blue-600 mt-1">
+            <i class="fas fa-calendar-week mr-1"></i>Last 7 days
+        </div>
+        <div class="text-xs text-blue-600 mt-1">
+            <i class="fas fa-shopping-cart mr-1"></i>
+            <?php echo number_format($week_conversion, 1); ?>% conversion
+        </div>
+        <?php if ($week_orders > 0): ?>
+            <div class="text-xs text-blue-700 mt-1 font-semibold">
+                <i class="fas fa-check-circle mr-1"></i><?php echo $week_orders; ?> order<?php echo $week_orders != 1 ? 's' : ''; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    
+    <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 text-center">
+        <div class="text-3xl font-bold text-purple-600 mb-1">
+            <?php echo number_format($month_visits); ?>
+        </div>
+        <div class="text-sm text-purple-700 font-medium">This Month</div>
+        <div class="text-xs text-purple-600 mt-1">
+            <i class="fas fa-calendar-alt mr-1"></i><?php echo date('F Y'); ?>
+        </div>
+        <div class="text-xs text-purple-600 mt-1">
+            <i class="fas fa-shopping-cart mr-1"></i>
+            <?php echo number_format($month_conversion, 1); ?>% conversion
+        </div>
+        <?php if ($month_orders > 0): ?>
+            <div class="text-xs text-purple-700 mt-1 font-semibold">
+                <i class="fas fa-check-circle mr-1"></i><?php echo $month_orders; ?> order<?php echo $month_orders != 1 ? 's' : ''; ?>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
-                        </div>
-                        
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 text-center">
-                            <div class="text-3xl font-bold text-blue-600 mb-1">
-                                <?php echo number_format($referral_data['week_visits'] ?? 0); ?>
-                            </div>
-                            <div class="text-sm text-blue-700 font-medium">This Week</div>
-                            <div class="text-xs text-blue-600 mt-1">
-                                <i class="fas fa-calendar-week mr-1"></i>Last 7 days
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 text-center">
-                            <div class="text-3xl font-bold text-purple-600 mb-1">
-                                <?php echo number_format($referral_data['month_visits'] ?? 0); ?>
-                            </div>
-                            <div class="text-sm text-purple-700 font-medium">This Month</div>
-                            <div class="text-xs text-purple-600 mt-1">
-                                <i class="fas fa-calendar-alt mr-1"></i><?php echo date('F Y'); ?>
-                            </div>
-                        </div>
-                    </div>
                     
                     <!-- Daily Breakdown Table -->
                     <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
@@ -944,213 +1010,236 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
             <!-- ✅ ANALYTICS SECTION ENDS HERE -->
             
             <!-- ✅ REFERRAL HISTORY SECTION STARTS HERE -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-6">
-                <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-4 sm:px-6 py-3 sm:py-4">
-                    <h2 class="text-lg sm:text-2xl font-bold text-white flex items-center">
-                        <i class="fas fa-history mr-2 sm:mr-3"></i>
-                        Referral Code History
-                    </h2>
-                </div>
-                
-                <div class="p-4 sm:p-6">
-                    <?php
-                    // Fetch ALL referral codes (active and inactive) for this user
-                    $history_stmt = $conn->prepare("
-                        SELECT 
-                            referral_code, 
-                            is_active, 
-                            total_scans, 
-                            total_conversions, 
-                            total_revenue, 
-                            discount_enabled,
-                            discount_type,
-                            discount_value,
-                            created_at,
-                            updated_at
-                        FROM referral_codes 
-                        WHERE user_id = ? 
-                        ORDER BY is_active DESC, created_at DESC
-                    ");
-                    $history_stmt->bind_param("i", $user_id);
-                    $history_stmt->execute();
-                    $history_result = $history_stmt->get_result();
-                    $has_history = $history_result->num_rows > 0;
-                    ?>
-                    
-                    <?php if ($has_history): ?>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead class="bg-gray-100 border-b-2 border-gray-300">
-    <tr>
-        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
-        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Referral Code</th>
-        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Discount</th>
-        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Visits</th>
-        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
-        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Conv. %</th>
-        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Revenue</th>
-        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Created</th>
-    </tr>
-</thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <?php while ($history_row = $history_result->fetch_assoc()): ?>
+<div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-6">
+    <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-4 sm:px-6 py-3 sm:py-4">
+        <h2 class="text-lg sm:text-2xl font-bold text-white flex items-center">
+            <i class="fas fa-history mr-2 sm:mr-3"></i>
+            Referral Code History
+        </h2>
+    </div>
+    
+    <div class="p-4 sm:p-6">
+        <?php
+        // Fetch ALL referral codes (active and inactive) for this user
+        $history_stmt = $conn->prepare("
+            SELECT 
+                referral_code, 
+                is_active, 
+                total_scans, 
+                total_conversions, 
+                total_revenue, 
+                discount_enabled,
+                discount_type,
+                discount_value,
+                created_at,
+                updated_at
+            FROM referral_codes 
+            WHERE user_id = ? 
+            ORDER BY is_active DESC, created_at DESC
+        ");
+        $history_stmt->bind_param("i", $user_id);
+        $history_stmt->execute();
+        $history_result = $history_stmt->get_result();
+        $has_history = $history_result->num_rows > 0;
+        
+        // Calculate summary stats
+$active_count = 0;
+$inactive_count = 0;
+$all_history_rows = [];
+
+while ($row = $history_result->fetch_assoc()) {
+    $all_history_rows[] = $row;
+    
+    if ($row['is_active'] == 1) {
+        $active_count++;
+    } else {
+        $inactive_count++;
+    }
+}
+?>
+
+<?php if ($has_history): ?>
     <?php 
-    $hist_visits = $history_row['total_scans'];
-    $hist_orders = $history_row['total_conversions'];
-    $hist_conv_rate = $hist_visits > 0 ? ($hist_orders / $hist_visits) * 100 : 0;
+    // NOW calculate real totals by fetching actual data
+    $total_all_visits = 0;
+    $total_all_sales = 0;
+    $total_all_revenue = 0;
     ?>
-    <tr class="hover:bg-gray-50 transition-colors <?php echo $history_row['is_active'] == 1 ? 'bg-green-50' : 'bg-gray-50'; ?>">
-                                            <!-- Status Badge -->
-                                            <td class="px-4 py-3">
-                                                <?php if ($history_row['is_active'] == 1): ?>
-                                                    <span class="inline-flex items-center px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold shadow-sm">
-                                                        <i class="fas fa-check-circle mr-1"></i>ACTIVE
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="inline-flex items-center px-3 py-1 bg-gray-400 text-white rounded-full text-xs font-bold">
-                                                        <i class="fas fa-ban mr-1"></i>INACTIVE
-                                                    </span>
-                                                <?php endif; ?>
-                                            </td>
-                                            
-                                            <!-- Referral Code -->
-                                            <td class="px-4 py-3">
-                                                <div class="flex items-center space-x-2">
-                                                    <span class="font-mono font-bold text-purple-700 text-base">
-                                                        <?php echo htmlspecialchars($history_row['referral_code']); ?>
-                                                    </span>
-                                                    <?php if ($history_row['is_active'] == 1): ?>
-                                                        <button onclick="copyHistoryCode('<?php echo htmlspecialchars($history_row['referral_code']); ?>')" 
-                                                            class="text-purple-600 hover:text-purple-800 transition" title="Copy code">
-                                                            <i class="fas fa-copy"></i>
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                            
-                                            <!-- Discount Info -->
-                                            <td class="px-4 py-3 text-center">
-                                                <?php if ($history_row['discount_enabled'] == 1): ?>
-                                                    <span class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">
-                                                        <i class="fas fa-ticket-alt mr-1"></i>
-                                                        <?php 
-                                                        if ($history_row['discount_type'] == 'percentage') {
-                                                            echo number_format($history_row['discount_value'], 0) . '%';
-                                                        } else {
-                                                            echo '₱' . number_format($history_row['discount_value'], 0);
-                                                        }
-                                                        ?>
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="text-gray-400 text-xs">-</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            
-                                            <!-- Visits -->
-                                            <td class="px-4 py-3 text-center">
-                                                <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
-                                                    <i class="fas fa-eye mr-1"></i>
-                                                    <?php echo number_format($history_row['total_scans']); ?>
-                                                </span>
-                                            </td>
-                                            
-                                            <!-- Orders -->
-<td class="px-4 py-3 text-center">
-    <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
-        <i class="fas fa-shopping-cart mr-1"></i>
-        <?php echo number_format($hist_orders); ?>
-    </span>
-</td>
-
-<!-- Conversion Rate -->
-<td class="px-4 py-3 text-center">
-    <?php if ($hist_orders > 0): ?>
-        <span class="font-bold <?= $hist_conv_rate >= 10 ? 'text-green-700' : ($hist_conv_rate >= 5 ? 'text-orange-600' : 'text-red-600') ?>">
-            <?php echo number_format($hist_conv_rate, 1); ?>%
-        </span>
-    <?php else: ?>
-        <span class="text-gray-400 text-xs">0%</span>
-    <?php endif; ?>
-</td>
-
-<!-- Revenue -->
-<td class="px-4 py-3 text-right">
-                                            <td class="px-4 py-3 text-right">
-                                                <span class="font-bold text-purple-700">
-                                                    ₱<?php echo number_format($history_row['total_revenue'], 2); ?>
-                                                </span>
-                                            </td>
-                                            
-                                            <!-- Created Date -->
-                                            <td class="px-4 py-3 text-center text-xs text-gray-600">
-                                                <div class="flex flex-col">
-                                                    <span class="font-medium"><?php echo date('M j, Y', strtotime($history_row['created_at'])); ?></span>
-                                                    <span class="text-gray-400"><?php echo date('g:i A', strtotime($history_row['created_at'])); ?></span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Summary Stats -->
-                        <?php
-                        $history_result->data_seek(0); // Reset pointer
-                        $total_all_visits = 0;
-                        $total_all_sales = 0;
-                        $total_all_revenue = 0;
-                        $active_count = 0;
-                        $inactive_count = 0;
-                        
-                        while ($sum_row = $history_result->fetch_assoc()) {
-                            $total_all_visits += $sum_row['total_scans'];
-                            $total_all_sales += $sum_row['total_conversions'];
-                            $total_all_revenue += $sum_row['total_revenue'];
-                            
-                            if ($sum_row['is_active'] == 1) {
-                                $active_count++;
-                            } else {
-                                $inactive_count++;
-                            }
-                        }
-                        ?>
-                        
-                        <div class="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-green-600"><?php echo $active_count; ?></div>
-                                <div class="text-xs text-gray-600">Active Codes</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-gray-400"><?php echo $inactive_count; ?></div>
-                                <div class="text-xs text-gray-600">Inactive Codes</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-blue-600"><?php echo number_format($total_all_visits); ?></div>
-                                <div class="text-xs text-gray-600">Total Visits</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-green-600"><?php echo number_format($total_all_sales); ?></div>
-                                <div class="text-xs text-gray-600">Total Sales</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-purple-600">₱<?php echo number_format($total_all_revenue, 2); ?></div>
-                                <div class="text-xs text-gray-600">Total Revenue</div>
-                            </div>
-                        </div>
-                        
-                    <?php else: ?>
-                        <div class="text-center py-12 text-gray-500">
-                            <i class="fas fa-inbox text-5xl mb-4 text-gray-300"></i>
-                            <p class="text-lg font-medium">No referral history yet</p>
-                            <p class="text-sm">Your referral codes will appear here once you generate them</p>
-                        </div>
-                    <?php endif; ?>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-100 border-b-2 border-gray-300">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Referral Code</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Discount</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Visits</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Conv. %</th>
+                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Revenue</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Created</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <?php foreach ($all_history_rows as $history_row): ?>
+                    <?php 
+                    // Get REAL visit count from referral_visits table
+                    $visit_stmt = $conn->prepare("SELECT COUNT(*) FROM referral_visits WHERE referral_code = ?");
+                    $visit_stmt->bind_param("s", $history_row['referral_code']);
+                    $visit_stmt->execute();
+                    $visit_stmt->bind_result($real_visits);
+                    $visit_stmt->fetch();
+                    $visit_stmt->close();
                     
-                    <?php $history_stmt->close(); ?>
-                </div>
+                    // Get REAL order count from orders table
+                    $order_stmt = $conn->prepare("SELECT COUNT(*), COALESCE(SUM(total), 0) FROM orders WHERE referral_code = ? AND referral_code IS NOT NULL");
+                    $order_stmt->bind_param("s", $history_row['referral_code']);
+                    $order_stmt->execute();
+                    $order_stmt->bind_result($real_orders, $real_revenue);
+                    $order_stmt->fetch();
+                    $order_stmt->close();
+                    
+                    // Use real data instead of cached totals
+                    $hist_visits = intval($real_visits ?? 0);
+                    $hist_orders = intval($real_orders ?? 0);
+                    $hist_revenue = floatval($real_revenue ?? 0);
+                    $hist_conv_rate = $hist_visits > 0 ? ($hist_orders / $hist_visits) * 100 : 0;
+                    
+                    // Add to totals for summary
+                    $total_all_visits += $hist_visits;
+                    $total_all_sales += $hist_orders;
+                    $total_all_revenue += $hist_revenue;
+                    ?>
+                    <tr class="hover:bg-gray-50 transition-colors <?php echo $history_row['is_active'] == 1 ? 'bg-green-50' : ''; ?>">
+                        <!-- Status Badge -->
+                        <td class="px-4 py-3">
+                            <?php if ($history_row['is_active'] == 1): ?>
+                                <span class="inline-flex items-center px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold shadow-sm">
+                                    <i class="fas fa-check-circle mr-1"></i>ACTIVE
+                                </span>
+                            <?php else: ?>
+                                <span class="inline-flex items-center px-3 py-1 bg-gray-400 text-white rounded-full text-xs font-bold">
+                                    <i class="fas fa-ban mr-1"></i>INACTIVE
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        
+                        <!-- Referral Code -->
+                        <td class="px-4 py-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-mono font-bold text-purple-700 text-base">
+                                    <?php echo htmlspecialchars($history_row['referral_code']); ?>
+                                </span>
+                                <?php if ($history_row['is_active'] == 1): ?>
+                                    <button onclick="copyHistoryCode('<?php echo htmlspecialchars($history_row['referral_code']); ?>')" 
+                                        class="text-purple-600 hover:text-purple-800 transition" title="Copy code">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        
+                        <!-- Discount Info -->
+                        <td class="px-4 py-3 text-center">
+                            <?php if ($history_row['discount_enabled'] == 1): ?>
+                                <span class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">
+                                    <i class="fas fa-ticket-alt mr-1"></i>
+                                    <?php 
+                                    if ($history_row['discount_type'] == 'percentage') {
+                                        echo number_format($history_row['discount_value'], 0) . '%';
+                                    } else {
+                                        echo '₱' . number_format($history_row['discount_value'], 0);
+                                    }
+                                    ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400 text-xs">-</span>
+                            <?php endif; ?>
+                        </td>
+                        
+                        <!-- Visits -->
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                <i class="fas fa-eye mr-1"></i>
+                                <?php echo number_format($hist_visits); ?>
+                            </span>
+                        </td>
+                        
+                        <!-- Orders -->
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
+                                <i class="fas fa-shopping-cart mr-1"></i>
+                                <?php echo number_format($hist_orders); ?>
+                            </span>
+                        </td>
+                        
+                        <!-- Conversion Rate -->
+                        <td class="px-4 py-3 text-center">
+                            <?php if ($hist_orders > 0): ?>
+                                <span class="font-bold <?php echo $hist_conv_rate >= 10 ? 'text-green-700' : ($hist_conv_rate >= 5 ? 'text-orange-600' : 'text-red-600'); ?>">
+                                    <?php echo number_format($hist_conv_rate, 1); ?>%
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400 text-xs">0%</span>
+                            <?php endif; ?>
+                        </td>
+                        
+                        <!-- Revenue -->
+                        <td class="px-4 py-3 text-right">
+                            <span class="font-bold text-purple-700">
+                                ₱<?php echo number_format($hist_revenue, 2); ?>
+                            </span>
+                        </td>
+                        
+                        <!-- Created Date -->
+                        <td class="px-4 py-3 text-center text-xs text-gray-600">
+                            <div class="flex flex-col">
+                                <span class="font-medium"><?php echo date('M j, Y', strtotime($history_row['created_at'])); ?></span>
+                                <span class="text-gray-400"><?php echo date('g:i A', strtotime($history_row['created_at'])); ?></span>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Summary Stats -->
+    <div class="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div class="text-center">
+            <div class="text-2xl font-bold text-green-600"><?php echo $active_count; ?></div>
+            <div class="text-xs text-gray-600">Active Codes</div>
+        </div>
+        <div class="text-center">
+            <div class="text-2xl font-bold text-gray-400"><?php echo $inactive_count; ?></div>
+            <div class="text-xs text-gray-600">Inactive Codes</div>
+        </div>
+        <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600"><?php echo number_format($total_all_visits); ?></div>
+            <div class="text-xs text-gray-600">Total Visits</div>
+        </div>
+        <div class="text-center">
+            <div class="text-2xl font-bold text-green-600"><?php echo number_format($total_all_sales); ?></div>
+            <div class="text-xs text-gray-600">Total Sales</div>
+        </div>
+        <div class="text-center">
+            <div class="text-2xl font-bold text-purple-600">₱<?php echo number_format($total_all_revenue, 2); ?></div>
+            <div class="text-xs text-gray-600">Total Revenue</div>
+        </div>
+    </div>
+            
+        <?php else: ?>
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-inbox text-5xl mb-4 text-gray-300"></i>
+                <p class="text-lg font-medium">No referral history yet</p>
+                <p class="text-sm">Your referral codes will appear here once you generate them</p>
             </div>
-            <!-- ✅ REFERRAL HISTORY SECTION ENDS HERE -->
+        <?php endif; ?>
+        
+        <?php $history_stmt->close(); ?>
+    </div>
+</div>
+<!-- ✅ REFERRAL HISTORY SECTION ENDS HERE -->
             
         <?php else: ?>
             

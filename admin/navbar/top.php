@@ -733,13 +733,30 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
         </div>
 
         <!-- Revenue Accountant -->
+         <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
+                                            <a href="../accountant/accountant"
+                                                class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+                                                <i class="ri-archive-line text-lg"></i>
+                                                <span>Dashboard</span>
+                                            </a>
+                                        <?php endif; ?>
+        <a href="../accountant/accountant_view_orders"
+           class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
+                  hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
+            <i class="ri-money-dollar-circle-line text-lg"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
         <a href="../accountant/accountantdashboard.php"
            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
                   hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-150">
             <i class="ri-money-dollar-circle-line text-lg"></i>
             <span>Revenue Accountant</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
         <!-- Add QR Code -->
         <a href="../accountant/manage_qr_codes.php"
            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -747,7 +764,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             <i class="ri-qr-code-line text-lg"></i>
             <span>Add QR Code</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
         <!-- Project Excel -->
         <a href="../accountant/accountantexcel.php"
            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -755,7 +774,9 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             <i class="ri-file-excel-2-line text-lg"></i>
             <span>Project Excel</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (hasAnyRole(['superadmin']) || !hasSubrole(['document_controller'])): ?>
         <!-- Accountant Management -->
         <a href="../accountant/accountant.php"
            class="quick-action-item flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-700 
@@ -763,6 +784,7 @@ if (!isset($_SESSION['noble_name']) || !isset($_SESSION['noble_lvl']) || !isset(
             <i class="ri-briefcase-4-line text-lg"></i>
             <span>Accountant Management</span>
         </a>
+        <?php endif; ?>
 
     </div>
 <?php endif; ?>

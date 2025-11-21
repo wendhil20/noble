@@ -12,6 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     ini_set('display_errors', 1);
 }
 
+// Redirect dispatchers to their own dashboard
+if (isset($_SESSION['noble_subrole']) && $_SESSION['noble_subrole'] === 'document_controller') {
+    header("Location: accountant_view_orders.php");
+    exit();
+}
+
 include '../../connection/connect.php';
 require_once '../role/roleaccount.php';
 require_role(['accountant', 'superadmin']);

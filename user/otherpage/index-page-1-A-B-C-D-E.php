@@ -233,7 +233,7 @@ $discount_result = mysqli_query(
      LIMIT 10"
 );
 
-// 7. Filter by furniture codename - WITH VIEW COUNT & RATING & SOLD COUNT & PRICE RANGE
+// 7. Filter by furniture codename - CORRECT PRICE (SIZE + COLOR SEPARATE)
 $filter = 'furniture';
 $query = "
     SELECT 
@@ -246,8 +246,10 @@ $query = "
         v.discount,
         v.percent,
         v.status,
-      COALESCE(MIN(pv.price), 0) as min_size_price,  
-      COALESCE(MAX(pv.price), 0) as max_size_price,  
+        -- 🔥 SIZE PRICES (variant prices only)
+        COALESCE(MIN(pv.price), 0) as min_size_price,  
+        COALESCE(MAX(pv.price), 0) as max_size_price,  
+        -- 🔥 COLOR PRICES (color prices only - kept separate)
         COALESCE(MIN(pc.price), 0) as min_color_price,
         COALESCE(MAX(pc.price), 0) as max_color_price,
         COUNT(DISTINCT pc.id) as color_count,
@@ -270,7 +272,7 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// 8. Filter by material codename - WITH PRICE RANGE
+// 8. Filter by material codename - CORRECT PRICE (SIZE + COLOR SEPARATE)
 $filter = 'buildingmaterials';
 $query = "
     SELECT 
@@ -283,8 +285,10 @@ $query = "
         v.discount,
         v.percent,
         v.status,
-     COALESCE(MIN(pv.price), 0) as min_size_price, 
-COALESCE(MAX(pv.price), 0) as max_size_price, 
+        -- 🔥 SIZE PRICES (variant prices only)
+        COALESCE(MIN(pv.price), 0) as min_size_price, 
+        COALESCE(MAX(pv.price), 0) as max_size_price, 
+        -- 🔥 COLOR PRICES (color prices only - kept separate)
         COALESCE(MIN(pc.price), 0) as min_color_price,
         COALESCE(MAX(pc.price), 0) as max_color_price,
         COUNT(DISTINCT pc.id) as color_count,
@@ -310,7 +314,7 @@ $stmt->bind_param("s", $filter);
 $stmt->execute();
 $results = $stmt->get_result();
 
-// 9. Filter by bedfurniture - WITH SUBCATEGORIES (BETTER APPROACH)
+// 9. Filter by aircon - CORRECT PRICE (SIZE + COLOR SEPARATE)
 $filters = 'aircon';
 $query = "
     SELECT 
@@ -323,21 +327,26 @@ $query = "
         MAX(v.discount) as discount,
         MAX(v.percent) as percent,
         MAX(v.status) as status,
-        -- Get the first variant's subcategory_name (or aggregate all unique ones)
+        -- Get the first variant's subcategory_name
         (SELECT subcategory_name 
          FROM product_variants 
          WHERE product_id = p.id 
          LIMIT 1) as subcategory_name,
+        -- 🔥 SIZE PRICES (variant prices only)
         COALESCE(MIN(pv.price), 0) as min_size_price,
         COALESCE(MAX(pv.price), 0) as max_size_price,  
+        -- 🔥 COLOR PRICES (color prices only - kept separate)
         COALESCE(MIN(pc.price), 0) as min_color_price,
         COALESCE(MAX(pc.price), 0) as max_color_price,
         COUNT(DISTINCT pc.id) as color_count,
+        AVG(r.rating) AS avg_rating,
+        COUNT(r.rating) AS rating_count,
         COALESCE(SUM(si.quantity), 0) AS total_sold
     FROM products p
     LEFT JOIN product_variants v ON v.product_id = p.id
     LEFT JOIN product_variants pv ON p.id = pv.product_id
     LEFT JOIN product_colors pc ON p.id = pc.product_id
+    LEFT JOIN product_ratings r ON r.product_id = p.id
     LEFT JOIN sold_items si ON si.product_id = p.id
     WHERE p.codename = ?
     GROUP BY p.id
@@ -840,16 +849,31 @@ while ($row = $banners_result->fetch_assoc()) {
 
     function renderProductCard($row, $conn)
     {
-        // 🔥 USE SMART PRICE DISPLAY FUNCTION
-        $priceData = calculateSmartPriceDisplay($row);
-
-        // Get discount info
-        $discount = (float)($row['discount'] ?? 0);
-        $percent = (float)($row['percent'] ?? 0);
-
         $product_id = (int)$row['id'];
 
-        // ✅ Get rating
+        // ✅ GET SIZE PRICES (final prices from product_variants)
+        $minSizePrice = (float)($row['min_size_price'] ?? 0);
+        $maxSizePrice = (float)($row['max_size_price'] ?? 0);
+
+        // ✅ GET COLOR PRICES (from product_colors)
+        $minColorPrice = (float)($row['min_color_price'] ?? 0);
+        $maxColorPrice = (float)($row['max_color_price'] ?? 0);
+
+        // ✅ GET DISCOUNT (display only)
+        $discount = (float)($row['discount'] ?? 0);
+
+        // 🔥 SIMPLE FORMULA: final_size_price + color_price
+        $minFinalPrice = $minSizePrice + $minColorPrice;
+        $maxFinalPrice = $maxSizePrice + $maxColorPrice;
+
+        // Format display price
+        if ($minFinalPrice != $maxFinalPrice) {
+            $displayPrice = '₱' . number_format($minFinalPrice, 2) . ' - ₱' . number_format($maxFinalPrice, 2);
+        } else {
+            $displayPrice = '₱' . number_format($minFinalPrice, 2);
+        }
+
+        // Get rating
         $rating_q = $conn->prepare("SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_raters FROM product_ratings WHERE product_id = ?");
         $rating_q->bind_param("i", $product_id);
         $rating_q->execute();
@@ -858,7 +882,7 @@ while ($row = $banners_result->fetch_assoc()) {
         $total_raters = $rating_result['total_raters'] ?? 0;
         $rating_q->close();
 
-        // 🆕 Get sold count
+        // Get sold count
         $sold_q = $conn->prepare("
         SELECT SUM(quantity) as total_sold 
         FROM sold_items 
@@ -915,18 +939,18 @@ while ($row = $banners_result->fetch_assoc()) {
                         <?php endif; ?>
                     </div>
 
-                    <!-- 🔥 SMART PRICE DISPLAY -->
+                    <!-- 🔥 CORRECT PRICE DISPLAY (NO DISCOUNT DEDUCTION) -->
                     <div class="flex items-baseline gap-1 flex-wrap mb-1 mt-auto">
                         <?php if ($discount > 0): ?>
-                            <!-- With Discount -->
+                            <!-- With Discount Badge (display only) -->
                             <p class="text-md font-bold text-gray-900">
-                                <?= $priceData['display_price'] ?>
+                                <?= $displayPrice ?>
                             </p>
                             <span class="text-[9px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                         <?php else: ?>
-                            <!-- No Discount -->
+                            <!-- No Discount Badge -->
                             <p class="text-xs font-bold text-gray-900">
-                                <?= $priceData['display_price'] ?>
+                                <?= $displayPrice ?>
                             </p>
                         <?php endif; ?>
                     </div>
@@ -1482,12 +1506,28 @@ while ($row = $banners_result->fetch_assoc()) {
                     <div class="swiper mySwiper-furniture w-full">
                         <div class="swiper-wrapper">
                             <?php
+                            // FURNITURE SECTION - Replace the price calculation part
                             mysqli_data_seek($result, 0);
                             while ($row = mysqli_fetch_assoc($result)) :
-                                $priceData = calculateSmartPriceDisplay($row);
+                                // ✅ DIRECT CALCULATION - NO calculateSmartPriceDisplay()
+                                $minSizePrice = (float)($row['min_size_price'] ?? 0);
+                                $maxSizePrice = (float)($row['max_size_price'] ?? 0);
+                                $minColorPrice = (float)($row['min_color_price'] ?? 0);
+                                $maxColorPrice = (float)($row['max_color_price'] ?? 0);
                                 $discount = (float)($row['discount'] ?? 0);
-                                $product_id = (int)$row['id'];
 
+                                // 🔥 SIMPLE FORMULA: size_price + color_price
+                                $minFinalPrice = $minSizePrice + $minColorPrice;
+                                $maxFinalPrice = $maxSizePrice + $maxColorPrice;
+
+                                // Format display price
+                                if ($minFinalPrice != $maxFinalPrice) {
+                                    $priceDisplay = '₱' . number_format($minFinalPrice, 2) . ' - ₱' . number_format($maxFinalPrice, 2);
+                                } else {
+                                    $priceDisplay = '₱' . number_format($minFinalPrice, 2);
+                                }
+
+                                $product_id = (int)$row['id'];
                                 $subcategory_name = $row['subcategory_name'] ?? 'uncategorized';
                                 $sub_slug = strtolower(str_replace(' ', '-', $subcategory_name));
 
@@ -1576,11 +1616,12 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <?php endif; ?>
 
                                                     <div class="flex items-baseline gap-1 flex-wrap">
+                                                        <!-- AFTER (use this) -->
                                                         <?php if ($discount > 0): ?>
-                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
                                                             <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                                                         <?php else: ?>
-                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                            <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
                                                         <?php endif; ?>
                                                     </div>
                                                 </div>
@@ -1696,8 +1737,24 @@ while ($row = $banners_result->fetch_assoc()) {
                             if (isset($resultss) && $resultss) {
                                 mysqli_data_seek($resultss, 0);
                                 while ($row = mysqli_fetch_assoc($resultss)) :
-                                    $priceData = calculateSmartPriceDisplay($row);
+                                    // ✅ DIRECT CALCULATION - NO calculateSmartPriceDisplay()
+                                    $minSizePrice = (float)($row['min_size_price'] ?? 0);
+                                    $maxSizePrice = (float)($row['max_size_price'] ?? 0);
+                                    $minColorPrice = (float)($row['min_color_price'] ?? 0);
+                                    $maxColorPrice = (float)($row['max_color_price'] ?? 0);
                                     $discount = (float)($row['discount'] ?? 0);
+
+                                    // 🔥 SIMPLE FORMULA: size_price + color_price
+                                    $minFinalPrice = $minSizePrice + $minColorPrice;
+                                    $maxFinalPrice = $maxSizePrice + $maxColorPrice;
+
+                                    // Format display price
+                                    if ($minFinalPrice != $maxFinalPrice) {
+                                        $priceDisplay = '₱' . number_format($minFinalPrice, 2) . ' - ₱' . number_format($maxFinalPrice, 2);
+                                    } else {
+                                        $priceDisplay = '₱' . number_format($minFinalPrice, 2);
+                                    }
+
                                     $product_id = (int)$row['id'];
 
                                     $subcategory_name = $row['subcategory_name'] ?? 'uncategorized';
@@ -1788,11 +1845,12 @@ while ($row = $banners_result->fetch_assoc()) {
                                                         <?php endif; ?>
 
                                                         <div class="flex items-baseline gap-1 flex-wrap">
+                                                            <!-- AFTER (use this) -->
                                                             <?php if ($discount > 0): ?>
-                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
                                                                 <span class="text-[8px] font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">-<?= number_format($discount, 0) ?>%</span>
                                                             <?php else: ?>
-                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceData['display_price'] ?></p>
+                                                                <p class="text-[11px] font-bold text-gray-900"><?= $priceDisplay ?></p>
                                                             <?php endif; ?>
                                                         </div>
                                                     </div>
@@ -2456,11 +2514,13 @@ while ($row = $banners_result->fetch_assoc()) {
                             <?php
                             mysqli_data_seek($material_results, 0);
                             while ($row = mysqli_fetch_assoc($material_results)) :
-                                $base = (float)$row['price'];
-                                $percent = (float)($row['percent'] ?? 0);
+                                // ✅ DIRECT CALCULATION - size_price + color_price
+                                $variantPrice = (float)($row['price'] ?? 0);
+                                $colorPrice = (float)($row['color_price'] ?? 0);
                                 $discount = (float)($row['discount'] ?? 0);
-                                $priceWithMarkup = $base + ($base * $percent / 100);
-                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+
+                                // 🔥 SIMPLE FORMULA: variant + color (no markup deduction)
+                                $finalPrice = $variantPrice + $colorPrice;
 
                                 $viewCount = (int)($row['view_count'] ?? 0);
                                 $soldCount = (int)($row['total_sold'] ?? 0);
@@ -2519,13 +2579,13 @@ while ($row = $banners_result->fetch_assoc()) {
                                             <!-- Price -->
                                             <div class="my-1 text-left px-1">
                                                 <?php if ($discount > 0): ?>
-                                                    <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+
                                                     <p class="text-sm text-black font-bold">
                                                         ₱<?= number_format($finalPrice, 2) ?>
                                                         <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                                     </p>
                                                 <?php else: ?>
-                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
                                                 <?php endif; ?>
                                             </div>
 
@@ -2547,7 +2607,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
                                                     <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                                     <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
                                                     <input type="hidden" name="return_url" value="index">
                                                     <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-2 rounded transition-all">
                                                         Add to Cart
@@ -2581,11 +2641,13 @@ while ($row = $banners_result->fetch_assoc()) {
                             <?php
                             mysqli_data_seek($material_resultsone, 0);
                             while ($row = mysqli_fetch_assoc($material_resultsone)) :
-                                $base = (float)$row['price'];
-                                $percent = (float)($row['percent'] ?? 0);
+                                // ✅ DIRECT CALCULATION - size_price + color_price
+                                $variantPrice = (float)($row['price'] ?? 0);
+                                $colorPrice = (float)($row['color_price'] ?? 0);
                                 $discount = (float)($row['discount'] ?? 0);
-                                $priceWithMarkup = $base + ($base * $percent / 100);
-                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+
+                                // 🔥 SIMPLE FORMULA: variant + color (no markup deduction)
+                                $finalPrice = $variantPrice + $colorPrice;
 
                                 $viewCount = (int)($row['view_count'] ?? 0);
                                 $soldCount = (int)($row['total_sold'] ?? 0);
@@ -2644,13 +2706,13 @@ while ($row = $banners_result->fetch_assoc()) {
                                             <!-- Price -->
                                             <div class="my-1 text-left px-1">
                                                 <?php if ($discount > 0): ?>
-                                                    <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+
                                                     <p class="text-sm text-black font-bold">
                                                         ₱<?= number_format($finalPrice, 2) ?>
                                                         <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                                     </p>
                                                 <?php else: ?>
-                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                    <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
                                                 <?php endif; ?>
                                             </div>
 
@@ -2672,7 +2734,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color'] ?? '') ?>">
                                                     <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                                     <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
                                                     <input type="hidden" name="return_url" value="index">
                                                     <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs py-1.5 rounded transition-all">
                                                         Add to Cart
@@ -2787,11 +2849,13 @@ while ($row = $banners_result->fetch_assoc()) {
                         <div class="swiper-wrapper" data-aos="fade-up" data-aos-delay="300">
                             <?php while ($row = mysqli_fetch_assoc($material_resultstwo)) : ?>
                                 <?php
-                                $base = (float)$row['price'];
-                                $percent = (float)($row['percent'] ?? 0);
+                                // ✅ DIRECT CALCULATION - size_price + color_price
+                                $variantPrice = (float)($row['price'] ?? 0);
+                                $colorPrice = (float)($row['color_price'] ?? 0);
                                 $discount = (float)($row['discount'] ?? 0);
-                                $priceWithMarkup = $base + ($base * $percent / 100);
-                                $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+
+                                // 🔥 SIMPLE FORMULA: variant + color (no markup deduction)
+                                $finalPrice = $variantPrice + $colorPrice;
 
                                 // Get stats
                                 $viewCount = (int)($row['view_count'] ?? 0);
@@ -2858,13 +2922,13 @@ while ($row = $banners_result->fetch_assoc()) {
                                                 <!-- Pricing -->
                                                 <div>
                                                     <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($variantPrice, 2) ?></p>
                                                         <p class="text-sm text-black font-bold">
                                                             ₱<?= number_format($finalPrice, 2) ?>
                                                             <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                                         </p>
                                                     <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
                                                     <?php endif; ?>
                                                 </div>
 
@@ -2883,13 +2947,13 @@ while ($row = $banners_result->fetch_assoc()) {
                                                 <!-- Pricing -->
                                                 <div class="my-1">
                                                     <?php if ($discount > 0): ?>
-                                                        <p class="text-xs text-gray-400 line-through">₱<?= number_format($priceWithMarkup, 2) ?></p>
+
                                                         <p class="text-sm text-black font-bold">
                                                             ₱<?= number_format($finalPrice, 2) ?>
                                                             <span class="text-xs text-red-500">-<?= number_format($discount, 0) ?>%</span>
                                                         </p>
                                                     <?php else: ?>
-                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($priceWithMarkup, 2) ?></p>
+                                                        <p class="text-sm text-green-600 font-bold">₱<?= number_format($finalPrice, 2) ?></p>
                                                     <?php endif; ?>
                                                 </div>
 
@@ -2913,7 +2977,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                         <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
                                                         <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                                         <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                        <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                        <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
                                                         <input type="hidden" name="return_url" value="index">
                                                         <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-xs px-4 py-2 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
                                                             <img src="../img/icon/cart.png" alt="" class="w-4 h-4" aria-hidden="true" />
@@ -2934,7 +2998,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                     <input type="hidden" name="selected_color_name" value="<?= htmlspecialchars($row['color_name'] ?? '') ?>">
                                                     <input type="hidden" name="color_price" value="<?= floatval($row['color_price'] ?? 0) ?>">
                                                     <input type="hidden" name="variant_price" value="<?= floatval($row['price'] ?? 0) ?>">
-                                                    <input type="hidden" name="total_price" value="<?= floatval($row['price'] ?? 0) ?>">
+                                                    <input type="hidden" name="total_price" value="<?= floatval($finalPrice) ?>">
                                                     <input type="hidden" name="return_url" value="index">
                                                     <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white text-sm px-6 py-3 flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform hover:scale-105" aria-label="Add to cart">
                                                         <img src="../img/icon/cart.png" alt="" class="w-6 h-6" aria-hidden="true" />

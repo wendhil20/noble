@@ -1210,77 +1210,116 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
             <?php endif; ?>
 
-            <!-- STEP 3: SIZE/VARIANT SELECTION -->
-            <div class="step-section">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base lg:text-xl font-semibold text-gray-800">
-                  Choose Size
-                </h3>
-                <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
-              </div>
+       <!-- STEP 3: SIZE/VARIANT SELECTION -->
+<div class="step-section">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+      Choose Size
+    </h3>
+    <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
+  </div>
 
-              <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
-                <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
-                <p class="text-sm lg:text-base">Please select a color first</p>
-              </div>
+  <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
+    <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
+    <p class="text-sm lg:text-base">Please select a color first</p>
+  </div>
 
-              <?php foreach ($types_data as $type): ?>
-                <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-                  <?php if (!empty($type['variants'])): ?>
-                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
-                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                        <?php foreach ($type['variants'] as $variant): ?>
-                          <?php
-                          $price = floatval($variant['variant_price']);
-                          $percent = floatval($variant['percent']);
-                          $discount = floatval($variant['discount'] ?? 0);
-                          $stock = intval($variant['stock']);
-                          $priceWithMarkup = $price + ($price * $percent / 100);
-                          $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-                          $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
-                          $is_out_of_stock = $stock <= 0;
-                          ?>
-                          <button type="button"
-                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
-                            class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded
+  <?php foreach ($types_data as $type): ?>
+    <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+      <?php if (!empty($type['variants'])): ?>
+        <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <?php foreach ($type['variants'] as $variant): ?>
+              <?php
+              $price = floatval($variant['variant_price']);
+              $percent = floatval($variant['percent']);
+              $discount = floatval($variant['discount'] ?? 0);
+              $stock = intval($variant['stock']);
+              $priceWithMarkup = $price + ($price * $percent / 100);
+              $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+              $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
+              $is_out_of_stock = $stock <= 0;
+              ?>
+              <button type="button"
+                onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
+                class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded
    px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
-                            data-price="<?= $price ?>"
-                            data-percent="<?= $percent ?>"
-                            data-discount="<?= $discount ?>"
-                            data-variant-id="<?= $variant['variant_id'] ?>"
-                            data-stock="<?= $stock ?>"
-                            data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
-                            data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
-                            data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
-                            data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'
-                            <?= $is_out_of_stock ? 'disabled' : '' ?>>
+                data-price="<?= $price ?>"
+                data-percent="<?= $percent ?>"
+                data-discount="<?= $discount ?>"
+                data-variant-id="<?= $variant['variant_id'] ?>"
+                data-stock="<?= $stock ?>"
+                data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
+                data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
+                data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
+                data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'
+                <?= $is_out_of_stock ? 'disabled' : '' ?>>
 
-                            <!-- Size Text -->
-                            <div class="text-gray-700 text-[11px] font-medium leading-tight">
-                              <?= htmlspecialchars($variant['size']) ?>
-                            </div>
+                <!-- ✅ DISCOUNT BADGE - Top Right Corner -->
+                <?php if ($discount > 0): ?>
+                  <div class="absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-20 shadow-md">
+                    -<?= round($discount) ?>%
+                  </div>
+                <?php endif; ?>
 
-                            <!-- Stock Display -->
-                            <div class="text-[9px] font-bold mt-0.5">
-                              <?php if ($stock <= 0): ?>
-                                <span class="text-red-600">OUT OF STOCK</span>
-                              <?php elseif ($stock <= 5): ?>
-                                <span class="text-orange-600"><?= $stock ?> left</span>
-                              <?php else: ?>
-                                <span class="text-green-600"><?= $stock ?> in stock</span>
-                              <?php endif; ?>
-                            </div>
+                <!-- Size Text -->
+                <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                  <?= htmlspecialchars($variant['size']) ?>
+                </div>
 
-                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
-                          </button>
-                        <?php endforeach; ?>
-                      </div>
-                    </div>
+                <!-- Stock Display -->
+                <div class="text-[9px] font-bold mt-0.5">
+                  <?php if ($stock <= 0): ?>
+                    <span class="text-red-600">OUT OF STOCK</span>
+                  <?php elseif ($stock <= 5): ?>
+                    <span class="text-orange-600"><?= $stock ?> left</span>
                   <?php else: ?>
-                    <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
+                    <span class="text-green-600"><?= $stock ?> in stock</span>
                   <?php endif; ?>
                 </div>
-              <?php endforeach; ?>
+
+                <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
+              </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php else: ?>
+        <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
+      <?php endif; ?>
+    </div>
+  <?php endforeach; ?>
+</div>
+
+<style>
+  /* Variant button discount badge styling */
+  .variant-btn {
+    position: relative;
+  }
+  
+  /* Discount badge animation */
+  .variant-btn .bg-red-500 {
+    animation: discountPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  @keyframes discountPop {
+    0% {
+      transform: scale(0) rotate(-20deg);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2) rotate(5deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+  
+  /* Hover effect on discount badge */
+  .variant-btn:hover .bg-red-500 {
+    transform: scale(1.15);
+  }
+</style>
 
               <script>
                 // ✅ Show total stock for each color (sum of all variants)

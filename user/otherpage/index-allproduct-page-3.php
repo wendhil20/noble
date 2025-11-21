@@ -13,7 +13,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
     if ($res->num_rows > 0) {
         $user = $res->fetch_assoc();
-        $_SESSION['user_id'] = $user['id']; null; 
+        $_SESSION['user_id'] = $user['id'];
+        null;
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['user_email'] = $user['email'] ?? '';
         $_SESSION['user_mobile'] = $user['mobile'] ?? '';
@@ -104,8 +105,8 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-<!-- Add before closing </head> tag -->
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <!-- Add before closing </head> tag -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
         :root {
             --primary-color: #f97316;
@@ -542,31 +543,31 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                         );
 
                         $color_image_path = !empty($row['color_image']) ? '../../' . $row['color_image'] : '../img/placeholder.jpg';
-  $product = [
-        'id' => (int)$row['product_id'],
-        'name' => safe_output($row['product_name']), // ✅ Already sanitized
-        'color_id' => (int)$row['color_id'],
-        'color_name' => safe_output($row['color_name']), // ✅ Already sanitized
-        'color_code' => safe_output($row['color_code']),
-        'color_price' => (float)$row['color_price'],
-        'color_image' => safe_output($color_image_path),
-        'variants' => $variants,
-        'initial_variant' => [
-            'variant_id' => (int)$first_variant['variant_id'],
-            'size' => safe_output($first_variant['size']), // ✅ Add this
-            'price' => (float)$pricing['final'],
-            'original_price' => (float)$pricing['original'],
-            'discount' => (float)$first_variant['discount'],
-            'origin' => safe_output($first_variant['origin']), // ✅ Add this
-            'variant_price' => (float)$first_variant['price'],
-            'percent' => (float)$first_variant['percent']
-        ]
-    ];
+                        $product = [
+                            'id' => (int)$row['product_id'],
+                            'name' => safe_output($row['product_name']), // ✅ Already sanitized
+                            'color_id' => (int)$row['color_id'],
+                            'color_name' => safe_output($row['color_name']), // ✅ Already sanitized
+                            'color_code' => safe_output($row['color_code']),
+                            'color_price' => (float)$row['color_price'],
+                            'color_image' => safe_output($color_image_path),
+                            'variants' => $variants,
+                            'initial_variant' => [
+                                'variant_id' => (int)$first_variant['variant_id'],
+                                'size' => safe_output($first_variant['size']), // ✅ Add this
+                                'price' => (float)$pricing['final'],
+                                'original_price' => (float)$pricing['original'],
+                                'discount' => (float)$first_variant['discount'],
+                                'origin' => safe_output($first_variant['origin']), // ✅ Add this
+                                'variant_price' => (float)$first_variant['price'],
+                                'percent' => (float)$first_variant['percent']
+                            ]
+                        ];
 
-    $product_json = json_encode($product, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-?>
-    <div class="product-data-item" data-product='<?= htmlspecialchars($product_json, ENT_QUOTES, 'UTF-8') ?>'></div>
-<?php endwhile; ?>
+                        $product_json = json_encode($product, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+                    ?>
+                        <div class="product-data-item" data-product='<?= htmlspecialchars($product_json, ENT_QUOTES, 'UTF-8') ?>'></div>
+                    <?php endwhile; ?>
                 <?php endif; ?>
             </div>
 
@@ -1019,20 +1020,19 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             }
 
             calculateVariantPrice(variant_price, color_price, percent, discount) {
-                const base = parseFloat(variant_price || 0) + parseFloat(color_price || 0);
-                const markup_percent = parseFloat(percent || 0);
-                const discount_percent = parseFloat(discount || 0);
-
-                const price_with_markup = base + (base * markup_percent / 100);
-                const final_price = price_with_markup - (price_with_markup * discount_percent / 100);
+                // ✅ SIMPLE FORMULA: variant + color (no markup deduction)
+                const final_price = parseFloat(variant_price || 0) + parseFloat(color_price || 0);
+                const original_price = final_price;
 
                 return {
-                    original: price_with_markup,
+                    original: original_price,
                     final: final_price
                 };
             }
 
-         createProductCard(product) {
+           // REPLACE ang createProductCard method na ito sa loob ng ProductFilter class
+
+createProductCard(product) {
     const card = document.createElement('article');
     card.className = 'product-card p-3 relative';
 
@@ -1040,31 +1040,25 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     const variants = product.variants || [];
     const hasMultipleVariants = variants.length > 1;
 
-    // ✅ SECURE: Create discount badge safely
-    if (initial.discount > 0) {
-        const discountBadge = document.createElement('div');
-        discountBadge.className = 'discount-badge absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10';
-        discountBadge.textContent = `-${initial.discount}%`; // ✅ Safe
-        card.appendChild(discountBadge);
-    }
 
-    // ✅ SECURE: Create image container
+
+    // Image container
     const imageContainer = document.createElement('div');
     imageContainer.className = 'aspect-square mb-3 overflow-hidden rounded-lg';
     const img = document.createElement('img');
     img.src = product.color_image;
-    img.alt = product.name; // ✅ Already sanitized from PHP
+    img.alt = product.name;
     img.className = 'w-full h-full object-contain product-image';
     imageContainer.appendChild(img);
     card.appendChild(imageContainer);
 
-    // ✅ SECURE: Create product name
+    // Product name
     const productName = document.createElement('h3');
     productName.className = 'text-lg font-semibold mb-2 line-clamp-2 product-name';
-    productName.textContent = product.name; // ✅ Safe: textContent auto-escapes
+    productName.textContent = product.name;
     card.appendChild(productName);
 
-    // ✅ SECURE: Create color/size info container
+    // Info container
     const infoContainer = document.createElement('div');
     infoContainer.className = 'mb-3 space-y-1';
     
@@ -1085,7 +1079,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     
     const colorNameSpan = document.createElement('span');
     colorNameSpan.className = 'text-xs font-medium product-color';
-    colorNameSpan.textContent = product.color_name; // ✅ Safe
+    colorNameSpan.textContent = product.color_name;
     colorInfoDiv.appendChild(colorNameSpan);
     
     colorDiv.appendChild(colorInfoDiv);
@@ -1097,13 +1091,13 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     sizeDiv.innerHTML = 'Size: ';
     const sizeSpan = document.createElement('span');
     sizeSpan.className = 'font-medium selected-size';
-    sizeSpan.textContent = initial.size; // ✅ Safe
+    sizeSpan.textContent = initial.size;
     sizeDiv.appendChild(sizeSpan);
     infoContainer.appendChild(sizeDiv);
     
     card.appendChild(infoContainer);
 
-    // ✅ SECURE: Size buttons (if multiple variants)
+    // Size buttons (if multiple variants)
     if (hasMultipleVariants) {
         const sizesContainer = document.createElement('div');
         sizesContainer.className = 'mb-3';
@@ -1122,9 +1116,9 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             const sizeBtn = document.createElement('button');
             sizeBtn.type = 'button';
             sizeBtn.className = `size-btn px-3 py-2 border rounded hover:border-orange-500 transition text-sm whitespace-nowrap flex-shrink-0 ${idx === 0 ? 'active' : 'border-gray-300'}`;
-            sizeBtn.textContent = v.size; // ✅ Safe
+            sizeBtn.textContent = v.size;
             
-            // ✅ SECURE: Store data in dataset instead of JSON string
+            // Store variant data
             sizeBtn.dataset.variantId = v.variant_id;
             sizeBtn.dataset.size = v.size;
             sizeBtn.dataset.price = pricing.final;
@@ -1141,34 +1135,46 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         card.appendChild(sizesContainer);
     }
 
-    // ✅ SECURE: Price container
+    // Price container - HIDE if may multiple variants at walang manual selection pa
     const priceContainer = document.createElement('div');
-    priceContainer.className = 'price-container mb-3';
+    priceContainer.className = `price-container mb-3 ${hasMultipleVariants ? 'price-container-hidden' : ''}`;
     
-    if (initial.discount > 0) {
-        const originalPrice = document.createElement('p');
-        originalPrice.className = 'text-xs text-gray-400 line-through original-price';
-        originalPrice.textContent = `₱${(initial.original_price || 0).toLocaleString()}`;
-        priceContainer.appendChild(originalPrice);
+    // ADD THIS CLASS FOR CONTROL
+    if (hasMultipleVariants) {
+        priceContainer.style.opacity = '0.5';
+        priceContainer.style.pointerEvents = 'none';
     }
-    
+
     const priceRow = document.createElement('div');
-    priceRow.className = 'flex items-center justify-between';
+    priceRow.className = 'flex items-center justify-between gap-2';
+    
+    const priceWithDiscount = document.createElement('div');
+    priceWithDiscount.className = 'flex items-center gap-2';
     
     const finalPrice = document.createElement('p');
     finalPrice.className = 'text-xl font-bold text-orange-600 final-price';
     finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
+    priceWithDiscount.appendChild(finalPrice);
+
+    // Discount badge sa tabi ng price
+    if (initial.discount > 0) {
+        const discountBadgeInline = document.createElement('span');
+        discountBadgeInline.className = 'discount-badge-inline bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold';
+        discountBadgeInline.textContent = `-${initial.discount}%`;
+        priceWithDiscount.appendChild(discountBadgeInline);
+    }
+
+    priceRow.appendChild(priceWithDiscount);
     
     const originBadge = document.createElement('span');
     originBadge.className = 'px-2 py-1 text-xs font-medium bg-black text-white rounded product-origin';
-    originBadge.textContent = initial.origin || 'local'; // ✅ Safe
+    originBadge.textContent = initial.origin || 'local';
     
-    priceRow.appendChild(finalPrice);
     priceRow.appendChild(originBadge);
     priceContainer.appendChild(priceRow);
     card.appendChild(priceContainer);
 
-    // ✅ SECURE: Buttons container
+    // Buttons container
     const buttonsDiv = document.createElement('div');
     buttonsDiv.className = 'space-y-2';
     
@@ -1195,7 +1201,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     cartForm.className = 'productForm';
     cartForm.dataset.productId = product.id;
     
-    // Create hidden inputs
+    // Hidden inputs
     const hiddenInputs = [
         {name: 'product_id', value: product.id},
         {name: 'variant_id', value: initial.variant_id, className: 'variant-id-input'},
@@ -1229,13 +1235,23 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     buttonsDiv.appendChild(cartForm);
     card.appendChild(buttonsDiv);
 
-    // ✅ SECURE: Add size button event listeners
+    // AUTOMATICALLY TRIGGER FIRST SIZE SELECTION
+    setTimeout(() => {
+        if (hasMultipleVariants) {
+            // Auto-select first size on load
+            const firstSizeBtn = card.querySelector('.size-btn.active');
+            if (firstSizeBtn) {
+                firstSizeBtn.click();
+            }
+        }
+    }, 0);
+
+    // Size button event listeners
     if (hasMultipleVariants) {
         card.querySelectorAll('.size-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 
-                // ✅ SECURE: Get data from dataset (already sanitized)
                 const variantData = {
                     variant_id: btn.dataset.variantId,
                     size: btn.dataset.size,
@@ -1249,7 +1265,6 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 
                 const form = card.querySelector('.productForm');
                 if (form) {
-                    // Update form inputs
                     form.querySelector('.variant-id-input').value = variantData.variant_id;
                     form.querySelector('.size-input').value = variantData.size;
                     form.querySelector('.variant-price-input').value = variantData.variant_price;
@@ -1258,43 +1273,38 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                     form.querySelector('.percent-input').value = variantData.percent;
                     form.querySelector('.origin-input').value = variantData.origin;
 
-                    // Update displayed values using textContent (safe)
                     const sizeEl = card.querySelector('.selected-size');
                     if (sizeEl) sizeEl.textContent = variantData.size;
 
                     const priceEl = card.querySelector('.final-price');
                     if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
 
+                    // UPDATE discount badge inline
+                    let discountBadgeInline = card.querySelector('.discount-badge-inline');
+                    if (variantData.discount > 0) {
+                        if (discountBadgeInline) {
+                            discountBadgeInline.textContent = `-${variantData.discount}%`;
+                        } else {
+                            discountBadgeInline = document.createElement('span');
+                            discountBadgeInline.className = 'discount-badge-inline bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold';
+                            discountBadgeInline.textContent = `-${variantData.discount}%`;
+                            priceEl.parentElement.appendChild(discountBadgeInline);
+                        }
+                    } else if (discountBadgeInline) {
+                        discountBadgeInline.remove();
+                    }
+
                     const originEl = card.querySelector('.product-origin');
                     if (originEl) originEl.textContent = variantData.origin;
 
-                    const originalPriceEl = card.querySelector('.original-price');
-                    if (originalPriceEl) {
-                        if (variantData.discount > 0) {
-                            originalPriceEl.textContent = `₱${variantData.original_price.toLocaleString()}`;
-                            originalPriceEl.classList.remove('hidden');
-                        } else {
-                            originalPriceEl.classList.add('hidden');
-                        }
-                    }
-
-                    // Update discount badge
-                    let discountBadge = card.querySelector('.discount-badge');
-                    if (variantData.discount > 0) {
-                        if (discountBadge) {
-                            discountBadge.textContent = `-${variantData.discount}%`;
-                        } else {
-                            discountBadge = document.createElement('div');
-                            discountBadge.className = 'discount-badge absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10';
-                            discountBadge.textContent = `-${variantData.discount}%`;
-                            card.insertBefore(discountBadge, card.firstChild);
-                        }
-                    } else if (discountBadge) {
-                        discountBadge.remove();
+                    // UPDATE: Show price container when size is selected
+                    const priceContainer = card.querySelector('.price-container');
+                    if (priceContainer) {
+                        priceContainer.style.opacity = '1';
+                        priceContainer.style.pointerEvents = 'auto';
                     }
                 }
 
-                // Update active state
                 card.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
             });

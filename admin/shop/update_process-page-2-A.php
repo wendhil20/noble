@@ -37,67 +37,92 @@ try {
     throw new Exception("Failed to update product: " . $conn->error);
   }
 
-  // 2. HANDLE PRODUCT COLORS (Simple colors attached to product)
-  if (isset($_POST['color_id'])) {
-    $colorIds = $_POST['color_id'] ?? [];
-    $colorNames = $_POST['color_name'] ?? [];
-    $colorCodes = $_POST['color_code'] ?? [];
-    $colorPrices = $_POST['color_price'] ?? [];
+ // 2. HANDLE PRODUCT COLORS (Simple colors attached to product)
+if (isset($_POST['color_id'])) {
+  $colorIds = $_POST['color_id'] ?? [];
+  $colorNames = $_POST['color_name'] ?? [];
+  $colorCodes = $_POST['color_code'] ?? [];
+  $colorPrices = $_POST['color_price'] ?? [];
+  $colorStocks = $_POST['color_stock'] ?? [];
 
-    foreach ($colorIds as $index => $colorId) {
-      $colorName = $conn->real_escape_string($colorNames[$index]);
-      $colorCode = $conn->real_escape_string($colorCodes[$index]);
-      $colorPrice = (float)$colorPrices[$index];
+  $fileIndex = 0; // ✅ Separate counter for files
 
-      // Delete color
-      if (isset($_POST['delete_color']) && in_array($colorId, $_POST['delete_color'])) {
-        // Delete from junction table first
-        $conn->query("DELETE FROM product_variant_colors WHERE color_id = $colorId");
-        // Then delete color
-        $conn->query("DELETE FROM product_colors WHERE id = $colorId");
-        continue;
-      }
+  foreach ($colorIds as $index => $colorId) {
+    $colorName = $conn->real_escape_string($colorNames[$index]);
+    $colorCode = $conn->real_escape_string($colorCodes[$index]);
+    $colorPrice = (float)$colorPrices[$index];
+    $colorStock = (int)($colorStocks[$index] ?? 0);
 
-      if ($colorId === 'new') {
-        // Insert new color
-        $colorImagePath = '';
-        if (!empty($_FILES['color_image']['name'][$index])) {
-          $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$index]);
-          $colorImagePath = '../../uploads/color_images/' . $colorImageName;
-          
-          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$index], $colorImagePath)) {
-            $colorImagePath = 'uploads/color_images/' . $colorImageName;
-          } else {
-            $colorImagePath = '';
-          }
+    // Delete color
+    if (isset($_POST['delete_color']) && in_array($colorId, $_POST['delete_color'])) {
+      // Delete from junction table first
+      $conn->query("DELETE FROM product_variant_colors WHERE color_id = $colorId");
+      // Then delete color
+      $conn->query("DELETE FROM product_colors WHERE id = $colorId");
+      $fileIndex++; // Still increment to keep in sync
+      continue;
+    }
+
+    $colorImagePath = '';
+
+    if ($colorId === 'new') {
+      // Insert new color - use $fileIndex
+      if (!empty($_FILES['color_image']['name'][$fileIndex])) {
+        $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
+        $uploadDir = '../../uploads/color_images/';
+        
+        // Create directory if it doesn't exist
+        if (!is_dir($uploadDir)) {
+          mkdir($uploadDir, 0755, true);
         }
         
-        $insertColorSQL = "INSERT INTO product_colors (product_id, color_name, color_code, price, image) 
-                         VALUES ($product_id, '$colorName', '$colorCode', $colorPrice, '$colorImagePath')";
+        $colorImagePath = $uploadDir . $colorImageName;
         
-        if (!$conn->query($insertColorSQL)) {
-          throw new Exception("Failed to insert color: " . $conn->error);
+        if (move_uploaded_file($_FILES['color_image']['tmp_name'][$fileIndex], $colorImagePath)) {
+          $colorImagePath = 'uploads/color_images/' . $colorImageName;
+        } else {
+          throw new Exception("Failed to upload color image: " . error_get_last()['message']);
+        }
+      }
+      
+      $insertColorSQL = "INSERT INTO product_colors (product_id, color_name, color_code, price, image, stock) 
+                       VALUES ($product_id, '$colorName', '$colorCode', $colorPrice, '$colorImagePath', $colorStock)";
+      
+      if (!$conn->query($insertColorSQL)) {
+        throw new Exception("Failed to insert color: " . $conn->error);
+      }
+    } else {
+      // Update existing color - use $fileIndex
+      if (!empty($_FILES['color_image']['name'][$fileIndex])) {
+        $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$fileIndex]);
+        $uploadDir = '../../uploads/color_images/';
+        
+        if (!is_dir($uploadDir)) {
+          mkdir($uploadDir, 0755, true);
+        }
+        
+        $colorImagePath = $uploadDir . $colorImageName;
+        
+        if (move_uploaded_file($_FILES['color_image']['tmp_name'][$fileIndex], $colorImagePath)) {
+          $colorImagePath = 'uploads/color_images/' . $colorImageName;
+          $conn->query("UPDATE product_colors 
+                       SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice, image = '$colorImagePath', stock = $colorStock
+                       WHERE id = $colorId");
+        } else {
+          throw new Exception("Failed to upload color image: " . error_get_last()['message']);
         }
       } else {
-        // Update existing color
-        if (!empty($_FILES['color_image']['name'][$index])) {
-          $colorImageName = time() . '_' . basename($_FILES['color_image']['name'][$index]);
-          $colorImagePath = '../../uploads/color_images/' . $colorImageName;
-          
-          if (move_uploaded_file($_FILES['color_image']['tmp_name'][$index], $colorImagePath)) {
-            $colorImagePath = 'uploads/color_images/' . $colorImageName;
-            $conn->query("UPDATE product_colors 
-                         SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice, image = '$colorImagePath'
-                         WHERE id = $colorId");
-          }
-        } else {
-          $conn->query("UPDATE product_colors 
-                       SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice
-                       WHERE id = $colorId");
-        }
+        // No new image uploaded - just update other fields
+        $conn->query("UPDATE product_colors 
+                     SET color_name = '$colorName', color_code = '$colorCode', price = $colorPrice, stock = $colorStock
+                     WHERE id = $colorId");
       }
     }
+
+    $fileIndex++; // ✅ Increment after processing each color
   }
+}
+
 
   // 3. HANDLE TYPES AND VARIANTS
   if (isset($_POST['type_id'])) {

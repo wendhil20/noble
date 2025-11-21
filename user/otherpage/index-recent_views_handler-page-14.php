@@ -533,9 +533,8 @@ function getMostViewedProducts($conn, $limit = 10)
 }
 
 // ====================================
-// 🔥 14. SMART PRICE DISPLAY - LAZADA STYLE
-// Shows: Lowest to Highest (any variant)
-// WITH DISCOUNT SUPPORT
+// 🔥 SMART PRICE DISPLAY - CORRECT FORMULA
+// Formula: (size_price × markup%) + color_price
 // ====================================
 function calculateSmartPriceDisplay($product)
 {
@@ -545,76 +544,76 @@ function calculateSmartPriceDisplay($product)
     $max_color = floatval($product['max_color_price'] ?? 0);
     $base_price = floatval($product['base_price'] ?? $product['price'] ?? 0);
 
-    // Get discount & percent
+    // ✅ GET DISCOUNT & PERCENT
     $discount = floatval($product['discount'] ?? 0);
     $percent = floatval($product['percent'] ?? 0);
 
-    // Collect all valid prices
-    $all_prices = array_filter([
-        $min_size,
-        $max_size,
-        $min_color,
-        $max_color,
-        $base_price
-    ], function ($p) {
-        return $p > 0;
-    });
+    // ⚠️ IMPORTANT: min_size_price & max_size_price are ALREADY combined (size + color)
+    // So we need to apply markup ONLY to the size part
+    // Extract individual components first:
+    
+    // If we're getting combined prices from SQL query:
+    // min_size_price = min_variant_price + min_color_price
+    // max_size_price = max_variant_price + max_color_price
+    
+    // We need to separate them to apply markup correctly
+    $variant_min = $min_size - $min_color;  // Extract pure variant price
+    $variant_max = $max_size - $max_color;  // Extract pure variant price
+    
+    // Ensure they don't go negative
+    if ($variant_min < 0) $variant_min = 0;
+    if ($variant_max < 0) $variant_max = 0;
+
+    // 🔥 APPLY MARKUP ONLY TO VARIANT PRICE, THEN ADD COLOR
+    // Step 1: Apply markup to variant price
+    if ($percent > 0) {
+        $variant_min = $variant_min + ($variant_min * $percent / 100);
+        $variant_max = $variant_max + ($variant_max * $percent / 100);
+    }
+
+    // Step 2: Add color prices (no markup on color)
+    $min_final = $variant_min + $min_color;
+    $max_final = $variant_max + $max_color;
 
     $result = [
         'has_range' => false,
-        'min_price' => $base_price,
-        'max_price' => $base_price,
-        'display_price' => '₱' . number_format($base_price, 2)
+        'min_price' => $min_final,
+        'max_price' => $max_final,
+        'display_price' => '₱' . number_format($min_final, 2),
+        'discount' => $discount,
+        'percent' => $percent
     ];
 
-    if (!empty($all_prices)) {
-        $min = min($all_prices);
-        $max = max($all_prices);
-
-        // Apply markup (percent)
-        if ($percent > 0) {
-            $min = $min + ($min * $percent / 100);
-            $max = $max + ($max * $percent / 100);
-        }
-
-        // Apply discount
-        if ($discount > 0) {
-            $min = $min - ($min * $discount / 100);
-            $max = $max - ($max * $discount / 100);
-        }
-
-        // Has range if min != max
-        if ($min != $max) {
-            $result['has_range'] = true;
-            $result['min_price'] = $min;
-            $result['max_price'] = $max;
-            $result['display_price'] = '₱' . number_format($min, 2) . ' - ₱' . number_format($max, 2);
-        } else {
-            // Single price
-            $result['min_price'] = $min;
-            $result['max_price'] = $min;
-            $result['display_price'] = '₱' . number_format($min, 2);
-        }
+    // Has range if min != max
+    if ($min_final != $max_final) {
+        $result['has_range'] = true;
+        $result['display_price'] = '₱' . number_format($min_final, 2) . ' - ₱' . number_format($max_final, 2);
     }
 
     return $result;
 }
 
+
 // ====================================
-// 🔥 15. RENDER SMART PRICE (HTML)
-// Optional: Use this for quick rendering
+// 🔥 RENDER SMART PRICE (HTML) - WITH DISCOUNT BADGE
 // ====================================
 function renderSmartPrice($priceData, $showBadge = false)
 {
-    $html = '<div class="product-price">';
+    $html = '<div class="product-price flex items-center gap-2">';
 
     if ($priceData['has_range']) {
-        $html .= '<span class="price-range">' . $priceData['display_price'] . '</span>';
+        $html .= '<span class="price-range font-bold text-gray-900">' . $priceData['display_price'] . '</span>';
         if ($showBadge) {
-            $html .= ' <span class="badge badge-info">Multiple variants</span>';
+            $html .= ' <span class="badge badge-info text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Multiple variants</span>';
         }
     } else {
-        $html .= '<span class="price-single">' . $priceData['display_price'] . '</span>';
+        $html .= '<span class="price-single font-bold text-gray-900">' . $priceData['display_price'] . '</span>';
+    }
+
+    // ✅ SHOW DISCOUNT BADGE IF DISCOUNT > 0 (display only)
+    if (!empty($priceData['discount']) && floatval($priceData['discount']) > 0) {
+        $discountPercent = round(floatval($priceData['discount']));
+        $html .= ' <span class="discount-badge text-xs font-bold bg-red-500 text-white px-2 py-1 rounded">-' . $discountPercent . '%</span>';
     }
 
     $html .= '</div>';

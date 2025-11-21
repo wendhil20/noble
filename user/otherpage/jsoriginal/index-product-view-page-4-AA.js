@@ -511,41 +511,51 @@ class ProductSelector {
     `;
   }
 
-  // ✅ NEW: Show stock indicator when size is hidden
-  showStockIndicatorForHiddenVariant(size) {
-    let container = document.getElementById("hidden-size-indicator");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "hidden-size-indicator";
-      container.className = "p-3 mb-2";
-      
-      const quantitySection = document.getElementById("quantityInput")?.closest("div") || 
-                             document.querySelector(".step-section:last-of-type");
-      if (quantitySection) {
-        quantitySection.parentNode.insertBefore(container, quantitySection);
-      }
+// ✅ FIXED: Show stock indicator when size is hidden - WITH DISCOUNT
+showStockIndicatorForHiddenVariant(size) {
+  let container = document.getElementById("hidden-size-indicator");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "hidden-size-indicator";
+    container.className = "p-3 mb-2";
+    
+    const quantitySection = document.getElementById("quantityInput")?.closest("div") || 
+                           document.querySelector(".step-section:last-of-type");
+    if (quantitySection) {
+      quantitySection.parentNode.insertBefore(container, quantitySection);
     }
-    
-    // Get stock from selected variant button
-    const selectedVariantBtn = document.querySelector('.variant-btn.selected');
-    const stock = selectedVariantBtn ? parseInt(selectedVariantBtn.dataset.stock || 0) : 0;
-    
-    let stockDisplay = '';
-    if (stock <= 0) {
-      stockDisplay = '<span class="ml-2 inline-block px-2 py-1 bg-red-100 text-red-700 text-xs rounded font-semibold">OUT OF STOCK</span>';
-    } else if (stock <= 5) {
-      stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-semibold">${stock} left</span>`;
-    } else {
-      stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">${stock} in stock</span>`;
-    }
-    
-    container.innerHTML = `
-      <div class="text-sm text-gray-700">
-        <strong>Size Selected:</strong> <span class="text-orange-600 font-semibold">${size}</span>
-        ${stockDisplay}
-      </div>
-    `;
   }
+  
+  // Get stock from selected variant button
+  const selectedVariantBtn = document.querySelector('.variant-btn.selected');
+  const stock = selectedVariantBtn ? parseInt(selectedVariantBtn.dataset.stock || 0) : 0;
+  
+  // ✅ GET DISCOUNT FROM SELECTED VARIANT BUTTON
+  const discount = selectedVariantBtn ? parseFloat(selectedVariantBtn.dataset.discount || 0) : 0;
+  
+  let stockDisplay = '';
+  if (stock <= 0) {
+    stockDisplay = '<span class="ml-2 inline-block px-2 py-1 bg-red-100 text-red-700 text-xs rounded font-semibold">OUT OF STOCK</span>';
+  } else if (stock <= 5) {
+    stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-semibold">${stock} left</span>`;
+  } else {
+    stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">${stock} in stock</span>`;
+  }
+  
+  // ✅ BUILD DISCOUNT DISPLAY
+  let discountDisplay = '';
+  if (discount > 0) {
+    discountDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-red-500 text-white text-xs rounded font-bold">-${Math.round(discount)}% OFF</span>`;
+  }
+  
+  container.innerHTML = `
+    <div class="text-sm text-gray-700">
+      <strong>Size Selected:</strong> <span class="text-orange-600 font-semibold">${size}</span>
+      ${discountDisplay}
+      ${stockDisplay}
+    </div>
+  `;
+}
 
   findSectionByTitle(title) {
     const sections = document.querySelectorAll(".step-section");

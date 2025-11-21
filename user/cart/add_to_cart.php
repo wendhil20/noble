@@ -330,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         error_log("Cart Error: " . $e->getMessage());
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => '❌ ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => '' . $e->getMessage()]);
     }
 } else {
     http_response_code(405);

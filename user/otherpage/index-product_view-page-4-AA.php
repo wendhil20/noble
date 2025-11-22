@@ -208,13 +208,18 @@ $stmt = $conn->prepare("
     pv.height,
     pv.length,
     pv.stock as variant_fallback_stock,
+    pv.timer_discount_percent,
+    pv.timer_discount_active,
+    pv.timer_discount_start,
+    pv.timer_discount_end,
     COALESCE(SUM(pvc.stock_quantity), 0) as total_variant_stock
   FROM product_types pt
   LEFT JOIN product_variants pv ON pt.id = pv.type_id 
   LEFT JOIN product_variant_colors pvc ON pv.id = pvc.variant_id
   WHERE pt.product_id = ?
-  GROUP BY pv.id, pt.id, pt.type_name, pt.type_image, pv.namevariant, pv.color, pv.size, 
-           pv.price, pv.percent, pv.discount, pv.image, pv.sku_info, pv.width, pv.height, pv.length, pv.stock
+GROUP BY pv.id, pt.id, pt.type_name, pt.type_image, pv.namevariant, pv.color, pv.size, 
+           pv.price, pv.percent, pv.discount, pv.image, pv.sku_info, pv.width, pv.height, pv.length, pv.stock,
+           pv.timer_discount_percent, pv.timer_discount_active, pv.timer_discount_start, pv.timer_discount_end
   ORDER BY pt.id ASC, pv.size ASC
 ");
 $stmt->bind_param("i", $product_id);
@@ -235,6 +240,25 @@ while ($row = $types_result->fetch_assoc()) {
   if ($row['variant_id']) {
     $stock = $row['total_variant_stock'] > 0 ? $row['total_variant_stock'] : $row['variant_fallback_stock'];
 
+    // ✅ CHECK IF TIMER DISCOUNT IS ACTIVE AND VALID
+    $timer_discount = 0;
+    $has_active_timer = false;
+
+    if (
+      $row['timer_discount_active'] &&
+      !empty($row['timer_discount_start']) &&
+      !empty($row['timer_discount_end'])
+    ) {
+      $now = time();
+      $start = strtotime($row['timer_discount_start']);
+      $end = strtotime($row['timer_discount_end']);
+
+      if ($now >= $start && $now <= $end) {
+        $timer_discount = floatval($row['timer_discount_percent']);
+        $has_active_timer = true;
+      }
+    }
+
     $types_data[$type_name]['variants'][] = [
       'variant_id' => $row['variant_id'],
       'namevariant' => $row['namevariant'],
@@ -248,7 +272,12 @@ while ($row = $types_result->fetch_assoc()) {
       'width' => $row['width'] ?? 0,
       'height' => $row['height'] ?? 0,
       'length' => $row['length'] ?? 0,
-      'stock' => $stock
+      'stock' => $stock,
+      'timer_discount' => $timer_discount,
+      'has_active_timer' => $has_active_timer,
+      'timer_end' => $row['timer_discount_end'],
+      'timer_discount_start' => $row['timer_discount_start'],  // ← ADD
+      'timer_discount_active' => $row['timer_discount_active'],  // ← ADD
     ];
   }
 }
@@ -1210,607 +1239,639 @@ $is_guest = !isset($_SESSION['user_id']);
               </div>
             <?php endif; ?>
 
-       <!-- STEP 3: SIZE/VARIANT SELECTION -->
-<div class="step-section">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-base lg:text-xl font-semibold text-gray-800">
-      Choose Size
-    </h3>
-    <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
-  </div>
+            <!-- STEP 3: SIZE/VARIANT SELECTION -->
+            <div class="step-section">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base lg:text-xl font-semibold text-gray-800">
+                  Choose Size
+                </h3>
+                <div class="text-xs lg:text-sm text-orange-600 font-medium">Required</div>
+              </div>
 
-  <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
-    <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
-    <p class="text-sm lg:text-base">Please select a color first</p>
-  </div>
+              <div id="variant-container" class="text-gray-500 p-4 lg:p-6 bg-gray-50 text-center rounded-lg border-2 border-dashed border-gray-300">
+                <i class="fas fa-arrow-up text-orange-500 mb-2 text-lg lg:text-xl"></i>
+                <p class="text-sm lg:text-base">Please select a color first</p>
+              </div>
 
-  <?php foreach ($types_data as $type): ?>
-    <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
-      <?php if (!empty($type['variants'])): ?>
-        <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <?php foreach ($type['variants'] as $variant): ?>
-              <?php
-              $price = floatval($variant['variant_price']);
-              $percent = floatval($variant['percent']);
-              $discount = floatval($variant['discount'] ?? 0);
-              $stock = intval($variant['stock']);
-              $priceWithMarkup = $price + ($price * $percent / 100);
-              $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
-              $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
-              $is_out_of_stock = $stock <= 0;
-              ?>
-              <button type="button"
-                onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
-                class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded
-   px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
-                data-price="<?= $price ?>"
-                data-percent="<?= $percent ?>"
-                data-discount="<?= $discount ?>"
-                data-variant-id="<?= $variant['variant_id'] ?>"
-                data-stock="<?= $stock ?>"
-                data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
-                data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
-                data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
-                data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'
-                <?= $is_out_of_stock ? 'disabled' : '' ?>>
+              <?php foreach ($types_data as $type): ?>
+                <div id="variants-<?= $type['id'] ?>" class="variant-group hidden">
+                  <?php if (!empty($type['variants'])): ?>
+                    <div class="max-h-60 lg:max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-300 pr-1">
+                      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                        <?php foreach ($type['variants'] as $variant): ?>
+                          <?php
+                          $price = floatval($variant['variant_price']);
+                          $percent = floatval($variant['percent']);
+                          $discount = floatval($variant['discount'] ?? 0);
+                          $stock = intval($variant['stock']);
+                          $priceWithMarkup = $price + ($price * $percent / 100);
+                          $finalPrice = $priceWithMarkup - ($priceWithMarkup * $discount / 100);
+                          $sku_info = !empty($variant['sku_info']) ? json_decode($variant['sku_info'], true) : null;
+                          $is_out_of_stock = $stock <= 0;
+                          // ✅ ADD THESE LINES:
 
-                <!-- ✅ DISCOUNT BADGE - Top Right Corner -->
-                <?php if ($discount > 0): ?>
-                  <div class="absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-20 shadow-md">
-                    -<?= round($discount) ?>%
-                  </div>
-                <?php endif; ?>
+                          $timer_discount = floatval($variant['timer_discount'] ?? 0);
+                          $has_active_timer = (bool)($variant['has_active_timer'] ?? false);
+                          $timer_discount_start = !empty($variant['timer_discount_start']) ? strtotime($variant['timer_discount_start']) : 0;
+                          $timer_discount_end = !empty($variant['timer_end']) ? strtotime($variant['timer_end']) : 0;
+                          $timer_discount_active = (bool)($variant['timer_discount_active'] ?? false);
 
-                <!-- Size Text -->
-                <div class="text-gray-700 text-[11px] font-medium leading-tight">
-                  <?= htmlspecialchars($variant['size']) ?>
-                </div>
+                          $now = time();
+                          $is_timer_active = $timer_discount_active && $timer_discount_end && ($now <= $timer_discount_end);
+                          $remaining_seconds = $is_timer_active ? ($timer_discount_end - $now) : 0;
+                          ?>
+                          <button type="button"
+                            onclick="selectVariant(this, '<?= addslashes($variant['size']) ?>'); showSkuInfo(this); updateCalculatorFromVariant(this); updateColorStockDisplay();"
+                            class="variant-btn border-2 <?= $is_out_of_stock ? 'border-red-300 opacity-50' : 'border-gray-300 hover:border-orange-500' ?> bg-white rounded
+ px-2 py-2 text-center transition-all duration-200 min-h-[50px] flex flex-col items-center justify-center relative"
+                            data-price="<?= $price ?>"
+                            data-percent="<?= $percent ?>"
+                            data-discount="<?= $discount ?>"
+                            data-variant-id="<?= $variant['variant_id'] ?>"
+                            data-stock="<?= $stock ?>"
+                            data-width="<?= isset($variant['width']) ? htmlspecialchars($variant['width']) : '0' ?>"
+                            data-height="<?= isset($variant['height']) ? htmlspecialchars($variant['height']) : '0' ?>"
+                            data-length="<?= isset($variant['length']) ? htmlspecialchars($variant['length']) : '0' ?>"
+                            data-sku-info='<?= $sku_info ? htmlspecialchars(json_encode($sku_info), ENT_QUOTES) : '' ?>'
+                            data-has-timer="<?= $has_active_timer ? '1' : '0' ?>"
+                            data-timer-discount="<?= $timer_discount ?>"
+                            data-timer-end="<?= !empty($variant['timer_end']) ? strtotime($variant['timer_end']) : '0' ?>"
+                            <?= $is_out_of_stock ? 'disabled' : '' ?>>
 
-                <!-- Stock Display -->
-                <div class="text-[9px] font-bold mt-0.5">
-                  <?php if ($stock <= 0): ?>
-                    <span class="text-red-600">OUT OF STOCK</span>
-                  <?php elseif ($stock <= 5): ?>
-                    <span class="text-orange-600"><?= $stock ?> left</span>
+                            <!-- ✅ DISCOUNT BADGE - Top Right Corner -->
+                            <?php if ($discount > 0): ?>
+                              <div class="absolute top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold z-20 shadow-md">
+                                -<?= round($discount) ?>%
+                              </div>
+                            <?php endif; ?>
+
+                            <!-- Size Text -->
+                            <div class="text-gray-700 text-[11px] font-medium leading-tight">
+                              <?= htmlspecialchars($variant['size']) ?>
+                            </div>
+
+                            <!-- Stock Display -->
+                            <div class="text-[9px] font-bold mt-0.5">
+                              <?php if ($stock <= 0): ?>
+                                <span class="text-red-600">OUT OF STOCK</span>
+                              <?php elseif ($stock <= 5): ?>
+                                <span class="text-orange-600"><?= $stock ?> left</span>
+                              <?php else: ?>
+                                <span class="text-green-600"><?= $stock ?> in stock</span>
+                              <?php endif; ?>
+                            </div>
+                            <!-- ✅ TIMER BADGE -->
+                            <?php if ($is_timer_active && $remaining_seconds > 0): ?>
+                              <div class="mt-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge"
+                                data-variant-id="<?= $variant['variant_id'] ?>"
+                                data-end-time="<?= $timer_discount_end ?>">
+                                Ends in <span class="timer-display font-mono tracking-wider" id="timer-<?= $variant['variant_id'] ?>">
+                                  <?php
+                                  $days = floor($remaining_seconds / 86400);
+                                  $hours = floor(($remaining_seconds % 86400) / 3600);
+                                  $minutes = floor(($remaining_seconds % 3600) / 60);
+                                  $seconds = $remaining_seconds % 60;
+                                  $total_hours = ($days * 24) + $hours;
+                                  echo sprintf('%02d:%02d:%02d', $total_hours, $minutes, $seconds);
+                                  ?>
+                                </span>
+                              </div>
+                            <?php endif; ?>
+                            <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
+                          </button>
+                        <?php endforeach; ?>
+                      </div>
+                    </div>
                   <?php else: ?>
-                    <span class="text-green-600"><?= $stock ?> in stock</span>
+                    <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
                   <?php endif; ?>
                 </div>
+              <?php endforeach; ?>
+            </div>
 
-                <span class="hidden" data-original-price="<?= $priceWithMarkup ?>" data-final-price="<?= $finalPrice ?>" data-discount-percent="<?= $discount ?>"></span>
-              </button>
-            <?php endforeach; ?>
-          </div>
-        </div>
-      <?php else: ?>
-        <p class="text-gray-500 text-center p-4 text-sm">No variants available for this type.</p>
-      <?php endif; ?>
-    </div>
-  <?php endforeach; ?>
-</div>
+            <style>
+              /* Variant button discount badge styling */
+              .variant-btn {
+                position: relative;
+              }
 
-<style>
-  /* Variant button discount badge styling */
-  .variant-btn {
-    position: relative;
-  }
-  
-  /* Discount badge animation */
-  .variant-btn .bg-red-500 {
-    animation: discountPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  
-  @keyframes discountPop {
-    0% {
-      transform: scale(0) rotate(-20deg);
-      opacity: 0;
-    }
-    50% {
-      transform: scale(1.2) rotate(5deg);
-    }
-    100% {
-      transform: scale(1) rotate(0deg);
-      opacity: 1;
-    }
-  }
-  
-  /* Hover effect on discount badge */
-  .variant-btn:hover .bg-red-500 {
-    transform: scale(1.15);
-  }
-</style>
+              /* Discount badge animation */
+              .variant-btn .bg-red-500 {
+                animation: discountPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+              }
 
-              <script>
-                // ✅ Show total stock for each color (sum of all variants)
-                function initializeColorStockDisplay() {
-                  console.log('Initializing color stock display...');
-
-                  document.querySelectorAll('.color-btn').forEach(btn => {
-                    const colorId = parseInt(btn.dataset.colorId);
-                    let totalStock = 0;
-
-                    // Sum stock across ALL variants for this color
-                    for (const variantId in variantColorStockMap) {
-                      const stock = variantColorStockMap[variantId][colorId] ?? 0;
-                      totalStock += stock;
-                    }
-
-                    console.log(`Color ${colorId} - Total stock across all sizes:`, totalStock);
-
-                    // Update display
-                    let stockSpan = btn.querySelector('.color-stock-display');
-                    if (stockSpan) {
-                      if (totalStock > 0) {
-                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
-                        stockSpan.textContent = totalStock + ' Stock';
-                      } else {
-                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
-                        stockSpan.textContent = 'OUT OF STOCK';
-                      }
-                    }
-                  });
+              @keyframes discountPop {
+                0% {
+                  transform: scale(0) rotate(-20deg);
+                  opacity: 0;
                 }
 
-                // ✅ Update color stock display for SELECTED size
-                function updateColorStockDisplay() {
-                  const selectedVariantBtn = document.querySelector('.variant-btn.selected');
+                50% {
+                  transform: scale(1.2) rotate(5deg);
+                }
 
-                  if (!selectedVariantBtn) {
-                    // If no size selected, show total stock
-                    initializeColorStockDisplay();
+                100% {
+                  transform: scale(1) rotate(0deg);
+                  opacity: 1;
+                }
+              }
+
+              /* Hover effect on discount badge */
+              .variant-btn:hover .bg-red-500 {
+                transform: scale(1.15);
+              }
+            </style>
+
+            <script>
+              // ✅ Show total stock for each color (sum of all variants)
+              function initializeColorStockDisplay() {
+                console.log('Initializing color stock display...');
+
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                  const colorId = parseInt(btn.dataset.colorId);
+                  let totalStock = 0;
+
+                  // Sum stock across ALL variants for this color
+                  for (const variantId in variantColorStockMap) {
+                    const stock = variantColorStockMap[variantId][colorId] ?? 0;
+                    totalStock += stock;
+                  }
+
+                  console.log(`Color ${colorId} - Total stock across all sizes:`, totalStock);
+
+                  // Update display
+                  let stockSpan = btn.querySelector('.color-stock-display');
+                  if (stockSpan) {
+                    if (totalStock > 0) {
+                      stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
+                      stockSpan.textContent = totalStock + ' Stock';
+                    } else {
+                      stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
+                      stockSpan.textContent = 'OUT OF STOCK';
+                    }
+                  }
+                });
+              }
+
+              // ✅ Update color stock display for SELECTED size
+              function updateColorStockDisplay() {
+                const selectedVariantBtn = document.querySelector('.variant-btn.selected');
+
+                if (!selectedVariantBtn) {
+                  // If no size selected, show total stock
+                  initializeColorStockDisplay();
+                  return;
+                }
+
+                const variantId = parseInt(selectedVariantBtn.dataset.variantId);
+
+                console.log('Updating color display for variant:', variantId);
+                console.log('Stock map:', variantColorStockMap);
+
+                // Update ALL color buttons with their respective stock for THIS VARIANT
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                  const btnColorId = parseInt(btn.dataset.colorId);
+                  const btnStock = variantColorStockMap[variantId]?.[btnColorId] ?? 0;
+
+                  console.log(`Color ${btnColorId} for variant ${variantId} - Stock:`, btnStock);
+
+                  // Update the color button display
+                  let stockSpan = btn.querySelector('.color-stock-display');
+                  if (stockSpan) {
+                    if (btnStock > 0) {
+                      stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-green-600 font-semibold block mt-1';
+                      stockSpan.textContent = btnStock + ' stock';
+                      btn.classList.remove('opacity-50', 'cursor-not-allowed', 'border-red-300');
+                      btn.classList.add('border-gray-300', 'hover:border-orange-500');
+                      btn.disabled = false;
+                    } else {
+                      stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
+                      stockSpan.textContent = 'NOT AVAIL';
+                      btn.classList.add('opacity-50', 'cursor-not-allowed', 'border-red-300');
+                      btn.classList.remove('border-gray-300', 'hover:border-orange-500');
+                      btn.disabled = true;
+                    }
+                  }
+                });
+              }
+
+              // ✅ Initialize on page load
+              document.addEventListener('DOMContentLoaded', function() {
+                initializeColorStockDisplay();
+              });
+            </script>
+
+
+            <!-- Calculator Guide Display -->
+            <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
+              <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
+                <div class="flex items-center gap-2 mb-4">
+                  <div>
+                    <h3 class="text-base text-gray-900 font-semibold">Area</h3>
+                    <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
+                  </div>
+                </div>
+
+                <!-- Selected Size Display -->
+                <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
+                      <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
+                    </div>
+                    <div class="text-xs text-gray-600">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dimensions Display -->
+                <div id="calculatorDimensionsDisplay" class="mb-4">
+                  <div class="grid grid-cols-4 gap-2">
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
+                      <div class="bg-gray-50 rounded px-2 py-2">
+                        <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
+                      <div class="bg-gray-50 rounded px-2 py-2">
+                        <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
+                      <div class="bg-gray-50 rounded px-2 py-2">
+                        <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
+                      <div class="bg-gray-200 rounded px-2 py-2">
+                        <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Calculator Input -->
+                <div class="mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1">
+                      <label class="block text-xs font-semibold text-gray-900 mb-1">
+                        <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
+                        Area
+                      </label>
+                      <div class="bg-gray-50 rounded">
+                        <input type="number" id="userArea" step="0.01" placeholder="Enter area"
+                          oninput="calculateFromArea()"
+                          class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
+                      </div>
+                    </div>
+                    <div class="text-gray-700 text-xl pt-5">
+                      <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="flex-1">
+                      <label class="block text-xs font-semibold text-gray-900 mb-1">
+                        <i class="fas fa-box text-gray-700 mr-1"></i>
+                        Pieces
+                      </label>
+                      <div class="bg-gray-100 rounded border border-gray-300">
+                        <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Results -->
+                <div id="userCalculationResults" class="hidden">
+                  <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
+                    <h4 class="text-xs font-semibold text-gray-900 mb-2">
+                      <i class="fas fa-tools text-gray-700 mr-1"></i>
+                      Additional Materials Needed
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+                        <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
+                        <div class="text-sm font-bold text-gray-900">
+                          <span id="userAdhesiveNeeded">0</span> pcs
+                        </div>
+                      </div>
+                      <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
+                        <label class="block text-xs text-gray-600 mb-1">Brackets</label>
+                        <div class="text-sm font-bold text-gray-900">
+                          <span id="userBracketsNeeded">0</span> pcs
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+                let selectedVariantDimensions = {
+                  width: 0,
+                  height: 0,
+                  length: 0,
+                  size: '',
+                  areaPerPiece: 0
+                };
+
+                function updateCalculatorFromVariant(button) {
+                  const width = parseFloat(button.dataset.width) || 0;
+                  const height = parseFloat(button.dataset.height) || 0;
+                  const length = parseFloat(button.dataset.length) || 0;
+                  const size = button.querySelector('.text-gray-700').textContent.trim();
+
+                  // Convert mm to meters
+                  const widthM = width / 1000;
+                  const heightM = height / 1000;
+                  const areaPerPiece = widthM * heightM;
+
+                  // Store dimensions
+                  selectedVariantDimensions = {
+                    width,
+                    height,
+                    length,
+                    size,
+                    areaPerPiece
+                  };
+
+                  // Show calculator section
+                  const calcSection = document.getElementById('calculatorSection');
+                  if (calcSection) {
+                    calcSection.classList.remove('hidden');
+                  }
+
+                  // SET SIZE ONCE - THIS WILL NOT CHANGE
+                  const sizeDisplay = document.getElementById('selectedSizeDisplay');
+                  if (sizeDisplay) {
+                    sizeDisplay.textContent = size;
+                  }
+
+                  // Update dimension displays
+                  const widthEl = document.getElementById('calcWidth');
+                  const heightEl = document.getElementById('calcHeight');
+                  const lengthEl = document.getElementById('calcLength');
+                  const areaEl = document.getElementById('calcAreaPerPiece');
+
+                  if (widthEl) widthEl.textContent = width;
+                  if (heightEl) heightEl.textContent = height;
+                  if (lengthEl) lengthEl.textContent = length;
+                  if (areaEl) areaEl.textContent = areaPerPiece.toFixed(4) + ' m²';
+
+                  // Clear previous calculations
+                  const areaInput = document.getElementById('userArea');
+                  const piecesDisplay = document.getElementById('piecesFromArea');
+                  const resultsSection = document.getElementById('userCalculationResults');
+
+                  if (areaInput) areaInput.value = '';
+                  if (piecesDisplay) piecesDisplay.textContent = '0';
+                  if (resultsSection) resultsSection.classList.add('hidden');
+                }
+
+                function calculateFromArea() {
+                  const areaInput = document.getElementById('userArea');
+                  const piecesDisplay = document.getElementById('piecesFromArea');
+                  const resultsSection = document.getElementById('userCalculationResults');
+                  const adhesiveEl = document.getElementById('userAdhesiveNeeded');
+                  const bracketsEl = document.getElementById('userBracketsNeeded');
+
+                  if (!areaInput || !piecesDisplay) return;
+
+                  const area = parseFloat(areaInput.value);
+
+                  // Validation
+                  if (!area || area <= 0) {
+                    piecesDisplay.textContent = '0';
+                    if (resultsSection) resultsSection.classList.add('hidden');
                     return;
                   }
 
-                  const variantId = parseInt(selectedVariantBtn.dataset.variantId);
+                  if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
+                    piecesDisplay.textContent = '0';
+                    if (resultsSection) resultsSection.classList.add('hidden');
+                    return;
+                  }
 
-                  console.log('Updating color display for variant:', variantId);
-                  console.log('Stock map:', variantColorStockMap);
+                  // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
+                  const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
 
-                  // Update ALL color buttons with their respective stock for THIS VARIANT
-                  document.querySelectorAll('.color-btn').forEach(btn => {
-                    const btnColorId = parseInt(btn.dataset.colorId);
-                    const btnStock = variantColorStockMap[variantId]?.[btnColorId] ?? 0;
+                  // CALCULATE ADDITIONAL MATERIALS
+                  const adhesiveNeeded = (area * 0.30).toFixed(2);
+                  const bracketsNeeded = Math.ceil(piecesNeeded * 0.25);
 
-                    console.log(`Color ${btnColorId} for variant ${variantId} - Stock:`, btnStock);
+                  // UPDATE DISPLAY - SIZE DOES NOT CHANGE
+                  piecesDisplay.textContent = piecesNeeded.toLocaleString();
 
-                    // Update the color button display
-                    let stockSpan = btn.querySelector('.color-stock-display');
-                    if (stockSpan) {
-                      if (btnStock > 0) {
-                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-green-600 font-semibold block mt-1';
-                        stockSpan.textContent = btnStock + ' stock';
-                        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'border-red-300');
-                        btn.classList.add('border-gray-300', 'hover:border-orange-500');
-                        btn.disabled = false;
-                      } else {
-                        stockSpan.className = 'color-stock-display text-[8px] lg:text-[9px] text-red-600 font-semibold block mt-1';
-                        stockSpan.textContent = 'NOT AVAIL';
-                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'border-red-300');
-                        btn.classList.remove('border-gray-300', 'hover:border-orange-500');
-                        btn.disabled = true;
-                      }
+                  if (adhesiveEl) adhesiveEl.textContent = adhesiveNeeded;
+                  if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
+                  if (resultsSection) resultsSection.classList.remove('hidden');
+                }
+
+                // ✅ ✅ ✅ FINAL FIX - DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUT
+                document.addEventListener('keydown', function(e) {
+                  // ✅ GET ACTIVE ELEMENT
+                  const activeElement = document.activeElement;
+
+                  // ✅ ✅ ✅ CRITICAL FIX: CHECK IF ANY INPUT/TEXTAREA IS FOCUSED
+                  if (activeElement &&
+                    (activeElement.tagName === 'INPUT' ||
+                      activeElement.tagName === 'TEXTAREA' ||
+                      activeElement.isContentEditable)) {
+                    // ❌ ❌ ❌ DO NOTHING - LET THE USER TYPE FREELY
+                    return;
+                  }
+
+                  // ESC key to close modals (only when NOT typing)
+                  if (e.key === 'Escape') {
+                    if (typeof closeContactModal === 'function') {
+                      closeContactModal();
                     }
+                  }
+
+                  // ✅ Number keys to select variants (ONLY when NOT in ANY input field)
+                  if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
+                    const index = parseInt(e.key) - 1;
+                    if (variantButtons[index]) {
+                      e.preventDefault(); // Prevent default number input behavior
+                      e.stopPropagation(); // Stop event from bubbling
+                      variantButtons[index].click();
+                    }
+                  }
+                });
+
+                // ✅ ADDITIONAL FIX: Prevent keydown on area input from triggering shortcuts
+                const areaInput = document.getElementById('userArea');
+                if (areaInput) {
+                  areaInput.addEventListener('keydown', function(e) {
+                    // Stop the event from propagating to document level
+                    e.stopPropagation();
                   });
                 }
 
-                // ✅ Initialize on page load
-                document.addEventListener('DOMContentLoaded', function() {
-                  initializeColorStockDisplay();
-                });
-              </script>
+                // CLEAR CALCULATOR FUNCTION
+                function clearCalculator() {
+                  const calcSection = document.getElementById('calculatorSection');
+                  const areaInput = document.getElementById('userArea');
+                  const piecesDisplay = document.getElementById('piecesFromArea');
+                  const resultsSection = document.getElementById('userCalculationResults');
 
+                  if (calcSection) calcSection.classList.add('hidden');
+                  if (areaInput) areaInput.value = '';
+                  if (piecesDisplay) piecesDisplay.textContent = '0';
+                  if (resultsSection) resultsSection.classList.add('hidden');
 
-              <!-- Calculator Guide Display -->
-              <?php if (isset($product['guide_enabled']) && $product['guide_enabled'] == 1): ?>
-                <div id="calculatorSection" class="mt-4 bg-white rounded p-3 lg:p-4 border border-gray-200 hidden">
-                  <div class="flex items-center gap-2 mb-4">
-                    <div>
-                      <h3 class="text-base text-gray-900 font-semibold">Area</h3>
-                      <p class="text-xs text-gray-600">Calculate coverage based on selected size</p>
-                    </div>
-                  </div>
-
-                  <!-- Selected Size Display -->
-                  <div class="mb-4 bg-gray-100 border border-gray-300 rounded p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <label class="block text-xs text-gray-600 mb-1">Selected Size</label>
-                        <div id="selectedSizeDisplay" class="text-sm font-medium text-gray-900">-</div>
-                      </div>
-                      <div class="text-xs text-gray-600">
-                        <i class="fas fa-check-circle"></i>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Dimensions Display -->
-                  <div id="calculatorDimensionsDisplay" class="mb-4">
-                    <div class="grid grid-cols-4 gap-2">
-                      <div class="text-center">
-                        <label class="block text-xs text-gray-600 mb-1">Length (mm)</label>
-                        <div class="bg-gray-50 rounded px-2 py-2">
-                          <div id="calcLength" class="text-xs font-semibold text-gray-900">-</div>
-                        </div>
-                      </div>
-                      <div class="text-center">
-                        <label class="block text-xs text-gray-600 mb-1">Height (mm)</label>
-                        <div class="bg-gray-50 rounded px-2 py-2">
-                          <div id="calcHeight" class="text-xs font-semibold text-gray-900">-</div>
-                        </div>
-                      </div>
-                      <div class="text-center">
-                        <label class="block text-xs text-gray-600 mb-1">Width (mm)</label>
-                        <div class="bg-gray-50 rounded px-2 py-2">
-                          <div id="calcWidth" class="text-xs font-semibold text-gray-900">-</div>
-                        </div>
-                      </div>
-                      <div class="text-center">
-                        <label class="block text-xs text-gray-600 mb-1">Per Piece</label>
-                        <div class="bg-gray-200 rounded px-2 py-2">
-                          <div id="calcAreaPerPiece" class="text-xs font-bold text-gray-900"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Calculator Input -->
-                  <div class="mb-4">
-                    <div class="flex items-center gap-3">
-                      <div class="flex-1">
-                        <label class="block text-xs font-semibold text-gray-900 mb-1">
-                          <i class="fas fa-ruler-combined text-gray-700 mr-1"></i>
-                          Area
-                        </label>
-                        <div class="bg-gray-50 rounded">
-                          <input type="number" id="userArea" step="0.01" placeholder="Enter area"
-                            oninput="calculateFromArea()"
-                            class="w-full px-3 py-2 bg-transparent text-center text-sm text-gray-900 outline-none border border-gray-200 rounded">
-                        </div>
-                      </div>
-                      <div class="text-gray-700 text-xl pt-5">
-                        <i class="fas fa-arrow-right"></i>
-                      </div>
-                      <div class="flex-1">
-                        <label class="block text-xs font-semibold text-gray-900 mb-1">
-                          <i class="fas fa-box text-gray-700 mr-1"></i>
-                          Pieces
-                        </label>
-                        <div class="bg-gray-100 rounded border border-gray-300">
-                          <div id="piecesFromArea" class="px-3 py-2 text-center text-sm font-bold text-gray-900">0</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Additional Results -->
-                  <div id="userCalculationResults" class="hidden">
-                    <div class="bg-gray-100 rounded-lg p-3 border border-gray-300">
-                      <h4 class="text-xs font-semibold text-gray-900 mb-2">
-                        <i class="fas fa-tools text-gray-700 mr-1"></i>
-                        Additional Materials Needed
-                      </h4>
-                      <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-                          <label class="block text-xs text-gray-600 mb-1">Adhesive</label>
-                          <div class="text-sm font-bold text-gray-900">
-                            <span id="userAdhesiveNeeded">0</span> pcs
-                          </div>
-                        </div>
-                        <div class="bg-white rounded px-3 py-2 text-center border border-gray-200">
-                          <label class="block text-xs text-gray-600 mb-1">Brackets</label>
-                          <div class="text-sm font-bold text-gray-900">
-                            <span id="userBracketsNeeded">0</span> pcs
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <script>
-                  let selectedVariantDimensions = {
+                  selectedVariantDimensions = {
                     width: 0,
                     height: 0,
                     length: 0,
                     size: '',
                     areaPerPiece: 0
                   };
+                }
+              </script>
+            <?php endif; ?>
 
-                  function updateCalculatorFromVariant(button) {
-                    const width = parseFloat(button.dataset.width) || 0;
-                    const height = parseFloat(button.dataset.height) || 0;
-                    const length = parseFloat(button.dataset.length) || 0;
-                    const size = button.querySelector('.text-gray-700').textContent.trim();
-
-                    // Convert mm to meters
-                    const widthM = width / 1000;
-                    const heightM = height / 1000;
-                    const areaPerPiece = widthM * heightM;
-
-                    // Store dimensions
-                    selectedVariantDimensions = {
-                      width,
-                      height,
-                      length,
-                      size,
-                      areaPerPiece
-                    };
-
-                    // Show calculator section
-                    const calcSection = document.getElementById('calculatorSection');
-                    if (calcSection) {
-                      calcSection.classList.remove('hidden');
-                    }
-
-                    // SET SIZE ONCE - THIS WILL NOT CHANGE
-                    const sizeDisplay = document.getElementById('selectedSizeDisplay');
-                    if (sizeDisplay) {
-                      sizeDisplay.textContent = size;
-                    }
-
-                    // Update dimension displays
-                    const widthEl = document.getElementById('calcWidth');
-                    const heightEl = document.getElementById('calcHeight');
-                    const lengthEl = document.getElementById('calcLength');
-                    const areaEl = document.getElementById('calcAreaPerPiece');
-
-                    if (widthEl) widthEl.textContent = width;
-                    if (heightEl) heightEl.textContent = height;
-                    if (lengthEl) lengthEl.textContent = length;
-                    if (areaEl) areaEl.textContent = areaPerPiece.toFixed(4) + ' m²';
-
-                    // Clear previous calculations
-                    const areaInput = document.getElementById('userArea');
-                    const piecesDisplay = document.getElementById('piecesFromArea');
-                    const resultsSection = document.getElementById('userCalculationResults');
-
-                    if (areaInput) areaInput.value = '';
-                    if (piecesDisplay) piecesDisplay.textContent = '0';
-                    if (resultsSection) resultsSection.classList.add('hidden');
-                  }
-
-                  function calculateFromArea() {
-                    const areaInput = document.getElementById('userArea');
-                    const piecesDisplay = document.getElementById('piecesFromArea');
-                    const resultsSection = document.getElementById('userCalculationResults');
-                    const adhesiveEl = document.getElementById('userAdhesiveNeeded');
-                    const bracketsEl = document.getElementById('userBracketsNeeded');
-
-                    if (!areaInput || !piecesDisplay) return;
-
-                    const area = parseFloat(areaInput.value);
-
-                    // Validation
-                    if (!area || area <= 0) {
-                      piecesDisplay.textContent = '0';
-                      if (resultsSection) resultsSection.classList.add('hidden');
-                      return;
-                    }
-
-                    if (!selectedVariantDimensions.areaPerPiece || selectedVariantDimensions.areaPerPiece <= 0) {
-                      piecesDisplay.textContent = '0';
-                      if (resultsSection) resultsSection.classList.add('hidden');
-                      return;
-                    }
-
-                    // CALCULATE PIECES NEEDED (SIZE STAYS THE SAME)
-                    const piecesNeeded = Math.ceil(area / selectedVariantDimensions.areaPerPiece);
-
-                    // CALCULATE ADDITIONAL MATERIALS
-                    const adhesiveNeeded = (area * 0.30).toFixed(2);
-                    const bracketsNeeded = Math.ceil(piecesNeeded * 0.25);
-
-                    // UPDATE DISPLAY - SIZE DOES NOT CHANGE
-                    piecesDisplay.textContent = piecesNeeded.toLocaleString();
-
-                    if (adhesiveEl) adhesiveEl.textContent = adhesiveNeeded;
-                    if (bracketsEl) bracketsEl.textContent = bracketsNeeded.toLocaleString();
-                    if (resultsSection) resultsSection.classList.remove('hidden');
-                  }
-
-                  // ✅ ✅ ✅ FINAL FIX - DISABLE KEYBOARD SHORTCUTS COMPLETELY WHEN IN INPUT
-                  document.addEventListener('keydown', function(e) {
-                    // ✅ GET ACTIVE ELEMENT
-                    const activeElement = document.activeElement;
-
-                    // ✅ ✅ ✅ CRITICAL FIX: CHECK IF ANY INPUT/TEXTAREA IS FOCUSED
-                    if (activeElement &&
-                      (activeElement.tagName === 'INPUT' ||
-                        activeElement.tagName === 'TEXTAREA' ||
-                        activeElement.isContentEditable)) {
-                      // ❌ ❌ ❌ DO NOTHING - LET THE USER TYPE FREELY
-                      return;
-                    }
-
-                    // ESC key to close modals (only when NOT typing)
-                    if (e.key === 'Escape') {
-                      if (typeof closeContactModal === 'function') {
-                        closeContactModal();
-                      }
-                    }
-
-                    // ✅ Number keys to select variants (ONLY when NOT in ANY input field)
-                    if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                      const variantButtons = document.querySelectorAll('.variant-btn:not([disabled])');
-                      const index = parseInt(e.key) - 1;
-                      if (variantButtons[index]) {
-                        e.preventDefault(); // Prevent default number input behavior
-                        e.stopPropagation(); // Stop event from bubbling
-                        variantButtons[index].click();
-                      }
-                    }
-                  });
-
-                  // ✅ ADDITIONAL FIX: Prevent keydown on area input from triggering shortcuts
-                  const areaInput = document.getElementById('userArea');
-                  if (areaInput) {
-                    areaInput.addEventListener('keydown', function(e) {
-                      // Stop the event from propagating to document level
-                      e.stopPropagation();
-                    });
-                  }
-
-                  // CLEAR CALCULATOR FUNCTION
-                  function clearCalculator() {
-                    const calcSection = document.getElementById('calculatorSection');
-                    const areaInput = document.getElementById('userArea');
-                    const piecesDisplay = document.getElementById('piecesFromArea');
-                    const resultsSection = document.getElementById('userCalculationResults');
-
-                    if (calcSection) calcSection.classList.add('hidden');
-                    if (areaInput) areaInput.value = '';
-                    if (piecesDisplay) piecesDisplay.textContent = '0';
-                    if (resultsSection) resultsSection.classList.add('hidden');
-
-                    selectedVariantDimensions = {
-                      width: 0,
-                      height: 0,
-                      length: 0,
-                      size: '',
-                      areaPerPiece: 0
-                    };
-                  }
-                </script>
-              <?php endif; ?>
-
-              <!-- SKU Info Display Section -->
-              <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
-                  </div>
-                  <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
-                    <i class="fas fa-times text-lg"></i>
-                  </button>
+            <!-- SKU Info Display Section -->
+            <div id="sku-info-display" class="hidden mt-4 p-2 lg:p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <h4 class="text-base lg:text-lg text-black font-semibold">Details</h4>
                 </div>
-
-                <!-- Content container with collapse functionality -->
-                <div id="sku-info-content-wrapper">
-                  <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
-                    <!-- Content will be inserted here -->
-                  </div>
-
-                  <!-- See More / See Less button -->
-                  <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
-                    <span id="toggle-sku-text">See More</span>
-                    <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- STEP 4: QUANTITY SELECTION -->
-            <div class="step-section">
-              <div class="flex items-start justify-start mb-2">
-                <h3 class="text-base lg:text-lg font-semibold text-gray-900">
-                  Quantity
-                </h3>
-              </div>
-
-              <!-- Quantity Controls -->
-              <div class="flex items-start justify-start gap-2 mb-3">
-                <button type="button"
-                  onclick="decreaseQuantity()"
-                  class="w-9 h-9 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center justify-center transition"
-                  id="decreaseBtn">
-                  <i class="fas fa-minus text-sm"></i>
-                </button>
-
-                <input type="number"
-                  id="quantityInput"
-                  name="quantity"
-                  value="1"
-                  min="1"
-                  max="9999"
-                  class="w-20 text-center text-base font-semibold border-2 border-gray-300 rounded-lg py-1 focus:outline-none focus:border-orange-500"
-                  onchange="validateQuantity()"
-                  oninput="validateQuantity()">
-
-                <button type="button"
-                  onclick="increaseQuantity()"
-                  class="w-9 h-9 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center transition"
-                  id="increaseBtn">
-                  <i class="fas fa-plus text-sm"></i>
+                <button onclick="hideSkuInfo()" class="text-black hover:text-gray-600 transition">
+                  <i class="fas fa-times text-lg"></i>
                 </button>
               </div>
 
-              <!-- Quick Buttons -->
-              <div class="flex flex-wrap gap-2 justify-start mb-3">
-                <button type="button" onclick="setQuantity(5)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">5</button>
-                <button type="button" onclick="setQuantity(10)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">10</button>
-                <button type="button" onclick="setQuantity(25)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">25</button>
-                <button type="button" onclick="setQuantity(50)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">50</button>
-              </div>
-
-              <!-- Preview -->
-              <div id="quantityPricePreview" class="mt-3 p-3 hidden">
-                <div class="flex justify-between items-center text-sm">
-                  <span class="text-gray-700 font-medium"><span id="previewQty">1</span> pcs</span>
-                  <span class="font-bold text-red-600 text-lg" id="previewTotal">₱0.00</span>
+              <!-- Content container with collapse functionality -->
+              <div id="sku-info-content-wrapper">
+                <div id="sku-info-content" class="text-sm text-black transition-all duration-300 overflow-hidden">
+                  <!-- Content will be inserted here -->
                 </div>
+
+                <!-- See More / See Less button -->
+                <button id="toggle-sku-btn" onclick="toggleSkuContent()" class="hidden mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1 transition">
+                  <span id="toggle-sku-text">See More</span>
+                  <i id="toggle-sku-icon" class="fas fa-chevron-down text-xs"></i>
+                </button>
               </div>
             </div>
+          </div>
 
-            <!-- PURCHASE SECTION -->
-            <div class="mt-6 p-2 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none">
-              <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
-                <input type="hidden" name="product_id" value="<?= $product_id ?>" />
-                <input type="hidden" name="selected_color_id" id="selected_color_id">
-                <input type="hidden" name="selected_color" id="selected_color">
-                <input type="hidden" name="selected_type" id="selected_type">
-                <input type="hidden" name="selected_variant" id="selected_variant">
-                <input type="hidden" name="variant_id" id="variant_id">
-                <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
+          <!-- STEP 4: QUANTITY SELECTION -->
+          <div class="step-section">
+            <div class="flex items-start justify-start mb-2">
+              <h3 class="text-base lg:text-lg font-semibold text-gray-900">
+                Quantity
+              </h3>
+            </div>
 
-                <!-- Total Price Display -->
-                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-2 lg:p-5 ">
-                  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                    <div>
-                      <p class="text-xs lg:text-sm text-gray-600 mb-1 font-medium">Total Price</p>
-                      <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
-                    </div>
-                    <div id="selectionStatus" class="text-xs lg:text-sm text-gray-500 sm:text-right">
-                      Complete steps 1-3 to see price
-                    </div>
+            <!-- Quantity Controls -->
+            <div class="flex items-start justify-start gap-2 mb-3">
+              <button type="button"
+                onclick="decreaseQuantity()"
+                class="w-9 h-9 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center justify-center transition"
+                id="decreaseBtn">
+                <i class="fas fa-minus text-sm"></i>
+              </button>
+
+              <input type="number"
+                id="quantityInput"
+                name="quantity"
+                value="1"
+                min="1"
+                max="9999"
+                class="w-20 text-center text-base font-semibold border-2 border-gray-300 rounded-lg py-1 focus:outline-none focus:border-orange-500"
+                onchange="validateQuantity()"
+                oninput="validateQuantity()">
+
+              <button type="button"
+                onclick="increaseQuantity()"
+                class="w-9 h-9 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center transition"
+                id="increaseBtn">
+                <i class="fas fa-plus text-sm"></i>
+              </button>
+            </div>
+
+            <!-- Quick Buttons -->
+            <div class="flex flex-wrap gap-2 justify-start mb-3">
+              <button type="button" onclick="setQuantity(5)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">5</button>
+              <button type="button" onclick="setQuantity(10)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">10</button>
+              <button type="button" onclick="setQuantity(25)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">25</button>
+              <button type="button" onclick="setQuantity(50)" class="px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition">50</button>
+            </div>
+
+            <!-- Preview -->
+            <div id="quantityPricePreview" class="mt-3 p-3 hidden">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-700 font-medium"><span id="previewQty">1</span> pcs</span>
+                <span class="font-bold text-red-600 text-lg" id="previewTotal">₱0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PURCHASE SECTION -->
+          <div class="mt-6 p-2 sticky bottom-0 lg:relative bg-white lg:bg-transparent pt-4 lg:pt-0 border-t lg:border-0 border-gray-200 z-10 shadow-lg lg:shadow-none">
+            <form id="productForm" method="POST" class="space-y-3 lg:space-y-4">
+              <input type="hidden" name="product_id" value="<?= $product_id ?>" />
+              <input type="hidden" name="selected_color_id" id="selected_color_id">
+              <input type="hidden" name="selected_color" id="selected_color">
+              <input type="hidden" name="selected_type" id="selected_type">
+              <input type="hidden" name="selected_variant" id="selected_variant">
+              <input type="hidden" name="variant_id" id="variant_id">
+              <input type="hidden" name="is_windows" value="<?= $is_windows_category ? '1' : '0' ?>" />
+
+              <!-- Total Price Display -->
+              <div class="bg-gradient-to-r from-green-50 to-blue-50 p-2 lg:p-5 ">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <div>
+                    <p class="text-xs lg:text-sm text-gray-600 mb-1 font-medium">Total Price</p>
+                    <p id="totalPrice" class="text-2xl lg:text-3xl font-bold text-green-600">₱0.00</p>
+                  </div>
+                  <div id="selectionStatus" class="text-xs lg:text-sm text-gray-500 sm:text-right">
+                    Complete steps 1-3 to see price
                   </div>
                 </div>
+              </div>
 
-                <?php if ($is_windows_category): ?>
-                  <button type="button" id="contactUsBtn" onclick="openContactModal()"
+              <?php if ($is_windows_category): ?>
+                <button type="button" id="contactUsBtn" onclick="openContactModal()"
+                  disabled
+                  class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
+                  <span id="contactBtnText" class="flex items-center justify-center gap-2">
+                    <i class="fas fa-phone"></i>
+                    Complete Steps to Contact Us
+                  </span>
+                </button>
+              <?php else: ?>
+                <div class="flex gap-2 lg:gap-3 w-full">
+                  <button type="submit" id="addToCartBtn"
                     disabled
-                    class="w-full py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
-                    <span id="contactBtnText" class="flex items-center justify-center gap-2">
-                      <i class="fas fa-phone"></i>
-                      Complete Steps to Contact Us
+                    class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
+                    <span id="btnText" class="flex items-center justify-center gap-2">
+                      <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
+                      Add to Cart
                     </span>
                   </button>
-                <?php else: ?>
-                  <div class="flex gap-2 lg:gap-3 w-full">
-                    <button type="submit" id="addToCartBtn"
-                      disabled
-                      class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-gray-400 text-white disabled:cursor-not-allowed disabled:opacity-75 ">
-                      <span id="btnText" class="flex items-center justify-center gap-2">
-                        <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
-                        Add to Cart
-                      </span>
-                    </button>
 
-                    <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
-                      class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
-                      <span class="flex items-center justify-center gap-2">
-                        <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
-                        View Cart
-                      </span>
-                    </button>
-                  </div>
-                <?php endif; ?>
-              </form>
-            </div>
+                  <button type="button" onclick="window.location.href='index-cart_view-page-8.php'"
+                    class="flex-1 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 bg-black hover:bg-orange-500 text-white ">
+                    <span class="flex items-center justify-center gap-2">
+                      <i class="fas fa-shopping-cart text-sm lg:text-base"></i>
+                      View Cart
+                    </span>
+                  </button>
+                </div>
+              <?php endif; ?>
+            </form>
           </div>
         </div>
       </div>
     </div>
+  </div>
   </div>
 
 
@@ -3006,6 +3067,68 @@ $is_guest = !isset($_SESSION['user_id']);
   <?php endif; ?>
 
   <?php include '../navbar/footer.php'; ?>
+  <script>
+    function initFlashSaleTimers() {
+      console.log('🔥 Initializing timers from database...');
+
+      const timerBadges = document.querySelectorAll('.timer-badge');
+      console.log(`Found ${timerBadges.length} timer badges`);
+
+      if (timerBadges.length === 0) return;
+
+      timerBadges.forEach((badge) => {
+        const endTime = parseInt(badge.dataset.endTime);
+        const variantId = badge.dataset.variantId;
+        const timerDisplay = badge.querySelector('.timer-display');
+
+        if (!endTime || !timerDisplay) {
+          console.warn(`⚠️ Invalid timer data for variant ${variantId}`);
+          return;
+        }
+
+        console.log(`✅ Timer started for variant ${variantId}`);
+
+        function updateTimer() {
+          const now = Math.floor(Date.now() / 1000);
+          const remaining = endTime - now;
+
+          // EXPIRED
+          if (remaining <= 0) {
+            timerDisplay.textContent = 'EXPIRED';
+            badge.classList.remove('bg-red-600');
+            badge.classList.add('bg-gray-400');
+            return;
+          }
+
+          // Calculate time components
+          const days = Math.floor(remaining / 86400);
+          const hours = Math.floor((remaining % 86400) / 3600);
+          const minutes = Math.floor((remaining % 3600) / 60);
+          const seconds = remaining % 60;
+
+          // Format: HH:MM:SS
+          const totalHours = (days * 24) + hours;
+          const timeText = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+          timerDisplay.textContent = timeText;
+        }
+
+        // Initial update
+        updateTimer();
+
+        // Update every second
+        setInterval(updateTimer, 1000);
+      });
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', initFlashSaleTimers);
+
+    // Run immediately if already loaded
+    if (document.readyState !== 'loading') {
+      initFlashSaleTimers();
+    }
+  </script>
   <script src="js/index-product-view-junction-stock.obfuscated.js?v=<?= filemtime('js/index-product-view-junction-stock.obfuscated.js') ?>"></script>
   <script src="js/index-product-view-page-4-AA.obfuscated.js?v=<?= filemtime('js/index-product-view-page-4-AA.obfuscated.js') ?>"></script>
 </body>

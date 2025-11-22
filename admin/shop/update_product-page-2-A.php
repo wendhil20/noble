@@ -377,6 +377,69 @@ if (!empty($product['sub_images'])) {
                     value="<?php echo htmlspecialchars($variant['price']); ?>"
                     class="computed-price-input" />
 
+
+                    <!-- Timer Discount Section -->
+<div class="bg-yellow-50 p-3 rounded mb-2 border-2 border-yellow-300">
+  <label class="text-xs font-semibold text-gray-700 block mb-2">⏰ Timer Discount (Flash Sale)</label>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <!-- Timer Discount Percentage -->
+    <div>
+      <label class="text-xs font-medium text-gray-600">Timer Discount %</label>
+      <input type="number" 
+             step="0.01" 
+             name="variant_timer_discount[<?php echo $typeIndex; ?>][]"
+             value="<?php echo htmlspecialchars($variant['timer_discount_percent'] ?? '0'); ?>"
+             placeholder="e.g., 20"
+             class="border p-2 w-full rounded text-sm timer-discount-input"
+             data-variant-index="<?php echo $typeIndex; ?>"
+             min="0"
+             max="100" />
+      <p class="text-xs text-gray-500 mt-1">Extra discount during flash sale</p>
+    </div>
+
+    <!-- Timer Discount Active -->
+    <div class="flex items-center">
+      <input type="checkbox" 
+             name="variant_timer_active[<?php echo $typeIndex; ?>][]"
+             value="1"
+             <?php echo (!empty($variant['timer_discount_active']) ? 'checked' : ''); ?>
+             class="mr-2"
+             id="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" />
+      <label for="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" 
+             class="text-sm font-medium text-gray-700">
+        Enable Timer Discount
+      </label>
+    </div>
+
+    <!-- Start Date/Time -->
+    <div>
+      <label class="text-xs font-medium text-gray-600">Start Date & Time</label>
+      <input type="datetime-local" 
+             name="variant_timer_start[<?php echo $typeIndex; ?>][]"
+             value="<?php echo !empty($variant['timer_discount_start']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_start'])) : ''; ?>"
+             class="border p-2 w-full rounded text-sm" />
+    </div>
+
+    <!-- End Date/Time -->
+    <div>
+      <label class="text-xs font-medium text-gray-600">End Date & Time</label>
+      <input type="datetime-local" 
+             name="variant_timer_end[<?php echo $typeIndex; ?>][]"
+             value="<?php echo !empty($variant['timer_discount_end']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_end'])) : ''; ?>"
+             class="border p-2 w-full rounded text-sm" />
+    </div>
+  </div>
+
+  <!-- Timer Discount Preview -->
+  <div class="mt-2 p-2 bg-white rounded border">
+    <div class="flex justify-between items-center">
+      <span class="text-xs text-gray-600">Price after timer discount:</span>
+      <span class="timer-final-preview text-sm font-bold text-orange-600">₱0.00</span>
+    </div>
+  </div>
+</div>
+
                   <!-- Row 3: Dimensions -->
                   <div class="bg-white p-3 rounded mb-2">
                     <label class="text-xs font-semibold text-gray-700 block mb-2">📏 Dimensions</label>
@@ -548,6 +611,45 @@ if (!empty($product['sub_images'])) {
   </div>
 
   <script>
+    function calculatePrices(container) {
+  const originalPrice = parseFloat(container.querySelector('.original-price-input')?.value) || 0;
+  const markup = parseFloat(container.querySelector('.percent-input')?.value) || 0;
+  const discount = parseFloat(container.querySelector('.discount-input')?.value) || 0;
+  const timerDiscount = parseFloat(container.querySelector('.timer-discount-input')?.value) || 0;
+  
+  const markupDisplay = container.querySelector('.markup-preview');
+  const finalDisplay = container.querySelector('.final-preview');
+  const timerFinalDisplay = container.querySelector('.timer-final-preview');
+  const computedPriceInput = container.querySelector('.computed-price-input');
+  
+  if (originalPrice > 0) {
+    // After markup
+    const afterMarkup = originalPrice + (originalPrice * markup / 100);
+    if (markupDisplay) markupDisplay.textContent = '₱' + afterMarkup.toFixed(2);
+    
+    // After regular discount
+    const afterDiscount = afterMarkup - (afterMarkup * discount / 100);
+    if (finalDisplay) finalDisplay.textContent = '₱' + afterDiscount.toFixed(2);
+    if (computedPriceInput) computedPriceInput.value = afterDiscount.toFixed(2);
+    
+    // After timer discount (if any)
+    const afterTimerDiscount = afterDiscount - (afterDiscount * timerDiscount / 100);
+    if (timerFinalDisplay) {
+      timerFinalDisplay.textContent = '₱' + afterTimerDiscount.toFixed(2);
+      if (timerDiscount > 0) {
+        timerFinalDisplay.classList.add('animate-pulse');
+      } else {
+        timerFinalDisplay.classList.remove('animate-pulse');
+      }
+    }
+  } else {
+    if (markupDisplay) markupDisplay.textContent = '₱0.00';
+    if (finalDisplay) finalDisplay.textContent = '₱0.00';
+    if (timerFinalDisplay) timerFinalDisplay.textContent = '₱0.00';
+    if (computedPriceInput) computedPriceInput.value = '0';
+  }
+}
+
     let typeIndex = <?php echo $typeIndex; ?>;
 
     function removeExistingSubImage(button, imageIndex) {
@@ -843,50 +945,110 @@ if (!empty($product['sub_images'])) {
       typeIndex++;
     }
 
-    function applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput) {
-      const originalPrice = parseFloat(originalPriceInput.value) || 0;
-      const percent = parseFloat(percentInput.value) || 0;
-      const discount = parseFloat(discountInput.value) || 0;
+// ✅ FIXED: Timer discount only applies if checkbox is CHECKED
+function applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput) {
+  const container = originalPriceInput.closest('.bg-blue-50');
+  const timerDiscountInput = container ? container.querySelector('.timer-discount-input') : null;
+  const timerCheckbox = container ? container.querySelector('input[name*="timer_active"]') : null;
+  
+  const originalPrice = parseFloat(originalPriceInput.value) || 0;
+  const percent = parseFloat(percentInput.value) || 0;
+  const discount = parseFloat(discountInput.value) || 0;
+  
+  // ✅ ONLY apply timer discount if checkbox is CHECKED
+  const timerDiscount = (timerCheckbox && timerCheckbox.checked && timerDiscountInput) 
+    ? (parseFloat(timerDiscountInput.value) || 0) 
+    : 0;
 
-      if (originalPrice > 0) {
-        const priceAfterMarkup = originalPrice + (originalPrice * percent / 100);
-        markupDisplay.textContent = '₱' + priceAfterMarkup.toFixed(2);
+  if (originalPrice > 0) {
+    // Step 1: After markup
+    const priceAfterMarkup = originalPrice + (originalPrice * percent / 100);
+    markupDisplay.textContent = '₱' + priceAfterMarkup.toFixed(2);
 
-        const finalPrice = priceAfterMarkup - (priceAfterMarkup * discount / 100);
-        finalDisplay.textContent = '₱' + finalPrice.toFixed(2);
+    // Step 2: After regular discount
+    const priceAfterDiscount = priceAfterMarkup - (priceAfterMarkup * discount / 100);
+    
+    // Step 3: Apply timer discount ONLY if enabled
+    const finalPrice = priceAfterDiscount - (priceAfterDiscount * timerDiscount / 100);
+    
+    // ✅ UPDATE FINAL PRICE
+    finalDisplay.textContent = '₱' + finalPrice.toFixed(2);
 
-        if (computedPriceInput) {
-          computedPriceInput.value = finalPrice.toFixed(2);
-        }
-      } else {
-        markupDisplay.textContent = '₱0.00';
-        finalDisplay.textContent = '₱0.00';
-        if (computedPriceInput) {
-          computedPriceInput.value = '0';
-        }
-      }
+    if (computedPriceInput) {
+      computedPriceInput.value = finalPrice.toFixed(2);
     }
+    
+    // Change color based on timer discount
+    if (timerDiscount > 0 && timerCheckbox && timerCheckbox.checked) {
+      finalDisplay.classList.add('text-orange-600', 'font-bold');
+      finalDisplay.style.animation = 'pulse 2s ease-in-out infinite';
+    } else {
+      finalDisplay.classList.remove('text-orange-600', 'font-bold');
+      finalDisplay.style.animation = '';
+    }
+  } else {
+    markupDisplay.textContent = '₱0.00';
+    finalDisplay.textContent = '₱0.00';
+    if (computedPriceInput) {
+      computedPriceInput.value = '0';
+    }
+  }
+}
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.bg-blue-50.p-4.rounded.border.mb-3').forEach((variantDiv) => {
-        const originalPriceInput = variantDiv.querySelector('.original-price-input');
-        const percentInput = variantDiv.querySelector('.percent-input');
-        const discountInput = variantDiv.querySelector('.discount-input');
-        const markupDisplay = variantDiv.querySelector('.markup-preview');
-        const finalDisplay = variantDiv.querySelector('.final-preview');
-        const computedPriceInput = variantDiv.querySelector('.computed-price-input');
+// ✅ UPDATED DOMContentLoaded - Listen to all inputs AND checkbox
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.bg-blue-50.p-4.rounded.border.mb-3').forEach((variantDiv) => {
+    const originalPriceInput = variantDiv.querySelector('.original-price-input');
+    const percentInput = variantDiv.querySelector('.percent-input');
+    const discountInput = variantDiv.querySelector('.discount-input');
+    const timerDiscountInput = variantDiv.querySelector('.timer-discount-input');
+    const timerCheckbox = variantDiv.querySelector('input[name*="timer_active"]');
+    const markupDisplay = variantDiv.querySelector('.markup-preview');
+    const finalDisplay = variantDiv.querySelector('.final-preview');
+    const computedPriceInput = variantDiv.querySelector('.computed-price-input');
 
-        if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
-          const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+    if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
+      const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
 
-          originalPriceInput.addEventListener('input', hook);
-          percentInput.addEventListener('input', hook);
-          if (discountInput) discountInput.addEventListener('input', hook);
+      // Listen to all price inputs
+      originalPriceInput.addEventListener('input', hook);
+      percentInput.addEventListener('input', hook);
+      if (discountInput) discountInput.addEventListener('input', hook);
+      if (timerDiscountInput) timerDiscountInput.addEventListener('input', hook);
+      
+      // ✅ IMPORTANT: Listen to checkbox changes!
+      if (timerCheckbox) {
+        timerCheckbox.addEventListener('change', hook);
+      }
 
-          hook();
-        }
-      });
-    });
+      hook(); // Initialize on page load
+    }
+  });
+});
+
+// ✅ For new variants - same setup
+function setupVariantListeners(variantDiv) {
+  const originalPriceInput = variantDiv.querySelector('.original-price-input');
+  const percentInput = variantDiv.querySelector('.percent-input');
+  const discountInput = variantDiv.querySelector('.discount-input');
+  const timerDiscountInput = variantDiv.querySelector('.timer-discount-input');
+  const timerCheckbox = variantDiv.querySelector('input[name*="timer_active"]');
+  const markupDisplay = variantDiv.querySelector('.markup-preview');
+  const finalDisplay = variantDiv.querySelector('.final-preview');
+  const computedPriceInput = variantDiv.querySelector('.computed-price-input');
+
+  if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
+    const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+
+    originalPriceInput.addEventListener('input', hook);
+    percentInput.addEventListener('input', hook);
+    if (discountInput) discountInput.addEventListener('input', hook);
+    if (timerDiscountInput) timerDiscountInput.addEventListener('input', hook);
+    if (timerCheckbox) timerCheckbox.addEventListener('change', hook);
+
+    hook();
+  }
+}
   </script>
 
 </body>

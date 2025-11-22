@@ -1,5 +1,5 @@
 <?php
-//update_process-page-2-A.php
+//update_process-page-2-A.php - UPDATED WITH TIMER DISCOUNT
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
@@ -190,6 +190,12 @@ if (isset($_POST['color_id'])) {
         $variantDimensionUnits = $_POST['variant_dimension_unit'][$typeIndex] ?? [];
         $variantWeights = $_POST['variant_weight'][$typeIndex] ?? [];
         $variantWeightUnits = $_POST['variant_weight_unit'][$typeIndex] ?? [];
+        
+        // ✅ NEW: Get timer discount data
+        $variantTimerDiscounts = $_POST['variant_timer_discount'][$typeIndex] ?? [];
+        $variantTimerActives = $_POST['variant_timer_active'][$typeIndex] ?? [];
+        $variantTimerStarts = $_POST['variant_timer_start'][$typeIndex] ?? [];
+        $variantTimerEnds = $_POST['variant_timer_end'][$typeIndex] ?? [];
 
         foreach ($variantIds as $variantIndex => $variantId) {
           $variantSize = $conn->real_escape_string($variantSizes[$variantIndex] ?? '');
@@ -204,6 +210,16 @@ if (isset($_POST['color_id'])) {
           $variantDimensionUnit = $conn->real_escape_string($variantDimensionUnits[$variantIndex] ?? 'cm');
           $variantWeight = !empty($variantWeights[$variantIndex]) ? (float)$variantWeights[$variantIndex] : null;
           $variantWeightUnit = $conn->real_escape_string($variantWeightUnits[$variantIndex] ?? 'kg');
+          
+          // ✅ NEW: Process timer discount data
+          $timerDiscount = (float)($variantTimerDiscounts[$variantIndex] ?? 0);
+          $timerActive = isset($variantTimerActives[$variantIndex]) ? 1 : 0;
+          $timerStart = !empty($variantTimerStarts[$variantIndex]) 
+              ? "'" . $conn->real_escape_string($variantTimerStarts[$variantIndex]) . "'" 
+              : "NULL";
+          $timerEnd = !empty($variantTimerEnds[$variantIndex]) 
+              ? "'" . $conn->real_escape_string($variantTimerEnds[$variantIndex]) . "'" 
+              : "NULL";
 
           // Delete variant
           if (isset($_POST['delete_variant'][$typeIndex]) && in_array($variantId, $_POST['delete_variant'][$typeIndex])) {
@@ -214,31 +230,43 @@ if (isset($_POST['color_id'])) {
             continue;
           }
 
-          // Insert or update variant
+          // ✅ UPDATED: Insert or update variant WITH TIMER DISCOUNT
           if ($variantId === 'new') {
             $insertVariantSQL = "INSERT INTO product_variants 
-                                (type_id, size, namevariant, original_price, percent, discount, price, width, height, length, dimension_unit, weight, weight_unit)
-                                VALUES ($typeId, '$variantSize', '$variantNamevariant', $variantOriginalPrice, $variantPercent, $variantDiscount, $variantPrice, 
+                                (type_id, size, namevariant, original_price, percent, discount, price, 
+                                 width, height, length, dimension_unit, weight, weight_unit,
+                                 timer_discount_percent, timer_discount_active, timer_discount_start, timer_discount_end)
+                                VALUES ($typeId, '$variantSize', '$variantNamevariant', $variantOriginalPrice, 
+                                        $variantPercent, $variantDiscount, $variantPrice, 
                                         " . ($variantWidth !== null ? $variantWidth : "NULL") . ", " .
                                         ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
                                         ($variantLength !== null ? $variantLength : "NULL") . ", " .
                                         "'$variantDimensionUnit', " .
                                         ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
-                                        "'$variantWeightUnit')";
+                                        "'$variantWeightUnit',
+                                        $timerDiscount, $timerActive, $timerStart, $timerEnd)";
             if (!$conn->query($insertVariantSQL)) {
               throw new Exception("Failed to insert variant: " . $conn->error);
             }
             $variantId = $conn->insert_id;
           } else {
             $updateVariantSQL = "UPDATE product_variants 
-                                SET size = '$variantSize', namevariant = '$variantNamevariant', original_price = $variantOriginalPrice,
-                                    percent = $variantPercent, discount = $variantDiscount, price = $variantPrice,
+                                SET size = '$variantSize', 
+                                    namevariant = '$variantNamevariant', 
+                                    original_price = $variantOriginalPrice,
+                                    percent = $variantPercent, 
+                                    discount = $variantDiscount, 
+                                    price = $variantPrice,
                                     width = " . ($variantWidth !== null ? $variantWidth : "NULL") . ", " .
                                     "height = " . ($variantHeight !== null ? $variantHeight : "NULL") . ", " .
                                     "length = " . ($variantLength !== null ? $variantLength : "NULL") . ", " .
                                     "dimension_unit = '$variantDimensionUnit',
                                     weight = " . ($variantWeight !== null ? $variantWeight : "NULL") . ", " .
-                                    "weight_unit = '$variantWeightUnit'
+                                    "weight_unit = '$variantWeightUnit',
+                                    timer_discount_percent = $timerDiscount,
+                                    timer_discount_active = $timerActive,
+                                    timer_discount_start = $timerStart,
+                                    timer_discount_end = $timerEnd
                                 WHERE id = $variantId";
             if (!$conn->query($updateVariantSQL)) {
               throw new Exception("Failed to update variant: " . $conn->error);
@@ -295,7 +323,7 @@ if (isset($_POST['color_id'])) {
   $conn->commit();
 
   // Success - redirect back
-  $_SESSION['success_message'] = "Product updated successfully!";
+  $_SESSION['success_message'] = "Product updated successfully with timer discount!";
   header("Location: update_product-page-2-A.php?id=$product_id&success=1");
   exit();
 
@@ -307,3 +335,4 @@ if (isset($_POST['color_id'])) {
   header("Location: update_product-page-2-A.php?id=$product_id&error=1");
   exit();
 }
+?>

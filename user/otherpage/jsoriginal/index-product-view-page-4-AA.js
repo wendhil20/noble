@@ -511,7 +511,7 @@ class ProductSelector {
     `;
   }
 
-// ✅ FIXED: Show stock indicator when size is hidden - WITH DISCOUNT
+// ✅ FIXED: Show stock indicator when size is hidden - WITH DISCOUNT AND FLASH SALE
 showStockIndicatorForHiddenVariant(size) {
   let container = document.getElementById("hidden-size-indicator");
   if (!container) {
@@ -528,10 +528,20 @@ showStockIndicatorForHiddenVariant(size) {
   
   // Get stock from selected variant button
   const selectedVariantBtn = document.querySelector('.variant-btn.selected');
-  const stock = selectedVariantBtn ? parseInt(selectedVariantBtn.dataset.stock || 0) : 0;
   
-  // ✅ GET DISCOUNT FROM SELECTED VARIANT BUTTON
-  const discount = selectedVariantBtn ? parseFloat(selectedVariantBtn.dataset.discount || 0) : 0;
+  if (!selectedVariantBtn) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  const stock = parseInt(selectedVariantBtn.dataset.stock || 0);
+  const discount = parseFloat(selectedVariantBtn.dataset.discount || 0);
+  const variantId = selectedVariantBtn.dataset.variantId || '';
+  
+  // ✅ CHECK IF TIMER BADGE EXISTS INSIDE THE BUTTON
+  const timerBadge = selectedVariantBtn.querySelector('.timer-badge');
+  
+  console.log('🔍 Timer Badge Found:', timerBadge);
   
   let stockDisplay = '';
   if (stock <= 0) {
@@ -542,20 +552,91 @@ showStockIndicatorForHiddenVariant(size) {
     stockDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">${stock} in stock</span>`;
   }
   
-  // ✅ BUILD DISCOUNT DISPLAY
+  // ✅ BUILD DISCOUNT DISPLAY (regular discount - only if no timer badge)
   let discountDisplay = '';
-  if (discount > 0) {
+  if (discount > 0 && !timerBadge) {
     discountDisplay = `<span class="ml-2 inline-block px-2 py-1 bg-red-500 text-white text-xs rounded font-bold">-${Math.round(discount)}% OFF</span>`;
+  }
+  
+  // ✅ BUILD FLASH SALE TIMER DISPLAY - CLONE FROM EXISTING TIMER BADGE
+  let flashSaleDisplay = '';
+  if (timerBadge) {
+    const timerEndTime = parseInt(timerBadge.dataset.endTime || 0);
+    const timerVariantId = timerBadge.dataset.variantId || variantId;
+    
+    if (timerEndTime > 0) {
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = timerEndTime - now;
+      
+      console.log('⏰ Timer Found:', { timerEndTime, remaining });
+      
+      if (remaining > 0) {
+        // Get current timer text from the badge
+        const currentTimerText = timerBadge.querySelector('.timer-display')?.textContent || '00:00:00';
+        
+        flashSaleDisplay = `
+          <div class="mt-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded inline-block timer-badge"
+            data-variant-id="${timerVariantId}"
+            data-end-time="${timerEndTime}">
+            Ends in <span class="timer-display font-mono tracking-wider" id="timer-hidden-${timerVariantId}">
+              ${currentTimerText}
+            </span>
+          </div>
+        `;
+        
+        // Start countdown timer for this specific element
+        setTimeout(() => {
+          const timerElement = document.getElementById(`timer-hidden-${timerVariantId}`);
+          if (timerElement) {
+            const endTime = parseInt(timerElement.closest('.timer-badge').dataset.endTime);
+            const timerInterval = setInterval(() => {
+              const now = Math.floor(Date.now() / 1000);
+              const remaining = endTime - now;
+              
+              if (remaining <= 0) {
+                timerElement.textContent = 'EXPIRED';
+                const badge = timerElement.closest('.timer-badge');
+                badge.classList.remove('bg-red-600');
+                badge.classList.add('bg-gray-400');
+                clearInterval(timerInterval);
+                return;
+              }
+              
+              const days = Math.floor(remaining / 86400);
+              const hours = Math.floor((remaining % 86400) / 3600);
+              const minutes = Math.floor((remaining % 3600) / 60);
+              const seconds = remaining % 60;
+              const totalHours = (days * 24) + hours;
+              
+              timerElement.textContent = `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+          }
+        }, 100);
+      } else {
+        // Timer expired
+        flashSaleDisplay = `
+          <div class="mt-2 bg-gray-400 text-white text-[10px] font-bold px-2 py-1 rounded inline-block">
+            EXPIRED
+          </div>
+        `;
+      }
+    }
   }
   
   container.innerHTML = `
     <div class="text-sm text-gray-700">
-      <strong>Size Selected:</strong> <span class="text-orange-600 font-semibold">${size}</span>
-      ${discountDisplay}
-      ${stockDisplay}
+      <div class="flex flex-wrap items-center gap-2">
+        <strong>Size Selected:</strong> 
+        <span class="text-orange-600 font-semibold">${size}</span>
+        ${discountDisplay}
+        ${stockDisplay}
+      </div>
+      ${flashSaleDisplay}
     </div>
   `;
 }
+
+
 
   findSectionByTitle(title) {
     const sections = document.querySelectorAll(".step-section");

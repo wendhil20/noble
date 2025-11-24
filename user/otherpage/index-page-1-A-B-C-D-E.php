@@ -1099,139 +1099,87 @@ while ($row = $banners_result->fetch_assoc()) {
         </style>
     </section>
 
-    <section>
-        <!-- Modal for "Not Available" -->
-        <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
-                <div class="text-center">
-                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
-                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-medium text-neutral-900 mb-2">Not Available</h3>
-                    <p class="text-sm text-neutral-600 mb-6">This promotion is currently unavailable. Please check back later.</p>
-                    <button onclick="closeModal()" class="w-full bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors">
-                        Close
-                    </button>
+    <!-- Modal for "Not Available" -->
+    <div id="unavailableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
                 </div>
+                <h3 class="text-lg font-medium text-neutral-900 mb-2">Not Available</h3>
+                <p class="text-sm text-neutral-600 mb-6">This promotion is currently unavailable. Please check back later.</p>
+                <button onclick="closeModal()" class="w-full bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors">
+                    Close
+                </button>
             </div>
         </div>
+    </div>
 
-        <script>
-            function showUnavailable(event) {
-                event.preventDefault();
-                document.getElementById('unavailableModal').classList.remove('hidden');
-            }
+    <section class="px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-full mx-auto">
+            <!-- 2x2 Grid Content -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Box 1 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/display2.webp"
+                            alt="Promo 1"
+                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900">Style to Modern your house!</h3>
+                </a>
 
-            function closeModal() {
-                document.getElementById('unavailableModal').classList.add('hidden');
-            }
+                <!-- Box 2 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/display1.webp"
+                            alt="Promo 2"
+                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900">Chair furniture deals below ₱5,000</h3>
+                </a>
 
-            // Close modal when clicking outside
-            document.getElementById('unavailableModal')?.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-        </script>
+                <!-- Box 3 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/gif2.gif"
+                            alt="Promo 3"
+                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900">Keep Shopping For Holiday</h3>
+                </a>
 
-        <section class=" px-4 sm:px-6 lg:px-8">
-            <div class="max-w-full mx-auto">
-                <!-- 2x2 Grid Content -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <!-- Box 1 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/display2.webp"
-                                alt="Promo 1"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Style to Modern your house!
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Box 2 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/display1.webp"
-                                alt="Promo 2"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Chair furniture deals below ₱5,000
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Box 3 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/gif2.gif"
-                                alt="Promo 3"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Keep Shopping For Holiday
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Box 4 -->
-                    <a href="#" onclick="showUnavailable(event)" class="group block relative overflow-hidden transition-all duration-500 hover:shadow-2xl rounded-lg">
-                        <div class="relative h-[240px] sm:h-[300px] lg:h-[380px] overflow-hidden bg-neutral-100">
-                            <img src="../img/display3.webp"
-                                alt="Promo 4"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-
-                            <!-- Dark Overlay on Hover -->
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500"></div>
-
-                            <!-- Text Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-5 sm:p-6 lg:p-8">
-                                <h3 class="text-base sm:text-lg lg:text-xl font-light text-white flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    Upgrade Your Living Space Today!
-                                    <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </h3>
-                            </div>
-                        </div>
-                    </a>
-
-                </div>
+                <!-- Box 4 -->
+                <a href="#" onclick="showUnavailable(event)" class="group block">
+                    <div class="overflow-hidden ">
+                        <img src="../img/display3.webp"
+                            alt="Promo 4"
+                            class="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <h3 class="text-lg font-semibold text-neutral-900">Upgrade Your Living Space Today!</h3>
+                </a>
             </div>
-        </section>
+        </div>
     </section>
+
+    <script>
+        function showUnavailable(event) {
+            event.preventDefault();
+            document.getElementById('unavailableModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('unavailableModal').classList.add('hidden');
+        }
+
+        document.getElementById('unavailableModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
 
     <!-- POPUP MODAL -->
     <div id="promoPopup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
@@ -1453,12 +1401,17 @@ while ($row = $banners_result->fetch_assoc()) {
                                 Furniture
                             </h2>
                         </div>
-                        <a href="#" class="text-xs sm:text-sm text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-1 transition-colors duration-300 group">
-                            See All
-                            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                            </svg>
-                        </a>
+
+                        <div class="flex items-center gap-4">
+
+
+                            <a href="#" class="text-xs sm:text-sm text-neutral-900 hover:text-neutral-600 font-light flex items-center gap-1 transition-colors duration-300 group">
+                                See All
+                                <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                                </svg>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Label: Suggestions -->
@@ -1566,6 +1519,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                             </label>
                                         </div>
 
+
                                         <a href="index-product_view-page-4-AA?id=<?= $product_id ?>" class="block h-full">
                                             <div class="relative h-[110px] sm:h-[130px] lg:h-[180px] overflow-hidden">
                                                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
@@ -1583,7 +1537,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                             <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
                                                 <div class="space-y-0.5 sm:space-y-1">
                                                     <div class="relative w-full max-w-xs">
-                                                        <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                        <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-bold text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
                                                             <?= htmlspecialchars($row['product_name']) ?>
                                                         </h3>
                                                         <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
@@ -1812,7 +1766,7 @@ while ($row = $banners_result->fetch_assoc()) {
                                                 <div class="p-1.5 sm:p-2 lg:p-2.5 flex flex-col justify-between h-[130px] sm:h-[150px] lg:h-[160px]">
                                                     <div class="space-y-0.5 sm:space-y-1">
                                                         <div class="relative w-full max-w-xs">
-                                                            <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-light text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
+                                                            <h3 class="text-[13px] sm:text-[13px] line-clamp-1 font-bold  text-gray-800 leading-tight group-hover:text-orange-600 transition-colors duration-300 line-clamp-2 sm:truncate pr-4">
                                                                 <?= htmlspecialchars($row['product_name']) ?>
                                                             </h3>
                                                             <div class="hidden sm:block absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-white to-transparent"></div>
@@ -2174,327 +2128,176 @@ while ($row = $banners_result->fetch_assoc()) {
 
 
 
-    <section>
-        <?php
-        // MAIN query for bestseller items
-        $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
-        $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
-        ?>
+    <?php
+    // MAIN query for bestseller items
+    $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
+    $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
+    ?>
 
-        <section class="py-6 md:py-8 lg:py-12" id="bestseller-section">
-            <div class="max-w-[1700px] mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8">
+    <section class="py-8  bg-gray-50" id="bestseller-section">
+        <div class="max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8">
 
-                <!-- Section Header -->
-                <div class="text-center mb-4 md:mb-6 lg:mb-8" data-aos="fade-up">
-                    <div class="flex items-center justify-center gap-2 mb-2">
-                        <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black tracking-wide">
-                            Best Seller
-                        </h2>
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                    </div>
-                    <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg px-2">
-                        Save big on quality home improvement products
-                    </p>
-                </div>
+            <!-- Section Header -->
+            <div class="text-base mb-8 md:mb-12">
+                <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2">
+                    Best Sellers
+                </h2>
+                <p class="text-gray-600 text-sm md:text-base">
+                    Top quality products at unbeatable prices
+                </p>
+            </div>
 
-                <!-- Bestseller Tabs Navigation -->
-                <div class="mb-4 md:mb-6 lg:mb-8">
-                    <div class="border-b border-gray-200 relative overflow-hidden">
-                        <!-- Swiper Container for Tabs -->
-                        <div class="swiper bestsellerTabsSwiper">
-                            <div class="swiper-wrapper pb-px">
-                                <?php foreach ($bestsellerData as $index => $item): ?>
-                                    <div class="swiper-slide !w-auto">
-                                        <button
-                                            onclick="switchBestseller(<?= $index ?>)"
-                                            data-index="<?= $index ?>"
-                                            class="bestseller-tab tracking-wide whitespace-nowrap py-2.5 md:py-3 px-3 sm:px-4 md:px-5 lg:px-6 border-b-2 uppercase text-xs md:text-sm lg:text-base transition-all duration-300 w-full <?= $index === 0 ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-black hover:text-gray-800 hover:border-gray-300' ?>">
-                                            <?= htmlspecialchars($item['title']) ?>
+            <!-- Content Area with Carousel -->
+            <div class="relative" id="bestseller-content">
+
+                <!-- Left Arrow - Hidden on mobile -->
+                <button onclick="prevBestseller()" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black text-white p-3 rounded-full hover:bg-red-600 transition-colors duration-300 -translate-x-16 hidden sm:flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <!-- Right Arrow - Hidden on mobile -->
+                <button onclick="nextBestseller()" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black text-white p-3 rounded-full hover:bg-red-600 transition-colors duration-300 translate-x-16 hidden sm:flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+
+                <!-- Content Carousel -->
+                <?php foreach ($bestsellerData as $index => $item): ?>
+                    <div
+                        id="content-<?= $index ?>"
+                        class="bestseller-content grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 items-start <?= $index === 0 ? '' : 'hidden' ?>">
+
+                        <!-- Image -->
+                        <div class="overflow-hidden rounded-lg shadow-lg">
+                            <img
+                                src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
+                                alt="<?= htmlspecialchars($item['title']) ?>"
+                                class="w-full h-[350px] md:h-[450px] object-cover hover:scale-105 transition-transform duration-500">
+                        </div>
+
+                        <!-- Content -->
+                        <div class="space-y-4 md:space-y-6">
+                            <div>
+                                <div class="flex items-start justify-between gap-3 sm:gap-0 sm:flex-col">
+                                    <span class="inline-block bg-red-600 text-white px-3 py-1 rounded-md text-xs font-bold">
+                                        BESTSELLER
+                                    </span>
+                                    <!-- Mobile Arrows -->
+                                    <div class="flex gap-2 sm:hidden">
+                                        <button onclick="prevBestseller()" class="bg-black text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <button onclick="nextBestseller()" class="bg-black text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                                            </svg>
                                         </button>
                                     </div>
-                                <?php endforeach; ?>
+                                </div>
+                                <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 mt-3 sm:mt-0 uppercase">
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </h3>
+                                <div class="w-12 h-1 bg-red-600 rounded-full"></div>
+                            </div>
+                            <p class="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-8">
+                                <?= nl2br(htmlspecialchars($item['description'])) ?>
+                            </p>
+                            <!-- Features -->
+                            <div class="flex flex-col gap-2 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="text-gray-700">Quality Guaranteed</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="text-gray-700">Top Rated Product</span>
+                                </div>
                             </div>
 
-                            <!-- Navigation Arrows (Desktop Only) -->
-                            <div class="swiper-button-prev"></div>
-                            <div class="swiper-button-next"></div>
+                            <!-- CTA Button -->
+                            <div class="pt-2">
+                                <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                                    class="inline-block bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300">
+                                    Learn More →
+                                </a>
+                            </div>
                         </div>
+
                     </div>
-                </div>
-
-                <!-- Content Display Area -->
-                <div class="relative overflow-hidden" id="bestseller-content">
-                    <?php foreach ($bestsellerData as $index => $item): ?>
-                        <div
-                            id="content-<?= $index ?>"
-                            class="bestseller-content grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 items-center <?= $index === 0 ? '' : 'hidden' ?>">
-
-                            <!-- Image Side -->
-                            <div class="order-2 md:order-1" data-aos="fade-right">
-                                <div class="relative overflow-hidden shadow-md md:shadow-lg lg:shadow-2xl group">
-                                    <img
-                                        src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
-                                        alt="<?= htmlspecialchars($item['title']) ?>"
-                                        class="w-full h-[240px] sm:h-[300px] md:h-[400px] lg:h-[500px] object-cover transition-transform duration-700">
-
-                                    <!-- Gradient Overlay -->
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
-                                    <!-- Badge -->
-                                    <div class="absolute top-3 right-3 md:top-4 md:right-4 bg-black text-white px-3 py-1.5 md:px-4 md:py-2 tracking-wide text-xs md:text-sm shadow-lg">
-                                        Best Seller
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Content Side -->
-                            <div class="order-1 md:order-2 space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4 md:px-6 lg:px-12" data-aos="fade-left">
-                                <div>
-                                    <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-800 mb-2 md:mb-3 lg:mb-4 uppercase leading-tight">
-                                        <?= htmlspecialchars($item['title']) ?>
-                                    </h3>
-                                    <div class="w-16 sm:w-16 md:w-20 h-1 bg-black rounded-full mb-3 md:mb-4 lg:mb-6"></div>
-                                </div>
-
-                                <p class="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
-                                    <?= nl2br(htmlspecialchars($item['description'])) ?>
-                                </p>
-                                <!-- CTA Button -->
-                                <div class="pt-1 sm:pt-2 md:pt-4">
-                                    <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                        class="animated-learn-more inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base transition-all duration-300 group relative">
-                                        <span class="relative overflow-hidden">
-                                            <span class="block transition-transform duration-300 group-hover:-translate-y-full">Learn More</span>
-                                            <span class="absolute inset-0 block translate-y-full transition-transform duration-300 group-hover:translate-y-0 text-red-600">Learn More</span>
-                                        </span>
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:text-red-600"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="4"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                                        </svg>
-                                    </a>
-                                </div>
-
-                                <style>
-                                    .animated-learn-more::after {
-                                        content: "";
-                                        position: absolute;
-                                        left: 0;
-                                        bottom: -4px;
-                                        width: 0;
-                                        height: 2px;
-                                        background-color: #c84747;
-                                        transition: width 0.3s ease-out;
-                                    }
-
-                                    .animated-learn-more:hover::after {
-                                        width: 100%;
-                                    }
-                                </style>
-
-                                <!-- Additional Info -->
-                                <div class="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 pt-1 sm:pt-2 md:pt-4 text-xs md:text-sm text-gray-500">
-                                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                        </svg>
-                                        <span>Top Rated</span>
-                                    </div>
-                                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2">
-                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        <span>Quality Guaranteed</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                <?php endforeach; ?>
 
             </div>
-        </section>
 
-        <style>
-            /* Swiper Navigation Styling */
-            .bestsellerTabsSwiper .swiper-button-prev,
-            .bestsellerTabsSwiper .swiper-button-next {
-                width: 40px;
-                height: 40px;
-                background: white;
-                border-radius: 50%;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-            .bestsellerTabsSwiper .swiper-button-prev:after,
-            .bestsellerTabsSwiper .swiper-button-next:after {
-                font-size: 18px;
-                font-weight: bold;
-                color: #000;
-            }
-
-            /* Hide arrows on mobile */
-            @media (max-width: 1023px) {
-
-                .bestsellerTabsSwiper .swiper-button-prev,
-                .bestsellerTabsSwiper .swiper-button-next {
-                    display: none;
-                }
-            }
-
-            /* Smooth content transitions */
-            .bestseller-content {
-                animation: fadeInContent 0.4s ease-in-out;
-            }
-
-            @keyframes fadeInContent {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            /* Mobile optimizations */
-            @media (max-width: 768px) {
-                .bestseller-tab {
-                    touch-action: manipulation;
-                }
-            }
-        </style>
-
-
-        <script>
-            // Initialize Tabs Swiper
-            let tabsSwiper;
-
-            document.addEventListener('DOMContentLoaded', function() {
-                tabsSwiper = new Swiper('.bestsellerTabsSwiper', {
-                    slidesPerView: 'auto',
-                    spaceBetween: 8,
-                    freeMode: true,
-                    grabCursor: true,
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                    breakpoints: {
-                        640: {
-                            spaceBetween: 8
-                        },
-                        768: {
-                            spaceBetween: 8
-                        },
-                        1024: {
-                            spaceBetween: 8
-                        }
-                    },
-                    on: {
-                        init: function() {
-                            updateNavigationButtons(this);
-                        },
-                        resize: function() {
-                            updateNavigationButtons(this);
-                        },
-                        slideChange: function() {
-                            updateNavigationButtons(this);
-                        },
-                        reachBeginning: function() {
-                            updateNavigationButtons(this);
-                        },
-                        reachEnd: function() {
-                            updateNavigationButtons(this);
-                        }
-                    }
-                });
-            });
-
-            // Function to show/hide navigation buttons based on content
-            function updateNavigationButtons(swiper) {
-                const prevButton = document.querySelector('.bestsellerTabsSwiper .swiper-button-prev');
-                const nextButton = document.querySelector('.bestsellerTabsSwiper .swiper-button-next');
-
-                if (!prevButton || !nextButton) return;
-
-                // Check if content is scrollable (overflow)
-                const isScrollable = swiper.isEnd !== swiper.isBeginning;
-
-                // Hide both buttons if content fits (not scrollable)
-                if (!isScrollable) {
-                    prevButton.style.display = 'none';
-                    nextButton.style.display = 'none';
-                    return;
-                }
-
-                // Show buttons on desktop only when scrollable
-                if (window.innerWidth >= 1024) {
-                    // Show/hide prev button
-                    if (swiper.isBeginning) {
-                        prevButton.style.display = 'none';
-                    } else {
-                        prevButton.style.display = 'flex';
-                    }
-
-                    // Show/hide next button
-                    if (swiper.isEnd) {
-                        nextButton.style.display = 'none';
-                    } else {
-                        nextButton.style.display = 'flex';
-                    }
-                } else {
-                    // Always hide on mobile
-                    prevButton.style.display = 'none';
-                    nextButton.style.display = 'none';
-                }
-            }
-
-            // Function to switch bestseller content
-            function switchBestseller(index) {
-                // Hide all content
-                const allContent = document.querySelectorAll('.bestseller-content');
-                allContent.forEach(content => {
-                    content.classList.add('hidden');
-                });
-
-                // Remove active class from all tabs
-                const allTabs = document.querySelectorAll('.bestseller-tab');
-                allTabs.forEach(tab => {
-                    tab.classList.remove('border-orange-500', 'text-orange-600', 'bg-orange-50');
-                    tab.classList.add('border-transparent', 'text-gray-600');
-                });
-
-                // Show selected content
-                const selectedContent = document.getElementById('content-' + index);
-                if (selectedContent) {
-                    selectedContent.classList.remove('hidden');
-                }
-
-                // Add active class to selected tab
-                const selectedTab = document.querySelector('[data-index="' + index + '"]');
-                if (selectedTab) {
-                    selectedTab.classList.remove('border-transparent', 'text-gray-600');
-                    selectedTab.classList.add('border-orange-500', 'text-orange-600', 'bg-orange-50');
-                }
-            }
-
-            // Update buttons on window resize
-            window.addEventListener('resize', function() {
-                if (tabsSwiper) {
-                    updateNavigationButtons(tabsSwiper);
-                }
-            });
-        </script>
-
+        </div>
     </section>
+
+    <style>
+        .bestseller-content {
+            animation: fadeInCarousel 0.5s ease-in-out;
+        }
+
+        .bestseller-content.hidden {
+            animation: fadeOutCarousel 0.5s ease-in-out;
+        }
+
+        @keyframes fadeInCarousel {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOutCarousel {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+    </style>
+
+    <script>
+        let currentIndex = 0;
+        const totalItems = <?= count($bestsellerData) ?>;
+
+        function nextBestseller() {
+            currentIndex = (currentIndex + 1) % totalItems;
+            updateContent();
+        }
+
+        function prevBestseller() {
+            currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+            updateContent();
+        }
+
+        function updateContent() {
+            // Hide all content
+            document.querySelectorAll('.bestseller-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Show selected content
+            document.getElementById('content-' + currentIndex)?.classList.remove('hidden');
+        }
+    </script>
 
 
     <section class="px-4 ">
@@ -3128,17 +2931,36 @@ while ($row = $banners_result->fetch_assoc()) {
 
     <!-- Floating Chatbot Widget -->
     <div id="chatbot-widget" class="fixed bottom-5 right-5 z-50">
-        <!-- Toggle Button -->
+        <!-- Compare Button -->
+        <button id="compareBtn" onclick="goToComparison()"
+
+            class="fixed bottom-28 right-6 hidden bg-gray-800 text-white px-5 py-2 rounded-full shadow-lg 
+           transition-all duration-300 z-40 flex items-center gap-2 text-sm hover:bg-gray-700">
+            <span id="compareCount">0</span>
+            <span>Compare</span>
+        </button>
+
+
+        <!-- Chatbot Toggle -->
         <button
             id="chatbot-toggle"
-            class="w-16 h-16 bg-orange-400 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center">
+            class="fixed bottom-6 right-6 w-16 h-16 bg-orange-400 text-white rounded-full shadow-lg 
+           hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center">
+
+            <!-- Chat Icon -->
             <svg id="chat-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 
+              15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
             </svg>
+
+            <!-- Close Icon -->
             <svg id="close-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </button>
+
 
         <!-- Chat Container -->
         <div

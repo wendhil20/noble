@@ -76,17 +76,13 @@ if (!empty($product_ids)) {
             font-family: 'Roboto', sans-serif;
         }
         
-        body {
-            font-family: 'Roboto', sans-serif;
-        }
-        
         .comparison-table {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
         
         .comparison-table::-webkit-scrollbar {
-            height: 6px;
+            height: 5px;
         }
         
         .comparison-table::-webkit-scrollbar-track {
@@ -105,130 +101,96 @@ if (!empty($product_ids)) {
         }
         
         .product-column {
-            min-width: 280px;
-            max-width: 320px;
-        }
-        
-        .feature-row {
-            transition: background 0.2s ease;
-        }
-        
-        .feature-row:hover {
-            background: #fafafa;
-        }
-        
-        @media (max-width: 768px) {
-            .product-column {
-                min-width: 240px;
-                max-width: 260px;
-            }
+            min-width: 200px;
         }
     </style>
 </head>
-<body class="bg-white">
+<body class="bg-gray-50">
     <?php include '../navbar/top.php'; ?>
 
     <!-- Hero Section -->
-    <div class="bg-black text-white py-12">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h1 class="text-4xl sm:text-5xl font-light mb-4 tracking-tight">
-                    Product Comparison
-                </h1>
-                <p class="text-lg font-light opacity-90">
-                    Compare specifications and features side-by-side
-                </p>
-            </div>
+    <div class="bg-black text-white py-6">
+        <div class="container mx-auto px-4">
+            <h1 class="text-2xl sm:text-3xl font-semibold">Product Comparison</h1>
+            <p class="text-sm text-gray-300 mt-1">Compare features side-by-side</p>
         </div>
     </div>
 
-    <!-- Breadcrumb -->
-    <nav class="bg-white px-4 py-3">
-        <div class="container mx-auto">
-            <div class="flex items-center space-x-2 text-sm">
-                <a href="index" class="text-gray-700 hover:text-black transition font-light">
-                    <i class="fas fa-home mr-1"></i>Home
-                </a>
-                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                <a href="shop" class="text-gray-700 hover:text-black transition font-light">Shop</a>
-                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                <span class="text-black font-normal">Compare Products</span>
-            </div>
-        </div>
-    </nav>
+  <!-- Breadcrumb -->
+  <nav class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="container mx-auto">
+      <div class="flex items-center space-x-2 text-sm">
+        <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+        <span class="text-gray-600 font-medium">Compare</span>
+      </div>
+    </div>
+  </nav>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-4xl mx-auto px-4 py-6">
         <?php if (empty($products)): ?>
             <!-- Empty State -->
-            <div class="bg-white rounded p-16 text-center">
-                <div class="mb-6">
-                    <i class="fas fa-balance-scale text-7xl text-gray-300"></i>
-                </div>
-                <h2 class="text-3xl font-light text-black mb-4">No Products to Compare</h2>
-                <p class="text-gray-600 mb-8 font-light">
-                    Select products from the shop to start comparing
-                </p>
-                <a href="shop" class="inline-block bg-black hover:bg-gray-800 text-white px-8 py-3 transition font-normal">
-                    Browse Products
+            <div class="bg-white rounded-lg p-12 text-center shadow-sm">
+                <i class="fas fa-balance-scale text-5xl text-gray-300 mb-4"></i>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-2">No Products Selected</h2>
+                <p class="text-gray-600 text-sm mb-6">Select products from the shop to start comparing</p>
+                <a href="shop" class="inline-block bg-black hover:bg-gray-800 text-white px-6 py-2 text-sm rounded transition">
+                    <i class="fas fa-shopping-bag mr-2"></i>Browse Products
                 </a>
             </div>
         <?php else: ?>
-            <!-- Comparison Controls -->
-            <div class="bg-white p-6 mb-6">
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <!-- Control Bar -->
+            <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
-                        <h3 class="text-xl font-normal text-black">Comparing <?= count($products) ?> Product<?= count($products) > 1 ? 's' : '' ?></h3>
-                        <p class="text-sm text-gray-600 font-light mt-1">Review and compare product features</p>
+                        <h3 class="font-semibold text-gray-900">Comparing <?= count($products) ?> Product<?= count($products) > 1 ? 's' : '' ?></h3>
                     </div>
-                    <div class="flex gap-3">
-                        <button onclick="printComparison()" 
-                            class="px-5 py-2.5 bg-white hover:bg-gray-100 text-black transition font-normal text-sm">
-                            <i class="fas fa-print mr-2"></i>Print
-                        </button>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                      
                         <a href="shop" 
-                            class="px-5 py-2.5 bg-white hover:bg-gray-100 text-black transition font-normal text-sm">
-                            <i class="fas fa-plus mr-2"></i>Add More
+                            class="flex-1 sm:flex-none px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-medium rounded transition text-center">
+                            <i class="fas fa-plus mr-1"></i>Add
                         </a>
                         <button onclick="clearAllComparisons()" 
-                            class="px-5 py-2.5 bg-black hover:bg-gray-800 text-white transition font-normal text-sm">
-                            <i class="fas fa-times mr-2"></i>Clear All
+                            class="flex-1 sm:flex-none px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition">
+                            <i class="fas fa-times mr-1"></i>Clear
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Comparison Table -->
-            <div class="bg-white">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div class="comparison-table">
-                    <table class="w-full">
-                        <!-- Product Images and Names -->
-                        <thead class="sticky-header">
-                            <tr>
-                                <th class="p-5 text-left font-medium text-black w-48">
-                                    Features
-                                </th>
+                    <table class="w-full text-sm">
+                        <!-- Product Header -->
+                        <thead class="sticky-header border-b border-gray-200">
+                            <tr class="bg-gray-50">
+                                <th class="p-3 text-left font-semibold text-gray-900 w-40">Features</th>
                                 <?php foreach ($products as $index => $product): ?>
-                                    <th class="p-5 bg-white product-column">
+                            <th class="p-3 product-column bg-white border-l border-gray-200">
                                         <div class="text-center">
                                             <?php if (!empty($product['main_image'])): ?>
-                                                <div class="relative mb-4">
+                                                <div class="relative mb-2">
                                                     <img src="../../<?= htmlspecialchars($product['main_image']) ?>" 
                                                          alt="<?= htmlspecialchars($product['product_name']) ?>"
-                                                         class="w-full h-56 object-contain">
-                                                    <div class="absolute top-3 right-3 bg-black text-white w-8 h-8 flex items-center justify-center font-medium text-sm">
+                                                         class="w-full h-24 object-contain">
+                                                    <div class="absolute top-1 right-1 bg-black text-white w-6 h-6 flex items-center justify-center font-bold text-xs rounded-full">
                                                         <?= $index + 1 ?>
                                                     </div>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="w-full h-56 bg-gray-100 mb-4 flex items-center justify-center">
-                                                    <i class="fas fa-image text-4xl text-gray-400"></i>
+                                                <div class="w-full h-24 bg-gray-100 mb-2 flex items-center justify-center rounded">
+                                                    <i class="fas fa-image text-2xl text-gray-300"></i>
                                                 </div>
                                             <?php endif; ?>
-                                            <h3 class="font-medium text-lg text-black mb-2">
+                                            <h4 class="font-semibold text-gray-900 text-xs leading-tight mb-1">
                                                 <?= htmlspecialchars($product['product_name']) ?>
-                                            </h3>
-                                            <p class="text-sm text-gray-600 font-light">
+                                            </h4>
+                                            <p class="text-xs text-gray-500">
                                                 <?= htmlspecialchars($product['codename'] ?? 'N/A') ?>
                                             </p>
                                         </div>
@@ -237,92 +199,60 @@ if (!empty($product_ids)) {
                             </tr>
                         </thead>
 
-                        <tbody>
+                        <tbody class="divide-y divide-gray-200">
                             <!-- Price Range -->
                             <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Price Range
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Price</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
+                                    <td class="p-3 text-center border-l border-gray-200">
                                         <?php if ($product['min_price'] && $product['max_price']): ?>
-                                            <div class="font-medium text-black text-lg">
-                                                ₱<?= number_format($product['min_price'], 2) ?>
-                                                <?php if ($product['min_price'] != $product['max_price']): ?>
-                                                    <div class="text-sm font-light text-gray-600 mt-1">to ₱<?= number_format($product['max_price'], 2) ?></div>
-                                                <?php endif; ?>
-                                            </div>
+                                            <div class="font-semibold text-gray-900">₱<?= number_format($product['min_price'], 0) ?></div>
+                                            <?php if ($product['min_price'] != $product['max_price']): ?>
+                                                <div class="text-xs text-gray-500">to ₱<?= number_format($product['max_price'], 0) ?></div>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <span class="text-gray-500 font-light">Contact for price</span>
+                                            <span class="text-gray-400 text-xs">Contact</span>
                                         <?php endif; ?>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
 
-                            <!-- Category -->
+                            <!-- Colors -->
                             <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Category
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Colors</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
-                                        <span class="inline-block bg-black text-white px-4 py-1.5 text-sm font-normal">
-                                            <?= htmlspecialchars($product['codename'] ?? 'N/A') ?>
+                                    <td class="p-3 text-center border-l border-gray-200">
+                                        <span class="text-xs text-gray-700">
+                                            <?= !empty($product['available_colors']) ? htmlspecialchars($product['available_colors']) : '—' ?>
                                         </span>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
 
-                            <!-- Available Colors -->
+                            <!-- Types -->
                             <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Available Colors
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Types</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
-                                        <?php if (!empty($product['available_colors'])): ?>
-                                            <div class="text-sm text-gray-700 font-light">
-                                                <?= htmlspecialchars($product['available_colors']) ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-gray-400">—</span>
-                                        <?php endif; ?>
+                                    <td class="p-3 text-center border-l border-gray-200">
+                                        <span class="text-xs text-gray-700">
+                                            <?= !empty($product['available_types']) ? htmlspecialchars($product['available_types']) : '—' ?>
+                                        </span>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
 
-                            <!-- Available Types -->
+                            <!-- Sizes -->
                             <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Available Types
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Sizes</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
-                                        <?php if (!empty($product['available_types'])): ?>
-                                            <div class="text-sm text-gray-700 font-light">
-                                                <?= htmlspecialchars($product['available_types']) ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-gray-400">—</span>
-                                        <?php endif; ?>
-                                    </td>
-                                <?php endforeach; ?>
-                            </tr>
-
-                            <!-- Available Sizes -->
-                            <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Available Sizes
-                                </td>
-                                <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
+                                    <td class="p-3 text-center border-l border-gray-200">
                                         <?php 
                                         $size_stmt = $conn->prepare("
                                             SELECT DISTINCT pv.size 
                                             FROM product_variants pv
                                             JOIN product_types pt ON pv.type_id = pt.id
                                             WHERE pt.product_id = ? AND pv.size IS NOT NULL AND pv.size != ''
-                                            ORDER BY pv.size
+                                            ORDER BY pv.size LIMIT 5
                                         ");
                                         $size_stmt->bind_param("i", $product['id']);
                                         $size_stmt->execute();
@@ -332,51 +262,31 @@ if (!empty($product_ids)) {
                                             $sizes[] = $size_row['size'];
                                         }
                                         $size_stmt->close();
-                                        
-                                        if (!empty($sizes)): ?>
-                                            <div class="text-sm text-gray-700 font-light">
-                                                <?= htmlspecialchars(implode(', ', $sizes)) ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-gray-400">—</span>
-                                        <?php endif; ?>
+                                        ?>
+                                        <span class="text-xs text-gray-700">
+                                            <?= !empty($sizes) ? htmlspecialchars(implode(', ', $sizes)) : '—' ?>
+                                        </span>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
 
                             <!-- Unit -->
                             <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Unit
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Unit</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
-                                        <span class="text-gray-700 font-light"><?= htmlspecialchars($product['descrip6'] ?? '—') ?></span>
-                                    </td>
-                                <?php endforeach; ?>
-                            </tr>
-
-                            <!-- Specification -->
-                            <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Specification
-                                </td>
-                                <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
-                                        <span class="text-gray-700 font-light"><?= htmlspecialchars($product['descrip7'] ?? '—') ?></span>
+                                    <td class="p-3 text-center border-l border-gray-200">
+                                        <span class="text-xs text-gray-700"><?= htmlspecialchars($product['descrip6'] ?? '—') ?></span>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
 
                             <!-- Description -->
                             <tr class="feature-row">
-                                <td class="p-5 font-medium text-black">
-                                    Description
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Description</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5">
-                                        <div class="text-sm text-gray-700 text-left max-h-32 overflow-y-auto font-light leading-relaxed">
-                                            <?= nl2br(htmlspecialchars($product['description'] ?? 'No description available')) ?>
+                                    <td class="p-3 border-l border-gray-200">
+                                        <div class="text-xs text-gray-700 line-clamp-3 leading-relaxed">
+                                            <?= nl2br(htmlspecialchars($product['description'] ?? 'N/A')) ?>
                                         </div>
                                     </td>
                                 <?php endforeach; ?>
@@ -384,19 +294,17 @@ if (!empty($product_ids)) {
 
                             <!-- Actions -->
                             <tr class="feature-row bg-gray-50">
-                                <td class="p-5 font-medium text-black">
-                                    Actions
-                                </td>
+                                <td class="p-3 font-semibold text-gray-900">Actions</td>
                                 <?php foreach ($products as $product): ?>
-                                    <td class="p-5 text-center">
-                                        <div class="flex flex-col gap-2">
-                                            <a href="product_view?id=<?= $product['id'] ?>" 
-                                               class="bg-black hover:bg-gray-800 text-white px-4 py-2.5 transition font-normal text-sm">
-                                                <i class="fas fa-eye mr-2"></i>View Details
+                                    <td class="p-3 text-center border-l border-gray-200">
+                                        <div class="flex flex-col gap-1.5">
+                                            <a href="index-product_view-page-4-AA.php?id=<?= $product['id'] ?>" 
+                                               class="bg-black hover:bg-gray-800 text-white px-2 py-1 text-xs rounded transition font-medium">
+                                                View
                                             </a>
                                             <button onclick="removeFromComparison(<?= $product['id'] ?>)"
-                                                    class="bg-white hover:bg-gray-100 text-black px-4 py-2.5 transition font-normal text-sm">
-                                                <i class="fas fa-times mr-2"></i>Remove
+                                                    class="bg-gray-200 hover:bg-gray-300 text-gray-900 px-2 py-1 text-xs rounded transition font-medium">
+                                                Remove
                                             </button>
                                         </div>
                                     </td>
@@ -406,34 +314,15 @@ if (!empty($product_ids)) {
                     </table>
                 </div>
             </div>
-
-            <!-- Tips Section -->
-            <div class="mt-6 p-5">
-                <h3 class="font-medium text-black mb-3 flex items-center gap-2">
-                    <i class="fas fa-info-circle"></i>
-                    Comparison Guidelines
-                </h3>
-                <ul class="space-y-2 text-sm text-gray-700 font-light">
-                    <li>• Scroll horizontally to view all products on smaller screens</li>
-                    <li>• Click "View Details" to see complete product information</li>
-                    <li>• Use the print button to save this comparison</li>
-                    <li>• Compare unlimited products to find the best match</li>
-                </ul>
-            </div>
         <?php endif; ?>
     </div>
 
     <?php include '../navbar/footer.php'; ?>
 
     <script>
-        // Print comparison
-        function printComparison() {
-            window.print();
-        }
 
-        // Remove product from comparison
         function removeFromComparison(productId) {
-            if (confirm('Remove this product from comparison?')) {
+            if (confirm('Remove this product?')) {
                 const urlParams = new URLSearchParams(window.location.search);
                 const products = urlParams.get('products');
                 
@@ -450,25 +339,21 @@ if (!empty($product_ids)) {
             }
         }
 
-        // Clear all comparisons
         function clearAllComparisons() {
-            if (confirm('Clear all product comparisons?')) {
+            if (confirm('Clear all comparisons?')) {
                 localStorage.removeItem('compareProducts');
                 window.location.href = 'index-shop-page-2';
             }
         }
 
-        // Print styles
         const style = document.createElement('style');
         style.textContent = `
             @media print {
                 body { background: white !important; }
+                nav, footer, button { display: none !important; }
                 .sticky-header { position: static !important; }
-                button, nav, footer { display: none !important; }
-                .comparison-table { overflow: visible !important; }
                 table { page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
-                @page { margin: 1cm; }
+                tr { page-break-inside: avoid; }
             }
         `;
         document.head.appendChild(style);

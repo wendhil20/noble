@@ -1100,30 +1100,6 @@ $is_guest = !isset($_SESSION['user_id']);
                     ?>
                   </span>
                 </div>
-
-                <!-- Customer Rating -->
-                <div>
-                  <h3 class="font-semibold text-gray-700 mb-2 text-sm lg:text-base">Customer Rating</h3>
-                  <?php if ($total_raters > 0): ?>
-                    <div class="flex items-center gap-2 text-yellow-400">
-                      <div class="flex text-lg">
-                        <?php
-                        $full = floor($avg_rating);
-                        $half = ($avg_rating - $full >= 0.5) ? 1 : 0;
-                        $empty = 5 - $full - $half;
-
-                        for ($i = 0; $i < $full; $i++) echo '<i class="fas fa-star"></i>';
-                        if ($half) echo '<i class="fas fa-star-half-alt"></i>';
-                        for ($i = 0; $i < $empty; $i++) echo '<i class="far fa-star"></i>';
-                        ?>
-                      </div>
-                      <span class="text-gray-700 font-medium"><?= $avg_rating ?>/5</span>
-                      <span class="text-gray-500 text-sm">(<?= $total_raters ?> review<?= $total_raters == 1 ? '' : 's' ?>)</span>
-                    </div>
-                  <?php else: ?>
-                    <p class="text-sm text-gray-500">No reviews yet</p>
-                  <?php endif; ?>
-                </div>
               </div>
 
               <!-- Product Description -->
@@ -2883,7 +2859,6 @@ $is_guest = !isset($_SESSION['user_id']);
                   <!-- Section Header -->
                   <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center gap-3">
-                      <i class="fas fa-file-alt text-purple-500 text-xl"></i>
                       <div>
                         <h3 class="text-lg font-semibold text-gray-900">Detailed Description</h3>
                         <p class="text-xs text-gray-500">Complete product information</p>
@@ -2893,9 +2868,9 @@ $is_guest = !isset($_SESSION['user_id']);
 
                   <!-- Description Content -->
                   <div class="p-6">
-                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                    <div class=" rounded-xl p-6">
                       <div class="prose prose-gray max-w-none">
-                        <p class="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
+                        <p class="text-gray-800 leading-relaxed text-base">
                           <?= nl2br(htmlspecialchars($product_specs['descriptionpic'])) ?>
                         </p>
                       </div>
@@ -2903,7 +2878,6 @@ $is_guest = !isset($_SESSION['user_id']);
                   </div>
                 </div>
               <?php endif; ?>
-
 
             </div>
           </div>

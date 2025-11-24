@@ -2,7 +2,8 @@
 session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
-
+// Add this before the query
+mysqli_query($conn, "SET SESSION group_concat_max_len = 10000;");   
 // Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -118,10 +119,6 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             transition: all 0.3s ease;
         }
 
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-        }
 
         .filter-button.active {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -316,6 +313,8 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             justify-content: center;
             color: #9ca3af;
         }
+
+
     </style>
 </head>
 
@@ -403,39 +402,18 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         </div>
     </aside>
 
-    <!-- Header with Background Image -->
-    <header class="relative text-center py-10 md:py-16 lg:py-20 overflow-hidden">
-        <div class="absolute inset-0 z-0">
-            <img src="../img/saleandexplore/a.png" alt="Background" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-        </div>
+<!-- Header with Background Image - Full Width -->
+<header class="relative text-center py-20 md:py-32 lg:py-40 overflow-hidden w-full">
+    <div class="absolute inset-0 z-0 w-full h-full">
+        <img src="../img/saleandexplore/a.png" alt="Background Image" class="w-full h-full object-contain" loading="lazy">
+        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+    </div>
+    <div class="relative z-10">
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Your Header Title</h1>
+    </div>
+</header>
 
-        <div class="relative z-10">
-            <h1 class="text-3xl md:text-4xl lg:text-5xl text-white">Premium <span class="text-white">Collections</span></h1>
-            <p class="text-sm md:text-base lg:text-lg text-white mt-2 md:mt-4 max-w-3xl mx-auto px-4">Discover high-quality products curated for your lifestyle.</p>
-
-            <div class="mt-4 md:mt-6 lg:mt-8 max-w-2xl mx-auto px-4">
-                <div class="relative">
-                    <input
-                        type="text"
-                        id="searchInput"
-                        placeholder="Search products..."
-                        class="w-full px-4 md:px-6 py-2 md:py-3 pr-10 md:pr-12 border-2 border-white rounded-full focus:outline-none focus:border-orange-500 text-gray-700 bg-white text-sm md:text-base">
-                    <button class="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-orange-500">
-                        <i class="fas fa-search text-base md:text-xl"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <section class="bg-black text-white py-2">
-        <div class="max-w-6xl mx-auto px-1 text-center md:text-left">
-            <div class="inline-flex flex-wrap gap-3 items-center">
-                <p class="text-base md:text-lg text-black"></p>
-            </div>
-        </div>
-    </section>
+ 
 
     <!-- Mobile Filter Button -->
     <div class="lg:hidden fixed bottom-4 left-4 right-4 z-30">
@@ -445,7 +423,8 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     </div>
 
     <!-- Main Layout -->
-    <div class="lg:flex">
+<!-- Main Layout -->
+<div class="lg:flex">
         <!-- Desktop Sidebar -->
         <aside class="hidden lg:block w-80 p-6 sticky top-0 h-screen overflow-y-auto">
             <h2 class="text-xl mb-6"><i class="fas fa-sliders-h mr-2"></i>Filters</h2>
@@ -519,7 +498,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-2">
             <div class="mb-4 text-sm text-gray-600">
                 Showing <span id="displayCount">0</span> of <span id="totalCount">0</span> products
             </div>
@@ -1030,95 +1009,128 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 };
             }
 
-           // REPLACE ang createProductCard method na ito sa loob ng ProductFilter class
-
 createProductCard(product) {
     const card = document.createElement('article');
-    card.className = 'product-card p-3 relative';
+    card.className = 'product-card overflow-hidden shadow-md hover:shadow-xl transition-all duration-300';
 
     const initial = product.initial_variant || {};
     const variants = product.variants || [];
     const hasMultipleVariants = variants.length > 1;
 
-
-
-    // Image container
+    // IMAGE CONTAINER WITH BADGES AND WISHLIST
     const imageContainer = document.createElement('div');
-    imageContainer.className = 'aspect-square mb-3 overflow-hidden rounded-lg';
+    imageContainer.className = 'relative aspect-square overflow-hidden bg-gray-100';
+
     const img = document.createElement('img');
     img.src = product.color_image;
     img.alt = product.name;
     img.className = 'w-full h-full object-contain product-image';
     imageContainer.appendChild(img);
+
+    // DISCOUNT/SALE BADGE - BOTTOM LEFT
+    if (initial.discount > 0) {
+        const discountBadge = document.createElement('span');
+        discountBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded';
+        discountBadge.textContent = `Save ${Math.round(initial.discount)}%`;
+        imageContainer.appendChild(discountBadge);
+    }
+
+    // WISHLIST BUTTON - TOP RIGHT
+    const wishlistBtn = document.createElement('button');
+    wishlistBtn.type = 'button';
+    wishlistBtn.className = 'absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition w-10 h-10 flex items-center justify-center';
+    wishlistBtn.innerHTML = '<i class="far fa-heart text-gray-600"></i>';
+    wishlistBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        wishlistBtn.querySelector('i').classList.toggle('far');
+        wishlistBtn.querySelector('i').classList.toggle('fas');
+        wishlistBtn.querySelector('i').classList.toggle('text-red-600');
+    });
+    imageContainer.appendChild(wishlistBtn);
+
     card.appendChild(imageContainer);
 
-    // Product name
-    const productName = document.createElement('h3');
-    productName.className = 'text-lg font-semibold mb-2 line-clamp-2 product-name';
-    productName.textContent = product.name;
-    card.appendChild(productName);
+    // PRODUCT INFO SECTION
+    const infoSection = document.createElement('div');
+    infoSection.className = 'p-1 sm:p-2 flex flex-col flex-grow';
 
-    // Info container
-    const infoContainer = document.createElement('div');
-    infoContainer.className = 'mb-3 space-y-1';
-    
+    // PRODUCT NAME
+    const productName = document.createElement('h3');
+    productName.className = 'text-xs sm:text-sm font-bold mb-2 line-clamp-2 text-gray-800 product-name';
+    productName.textContent = product.name;
+    infoSection.appendChild(productName);
+
+    // VARIANT INFO
+    const variantInfo = document.createElement('div');
+    variantInfo.className = 'text-xs text-gray-600 mb-3 space-y-1 hidden sm:block';
+
     // Color info
     const colorDiv = document.createElement('div');
     colorDiv.className = 'flex items-center gap-2';
-    colorDiv.innerHTML = `<span class="text-xs text-gray-600">Color:</span>`;
-    
-    const colorInfoDiv = document.createElement('div');
-    colorInfoDiv.className = 'flex items-center gap-1';
-    
+    const colorLabel = document.createElement('span');
+    colorLabel.textContent = 'Color:';
+    colorDiv.appendChild(colorLabel);
+
+    const colorValueDiv = document.createElement('div');
+    colorValueDiv.className = 'flex items-center gap-1';
     if (product.color_code) {
         const colorBox = document.createElement('div');
-        colorBox.className = 'w-4 h-4 rounded-full border';
+        colorBox.className = 'w-3 h-3 rounded-full border border-gray-300';
         colorBox.style.backgroundColor = product.color_code;
-        colorInfoDiv.appendChild(colorBox);
+        colorValueDiv.appendChild(colorBox);
     }
-    
-    const colorNameSpan = document.createElement('span');
-    colorNameSpan.className = 'text-xs font-medium product-color';
-    colorNameSpan.textContent = product.color_name;
-    colorInfoDiv.appendChild(colorNameSpan);
-    
-    colorDiv.appendChild(colorInfoDiv);
-    infoContainer.appendChild(colorDiv);
+    const colorName = document.createElement('span');
+    colorName.className = 'font-medium text-gray-700 product-color';
+    colorName.textContent = product.color_name;
+    colorValueDiv.appendChild(colorName);
+    colorDiv.appendChild(colorValueDiv);
+    variantInfo.appendChild(colorDiv);
 
     // Size info
     const sizeDiv = document.createElement('div');
-    sizeDiv.className = 'text-xs text-gray-600';
-    sizeDiv.innerHTML = 'Size: ';
-    const sizeSpan = document.createElement('span');
-    sizeSpan.className = 'font-medium selected-size';
-    sizeSpan.textContent = initial.size;
-    sizeDiv.appendChild(sizeSpan);
-    infoContainer.appendChild(sizeDiv);
-    
-    card.appendChild(infoContainer);
+    sizeDiv.innerHTML = '<span>Size:</span> <span class="font-medium text-gray-700 selected-size">' + initial.size + '</span>';
+    variantInfo.appendChild(sizeDiv);
 
-    // Size buttons (if multiple variants)
+    infoSection.appendChild(variantInfo);
+
+    // PRICE SECTION
+    const priceContainer = document.createElement('div');
+    priceContainer.className = 'price-container';
+    
+    const priceRow = document.createElement('div');
+    priceRow.className = 'flex items-center justify-between gap-2 mb-2';
+    
+    const finalPrice = document.createElement('p');
+    finalPrice.className = 'text-lg font-bold text-orange-600 final-price';
+    finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
+    priceRow.appendChild(finalPrice);
+    priceContainer.appendChild(priceRow);
+    infoSection.appendChild(priceContainer);
+
+    // SIZE SELECTOR (if multiple variants) - WITH +X INDICATOR
     if (hasMultipleVariants) {
         const sizesContainer = document.createElement('div');
         sizesContainer.className = 'mb-3';
         
         const sizesLabel = document.createElement('p');
-        sizesLabel.className = 'text-xs text-gray-600 mb-2';
+        sizesLabel.className = 'text-xs font-semibold text-gray-700 mb-2';
         sizesLabel.textContent = 'Available Sizes:';
         sizesContainer.appendChild(sizesLabel);
         
         const sizeButtonsDiv = document.createElement('div');
-        sizeButtonsDiv.className = 'flex gap-2 overflow-x-auto pb-2 scrollbar-thin';
+        sizeButtonsDiv.className = 'flex gap-2 flex-wrap items-center';
+        
+        const VISIBLE_SIZES = 2;
+        let hiddenCount = 0;
         
         variants.forEach((v, idx) => {
             const pricing = this.calculateVariantPrice(v.price, product.color_price, v.percent, v.discount);
             
             const sizeBtn = document.createElement('button');
             sizeBtn.type = 'button';
-            sizeBtn.className = `size-btn px-3 py-2 border rounded hover:border-orange-500 transition text-sm whitespace-nowrap flex-shrink-0 ${idx === 0 ? 'active' : 'border-gray-300'}`;
+            sizeBtn.className = `size-btn px-3 py-1 border rounded text-xs whitespace-nowrap font-semibold transition-all ${idx === 0 ? 'bg-black text-white border-black' : 'bg-white text-gray-800 border-gray-300 hover:border-orange-500'}`;
             sizeBtn.textContent = v.size;
             
-            // Store variant data
             sizeBtn.dataset.variantId = v.variant_id;
             sizeBtn.dataset.size = v.size;
             sizeBtn.dataset.price = pricing.final;
@@ -1128,57 +1140,38 @@ createProductCard(product) {
             sizeBtn.dataset.variantPrice = v.price;
             sizeBtn.dataset.percent = v.percent;
             
+            if (idx >= VISIBLE_SIZES) {
+                sizeBtn.style.display = 'none';
+                sizeBtn.classList.add('size-btn-hidden');
+                hiddenCount++;
+            }
+            
             sizeButtonsDiv.appendChild(sizeBtn);
         });
         
+        // Add "+X" INDICATOR BADGE (not clickable, just shows count)
+        if (hiddenCount > 0) {
+            const indicatorBadge = document.createElement('span');
+            indicatorBadge.className = 'px-3 py-1 border border-gray-300 rounded text-xs font-bold bg-gray-50 text-gray-700';
+            indicatorBadge.textContent = `+${hiddenCount}`;
+            indicatorBadge.style.display = 'inline-flex';
+            indicatorBadge.style.alignItems = 'center';
+            indicatorBadge.style.justifyContent = 'center';
+            indicatorBadge.style.minWidth = '32px';
+            indicatorBadge.style.minHeight = '32px';
+            
+            sizeButtonsDiv.appendChild(indicatorBadge);
+        }
+        
         sizesContainer.appendChild(sizeButtonsDiv);
-        card.appendChild(sizesContainer);
+        infoSection.appendChild(sizesContainer);
     }
 
-    // Price container - HIDE if may multiple variants at walang manual selection pa
-    const priceContainer = document.createElement('div');
-    priceContainer.className = `price-container mb-3 ${hasMultipleVariants ? 'price-container-hidden' : ''}`;
-    
-    // ADD THIS CLASS FOR CONTROL
-    if (hasMultipleVariants) {
-        priceContainer.style.opacity = '0.5';
-        priceContainer.style.pointerEvents = 'none';
-    }
-
-    const priceRow = document.createElement('div');
-    priceRow.className = 'flex items-center justify-between gap-2';
-    
-    const priceWithDiscount = document.createElement('div');
-    priceWithDiscount.className = 'flex items-center gap-2';
-    
-    const finalPrice = document.createElement('p');
-    finalPrice.className = 'text-xl font-bold text-orange-600 final-price';
-    finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
-    priceWithDiscount.appendChild(finalPrice);
-
-    // Discount badge sa tabi ng price
-    if (initial.discount > 0) {
-        const discountBadgeInline = document.createElement('span');
-        discountBadgeInline.className = 'discount-badge-inline bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold';
-        discountBadgeInline.textContent = `-${initial.discount}%`;
-        priceWithDiscount.appendChild(discountBadgeInline);
-    }
-
-    priceRow.appendChild(priceWithDiscount);
-    
-    const originBadge = document.createElement('span');
-    originBadge.className = 'px-2 py-1 text-xs font-medium bg-black text-white rounded product-origin';
-    originBadge.textContent = initial.origin || 'local';
-    
-    priceRow.appendChild(originBadge);
-    priceContainer.appendChild(priceRow);
-    card.appendChild(priceContainer);
-
-    // Buttons container
+    // BUTTONS SECTION
     const buttonsDiv = document.createElement('div');
-    buttonsDiv.className = 'space-y-2';
+    buttonsDiv.className = 'space-y-2 mt-auto';
     
-    // View Product form
+    // VIEW PRODUCT BUTTON
     const viewForm = document.createElement('form');
     viewForm.action = 'index-product_view-page-4-AA';
     viewForm.method = 'GET';
@@ -1191,17 +1184,16 @@ createProductCard(product) {
     
     const viewButton = document.createElement('button');
     viewButton.type = 'submit';
-    viewButton.className = 'w-full bg-black text-white py-2 hover:bg-orange-500 text-sm transition rounded';
-    viewButton.textContent = 'View Product';
+    viewButton.className = 'w-full bg-gray-200 text-gray-800 py-2 hover:bg-gray-300 text-xs font-semibold transition rounded';
+    viewButton.textContent = 'Quickview';
     viewForm.appendChild(viewButton);
     buttonsDiv.appendChild(viewForm);
 
-    // Add to Cart form
+    // ADD TO CART BUTTON
     const cartForm = document.createElement('form');
     cartForm.className = 'productForm';
     cartForm.dataset.productId = product.id;
     
-    // Hidden inputs
     const hiddenInputs = [
         {name: 'product_id', value: product.id},
         {name: 'variant_id', value: initial.variant_id, className: 'variant-id-input'},
@@ -1228,27 +1220,20 @@ createProductCard(product) {
     
     const cartButton = document.createElement('button');
     cartButton.type = 'submit';
-    cartButton.className = 'w-full bg-black text-white py-2 hover:bg-orange-500 text-sm flex items-center justify-center gap-2 transition rounded';
+    cartButton.className = 'w-full bg-black text-white py-2 hover:bg-orange-600 text-xs font-semibold flex items-center justify-center gap-2 transition rounded';
     cartButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
     cartForm.appendChild(cartButton);
     
     buttonsDiv.appendChild(cartForm);
-    card.appendChild(buttonsDiv);
+    infoSection.appendChild(buttonsDiv);
 
-    // AUTOMATICALLY TRIGGER FIRST SIZE SELECTION
+    card.appendChild(infoSection);
+
+    // Setup size button event listeners
     setTimeout(() => {
-        if (hasMultipleVariants) {
-            // Auto-select first size on load
-            const firstSizeBtn = card.querySelector('.size-btn.active');
-            if (firstSizeBtn) {
-                firstSizeBtn.click();
-            }
-        }
-    }, 0);
-
-    // Size button event listeners
-    if (hasMultipleVariants) {
-        card.querySelectorAll('.size-btn').forEach(btn => {
+        const allSizeButtons = card.querySelectorAll('.size-btn');
+        
+        allSizeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 
@@ -1272,44 +1257,28 @@ createProductCard(product) {
                     form.querySelector('.discount-input').value = variantData.discount;
                     form.querySelector('.percent-input').value = variantData.percent;
                     form.querySelector('.origin-input').value = variantData.origin;
-
-                    const sizeEl = card.querySelector('.selected-size');
-                    if (sizeEl) sizeEl.textContent = variantData.size;
-
-                    const priceEl = card.querySelector('.final-price');
-                    if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
-
-                    // UPDATE discount badge inline
-                    let discountBadgeInline = card.querySelector('.discount-badge-inline');
-                    if (variantData.discount > 0) {
-                        if (discountBadgeInline) {
-                            discountBadgeInline.textContent = `-${variantData.discount}%`;
-                        } else {
-                            discountBadgeInline = document.createElement('span');
-                            discountBadgeInline.className = 'discount-badge-inline bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold';
-                            discountBadgeInline.textContent = `-${variantData.discount}%`;
-                            priceEl.parentElement.appendChild(discountBadgeInline);
-                        }
-                    } else if (discountBadgeInline) {
-                        discountBadgeInline.remove();
-                    }
-
-                    const originEl = card.querySelector('.product-origin');
-                    if (originEl) originEl.textContent = variantData.origin;
-
-                    // UPDATE: Show price container when size is selected
-                    const priceContainer = card.querySelector('.price-container');
-                    if (priceContainer) {
-                        priceContainer.style.opacity = '1';
-                        priceContainer.style.pointerEvents = 'auto';
-                    }
                 }
-
-                card.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                
+                const priceEl = card.querySelector('.final-price');
+                if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
+                
+                const sizeEl = card.querySelector('.selected-size');
+                if (sizeEl) sizeEl.textContent = variantData.size;
+                
+                allSizeButtons.forEach(b => {
+                    b.classList.remove('bg-black', 'text-white', 'border-black');
+                    b.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                });
+                btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                btn.classList.add('bg-black', 'text-white', 'border-black');
             });
         });
-    }
+        
+        // Auto-select first size
+        if (allSizeButtons.length > 0) {
+            allSizeButtons[0].click();
+        }
+    }, 0);
 
     return card;
 }

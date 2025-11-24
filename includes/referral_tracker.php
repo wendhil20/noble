@@ -1,4 +1,5 @@
 <?php
+//referral_tracker.php
 // ============================================
 // FILE: referral_tracker.php (CORRECTED VERSION)
 // Place this in: /noble/includes/referral_tracker.php
@@ -16,6 +17,9 @@ function trackReferralVisit($conn) {
     
     // Convert to uppercase to match database format
     $ref_code = trim(strtoupper($_GET['ref']));
+    
+    // ✅ SAVE referral code to session for later use during login
+    $_SESSION['pending_referral_code'] = $ref_code;
     
     // Validate referral code format (NH-XXXXXX)
     if (!preg_match('/^NH-[A-Z0-9]{6}$/', $ref_code)) {
@@ -82,6 +86,99 @@ function trackReferralVisit($conn) {
         // Rollback on error
         $conn->rollback();
         error_log("Referral tracking error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Associate referral code with user account after login OR if already logged in
+ * Call this after successful login OR on page load if user is logged in
+ */
+function assignReferralToUser($conn, $user_id) {
+    // Check if there's a pending referral code from the session
+    if (!isset($_SESSION['pending_referral_code']) || empty($_SESSION['pending_referral_code'])) {
+        return false;
+    }
+    
+    $ref_code = $_SESSION['pending_referral_code'];
+    
+    // Validate user_id
+    if (empty($user_id) || !is_numeric($user_id)) {
+        return false;
+    }
+    
+    // Validate referral code exists and is active
+    $stmt = $conn->prepare("SELECT id, user_id FROM referral_codes WHERE referral_code = ? AND is_active = 1 LIMIT 1");
+    $stmt->bind_param("s", $ref_code);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        $stmt->close();
+        unset($_SESSION['pending_referral_code']); // Clear invalid code
+        return false;
+    }
+    
+    $row = $result->fetch_assoc();
+    $referrer_user_id = $row['user_id'];
+    $referral_id = $row['id'];
+    $stmt->close();
+    
+    // ✅ Don't allow self-referral
+    if ($referrer_user_id == $user_id) {
+        unset($_SESSION['pending_referral_code']);
+        return false;
+    }
+    
+    // ✅ Check if user already has a referral code assigned
+    $check_stmt = $conn->prepare("SELECT referred_by_code FROM users WHERE id = ? LIMIT 1");
+    $check_stmt->bind_param("i", $user_id);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    
+    if ($check_result->num_rows === 0) {
+        $check_stmt->close();
+        unset($_SESSION['pending_referral_code']);
+        return false; // User doesn't exist
+    }
+    
+    $user_data = $check_result->fetch_assoc();
+    $check_stmt->close();
+    
+    // ✅ Only assign if user doesn't already have a referral code (NULL check)
+    if (!empty($user_data['referred_by_code'])) {
+        unset($_SESSION['pending_referral_code']);
+        return false; // User already has a referral
+    }
+    
+    // ✅ Start transaction to ensure data consistency
+    $conn->begin_transaction();
+    
+    try {
+        // Update user with referral code
+        $update_stmt = $conn->prepare("UPDATE users SET referred_by_code = ? WHERE id = ? AND referred_by_code IS NULL");
+        $update_stmt->bind_param("si", $ref_code, $user_id);
+        $update_stmt->execute();
+        $affected_rows = $update_stmt->affected_rows;
+        $update_stmt->close();
+        
+        if ($affected_rows > 0) {
+            // Commit transaction
+            $conn->commit();
+            
+            // Clear the pending referral from session
+            unset($_SESSION['pending_referral_code']);
+            
+            return true;
+        } else {
+            $conn->rollback();
+            unset($_SESSION['pending_referral_code']);
+            return false;
+        }
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("Referral assignment error: " . $e->getMessage());
         return false;
     }
 }

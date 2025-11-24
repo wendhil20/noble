@@ -1,4 +1,5 @@
 <?php
+//mobile_login.php
 session_name("nobleuser");
 session_start();
 include '../connection/connect.php';
@@ -74,6 +75,9 @@ try {
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_mobile'] = $user['mobile'];
+    // ✅ Assign referral code if user came from a referral link
+    require_once '../includes/referral_tracker.php';
+    assignReferralToUser($conn, $user['id']);
 
     // Handle remember me
     if ($remember) {

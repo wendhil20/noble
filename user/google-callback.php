@@ -1,4 +1,5 @@
 <?php
+//google-callback.php
 session_name("nobleuser");
 session_start();
 require_once '../vendor/autoload.php';
@@ -128,6 +129,9 @@ if (isset($_GET['code'])) {
         $_SESSION['user_picture'] = $picture;
         $_SESSION['google_logged_in'] = true;
         $_SESSION['login_success'] = 'Welcome, ' . htmlspecialchars($name) . '!';
+        // ✅ Assign referral code if user came from a referral link
+        require_once '../includes/referral_tracker.php';
+        assignReferralToUser($conn, $user_id);
         
         // Set remember token cookie
         setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), "/", "", false, true);

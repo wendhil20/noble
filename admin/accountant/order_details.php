@@ -103,9 +103,9 @@ $tracking_status_colors = [
     </script>
 </head>
 <body class="bg-gray-50">
-    <div class="max-w-6xl mx-auto p-6">
+    <div class="max-w-7xl mx-auto px-3 py-6">
         <!-- Header -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-noble-orange rounded-lg flex items-center justify-center">
@@ -124,7 +124,7 @@ $tracking_status_colors = [
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- Customer Information -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white rounded-xl shadow-sm p-4">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-user text-noble-orange mr-2"></i>Customer Information
                 </h2>
@@ -153,7 +153,7 @@ $tracking_status_colors = [
             </div>
 
             <!-- Order Status & Dates -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white rounded-xl shadow-sm p-4">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <i class="fas fa-info-circle text-noble-orange mr-2"></i>Order Status
                 </h2>
@@ -192,7 +192,7 @@ $tracking_status_colors = [
 
         <!-- Referral Information (if applicable) -->
         <?php if ($order['referral_code']): ?>
-        <div class="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-6 mb-6">
+        <div class="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-4 mb-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <i class="fas fa-gift text-purple-600 mr-2"></i>Referral Discount Applied
             </h2>
@@ -229,7 +229,7 @@ $tracking_status_colors = [
         <?php endif; ?>
 
         <!-- Payment Information -->
-<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
         <i class="fas fa-credit-card text-noble-orange mr-2"></i>Payment Information
     </h2>
@@ -323,20 +323,20 @@ $tracking_status_colors = [
 </div>
 
         <!-- Order Summary -->
-<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
         <i class="fas fa-calculator text-noble-orange mr-2"></i>Order Summary
     </h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="text-center p-4 bg-gray-50 rounded-lg">
+    <div class="text-center p-3 bg-gray-50 rounded-lg">
         <p class="text-2xl font-bold text-gray-900">₱<?php echo number_format($order['subtotal'] ?: $order['total'], 2); ?></p>
         <p class="text-sm text-gray-600">Subtotal</p>
     </div>
-    <div class="text-center p-4 bg-gray-50 rounded-lg">
+    <div class="text-center p-3 bg-gray-50 rounded-lg">
         <p class="text-2xl font-bold text-purple-600">₱<?php echo number_format($order['vat_amount'], 2); ?></p>
         <p class="text-sm text-gray-600">VAT (12%)</p>
     </div>
-    <div class="text-center p-4 bg-gray-50 rounded-lg">
+    <div class="text-center p-3 bg-gray-50 rounded-lg">
         <p class="text-2xl font-bold text-green-600">₱<?php echo number_format($order['delivery_fee'] ?: $order['shipping_fee'], 2); ?></p>
         <p class="text-sm text-gray-600">Delivery Fee</p>
     </div>
@@ -394,13 +394,13 @@ $profit_margin = $total_selling_price > 0 ? (($gross_profit / $total_selling_pri
 $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
 ?>
 
-<div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-6 mb-6 border-l-4 border-green-500">
+<div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-4 mb-6 border-l-4 border-green-500">
     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
         <i class="fas fa-chart-line text-green-600 mr-2"></i>Profit & Discount Analysis
     </h2>
     
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
-    <div class="bg-white rounded-lg p-4 shadow-sm">
+    <div class="bg-white rounded-lg p-3 shadow-sm">
         <p class="text-xs text-gray-600 mb-1">Supplier Cost</p>
         <p class="text-xl font-bold text-gray-700">₱<?php echo number_format($total_original_cost, 2); ?></p>
         <p class="text-xs text-gray-500 mt-1">Base price</p>
@@ -410,7 +410,7 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
         <p class="text-xl font-bold text-blue-600">+₱<?php echo number_format($total_markup_amount, 2); ?></p>
         <p class="text-xs text-gray-500 mt-1">Added profit</p>
     </div>
-    <div class="bg-white rounded-lg p-4 shadow-sm">
+    <div class="bg-white rounded-lg p-3 shadow-sm">
         <p class="text-xs text-gray-600 mb-1">After Markup</p>
         <p class="text-xl font-bold text-indigo-600">₱<?php echo number_format($price_after_markup, 2); ?></p>
         <p class="text-xs text-gray-500 mt-1">Before discount</p>
@@ -420,7 +420,7 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
         <p class="text-xl font-bold text-orange-600">-₱<?php echo number_format($total_item_discount, 2); ?></p>
         <p class="text-xs text-gray-500 mt-1">Discount given</p>
     </div>
-    <div class="bg-white rounded-lg p-4 shadow-sm">
+    <div class="bg-white rounded-lg p-3 shadow-sm">
         <p class="text-xs text-gray-600 mb-1">After Discount</p>
         <p class="text-xl font-bold text-green-600">₱<?php echo number_format($price_after_discount, 2); ?></p>
         <p class="text-xs text-gray-500 mt-1">Final selling price</p>
@@ -433,7 +433,7 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
 </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-green-200">
+        <div class="bg-white rounded-lg p-3 shadow-sm border-2 border-green-200">
             <p class="text-xs text-gray-600 mb-1">Gross Profit</p>
             <p class="text-2xl font-bold text-green-600">₱<?php echo number_format($gross_profit, 2); ?></p>
             <p class="text-xs text-gray-500 mt-1">Before referral discount</p>
@@ -452,7 +452,7 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
 </div>
 
         <!-- Order Items with Tracking Status -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-4">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <i class="fas fa-shopping-cart text-noble-orange mr-2"></i>Order Items
             </h2>
@@ -460,13 +460,13 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
                 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pricing</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pricing</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
+            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
         </tr>
     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -479,7 +479,7 @@ $actual_selling_price = $actual_subtotal / $quantity;
 $item_profit = $actual_subtotal - ($original_price * $quantity);
         ?>
                                 <tr>
-                                    <td class="px-4 py-4">
+                                    <td class="px-2 py-4">
                                         <div class="text-sm font-medium text-gray-900">
                                             <?php echo htmlspecialchars($item['product_name']); ?>
                                         </div>
@@ -487,7 +487,7 @@ $item_profit = $actual_subtotal - ($original_price * $quantity);
                                         <div class="text-xs text-gray-500">Code: <?php echo htmlspecialchars($item['codename']); ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="px-4 py-4">
+                                    <td class="px-2 py-4">
                                         <div class="text-xs space-y-1">
                                             <?php if ($item['type_name']): ?>
                                             <div><span class="font-medium">Type:</span> <?php echo htmlspecialchars($item['type_name']); ?></div>
@@ -503,7 +503,7 @@ $item_profit = $actual_subtotal - ($original_price * $quantity);
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-4">
+                                    <td class="px-2 py-4">
     <?php
     $item_original = $item['original_price'] ?? $item['price'];
     $item_markup_pct = $item['markup_percent'] ?? 0;
@@ -588,7 +588,7 @@ $item_profit = $actual_subtotal - ($original_price * $quantity);
                             <?php endforeach; ?>
                         <?php else: ?>
     <tr>
-        <td colspan="7" class="px-4 py-8 text-center text-gray-500">No items found</td>
+        <td colspan="7" class="px-2 py-8 text-center text-gray-500">No items found</td>
     </tr>
 <?php endif; ?>
                     </tbody>
@@ -601,13 +601,13 @@ $item_profit = $actual_subtotal - ($original_price * $quantity);
     <div id="screenshotModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-auto">
-                <div class="flex justify-between items-center p-4 border-b">
+                <div class="flex justify-between items-center p-3 border-b">
                     <h3 class="text-lg font-medium text-gray-900">Payment Screenshot</h3>
                     <button onclick="closeScreenshotModal()" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <div class="p-4">
+                <div class="p-3">
                     <img id="screenshotImage" src="" alt="Payment Screenshot" class="max-w-full h-auto mx-auto">
                 </div>
             </div>

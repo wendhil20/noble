@@ -9,6 +9,11 @@ include '../../connection/connect.php';
 require_once '../../includes/referral_tracker.php';
 trackReferralVisit($conn);
 
+// ✅ If user is already logged in, assign referral code if they don't have one
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    assignReferralToUser($conn, $_SESSION['user_id']);
+}
+
 // Include the handler
 include 'index-recent_views_handler-page-14.php';
 

@@ -18,6 +18,11 @@ function generateResetToken() {
 
 // Function to send reset email using PHPMailer
 function sendResetEmail($email, $token, $name) {
+    // Build dynamic reset link
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'];
+    $reset_link = $protocol . $host . '/noble/user/reset_password.php?token=' . $token;
+    
     $mail = new PHPMailer(true);
 
     try {
@@ -34,9 +39,7 @@ function sendResetEmail($email, $token, $name) {
         $mail->setFrom('your-email@gmail.com', 'Noble System');
         $mail->addAddress($email, $name);
 
-        // Content https://noblehomedepot.com/user/
-        $reset_link = "http://localhost/noble/user/reset_password.php?token=" . $token;
-        
+        // Content
         $mail->isHTML(true);
         $mail->Subject = 'Password Reset Request - Noble System';
         $mail->Body    = "

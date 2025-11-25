@@ -7,10 +7,15 @@ require_once '../connection/connect.php';
 
 use Google\Service\PeopleService;
 
+// Build dynamic redirect URI
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+$redirectUri = $protocol . $host . '/noble/user/google-callback.php';
+
 $client = new Google_Client();
 $client->setClientId('465138054143-qv9j0hfr0ft416r41qj1qsqvl1u726u0.apps.googleusercontent.com');
 $client->setClientSecret('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');
-$client->setRedirectUri('http://localhost/noble/user/google-callback.php');
+$client->setRedirectUri($redirectUri);
 $client->addScope("email");
 $client->addScope("profile");
 $client->addScope("https://www.googleapis.com/auth/userinfo.email");
@@ -141,7 +146,7 @@ if (isset($_GET['code'])) {
         
     } catch (Exception $e) {
         error_log("Google OAuth callback error: " . $e->getMessage());
-        $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage(); // Show specific error
+        $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage();
         header("Location: otherpage/index-page-1-A-B-C-D-E.php");
         exit;
     }

@@ -10,10 +10,13 @@
     const host = window.location.host; // localhost or noblehomedepot.com
     
     // Build the redirect URL dynamically
+    // Replace 'index.html' or this file with the actual page
     const redirectUrl = protocol + '//' + host + '/noble/user/otherpage/index-page-1-A-B-C-D-E.php';
     
-    // Redirect immediately
-    window.location.href = redirectUrl;
+    // Redirect immediately with a small delay to ensure it processes
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 100);
   </script>
 </head>
 <body>

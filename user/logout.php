@@ -16,7 +16,7 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https:
 $host = $_SERVER['HTTP_HOST'];
 
 // Redirect to main website homepage
-$redirectUrl = $protocol . $host . '/noble/user/otherpage/index-page-1-A-B-C-D-E.php';
+$redirectUrl = $protocol . $host . '/noble/user/index.php';
 
 // Simply redirect back to your site (logs out of your app)
 // Note: User remains logged into Google in their browser

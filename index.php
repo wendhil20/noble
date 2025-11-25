@@ -5,8 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Redirecting...</title>
   <script>
-    // Magre-redirect agad sa user/otherpage/index.php
-    window.location.href = "user/otherpage/index-page-1-A-B-C-D-E";
+    // Get the protocol and host dynamically
+    const protocol = window.location.protocol; // http: or https:
+    const host = window.location.host; // localhost or noblehomedepot.com
+    
+    // Build the redirect URL dynamically
+    const redirectUrl = protocol + '//' + host + '/noble/user/otherpage/index-page-1-A-B-C-D-E.php';
+    
+    // Redirect immediately
+    window.location.href = redirectUrl;
   </script>
 </head>
 <body>

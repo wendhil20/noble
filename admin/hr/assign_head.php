@@ -27,7 +27,7 @@ $department_subroles = [
 ];
 
 // Fetch all accounts
-$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head, subrole
+$q = "SELECT id, fullname, email, lvl, IFNULL(is_head,0) AS is_head, subrole, IFNULL(commission_rate, 0.00) AS commission_rate
       FROM nobleaccount
       ORDER BY lvl, fullname";
 $res = mysqli_query($conn, $q);
@@ -114,6 +114,9 @@ while ($r = mysqli_fetch_assoc($res)) {
     <?php if (!empty($m['subrole'])): ?>
       <div class="text-xs text-blue-600 mt-1">Role: <?= htmlspecialchars($m['subrole']) ?></div>
     <?php endif; ?>
+    <?php if ($dept === 'sales' && isset($m['commission_rate'])): ?>
+      <div class="text-xs text-green-600 mt-1 font-semibold">Commission: <?= number_format($m['commission_rate'], 2) ?>%</div>
+    <?php endif; ?>
   </div>
 
   <div class="flex items-center gap-2">
@@ -123,7 +126,11 @@ while ($r = mysqli_fetch_assoc($res)) {
     <?php else: ?>
       <button type="button" class="set-head inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-600 text-white text-sm" data-id="<?= $id ?>">Set as Head</button>
     <?php endif; ?>
-    <button type="button" class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm" data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
+    <?php if ($dept !== 'sales'): ?>
+      <button type="button" class="edit-subrole inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-600 text-white text-sm" data-id="<?= $id ?>" data-subrole="<?= htmlspecialchars($m['subrole'] ?? '') ?>">Edit Role</button>
+    <?php else: ?>
+      <button type="button" class="edit-commission inline-flex items-center gap-2 px-3 py-1 rounded-md bg-green-600 text-white text-sm" data-id="<?= $id ?>" data-commission="<?= htmlspecialchars($m['commission_rate'] ?? '0.00') ?>">Edit Commission</button>
+    <?php endif; ?>
   </div>
 </li>
               <?php endforeach; endif; ?>
@@ -215,6 +222,29 @@ while ($r = mysqli_fetch_assoc($res)) {
   </div>
 </div>
 
+<!-- Commission modal (for sales only) -->
+  <div id="commissionModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto p-5">
+      <h4 class="text-lg font-semibold text-gray-900">Edit Commission Rate</h4>
+      <p class="mt-2 text-sm text-gray-600">Set commission percentage for this sales member</p>
+      
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Commission Rate (%)</label>
+        <div class="relative">
+          <input type="number" id="commissionInput" step="0.01" min="0" max="100" placeholder="0.00" 
+                 class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Enter value between 0.00 and 100.00</p>
+      </div>
+      
+      <div class="mt-5 flex justify-end gap-3">
+        <button id="commissionCancel" type="button" class="px-4 py-2 rounded-md border bg-white">Cancel</button>
+        <button id="commissionSave" type="button" class="px-4 py-2 rounded-md bg-green-600 text-white">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- toast -->
   <div id="toast" class="fixed top-6 right-6 z-50 hidden">
     <div id="toastContent" class="px-4 py-2 rounded-lg shadow bg-green-600 text-white"></div>
@@ -244,6 +274,10 @@ const subroleCustomInput = $('#subroleCustomInput');
 const subroleDeptName = $('#subroleDeptName');
 const subroleSave = $('#subroleSave');
 const subroleCancel = $('#subroleCancel');
+const commissionModal = $('#commissionModal');
+  const commissionInput = $('#commissionInput');
+  const commissionSave = $('#commissionSave');
+  const commissionCancel = $('#commissionCancel');
   const toast = $('#toast');
   const toastContent = $('#toastContent');
 
@@ -353,6 +387,74 @@ async function sendAction(accountId, action, extraData = {}) {
     if (deptBtn) {
       const filter = (deptBtn.dataset.filter || '').toLowerCase();
       applyFilter(filter);
+      return;
+    }
+
+    // Handle edit commission button (sales only)
+    const editCommissionBtn = e.target.closest('.edit-commission');
+    if (editCommissionBtn) {
+      const id = editCommissionBtn.dataset.id;
+      const currentCommission = editCommissionBtn.dataset.commission || '0.00';
+      
+      commissionInput.value = currentCommission;
+      commissionModal.classList.remove('hidden');
+      commissionInput.focus();
+      
+      const saveHandler = async () => {
+        const newCommission = parseFloat(commissionInput.value) || 0.00;
+        
+        if (newCommission < 0 || newCommission > 100) {
+          showToast('Commission must be between 0 and 100', 'error');
+          return;
+        }
+        
+        commissionSave.disabled = true;
+        commissionSave.textContent = 'Saving...';
+        
+        try {
+          const json = await sendAction(id, 'update_commission', { commission: newCommission.toFixed(2) });
+          if (json && json.success) {
+            showToast(json.message || 'Commission updated');
+            // Update the button and display
+            editCommissionBtn.dataset.commission = newCommission.toFixed(2);
+            const row = editCommissionBtn.closest('li[data-id]');
+            if (row) {
+              const existingCommission = row.querySelector('.text-green-600');
+              if (existingCommission) {
+                existingCommission.textContent = 'Commission: ' + newCommission.toFixed(2) + '%';
+              } else {
+                const emailDiv = row.querySelector('.text-xs.text-gray-500');
+                const commissionDiv = document.createElement('div');
+                commissionDiv.className = 'text-xs text-green-600 mt-1 font-semibold';
+                commissionDiv.textContent = 'Commission: ' + newCommission.toFixed(2) + '%';
+                emailDiv.after(commissionDiv);
+              }
+            }
+            cleanup();
+          } else {
+            showToast((json && json.message) || 'Failed to update commission', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Network error', 'error');
+        } finally {
+          commissionSave.disabled = false;
+          commissionSave.textContent = 'Save';
+        }
+      };
+      
+      const cancelHandler = () => {
+        cleanup();
+      };
+      
+      const cleanup = () => {
+        commissionModal.classList.add('hidden');
+        commissionSave.removeEventListener('click', saveHandler);
+        commissionCancel.removeEventListener('click', cancelHandler);
+      };
+      
+      commissionSave.addEventListener('click', saveHandler);
+      commissionCancel.addEventListener('click', cancelHandler);
       return;
     }
 

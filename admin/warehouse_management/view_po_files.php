@@ -107,6 +107,101 @@ if (isset($_POST['mark_as_ordered'])) {
     }
 }
 
+// Handle P.O. status update
+if (isset($_POST['update_po_status'])) {
+    $file_id = (int)$_POST['file_id'];
+    $new_status = $_POST['new_status'];
+    $current_user_id = $_SESSION['noble_id'] ?? 0;
+    
+    // Validate status
+    $allowed_statuses = ['supplier_confirmed', 'out_for_delivery', 'currently_receiving'];
+    
+    if (in_array($new_status, $allowed_statuses)) {
+        // Prepare update based on status
+        if ($new_status == 'supplier_confirmed') {
+            $expected_date = isset($_POST['expected_delivery_date']) ? $_POST['expected_delivery_date'] : NULL;
+            
+            $updateSql = "UPDATE po_attachments 
+                         SET po_status = ?,
+                             supplier_confirmed_at = NOW(),
+                             expected_delivery_date = ?,
+                             status_updated_by = ?
+                         WHERE id = ? AND order_id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("ssiii", $new_status, $expected_date, $current_user_id, $file_id, $order_id);
+            
+        } elseif ($new_status == 'out_for_delivery') {
+            $updateSql = "UPDATE po_attachments 
+                         SET po_status = ?,
+                             out_for_delivery_at = NOW(),
+                             status_updated_by = ?
+                         WHERE id = ? AND order_id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("siii", $new_status, $current_user_id, $file_id, $order_id);
+            
+        } elseif ($new_status == 'currently_receiving') {
+    $receiver_id = isset($_POST['receiver_id']) ? (int)$_POST['receiver_id'] : 0;
+    $po_number = isset($_POST['po_number']) ? trim($_POST['po_number']) : '';
+    
+    if ($receiver_id <= 0) {
+        $error_message = "Please select a receiver.";
+    } elseif (empty($po_number)) {
+        $error_message = "P.O. number is required.";
+    } else {
+        // Validate P.O. number exists in order_items
+        $validatePoSql = "SELECT COUNT(*) as count FROM order_items WHERE po_number = ? AND order_id = ?";
+        $validatePoStmt = $conn->prepare($validatePoSql);
+        $validatePoStmt->bind_param("si", $po_number, $order_id);
+        $validatePoStmt->execute();
+        $validateResult = $validatePoStmt->get_result()->fetch_assoc();
+        $validatePoStmt->close();
+        
+        if ($validateResult['count'] == 0) {
+            $error_message = "Invalid P.O. number for this order.";
+        } else {
+            // Update P.O. status
+            $updateSql = "UPDATE po_attachments 
+                         SET po_status = ?,
+                             currently_receiving_at = NOW(),
+                             status_updated_by = ?
+                         WHERE id = ? AND order_id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("siii", $new_status, $current_user_id, $file_id, $order_id);
+            
+            if ($updateStmt->execute()) {
+                // Create receiver assignment using the validated P.O. number
+                $assignSql = "INSERT INTO po_receiver_assignments 
+                             (po_attachment_id, po_number, order_id, receiver_id, assigned_by, assigned_at, status)
+                             VALUES (?, ?, ?, ?, ?, NOW(), 'active')";
+                $assignStmt = $conn->prepare($assignSql);
+                $assignStmt->bind_param("isiii", $file_id, $po_number, $order_id, $receiver_id, $current_user_id);
+                
+                if ($assignStmt->execute()) {
+                    $success_message = "P.O. assigned to receiver successfully.";
+                } else {
+                    $error_message = "Failed to assign P.O. to receiver.";
+                }
+                $assignStmt->close();
+            } else {
+                $error_message = "Failed to update P.O. status.";
+            }
+        }
+    }
+}
+        
+        if ($updateStmt->execute()) {
+            $success_message = "P.O. status updated successfully.";
+            header("Location: view_po_files.php?order_id=" . $order_id);
+            exit();
+        } else {
+            $error_message = "Failed to update P.O. status.";
+        }
+        $updateStmt->close();
+    } else {
+        $error_message = "Invalid status.";
+    }
+}
+
 // Handle approval request
 if (isset($_POST['request_approval'])) {
     $file_id = (int)$_POST['file_id'];
@@ -379,12 +474,44 @@ if (isset($_POST['delete_file'])) {
                                             </div>
                                         </div>
                                         <div class="flex items-center space-x-2">
-    <!-- Ordered Badge -->
-    <?php if ($file['marked_as_ordered'] == 1): ?>
-        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-            <i class="fas fa-shipping-fast mr-1"></i>
-            Ordered on <?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>
+    <!-- P.O. Status Badges -->
+    <?php if ($file['all_items_received'] == 1): ?>
+    <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full border-2 border-emerald-300">
+        <i class="fas fa-check-double mr-1"></i>
+        All Items Received (<?php echo date('M j, Y', strtotime($file['all_items_received_at'])); ?>)
+    </span>
+<?php elseif ($file['marked_as_ordered'] == 1): ?>
+    <?php if ($file['po_status'] == 'currently_receiving'): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+            <i class="fas fa-inbox mr-1"></i>
+            Currently Receiving (<?php echo date('M j, Y', strtotime($file['currently_receiving_at'])); ?>)
         </span>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                <i class="fas fa-inbox mr-1"></i>
+                Currently Receiving (<?php echo date('M j, Y', strtotime($file['currently_receiving_at'])); ?>)
+            </span>
+        <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                <i class="fas fa-truck mr-1"></i>
+                Out for Delivery (<?php echo date('M j, Y', strtotime($file['out_for_delivery_at'])); ?>)
+            </span>
+        <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                <i class="fas fa-check-circle mr-1"></i>
+                Supplier Confirmed (<?php echo date('M j, Y', strtotime($file['supplier_confirmed_at'])); ?>)
+            </span>
+            <?php if ($file['expected_delivery_date']): ?>
+                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                    <i class="fas fa-calendar mr-1"></i>
+                    Expected: <?php echo date('M j, Y', strtotime($file['expected_delivery_date'])); ?>
+                </span>
+            <?php endif; ?>
+        <?php else: ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                <i class="fas fa-shipping-fast mr-1"></i>
+                Ordered (<?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>)
+            </span>
+        <?php endif; ?>
     <?php endif; ?>
     
     <!-- Approval Status Badge -->
@@ -412,25 +539,61 @@ if (isset($_POST['delete_file'])) {
     </a>
     
     <?php if ($file['marked_as_ordered'] == 0): ?>
-        <?php if ($file['approval_status'] != 'pending' && $file['approval_requested_at'] == null): ?>
-            <form method="POST" style="display: inline;">
-                <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
-                <button type="submit" name="request_approval"
-                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-                    <i class="fas fa-check"></i>
-                    <span>Request Approval</span>
-                </button>
-            </form>
-        <?php endif; ?>
-        
-        <?php if ($file['approval_status'] == 'approved'): ?>
-            <button onclick="markSingleAsOrdered(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
-                    class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
-                <i class="fas fa-paper-plane"></i>
-                <span>Mark as Ordered</span>
+    <?php if ($file['approval_status'] != 'pending' && $file['approval_requested_at'] == null): ?>
+        <form method="POST" style="display: inline;">
+            <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
+            <button type="submit" name="request_approval"
+                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+                <i class="fas fa-check"></i>
+                <span>Request Approval</span>
             </button>
-        <?php endif; ?>
+        </form>
     <?php endif; ?>
+    
+    <?php if ($file['approval_status'] == 'approved'): ?>
+        <button onclick="markSingleAsOrdered(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+            <i class="fas fa-paper-plane"></i>
+            <span>Mark as Ordered</span>
+        </button>
+    <?php endif; ?>
+<?php else: ?>
+    <!-- P.O. Status Update Buttons -->
+    <?php if ($file['po_status'] == 'currently_receiving'): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+            <i class="fas fa-check-double mr-1"></i>
+            Process Complete
+        </span>
+    <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
+        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'currently_receiving', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+            <i class="fas fa-inbox"></i>
+            <span>Mark as Currently Receiving</span>
+        </button>
+        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
+                class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+            <i class="fas fa-undo"></i>
+            <span>Back to Confirmed</span>
+        </button>
+    <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
+        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'out_for_delivery', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
+                class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+            <i class="fas fa-truck"></i>
+            <span>Mark as Out for Delivery</span>
+        </button>
+        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+            <i class="fas fa-edit"></i>
+            <span>Update Expected Date</span>
+        </button>
+    <?php else: ?>
+        <button onclick="updatePoStatus(<?php echo $file['id']; ?>, 'supplier_confirmed', '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>', true)"
+                class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
+            <i class="fas fa-check-circle"></i>
+            <span>Mark as Supplier Confirmed</span>
+        </button>
+    <?php endif; ?>
+<?php endif; ?>
     
     <button onclick="confirmDelete(<?php echo $file['id']; ?>, '<?php echo htmlspecialchars($file['original_filename'], ENT_QUOTES); ?>')"
             class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm">
@@ -558,6 +721,115 @@ if (isset($_POST['delete_file'])) {
         </div>
     </div>
 
+    <!-- P.O. Status Update Modal -->
+<div id="updateStatusModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <form method="POST">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                            <i class="fas fa-sync-alt text-blue-600 text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900">Update P.O. Status</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Update status for: <strong id="statusFileName"></strong>
+                    </p>
+                    
+                    <input type="hidden" name="file_id" id="statusFileId">
+                    <input type="hidden" name="new_status" id="newStatusValue">
+                    
+                    <!-- P.O. Number Input Field (shown only for currently_receiving) -->
+                    <div id="poNumberField" class="mb-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-barcode mr-1"></i>
+                            P.O. Number <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="po_number" 
+                               id="poNumberInput"
+                               placeholder="Enter P.O. Number (e.g., NH10202025922331)"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                               readonly>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            This P.O. number will be assigned to the receiver
+                        </p>
+                    </div>
+                    
+                    <!-- Expected Delivery Date Field (shown only for supplier_confirmed) -->
+                    <div id="expectedDateField" class="mb-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-1"></i>
+                            Expected Delivery Date
+                        </label>
+                        <input type="date" 
+                               name="expected_delivery_date" 
+                               id="expectedDeliveryDate"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <!-- Receiver Selection Field (shown only for currently_receiving) -->
+                    <div id="receiverSelectField" class="mb-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-check mr-1"></i>
+                            Assign to Receiver <span class="text-red-500">*</span>
+                        </label>
+                        <select name="receiver_id" 
+                                id="receiverSelect"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">-- Select Receiver --</option>
+                            <?php
+                            // Get available receivers with their current workload
+                            $receiversSql = "SELECT 
+                                                na.id, 
+                                                na.fullname,
+                                                COUNT(pra.id) as active_workload
+                                            FROM nobleaccount na
+                                            LEFT JOIN po_receiver_assignments pra ON na.id = pra.receiver_id AND pra.status = 'active'
+                                            WHERE na.subrole = 'warehouse_receiver' AND na.status = 'active'
+                                            GROUP BY na.id, na.fullname
+                                            ORDER BY active_workload ASC, na.fullname ASC";
+                            $receiversStmt = $conn->query($receiversSql);
+                            
+                            if ($receiversStmt) {
+                                while ($receiver = $receiversStmt->fetch_assoc()) {
+                                    $workloadBadge = $receiver['active_workload'] > 0 ? " ({$receiver['active_workload']} active)" : " (Available)";
+                                    echo '<option value="' . $receiver['id'] . '">' . htmlspecialchars($receiver['fullname']) . $workloadBadge . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Receivers with fewer active P.O.s are shown first
+                        </p>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-blue-800" id="statusUpdateMessage">
+                            <!-- Dynamic message will appear here -->
+                        </p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeUpdateStatusModal()" 
+                                class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" name="update_po_status" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <i class="fas fa-check mr-2"></i>
+                            <span id="updateStatusButtonText">Update Status</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
     <script>
         function confirmDelete(fileId, fileName) {
             document.getElementById('deleteFileId').value = fileId;
@@ -650,6 +922,80 @@ if (isset($_POST['delete_file'])) {
         document.getElementById('markAllOrderedModal').addEventListener('click', function(e) {
             if (e.target === this) closeMarkAllOrderedModal();
         });
+
+        // Update P.O. Status
+function updatePoStatus(fileId, newStatus, fileName, needsDate = false) {
+    document.getElementById('statusFileId').value = fileId;
+    document.getElementById('newStatusValue').value = newStatus;
+    document.getElementById('statusFileName').textContent = fileName;
+    
+    const expectedDateField = document.getElementById('expectedDateField');
+    const expectedDateInput = document.getElementById('expectedDeliveryDate');
+    const poNumberField = document.getElementById('poNumberField');
+    const poNumberInput = document.getElementById('poNumberInput');
+    const receiverField = document.getElementById('receiverSelectField');
+    const receiverSelect = document.getElementById('receiverSelect');
+    const updateMessage = document.getElementById('statusUpdateMessage');
+    const buttonText = document.getElementById('updateStatusButtonText');
+    
+    // Reset all fields
+    expectedDateField.classList.add('hidden');
+    expectedDateInput.removeAttribute('required');
+    expectedDateInput.value = '';
+    poNumberField.classList.add('hidden');
+    poNumberInput.removeAttribute('required');
+    poNumberInput.value = '';
+    receiverField.classList.add('hidden');
+    receiverSelect.removeAttribute('required');
+    receiverSelect.value = '';
+    
+    // Show/hide fields and update message based on status
+    if (newStatus === 'supplier_confirmed') {
+        expectedDateField.classList.remove('hidden');
+        expectedDateInput.setAttribute('required', 'required');
+        updateMessage.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Supplier has confirmed the order. Please provide the expected delivery date.';
+        buttonText.textContent = needsDate ? 'Update Expected Date' : 'Confirm with Date';
+        
+    } else if (newStatus === 'out_for_delivery') {
+        updateMessage.innerHTML = '<i class="fas fa-truck mr-1"></i>Mark this P.O. as out for delivery.';
+        buttonText.textContent = 'Mark Out for Delivery';
+        
+    } else if (newStatus === 'currently_receiving') {
+        // Show P.O. number field (read-only, extracted from file name)
+        poNumberField.classList.remove('hidden');
+        poNumberInput.setAttribute('required', 'required');
+        
+        // Extract P.O. number from the file name
+        // Assuming format: PO_NH11242025152028_Wendhil_business_warehouse_staff_(1).xlsx
+        const poMatch = fileName.match(/PO_([A-Z0-9]+)_/i);
+        if (poMatch && poMatch[1]) {
+            poNumberInput.value = poMatch[1];
+        } else {
+            // If can't extract, allow manual input
+            poNumberInput.readOnly = false;
+            poNumberInput.placeholder = 'Enter P.O. Number';
+        }
+        
+        // Show receiver selection
+        receiverField.classList.remove('hidden');
+        receiverSelect.setAttribute('required', 'required');
+        
+        updateMessage.innerHTML = '<i class="fas fa-inbox mr-1"></i>Assign this P.O. to a warehouse receiver for processing. The P.O. number will be used to track items.';
+        buttonText.textContent = 'Assign to Receiver';
+    }
+    
+    document.getElementById('updateStatusModal').classList.remove('hidden');
+}
+
+function closeUpdateStatusModal() {
+    document.getElementById('updateStatusModal').classList.add('hidden');
+    document.getElementById('expectedDeliveryDate').value = '';
+}
+
+// Close modal when clicking outside
+document.getElementById('updateStatusModal').addEventListener('click', function(e) {
+    if (e.target === this) closeUpdateStatusModal();
+});
     </script>
 </body>
 </html>

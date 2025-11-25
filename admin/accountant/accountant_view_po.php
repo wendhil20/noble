@@ -153,17 +153,22 @@ if (isset($_POST['approve_with_file'])) {
         }
         
         // Approve the file (with or without replacement)
-        if (!isset($error_message)) {
-            $approveSql = "UPDATE po_attachments 
-                           SET approval_status = 'approved', 
-                               approved_by = ?,
-                               approved_at = NOW(),
-                               file_path = ?,
-                               original_filename = ?,
-                               uploaded_at = NOW()
-                           WHERE id = ? AND order_id = ?";
-            $approveStmt = $conn->prepare($approveSql);
-            $approveStmt->bind_param("issii", $current_user_id, $file_path, $original_filename, $file_id, $order_id);
+if (!isset($error_message)) {
+    // Check if file was replaced
+    $fileReplaced = isset($_FILES['updated_po_file']) && $_FILES['updated_po_file']['error'] === UPLOAD_ERR_OK ? 1 : 0;
+    
+    $approveSql = "UPDATE po_attachments 
+                   SET approval_status = 'approved', 
+                       approved_by = ?,
+                       approved_at = NOW(),
+                       file_path = ?,
+                       original_filename = ?,
+                       uploaded_at = NOW(),
+                       file_replaced = ?,
+                       file_replaced_at = " . ($fileReplaced ? "NOW()" : "NULL") . "
+                   WHERE id = ? AND order_id = ?";
+    $approveStmt = $conn->prepare($approveSql);
+    $approveStmt->bind_param("issiii", $current_user_id, $file_path, $original_filename, $fileReplaced, $file_id, $order_id);
             
             if ($approveStmt->execute()) {
                 if (isset($_FILES['updated_po_file']) && $_FILES['updated_po_file']['error'] === UPLOAD_ERR_OK) {
@@ -408,12 +413,52 @@ if (isset($_POST['reject_file'])) {
             </div>
         </div>
                                         <div class="flex items-center space-x-2">
-    <!-- Ordered Badge -->
-    <?php if ($file['marked_as_ordered'] == 1): ?>
-        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-            <i class="fas fa-shipping-fast mr-1"></i>
-            Ordered on <?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>
+    <!-- File Replaced Badge -->
+    <?php if (!empty($file['file_replaced']) && $file['file_replaced'] == 1): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+            <i class="fas fa-sync-alt mr-1"></i>
+            File Updated on <?php echo date('M j, Y', strtotime($file['file_replaced_at'])); ?>
         </span>
+    <?php endif; ?>
+    
+    <!-- P.O. Status Badges (Read-Only for Accountant) -->
+    <?php if ($file['all_items_received'] == 1): ?>
+    <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full border-2 border-emerald-300">
+        <i class="fas fa-check-double mr-1"></i>
+        All Items Received (<?php echo date('M j, Y', strtotime($file['all_items_received_at'])); ?>)
+    </span>
+<?php elseif ($file['marked_as_ordered'] == 1): ?>
+    <?php if ($file['po_status'] == 'currently_receiving'): ?>
+        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+            <i class="fas fa-inbox mr-1"></i>
+            Currently Receiving (<?php echo date('M j, Y', strtotime($file['currently_receiving_at'])); ?>)
+        </span>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                <i class="fas fa-inbox mr-1"></i>
+                Currently Receiving (<?php echo date('M j, Y', strtotime($file['currently_receiving_at'])); ?>)
+            </span>
+        <?php elseif ($file['po_status'] == 'out_for_delivery'): ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                <i class="fas fa-truck mr-1"></i>
+                Out for Delivery (<?php echo date('M j, Y', strtotime($file['out_for_delivery_at'])); ?>)
+            </span>
+        <?php elseif ($file['po_status'] == 'supplier_confirmed'): ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                <i class="fas fa-check-circle mr-1"></i>
+                Supplier Confirmed (<?php echo date('M j, Y', strtotime($file['supplier_confirmed_at'])); ?>)
+            </span>
+            <?php if ($file['expected_delivery_date']): ?>
+                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                    <i class="fas fa-calendar mr-1"></i>
+                    Expected: <?php echo date('M j, Y', strtotime($file['expected_delivery_date'])); ?>
+                </span>
+            <?php endif; ?>
+        <?php else: ?>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                <i class="fas fa-shipping-fast mr-1"></i>
+                Ordered (<?php echo date('M j, Y', strtotime($file['marked_as_ordered_at'])); ?>)
+            </span>
+        <?php endif; ?>
     <?php endif; ?>
     
     <!-- Approval Status -->

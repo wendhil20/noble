@@ -19,17 +19,13 @@ if (!$order_id) {
     die("Invalid order ID");
 }
 
-// Get order details with referral information
+// Get order details with sales referral information
 $order_query = "
-    SELECT o.*, 
-           rc.referral_code as used_referral_code,
-           rc.discount_type as referral_discount_type,
-           rc.discount_value as referral_discount_value,
-           na.fullname as referrer_name,
-           na.email as referrer_email
+    SELECT o.*,
+           na.fullname as sales_person_name,
+           na.email as sales_person_email
     FROM orders o
-    LEFT JOIN referral_codes rc ON o.referral_code = rc.referral_code
-    LEFT JOIN nobleaccount na ON rc.user_id = na.id
+    LEFT JOIN nobleaccount na ON o.sales_user_id = na.id
     WHERE o.id = ?
 ";
 $stmt = $conn->prepare($order_query);
@@ -190,44 +186,32 @@ $tracking_status_colors = [
             </div>
         </div>
 
-        <!-- Referral Information (if applicable) -->
-        <?php if ($order['referral_code']): ?>
-        <div class="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-4 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-gift text-purple-600 mr-2"></i>Referral Discount Applied
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Referral Code Used</label>
-                    <p class="text-lg font-bold text-purple-700"><?php echo htmlspecialchars($order['referral_code']); ?></p>
-                </div>
-                <?php if ($order['referrer_name']): ?>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Referred By</label>
-                    <p class="text-gray-900"><?php echo htmlspecialchars($order['referrer_name']); ?></p>
-                    <p class="text-sm text-gray-500"><?php echo htmlspecialchars($order['referrer_email']); ?></p>
-                </div>
-                <?php endif; ?>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Discount Type</label>
-                    <p class="text-gray-900"><?php echo ucfirst($order['referral_discount_type'] ?: 'N/A'); ?></p>
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Discount Amount</label>
-                    <p class="text-lg font-bold text-green-600">
-                        <?php 
-                        if ($order['referral_discount_amount'] > 0) {
-                            echo '₱' . number_format($order['referral_discount_amount'], 2);
-                        } else {
-                            echo 'N/A';
-                        }
-                        ?>
-                    </p>
-                </div>
-            </div>
+        <!-- Sales Referral Information (if applicable) -->
+<?php if ($order['sales_referral_code']): ?>
+<div class="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-4 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-user-tie text-purple-600 mr-2"></i>Sales Representative
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="text-sm font-medium text-gray-600">Referral Code Used</label>
+            <p class="text-lg font-bold text-purple-700"><?php echo htmlspecialchars($order['sales_referral_code']); ?></p>
         </div>
-        <?php endif; ?>
-
+        <div>
+            <label class="text-sm font-medium text-gray-600">Sales Representative</label>
+            <p class="text-gray-900 font-semibold"><?php echo htmlspecialchars($order['sales_person_name'] ?? 'N/A'); ?></p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-600">Commission Rate</label>
+            <p class="text-lg font-bold text-orange-600"><?php echo number_format($order['sales_commission_rate'] ?? 0, 1); ?>%</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-600">Commission Amount</label>
+            <p class="text-lg font-bold text-green-600">₱<?php echo number_format($order['sales_commission_amount'] ?? 0, 2); ?></p>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
         <!-- Payment Information -->
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -327,7 +311,7 @@ $tracking_status_colors = [
     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
         <i class="fas fa-calculator text-noble-orange mr-2"></i>Order Summary
     </h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
     <div class="text-center p-3 bg-gray-50 rounded-lg">
         <p class="text-2xl font-bold text-gray-900">₱<?php echo number_format($order['subtotal'] ?: $order['total'], 2); ?></p>
         <p class="text-sm text-gray-600">Subtotal</p>
@@ -389,9 +373,6 @@ while ($item = $items_result->fetch_assoc()) {
 
 $gross_profit = $total_selling_price - $total_original_cost;
 $profit_margin = $total_selling_price > 0 ? (($gross_profit / $total_selling_price) * 100) : 0;
-
-// Net profit after referral discount
-$net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
 ?>
 
 <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-sm p-4 mb-6 border-l-4 border-green-500">
@@ -399,7 +380,7 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
         <i class="fas fa-chart-line text-green-600 mr-2"></i>Profit & Discount Analysis
     </h2>
     
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
     <div class="bg-white rounded-lg p-3 shadow-sm">
         <p class="text-xs text-gray-600 mb-1">Supplier Cost</p>
         <p class="text-xl font-bold text-gray-700">₱<?php echo number_format($total_original_cost, 2); ?></p>
@@ -425,30 +406,20 @@ $net_profit = $gross_profit - ($order['referral_discount_amount'] ?? 0);
         <p class="text-xl font-bold text-green-600">₱<?php echo number_format($price_after_discount, 2); ?></p>
         <p class="text-xs text-gray-500 mt-1">Final selling price</p>
     </div>
-    <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-200">
-        <p class="text-xs text-gray-600 mb-1">Referral Discount</p>
-        <p class="text-xl font-bold text-purple-600">-₱<?php echo number_format($order['referral_discount_amount'] ?? 0, 2); ?></p>
-        <p class="text-xs text-gray-500 mt-1">Extra discount</p>
-    </div>
 </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg p-3 shadow-sm border-2 border-green-200">
-            <p class="text-xs text-gray-600 mb-1">Gross Profit</p>
-            <p class="text-2xl font-bold text-green-600">₱<?php echo number_format($gross_profit, 2); ?></p>
-            <p class="text-xs text-gray-500 mt-1">Before referral discount</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-blue-200">
-            <p class="text-xs text-gray-600 mb-1">Net Profit</p>
-            <p class="text-2xl font-bold text-blue-600">₱<?php echo number_format($net_profit, 2); ?></p>
-            <p class="text-xs text-gray-500 mt-1">After all discounts</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-indigo-200">
-            <p class="text-xs text-gray-600 mb-1">Profit Margin</p>
-            <p class="text-2xl font-bold text-indigo-600"><?php echo number_format($profit_margin, 2); ?>%</p>
-            <p class="text-xs text-gray-500 mt-1">Gross margin percentage</p>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-green-200">
+        <p class="text-xs text-gray-600 mb-1">Gross Profit</p>
+        <p class="text-2xl font-bold text-green-600">₱<?php echo number_format($gross_profit, 2); ?></p>
+        <p class="text-xs text-gray-500 mt-1">After all discounts</p>
     </div>
+    <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-indigo-200">
+        <p class="text-xs text-gray-600 mb-1">Profit Margin</p>
+        <p class="text-2xl font-bold text-indigo-600"><?php echo number_format($profit_margin, 2); ?>%</p>
+        <p class="text-xs text-gray-500 mt-1">Gross margin percentage</p>
+    </div>
+</div>
 </div>
 
         <!-- Order Items with Tracking Status -->

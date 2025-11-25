@@ -364,6 +364,96 @@ if (!empty($po_number)) {
                     </div>
                 </div>
 
+                <?php
+// Check if all items with this PO are received
+$allReceivedSql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN received_status = 'received' THEN 1 ELSE 0 END) as received_count
+                   FROM order_items 
+                   WHERE po_number = ?";
+$allReceivedStmt = $conn->prepare($allReceivedSql);
+$allReceivedStmt->bind_param("s", $po_number);
+$allReceivedStmt->execute();
+$receivedStats = $allReceivedStmt->get_result()->fetch_assoc();
+$allReceivedStmt->close();
+
+$allItemsReceived = ($receivedStats['total'] == $receivedStats['received_count']) && $receivedStats['total'] > 0;
+$someItemsReceived = $receivedStats['received_count'] > 0;
+
+// Check if PO attachment already marked as all received
+$poStatusSql = "SELECT pa.all_items_received 
+                FROM po_attachments pa
+                INNER JOIN order_items oi ON pa.order_id = oi.order_id
+                WHERE oi.po_number = ?
+                LIMIT 1";
+$poStatusStmt = $conn->prepare($poStatusSql);
+$poStatusStmt->bind_param("s", $po_number);
+$poStatusStmt->execute();
+$poStatus = $poStatusStmt->get_result()->fetch_assoc();
+$poStatusStmt->close();
+$alreadyMarkedComplete = ($poStatus['all_items_received'] ?? 0) == 1;
+?>
+
+<?php if ($someItemsReceived): ?>
+<!-- Reception Progress Card -->
+<div class="bg-gradient-to-r from-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-50 to-<?php echo $allItemsReceived ? 'emerald' : 'indigo'; ?>-50 border-2 border-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-300 rounded-xl shadow-lg p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-start space-x-4">
+            <div class="bg-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-500 p-3 rounded-lg flex-shrink-0">
+                <i class="fas fa-<?php echo $allItemsReceived ? 'check-circle' : 'tasks'; ?> text-white text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-900 mb-2">
+                    <?php echo $allItemsReceived ? 'All Items Received!' : 'Reception In Progress'; ?>
+                </h3>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-sm text-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-700">
+                            <i class="fas fa-box-check mr-1"></i>
+                            <span class="font-semibold"><?php echo $receivedStats['received_count']; ?> of <?php echo $receivedStats['total']; ?></span> items received
+                        </div>
+                        <div class="flex-1 max-w-xs">
+                            <div class="w-full bg-white rounded-full h-3 shadow-inner">
+                                <div class="bg-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-500 h-3 rounded-full transition-all duration-500" 
+                                     style="width: <?php echo ($receivedStats['received_count'] / $receivedStats['total']) * 100; ?>%"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold text-<?php echo $allItemsReceived ? 'green' : 'blue'; ?>-700">
+                            <?php echo round(($receivedStats['received_count'] / $receivedStats['total']) * 100); ?>%
+                        </span>
+                    </div>
+                    
+                    <?php if ($allItemsReceived && !$alreadyMarkedComplete): ?>
+                    <p class="text-sm text-green-700 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ready to mark P.O. as completely received
+                    </p>
+                    <?php elseif ($alreadyMarkedComplete): ?>
+                    <p class="text-sm text-green-700 mt-2">
+                        <i class="fas fa-check-double mr-1"></i>
+                        P.O. marked as completely received
+                    </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <?php if ($allItemsReceived && !$alreadyMarkedComplete): ?>
+        <button onclick="markPOAsCompletelyReceived('<?php echo htmlspecialchars($po_number, ENT_QUOTES); ?>')"
+                class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 whitespace-nowrap">
+            <i class="fas fa-clipboard-check text-xl"></i>
+            <span class="font-semibold">Mark P.O. as Completely Received</span>
+        </button>
+        <?php elseif ($alreadyMarkedComplete): ?>
+        <div class="bg-green-100 border-2 border-green-400 text-green-800 px-6 py-3 rounded-lg flex items-center space-x-2">
+            <i class="fas fa-check-circle text-xl"></i>
+            <span class="font-semibold">Complete</span>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
                 <!-- Items Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php foreach ($orderItems as $index => $item): ?>
@@ -1083,6 +1173,35 @@ if (!empty($po_number)) {
         if (searchInput && !searchInput.value) {
             searchInput.focus();
         }
+
+        function markPOAsCompletelyReceived(poNumber) {
+    if (!confirm('Mark this P.O. as completely received?\n\nThis will:\n• Update the P.O. attachment status\n• Record the completion date\n• Notify relevant departments\n\nProceed?')) {
+        return;
+    }
+    
+    fetch('mark_po_complete.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            po_number: poNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ P.O. marked as completely received!\n\n' + data.message);
+            window.location.reload();
+        } else {
+            alert('✗ Failed to mark P.O. as complete: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('✗ Failed to mark P.O. as complete. Please try again.');
+    });
+}
     </script>
 </body>
 </html>

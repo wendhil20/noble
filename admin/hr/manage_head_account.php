@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : 0;
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 
-if (!$account_id || !in_array($action, ['set_head','remove_head','update_subrole'])) {
+if (!$account_id || !in_array($action, ['set_head','remove_head','update_subrole','update_commission'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid parameters.']);
     exit;
 }
@@ -94,6 +94,34 @@ if ($action === 'update_subrole') {
         echo json_encode(['success' => true, 'message' => 'Subrole updated successfully.']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to update subrole.']);
+    }
+    exit;
+}
+
+if ($action === 'update_commission') {
+    // Only allow commission for sales department
+    if ($lvl !== 'sales') {
+        echo json_encode(['success' => false, 'message' => 'Commission can only be set for sales members.']);
+        exit;
+    }
+    
+    $commission = isset($_POST['commission']) ? floatval($_POST['commission']) : 0.00;
+    
+    // Validate commission range
+    if ($commission < 0 || $commission > 100) {
+        echo json_encode(['success' => false, 'message' => 'Commission must be between 0 and 100.']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("UPDATE nobleaccount SET commission_rate = ? WHERE id = ?");
+    $stmt->bind_param("di", $commission, $account_id);
+    $ok = $stmt->execute();
+    $stmt->close();
+
+    if ($ok) {
+        echo json_encode(['success' => true, 'message' => 'Commission updated successfully.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to update commission.']);
     }
     exit;
 }

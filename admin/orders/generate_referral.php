@@ -46,36 +46,6 @@ $message = "";
 $error = "";
 $referral_data = null;
 
-// ✅ Handle discount/voucher update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_discount'])) {
-    $discount_enabled = isset($_POST['discount_enabled']) ? 1 : 0;
-    $discount_type = $_POST['discount_type'] ?? 'percentage';
-    $discount_value = floatval($_POST['discount_value'] ?? 0);
-    
-    // Validate discount value
-    if ($discount_type == 'percentage' && ($discount_value < 0 || $discount_value > 100)) {
-        $error = "Percentage discount must be between 0 and 100!";
-    } elseif ($discount_type == 'fixed' && $discount_value < 0) {
-        $error = "Fixed discount cannot be negative!";
-    } else {
-        // Update discount settings
-        $stmt = $conn->prepare("UPDATE referral_codes SET discount_enabled = ?, discount_type = ?, discount_value = ? WHERE user_id = ? AND is_active = 1");
-        $stmt->bind_param("isdi", $discount_enabled, $discount_type, $discount_value, $user_id);
-        
-        if ($stmt->execute()) {
-            $message = "Discount/voucher settings updated successfully!";
-            
-            // Refresh data
-            $referral_data['discount_enabled'] = $discount_enabled;
-            $referral_data['discount_type'] = $discount_type;
-            $referral_data['discount_value'] = $discount_value;
-        } else {
-            $error = "Failed to update discount settings. Please try again.";
-        }
-        $stmt->close();
-    }
-}
-
 // ✅ Generate Clean Referral Code (NH-XXXXXX)
 function generateCleanCode($conn, $user_id) {
     $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing: 0,O,1,I
@@ -129,10 +99,70 @@ if ($referral_data !== null) {
     $referral_data['conversion_rate'] = $conversion_rate;
 }
 
+// ✅ CALCULATE TOTAL COMMISSION EARNED
+if ($referral_data !== null) {
+    // Get total commission from all orders using this sales person's referral code
+    $commission_stmt = $conn->prepare("
+        SELECT 
+            COUNT(*) as total_orders,
+            COALESCE(SUM(sales_commission_amount), 0) as total_commission,
+            COALESCE(SUM(subtotal), 0) as total_sales_value,
+            AVG(sales_commission_rate) as avg_commission_rate
+        FROM orders 
+        WHERE sales_referral_code = ? 
+        AND sales_user_id = ?
+        AND payment_status IN ('verified', 'paid', 'completed')
+    ");
+    $commission_stmt->bind_param("si", $referral_data['code'], $user_id);
+    $commission_stmt->execute();
+    $commission_result = $commission_stmt->get_result();
+    
+    if ($commission_result->num_rows > 0) {
+        $commission_data = $commission_result->fetch_assoc();
+        $referral_data['total_commission'] = floatval($commission_data['total_commission'] ?? 0);
+        $referral_data['commission_orders'] = intval($commission_data['total_orders'] ?? 0);
+        $referral_data['total_sales_value'] = floatval($commission_data['total_sales_value'] ?? 0);
+        $referral_data['avg_commission_rate'] = floatval($commission_data['avg_commission_rate'] ?? 0);
+    } else {
+        $referral_data['total_commission'] = 0;
+        $referral_data['commission_orders'] = 0;
+        $referral_data['total_sales_value'] = 0;
+        $referral_data['avg_commission_rate'] = 0;
+    }
+    $commission_stmt->close();
+    
+    // Get detailed commission breakdown by order
+    $commission_details_stmt = $conn->prepare("
+        SELECT 
+            o.id,
+            o.reference_no,
+            o.customer_name,
+            o.created_at,
+            o.subtotal,
+            o.sales_commission_rate,
+            o.sales_commission_amount,
+            o.payment_status
+        FROM orders o
+        WHERE o.sales_referral_code = ? 
+        AND o.sales_user_id = ?
+        ORDER BY o.created_at DESC
+    ");
+    $commission_details_stmt->bind_param("si", $referral_data['code'], $user_id);
+    $commission_details_stmt->execute();
+    $commission_details_result = $commission_details_stmt->get_result();
+    
+    $commission_breakdown = [];
+    while ($row = $commission_details_result->fetch_assoc()) {
+        $commission_breakdown[] = $row;
+    }
+    $commission_details_stmt->close();
+    $referral_data['commission_breakdown'] = $commission_breakdown;
+}
+
 // ✅ NEW: Count unique users who used this referral code
 if ($referral_data !== null) {
     // Count unique customers who placed orders with this referral code
-    $stmt = $conn->prepare("SELECT COUNT(DISTINCT user_id) FROM orders WHERE referral_code = ? AND referral_code IS NOT NULL");
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT user_id) FROM orders WHERE sales_referral_code = ? AND sales_referral_code IS NOT NULL");
     $stmt->bind_param("s", $referral_data['code']);
     $stmt->execute();
     $stmt->bind_result($unique_users);
@@ -142,19 +172,19 @@ if ($referral_data !== null) {
     
     // Get list of users who used the code (with their details)
     $stmt = $conn->prepare("
-        SELECT DISTINCT 
-            o.user_id,
-            o.customer_name,
-            o.email,
-            COUNT(o.id) as order_count,
-            SUM(o.total) as total_spent,
-            MIN(o.created_at) as first_order_date,
-            MAX(o.created_at) as last_order_date
-        FROM orders o
-        WHERE o.referral_code = ? AND o.referral_code IS NOT NULL
-        GROUP BY o.user_id, o.customer_name, o.email
-        ORDER BY total_spent DESC
-    ");
+    SELECT DISTINCT 
+        o.user_id,
+        o.customer_name,
+        o.email,
+        COUNT(o.id) as order_count,
+        SUM(o.total) as total_spent,
+        MIN(o.created_at) as first_order_date,
+        MAX(o.created_at) as last_order_date
+    FROM orders o
+    WHERE o.sales_referral_code = ? AND o.sales_referral_code IS NOT NULL
+    GROUP BY o.user_id, o.customer_name, o.email
+    ORDER BY total_spent DESC
+");
     $stmt->bind_param("s", $referral_data['code']);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -211,8 +241,8 @@ $stmt = $conn->prepare("
             COUNT(*) as order_count,
             SUM(total) as revenue
         FROM orders
-        WHERE referral_code = ? 
-        AND referral_code IS NOT NULL
+        WHERE sales_referral_code = ? 
+        AND sales_referral_code IS NOT NULL
         GROUP BY DATE(created_at)
     ) daily_orders ON rv.visit_date = daily_orders.order_date
     WHERE rv.user_id = ? 
@@ -559,143 +589,139 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
     </div>
 </div>
 
-<!-- Stats Grid -->
-                    <!-- Discount/Voucher Section -->
-<div class="mt-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange-300 overflow-hidden">
-    <div class="bg-gradient-to-r from-orange-400 to-yellow-400 px-4 py-2 flex items-center justify-between">
-        <h3 class="text-white font-bold flex items-center">
-            <i class="fas fa-ticket-alt mr-2"></i>
-            Referral Discount/Voucher
+<!-- ✅ COMMISSION EARNINGS SECTION -->
+<div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300 overflow-hidden mb-6">
+    <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-3 flex items-center justify-between">
+        <h3 class="text-white font-bold flex items-center text-lg">
+            <i class="fas fa-money-bill-wave mr-2"></i>
+            Your Commission Earnings
         </h3>
-        <button onclick="toggleDiscountForm()" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-sm">
-            <i class="fas fa-edit mr-1"></i>Edit
-        </button>
+        <span class="bg-white/20 px-3 py-1 rounded-full text-white text-xs font-semibold">
+            <i class="fas fa-percent mr-1"></i>
+            <?php echo number_format($referral_data['avg_commission_rate'] ?? 0, 1); ?>% Avg Rate
+        </span>
     </div>
     
-    <div class="p-4">
-        <?php if (($referral_data['discount_enabled'] ?? 0) == 1): ?>
-            <div class="text-center py-4">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-3">
-                    <i class="fas fa-gift text-orange-600 text-2xl"></i>
+    <div class="p-6">
+        <!-- Commission Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <!-- Total Commission -->
+            <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-green-200">
+                <div class="text-sm text-gray-600 mb-2 font-medium">Total Commission Earned</div>
+                <div class="text-4xl font-bold text-green-600 mb-1">
+                    ₱<?php echo number_format($referral_data['total_commission'] ?? 0, 2); ?>
                 </div>
-                <div class="text-3xl font-bold text-orange-600 mb-2">
-                    <?php 
-                    if ($referral_data['discount_type'] == 'percentage') {
-                        echo number_format($referral_data['discount_value'], 0) . '% OFF';
-                    } else {
-                        echo '₱' . number_format($referral_data['discount_value'], 2) . ' OFF';
-                    }
+                <div class="text-xs text-gray-500">
+                    From <?php echo number_format($referral_data['commission_orders'] ?? 0); ?> order<?php echo ($referral_data['commission_orders'] ?? 0) != 1 ? 's' : ''; ?>
+                </div>
+            </div>
+            
+            <!-- Total Sales Value -->
+            <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-blue-200">
+                <div class="text-sm text-gray-600 mb-2 font-medium">Total Sales Value</div>
+                <div class="text-4xl font-bold text-blue-600 mb-1">
+                    ₱<?php echo number_format($referral_data['total_sales_value'] ?? 0, 2); ?>
+                </div>
+                <div class="text-xs text-gray-500">
+                    Generated from your referrals
+                </div>
+            </div>
+            
+            <!-- Average Commission Per Order -->
+            <div class="bg-white rounded-xl shadow-md p-6 text-center border-2 border-purple-200">
+                <div class="text-sm text-gray-600 mb-2 font-medium">Avg Commission/Order</div>
+                <div class="text-4xl font-bold text-purple-600 mb-1">
+                    ₱<?php 
+                    $avg_per_order = ($referral_data['commission_orders'] ?? 0) > 0 
+                        ? ($referral_data['total_commission'] ?? 0) / ($referral_data['commission_orders'] ?? 1)
+                        : 0;
+                    echo number_format($avg_per_order, 2); 
                     ?>
                 </div>
-                <p class="text-sm text-gray-600">
-                    <?php 
-                    if ($referral_data['discount_type'] == 'percentage') {
-                        echo 'Customers get ' . number_format($referral_data['discount_value'], 0) . '% discount';
-                    } else {
-                        echo 'Customers get ₱' . number_format($referral_data['discount_value'], 2) . ' voucher';
-                    }
-                    ?>
-                </p>
-                <div class="mt-3 inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                    <i class="fas fa-check-circle mr-1"></i>Active
+                <div class="text-xs text-gray-500">
+                    Per successful order
+                </div>
+            </div>
+        </div>
+        
+        <!-- Commission Breakdown Table -->
+        <?php if (!empty($referral_data['commission_breakdown'])): ?>
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <h4 class="font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-list mr-2"></i>
+                        Commission Breakdown
+                    </h4>
+                </div>
+                
+                <div class="overflow-x-auto max-h-96">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100 sticky top-0">
+                            <tr class="border-b border-gray-200">
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Order #</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Customer</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Date</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Order Value</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Rate</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Commission</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <?php foreach ($referral_data['commission_breakdown'] as $order): ?>
+                                <tr class="hover:bg-green-50 transition-colors">
+                                    <td class="px-4 py-3">
+                                        <span class="font-mono text-purple-700 font-semibold">
+                                            <?php echo htmlspecialchars($order['reference_no']); ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-800">
+                                        <?php echo htmlspecialchars($order['customer_name']); ?>
+                                    </td>
+                                    <td class="px-4 py-3 text-center text-xs text-gray-600">
+                                        <?php echo date('M j, Y', strtotime($order['created_at'])); ?>
+                                    </td>
+                                    <td class="px-4 py-3 text-right font-semibold text-blue-600">
+                                        ₱<?php echo number_format($order['subtotal'], 2); ?>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">
+                                            <?php echo number_format($order['sales_commission_rate'], 1); ?>%
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <span class="font-bold text-green-700 text-base">
+                                            ₱<?php echo number_format($order['sales_commission_amount'], 2); ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <?php
+                                        $status_colors = [
+                                            'verified' => 'bg-green-100 text-green-700',
+                                            'paid' => 'bg-blue-100 text-blue-700',
+                                            'completed' => 'bg-purple-100 text-purple-700',
+                                            'pending' => 'bg-yellow-100 text-yellow-700'
+                                        ];
+                                        $status_class = $status_colors[$order['payment_status']] ?? 'bg-gray-100 text-gray-700';
+                                        ?>
+                                        <span class="inline-flex items-center px-2 py-1 <?php echo $status_class; ?> rounded-full text-xs font-semibold">
+                                            <?php echo ucfirst($order['payment_status']); ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         <?php else: ?>
-            <div class="text-center py-6 text-gray-500">
-                <i class="fas fa-ban text-4xl mb-3 text-gray-400"></i>
-                <p class="font-medium">No discount/voucher set</p>
-                <p class="text-xs mt-1">Click "Edit" to add a discount for your referrals</p>
+            <div class="bg-white rounded-xl shadow-md p-12 text-center">
+                <i class="fas fa-inbox text-5xl text-gray-300 mb-4"></i>
+                <p class="text-gray-600 font-medium">No commission earned yet</p>
+                <p class="text-sm text-gray-500 mt-2">Share your referral code to start earning commissions!</p>
             </div>
         <?php endif; ?>
     </div>
-</div>
-
-<!-- Discount Settings Form (Hidden by default) -->
-<div id="discountForm" class="hidden mt-6 bg-white rounded-lg border-2 border-gray-300 p-6">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">
-        <i class="fas fa-cog mr-2 text-gray-600"></i>Configure Discount/Voucher
-    </h3>
-    
-    <form method="POST" class="space-y-4">
-        <!-- Enable/Disable Discount -->
-        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-            <input type="checkbox" id="enableDiscount" name="discount_enabled" value="1" 
-                <?php echo (($referral_data['discount_enabled'] ?? 0) == 1) ? 'checked' : ''; ?>
-                class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
-            <label for="enableDiscount" class="text-sm font-medium text-gray-700">
-                Enable discount/voucher for this referral code
-            </label>
-        </div>
-        
-        <!-- Discount Type Selection -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Discount Type</label>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition
-                    <?php echo ($referral_data['discount_type'] == 'percentage') ? 'border-orange-500 bg-orange-50' : 'border-gray-300'; ?>">
-                    <input type="radio" name="discount_type" value="percentage" 
-                        <?php echo (($referral_data['discount_type'] ?? 'percentage') == 'percentage') ? 'checked' : ''; ?>
-                        class="sr-only" onchange="this.form.querySelectorAll('label').forEach(l => l.classList.remove('border-orange-500', 'bg-orange-50')); this.closest('label').classList.add('border-orange-500', 'bg-orange-50');">
-                    <div class="flex-1 text-center">
-                        <i class="fas fa-percent text-2xl text-orange-600 mb-2"></i>
-                        <div class="font-bold text-gray-900">Percentage</div>
-                        <div class="text-xs text-gray-600">e.g., 10% off</div>
-                    </div>
-                </label>
-                
-                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition
-                    <?php echo ($referral_data['discount_type'] == 'fixed') ? 'border-orange-500 bg-orange-50' : 'border-gray-300'; ?>">
-                    <input type="radio" name="discount_type" value="fixed" 
-                        <?php echo ($referral_data['discount_type'] == 'fixed') ? 'checked' : ''; ?>
-                        class="sr-only" onchange="this.form.querySelectorAll('label').forEach(l => l.classList.remove('border-orange-500', 'bg-orange-50')); this.closest('label').classList.add('border-orange-500', 'bg-orange-50');">
-                    <div class="flex-1 text-center">
-                        <i class="fas fa-coins text-2xl text-orange-600 mb-2"></i>
-                        <div class="font-bold text-gray-900">Fixed Amount</div>
-                        <div class="text-xs text-gray-600">e.g., ₱100 off</div>
-                    </div>
-                </label>
-            </div>
-        </div>
-        
-        <!-- Discount Value Input -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Discount Value</label>
-            <div class="relative">
-                <input type="number" name="discount_value" step="0.01" min="0" 
-                    value="<?php echo htmlspecialchars($referral_data['discount_value'] ?? '0'); ?>"
-                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg font-bold"
-                    placeholder="Enter amount"
-                    required>
-                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                    <span id="discountUnit"><?php echo ($referral_data['discount_type'] == 'percentage') ? '%' : '₱'; ?></span>
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">
-                <i class="fas fa-info-circle mr-1"></i>
-                <span id="discountHint">
-                    <?php 
-                    if ($referral_data['discount_type'] == 'percentage') {
-                        echo 'Enter percentage (e.g., 10 for 10% discount)';
-                    } else {
-                        echo 'Enter amount in pesos (e.g., 100 for ₱100 voucher)';
-                    }
-                    ?>
-                </span>
-            </p>
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex gap-3 pt-4 border-t border-gray-200">
-            <button type="button" onclick="toggleDiscountForm()" 
-                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition">
-                Cancel
-            </button>
-            <button type="submit" name="update_discount" 
-                class="flex-1 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white px-4 py-3 rounded-lg font-medium transition">
-                <i class="fas fa-save mr-2"></i>Save Discount
-            </button>
-        </div>
-    </form>
 </div>
 
 <!-- ✅ CUSTOMERS WHO USED CODE SECTION -->
@@ -718,6 +744,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                             <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Email</th>
                             <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
                             <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total Spent</th>
+                            <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Comission</th>
                             <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">First Order</th>
                             <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Last Order</th>
                         </tr>
@@ -753,10 +780,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                                 </td>
                                 
                                 <td class="px-4 py-3 text-right">
-                                    <span class="font-bold text-green-700">
-                                        ₱<?php echo number_format($user['total_spent'], 2); ?>
-                                    </span>
-                                </td>
+    <span class="font-bold text-green-700">
+        ₱<?php echo number_format($user['total_spent'], 2); ?>
+    </span>
+</td>
+
+<td class="px-4 py-3 text-center text-xs text-gray-600">
+    <?php
+    // Calculate commission for this customer
+    $customer_comm_stmt = $conn->prepare("
+        SELECT COALESCE(SUM(sales_commission_amount), 0) as customer_commission
+        FROM orders 
+        WHERE user_id = ? 
+        AND sales_referral_code = ?
+        AND sales_user_id = ?
+    ");
+    $customer_comm_stmt->bind_param("isi", $user['user_id'], $referral_data['code'], $user_id);
+    $customer_comm_stmt->execute();
+    $customer_comm_stmt->bind_result($customer_commission);
+    $customer_comm_stmt->fetch();
+    $customer_comm_stmt->close();
+    ?>
+    <span class="font-bold text-green-700">
+        ₱<?php echo number_format($customer_commission ?? 0, 2); ?>
+    </span>
+</td>
                                 
                                 <td class="px-4 py-3 text-center text-xs text-gray-600">
                                     <?php echo date('M j, Y', strtotime($user['first_order_date'])); ?>
@@ -814,8 +862,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remake_code'])) {
                 
                 <div class="p-4 sm:p-6">
                     <?php
-// Calculate today's conversion rate
-$today_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE referral_code = ? AND DATE(created_at) = CURDATE()");
+// Get today's conversion rate
+$today_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE sales_referral_code = ? AND DATE(created_at) = CURDATE()");
 $today_orders_stmt->bind_param("s", $referral_data['code']);
 $today_orders_stmt->execute();
 $today_orders_stmt->bind_result($today_orders);
@@ -826,7 +874,7 @@ $today_visits = $referral_data['today_visits'] ?? 0;
 $today_conversion = $today_visits > 0 ? (($today_orders ?? 0) / $today_visits) * 100 : 0;
 
 // Calculate this week's stats
-$week_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE referral_code = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+$week_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE sales_referral_code = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
 $week_orders_stmt->bind_param("s", $referral_data['code']);
 $week_orders_stmt->execute();
 $week_orders_stmt->bind_result($week_orders);
@@ -837,7 +885,7 @@ $week_visits = $referral_data['week_visits'] ?? 0;
 $week_conversion = $week_visits > 0 ? (($week_orders ?? 0) / $week_visits) * 100 : 0;
 
 // Calculate this month's stats
-$month_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE referral_code = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
+$month_orders_stmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE sales_referral_code = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
 $month_orders_stmt->bind_param("s", $referral_data['code']);
 $month_orders_stmt->execute();
 $month_orders_stmt->bind_result($month_orders);
@@ -1069,17 +1117,17 @@ while ($row = $history_result->fetch_assoc()) {
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-100 border-b-2 border-gray-300">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Referral Code</th>
-                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Discount</th>
-                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Visits</th>
-                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
-                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Conv. %</th>
-                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Revenue</th>
-                    <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Created</th>
-                </tr>
-            </thead>
+    <tr>
+        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">#</th>
+        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Customer Name</th>
+        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Email</th>
+        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Orders</th>
+        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total Spent</th>
+        <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Commission Earned</th>
+        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">First Order</th>
+        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Last Order</th>
+    </tr>
+</thead>
             <tbody class="divide-y divide-gray-200">
                 <?php foreach ($all_history_rows as $history_row): ?>
                     <?php 
@@ -1092,7 +1140,7 @@ while ($row = $history_result->fetch_assoc()) {
                     $visit_stmt->close();
                     
                     // Get REAL order count from orders table
-                    $order_stmt = $conn->prepare("SELECT COUNT(*), COALESCE(SUM(total), 0) FROM orders WHERE referral_code = ? AND referral_code IS NOT NULL");
+$order_stmt = $conn->prepare("SELECT COUNT(*), COALESCE(SUM(total), 0) FROM orders WHERE sales_referral_code = ? AND sales_referral_code IS NOT NULL");
                     $order_stmt->bind_param("s", $history_row['referral_code']);
                     $order_stmt->execute();
                     $order_stmt->bind_result($real_orders, $real_revenue);
@@ -1405,28 +1453,6 @@ while ($row = $history_result->fetch_assoc()) {
                 hideRemakeModal();
             }
         });
-
-        // Discount form toggle
-function toggleDiscountForm() {
-    const form = document.getElementById('discountForm');
-    form.classList.toggle('hidden');
-}
-
-// Update discount unit and hint based on selected type
-document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const unit = document.getElementById('discountUnit');
-        const hint = document.getElementById('discountHint');
-        
-        if (this.value === 'percentage') {
-            unit.textContent = '%';
-            hint.textContent = 'Enter percentage (e.g., 10 for 10% discount)';
-        } else {
-            unit.textContent = '₱';
-            hint.textContent = 'Enter amount in pesos (e.g., 100 for ₱100 voucher)';
-        }
-    });
-});
 
 function copyCode() {
     const code = '<?php echo $referral_data['code'] ?? ''; ?>';

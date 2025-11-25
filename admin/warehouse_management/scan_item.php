@@ -915,26 +915,27 @@ if ($itemInfo && $itemInfo['order_id']) {
         const itemId = <?php echo $item_id; ?>;
 
         function updateTrackingStatus(newStatus) {
-            if (!confirm('Are you sure you want to update the tracking status to "' + newStatus + '"?\n\nThis will indicate that the package has been received and is now stored in the warehouse.')) {
-                return;
-            }
+    if (!confirm('Are you sure you want to update the tracking status to "' + newStatus + '"?\n\nThis will:\n• Mark the item as In Warehouse\n• Update received status\n• Record receipt date and time')) {
+        return;
+    }
 
-            // Show loading state
-            const button = event.target.closest('button');
-            const originalContent = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
 
-            fetch('update_tracking_status.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId,
-                        tracking_status: newStatus
-                    })
-                })
+    fetch('update_tracking_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                tracking_status: newStatus,
+                mark_as_received: true  // Add this flag
+            })
+        })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {

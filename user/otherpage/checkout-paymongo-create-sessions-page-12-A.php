@@ -50,63 +50,68 @@ try {
     $delivery_fee = floatval($input['delivery_fee'] ?? 0);
     $order_details = $input['order_details'] ?? [];
     
-    // ✅ STEP 1: Get referral code from SESSION first
-$referral_code = isset($_SESSION['applied_referral_code']) ? trim($_SESSION['applied_referral_code']) : null;
-$referral_user_id = null;
-$referral_discount = 0.00;
+   // ✅ SALES COMMISSION TRACKING (NO DISCOUNT)
+$sales_commission_rate = 0.00;
+$sales_commission_amount = 0.00;
+$sales_user_id = null;
+$sales_referral_code = null;
 
-error_log("=== CHECKING FOR REFERRAL CODE ===");
-error_log("Session applied_referral_code: " . ($referral_code ?? 'NULL'));
-
-// ✅ STEP 2: Process referral code if we have one
-if (!empty($referral_code)) {
-    $stmt = $conn->prepare("SELECT user_id, discount_type, discount_value 
-                           FROM referral_codes 
-                           WHERE referral_code = ? AND is_active = 1 AND discount_enabled = 1 
-                           LIMIT 1");
-    $stmt->bind_param("s", $referral_code);
-    $stmt->execute();
-    $result = $stmt->get_result();
+// Check logged-in user's referred_by_code
+if (!empty($user_id)) {
+    $user_check = $conn->prepare("SELECT referred_by_code FROM users WHERE id = ? LIMIT 1");
+    $user_check->bind_param("i", $user_id);
+    $user_check->execute();
+    $user_result = $user_check->get_result();
     
-    if ($result->num_rows > 0) {
-        $ref_data = $result->fetch_assoc();
-        $referral_user_id = $ref_data['user_id'];
+    if ($user_result->num_rows > 0) {
+        $user_data = $user_result->fetch_assoc();
+        $potential_code = $user_data['referred_by_code'];
         
-        // ✅ STEP 3: Get ORIGINAL cart subtotal (before ANY discounts)
-        $cart_stmt = $conn->prepare("
-            SELECT SUM(price * quantity) as original_subtotal
-            FROM user_cart_items 
-            WHERE user_id = ?
-        ");
-        $cart_stmt->bind_param("i", $user_id);
-        $cart_stmt->execute();
-        $cart_result = $cart_stmt->get_result();
-        $cart_row = $cart_result->fetch_assoc();
-        $original_subtotal = floatval($cart_row['original_subtotal'] ?? 0);
-        $cart_stmt->close();
-        
-        error_log("=== REFERRAL DISCOUNT CALCULATION (PayMongo) ===");
-        error_log("Original Cart Subtotal: ₱" . number_format($original_subtotal, 2));
-        error_log("Referral Type: " . $ref_data['discount_type']);
-        error_log("Referral Value: " . $ref_data['discount_value']);
-        
-        // ✅ STEP 4: Apply discount on ORIGINAL subtotal
-        if ($ref_data['discount_type'] === 'percentage') {
-            $referral_discount = $original_subtotal * ($ref_data['discount_value'] / 100);
-            error_log("Calculation: ₱" . number_format($original_subtotal, 2) . " × " . $ref_data['discount_value'] . "% = ₱" . number_format($referral_discount, 2));
-        } else {
-            $referral_discount = min($ref_data['discount_value'], $original_subtotal);
-            error_log("Calculation: min(₱" . number_format($ref_data['discount_value'], 2) . ", ₱" . number_format($original_subtotal, 2) . ") = ₱" . number_format($referral_discount, 2));
+        if (!empty($potential_code)) {
+            $sales_check = $conn->prepare("
+                SELECT rc.user_id, rc.referral_code, na.commission_rate
+                FROM referral_codes rc
+                INNER JOIN nobleaccount na ON rc.user_id = na.id
+                WHERE rc.referral_code = ? 
+                AND rc.is_active = 1 
+                AND na.lvl = 'sales'
+                AND na.commission_rate > 0
+                LIMIT 1
+            ");
+            
+            $sales_check->bind_param("s", $potential_code);
+            $sales_check->execute();
+            $sales_result = $sales_check->get_result();
+            
+            if ($sales_result->num_rows > 0) {
+                $sales_data = $sales_result->fetch_assoc();
+                $sales_user_id = $sales_data['user_id'];
+                $sales_referral_code = $sales_data['referral_code'];
+                $sales_commission_rate = floatval($sales_data['commission_rate']);
+                
+                // Get original cart subtotal
+                $cart_stmt = $conn->prepare("
+                    SELECT SUM(price * quantity) as original_subtotal
+                    FROM user_cart_items 
+                    WHERE user_id = ?
+                ");
+                $cart_stmt->bind_param("i", $user_id);
+                $cart_stmt->execute();
+                $cart_result = $cart_stmt->get_result();
+                $cart_row = $cart_result->fetch_assoc();
+                $original_subtotal = floatval($cart_row['original_subtotal'] ?? 0);
+                $cart_stmt->close();
+                
+                $sales_commission_amount = $original_subtotal * ($sales_commission_rate / 100);
+                
+                error_log("=== PayMongo Sales Commission ===");
+                error_log("Commission Rate: {$sales_commission_rate}%");
+                error_log("Commission Amount: ₱" . number_format($sales_commission_amount, 2));
+            }
+            $sales_check->close();
         }
-        
-        error_log(">>> FINAL REFERRAL DISCOUNT: ₱" . number_format($referral_discount, 2));
-        error_log("===============================================");
-    } else {
-        error_log("⚠️ Referral code not found in database!");
     }
-    $stmt->close();
-} else {
-    error_log("⚠️ No referral code in session");
+    $user_check->close();
 }
 
 error_log("=== PAYMONGO SESSION CREATION ===");
@@ -232,17 +237,18 @@ error_log("Amount: ₱" . number_format($amount, 2));
         longitude,
         billing_address_id,
         delivery_distance,
-        referral_code,
-        referral_user_id,
-        referral_discount_amount
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        sales_referral_code,
+sales_commission_rate,
+sales_commission_amount,
+sales_user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($insert_sql);
     if (!$stmt) {
         throw new Exception('Prepare failed: ' . $conn->error);
     }
 
-    $types = "isssssdddddsssssissddddddidsid";
+    $types = "isssssdddddsssssissddddddidsddi";
 
     $stmt->bind_param(
         $types,
@@ -273,9 +279,10 @@ error_log("Amount: ₱" . number_format($amount, 2));
         $longitude,
         $billing_address_id,
         $delivery_distance,
-        $referral_code,
-        $referral_user_id,
-        $referral_discount
+        $sales_referral_code,
+$sales_commission_rate,
+$sales_commission_amount,
+$sales_user_id
     );
     
     if (!$stmt->execute()) {

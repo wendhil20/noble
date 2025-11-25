@@ -197,6 +197,15 @@ try {
                 unset($_SESSION['pending_paymongo_order']);
                 unset($_SESSION['paymongo_order_data']);
 
+                // ✅ STEP 6: Clear referred_by_code after first successful purchase
+if (isset($order['sales_user_id']) && !empty($order['sales_user_id'])) {
+    $clear_referral = $conn->prepare("UPDATE users SET referred_by_code = NULL WHERE id = ?");
+    $clear_referral->bind_param("i", $user_id);
+    $clear_referral->execute();
+    $clear_referral->close();
+    error_log("✓ Cleared referred_by_code for user: $user_id (PayMongo purchase completed)");
+}
+
             } else {
                 // Page refresh - don't deduct again
                 error_log("✓ Stock already deducted for order: " . $order['id']);
@@ -336,13 +345,6 @@ if ($order && !empty($order['reference_no'])) {
                                     <span class="text-gray-600">Items Subtotal:</span>
                                     <span class="font-medium">₱<?= number_format($order['subtotal'] ?? 0, 2) ?></span>
                                 </div>
-
-                                <?php if (isset($order['referral_code']) && !empty($order['referral_code']) && isset($order['referral_discount_amount']) && $order['referral_discount_amount'] > 0): ?>
-                                    <div class="flex justify-between text-purple-600 bg-purple-50 px-3 py-2 rounded-lg -mx-3">
-                                        <span class="font-medium">Referral Discount (<?= htmlspecialchars($order['referral_code']) ?>):</span>
-                                        <span class="font-bold">-₱<?= number_format($order['referral_discount_amount'], 2) ?></span>
-                                    </div>
-                                <?php endif; ?>
 
                                 <?php if (isset($order['vat_amount']) && $order['vat_amount'] > 0): ?>
                                     <div class="flex justify-between text-sm">

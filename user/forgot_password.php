@@ -11,17 +11,27 @@ use PHPMailer\PHPMailer\Exception;
 
 require '../vendor/autoload.php'; // Adjust path to your PHPMailer installation
 
+// Detect if localhost or production
+$isLocalhost = (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false);
+
 // Function to generate random token
 function generateResetToken() {
     return bin2hex(random_bytes(32));
 }
 
 // Function to send reset email using PHPMailer
-function sendResetEmail($email, $token, $name) {
+function sendResetEmail($email, $token, $name, $isLocalhost) {
     // Build dynamic reset link
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'];
-    $reset_link = $protocol . $host . '/noble/user/reset_password.php?token=' . $token;
+    
+    if ($isLocalhost) {
+        // Localhost path with 'noble' folder
+        $reset_link = $protocol . $host . '/noble/user/reset_password.php?token=' . $token;
+    } else {
+        // Production domain - starts from 'user'
+        $reset_link = $protocol . $host . '/user/reset_password.php?token=' . $token;
+    }
     
     $mail = new PHPMailer(true);
 
@@ -145,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($stmt->execute()) {
                     // Send reset email/SMS
                     if (filter_var($email_or_mobile, FILTER_VALIDATE_EMAIL)) {
-                        if (sendResetEmail($user['email'], $reset_token, $user['name'])) {
+                        if (sendResetEmail($user['email'], $reset_token, $user['name'], $isLocalhost)) {
                             $message = "Password reset link has been sent to your email. Please check your inbox.";
                         } else {
                             $error = "Failed to send reset email. Please try again later.";
@@ -165,6 +175,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = "If an account with that email/mobile exists, a password reset link has been sent.";
         }
     }
+}
+
+// Determine back to login link based on environment
+if ($isLocalhost) {
+    $backToLoginLink = "otherpage/index-page-1-A-B-C-D-E.php";
+} else {
+    $backToLoginLink = "../otherpage/index-page-1-A-B-C-D-E.php";
 }
 ?>
 
@@ -234,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <!-- Back to Login -->
         <div class="text-center">
-            <a href="otherpage/index-page-1-A-B-C-D-E.php" class="text-sm text-orange-500 hover:underline">
+            <a href="<?= $backToLoginLink ?>" class="text-sm text-orange-500 hover:underline">
                 ← Back to Login
             </a>
         </div>

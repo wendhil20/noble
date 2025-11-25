@@ -37,13 +37,23 @@ $delivery_data = $_SESSION['checkout_step3'];
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
 
+// Detect if localhost or production
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+// Determine base path for URLs
+if ($isLocalhost) {
+    $basePath = '/noble/user/otherpage';
+} else {
+    $basePath = '/user/otherpage';
+}
+
 // Dynamic PayPal URLs
-$paypal_return_url = $protocol . $host . '/noble/user/otherpage/paypal-success.php';
-$paypal_cancel_url = $protocol . $host . '/noble/user/otherpage/index-checkout-page-12-3.php';
+$paypal_return_url = $protocol . $host . $basePath . '/paypal-success.php';
+$paypal_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
 
 // Dynamic PayMongo URLs
-$paymongo_success_url = $protocol . $host . '/noble/user/otherpage/checkout-paymongo-succes-page-12-A.php';
-$paymongo_cancel_url = $protocol . $host . '/noble/user/otherpage/index-checkout-page-12-3.php';
+$paymongo_success_url = $protocol . $host . $basePath . '/checkout-paymongo-succes-page-12-A.php';
+$paymongo_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
 
 // PayPal configuration
 $paypal_config = [
@@ -806,9 +816,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($_SESSION['checkout_step3']);
                 unset($_SESSION['applied_referral_code']); // ← ADD THIS
 
-                // Redirect to success page
-                header('Location: checkout-order_receipt-page-12-A.php?order_id=' . $order_id);
-                exit;
+          // Redirect to success page - DYNAMIC
+    $receiptUrl = $isLocalhost ? 
+        'checkout-order_receipt-page-12-A.php?order_id=' . $order_id :
+        '../checkout-order_receipt-page-12-A.php?order_id=' . $order_id;
+    
+    header('Location: ' . $receiptUrl);
+    exit;
             }
             $stmt->close();
         } catch (Exception $e) {

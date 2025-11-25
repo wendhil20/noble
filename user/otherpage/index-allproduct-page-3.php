@@ -3,7 +3,7 @@ session_name("nobleuser");
 session_start();
 include '../../connection/connect.php';
 // Add this before the query
-mysqli_query($conn, "SET SESSION group_concat_max_len = 10000;");   
+mysqli_query($conn, "SET SESSION group_concat_max_len = 10000;");
 // Restore session from remember_token
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -30,7 +30,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 
 
 $is_guest = !isset($_SESSION['user_id']);
-// Modified query to get products with colors and variants
+// ✅ UPDATED: Query to get products with colors (including image2) and variants
 $material_query = "
     SELECT 
         p.id AS product_id,
@@ -41,6 +41,7 @@ $material_query = "
         pc.color_code,
         pc.price AS color_price,
         pc.image AS color_image,
+        pc.image2 AS color_image2,
         GROUP_CONCAT(
             DISTINCT
             JSON_OBJECT(
@@ -94,6 +95,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
     ];
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -208,7 +210,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         .notification.success {
             background-color: #28a745;
             /* Verification green */
-            color: #ffffff;
+            color: #ffffffff;
             padding: 12px 16px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
             font-weight: 500;
@@ -314,12 +316,64 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
             color: #9ca3af;
         }
 
+        /* Product Image Hover Effect */
+        .product-card .group {
+            position: relative;
+        }
 
+        .product-image {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .product-image-2 {
+            transition: opacity 0.3s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Smooth image transition on hover */
+        .group:hover .product-image {
+            opacity: 0 !important;
+        }
+
+        .group:hover .product-image-2 {
+            opacity: 1 !important;
+        }
+
+        /* Fallback for browsers without group-hover */
+        @media (hover: hover) {
+            .product-image {
+                opacity: 1;
+            }
+
+            .product-image-2 {
+                opacity: 0;
+            }
+
+            .product-card:hover .product-image {
+                opacity: 0;
+            }
+
+            .product-card:hover .product-image-2 {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 font-roboto">
     <?php include '../navbar/top.php'; ?>
+<div class="hidden md:block">
+    <div class="container mx-auto px-1 bg-contain bg-center mb-4 h-96 "
+        style="background-image: url('../img/display2.webp'); ">
+        <h3 class="text-3xl font-bold text-white text-center drop-shadow-md py-20">
+            
+        </h3>
+    </div>
+</div>
+
+
 
     <!-- Mobile Filter Overlay -->
     <div class="filter-overlay lg:hidden" id="filterOverlay"></div>
@@ -402,29 +456,16 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
         </div>
     </aside>
 
-<!-- Header with Background Image - Full Width -->
-<header class="relative text-center py-20 md:py-32 lg:py-40 overflow-hidden w-full">
-    <div class="absolute inset-0 z-0 w-full h-full">
-        <img src="../img/saleandexplore/a.png" alt="Background Image" class="w-full h-full object-contain" loading="lazy">
-        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-    </div>
-    <div class="relative z-10">
-        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Your Header Title</h1>
-    </div>
-</header>
-
- 
-
     <!-- Mobile Filter Button -->
-    <div class="lg:hidden fixed bottom-4 left-4 right-4 z-30">
-        <button onclick="openMobileFilters()" class="w-full px-4 py-3 bg-black text-white rounded-full shadow-lg flex items-center justify-center gap-2 hover:bg-gray-900">
+    <div class="lg:hidden fixed bottom-4 left-4 right-4 z-30 mb-2">
+        <button onclick="openMobileFilters()" class=" px-1 py-1 bg-black text-white rounded-lg flex items-center justify-start gap-2 hover:bg-gray-900">
             <i class="fas fa-filter"></i> Filters & Sort
         </button>
     </div>
 
     <!-- Main Layout -->
-<!-- Main Layout -->
-<div class="lg:flex">
+    <!-- Main Layout -->
+    <div class="lg:flex">
         <!-- Desktop Sidebar -->
         <aside class="hidden lg:block w-80 p-6 sticky top-0 h-screen overflow-y-auto">
             <h2 class="text-xl mb-6"><i class="fas fa-sliders-h mr-2"></i>Filters</h2>
@@ -503,7 +544,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 Showing <span id="displayCount">0</span> of <span id="totalCount">0</span> products
             </div>
 
-            <!-- Hidden product data -->
+
             <div id="productData" style="display: none;">
                 <?php if ($material_results && mysqli_num_rows($material_results) > 0): ?>
                     <?php while ($row = mysqli_fetch_assoc($material_results)):
@@ -521,23 +562,27 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                             $first_variant['discount']
                         );
 
+                        // ✅ UPDATED: Handle both image and image2
                         $color_image_path = !empty($row['color_image']) ? '../../' . $row['color_image'] : '../img/placeholder.jpg';
+                        $color_image2_path = !empty($row['color_image2']) ? '../../' . $row['color_image2'] : null;
+
                         $product = [
                             'id' => (int)$row['product_id'],
-                            'name' => safe_output($row['product_name']), // ✅ Already sanitized
+                            'name' => safe_output($row['product_name']),
                             'color_id' => (int)$row['color_id'],
-                            'color_name' => safe_output($row['color_name']), // ✅ Already sanitized
+                            'color_name' => safe_output($row['color_name']),
                             'color_code' => safe_output($row['color_code']),
                             'color_price' => (float)$row['color_price'],
                             'color_image' => safe_output($color_image_path),
+                            'color_image2' => safe_output($color_image2_path), // ✅ NEW
                             'variants' => $variants,
                             'initial_variant' => [
                                 'variant_id' => (int)$first_variant['variant_id'],
-                                'size' => safe_output($first_variant['size']), // ✅ Add this
+                                'size' => safe_output($first_variant['size']),
                                 'price' => (float)$pricing['final'],
                                 'original_price' => (float)$pricing['original'],
                                 'discount' => (float)$first_variant['discount'],
-                                'origin' => safe_output($first_variant['origin']), // ✅ Add this
+                                'origin' => safe_output($first_variant['origin']),
                                 'variant_price' => (float)$first_variant['price'],
                                 'percent' => (float)$first_variant['percent']
                             ]
@@ -549,6 +594,7 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                     <?php endwhile; ?>
                 <?php endif; ?>
             </div>
+
 
             <div id="productsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8 items-start"></div>
 
@@ -1009,279 +1055,333 @@ function calculate_price($variant_price, $color_price, $percent = 0, $discount =
                 };
             }
 
-createProductCard(product) {
-    const card = document.createElement('article');
-    card.className = 'product-card overflow-hidden shadow-md hover:shadow-xl transition-all duration-300';
+            createProductCard(product) {
+                const card = document.createElement('article');
+                card.className = 'product-card overflow-hidden transition-all duration-300';
 
-    const initial = product.initial_variant || {};
-    const variants = product.variants || [];
-    const hasMultipleVariants = variants.length > 1;
+                const initial = product.initial_variant || {};
+                const variants = product.variants || [];
+                const hasMultipleVariants = variants.length > 1;
 
-    // IMAGE CONTAINER WITH BADGES AND WISHLIST
-    const imageContainer = document.createElement('div');
-    imageContainer.className = 'relative aspect-square overflow-hidden bg-gray-100';
+                // IMAGE CONTAINER WITH BADGES AND WISHLIST
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'relative aspect-square overflow-hidden bg-gray-100';
 
-    const img = document.createElement('img');
-    img.src = product.color_image;
-    img.alt = product.name;
-    img.className = 'w-full h-full object-contain product-image';
-    imageContainer.appendChild(img);
+                const img = document.createElement('img');
+                img.src = product.color_image;
+                img.alt = product.name;
+                img.className = 'w-full h-full object-contain product-image';
+                imageContainer.appendChild(img);
 
-    // DISCOUNT/SALE BADGE - BOTTOM LEFT
-    if (initial.discount > 0) {
-        const discountBadge = document.createElement('span');
-        discountBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded';
-        discountBadge.textContent = `Save ${Math.round(initial.discount)}%`;
-        imageContainer.appendChild(discountBadge);
-    }
 
-    // WISHLIST BUTTON - TOP RIGHT
-    const wishlistBtn = document.createElement('button');
-    wishlistBtn.type = 'button';
-    wishlistBtn.className = 'absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition w-10 h-10 flex items-center justify-center';
-    wishlistBtn.innerHTML = '<i class="far fa-heart text-gray-600"></i>';
-    wishlistBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        wishlistBtn.querySelector('i').classList.toggle('far');
-        wishlistBtn.querySelector('i').classList.toggle('fas');
-        wishlistBtn.querySelector('i').classList.toggle('text-red-600');
-    });
-    imageContainer.appendChild(wishlistBtn);
-
-    card.appendChild(imageContainer);
-
-    // PRODUCT INFO SECTION
-    const infoSection = document.createElement('div');
-    infoSection.className = 'p-1 sm:p-2 flex flex-col flex-grow';
-
-    // PRODUCT NAME
-    const productName = document.createElement('h3');
-    productName.className = 'text-xs sm:text-sm font-bold mb-2 line-clamp-2 text-gray-800 product-name';
-    productName.textContent = product.name;
-    infoSection.appendChild(productName);
-
-    // VARIANT INFO
-    const variantInfo = document.createElement('div');
-    variantInfo.className = 'text-xs text-gray-600 mb-3 space-y-1 hidden sm:block';
-
-    // Color info
-    const colorDiv = document.createElement('div');
-    colorDiv.className = 'flex items-center gap-2';
-    const colorLabel = document.createElement('span');
-    colorLabel.textContent = 'Color:';
-    colorDiv.appendChild(colorLabel);
-
-    const colorValueDiv = document.createElement('div');
-    colorValueDiv.className = 'flex items-center gap-1';
-    if (product.color_code) {
-        const colorBox = document.createElement('div');
-        colorBox.className = 'w-3 h-3 rounded-full border border-gray-300';
-        colorBox.style.backgroundColor = product.color_code;
-        colorValueDiv.appendChild(colorBox);
-    }
-    const colorName = document.createElement('span');
-    colorName.className = 'font-medium text-gray-700 product-color';
-    colorName.textContent = product.color_name;
-    colorValueDiv.appendChild(colorName);
-    colorDiv.appendChild(colorValueDiv);
-    variantInfo.appendChild(colorDiv);
-
-    // Size info
-    const sizeDiv = document.createElement('div');
-    sizeDiv.innerHTML = '<span>Size:</span> <span class="font-medium text-gray-700 selected-size">' + initial.size + '</span>';
-    variantInfo.appendChild(sizeDiv);
-
-    infoSection.appendChild(variantInfo);
-
-    // PRICE SECTION
-    const priceContainer = document.createElement('div');
-    priceContainer.className = 'price-container';
-    
-    const priceRow = document.createElement('div');
-    priceRow.className = 'flex items-center justify-between gap-2 mb-2';
-    
-    const finalPrice = document.createElement('p');
-    finalPrice.className = 'text-lg font-bold text-orange-600 final-price';
-    finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
-    priceRow.appendChild(finalPrice);
-    priceContainer.appendChild(priceRow);
-    infoSection.appendChild(priceContainer);
-
-    // SIZE SELECTOR (if multiple variants) - WITH +X INDICATOR
-    if (hasMultipleVariants) {
-        const sizesContainer = document.createElement('div');
-        sizesContainer.className = 'mb-3';
-        
-        const sizesLabel = document.createElement('p');
-        sizesLabel.className = 'text-xs font-semibold text-gray-700 mb-2';
-        sizesLabel.textContent = 'Available Sizes:';
-        sizesContainer.appendChild(sizesLabel);
-        
-        const sizeButtonsDiv = document.createElement('div');
-        sizeButtonsDiv.className = 'flex gap-2 flex-wrap items-center';
-        
-        const VISIBLE_SIZES = 2;
-        let hiddenCount = 0;
-        
-        variants.forEach((v, idx) => {
-            const pricing = this.calculateVariantPrice(v.price, product.color_price, v.percent, v.discount);
-            
-            const sizeBtn = document.createElement('button');
-            sizeBtn.type = 'button';
-            sizeBtn.className = `size-btn px-3 py-1 border rounded text-xs whitespace-nowrap font-semibold transition-all ${idx === 0 ? 'bg-black text-white border-black' : 'bg-white text-gray-800 border-gray-300 hover:border-orange-500'}`;
-            sizeBtn.textContent = v.size;
-            
-            sizeBtn.dataset.variantId = v.variant_id;
-            sizeBtn.dataset.size = v.size;
-            sizeBtn.dataset.price = pricing.final;
-            sizeBtn.dataset.originalPrice = pricing.original;
-            sizeBtn.dataset.discount = v.discount;
-            sizeBtn.dataset.origin = v.origin;
-            sizeBtn.dataset.variantPrice = v.price;
-            sizeBtn.dataset.percent = v.percent;
-            
-            if (idx >= VISIBLE_SIZES) {
-                sizeBtn.style.display = 'none';
-                sizeBtn.classList.add('size-btn-hidden');
-                hiddenCount++;
-            }
-            
-            sizeButtonsDiv.appendChild(sizeBtn);
-        });
-        
-        // Add "+X" INDICATOR BADGE (not clickable, just shows count)
-        if (hiddenCount > 0) {
-            const indicatorBadge = document.createElement('span');
-            indicatorBadge.className = 'px-3 py-1 border border-gray-300 rounded text-xs font-bold bg-gray-50 text-gray-700';
-            indicatorBadge.textContent = `+${hiddenCount}`;
-            indicatorBadge.style.display = 'inline-flex';
-            indicatorBadge.style.alignItems = 'center';
-            indicatorBadge.style.justifyContent = 'center';
-            indicatorBadge.style.minWidth = '32px';
-            indicatorBadge.style.minHeight = '32px';
-            
-            sizeButtonsDiv.appendChild(indicatorBadge);
-        }
-        
-        sizesContainer.appendChild(sizeButtonsDiv);
-        infoSection.appendChild(sizesContainer);
-    }
-
-    // BUTTONS SECTION
-    const buttonsDiv = document.createElement('div');
-    buttonsDiv.className = 'space-y-2 mt-auto';
-    
-    // VIEW PRODUCT BUTTON
-    const viewForm = document.createElement('form');
-    viewForm.action = 'index-product_view-page-4-AA';
-    viewForm.method = 'GET';
-    
-    const viewInput = document.createElement('input');
-    viewInput.type = 'hidden';
-    viewInput.name = 'id';
-    viewInput.value = product.id;
-    viewForm.appendChild(viewInput);
-    
-    const viewButton = document.createElement('button');
-    viewButton.type = 'submit';
-    viewButton.className = 'w-full bg-gray-200 text-gray-800 py-2 hover:bg-gray-300 text-xs font-semibold transition rounded';
-    viewButton.textContent = 'Quickview';
-    viewForm.appendChild(viewButton);
-    buttonsDiv.appendChild(viewForm);
-
-    // ADD TO CART BUTTON
-    const cartForm = document.createElement('form');
-    cartForm.className = 'productForm';
-    cartForm.dataset.productId = product.id;
-    
-    const hiddenInputs = [
-        {name: 'product_id', value: product.id},
-        {name: 'variant_id', value: initial.variant_id, className: 'variant-id-input'},
-        {name: 'selected_color_id', value: product.color_id, className: 'color-id-input'},
-        {name: 'selected_color_name', value: product.color_name, className: 'color-name-input'},
-        {name: 'color_price', value: product.color_price, className: 'color-price-input'},
-        {name: 'variant_price', value: initial.variant_price, className: 'variant-price-input'},
-        {name: 'total_price', value: initial.price, className: 'total-price-input'},
-        {name: 'discount', value: initial.discount, className: 'discount-input'},
-        {name: 'percent', value: initial.percent, className: 'percent-input'},
-        {name: 'origin', value: initial.origin, className: 'origin-input'},
-        {name: 'selected_size', value: initial.size, className: 'size-input'},
-        {name: 'return_url', value: 'index'}
-    ];
-    
-    hiddenInputs.forEach(inputData => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = inputData.name;
-        input.value = inputData.value;
-        if (inputData.className) input.className = inputData.className;
-        cartForm.appendChild(input);
-    });
-    
-    const cartButton = document.createElement('button');
-    cartButton.type = 'submit';
-    cartButton.className = 'w-full bg-black text-white py-2 hover:bg-orange-600 text-xs font-semibold flex items-center justify-center gap-2 transition rounded';
-    cartButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
-    cartForm.appendChild(cartButton);
-    
-    buttonsDiv.appendChild(cartForm);
-    infoSection.appendChild(buttonsDiv);
-
-    card.appendChild(infoSection);
-
-    // Setup size button event listeners
-    setTimeout(() => {
-        const allSizeButtons = card.querySelectorAll('.size-btn');
-        
-        allSizeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                const variantData = {
-                    variant_id: btn.dataset.variantId,
-                    size: btn.dataset.size,
-                    price: parseFloat(btn.dataset.price),
-                    original_price: parseFloat(btn.dataset.originalPrice),
-                    discount: parseFloat(btn.dataset.discount),
-                    origin: btn.dataset.origin,
-                    variant_price: parseFloat(btn.dataset.variantPrice),
-                    percent: parseFloat(btn.dataset.percent)
-                };
-                
-                const form = card.querySelector('.productForm');
-                if (form) {
-                    form.querySelector('.variant-id-input').value = variantData.variant_id;
-                    form.querySelector('.size-input').value = variantData.size;
-                    form.querySelector('.variant-price-input').value = variantData.variant_price;
-                    form.querySelector('.total-price-input').value = variantData.price;
-                    form.querySelector('.discount-input').value = variantData.discount;
-                    form.querySelector('.percent-input').value = variantData.percent;
-                    form.querySelector('.origin-input').value = variantData.origin;
+                // ✅ NEW: SECONDARY IMAGE (IMAGE2) - SHOWS ON HOVER
+                if (product.color_image2) {
+                    const img2 = document.createElement('img');
+                    img2.src = product.color_image2;
+                    img2.alt = `${product.name} - View 2`;
+                    img2.className = 'absolute inset-0 w-full h-full object-contain product-image-2 transition-opacity duration-300 opacity-0 group-hover:opacity-100';
+                    img2.loading = 'lazy';
+                    imageContainer.appendChild(img2);
                 }
-                
-                const priceEl = card.querySelector('.final-price');
-                if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
-                
-                const sizeEl = card.querySelector('.selected-size');
-                if (sizeEl) sizeEl.textContent = variantData.size;
-                
-                allSizeButtons.forEach(b => {
-                    b.classList.remove('bg-black', 'text-white', 'border-black');
-                    b.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
-                });
-                btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
-                btn.classList.add('bg-black', 'text-white', 'border-black');
-            });
-        });
-        
-        // Auto-select first size
-        if (allSizeButtons.length > 0) {
-            allSizeButtons[0].click();
-        }
-    }, 0);
 
-    return card;
-}
+                // DISCOUNT/SALE BADGE - BOTTOM LEFT
+                if (initial.discount > 0) {
+                    const discountBadge = document.createElement('span');
+                    discountBadge.className = 'absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded';
+                    discountBadge.textContent = `Save ${Math.round(initial.discount)}%`;
+                    imageContainer.appendChild(discountBadge);
+                }
+
+                // WISHLIST BUTTON - TOP RIGHT
+                const wishlistBtn = document.createElement('button');
+                wishlistBtn.type = 'button';
+                wishlistBtn.className = 'absolute top-3 right-3 bg-white rounded-full p-2 hover:bg-gray-100 transition w-10 h-10 flex items-center justify-center';
+                wishlistBtn.innerHTML = '<i class="far fa-heart text-gray-600"></i>';
+                wishlistBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    wishlistBtn.querySelector('i').classList.toggle('far');
+                    wishlistBtn.querySelector('i').classList.toggle('fas');
+                    wishlistBtn.querySelector('i').classList.toggle('text-red-600');
+                });
+                imageContainer.appendChild(wishlistBtn);
+
+                card.appendChild(imageContainer);
+
+                // PRODUCT INFO SECTION
+                const infoSection = document.createElement('div');
+                infoSection.className = 'p-1 sm:p-2 flex flex-col flex-grow';
+
+                // PRODUCT NAME
+                const productName = document.createElement('h3');
+                productName.className = 'text-lg sm:text-sm font-semibold line-clamp-2 text-black product-name';
+                productName.textContent = product.name;
+                infoSection.appendChild(productName);
+
+                // VARIANT INFO
+                const variantInfo = document.createElement('div');
+                variantInfo.className = 'text-xs text-gray-600 space-y-1 hidden sm:block';
+
+                // Color info
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'flex items-center gap-2 text-black text-sm';
+                const colorLabel = document.createElement('span');
+                colorLabel.textContent = 'Color:';
+                colorDiv.appendChild(colorLabel);
+
+                const colorValueDiv = document.createElement('div');
+                colorValueDiv.className = 'flex items-center gap-1';
+                if (product.color_code) {
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'w-3 h-3 rounded-full border border-gray-300';
+                    colorBox.style.backgroundColor = product.color_code;
+                    colorValueDiv.appendChild(colorBox);
+                }
+                const colorName = document.createElement('span');
+                colorName.className = 'font-medium text-black product-color';
+                colorName.textContent = product.color_name;
+                colorValueDiv.appendChild(colorName);
+                colorDiv.appendChild(colorValueDiv);
+                variantInfo.appendChild(colorDiv);
+
+                // Size info
+                const sizeDiv = document.createElement('div');
+
+                infoSection.appendChild(variantInfo);
+
+                // PRICE SECTION
+                const priceContainer = document.createElement('div');
+                priceContainer.className = 'price-container';
+
+                const priceRow = document.createElement('div');
+                priceRow.className = 'flex items-center justify-between gap-2';
+
+                const finalPrice = document.createElement('p');
+                finalPrice.className = 'text-lg font-bold text-black final-price';
+                finalPrice.textContent = `₱${(initial.price || 0).toLocaleString()}`;
+                priceRow.appendChild(finalPrice);
+                priceContainer.appendChild(priceRow);
+                infoSection.appendChild(priceContainer);
+
+                // SIZE SELECTOR (if multiple variants) - WITH +X INDICATOR
+                if (hasMultipleVariants) {
+                    const sizesContainer = document.createElement('div');
+                    sizesContainer.className = 'mb-1';
+
+                    const sizesLabel = document.createElement('p');
+                    sizesLabel.className = 'text-sm font-semibold text-black ';
+                    sizesLabel.textContent = 'Available Sizes:';
+                    sizesContainer.appendChild(sizesLabel);
+
+                    const sizeButtonsDiv = document.createElement('div');
+                    sizeButtonsDiv.className = 'flex gap-2 flex-wrap items-center';
+
+                    const VISIBLE_SIZES = 2;
+                    let hiddenCount = 0;
+
+                    variants.forEach((v, idx) => {
+                        const pricing = this.calculateVariantPrice(v.price, product.color_price, v.percent, v.discount);
+
+                        const sizeBtn = document.createElement('button');
+                        sizeBtn.type = 'button';
+                        sizeBtn.className = `size-btn px-3 py-1 border rounded text-xs whitespace-nowrap font-semibold transition-all ${idx === 0 ? 'bg-black text-white border-black' : 'bg-white text-gray-800 border-gray-300 hover:border-orange-500'}`;
+                        sizeBtn.textContent = v.size;
+
+                        sizeBtn.dataset.variantId = v.variant_id;
+                        sizeBtn.dataset.size = v.size;
+                        sizeBtn.dataset.price = pricing.final;
+                        sizeBtn.dataset.originalPrice = pricing.original;
+                        sizeBtn.dataset.discount = v.discount;
+                        sizeBtn.dataset.origin = v.origin;
+                        sizeBtn.dataset.variantPrice = v.price;
+                        sizeBtn.dataset.percent = v.percent;
+
+                        if (idx >= VISIBLE_SIZES) {
+                            sizeBtn.style.display = 'none';
+                            sizeBtn.classList.add('size-btn-hidden');
+                            hiddenCount++;
+                        }
+
+                        sizeButtonsDiv.appendChild(sizeBtn);
+                    });
+
+                    // Add "+X" INDICATOR BADGE (not clickable, just shows count)
+                    if (hiddenCount > 0) {
+                        const indicatorBadge = document.createElement('span');
+                        indicatorBadge.className = 'border border-gray-200 rounded-full text-xs font-bold bg-gray-50 text-gray-700';
+                        indicatorBadge.textContent = `+${hiddenCount}`;
+                        indicatorBadge.style.display = 'inline-flex';
+                        indicatorBadge.style.alignItems = 'center';
+                        indicatorBadge.style.justifyContent = 'center';
+                        indicatorBadge.style.minWidth = '32px';
+                        indicatorBadge.style.minHeight = '32px';
+
+                        sizeButtonsDiv.appendChild(indicatorBadge);
+                    }
+
+                    sizesContainer.appendChild(sizeButtonsDiv);
+                    infoSection.appendChild(sizesContainer);
+                }
+
+                // BUTTONS SECTION
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'space-y-2 mt-auto';
+
+                // VIEW PRODUCT BUTTON
+                const viewForm = document.createElement('form');
+                viewForm.action = 'index-product_view-page-4-AA';
+                viewForm.method = 'GET';
+
+                const viewInput = document.createElement('input');
+                viewInput.type = 'hidden';
+                viewInput.name = 'id';
+                viewInput.value = product.id;
+                viewForm.appendChild(viewInput);
+
+                const viewButton = document.createElement('button');
+                viewButton.type = 'submit';
+                viewButton.className = 'w-full text-black text-sm font-semibold transition rounded text-start hover:underline';
+                viewButton.textContent = 'Quickview';
+                viewForm.appendChild(viewButton);
+                buttonsDiv.appendChild(viewForm);
+
+                // ADD TO CART BUTTON
+                const cartForm = document.createElement('form');
+                cartForm.className = 'productForm';
+                cartForm.dataset.productId = product.id;
+
+                const hiddenInputs = [{
+                        name: 'product_id',
+                        value: product.id
+                    },
+                    {
+                        name: 'variant_id',
+                        value: initial.variant_id,
+                        className: 'variant-id-input'
+                    },
+                    {
+                        name: 'selected_color_id',
+                        value: product.color_id,
+                        className: 'color-id-input'
+                    },
+                    {
+                        name: 'selected_color_name',
+                        value: product.color_name,
+                        className: 'color-name-input'
+                    },
+                    {
+                        name: 'color_price',
+                        value: product.color_price,
+                        className: 'color-price-input'
+                    },
+                    {
+                        name: 'variant_price',
+                        value: initial.variant_price,
+                        className: 'variant-price-input'
+                    },
+                    {
+                        name: 'total_price',
+                        value: initial.price,
+                        className: 'total-price-input'
+                    },
+                    {
+                        name: 'discount',
+                        value: initial.discount,
+                        className: 'discount-input'
+                    },
+                    {
+                        name: 'percent',
+                        value: initial.percent,
+                        className: 'percent-input'
+                    },
+                    {
+                        name: 'origin',
+                        value: initial.origin,
+                        className: 'origin-input'
+                    },
+                    {
+                        name: 'selected_size',
+                        value: initial.size,
+                        className: 'size-input'
+                    },
+                    {
+                        name: 'return_url',
+                        value: 'index'
+                    }
+                ];
+
+                hiddenInputs.forEach(inputData => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = inputData.name;
+                    input.value = inputData.value;
+                    if (inputData.className) input.className = inputData.className;
+                    cartForm.appendChild(input);
+                });
+
+                const cartButton = document.createElement('button');
+                cartButton.type = 'submit';
+                cartButton.className = 'w-full text-black text-sm font-semibold flex items-center justify-start gap-2 transition rounded underline';
+                cartButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                cartForm.appendChild(cartButton);
+
+                buttonsDiv.appendChild(cartForm);
+                infoSection.appendChild(buttonsDiv);
+
+                card.appendChild(infoSection);
+
+                // Setup size button event listeners
+                setTimeout(() => {
+                    const allSizeButtons = card.querySelectorAll('.size-btn');
+
+                    allSizeButtons.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+
+                            const variantData = {
+                                variant_id: btn.dataset.variantId,
+                                size: btn.dataset.size,
+                                price: parseFloat(btn.dataset.price),
+                                original_price: parseFloat(btn.dataset.originalPrice),
+                                discount: parseFloat(btn.dataset.discount),
+                                origin: btn.dataset.origin,
+                                variant_price: parseFloat(btn.dataset.variantPrice),
+                                percent: parseFloat(btn.dataset.percent)
+                            };
+
+                            const form = card.querySelector('.productForm');
+                            if (form) {
+                                form.querySelector('.variant-id-input').value = variantData.variant_id;
+                                form.querySelector('.size-input').value = variantData.size;
+                                form.querySelector('.variant-price-input').value = variantData.variant_price;
+                                form.querySelector('.total-price-input').value = variantData.price;
+                                form.querySelector('.discount-input').value = variantData.discount;
+                                form.querySelector('.percent-input').value = variantData.percent;
+                                form.querySelector('.origin-input').value = variantData.origin;
+                            }
+
+                            const priceEl = card.querySelector('.final-price');
+                            if (priceEl) priceEl.textContent = `₱${variantData.price.toLocaleString()}`;
+
+                            const sizeEl = card.querySelector('.selected-size');
+                            if (sizeEl) sizeEl.textContent = variantData.size;
+
+                            allSizeButtons.forEach(b => {
+                                b.classList.remove('bg-black', 'text-white', 'border-black');
+                                b.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                            });
+                            btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                            btn.classList.add('bg-black', 'text-white', 'border-black');
+                        });
+                    });
+
+                    // Auto-select first size
+                    if (allSizeButtons.length > 0) {
+                        allSizeButtons[0].click();
+                    }
+                }, 0);
+
+                return card;
+            }
         }
 
         class CartManager {

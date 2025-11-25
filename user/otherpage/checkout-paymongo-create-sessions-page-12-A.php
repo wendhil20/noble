@@ -34,12 +34,21 @@ try {
         throw new Exception('User not logged in');
     }
 
-    // ✅ BUILD DYNAMIC URLs
+ // ✅ BUILD DYNAMIC URLs
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'];
     
-    $success_url = $protocol . $host . '/noble/user/otherpage/checkout-paymongo-success-page-12-A.php';
-    $cancel_url = $protocol . $host . '/noble/user/otherpage/index-checkout-page-12.php';
+    // Detect if localhost or production
+    $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+    
+    if ($isLocalhost) {
+        $basePath = '/noble/user/otherpage';
+    } else {
+        $basePath = '/user/otherpage';
+    }
+    
+    $success_url = $protocol . $host . $basePath . '/checkout-paymongo-success-page-12-A.php';
+    $cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12.php';
 
     $input = json_decode(file_get_contents("php://input"), true);
 

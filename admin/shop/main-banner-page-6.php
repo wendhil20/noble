@@ -189,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->query("DELETE FROM onsalebanner WHERE id=$id");
     }
 
-    header("Location: banner.php");
+    header("Location: main-banner-page-6.php");
     exit();
 }
 

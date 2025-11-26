@@ -755,17 +755,14 @@ while ($row = $banners_result->fetch_assoc()) {
                     <img src="../img/gif1.gif" alt="Recent" class="w-full h-full object-cover mix-blend-overlay" />
                 </div>
                 <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
-                    <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Quick Access</div>
-                    <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">Recent View →</div>
+                   
+                    <div class="text-white text-sm group-hover:text-orange-400 transition-colors ">Flash Discount</div>
                 </div>
             </a>
 
             <!-- Card 2: Deals - Links to first banner category -->
             <a href="<?= !empty($banners) ? '../otherpage/index-subcategory_grid_page-14.php?category_name=' . urlencode(strtolower($banners[0]['category_name'])) : '#' ?>"
                 class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group transition-all ">
-                <div class="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-1  z-10">
-                    HOT
-                </div>
                 <div class="absolute inset-0">
                     <?php if (!empty($banners)): ?>
                         <img src="../../uploads/<?= basename($banners[0]['filename']) ?>"
@@ -776,12 +773,15 @@ while ($row = $banners_result->fetch_assoc()) {
                         <img src="../img/gif1.gif" alt="Deals" class="w-full h-full object-cover mix-blend-overlay" />
                     <?php endif; ?>
                 </div>
-                <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
-                    <div class="text-white/80 text-[10px] uppercase mb-1 font-semibold">Limited Time</div>
-                    <div class="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">
-                        <?= !empty($banners) ? htmlspecialchars($banners[0]['category_name']) : 'Holiday Deals' ?> →
-                    </div>
-                </div>
+           <div class="relative h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black/60 to-transparent">
+    <div class="text-white text-sm group-hover:text-orange-400 transition-colors">
+        <?php
+            $label = !empty($banners) ? $banners[0]['category_name'] : 'Holiday Deals';
+            echo ucfirst(htmlspecialchars($label));
+        ?> 
+    </div>
+</div>
+
             </a>
         </div>
     </div>

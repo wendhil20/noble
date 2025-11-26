@@ -14,14 +14,28 @@ foreach ($tables as $table) {
     }
 }
 
+// Build dynamic redirect URI
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+
+// Detect if localhost or production
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+if ($isLocalhost) {
+    // Localhost path with 'noble' folder
+    $redirectUri = $protocol . $host . '/noble/user/google-callback.php';
+} else {
+    // Production domain - starts from 'user'
+    $redirectUri = $protocol . $host . '/user/google-callback.php';
+}
+
 $client = new Google_Client();
 $client->setClientId('465138054143-qv9j0hfr0ft416r41qj1qsqvl1u726u0.apps.googleusercontent.com');
 $client->setClientSecret('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');
-$client->setRedirectUri('http://localhost/noble/user/google-callback.php');
+$client->setRedirectUri($redirectUri);
 $client->addScope("email");
 $client->addScope("profile");
 
 header('Location: ' . $client->createAuthUrl());
 exit;
-
-// https://noblehomedepot.com/user/google-callback.php
+?>

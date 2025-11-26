@@ -1,6 +1,5 @@
 <?php
 session_name("nobleuser");
-
 session_start();
 
 // Unset all session variables
@@ -10,17 +9,25 @@ session_unset();
 session_destroy();
 
 // Remove the remember me cookie (if any)
-setcookie("remember_token", "", time() - 3600, "/"); // Expire the cookie
+setcookie("remember_token", "", time() - 3600, "/");
 
-// Redirect to Google's OAuth 2.0 logout endpoint
-$googleLogoutUrl = 'https://accounts.google.com/Logout';
+// Build dynamic redirect URL back to main website
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
 
-// Google logout works as expected, but we need a workaround to return to your site after logout.
-$redirectUrl = 'http://localhost/noble/user/otherpage/index-page-1-A-B-C-D-E.php'; // Change to your actual redirect URL (e.g., 'index.php')
+// Detect if localhost or production
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
 
-// Set up the location header to redirect after Google logout https://noblehomedepot.com/user/otherpage/index.php
-header("Location: $googleLogoutUrl");
+if ($isLocalhost) {
+    // Localhost path with 'noble' folder
+    $redirectUrl = $protocol . $host . '/noble/index.php';
+} else {
+    // Production domain - starts from 'user'
+    $redirectUrl = $protocol . $host . '/index.php';
+}
 
-// Redirect back to your site after Google logout
+// Redirect back to your site (logs out of your app)
+// Note: User remains logged into Google in their browser
 header("Location: $redirectUrl");
 exit;
+?>

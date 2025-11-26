@@ -1,11 +1,12 @@
 <?php
-//upload_process.php
+//upload_process-page-1-A.php - UPDATED WITH IMAGE2 SUPPORT
 include '../../connection/connect.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // FIXED: Consistent path handling
-function saveImageToFolder($file, $targetDir = '../../uploads/') {
+function saveImageToFolder($file, $targetDir = '../../uploads/')
+{
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
@@ -14,7 +15,7 @@ function saveImageToFolder($file, $targetDir = '../../uploads/') {
     $timestamp = time();
     $filename = 'img_' . $timestamp . '_' . uniqid() . '.webp';
     $targetPath = $targetDir . $filename;
-    
+
     // IMPORTANT: Return path WITHOUT ../../ prefix
     // This ensures database stores: uploads/img_xxxxx.webp
     $relativePath = 'uploads/' . $filename;
@@ -62,34 +63,35 @@ function saveImageToFolder($file, $targetDir = '../../uploads/') {
 }
 
 // FIXED: Sub images path handling
-function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/') {
+function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/')
+{
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
 
     $subImagePaths = [];
-    
+
     if (isset($subImagesFiles['name']) && is_array($subImagesFiles['name'])) {
         $totalSubImages = count($subImagesFiles['name']);
-        
+
         for ($i = 0; $i < $totalSubImages; $i++) {
             if (empty($subImagesFiles['name'][$i]) || $subImagesFiles['error'][$i] !== UPLOAD_ERR_OK) {
                 continue;
             }
-            
+
             // Generate unique filename
             $timestamp = time();
             $filename = 'sub_' . $timestamp . '_' . uniqid() . '.webp';
             $targetPath = $targetDir . $filename;
-            
+
             // IMPORTANT: Store as sub_images/filename.webp
             $relativePath = 'sub_images/' . $filename;
-            
+
             $file = [
                 'name' => $subImagesFiles['name'][$i],
                 'tmp_name' => $subImagesFiles['tmp_name'][$i]
             ];
-            
+
             // Process image
             $imageType = mime_content_type($file['tmp_name']);
             $sourceImage = null;
@@ -126,7 +128,7 @@ function saveSubImages($subImagesFiles, $targetDir = '../../sub_images/') {
             }
         }
     }
-    
+
     return $subImagePaths;
 }
 
@@ -148,8 +150,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $main_image = null;
         if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] === UPLOAD_ERR_OK) {
             $main_image = saveImageToFolder($_FILES['main_image']);
-            
-            // Log the saved path
             error_log("Main image saved: $main_image");
         }
 
@@ -159,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sub_images = saveSubImages($_FILES['sub_images']);
             error_log("Sub images saved: " . json_encode($sub_images));
         }
-        
+
         $sub_images_json = !empty($sub_images) ? json_encode($sub_images) : null;
 
         $_POST['quantity'] = (int)$_POST['quantity'];
@@ -186,19 +186,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($column == 'weight_unit') {
                     $conn->query("ALTER TABLE product_variants ADD COLUMN $column VARCHAR(10) DEFAULT 'kg' AFTER weight");
                 } elseif (in_array($column, ['width', 'height', 'length', 'weight'])) {
-                    $position = ($column == 'width') ? 'AFTER discount' : 
-                               (($column == 'height') ? 'AFTER width' : 
-                               (($column == 'length') ? 'AFTER height' : 'AFTER dimension_unit'));
+                    $position = ($column == 'width') ? 'AFTER discount' : (($column == 'height') ? 'AFTER width' : (($column == 'length') ? 'AFTER height' : 'AFTER dimension_unit'));
                     $conn->query("ALTER TABLE product_variants ADD COLUMN $column DECIMAL(10,2) DEFAULT NULL $position");
                 }
             }
+        }
+
+        // ✅ NEW: Check and add image2 column to product_colors
+        $check_image2 = $conn->query("SHOW COLUMNS FROM product_colors LIKE 'image2'");
+        if ($check_image2->num_rows == 0) {
+            $conn->query("ALTER TABLE product_colors ADD COLUMN image2 VARCHAR(255) NULL DEFAULT NULL AFTER image");
         }
 
         // Insert product
         $stmt = $conn->prepare("INSERT INTO products (product_name, codename, quantity, main_image, sub_images, description) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
 
-        $stmt->bind_param("ssisss",
+        $stmt->bind_param(
+            "ssisss",
             $_POST['product_name'],
             $_POST['codename'],
             $_POST['quantity'],
@@ -217,8 +222,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['type_name']) && is_array($_POST['type_name'])) {
             foreach ($_POST['type_name'] as $type_index => $type_name) {
                 $type_image = null;
-                if (isset($_FILES['type_image']['tmp_name'][$type_index]) &&
-                    $_FILES['type_image']['error'][$type_index] === UPLOAD_ERR_OK) {
+                if (
+                    isset($_FILES['type_image']['tmp_name'][$type_index]) &&
+                    $_FILES['type_image']['error'][$type_index] === UPLOAD_ERR_OK
+                ) {
                     $file = [
                         'name' => $_FILES['type_image']['name'][$type_index],
                         'tmp_name' => $_FILES['type_image']['tmp_name'][$type_index]
@@ -233,16 +240,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $type_id = $stmt->insert_id;
                 $stmt->close();
 
-                // Colors
+                // ✅ UPDATED: Colors with image2 support
                 if (isset($_POST['color_name'][$type_index]) && is_array($_POST['color_name'][$type_index])) {
                     foreach ($_POST['color_name'][$type_index] as $color_index => $color_name) {
                         if (!empty($color_name)) {
                             $color_code = $_POST['color_code'][$type_index][$color_index] ?? '';
                             $color_price = (float)($_POST['color_price'][$type_index][$color_index] ?? 0);
                             $color_image = null;
+                            $color_image2 = null; // ✅ NEW
 
-                            if (isset($_FILES['color_image']['tmp_name'][$type_index][$color_index]) &&
-                                $_FILES['color_image']['error'][$type_index][$color_index] === UPLOAD_ERR_OK) {
+                            // Handle main image
+                            if (
+                                isset($_FILES['color_image']['tmp_name'][$type_index][$color_index]) &&
+                                $_FILES['color_image']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
+                            ) {
                                 $file = [
                                     'name' => $_FILES['color_image']['name'][$type_index][$color_index],
                                     'tmp_name' => $_FILES['color_image']['tmp_name'][$type_index][$color_index]
@@ -250,9 +261,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $color_image = saveImageToFolder($file);
                             }
 
-                            $stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, color_code, price, image) VALUES (?, ?, ?, ?, ?)");
+                            // ✅ NEW: Handle secondary image
+                            if (
+                                isset($_FILES['color_image2']['tmp_name'][$type_index][$color_index]) &&
+                                $_FILES['color_image2']['error'][$type_index][$color_index] === UPLOAD_ERR_OK
+                            ) {
+                                $file = [
+                                    'name' => $_FILES['color_image2']['name'][$type_index][$color_index],
+                                    'tmp_name' => $_FILES['color_image2']['tmp_name'][$type_index][$color_index]
+                                ];
+                                $color_image2 = saveImageToFolder($file);
+                            }
+
+                            // ✅ UPDATED: Insert with image2
+                            $stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, color_code, price, image, image2) VALUES (?, ?, ?, ?, ?, ?)");
                             if (!$stmt) throw new Exception("Color insert failed: " . $conn->error);
-                            $stmt->bind_param("issds", $product_id, $color_name, $color_code, $color_price, $color_image);
+                            $stmt->bind_param("issdsS", $product_id, $color_name, $color_code, $color_price, $color_image, $color_image2);
                             $stmt->execute();
                             $stmt->close();
                         }
@@ -279,8 +303,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $final_price = $price + ($price * $percent / 100);
                             $variant_image = null;
 
-                            if (isset($_FILES['variant_image']['tmp_name'][$type_index][$variant_index]) &&
-                                $_FILES['variant_image']['error'][$type_index][$variant_index] === UPLOAD_ERR_OK) {
+                            if (
+                                isset($_FILES['variant_image']['tmp_name'][$type_index][$variant_index]) &&
+                                $_FILES['variant_image']['error'][$type_index][$variant_index] === UPLOAD_ERR_OK
+                            ) {
                                 $file = [
                                     'name' => $_FILES['variant_image']['name'][$type_index][$variant_index],
                                     'tmp_name' => $_FILES['variant_image']['tmp_name'][$type_index][$variant_index]
@@ -290,10 +316,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             $stmt = $conn->prepare("INSERT INTO product_variants (product_id, type_id, color, size, original_price, price, percent, discount, namevariant, image, width, height, length, dimension_unit, weight, weight_unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                             if (!$stmt) throw new Exception("Variant insert failed: " . $conn->error);
-                            $stmt->bind_param("iissddddssdddsds",
-                                $product_id, $type_id, $color, $size, $original_price, $final_price,
-                                $percent, $discount, $name_variant, $variant_image,
-                                $width, $height, $length, $dimension_unit, $weight, $weight_unit
+                            $stmt->bind_param(
+                                "iissddddssdddsds",
+                                $product_id,
+                                $type_id,
+                                $color,
+                                $size,
+                                $original_price,
+                                $final_price,
+                                $percent,
+                                $discount,
+                                $name_variant,
+                                $variant_image,
+                                $width,
+                                $height,
+                                $length,
+                                $dimension_unit,
+                                $weight,
+                                $weight_unit
                             );
                             $stmt->execute();
                             $stmt->close();
@@ -304,18 +344,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $conn->commit();
-        
+
         $sub_images_count = count($sub_images);
         $success_message = "Product uploaded successfully! ID: $product_id";
         if ($sub_images_count > 0) {
             $success_message .= " ($sub_images_count sub images)";
         }
-        
+
         echo "<script>
             alert('$success_message'); 
-            window.location.href='adminshop.php';
+            window.location.href='main-adminshop-page-1.php';
         </script>";
-        
     } catch (Exception $e) {
         $conn->rollback();
         error_log("Upload error: " . $e->getMessage());
@@ -325,7 +364,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </script>";
     }
 } else {
-    header("Location: adminshop.php");
+    header("Location: main-adminshop-page-1.php");
     exit();
 }
-?>

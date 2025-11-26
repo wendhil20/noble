@@ -7,10 +7,25 @@ require_once '../connection/connect.php';
 
 use Google\Service\PeopleService;
 
+// Build dynamic redirect URI
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+
+// Detect if localhost or production
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+if ($isLocalhost) {
+    // Localhost path with 'noble' folder
+    $redirectUri = $protocol . $host . '/noble/user/google-callback.php';
+} else {
+    // Production domain - starts from 'user'
+    $redirectUri = $protocol . $host . '/user/google-callback.php';
+}
+
 $client = new Google_Client();
 $client->setClientId('465138054143-qv9j0hfr0ft416r41qj1qsqvl1u726u0.apps.googleusercontent.com');
 $client->setClientSecret('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');
-$client->setRedirectUri('http://localhost/noble/user/google-callback.php');
+$client->setRedirectUri($redirectUri);
 $client->addScope("email");
 $client->addScope("profile");
 $client->addScope("https://www.googleapis.com/auth/userinfo.email");
@@ -136,19 +151,36 @@ if (isset($_GET['code'])) {
         // Set remember token cookie
         setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), "/", "", false, true);
         
-        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        // Dynamic redirect based on environment
+        if ($isLocalhost) {
+            header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        } else {
+            header("Location: ../otherpage/index-page-1-A-B-C-D-E.php");
+        }
         exit;
         
     } catch (Exception $e) {
         error_log("Google OAuth callback error: " . $e->getMessage());
-        $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage(); // Show specific error
-        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        $_SESSION['login_needed'] = 'Login failed: ' . $e->getMessage();
+        
+        // Dynamic redirect based on environment
+        if ($isLocalhost) {
+            header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+        } else {
+            header("Location: ../otherpage/index-page-1-A-B-C-D-E.php");
+        }
         exit;
     }
     
 } else {
     $_SESSION['login_needed'] = 'Please sign in first.';
-    header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+    
+    // Dynamic redirect based on environment
+    if ($isLocalhost) {
+        header("Location: otherpage/index-page-1-A-B-C-D-E.php");
+    } else {
+        header("Location: ../otherpage/index-page-1-A-B-C-D-E.php");
+    }
     exit;
 }
 ?>

@@ -1,4 +1,5 @@
 <?php
+// admin/qrcodeperproduct/qrcodeitem.php
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';

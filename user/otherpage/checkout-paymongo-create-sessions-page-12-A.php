@@ -1,6 +1,5 @@
 <?php
-// paymongo-create-sessions.php - FIXED: NO STOCK DEDUCTION HERE
-// Stock will only be deducted AFTER successful payment
+// paymongo-create-sessions.php - FIXED: Dynamic URLs + NO STOCK DEDUCTION
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -34,6 +33,22 @@ try {
     if (!isset($_SESSION['user_id'])) {
         throw new Exception('User not logged in');
     }
+
+ // ✅ BUILD DYNAMIC URLs
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'];
+    
+    // Detect if localhost or production
+    $isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+    
+    if ($isLocalhost) {
+        $basePath = '/noble/user/otherpage';
+    } else {
+        $basePath = '/user/otherpage';
+    }
+    
+    $success_url = $protocol . $host . $basePath . '/checkout-paymongo-success-page-12-A.php';
+    $cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12.php';
 
     $input = json_decode(file_get_contents("php://input"), true);
 
@@ -114,14 +129,9 @@ if (!empty($user_id)) {
     $user_check->close();
 }
 
-error_log("=== PAYMONGO SESSION CREATION ===");
-error_log("Referral Code: " . ($referral_code ?? 'NONE'));
-error_log("Referral User ID: " . ($referral_user_id ?? 'NONE'));
-error_log("Referral Discount: ₱" . number_format($referral_discount, 2));
-error_log("Amount: ₱" . number_format($amount, 2));
-    
     error_log("=== PAYMONGO SESSION CREATION ===");
     error_log("Referral Code: " . ($referral_code ?? 'NONE'));
+    error_log("Referral User ID: " . ($referral_user_id ?? 'NONE'));
     error_log("Referral Discount: ₱" . number_format($referral_discount, 2));
     error_log("Amount: ₱" . number_format($amount, 2));
     
@@ -402,7 +412,7 @@ $sales_user_id
     
     error_log("✓ Order items created WITHOUT stock deduction (waiting for payment)");
 
-    // ✅ CREATE PAYMONGO CHECKOUT SESSION
+    // ✅ CREATE PAYMONGO CHECKOUT SESSION - WITH DYNAMIC URLs
     $amount_in_centavos = intval($amount * 100);
     $secretKey = "sk_test_AJdRkkXWfGW9W5DHV6UNNECZ";
 
@@ -421,8 +431,8 @@ $sales_user_id
                                    " + Delivery: ₱" . number_format($delivery_fee, 2)
                 ]],
                 "payment_method_types" => ["gcash", "paymaya", "card", "grab_pay"],
-                "success_url" => "http://localhost/noble/user/otherpage/checkout-paymongo-success-page-12-A.php?order_id=" . $order_id . "&ref=" . $reference_no,
-                "cancel_url" => "http://localhost/noble/user/otherpage/index-checkout-page-12.php?payment_cancelled=1&order_id=" . $order_id,
+                "success_url" => $success_url . "?order_id=" . $order_id . "&ref=" . $reference_no,
+                "cancel_url" => $cancel_url . "?payment_cancelled=1&order_id=" . $order_id,
                 "description" => "Noble Home Construction - Order #" . $reference_no,
                 "metadata" => [
                     "user_id" => strval($user_id),

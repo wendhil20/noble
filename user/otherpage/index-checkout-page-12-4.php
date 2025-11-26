@@ -33,6 +33,28 @@ $customer_data = $_SESSION['checkout_step1'];
 $address_data = $_SESSION['checkout_step2'];
 $delivery_data = $_SESSION['checkout_step3'];
 
+// ✅ BUILD DYNAMIC URLs
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+
+// Detect if localhost or production
+$isLocalhost = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+
+// Determine base path for URLs
+if ($isLocalhost) {
+    $basePath = '/noble/user/otherpage';
+} else {
+    $basePath = '/user/otherpage';
+}
+
+// Dynamic PayPal URLs
+$paypal_return_url = $protocol . $host . $basePath . '/paypal-success.php';
+$paypal_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
+
+// Dynamic PayMongo URLs
+$paymongo_success_url = $protocol . $host . $basePath . '/checkout-paymongo-succes-page-12-A.php';
+$paymongo_cancel_url = $protocol . $host . $basePath . '/index-checkout-page-12-3.php';
+
 // PayPal configuration
 $paypal_config = [
     'mode' => 'sandbox',
@@ -41,14 +63,14 @@ $paypal_config = [
     'currency' => 'PHP'
 ];
 
-// PayMongo configuration
+// Then update the PayMongo config:
 $paymongo_config = [
     'mode' => 'test',
     'secret_key' => 'sk_test_AJdRkkXWfGW9W5DHV6UNNECZ',
     'public_key' => 'pk_test_r4XYBug7KMzvamWvUzjAGAyC',
     'currency' => 'PHP',
-    'success_url' => 'http://localhost/noble/user/otherpage/checkout-paymongo-succes-page-12-A.php',
-    'cancel_url' => 'http://localhost/noble/user/otherpage/index-checkout-page-12-3.php'
+    'success_url' => $paymongo_success_url,    // ← USE DYNAMIC URL
+    'cancel_url' => $paymongo_cancel_url       // ← USE DYNAMIC URL
 ];
 
 // ✅ UPDATED: Include color_id from user_cart_items
@@ -299,86 +321,6 @@ function calculateLeadTimeRange($leadCount, $leadInterval, $leadGap)
     ];
 }
 
-// PayPal functions
-function getPayPalAccessToken($config)
-{
-    $url = $config['mode'] === 'sandbox'
-        ? 'https://api-m.sandbox.paypal.com/v1/oauth2/token'
-        : 'https://api-m.paypal.com/v1/oauth2/token';
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Accept: application/json',
-        'Accept-Language: en_US',
-    ]);
-    curl_setopt($ch, CURLOPT_USERPWD, $config['client_id'] . ':' . $config['client_secret']);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-    $response = curl_exec($ch);
-    curl_close($ch);
-
-    $data = json_decode($response, true);
-    return $data['access_token'] ?? null;
-}
-
-function createPayPalOrder($amount, $order_id, $config)
-{
-    $url = $config['mode'] === 'sandbox'
-        ? 'https://api-m.sandbox.paypal.com/v2/checkout/orders'
-        : 'https://api-m.paypal.com/v2/checkout/orders';
-
-    $access_token = getPayPalAccessToken($config);
-    if (!$access_token) {
-        return false;
-    }
-
-    $formatted_amount = number_format((float)$amount, 2, '.', '');
-
-    $order_data = [
-        'intent' => 'CAPTURE',
-        'purchase_units' => [[
-            'reference_id' => (string)$order_id,
-            'amount' => [
-                'currency_code' => $config['currency'],
-                'value' => $formatted_amount
-            ],
-            'description' => 'Order from Noble Home - Order #' . $order_id
-        ]],
-        'application_context' => [
-            'return_url' => 'http://localhost/noble/user/otherpage/paypal-success.php',
-            'cancel_url' => 'http://localhost/noble/user/otherpage/index-checkout-page-12-3.php',
-            'shipping_preference' => 'NO_SHIPPING',
-            'user_action' => 'PAY_NOW',
-            'brand_name' => 'Noble Home Construction'
-        ]
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $access_token,
-        'Prefer: return=representation'
-    ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($order_data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($http_code === 201) {
-        return json_decode($response, true);
-    }
-
-    return false;
-}
 
 // Handle form submission
 $error = null;
@@ -461,113 +403,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $bank_type = 'QR_' . $qr_method_id;
     }
 
-    // Handle PayPal
-    if ($payment_method === 'PayPal') {
-        try {
-            $reference_no = generateReferenceNumber();
-            $paypal_order = createPayPalOrder($grand_total, $reference_no, $paypal_config);
-
-            if ($paypal_order && isset($paypal_order['links'])) {
-                $payment_status = 'pending_paypal';
-                $paypal_order_id = $paypal_order['id'];
-
-                // Insert order
-                $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, mobile, address, zipcode, mode_payment, total, reference_no, billing_address_id, latitude, longitude, user_id, delivery_distance, delivery_fee, subtotal, payment_status, paypal_order_id, assigned_vehicle_id, assigned_vehicle_type, total_cubic_meters, total_weight_kg, total_width, total_height, total_length, delivery_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-                $stmt->bind_param(
-                    "ssssssdsiddidddssisddddds",
-                    $customer_data['customer_name'],
-                    $customer_data['email'],
-                    $address_data['mobile'],
-                    $address_data['address'],
-                    $address_data['zipcode'],
-                    $payment_method,
-                    $grand_total,
-                    $reference_no,
-                    $address_data['billing_address_id'],
-                    $address_data['latitude'],
-                    $address_data['longitude'],
-                    $user_id,
-                    $delivery_data['delivery_distance'],
-                    $delivery_fee,
-                    $subtotal_after_discount,
-                    $payment_status,
-                    $paypal_order_id,
-                    $delivery_data['assigned_vehicle_id'],
-                    $delivery_data['assigned_vehicle_type'],
-                    $delivery_data['total_cubic_meters'],
-                    $delivery_data['total_weight_kg'],
-                    $delivery_data['total_width'],
-                    $delivery_data['total_height'],
-                    $delivery_data['total_length'],
-                    $delivery_data['delivery_type']
-                );
-
-                if ($stmt->execute()) {
-                    $order_id = $stmt->insert_id;
-                    $_SESSION['pending_paypal_order'] = $order_id;
-
-                    // Insert order items
-                    foreach ($cart_items as $item) {
-                        $subtotal_item = $item['price'] * $item['quantity'];
-                        $leadTimeRange = calculateLeadTimeRange(
-                            $item['lead_count'] ?? null,
-                            $item['lead_interval'] ?? null,
-                            $item['lead_gap'] ?? null
-                        );
-
-                        $lt_from = $leadTimeRange ? $leadTimeRange['start_date']->format('Y-m-d') : null;
-                        $lt_to = $leadTimeRange ? $leadTimeRange['end_date']->format('Y-m-d') : null;
-
-                        $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, codename, type_name, variant_color, size, price, quantity, subtotal, descrip6, descrip7, origin, lt_from, lt_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-                        $stmt2->bind_param(
-                            "iisssssdiisssss",
-                            $order_id,
-                            $item['product_id'],
-                            $item['product_name'] ?? $item['variant_name'],
-                            $item['codename'] ?? '',
-                            $item['type_name'] ?? '',
-                            $item['variant_color'] ?? '',
-                            $item['size'] ?? '',
-                            $item['price'],
-                            $item['quantity'],
-                            $subtotal_item,
-                            $item['descrip6'] ?? '',
-                            $item['descrip7'] ?? '',
-                            $item['origin'] ?? '',
-                            $lt_from,
-                            $lt_to
-                        );
-
-                        $stmt2->execute();
-                        $stmt2->close();
-                    }
-
-
-
-                    // Get approval URL
-                    $approval_url = null;
-                    foreach ($paypal_order['links'] as $link) {
-                        if ($link['rel'] === 'approve') {
-                            $approval_url = $link['href'];
-                            break;
-                        }
-                    }
-
-                    if ($approval_url) {
-                        header('Location: ' . $approval_url);
-                        exit;
-                    }
-                }
-                $stmt->close();
-            } else {
-                throw new Exception("Failed to create PayPal order");
-            }
-        } catch (Exception $e) {
-            $error = "PayPal payment error: " . $e->getMessage();
-        }
-    }
 
     // Handle PayMongo
     if ($payment_method === 'PayMongo') {

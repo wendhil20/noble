@@ -277,17 +277,31 @@ $categoryResult = mysqli_query($conn, $categoryQuery);
       typeIndex++;
     }
 
-    // HTML template for color row
+    // Updated colorRowHTML function in adminshop.php
+    // Replace the existing colorRowHTML with this:
+
     function colorRowHTML(index) {
       return `
-        <div class="color-row grid grid-cols-2 md:grid-cols-5 gap-2 items-center bg-green-50 p-3 rounded border">
-          <input type="text" name="color_name[${index}][]" placeholder="Color Name" class="border p-2 rounded"  />
-          <input type="text" name="color_code[${index}][]" placeholder="#hex code" class="border p-2 rounded" />
-          <input type="file" name="color_image[${index}][]" accept="image/*" class="border p-2 rounded" />
-          <input type="number" step="0.01" name="color_price[${index}][]" placeholder="Price" class="border p-2 rounded"  />
-          <button type="button" onclick="removeColor(this)" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">Remove</button>
-        </div>
-      `;
+    <div class="color-row grid grid-cols-2 md:grid-cols-6 gap-2 items-center bg-green-50 p-3 rounded border">
+      <input type="text" name="color_name[${index}][]" placeholder="Color Name" class="border p-2 rounded"  />
+      
+      <input type="text" name="color_code[${index}][]" placeholder="#hex code" class="border p-2 rounded" />
+      
+      <div class="flex flex-col">
+        <label class="text-xs text-gray-600 mb-1">Main Image</label>
+        <input type="file" name="color_image[${index}][]" accept="image/*" class="border p-2 rounded text-xs" />
+      </div>
+      
+      <div class="flex flex-col">
+        <label class="text-xs text-gray-600 mb-1">Secondary Image</label>
+        <input type="file" name="color_image2[${index}][]" accept="image/*" class="border p-2 rounded text-xs" />
+      </div>
+      
+      <input type="number" step="0.01" name="color_price[${index}][]" placeholder="Price" class="border p-2 rounded"  />
+      
+      <button type="button" onclick="removeColor(this)" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">Remove</button>
+    </div>
+  `;
     }
 
     // HTML template for variant row

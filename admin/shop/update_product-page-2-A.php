@@ -42,6 +42,7 @@ if (!empty($product['sub_images'])) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -53,6 +54,7 @@ if (!empty($product['sub_images'])) {
       display: inline-block;
       transition: all 0.3s ease;
     }
+
     .remove-sub-image {
       position: absolute;
       top: -8px;
@@ -69,9 +71,11 @@ if (!empty($product['sub_images'])) {
       align-items: center;
       justify-content: center;
     }
+
     .remove-sub-image:hover {
       background: #dc2626;
     }
+
     .restore-sub-image {
       position: absolute;
       top: -8px;
@@ -88,19 +92,23 @@ if (!empty($product['sub_images'])) {
       align-items: center;
       justify-content: center;
     }
+
     .restore-sub-image:hover {
       background: #059669;
     }
+
     .image-preview {
       max-width: 80px;
       max-height: 80px;
       object-fit: cover;
       border-radius: 4px;
     }
+
     .marked-for-deletion {
       opacity: 0.5;
       border: 2px dashed #ef4444 !important;
     }
+
     .marked-for-deletion .restore-sub-image {
       display: flex;
     }
@@ -213,6 +221,7 @@ if (!empty($product['sub_images'])) {
         <textarea name="description" rows="4" class="w-full border p-2 rounded" required><?php echo htmlspecialchars($product['description'] ?? ''); ?></textarea>
       </div>
 
+      <!-- UPDATED COLOR SECTION in update_product-page-2-A.php -->
       <!-- Product Colors Section -->
       <div class="mb-6 border p-4 rounded bg-green-50">
         <h3 class="font-semibold text-lg text-gray-700 mb-3">Product Colors</h3>
@@ -220,7 +229,7 @@ if (!empty($product['sub_images'])) {
           <?php
           $colorIndex = 0;
           while ($color = $colors->fetch_assoc()) { ?>
-            <div class="flex gap-2 mb-2 items-center bg-white p-2 rounded border">
+            <div class="flex gap-2 mb-3 items-center bg-white p-3 rounded border">
               <input type="hidden" name="color_id[]" value="<?php echo $color['id']; ?>" />
 
               <!-- Delete checkbox -->
@@ -230,23 +239,33 @@ if (!empty($product['sub_images'])) {
               </div>
 
               <!-- Color Name -->
-              <input type="text" name="color_name[]" value="<?php echo htmlspecialchars($color['color_name']); ?>" placeholder="Color Name" class="border p-2 w-1/5 rounded" required />
+              <input type="text" name="color_name[]" value="<?php echo htmlspecialchars($color['color_name']); ?>" placeholder="Color Name" class="border p-2 w-1/6 rounded" required />
 
               <!-- Color Code -->
-              <input type="text" name="color_code[]" value="<?php echo htmlspecialchars($color['color_code']); ?>" placeholder="Color Code (#hex)" class="border p-2 w-1/5 rounded" />
+              <input type="text" name="color_code[]" value="<?php echo htmlspecialchars($color['color_code']); ?>" placeholder="Color Code (#hex)" class="border p-2 w-1/6 rounded" />
 
-              <!-- Image -->
-              <div class="w-1/5">
+              <!-- Image 1 -->
+              <div class="w-1/6">
                 <?php if (!empty($color['image'])): ?>
                   <img src="../../<?= htmlspecialchars($color['image']) ?>" alt="Color Image" class="w-12 h-12 object-contain rounded mb-1 border" />
                 <?php endif; ?>
                 <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" />
+                <p class="text-xs text-gray-500 mt-1">Main Image</p>
+              </div>
+
+              <!-- Image 2 (NEW) -->
+              <div class="w-1/6">
+                <?php if (!empty($color['image2'])): ?>
+                  <img src="../../<?= htmlspecialchars($color['image2']) ?>" alt="Color Image 2" class="w-12 h-12 object-contain rounded mb-1 border" />
+                <?php endif; ?>
+                <input type="file" name="color_image2[]" accept="image/*" class="w-full text-xs" />
+                <p class="text-xs text-gray-500 mt-1">Secondary Image</p>
               </div>
 
               <!-- Price -->
-              <input type="number" step="0.01" name="color_price[]" value="<?php echo htmlspecialchars($color['price']); ?>" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
+              <input type="number" step="0.01" name="color_price[]" value="<?php echo htmlspecialchars($color['price']); ?>" placeholder="Color Price" class="border p-2 w-1/6 rounded" required />
 
-              <!-- Stock (NEW) -->
+              <!-- Stock -->
               <input type="number" name="color_stock[]" value="<?php echo htmlspecialchars($color['stock'] ?? 0); ?>" placeholder="Stock" class="border p-2 w-1/6 rounded" required />
 
               <!-- Remove Button -->
@@ -296,7 +315,7 @@ if (!empty($product['sub_images'])) {
 
             <label class="block font-medium mb-1">Variants (Sizes, etc.):</label>
             <div id="variant-section-<?php echo $typeIndex; ?>">
-              <?php while ($variant = $variants->fetch_assoc()) { 
+              <?php while ($variant = $variants->fetch_assoc()) {
                 $variant_id = $variant['id'];
                 $variantColorQuery = "SELECT pvc.*, pc.id as color_id, pc.color_name, pc.color_code 
                                      FROM product_variant_colors pvc 
@@ -378,67 +397,67 @@ if (!empty($product['sub_images'])) {
                     class="computed-price-input" />
 
 
-                    <!-- Timer Discount Section -->
-<div class="bg-yellow-50 p-3 rounded mb-2 border-2 border-yellow-300">
-  <label class="text-xs font-semibold text-gray-700 block mb-2">⏰ Timer Discount (Flash Sale)</label>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <!-- Timer Discount Percentage -->
-    <div>
-      <label class="text-xs font-medium text-gray-600">Timer Discount %</label>
-      <input type="number" 
-             step="0.01" 
-             name="variant_timer_discount[<?php echo $typeIndex; ?>][]"
-             value="<?php echo htmlspecialchars($variant['timer_discount_percent'] ?? '0'); ?>"
-             placeholder="e.g., 20"
-             class="border p-2 w-full rounded text-sm timer-discount-input"
-             data-variant-index="<?php echo $typeIndex; ?>"
-             min="0"
-             max="100" />
-      <p class="text-xs text-gray-500 mt-1">Extra discount during flash sale</p>
-    </div>
+                  <!-- Timer Discount Section -->
+                  <div class="bg-yellow-50 p-3 rounded mb-2 border-2 border-yellow-300">
+                    <label class="text-xs font-semibold text-gray-700 block mb-2">⏰ Timer Discount (Flash Sale)</label>
 
-    <!-- Timer Discount Active -->
-    <div class="flex items-center">
-      <input type="checkbox" 
-             name="variant_timer_active[<?php echo $typeIndex; ?>][]"
-             value="1"
-             <?php echo (!empty($variant['timer_discount_active']) ? 'checked' : ''); ?>
-             class="mr-2"
-             id="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" />
-      <label for="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" 
-             class="text-sm font-medium text-gray-700">
-        Enable Timer Discount
-      </label>
-    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <!-- Timer Discount Percentage -->
+                      <div>
+                        <label class="text-xs font-medium text-gray-600">Timer Discount %</label>
+                        <input type="number"
+                          step="0.01"
+                          name="variant_timer_discount[<?php echo $typeIndex; ?>][]"
+                          value="<?php echo htmlspecialchars($variant['timer_discount_percent'] ?? '0'); ?>"
+                          placeholder="e.g., 20"
+                          class="border p-2 w-full rounded text-sm timer-discount-input"
+                          data-variant-index="<?php echo $typeIndex; ?>"
+                          min="0"
+                          max="100" />
+                        <p class="text-xs text-gray-500 mt-1">Extra discount during flash sale</p>
+                      </div>
 
-    <!-- Start Date/Time -->
-    <div>
-      <label class="text-xs font-medium text-gray-600">Start Date & Time</label>
-      <input type="datetime-local" 
-             name="variant_timer_start[<?php echo $typeIndex; ?>][]"
-             value="<?php echo !empty($variant['timer_discount_start']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_start'])) : ''; ?>"
-             class="border p-2 w-full rounded text-sm" />
-    </div>
+                      <!-- Timer Discount Active -->
+                      <div class="flex items-center">
+                        <input type="checkbox"
+                          name="variant_timer_active[<?php echo $typeIndex; ?>][]"
+                          value="1"
+                          <?php echo (!empty($variant['timer_discount_active']) ? 'checked' : ''); ?>
+                          class="mr-2"
+                          id="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>" />
+                        <label for="timer_active_<?php echo $typeIndex; ?>_<?php echo $variant['id'] ?? 'new'; ?>"
+                          class="text-sm font-medium text-gray-700">
+                          Enable Timer Discount
+                        </label>
+                      </div>
 
-    <!-- End Date/Time -->
-    <div>
-      <label class="text-xs font-medium text-gray-600">End Date & Time</label>
-      <input type="datetime-local" 
-             name="variant_timer_end[<?php echo $typeIndex; ?>][]"
-             value="<?php echo !empty($variant['timer_discount_end']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_end'])) : ''; ?>"
-             class="border p-2 w-full rounded text-sm" />
-    </div>
-  </div>
+                      <!-- Start Date/Time -->
+                      <div>
+                        <label class="text-xs font-medium text-gray-600">Start Date & Time</label>
+                        <input type="datetime-local"
+                          name="variant_timer_start[<?php echo $typeIndex; ?>][]"
+                          value="<?php echo !empty($variant['timer_discount_start']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_start'])) : ''; ?>"
+                          class="border p-2 w-full rounded text-sm" />
+                      </div>
 
-  <!-- Timer Discount Preview -->
-  <div class="mt-2 p-2 bg-white rounded border">
-    <div class="flex justify-between items-center">
-      <span class="text-xs text-gray-600">Price after timer discount:</span>
-      <span class="timer-final-preview text-sm font-bold text-orange-600">₱0.00</span>
-    </div>
-  </div>
-</div>
+                      <!-- End Date/Time -->
+                      <div>
+                        <label class="text-xs font-medium text-gray-600">End Date & Time</label>
+                        <input type="datetime-local"
+                          name="variant_timer_end[<?php echo $typeIndex; ?>][]"
+                          value="<?php echo !empty($variant['timer_discount_end']) ? date('Y-m-d\TH:i', strtotime($variant['timer_discount_end'])) : ''; ?>"
+                          class="border p-2 w-full rounded text-sm" />
+                      </div>
+                    </div>
+
+                    <!-- Timer Discount Preview -->
+                    <div class="mt-2 p-2 bg-white rounded border">
+                      <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-600">Price after timer discount:</span>
+                        <span class="timer-final-preview text-sm font-bold text-orange-600">₱0.00</span>
+                      </div>
+                    </div>
+                  </div>
 
                   <!-- Row 3: Dimensions -->
                   <div class="bg-white p-3 rounded mb-2">
@@ -499,40 +518,40 @@ if (!empty($product['sub_images'])) {
                   <!-- Row 5: Available Colors for this Variant with STOCK -->
                   <div class="bg-white p-3 rounded mb-2 border-2 border-purple-200">
                     <label class="text-xs font-semibold text-gray-700 block mb-2">🎨 Available Colors & Stock for this Variant</label>
-                    
+
                     <div id="variant-colors-section-<?php echo $typeIndex; ?>-<?php echo $variant_id; ?>" class="space-y-2 mb-3">
-                      <?php 
+                      <?php
                       if ($variantColors && $variantColors->num_rows > 0):
                         while ($vc = $variantColors->fetch_assoc()):
                       ?>
-                        <div class="flex gap-2 items-center bg-gray-50 p-2 rounded border variant-color-item">
-                          <input type="hidden" name="variant_color_id[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
-                                 value="<?php echo $vc['id']; ?>" />
-                          
-                          <div class="flex items-center">
-                            <input type="checkbox" 
-                                   name="delete_variant_color[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
-                                   value="<?php echo $vc['id']; ?>" />
-                            <label class="text-xs text-gray-600 ml-1">Delete</label>
+                          <div class="flex gap-2 items-center bg-gray-50 p-2 rounded border variant-color-item">
+                            <input type="hidden" name="variant_color_id[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]"
+                              value="<?php echo $vc['id']; ?>" />
+
+                            <div class="flex items-center">
+                              <input type="checkbox"
+                                name="delete_variant_color[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]"
+                                value="<?php echo $vc['id']; ?>" />
+                              <label class="text-xs text-gray-600 ml-1">Delete</label>
+                            </div>
+
+                            <div class="w-8 h-8 rounded border"
+                              style="background-color: <?php echo htmlspecialchars($vc['color_code']); ?>"
+                              title="<?php echo htmlspecialchars($vc['color_name']); ?>"></div>
+
+                            <span class="text-sm font-medium text-gray-700 min-w-24">
+                              <?php echo htmlspecialchars($vc['color_name']); ?>
+                            </span>
+
+                            <!-- STOCK INPUT (NEW - PER SIZE+COLOR COMBO) -->
+                            <input type="number"
+                              name="variant_color_stock[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]"
+                              value="<?php echo (int)$vc['stock_quantity']; ?>"
+                              placeholder="Stock"
+                              class="border p-2 w-24 rounded text-sm font-semibold"
+                              min="0" required />
                           </div>
-                          
-                          <div class="w-8 h-8 rounded border" 
-                               style="background-color: <?php echo htmlspecialchars($vc['color_code']); ?>"
-                               title="<?php echo htmlspecialchars($vc['color_name']); ?>"></div>
-                          
-                          <span class="text-sm font-medium text-gray-700 min-w-24">
-                            <?php echo htmlspecialchars($vc['color_name']); ?>
-                          </span>
-                          
-                          <!-- STOCK INPUT (NEW - PER SIZE+COLOR COMBO) -->
-                          <input type="number" 
-                                 name="variant_color_stock[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
-                                 value="<?php echo (int)$vc['stock_quantity']; ?>" 
-                                 placeholder="Stock" 
-                                 class="border p-2 w-24 rounded text-sm font-semibold" 
-                                 min="0" required />
-                        </div>
-                      <?php 
+                      <?php
                         endwhile;
                       endif;
                       ?>
@@ -543,7 +562,7 @@ if (!empty($product['sub_images'])) {
                       <p class="text-xs text-gray-600 mb-2">Add color options to this variant:</p>
                       <div id="new-variant-colors-<?php echo $typeIndex; ?>-<?php echo $variant_id; ?>" class="space-y-2">
                         <div class="flex gap-2 items-center">
-                          <?php 
+                          <?php
                           // Get colors already assigned to this variant
                           $assignedColorsQuery = "SELECT color_id FROM product_variant_colors WHERE variant_id = $variant_id";
                           $assignedColorsResult = $conn->query($assignedColorsQuery);
@@ -552,37 +571,37 @@ if (!empty($product['sub_images'])) {
                             $assignedColorIds[] = $assignedColor['color_id'];
                           }
                           ?>
-                          <select name="new_variant_color[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
-                                  class="border p-2 rounded text-sm flex-1">
+                          <select name="new_variant_color[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]"
+                            class="border p-2 rounded text-sm flex-1">
                             <option value="">-- Select a Color --</option>
-                            <?php 
+                            <?php
                             $allColorsQuery = "SELECT id, color_name, color_code FROM product_colors WHERE product_id = $product_id";
                             $allColors = $conn->query($allColorsQuery);
-                            
+
                             while ($color = $allColors->fetch_assoc()):
                               // Skip colors already assigned to this variant
                               if (!in_array($color['id'], $assignedColorIds)):
                             ?>
-                              <option value="<?php echo $color['id']; ?>">
-                                <?php echo htmlspecialchars($color['color_name']); ?>
-                              </option>
-                            <?php 
+                                <option value="<?php echo $color['id']; ?>">
+                                  <?php echo htmlspecialchars($color['color_name']); ?>
+                                </option>
+                            <?php
                               endif;
-                            endwhile; 
+                            endwhile;
                             ?>
                           </select>
-                          
+
                           <!-- STOCK INPUT FOR NEW COLORS -->
-                          <input type="number" 
-                                 name="new_variant_color_stock[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]" 
-                                 placeholder="Stock qty" 
-                                 value="0"
-                                 class="border p-2 w-32 rounded text-sm font-semibold" 
-                                 min="0" required />
-                          
-                          <button type="button" 
-                                  onclick="addColorToVariant(<?php echo $typeIndex; ?>, <?php echo $variant_id; ?>)" 
-                                  class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 whitespace-nowrap">
+                          <input type="number"
+                            name="new_variant_color_stock[<?php echo $typeIndex; ?>][<?php echo $variant_id; ?>][]"
+                            placeholder="Stock qty"
+                            value="0"
+                            class="border p-2 w-32 rounded text-sm font-semibold"
+                            min="0" required />
+
+                          <button type="button"
+                            onclick="addColorToVariant(<?php echo $typeIndex; ?>, <?php echo $variant_id; ?>)"
+                            class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 whitespace-nowrap">
                             + Add
                           </button>
                         </div>
@@ -612,43 +631,43 @@ if (!empty($product['sub_images'])) {
 
   <script>
     function calculatePrices(container) {
-  const originalPrice = parseFloat(container.querySelector('.original-price-input')?.value) || 0;
-  const markup = parseFloat(container.querySelector('.percent-input')?.value) || 0;
-  const discount = parseFloat(container.querySelector('.discount-input')?.value) || 0;
-  const timerDiscount = parseFloat(container.querySelector('.timer-discount-input')?.value) || 0;
-  
-  const markupDisplay = container.querySelector('.markup-preview');
-  const finalDisplay = container.querySelector('.final-preview');
-  const timerFinalDisplay = container.querySelector('.timer-final-preview');
-  const computedPriceInput = container.querySelector('.computed-price-input');
-  
-  if (originalPrice > 0) {
-    // After markup
-    const afterMarkup = originalPrice + (originalPrice * markup / 100);
-    if (markupDisplay) markupDisplay.textContent = '₱' + afterMarkup.toFixed(2);
-    
-    // After regular discount
-    const afterDiscount = afterMarkup - (afterMarkup * discount / 100);
-    if (finalDisplay) finalDisplay.textContent = '₱' + afterDiscount.toFixed(2);
-    if (computedPriceInput) computedPriceInput.value = afterDiscount.toFixed(2);
-    
-    // After timer discount (if any)
-    const afterTimerDiscount = afterDiscount - (afterDiscount * timerDiscount / 100);
-    if (timerFinalDisplay) {
-      timerFinalDisplay.textContent = '₱' + afterTimerDiscount.toFixed(2);
-      if (timerDiscount > 0) {
-        timerFinalDisplay.classList.add('animate-pulse');
+      const originalPrice = parseFloat(container.querySelector('.original-price-input')?.value) || 0;
+      const markup = parseFloat(container.querySelector('.percent-input')?.value) || 0;
+      const discount = parseFloat(container.querySelector('.discount-input')?.value) || 0;
+      const timerDiscount = parseFloat(container.querySelector('.timer-discount-input')?.value) || 0;
+
+      const markupDisplay = container.querySelector('.markup-preview');
+      const finalDisplay = container.querySelector('.final-preview');
+      const timerFinalDisplay = container.querySelector('.timer-final-preview');
+      const computedPriceInput = container.querySelector('.computed-price-input');
+
+      if (originalPrice > 0) {
+        // After markup
+        const afterMarkup = originalPrice + (originalPrice * markup / 100);
+        if (markupDisplay) markupDisplay.textContent = '₱' + afterMarkup.toFixed(2);
+
+        // After regular discount
+        const afterDiscount = afterMarkup - (afterMarkup * discount / 100);
+        if (finalDisplay) finalDisplay.textContent = '₱' + afterDiscount.toFixed(2);
+        if (computedPriceInput) computedPriceInput.value = afterDiscount.toFixed(2);
+
+        // After timer discount (if any)
+        const afterTimerDiscount = afterDiscount - (afterDiscount * timerDiscount / 100);
+        if (timerFinalDisplay) {
+          timerFinalDisplay.textContent = '₱' + afterTimerDiscount.toFixed(2);
+          if (timerDiscount > 0) {
+            timerFinalDisplay.classList.add('animate-pulse');
+          } else {
+            timerFinalDisplay.classList.remove('animate-pulse');
+          }
+        }
       } else {
-        timerFinalDisplay.classList.remove('animate-pulse');
+        if (markupDisplay) markupDisplay.textContent = '₱0.00';
+        if (finalDisplay) finalDisplay.textContent = '₱0.00';
+        if (timerFinalDisplay) timerFinalDisplay.textContent = '₱0.00';
+        if (computedPriceInput) computedPriceInput.value = '0';
       }
     }
-  } else {
-    if (markupDisplay) markupDisplay.textContent = '₱0.00';
-    if (finalDisplay) finalDisplay.textContent = '₱0.00';
-    if (timerFinalDisplay) timerFinalDisplay.textContent = '₱0.00';
-    if (computedPriceInput) computedPriceInput.value = '0';
-  }
-}
 
     let typeIndex = <?php echo $typeIndex; ?>;
 
@@ -734,25 +753,31 @@ if (!empty($product['sub_images'])) {
       button.closest('.flex.gap-2').remove();
     }
 
+    // Updated addColor() function with image2 support
     function addColor() {
       const colorsSection = document.getElementById('colors-section');
       const div = document.createElement('div');
-      div.className = 'flex gap-2 mb-2 items-center bg-white p-2 rounded border';
+      div.className = 'flex gap-2 mb-3 items-center bg-white p-3 rounded border';
 
       div.innerHTML = `
-        <input type="hidden" name="color_id[]" value="new" />
-        <div class="flex items-center">
-          <span class="text-sm text-gray-400 w-[50px]">New</span>
-        </div>
-        <input type="text" name="color_name[]" placeholder="Color Name" class="border p-2 w-1/5 rounded" required />
-        <input type="text" name="color_code[]" placeholder="Color Code (#hex)" class="border p-2 w-1/5 rounded" />
-        <div class="w-1/5">
-          <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" required />
-        </div>
-        <input type="number" step="0.01" name="color_price[]" placeholder="Color Price" class="border p-2 w-1/5 rounded" required />
-        <input type="number" name="color_stock[]" placeholder="Stock" value="0" class="border p-2 w-1/6 rounded" required />
-        <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
-      `;
+    <input type="hidden" name="color_id[]" value="new" />
+    <div class="flex items-center">
+      <span class="text-sm text-gray-400 w-[50px]">New</span>
+    </div>
+    <input type="text" name="color_name[]" placeholder="Color Name" class="border p-2 w-1/6 rounded" required />
+    <input type="text" name="color_code[]" placeholder="Color Code (#hex)" class="border p-2 w-1/6 rounded" />
+    <div class="w-1/6">
+      <input type="file" name="color_image[]" accept="image/*" class="w-full text-xs" required />
+      <p class="text-xs text-gray-500 mt-1">Main Image</p>
+    </div>
+    <div class="w-1/6">
+      <input type="file" name="color_image2[]" accept="image/*" class="w-full text-xs" />
+      <p class="text-xs text-gray-500 mt-1">Secondary Image</p>
+    </div>
+    <input type="number" step="0.01" name="color_price[]" placeholder="Color Price" class="border p-2 w-1/6 rounded" required />
+    <input type="number" name="color_stock[]" placeholder="Stock" value="0" class="border p-2 w-1/6 rounded" required />
+    <button type="button" onclick="removeColor(this)" class="text-red-500 text-sm">✕</button>
+  `;
 
       colorsSection.appendChild(div);
     }
@@ -761,10 +786,10 @@ if (!empty($product['sub_images'])) {
       const newColorsSection = document.getElementById(`new-variant-colors-${typeIndex}-${variantId}`);
       const div = document.createElement('div');
       div.className = 'flex gap-2 items-center';
-      
+
       const firstSelect = document.querySelector(`select[name="new_variant_color[${typeIndex}][${variantId}][]"]`);
       const colorOptions = Array.from(firstSelect.options).map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('');
-      
+
       div.innerHTML = `
         <select name="new_variant_color[${typeIndex}][${variantId}][]" 
                 class="border p-2 rounded text-sm flex-1">
@@ -785,7 +810,7 @@ if (!empty($product['sub_images'])) {
           Remove
         </button>
       `;
-      
+
       newColorsSection.appendChild(div);
     }
 
@@ -945,110 +970,110 @@ if (!empty($product['sub_images'])) {
       typeIndex++;
     }
 
-// ✅ FIXED: Timer discount only applies if checkbox is CHECKED
-function applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput) {
-  const container = originalPriceInput.closest('.bg-blue-50');
-  const timerDiscountInput = container ? container.querySelector('.timer-discount-input') : null;
-  const timerCheckbox = container ? container.querySelector('input[name*="timer_active"]') : null;
-  
-  const originalPrice = parseFloat(originalPriceInput.value) || 0;
-  const percent = parseFloat(percentInput.value) || 0;
-  const discount = parseFloat(discountInput.value) || 0;
-  
-  // ✅ ONLY apply timer discount if checkbox is CHECKED
-  const timerDiscount = (timerCheckbox && timerCheckbox.checked && timerDiscountInput) 
-    ? (parseFloat(timerDiscountInput.value) || 0) 
-    : 0;
+    // ✅ FIXED: Timer discount only applies if checkbox is CHECKED
+    function applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput) {
+      const container = originalPriceInput.closest('.bg-blue-50');
+      const timerDiscountInput = container ? container.querySelector('.timer-discount-input') : null;
+      const timerCheckbox = container ? container.querySelector('input[name*="timer_active"]') : null;
 
-  if (originalPrice > 0) {
-    // Step 1: After markup
-    const priceAfterMarkup = originalPrice + (originalPrice * percent / 100);
-    markupDisplay.textContent = '₱' + priceAfterMarkup.toFixed(2);
+      const originalPrice = parseFloat(originalPriceInput.value) || 0;
+      const percent = parseFloat(percentInput.value) || 0;
+      const discount = parseFloat(discountInput.value) || 0;
 
-    // Step 2: After regular discount
-    const priceAfterDiscount = priceAfterMarkup - (priceAfterMarkup * discount / 100);
-    
-    // Step 3: Apply timer discount ONLY if enabled
-    const finalPrice = priceAfterDiscount - (priceAfterDiscount * timerDiscount / 100);
-    
-    // ✅ UPDATE FINAL PRICE
-    finalDisplay.textContent = '₱' + finalPrice.toFixed(2);
+      // ✅ ONLY apply timer discount if checkbox is CHECKED
+      const timerDiscount = (timerCheckbox && timerCheckbox.checked && timerDiscountInput) ?
+        (parseFloat(timerDiscountInput.value) || 0) :
+        0;
 
-    if (computedPriceInput) {
-      computedPriceInput.value = finalPrice.toFixed(2);
-    }
-    
-    // Change color based on timer discount
-    if (timerDiscount > 0 && timerCheckbox && timerCheckbox.checked) {
-      finalDisplay.classList.add('text-orange-600', 'font-bold');
-      finalDisplay.style.animation = 'pulse 2s ease-in-out infinite';
-    } else {
-      finalDisplay.classList.remove('text-orange-600', 'font-bold');
-      finalDisplay.style.animation = '';
-    }
-  } else {
-    markupDisplay.textContent = '₱0.00';
-    finalDisplay.textContent = '₱0.00';
-    if (computedPriceInput) {
-      computedPriceInput.value = '0';
-    }
-  }
-}
+      if (originalPrice > 0) {
+        // Step 1: After markup
+        const priceAfterMarkup = originalPrice + (originalPrice * percent / 100);
+        markupDisplay.textContent = '₱' + priceAfterMarkup.toFixed(2);
 
-// ✅ UPDATED DOMContentLoaded - Listen to all inputs AND checkbox
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.bg-blue-50.p-4.rounded.border.mb-3').forEach((variantDiv) => {
-    const originalPriceInput = variantDiv.querySelector('.original-price-input');
-    const percentInput = variantDiv.querySelector('.percent-input');
-    const discountInput = variantDiv.querySelector('.discount-input');
-    const timerDiscountInput = variantDiv.querySelector('.timer-discount-input');
-    const timerCheckbox = variantDiv.querySelector('input[name*="timer_active"]');
-    const markupDisplay = variantDiv.querySelector('.markup-preview');
-    const finalDisplay = variantDiv.querySelector('.final-preview');
-    const computedPriceInput = variantDiv.querySelector('.computed-price-input');
+        // Step 2: After regular discount
+        const priceAfterDiscount = priceAfterMarkup - (priceAfterMarkup * discount / 100);
 
-    if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
-      const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+        // Step 3: Apply timer discount ONLY if enabled
+        const finalPrice = priceAfterDiscount - (priceAfterDiscount * timerDiscount / 100);
 
-      // Listen to all price inputs
-      originalPriceInput.addEventListener('input', hook);
-      percentInput.addEventListener('input', hook);
-      if (discountInput) discountInput.addEventListener('input', hook);
-      if (timerDiscountInput) timerDiscountInput.addEventListener('input', hook);
-      
-      // ✅ IMPORTANT: Listen to checkbox changes!
-      if (timerCheckbox) {
-        timerCheckbox.addEventListener('change', hook);
+        // ✅ UPDATE FINAL PRICE
+        finalDisplay.textContent = '₱' + finalPrice.toFixed(2);
+
+        if (computedPriceInput) {
+          computedPriceInput.value = finalPrice.toFixed(2);
+        }
+
+        // Change color based on timer discount
+        if (timerDiscount > 0 && timerCheckbox && timerCheckbox.checked) {
+          finalDisplay.classList.add('text-orange-600', 'font-bold');
+          finalDisplay.style.animation = 'pulse 2s ease-in-out infinite';
+        } else {
+          finalDisplay.classList.remove('text-orange-600', 'font-bold');
+          finalDisplay.style.animation = '';
+        }
+      } else {
+        markupDisplay.textContent = '₱0.00';
+        finalDisplay.textContent = '₱0.00';
+        if (computedPriceInput) {
+          computedPriceInput.value = '0';
+        }
       }
-
-      hook(); // Initialize on page load
     }
-  });
-});
 
-// ✅ For new variants - same setup
-function setupVariantListeners(variantDiv) {
-  const originalPriceInput = variantDiv.querySelector('.original-price-input');
-  const percentInput = variantDiv.querySelector('.percent-input');
-  const discountInput = variantDiv.querySelector('.discount-input');
-  const timerDiscountInput = variantDiv.querySelector('.timer-discount-input');
-  const timerCheckbox = variantDiv.querySelector('input[name*="timer_active"]');
-  const markupDisplay = variantDiv.querySelector('.markup-preview');
-  const finalDisplay = variantDiv.querySelector('.final-preview');
-  const computedPriceInput = variantDiv.querySelector('.computed-price-input');
+    // ✅ UPDATED DOMContentLoaded - Listen to all inputs AND checkbox
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.bg-blue-50.p-4.rounded.border.mb-3').forEach((variantDiv) => {
+        const originalPriceInput = variantDiv.querySelector('.original-price-input');
+        const percentInput = variantDiv.querySelector('.percent-input');
+        const discountInput = variantDiv.querySelector('.discount-input');
+        const timerDiscountInput = variantDiv.querySelector('.timer-discount-input');
+        const timerCheckbox = variantDiv.querySelector('input[name*="timer_active"]');
+        const markupDisplay = variantDiv.querySelector('.markup-preview');
+        const finalDisplay = variantDiv.querySelector('.final-preview');
+        const computedPriceInput = variantDiv.querySelector('.computed-price-input');
 
-  if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
-    const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+        if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
+          const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
 
-    originalPriceInput.addEventListener('input', hook);
-    percentInput.addEventListener('input', hook);
-    if (discountInput) discountInput.addEventListener('input', hook);
-    if (timerDiscountInput) timerDiscountInput.addEventListener('input', hook);
-    if (timerCheckbox) timerCheckbox.addEventListener('change', hook);
+          // Listen to all price inputs
+          originalPriceInput.addEventListener('input', hook);
+          percentInput.addEventListener('input', hook);
+          if (discountInput) discountInput.addEventListener('input', hook);
+          if (timerDiscountInput) timerDiscountInput.addEventListener('input', hook);
 
-    hook();
-  }
-}
+          // ✅ IMPORTANT: Listen to checkbox changes!
+          if (timerCheckbox) {
+            timerCheckbox.addEventListener('change', hook);
+          }
+
+          hook(); // Initialize on page load
+        }
+      });
+    });
+
+    // ✅ For new variants - same setup
+    function setupVariantListeners(variantDiv) {
+      const originalPriceInput = variantDiv.querySelector('.original-price-input');
+      const percentInput = variantDiv.querySelector('.percent-input');
+      const discountInput = variantDiv.querySelector('.discount-input');
+      const timerDiscountInput = variantDiv.querySelector('.timer-discount-input');
+      const timerCheckbox = variantDiv.querySelector('input[name*="timer_active"]');
+      const markupDisplay = variantDiv.querySelector('.markup-preview');
+      const finalDisplay = variantDiv.querySelector('.final-preview');
+      const computedPriceInput = variantDiv.querySelector('.computed-price-input');
+
+      if (originalPriceInput && percentInput && markupDisplay && finalDisplay && computedPriceInput) {
+        const hook = () => applyMarkup(originalPriceInput, percentInput, discountInput, markupDisplay, finalDisplay, computedPriceInput);
+
+        originalPriceInput.addEventListener('input', hook);
+        percentInput.addEventListener('input', hook);
+        if (discountInput) discountInput.addEventListener('input', hook);
+        if (timerDiscountInput) timerDiscountInput.addEventListener('input', hook);
+        if (timerCheckbox) timerCheckbox.addEventListener('change', hook);
+
+        hook();
+      }
+    }
   </script>
 
 </body>

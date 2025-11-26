@@ -750,7 +750,7 @@ while ($row = $banners_result->fetch_assoc()) {
         <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-1">
 
             <!-- Card 1: Recent Views -->
-            <a href="#recent" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group  transition-all ">
+            <a href="index-countdowntimer-page-17.php" class="relative overflow-hidden h-[125px] sm:h-[175px] lg:h-[197px] group  transition-all ">
                 <div class="absolute inset-0">
                     <img src="../img/gif1.gif" alt="Recent" class="w-full h-full object-cover mix-blend-overlay" />
                 </div>

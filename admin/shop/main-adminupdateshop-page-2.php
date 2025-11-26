@@ -13,7 +13,6 @@ if (!isset($_SESSION['noble_user'])) {
   exit();
 }
 
-
 // DELETE LOGIC
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
   $deleteId = (int) $_POST['delete_id'];
@@ -156,21 +155,30 @@ $products = $conn->query("
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    .product-card {
-      transition: all 0.3s ease;
-      border: 1px solid #e5e7eb;
+    .table-row-hover {
+      transition: all 0.2s ease;
     }
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(249, 115, 22, 0.15);
-      border-color: #fb923c;
+    .table-row-hover:hover {
+      background-color: #faf8f6;
     }
-    .badge-stock {
+    .stock-badge {
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      50% { opacity: 0.8; }
+    }
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .product-image-cell {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      background: #f9fafb;
+      border-radius: 0.5rem;
     }
   </style>
 </head>
@@ -178,7 +186,7 @@ $products = $conn->query("
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-roboto">
   <?php include '../navbar/top.php'; ?>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header Section -->
     <div class="mb-8">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -200,11 +208,11 @@ $products = $conn->query("
     </div>
 
     <!-- Filters Section -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-search text-gray-400 mr-2"></i>Search Product
+            <i class="fas fa-search text-orange-500 mr-2"></i>Search Product
           </label>
           <input
             type="text"
@@ -214,7 +222,7 @@ $products = $conn->query("
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-box-open text-gray-400 mr-2"></i>Stock Status
+            <i class="fas fa-filter text-orange-500 mr-2"></i>Stock Status
           </label>
           <select
             id="quantityFilter"
@@ -227,99 +235,141 @@ $products = $conn->query("
       </div>
     </div>
 
-    <!-- Products Grid -->
+    <!-- Products Table -->
     <?php if ($products->num_rows > 0): ?>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" id="productGrid">
-        <?php while ($product = $products->fetch_assoc()): ?>
-          <?php
-          $createdAt = strtotime($product['created_at']);
-          $updatedAt = strtotime($product['updated_at']);
-          // ✅ Check if color OR size has stock
-          $isInStock = ($product['total_color_stock'] > 0 || $product['total_size_stock'] > 0);
-          ?>
-          <div class="product-card bg-white rounded-xl overflow-hidden shadow-sm">
-            <!-- Image Section -->
-            <div class="relative w-full aspect-square bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden group">
-              <?php if (!empty($product['main_image'])): ?>
-                <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
-                  alt="Product Image"
-                  class="h-full w-full object-contain group-hover:scale-105 transition duration-300" />
-              <?php else: ?>
-                <div class="text-center">
-                  <i class="fas fa-image text-gray-300 text-3xl mb-2"></i>
-                  <span class="text-gray-400 text-xs italic block">No image</span>
-                </div>
-              <?php endif; ?>
-              
-              <!-- Stock Badge -->
-              <div class="absolute top-2 right-2">
-                <span class="<?= $isInStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?> text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 badge-stock">
-                  <i class="fas fa-<?= $isInStock ? 'check-circle' : 'times-circle' ?>"></i>
-                  <?= $isInStock ? 'In Stock' : 'Out' ?>
-                </span>
-              </div>
-            </div>
+      <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="sticky-header bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left font-semibold text-gray-700">Image</th>
+                <th class="px-6 py-4 text-left font-semibold text-gray-700">Product Name</th>
+                <th class="px-6 py-4 text-left font-semibold text-gray-700">Product Code</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Color Stock</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Size Stock</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Total Stock</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Status</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Created</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Updated</th>
+                <th class="px-6 py-4 text-center font-semibold text-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <?php while ($product = $products->fetch_assoc()): ?>
+                <?php
+                $createdAt = strtotime($product['created_at']);
+                $updatedAt = strtotime($product['updated_at']);
+                $isInStock = ($product['total_color_stock'] > 0 || $product['total_size_stock'] > 0);
+                $totalStock = $product['total_color_stock'] + $product['total_size_stock'];
+                ?>
+                <tr class="table-row-hover border-b border-gray-100 product-row " 
+                    data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>"
+                    data-code="<?= htmlspecialchars(strtolower($product['codename'])) ?>"
+                    data-stock="<?= $totalStock ?>">
+                  
+                  <!-- Product Image -->
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-center">
+                      <?php if (!empty($product['main_image'])): ?>
+                        <img src="../../<?= htmlspecialchars($product['main_image']) ?>"
+                          alt="<?= htmlspecialchars($product['product_name']) ?>"
+                          class="product-image-cell" />
+                      <?php else: ?>
+                        <div class="w-14 h-14 bg-gray-200 rounded flex items-center justify-center">
+                          <i class="fas fa-image text-gray-400 text-lg"></i>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  </td>
 
-            <!-- Content Section -->
-            <div class="p-4">
-              <h3 class="font-bold text-gray-900 text-sm truncate product-name mb-1" title="<?= htmlspecialchars($product['product_name']) ?>">
-                <?= htmlspecialchars($product['product_name']) ?>
-              </h3>
-              <p class="text-xs text-gray-500 truncate product-code mb-3" title="<?= htmlspecialchars($product['codename']) ?>">
-                <?= htmlspecialchars($product['codename']) ?>
-              </p>
+                  <!-- Product Name -->
+                  <td class="px-6 py-4">
+                    <span class="font-medium text-gray-900 product-name" title="<?= htmlspecialchars($product['product_name']) ?>">
+                      <?= htmlspecialchars(substr($product['product_name'], 0, 25)) . (strlen($product['product_name']) > 25 ? '...' : '') ?>
+                    </span>
+                  </td>
 
-              <!-- Info Grid -->
-              <div class="space-y-2 mb-4 text-xs">
-                <!-- ✅ Display color stock -->
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600"><i class="fas fa-palette mr-1"></i>Color Stock:</span>
-                  <span class="font-semibold text-blue-600 product-qty"><?= $product['total_color_stock'] ?></span>
-                </div>
-                
-                <!-- ✅ Display size stock -->
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600"><i class="fas fa-ruler mr-1"></i>Size Stock:</span>
-                  <span class="font-semibold text-green-600 product-qty"><?= $product['total_size_stock'] ?></span>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600"><i class="fas fa-calendar mr-1"></i>Created:</span>
-                  <span class="font-medium text-gray-700"><?= date('M d', $createdAt) ?></span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600"><i class="fas fa-sync mr-1"></i>Updated:</span>
-                  <span class="font-medium text-gray-700"><?= date('M d', $updatedAt) ?></span>
-                </div>
-              </div>
+                  <!-- Product Code -->
+                  <td class="px-6 py-4">
+                    <span class="text-black font-mono text-xs bg-gray-100 px-2 py-1 rounded product-code uppercase" title="<?= htmlspecialchars($product['codename']) ?>">
+                      <?= htmlspecialchars($product['codename']) ?>
+                    </span>
+                  </td>
 
-              <!-- Action Buttons -->
-              <div class="flex flex-col gap-2 mt-4">
-                <div class="flex gap-2">
-                  <a href="update_product-page-2-A.php?id=<?= $product['id'] ?>"
-                    class="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-2 py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1">
-                    <i class="fas fa-edit"></i>
-                    Edit
-                  </a>
-                  <form method="POST" class="flex-1" onsubmit="return confirm('⚠️ Delete this product permanently?');">
-                    <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
-                    <button type="submit"
-                      class="w-full bg-red-600 hover:bg-red-700 text-white px-2 py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1">
-                      <i class="fas fa-trash"></i>
-                      Delete
-                    </button>
-                  </form>
-                </div>
-                <!-- STOCK BUTTON -->
-                <a href="main-modify-stock-product-page-7.php?id=<?= $product['id'] ?>"
-                  class="w-full bg-green-600 hover:bg-green-700 text-white px-2 py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1">
-                  <i class="fas fa-box-open"></i>
-                  Manage Stock
-                </a>
-              </div>
-            </div>
-          </div>
-        <?php endwhile; ?>
+                  <!-- Color Stock -->
+                  <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold color-stock">
+                      <i class="fas fa-palette text-xs"></i>
+                      <?= $product['total_color_stock'] ?>
+                    </span>
+                  </td>
+
+                  <!-- Size Stock -->
+                  <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-1 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-semibold size-stock">
+                      <i class="fas fa-ruler text-xs"></i>
+                      <?= $product['total_size_stock'] ?>
+                    </span>
+                  </td>
+
+                  <!-- Total Stock -->
+                  <td class="px-6 py-4 text-center">
+                    <span class="font-bold text-lg text-gray-900 total-stock">
+                      <?= $totalStock ?>
+                    </span>
+                  </td>
+
+                  <!-- Status Badge -->
+                  <td class="px-6 py-4 text-center">
+                    <span class="<?= $isInStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?> text-xs font-semibold px-3 py-1 rounded-full flex items-center justify-center gap-1 stock-badge mx-auto w-fit">
+                      <i class="fas fa-<?= $isInStock ? 'check-circle' : 'times-circle' ?>"></i>
+                      <?= $isInStock ? 'In Stock' : 'Out' ?>
+                    </span>
+                  </td>
+
+                  <!-- Created Date -->
+                  <td class="px-6 py-4 text-center text-gray-600 text-xs">
+                    <i class="fas fa-calendar-alt text-orange-500 mr-1"></i>
+                    <?= date('M d, Y', $createdAt) ?>
+                  </td>
+
+                  <!-- Updated Date -->
+                  <td class="px-6 py-4 text-center text-gray-600 text-xs">
+                    <i class="fas fa-sync text-blue-500 mr-1"></i>
+                    <?= date('M d, Y', $updatedAt) ?>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-6 py-4">
+                    <div class="flex gap-2 justify-center flex-wrap">
+                      <a href="update_product-page-2-A.php?id=<?= $product['id'] ?>"
+                        class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                        title="Edit Product">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                      </a>
+                      <a href="main-modify-stock-product-page-7.php?id=<?= $product['id'] ?>"
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                        title="Manage Stock">
+                        <i class="fas fa-boxes"></i>
+                        Stock
+                      </a>
+                      <form method="POST" class="inline" onsubmit="return confirm('⚠️ Delete this product permanently?');">
+                        <input type="hidden" name="delete_id" value="<?= $product['id'] ?>">
+                        <button type="submit"
+                          class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1 whitespace-nowrap"
+                          title="Delete Product">
+                          <i class="fas fa-trash"></i>
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <?php endwhile; ?>
+            </tbody>
+          </table>
+        </div>
       </div>
 
     <?php else: ?>
@@ -346,41 +396,50 @@ $products = $conn->query("
   <script>
     const searchInput = document.getElementById("searchInput");
     const quantityFilter = document.getElementById("quantityFilter");
-    const cards = document.querySelectorAll(".product-card");
+    const rows = document.querySelectorAll(".product-row");
 
-    function filterCards() {
+    function filterRows() {
       const searchTerm = searchInput.value.toLowerCase();
       const quantityValue = quantityFilter.value;
       let visibleCount = 0;
 
-      cards.forEach(card => {
-        const name = card.querySelector(".product-name").textContent.toLowerCase();
-        const code = card.querySelector(".product-code").textContent.toLowerCase();
-        const stockElements = card.querySelectorAll(".product-qty");
-        const colorStock = parseInt(stockElements[0].textContent);
-        const sizeStock = parseInt(stockElements[1].textContent);
-        const totalStock = colorStock + sizeStock;
+      rows.forEach(row => {
+        const name = row.dataset.name;
+        const code = row.dataset.code;
+        const stock = parseInt(row.dataset.stock);
 
         const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
         let matchesFilter = true;
 
         if (quantityValue === "in-stock") {
-          matchesFilter = totalStock > 0;
+          matchesFilter = stock > 0;
         } else if (quantityValue === "out-of-stock") {
-          matchesFilter = totalStock === 0;
+          matchesFilter = stock === 0;
         }
 
         if (matchesSearch && matchesFilter) {
-          card.style.display = "";
+          row.style.display = "";
           visibleCount++;
         } else {
-          card.style.display = "none";
+          row.style.display = "none";
         }
       });
+
+      // Show no results message if needed
+      const tbody = document.getElementById("productTableBody");
+      const noResults = tbody.querySelector(".no-results");
+      if (visibleCount === 0 && !noResults) {
+        const tr = document.createElement("tr");
+        tr.className = "no-results";
+        tr.innerHTML = '<td colspan="10" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-search mr-2"></i>No products found</td>';
+        tbody.appendChild(tr);
+      } else if (visibleCount > 0 && noResults) {
+        noResults.remove();
+      }
     }
 
-    searchInput.addEventListener("input", filterCards);
-    quantityFilter.addEventListener("change", filterCards);
+    searchInput.addEventListener("input", filterRows);
+    quantityFilter.addEventListener("change", filterRows);
   </script>
 
 </body>

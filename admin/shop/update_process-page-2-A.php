@@ -1,8 +1,9 @@
 <?php
-//update_process-page-2-A.php - FIXED VERSION WITH AUTO-DELETE
+//update_process-page-2-A.php - FIXED VERSION WITH AUTO-DELETE & NOTIFICATIONS
 session_name("nobleadmin");
 session_start();
 include '../../connection/connect.php';
+require_once '../notification/main-handler-notif-page-2.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -20,14 +21,19 @@ if (!$product_id) {
 try {
   $conn->begin_transaction();
 
+  // Get product name for notification
+  $productNameResult = $conn->query("SELECT product_name FROM products WHERE id = $product_id");
+  $productNameRow = $productNameResult->fetch_assoc();
+  $product_name = $productNameRow['product_name'] ?? 'Unknown Product';
+
   // 1. UPDATE BASIC PRODUCT INFO
-  $product_name = $conn->real_escape_string($_POST['product_name']);
+  $product_name_new = $conn->real_escape_string($_POST['product_name']);
   $quantity = (int)$_POST['quantity'];
   $description = $conn->real_escape_string($_POST['description']);
   $category = $conn->real_escape_string($_POST['category']);
 
   $updateProductSQL = "UPDATE products 
-                      SET product_name = '$product_name',
+                      SET product_name = '$product_name_new',
                           quantity = $quantity,
                           description = '$description',
                           codename = '$category'
@@ -35,6 +41,11 @@ try {
 
   if (!$conn->query($updateProductSQL)) {
     throw new Exception("Failed to update product: " . $conn->error);
+  }
+
+  // Update product_name for notification if it changed
+  if ($product_name_new !== $product_name) {
+    $product_name = $product_name_new;
   }
 
   // ✅ UPDATE MAIN PRODUCT IMAGE WITH AUTO-DELETE
@@ -496,6 +507,28 @@ try {
   }
 
   $conn->commit();
+
+  // ✅ NEW: CREATE NOTIFICATION FOR PRODUCT UPDATE
+  $notification_title = "Product Updated";
+  $notification_message = "'" . htmlspecialchars($product_name) . "' (ID: #$product_id) has been updated";
+  
+  $style = getNotificationStyle('product_update');
+  
+  $notif_created = createNotification(
+    $conn,
+    'product_update',
+    $notification_title,
+    $notification_message,
+    $style['icon'],
+    $style['color']
+  );
+
+  // Log notification creation
+  if ($notif_created) {
+    error_log("Notification created for product update: $product_id");
+  } else {
+    error_log("Failed to create notification for product update: $product_id");
+  }
 
   $_SESSION['success_message'] = "Product updated successfully with timer discount!";
   header("Location: update_product-page-2-A.php?id=$product_id&success=1");

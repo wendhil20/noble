@@ -1,6 +1,7 @@
 <?php
-//upload_process-page-1-A.php - UPDATED WITH IMAGE2 SUPPORT
+//upload_process-page-1-A.php - UPDATED WITH IMAGE2 SUPPORT & NOTIFICATIONS
 include '../../connection/connect.php';
+require_once '../notification/main-handler-notif-page-2.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -213,6 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $stmt->execute();
         $product_id = $conn->insert_id;
+        $product_name = $_POST['product_name'];
         $stmt->close();
 
         // Log product creation
@@ -273,10 +275,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $color_image2 = saveImageToFolder($file);
                             }
 
-                            // ✅ UPDATED: Insert with image2
+                            // ✅ FIXED: Changed 'issdsS' to 'issdss' (all lowercase)
                             $stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, color_code, price, image, image2) VALUES (?, ?, ?, ?, ?, ?)");
                             if (!$stmt) throw new Exception("Color insert failed: " . $conn->error);
-                            $stmt->bind_param("issdsS", $product_id, $color_name, $color_code, $color_price, $color_image, $color_image2);
+                            $stmt->bind_param("issdss", $product_id, $color_name, $color_code, $color_price, $color_image, $color_image2);
                             $stmt->execute();
                             $stmt->close();
                         }
@@ -345,10 +347,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $conn->commit();
 
+        // ✅ NEW: CREATE NOTIFICATION FOR ALL ADMINS
+        $notification_title = "New Product Added";
+        $notification_message = "'" . htmlspecialchars($product_name) . "' has been added to catalog (ID: #$product_id)";
+        
+        $style = getNotificationStyle('product_upload');
+        
+        $notif_created = createNotification(
+            $conn,
+            'product_upload',
+            $notification_title,
+            $notification_message,
+            $style['icon'],
+            $style['color']
+        );
+
         $sub_images_count = count($sub_images);
         $success_message = "Product uploaded successfully! ID: $product_id";
         if ($sub_images_count > 0) {
             $success_message .= " ($sub_images_count sub images)";
+        }
+
+        // Log notification creation
+        if ($notif_created) {
+            error_log("Notification created for product: $product_id");
+        } else {
+            error_log("Failed to create notification for product: $product_id");
         }
 
         echo "<script>

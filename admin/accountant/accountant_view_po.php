@@ -422,9 +422,14 @@ if (isset($_POST['reject_file'])) {
     <?php endif; ?>
     
     <!-- P.O. Status Badges (Read-Only for Accountant) -->
-    <?php if ($file['all_items_received'] == 1): ?>
+    <?php if ($file['all_items_received'] == 1 && $file['po_status'] == 'received'): ?>
     <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full border-2 border-emerald-300">
         <i class="fas fa-check-double mr-1"></i>
+        Fully Received (<?php echo date('M j, Y', strtotime($file['all_items_received_at'])); ?>)
+    </span>
+<?php elseif ($file['all_items_received'] == 1): ?>
+    <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+        <i class="fas fa-check-circle mr-1"></i>
         All Items Received (<?php echo date('M j, Y', strtotime($file['all_items_received_at'])); ?>)
     </span>
 <?php elseif ($file['marked_as_ordered'] == 1): ?>

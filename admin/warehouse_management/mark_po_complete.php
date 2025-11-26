@@ -1,4 +1,5 @@
 <?php
+// mark_po_complete.php
 session_name("nobleadmin");
 session_start();
 
@@ -22,6 +23,8 @@ if (empty($po_number)) {
     exit();
 }
 
+$user_id = $_SESSION['noble_id'] ?? 0;
+
 try {
     $conn->begin_transaction();
     
@@ -37,7 +40,11 @@ try {
     $verifyStmt->close();
     
     if ($verifyResult['total'] != $verifyResult['received_count']) {
-        throw new Exception('Not all items have been received yet');
+        throw new Exception('Not all items have been received yet. ' . $verifyResult['received_count'] . ' of ' . $verifyResult['total'] . ' items received.');
+    }
+    
+    if ($verifyResult['total'] == 0) {
+        throw new Exception('No items found for this P.O. number');
     }
     
     // Get order_id from the PO
@@ -52,10 +59,11 @@ try {
         throw new Exception('Could not find order for this P.O.');
     }
     
-    // Update po_attachments table
+    // Update po_attachments table - mark as received and update po_status
     $updateSql = "UPDATE po_attachments 
                   SET all_items_received = 1,
-                      all_items_received_at = NOW()
+                      all_items_received_at = NOW(),
+                      po_status = 'received'
                   WHERE order_id = ? 
                   AND (original_filename LIKE CONCAT('%', ?, '%') OR supplier_name IN (
                       SELECT DISTINCT CASE 
@@ -70,19 +78,63 @@ try {
     $updateStmt->bind_param("iss", $order_id, $po_number, $po_number);
     
     if (!$updateStmt->execute()) {
-        throw new Exception('Failed to update P.O. attachment status');
+        throw new Exception('Failed to update P.O. attachment status: ' . $updateStmt->error);
     }
+    $affectedPoRows = $updateStmt->affected_rows;
     $updateStmt->close();
     
+    // Update po_receiver_assignments table - mark as completed
+    $updateAssignmentSql = "UPDATE po_receiver_assignments 
+                            SET status = 'completed',
+                                completed_at = NOW(),
+                                notes = CONCAT(COALESCE(notes, ''), 
+                                              IF(notes IS NULL OR notes = '', '', '\n'),
+                                              'Completed by user ID ', ?, ' on ', NOW())
+                            WHERE po_number = ? 
+                            AND status = 'active'";
+    $updateAssignmentStmt = $conn->prepare($updateAssignmentSql);
+    $updateAssignmentStmt->bind_param("is", $user_id, $po_number);
+    
+    if (!$updateAssignmentStmt->execute()) {
+        throw new Exception('Failed to update receiver assignment status: ' . $updateAssignmentStmt->error);
+    }
+    $affectedAssignmentRows = $updateAssignmentStmt->affected_rows;
+    $updateAssignmentStmt->close();
+    
+    // Commit all changes
     $conn->commit();
+    
+    // Build detailed success message
+    $message = "P.O. $po_number marked as completely received. All {$verifyResult['total']} items have been confirmed.";
+    
+    if ($affectedPoRows > 0) {
+        $message .= " Updated $affectedPoRows P.O. attachment(s) to 'received' status.";
+    }
+    
+    if ($affectedAssignmentRows > 0) {
+        $message .= " Marked $affectedAssignmentRows receiver assignment(s) as completed.";
+    }
     
     echo json_encode([
         'success' => true,
-        'message' => "P.O. $po_number marked as completely received. All {$verifyResult['total']} items have been confirmed."
+        'message' => $message,
+        'po_number' => $po_number,
+        'items_received' => $verifyResult['total'],
+        'po_attachments_updated' => $affectedPoRows,
+        'assignments_completed' => $affectedAssignmentRows,
+        'order_id' => $order_id
     ]);
     
 } catch (Exception $e) {
     $conn->rollback();
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    
+    error_log("Error in mark_po_complete.php: " . $e->getMessage());
+    
+    echo json_encode([
+        'success' => false, 
+        'error' => $e->getMessage()
+    ]);
 }
+
+$conn->close();
 ?>

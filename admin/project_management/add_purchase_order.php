@@ -897,9 +897,7 @@ if ($material_results && mysqli_num_rows($material_results) > 0) {
                     <i class="fas fa-check-circle text-green-600 mt-1 flex-shrink-0"></i>
                     <p class="text-sm text-green-800 font-medium">All sizes are available for this item</p>
                 </div>
-                <p class="font-bold text-sm text-gray-800 line-clamp-2 group-hover:text-orange-700 transition-colors">
-                    <?php echo htmlspecialchars(substr($product['name'], 0, 40)); ?>
-                </p>
+        
                 <!-- Size Options -->
                 <div class="mb-8">
                     <label class="block text-sm font-bold text-gray-800 mb-4">Available Sizes:</label>

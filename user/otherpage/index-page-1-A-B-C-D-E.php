@@ -2128,21 +2128,21 @@ while ($row = $banners_result->fetch_assoc()) {
 
 
 
-    <?php
+   <?php
     // MAIN query for bestseller items
     $bestsellerItems = $conn->query("SELECT * FROM bestseller ORDER BY id DESC");
     $bestsellerData = $bestsellerItems->fetch_all(MYSQLI_ASSOC);
     ?>
 
-    <section class="py-8  bg-gray-50" id="bestseller-section">
-        <div class="max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8">
+    <section class="py-8 md:py-12 lg:py-16 bg-gray-50" id="bestseller-section">
+        <div class="max-w-7xl mx-auto w-full px-4 md:px-6 lg:px-8">
 
             <!-- Section Header -->
-            <div class="text-base mb-8 md:mb-12">
-                <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2">
+            <div class="mb-8 md:mb-12 lg:mb-16">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2">
                     Best Sellers
                 </h2>
-                <p class="text-gray-600 text-sm md:text-base">
+                <p class="text-gray-600 text-xs sm:text-sm md:text-base">
                     Top quality products at unbeatable prices
                 </p>
             </div>
@@ -2150,86 +2150,74 @@ while ($row = $banners_result->fetch_assoc()) {
             <!-- Content Area with Carousel -->
             <div class="relative" id="bestseller-content">
 
-                <!-- Left Arrow - Hidden on mobile -->
-                <button onclick="prevBestseller()" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black text-white p-3 rounded-full hover:bg-red-600 transition-colors duration-300 -translate-x-16 hidden sm:flex items-center justify-center">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
-
-                <!-- Right Arrow - Hidden on mobile -->
-                <button onclick="nextBestseller()" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black text-white p-3 rounded-full hover:bg-red-600 transition-colors duration-300 translate-x-16 hidden sm:flex items-center justify-center">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-
                 <!-- Content Carousel -->
                 <?php foreach ($bestsellerData as $index => $item): ?>
                     <div
                         id="content-<?= $index ?>"
-                        class="bestseller-content grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 items-start <?= $index === 0 ? '' : 'hidden' ?>">
+                        class="bestseller-content grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-12 items-center <?= $index === 0 ? '' : 'hidden' ?>">
 
-                        <!-- Image -->
-                        <div class="overflow-hidden rounded-lg shadow-lg">
+                        <!-- Image Container -->
+                        <div class="overflow-hidden rounded-lg shadow-lg w-full">
                             <img
                                 src="<?= htmlspecialchars($item['image'] ?: '../img/promo/default.png') ?>"
                                 alt="<?= htmlspecialchars($item['title']) ?>"
-                                class="w-full h-[350px] md:h-[450px] object-cover hover:scale-105 transition-transform duration-500">
+                                class="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] object-cover hover:scale-105 transition-transform duration-500">
                         </div>
 
                         <!-- Content -->
-                        <div class="space-y-4 md:space-y-6">
+                        <div class="space-y-4 md:space-y-6 lg:space-y-8 w-full">
                             <div>
-                                <div class="flex items-start justify-between gap-3 sm:gap-0 sm:flex-col">
+                                <div class="flex items-center gap-2 sm:gap-3 flex-wrap mb-3">
                                     <span class="inline-block bg-red-600 text-white px-3 py-1 rounded-md text-xs font-bold">
                                         BESTSELLER
                                     </span>
-                                    <!-- Mobile Arrows -->
-                                    <div class="flex gap-2 sm:hidden">
-                                        <button onclick="prevBestseller()" class="bg-black text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <!-- CTA Button - Next to BESTSELLER -->
+                                    <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
+                                        class="inline-block bg-black text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm hover:bg-red-600 transition-colors duration-300">
+                                        Learn More →
+                                    </a>
+                                    <!-- Navigation Arrows - Always visible next to BESTSELLER -->
+                                    <div class="flex gap-2 ml-auto sm:ml-0">
+                                        <button onclick="prevBestseller()" class="bg-black text-white p-1.5 sm:p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
+                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
                                             </svg>
                                         </button>
-                                        <button onclick="nextBestseller()" class="bg-black text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <button onclick="nextBestseller()" class="bg-black text-white p-1.5 sm:p-2 rounded-full hover:bg-red-600 transition-colors duration-300">
+                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
                                             </svg>
                                         </button>
                                     </div>
                                 </div>
-                                <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 mt-3 sm:mt-0 uppercase">
+                                
+                                <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 uppercase leading-tight">
                                     <?= htmlspecialchars($item['title']) ?>
                                 </h3>
                                 <div class="w-12 h-1 bg-red-600 rounded-full"></div>
                             </div>
-                            <p class="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-8">
+
+                            <p class="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-6 sm:line-clamp-8">
                                 <?= nl2br(htmlspecialchars($item['description'])) ?>
                             </p>
+
                             <!-- Features -->
-                            <div class="flex flex-col gap-2 text-sm">
+                            <div class="flex flex-col gap-2 sm:gap-3 text-xs sm:text-sm">
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                     <span class="text-gray-700">Quality Guaranteed</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                     <span class="text-gray-700">Top Rated Product</span>
                                 </div>
                             </div>
 
-                            <!-- CTA Button -->
-                            <div class="pt-2">
-                                <a href="index-bestseller-detail-B.php?slug=<?= htmlspecialchars($item['slug']) ?>"
-                                    class="inline-block bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300">
-                                    Learn More →
-                                </a>
-                            </div>
+
                         </div>
 
                     </div>
@@ -2270,6 +2258,22 @@ while ($row = $banners_result->fetch_assoc()) {
             to {
                 opacity: 0;
                 transform: translateY(10px);
+            }
+        }
+
+        /* Ensure proper layout on all screen sizes */
+        @media (max-width: 768px) {
+            #bestseller-content {
+                margin: 0 -16px;
+                padding: 0 16px;
+            }
+        }
+
+        /* Prevent overflow on laptop */
+        @media (min-width: 1024px) {
+            .bestseller-content {
+                min-height: auto;
+                align-items: center;
             }
         }
     </style>

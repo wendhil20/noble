@@ -947,20 +947,22 @@ $is_guest = !isset($_SESSION['user_id']);
 
 <body class="font-roboto">
   <?php include '../navbar/top.php'; ?>
-  <!-- Breadcrumb -->
-  <nav class="bg-white border-b border-gray-200 px-4 py-3">
-    <div class="container mx-auto">
-      <div class="flex items-center space-x-2 text-sm">
-        <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
-          <i class="fas fa-home mr-1"></i>Home
-        </a>
-        <i class="fas fa-chevron-right text-gray-400"></i>
-        <span class="text-gray-600 font-medium">Products</span>
-        <i class="fas fa-chevron-right text-gray-400"></i>
-        <span class="text-gray-800 font-semibold"><?= htmlspecialchars($product['product_name']) ?></span>
-      </div>
+<!-- Breadcrumb -->
+<nav class="bg-white border-b border-gray-200 px-4 py-3">
+  <div class="container mx-auto">
+    <div class="flex items-center space-x-2 text-sm">
+      <a href="index-page-1-A-B-C-D-E" class="text-orange-500 hover:text-orange-700 transition duration-200 flex items-center">
+        <i class="fas fa-home mr-1"></i>Home
+      </a>
+      <i class="fas fa-chevron-right text-gray-400"></i>
+      <span class="text-gray-600 font-medium">Products</span>
+      <i class="fas fa-chevron-right text-gray-400"></i>
+      <span class="text-gray-800 font-semibold">
+        <?= htmlspecialchars($product['product_name'] ?? $display_name ?? 'Product') ?>
+      </span>
     </div>
-  </nav>
+  </div>
+</nav>
 
   <!-- Main Content -->
   <div class="container mx-auto">
